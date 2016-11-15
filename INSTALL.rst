@@ -1,14 +1,24 @@
-*Note: pip is the easiest way to install psutil.
+PIP
+===
+
+pip is the easiest way to install psutil.
 It is shipped by default with Python 2.7.9+ and 3.4+. If you're using an
-older Python version* `install pip <https://pip.pypa.io/en/latest/installing/>`__
-*first.* If you cloned psutil source code you can also install it with
-``make install-pip``.
+older Python version `install pip <https://pip.pypa.io/en/latest/installing/>`__
+first.
+If you GIT cloned psutil source code you can also install pip with::
 
-Permission issues
-=================
+    make install-pip
 
-Except for Linux, the commands below assume you're running as root.
-If you're not and you bump into permission errors you can either:
+Unless you're on Windows, in order to install psutil with pip you'll also need
+a C compiler installed.
+pip will retrieve psutil source code or binaries from
+`PYPI <https://pypi.python.org/pypi/psutil>`__ repository.
+
+Permission issues (UNIX)
+========================
+
+The commands below assume you're running as root.
+If you're not or you bump into permission errors you can either:
 
 * prepend ``sudo``, e.g.:
 
@@ -25,15 +35,29 @@ If you're not and you bump into permission errors you can either:
 Linux
 =====
 
-Ubuntu / Debian (use ``python3-dev`` and ``python3-pip`` for python 3)::
+Ubuntu / Debian::
 
     sudo apt-get install gcc python-dev python-pip
     pip install psutil
 
-RedHat (use ``python3-devel`` and ``python3-pip`` for python 3)::
+RedHat / CentOS::
 
     sudo yum install gcc python-devel python-pip
     pip install psutil
+
+If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
+
+Major Linux distros also provide binary distributions of psutil so, for
+instance, on Ubuntu and Debian you can also do::
+
+    sudo apt-get install python-psutil
+
+On RedHat and CentOS::
+
+    sudo yum install python-psutil
+
+This is not recommended though as Linux distros usually ship older psutil
+versions.
 
 OSX
 ===
@@ -49,7 +73,7 @@ Windows
 =======
 
 The easiest way to install psutil on Windows is to just use the pre-compiled
-exe/wheel installers on
+exe/wheel installers hosted on
 `PYPI <https://pypi.python.org/pypi/psutil/#downloads>`__ via pip::
 
     C:\Python27\python.exe -m pip install psutil
@@ -83,7 +107,7 @@ OpenBSD
 
 ::
 
-    export PKG_PATH=http://ftp.usa.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`
+    export PKG_PATH="http://ftp.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`/"
     pkg_add -v python gcc
     python -m pip install psutil
 

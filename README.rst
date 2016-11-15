@@ -56,10 +56,30 @@ to 3.5** (users of Python 2.4 and 2.5 may use
 Example applications
 ====================
 
++------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
+| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/top-small.png      |
+|    :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo.png          |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/top.png          |
++------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
+| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap-small.png     |
+|     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
++------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
+
+Also see https://github.com/giampaolo/psutil/tree/master/scripts.
+
+=====================
+Projects using psutil
+=====================
+
+At the time of writing there are currently almost
+`4000 projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+on github which depend from psutil.
+Here's some I find particularly interesting:
+
+- https://github.com/facebook/osquery/
 - https://github.com/nicolargo/glances
 - https://github.com/google/grr
 - https://github.com/Jahaja/psdash
-- https://github.com/giampaolo/psutil/tree/master/scripts
+- https://github.com/ajenti/ajenti
 
 ==============
 Example usages
@@ -349,59 +369,10 @@ I only ask for a small donation, but of course I appreciate any amount.
     :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
     :alt: Donate via PayPal
 
-Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <http://www.linkedin.com/in/grodola>`_.
+Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
 
 ============
 Mailing list
 ============
 
 http://groups.google.com/group/psutil/
-
-========
-Timeline
-========
-
-- 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-4.3.0.tar.gz>`_
-- 2016-05-15: `psutil-4.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-4.2.0.tar.gz>`_
-- 2016-03-12: `psutil-4.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-4.1.0.tar.gz>`_
-- 2016-02-17: `psutil-4.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-4.0.0.tar.gz>`_
-- 2016-01-20: `psutil-3.4.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.4.2.tar.gz>`_
-- 2016-01-15: `psutil-3.4.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.4.1.tar.gz>`_
-- 2015-11-25: `psutil-3.3.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.3.0.tar.gz>`_
-- 2015-10-04: `psutil-3.2.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.2.2.tar.gz>`_
-- 2015-09-03: `psutil-3.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.2.1.tar.gz>`_
-- 2015-09-02: `psutil-3.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.2.0.tar.gz>`_
-- 2015-07-15: `psutil-3.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.1.1.tar.gz>`_
-- 2015-07-15: `psutil-3.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.1.0.tar.gz>`_
-- 2015-06-18: `psutil-3.0.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.0.1.tar.gz>`_
-- 2015-06-13: `psutil-3.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.0.0.tar.gz>`_
-- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.1.tar.gz>`_
-- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.0.tar.gz>`_
-- 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.3.tar.gz>`_
-- 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.2.tar.gz>`_
-- 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_
-- 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.0.tar.gz>`_
-- 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.0.0.tar.gz>`_
-- 2013-11-25: `psutil-1.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.2.1.tar.gz>`_
-- 2013-11-20: `psutil-1.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.2.0.tar.gz>`_
-- 2013-11-07: `psutil-1.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.3.tar.gz>`_
-- 2013-10-22: `psutil-1.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.2.tar.gz>`_
-- 2013-10-08: `psutil-1.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.1.tar.gz>`_
-- 2013-09-28: `psutil-1.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.0.tar.gz>`_
-- 2013-07-12: `psutil-1.0.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.0.1.tar.gz>`_
-- 2013-07-10: `psutil-1.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.0.0.tar.gz>`_
-- 2013-05-03: `psutil-0.7.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.7.1.tar.gz>`_
-- 2013-04-12: `psutil-0.7.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.7.0.tar.gz>`_
-- 2012-08-16: `psutil-0.6.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.6.1.tar.gz>`_
-- 2012-08-13: `psutil-0.6.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.6.0.tar.gz>`_
-- 2012-06-29: `psutil-0.5.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.5.1.tar.gz>`_
-- 2012-06-27: `psutil-0.5.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.5.0.tar.gz>`_
-- 2011-12-14: `psutil-0.4.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.4.1.tar.gz>`_
-- 2011-10-29: `psutil-0.4.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.4.0.tar.gz>`_
-- 2011-07-08: `psutil-0.3.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.3.0.tar.gz>`_
-- 2011-03-20: `psutil-0.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.2.1.tar.gz>`_
-- 2010-11-13: `psutil-0.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.2.0.tar.gz>`_
-- 2010-03-02: `psutil-0.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.3.tar.gz>`_
-- 2009-05-06: `psutil-0.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.2.tar.gz>`_
-- 2009-03-06: `psutil-0.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.1.tar.gz>`_
-- 2009-01-27: `psutil-0.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.0.tar.gz>`_

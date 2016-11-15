@@ -25,8 +25,7 @@
 #include <net/if_media.h>
 #include <libutil.h>
 
-#include "freebsd.h"
-#include "freebsd_socks.h"
+#include "../../_psutil_common.h"
 
 
 #define HASHSIZE 1009
@@ -498,9 +497,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         goto error;
     }
 

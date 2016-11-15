@@ -25,7 +25,6 @@
 #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
 #include <sys/cpuset.h>
 
-#include "freebsd.h"
 #include "../../_psutil_common.h"
 
 
@@ -67,19 +66,6 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
 }
 
 
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
-        NoSuchProcess();
-    else if (ret == 1)
-        AccessDenied();
-    return ret;
-}
-
-
 // remove spaces from string
 static void psutil_remove_spaces(char *str) {
     char *p1 = str;
@@ -106,10 +92,8 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int err;
     struct kinfo_proc *result;
     int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
-    // Declaring name as const requires us to cast it when passing it to
-    // sysctl because the prototype doesn't include the const modifier.
-    size_t              length;
+    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
+    size_t length;
 
     assert( procList != NULL);
     assert(*procList == NULL);
@@ -281,34 +265,6 @@ error:
 
 
 /*
- * Return 1 if PID exists in the current process list, else 0, -1
- * on error.
- * TODO: this should live in _psutil_posix.c but for some reason if I
- * move it there I get a "include undefined symbol" error.
- */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
-}
-
-
-
-/*
  * Return process pathname executable.
  * Thanks to Robert N. M. Watson:
  * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
@@ -334,8 +290,14 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size = sizeof(pathname);
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        if (errno == ENOENT) {
+            // see: https://github.com/giampaolo/psutil/issues/907
+            return Py_BuildValue("s", "");
+        }
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
@@ -544,13 +506,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
+        PyErr_SetString(PyExc_RuntimeError, "kvm_open() syscall failed");
         return NULL;
     }
 
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
         kvm_close(kd);
-        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "kvm_getswapinfo() syscall failed");
         return NULL;
     }
 
@@ -595,9 +558,10 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         goto error;
     }
 
@@ -647,9 +611,10 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         return NULL;
     }
     free(freep);
@@ -733,7 +698,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
     if (devstat_checkversion(NULL) < 0) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
+        PyErr_Format(PyExc_RuntimeError,
+                     "devstat_checkversion() syscall failed");
         goto error;
     }
 
@@ -745,7 +711,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     bzero(stats.dinfo, sizeof(struct devinfo));
 
     if (devstat_getdevs(NULL, &stats) == -1) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() failed");
+        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() syscall failed");
         goto error;
     }
 
@@ -813,9 +779,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
 
+    errno = 0;
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getvmmap() failed");
         goto error;
     }
     for (i = 0; i < cnt; i++) {
@@ -971,7 +938,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 #else
         long value = PyInt_AsLong(item);
 #endif
-        if (value == -1 && PyErr_Occurred())
+        if (value == -1 || PyErr_Occurred())
             goto error;
         CPU_SET(value, &cpu_set);
     }

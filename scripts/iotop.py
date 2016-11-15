@@ -48,6 +48,7 @@ def tear_down():
     curses.echo()
     curses.endwin()
 
+
 win = curses.initscr()
 atexit.register(tear_down)
 curses.endwin()
@@ -111,14 +112,15 @@ def poll(interval):
 
     # then retrieve the same info again
     for p in procs[:]:
-        try:
-            p._after = p.io_counters()
-            p._cmdline = ' '.join(p.cmdline())
-            if not p._cmdline:
-                p._cmdline = p.name()
-            p._username = p.username()
-        except (psutil.NoSuchProcess, psutil.ZombieProcess):
-            procs.remove(p)
+        with p.oneshot():
+            try:
+                p._after = p.io_counters()
+                p._cmdline = ' '.join(p.cmdline())
+                if not p._cmdline:
+                    p._cmdline = p.name()
+                p._username = p.username()
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                procs.remove(p)
     disks_after = psutil.disk_io_counters()
 
     # finally calculate results by comparing data before and
@@ -174,6 +176,7 @@ def main():
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass
+
 
 if __name__ == '__main__':
     main()

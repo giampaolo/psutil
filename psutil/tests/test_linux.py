@@ -6,6 +6,8 @@
 
 """Linux specific tests."""
 
+from __future__ import division
+import collections
 import contextlib
 import errno
 import io
@@ -34,7 +36,7 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
+from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFN
@@ -54,6 +56,7 @@ if LINUX:
 # =====================================================================
 # utils
 # =====================================================================
+
 
 def get_ipv4_address(ifname):
     import fcntl
@@ -90,11 +93,13 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    lines = sh('free').split('\n')
+    out = sh('free -b')
+    lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
             _, total, used, free = line.split()
-            return (int(total) * 1024, int(used) * 1024, int(free) * 1024)
+            nt = collections.namedtuple('free', 'total used free')
+            return nt(int(total), int(used), int(free))
     raise ValueError(
         "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -107,105 +112,300 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    lines = sh('free').split('\n')
+    out = sh('free -b')
+    lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
             total, used, free, shared = \
-                [int(x) * 1024 for x in line.split()[1:5]]
-            return (total, used, free, shared)
+                [int(x) for x in line.split()[1:5]]
+            nt = collections.namedtuple(
+                'free', 'total used free shared output')
+            return nt(total, used, free, shared, out)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
+
+
+def vmstat(stat):
+    out = sh("vmstat -s")
+    for line in out.split("\n"):
+        line = line.strip()
+        if stat in line:
+            return int(line.split(' ')[0])
+    raise ValueError("can't find %r in 'vmstat' output" % stat)
+
+
+def get_free_version_info():
+    out = sh("free -V").strip()
+    return tuple(map(int, out.split()[-1].split('.')))
 
 
 # =====================================================================
 # system virtual memory
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        total, used, free, shared = free_physmem()
-        self.assertEqual(total, psutil.virtual_memory().total)
+        # free_value = free_physmem().total
+        # psutil_value = psutil.virtual_memory().total
+        # self.assertEqual(free_value, psutil_value)
+        vmstat_value = vmstat('total memory') * 1024
+        psutil_value = psutil.virtual_memory().total
+        self.assertAlmostEqual(vmstat_value, psutil_value)
 
+    # Older versions of procps used slab memory to calculate used memory.
+    # This got changed in:
+    # https://gitlab.com/procps-ng/procps/commit/
+    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+    @unittest.skipUnless(
+        LINUX and get_free_version_info() >= (3, 3, 12), "old free version")
     @retry_before_failing()
     def test_used(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(used, psutil.virtual_memory().used,
-                               delta=MEMORY_TOLERANCE)
+        free = free_physmem()
+        free_value = free.used
+        psutil_value = psutil.virtual_memory().used
+        self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(free, psutil.virtual_memory().free,
-                               delta=MEMORY_TOLERANCE)
+        # _, _, free_value, _ = free_physmem()
+        # psutil_value = psutil.virtual_memory().free
+        # self.assertAlmostEqual(
+        #     free_value, psutil_value, delta=MEMORY_TOLERANCE)
+        vmstat_value = vmstat('free memory') * 1024
+        psutil_value = psutil.virtual_memory().free
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_buffers(self):
-        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
-        self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_value = vmstat('buffer memory') * 1024
+        psutil_value = psutil.virtual_memory().buffers
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_cached(self):
-        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
-        self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
-                               delta=MEMORY_TOLERANCE)
+    def test_active(self):
+        vmstat_value = vmstat('active memory') * 1024
+        psutil_value = psutil.virtual_memory().active
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    @unittest.skipIf(TRAVIS, "fails on travis")
+    def test_inactive(self):
+        vmstat_value = vmstat('inactive memory') * 1024
+        psutil_value = psutil.virtual_memory().inactive
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
     def test_shared(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(shared, psutil.virtual_memory().shared,
-                               delta=MEMORY_TOLERANCE)
+        free = free_physmem()
+        free_value = free.shared
+        if free_value == 0:
+            raise unittest.SkipTest("free does not support 'shared' column")
+        psutil_value = psutil.virtual_memory().shared
+        self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
-    # --- mocked tests
+    @retry_before_failing()
+    def test_available(self):
+        # "free" output format has changed at some point:
+        # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
+        out = sh("free -b")
+        lines = out.split('\n')
+        if 'available' not in lines[0]:
+            raise unittest.SkipTest("free does not support 'available' column")
+        else:
+            free_value = int(lines[1].split()[-1])
+            psutil_value = psutil.virtual_memory().available
+            self.assertAlmostEqual(
+                free_value, psutil_value, delta=MEMORY_TOLERANCE,
+                msg='%s %s \n%s' % (free_value, psutil_value, out))
 
     def test_warnings_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/meminfo':
+                return io.BytesIO(textwrap.dedent("""\
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemAvailable:    6574984 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil._pslinux.virtual_memory()
+                ret = psutil.virtual_memory()
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
                 self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
                 self.assertIn(
                     "memory stats couldn't be determined", str(w.message))
+                self.assertIn("cached", str(w.message))
+                self.assertIn("shared", str(w.message))
+                self.assertIn("active", str(w.message))
+                self.assertIn("inactive", str(w.message))
                 self.assertEqual(ret.cached, 0)
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
+                self.assertEqual(ret.shared, 0)
+
+    def test_avail_old_percent(self):
+        # Make sure that our calculation of avail mem for old kernels
+        # is off by max 10%.
+        from psutil._pslinux import calculate_avail_vmem
+        from psutil._pslinux import open_binary
+
+        mems = {}
+        with open_binary('/proc/meminfo') as f:
+            for line in f:
+                fields = line.split()
+                mems[fields[0]] = int(fields[1]) * 1024
+
+        a = calculate_avail_vmem(mems)
+        if b'MemAvailable:' in mems:
+            b = mems[b'MemAvailable:']
+            diff_percent = abs(a - b) / a * 100
+            self.assertLess(diff_percent, 10)
+
+    def test_avail_old_comes_from_kernel(self):
+        # Make sure "MemAvailable:" coluimn is used instead of relying
+        # on our internal algorithm to calculate avail mem.
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemAvailable:    6574984 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 6574984 * 1024)
+
+    def test_avail_old_missing_fields(self):
+        # Remove Active(file), Inactive(file) and SReclaimable
+        # from /proc/meminfo and make sure the fallback is used
+        # (free + cached),
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
+
+    def test_avail_old_missing_zoneinfo(self):
+        # Remove /proc/zoneinfo file. Make sure fallback is used
+        # (free + cached).
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            elif name == "/proc/zoneinfo":
+                raise IOError(errno.ENOENT, 'no such file or directory')
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
 
 
 # =====================================================================
 # system swap memory
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemSwapMemory(unittest.TestCase):
 
     def test_total(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(total, psutil.swap_memory().total,
-                                      delta=MEMORY_TOLERANCE)
+        free_value = free_swap().total
+        psutil_value = psutil.swap_memory().total
+        return self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_used(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(used, psutil.swap_memory().used,
-                                      delta=MEMORY_TOLERANCE)
+        free_value = free_swap().used
+        psutil_value = psutil.swap_memory().used
+        return self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(free, psutil.swap_memory().free,
-                                      delta=MEMORY_TOLERANCE)
+        free_value = free_swap().free
+        psutil_value = psutil.swap_memory().free
+        return self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     def test_warnings_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil._pslinux.swap_memory()
+                ret = psutil.swap_memory()
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
@@ -239,7 +439,8 @@ class TestSystemSwapMemory(unittest.TestCase):
 # system CPU
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemCPU(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
@@ -320,10 +521,31 @@ class TestSystemCPU(unittest.TestCase):
 
 
 # =====================================================================
+# system CPU stats
+# =====================================================================
+
+
+@unittest.skipUnless(LINUX, "LINUX only")
+class TestSystemCPUStats(unittest.TestCase):
+
+    @unittest.skipIf(TRAVIS, "fails on Travis")
+    def test_ctx_switches(self):
+        vmstat_value = vmstat("context switches")
+        psutil_value = psutil.cpu_stats().ctx_switches
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+
+    def test_interrupts(self):
+        vmstat_value = vmstat("interrupts")
+        psutil_value = psutil.cpu_stats().interrupts
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+
+
+# =====================================================================
 # system network
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemNetwork(unittest.TestCase):
 
     def test_net_if_addrs_ips(self):
@@ -342,10 +564,11 @@ class TestSystemNetwork(unittest.TestCase):
             except RuntimeError:
                 pass
             else:
-                self.assertEqual(stats.isup, 'RUNNING' in out)
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
                                  int(re.findall('MTU:(\d+)', out)[0]))
 
+    @retry_before_failing()
     def test_net_io_counters(self):
         def ifconfig(nic):
             ret = {}
@@ -366,13 +589,13 @@ class TestSystemNetwork(unittest.TestCase):
             except RuntimeError:
                 continue
             self.assertAlmostEqual(
-                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024)
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 5)
             self.assertAlmostEqual(
-                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024)
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 5)
             self.assertAlmostEqual(
-                stats.packets_recv, ifconfig_ret['packets_recv'], delta=512)
+                stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024)
             self.assertAlmostEqual(
-                stats.packets_sent, ifconfig_ret['packets_sent'], delta=512)
+                stats.packets_sent, ifconfig_ret['packets_sent'], delta=1024)
             self.assertAlmostEqual(
                 stats.errin, ifconfig_ret['errin'], delta=10)
             self.assertAlmostEqual(
@@ -420,7 +643,6 @@ class TestSystemNetwork(unittest.TestCase):
                     """))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -433,7 +655,8 @@ class TestSystemNetwork(unittest.TestCase):
 # system disk
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemDisks(unittest.TestCase):
 
     @unittest.skipUnless(
@@ -502,7 +725,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -535,7 +757,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -570,7 +791,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3    1   hda 1 2 3 4"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -593,8 +813,14 @@ class TestSystemDisks(unittest.TestCase):
 # misc
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestMisc(unittest.TestCase):
+
+    def test_boot_time(self):
+        vmstat_value = vmstat('boot time')
+        psutil_value = psutil.boot_time()
+        self.assertEqual(int(vmstat_value), int(psutil_value))
 
     @mock.patch('psutil.traceback.print_exc')
     def test_no_procfs_on_import(self, tb):
@@ -767,11 +993,12 @@ class TestMisc(unittest.TestCase):
 # test process
 # =====================================================================
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     tearDown = setUp
 
@@ -781,73 +1008,42 @@ class TestProcess(unittest.TestCase):
         # For all those cases we check that the value found in
         # /proc/pid/stat (by psutil) matches the one found in
         # /proc/pid/status.
-        for p in psutil.process_iter():
-            try:
-                f = psutil._psplatform.open_text('/proc/%s/status' % p.pid)
-            except IOError:
-                pass
-            else:
-                with f:
-                    for line in f:
-                        line = line.strip()
-                        if line.startswith('Name:'):
-                            name = line.split()[1]
-                            # Name is truncated to 15 chars
-                            self.assertEqual(p.name()[:15], name[:15])
-                        elif line.startswith('State:'):
-                            status = line[line.find('(') + 1:line.rfind(')')]
-                            status = status.replace(' ', '-')
-                            self.assertEqual(p.status(), status)
-                        elif line.startswith('PPid:'):
-                            ppid = int(line.split()[1])
-                            self.assertEqual(p.ppid(), ppid)
-                        # The ones below internally are determined by reading
-                        # 'status' file but we use a re to extract the info
-                        # so it makes sense to check them.
-                        elif line.startswith('Threads:'):
-                            num_threads = int(line.split()[1])
-                            self.assertEqual(p.num_threads(), num_threads)
-                        elif line.startswith('Uid:'):
-                            uids = tuple(map(int, line.split()[1:4]))
-                            self.assertEqual(tuple(p.uids()), uids)
-                        elif line.startswith('Gid:'):
-                            gids = tuple(map(int, line.split()[1:4]))
-                            self.assertEqual(tuple(p.gids()), gids)
-                        elif line.startswith('voluntary_ctxt_switches:'):
-                            vol = int(line.split()[1])
-                            self.assertAlmostEqual(
-                                p.num_ctx_switches().voluntary, vol, delta=2)
-                        elif line.startswith('nonvoluntary_ctxt_switches:'):
-                            invol = int(line.split()[1])
-                            self.assertAlmostEqual(
-                                p.num_ctx_switches().involuntary, invol,
-                                delta=2)
-
-    def test_memory_maps(self):
-        src = textwrap.dedent("""
-            import time
-            with open("%s", "w") as f:
-                time.sleep(10)
-            """ % TESTFN)
-        sproc = pyrun(src)
-        self.addCleanup(reap_children)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
-        p = psutil.Process(sproc.pid)
-        time.sleep(.1)
-        maps = p.memory_maps(grouped=False)
-        pmap = sh('pmap -x %s' % p.pid).split('\n')
-        # get rid of header
-        del pmap[0]
-        del pmap[0]
-        while maps and pmap:
-            this = maps.pop(0)
-            other = pmap.pop(0)
-            addr, _, rss, dirty, mode, path = other.split(None, 5)
-            if not path.startswith('[') and not path.endswith(']'):
-                self.assertEqual(path, os.path.basename(this.path))
-            self.assertEqual(int(rss) * 1024, this.rss)
-            # test only rwx chars, ignore 's' and 'p'
-            self.assertEqual(mode[:3], this.perms[:3])
+        p = psutil.Process()
+        with psutil._psplatform.open_text('/proc/%s/status' % p.pid) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('Name:'):
+                    name = line.split()[1]
+                    # Name is truncated to 15 chars
+                    self.assertEqual(p.name()[:15], name[:15])
+                elif line.startswith('State:'):
+                    status = line[line.find('(') + 1:line.rfind(')')]
+                    status = status.replace(' ', '-')
+                    self.assertEqual(p.status(), status)
+                elif line.startswith('PPid:'):
+                    ppid = int(line.split()[1])
+                    self.assertEqual(p.ppid(), ppid)
+                # The ones below internally are determined by reading
+                # 'status' file but we use a re to extract the info
+                # so it makes sense to check them.
+                elif line.startswith('Threads:'):
+                    num_threads = int(line.split()[1])
+                    self.assertEqual(p.num_threads(), num_threads)
+                elif line.startswith('Uid:'):
+                    uids = tuple(map(int, line.split()[1:4]))
+                    self.assertEqual(tuple(p.uids()), uids)
+                elif line.startswith('Gid:'):
+                    gids = tuple(map(int, line.split()[1:4]))
+                    self.assertEqual(tuple(p.gids()), gids)
+                elif line.startswith('voluntary_ctxt_switches:'):
+                    vol = int(line.split()[1])
+                    self.assertAlmostEqual(
+                        p.num_ctx_switches().voluntary, vol, delta=2)
+                elif line.startswith('nonvoluntary_ctxt_switches:'):
+                    invol = int(line.split()[1])
+                    self.assertAlmostEqual(
+                        p.num_ctx_switches().involuntary, invol,
+                        delta=2)
 
     def test_memory_full_info(self):
         src = textwrap.dedent("""
@@ -871,7 +1067,7 @@ class TestProcess(unittest.TestCase):
             mem.swap, sum([x.swap for x in maps]), delta=4096)
 
     # On PYPY file descriptors are not closed fast enough.
-    @unittest.skipIf(PYPY, "skipped on PYPY")
+    @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_open_files_mode(self):
         def get_test_file():
             p = psutil.Process()
@@ -900,10 +1096,10 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(get_test_file().mode, "a+")
         # note: "x" bit is not supported
         if PY3:
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x"):
                 self.assertEqual(get_test_file().mode, "w")
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x+"):
                 self.assertEqual(get_test_file().mode, "r+")
 
@@ -1001,7 +1197,7 @@ class TestProcess(unittest.TestCase):
 
     # not sure why (doesn't fail locally)
     # https://travis-ci.org/giampaolo/psutil/jobs/108629915
-    @unittest.skipIf(TRAVIS, "fails on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_exe_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         side_effect=OSError(errno.ENOENT, "")) as m:

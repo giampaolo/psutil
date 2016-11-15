@@ -12,13 +12,32 @@ import sys
 from collections import namedtuple
 
 from . import _common
-from . import _psutil_windows as cext
+try:
+    from . import _psutil_windows as cext
+except ImportError as err:
+    if str(err).lower().startswith("dll load failed") and \
+            sys.getwindowsversion()[0] < 6:
+        # We may get here if:
+        # 1) we are on an old Windows version
+        # 2) psutil was installed via pip + wheel
+        # See: https://github.com/giampaolo/psutil/issues/811
+        # It must be noted that psutil can still (kind of) work
+        # on outdated systems if compiled / installed from sources,
+        # but if we get here it means this this was a wheel (or exe).
+        msg = "this Windows version is too old (< Windows Vista); "
+        msg += "psutil 3.4.2 is the latest version which supports Windows "
+        msg += "2000, XP and 2003 server"
+        raise RuntimeError(msg)
+    else:
+        raise
+
 from ._common import conn_tmap
 from ._common import isfile_strict
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._common import memoize_when_activated
 from ._compat import long
 from ._compat import lru_cache
 from ._compat import PY3
@@ -89,6 +108,29 @@ if enum is not None:
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
     globals().update(Priority.__members__)
+
+pinfo_map = dict(
+    num_handles=0,
+    ctx_switches=1,
+    user_time=2,
+    kernel_time=3,
+    create_time=4,
+    num_threads=5,
+    io_rcount=6,
+    io_wcount=7,
+    io_rbytes=8,
+    io_wbytes=9,
+    num_page_faults=10,
+    peak_wset=11,
+    wset=12,
+    peak_paged_pool=13,
+    paged_pool=14,
+    peak_non_paged_pool=15,
+    non_paged_pool=16,
+    pagefile=17,
+    peak_pagefile=18,
+    mem_private=19,
+)
 
 
 # =====================================================================
@@ -477,8 +519,8 @@ class WindowsService(object):
         return d
 
     # actions
-    # XXX: the necessary C bindings for start() and stop() are implemented
-    # but for now I prefer not to expose them.
+    # XXX: the necessary C bindings for start() and stop() are
+    # implemented but for now I prefer not to expose them.
     # I may change my mind in the future. Reasons:
     # - they require Administrator privileges
     # - can't implement a timeout for stop() (unless by using a thread,
@@ -553,6 +595,23 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    # --- oneshot() stuff
+
+    def oneshot_enter(self):
+        self.oneshot_info.cache_activate()
+
+    def oneshot_exit(self):
+        self.oneshot_info.cache_deactivate()
+
+    @memoize_when_activated
+    def oneshot_info(self):
+        """Return multiple information about this process as a
+        raw tuple.
+        """
+        ret = cext.proc_info(self.pid)
+        assert len(ret) == len(pinfo_map)
+        return ret
+
     @wrap_exceptions
     def name(self):
         """Return process name, which on Windows is always the final
@@ -609,7 +668,19 @@ class Process(object):
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
-                return cext.proc_memory_info_2(self.pid)
+                info = self.oneshot_info()
+                return (
+                    info[pinfo_map['num_page_faults']],
+                    info[pinfo_map['peak_wset']],
+                    info[pinfo_map['wset']],
+                    info[pinfo_map['peak_paged_pool']],
+                    info[pinfo_map['paged_pool']],
+                    info[pinfo_map['peak_non_paged_pool']],
+                    info[pinfo_map['non_paged_pool']],
+                    info[pinfo_map['pagefile']],
+                    info[pinfo_map['peak_pagefile']],
+                    info[pinfo_map['mem_private']],
+                )
             raise
 
     @wrap_exceptions
@@ -656,11 +727,11 @@ class Process(object):
     @wrap_exceptions
     def wait(self, timeout=None):
         if timeout is None:
-            timeout = cext.INFINITE
+            cext_timeout = cext.INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds
-            timeout = int(timeout * 1000)
-        ret = cext.proc_wait(self.pid, timeout)
+            cext_timeout = int(timeout * 1000)
+        ret = cext.proc_wait(self.pid, cext_timeout)
         if ret == WAIT_TIMEOUT:
             raise TimeoutExpired(timeout, self.pid, self._name)
         return ret
@@ -680,12 +751,12 @@ class Process(object):
             return cext.proc_create_time(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).create_time
+                return self.oneshot_info()[pinfo_map['create_time']]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return ntpinfo(*cext.proc_info(self.pid)).num_threads
+        return self.oneshot_info()[pinfo_map['num_threads']]
 
     @wrap_exceptions
     def threads(self):
@@ -702,8 +773,9 @@ class Process(object):
             user, system = cext.proc_cpu_times(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                user, system = (nt.user_time, nt.kernel_time)
+                info = self.oneshot_info()
+                user = info[pinfo_map['user_time']]
+                system = info[pinfo_map['kernel_time']]
             else:
                 raise
         # Children user/system times are not retrievable (set to 0).
@@ -782,8 +854,13 @@ class Process(object):
             ret = cext.proc_io_counters(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
+                info = self.oneshot_info()
+                ret = (
+                    info[pinfo_map['io_rcount']],
+                    info[pinfo_map['io_wcount']],
+                    info[pinfo_map['io_rbytes']],
+                    info[pinfo_map['io_wbytes']],
+                )
             else:
                 raise
         return _common.pio(*ret)
@@ -834,11 +911,11 @@ class Process(object):
             return cext.proc_num_handles(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).num_handles
+                return self.oneshot_info()[pinfo_map['num_handles']]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = ntpinfo(*cext.proc_info(self.pid)).ctx_switches
+        ctx_switches = self.oneshot_info()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
         return _common.pctxsw(ctx_switches, 0)

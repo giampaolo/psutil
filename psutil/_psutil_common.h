@@ -8,3 +8,8 @@
 
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
+
+#ifdef PSUTIL_POSIX
+int psutil_pid_exists(long pid);
+void psutil_raise_for_pid(long pid, char *msg);
+#endif

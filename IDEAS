@@ -14,13 +14,34 @@ PLATFORMS
 - DragonFlyBSD
 - HP-UX
 
+
+APIS
+====
+
+- cpu_info() (#550)
+
+
 FEATURES
 ========
 
-- (Linux): from /proc/pid/stat we can also retrieve process and children guest
-  times (time spent running a virtual CPU for a guest OS).
+- #669: Windows / net_if_addrs(): return broadcast addr.
 
-- #809: (Linux) per-process resource limits.
+- #550: CPU info (frequency, architecture, threads per core, cores per socket,
+  sockets, ...)
+
+- #772: extended net_io_counters() metrics.
+
+- #900: wheels for OSX and Linux.
+
+- #922: extended net_io_stats() info.
+
+- #914: extended platform specific process info.
+
+- #898: wifi stats
+
+- #893: (BSD) process environ
+
+- #809: (BSD) per-process resource limits (rlimit()).
 
 - (UNIX) process root (different from cwd)
 
@@ -54,7 +75,6 @@ FEATURES
 
 - system-wide number of open file descriptors:
   - https://jira.hyperic.com/browse/SIGAR-30
-  - http://www.netadmintools.com/part295.html
 
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
@@ -136,6 +156,18 @@ FEATURES
 - #550: number of threads per core.
 
 - Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+
+
+BUGFIXES
+========
+
+- #600: windows / open_files(): support network file handles.
+
+
+REJECTED
+========
+
+- #550: threads per core
 
 
 RESOURCES

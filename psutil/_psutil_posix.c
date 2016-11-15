@@ -34,9 +34,8 @@
 
 #if defined(__sun)
 #include <netdb.h>
+#include <sys/sockio.h>
 #endif
-
-#include "_psutil_posix.h"
 
 
 /*
@@ -50,7 +49,12 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+
+#if defined(__APPLE__)
+    priority = getpriority(PRIO_PROCESS, (id_t)pid);
+#else
     priority = getpriority(PRIO_PROCESS, pid);
+#endif
     if (errno != 0)
         return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("i", priority);
@@ -68,7 +72,12 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
+
+#if defined(__APPLE__)
+    retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
+#else
     retval = setpriority(PRIO_PROCESS, pid, priority);
+#endif
     if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
     Py_RETURN_NONE;
@@ -247,8 +256,81 @@ error:
 
 
 /*
- * net_if_stats() implementation. This is here because it is common
- * to both OSX and FreeBSD and I didn't know where else to put it.
+ * Return NIC MTU. References:
+ * http://www.i-scream.org/libstatgrab/
+ */
+static PyObject *
+psutil_net_if_mtu(PyObject *self, PyObject *args) {
+    char *nic_name;
+    int sock = 0;
+    int ret;
+    int mtu;
+    struct ifreq ifr;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        return NULL;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        goto error;
+
+    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    ret = ioctl(sock, SIOCGIFMTU, &ifr);
+    if (ret == -1)
+        goto error;
+    close(sock);
+    mtu = ifr.ifr_mtu;
+
+    return Py_BuildValue("i", mtu);
+
+error:
+    if (sock != 0)
+        close(sock);
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Inspect NIC flags, returns a bool indicating whether the NIC is
+ * running. References:
+ * http://www.i-scream.org/libstatgrab/
+ */
+static PyObject *
+psutil_net_if_flags(PyObject *self, PyObject *args) {
+    char *nic_name;
+    int sock = 0;
+    int ret;
+    struct ifreq ifr;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        return NULL;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        goto error;
+
+    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    if (ret == -1)
+        goto error;
+
+    close(sock);
+    if ((ifr.ifr_flags & IFF_UP) != 0)
+        return Py_BuildValue("O", Py_True);
+    else
+        return Py_BuildValue("O", Py_False);
+
+error:
+    if (sock != 0)
+        close(sock);
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * net_if_stats() OSX/BSD implementation.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
 
@@ -398,17 +480,14 @@ int psutil_get_nic_speed(int ifm_active) {
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_stats(PyObject *self, PyObject *args) {
+psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;
     int ret;
     int duplex;
     int speed;
-    int mtu;
     struct ifreq ifr;
     struct ifmediareq ifmed;
-
-    PyObject *py_is_up = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
@@ -417,22 +496,6 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-
-    // is up?
-    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
-        goto error;
-    if ((ifr.ifr_flags & IFF_UP) != 0)
-        py_is_up = Py_True;
-    else
-        py_is_up = Py_False;
-    Py_INCREF(py_is_up);
-
-    // MTU
-    ret = ioctl(sock, SIOCGIFMTU, &ifr);
-    if (ret == -1)
-        goto error;
-    mtu = ifr.ifr_mtu;
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
@@ -453,18 +516,15 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     }
 
     close(sock);
-    Py_DECREF(py_is_up);
-
-    return Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
+    return Py_BuildValue("[ii]", duplex, speed);
 
 error:
-    Py_XDECREF(py_is_up);
     if (sock != 0)
         close(sock);
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
-#endif  // net_if_stats() implementation
+#endif  // net_if_stats() OSX/BSD implementation
 
 
 /*
@@ -478,8 +538,12 @@ PsutilMethods[] = {
      "Set process priority"},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
      "Retrieve NICs information"},
+    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS,
+     "Retrieve NIC MTU"},
+    {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
+     "Retrieve NIC flags"},
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},
 #endif
     {NULL, NULL, 0, NULL}

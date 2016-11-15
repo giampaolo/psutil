@@ -174,7 +174,8 @@ psutil_get_nic_addresses() {
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+        PyErr_SetString(
+            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
@@ -777,57 +778,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
-static PyObject *
-psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    SIZE_T private;
-    unsigned long pfault_count;
-
-#if defined(_WIN64)
-    unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
-#else
-    unsigned int m1, m2, m3, m4, m5, m6, m7, m8;
-#endif
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (! psutil_get_proc_info(pid, &process, &buffer))
-        return NULL;
-
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
-    private = process->PrivatePageCount;
-#else
-    private = 0;
-#endif
-    pfault_count = process->PageFaultCount;
-
-    m1 = process->PeakWorkingSetSize;
-    m2 = process->WorkingSetSize;
-    m3 = process->QuotaPeakPagedPoolUsage;
-    m4 = process->QuotaPagedPoolUsage;
-    m5 = process->QuotaPeakNonPagedPoolUsage;
-    m6 = process->QuotaNonPagedPoolUsage;
-    m7 = process->PagefileUsage;
-    m8 = process->PeakPagefileUsage;
-
-    free(buffer);
-
-    // SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
-    // bits is an (unsigned long long) and on 32bits is an (unsigned int).
-    // "_WIN64" is defined if we're running a 64bit Python interpreter not
-    // exclusively if the *system* is 64bit.
-#if defined(_WIN64)
-    return Py_BuildValue("(kKKKKKKKKK)",
-#else
-    return Py_BuildValue("(kIIIIIIIII)",
-#endif
-        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
-}
 
 /**
  * Returns the USS of the process.
@@ -1469,6 +1419,88 @@ psutil_proc_username(PyObject *self, PyObject *args) {
 }
 
 
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              TCP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365928.aspx
+static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 TCP_TABLE_OWNER_PID_ALL, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     TCP_TABLE_OWNER_PID_ALL, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365930.aspx
+static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 UDP_TABLE_OWNER_PID, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     UDP_TABLE_OWNER_PID, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
 /*
  * Return a list of network connections opened by a process
  */
@@ -1480,14 +1512,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
     typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
     _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
-    typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                                  TCP_TABLE_CLASS, ULONG);
     _GetExtendedTcpTable getExtendedTcpTable;
-    typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                                  UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
     DWORD tableSize;
+    DWORD error;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
@@ -1570,17 +1599,15 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
-                            TCP_TABLE_OWNER_PID_ALL, 0);
 
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
-                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (error == NO_ERROR)
         {
             tcp4Table = table;
 
@@ -1650,8 +1677,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // TCP IPv6
@@ -1663,17 +1696,15 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
-                            TCP_TABLE_OWNER_PID_ALL, 0);
 
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
-                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (error == NO_ERROR)
         {
             tcp6Table = table;
 
@@ -1743,8 +1774,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // UDP IPv4
@@ -1757,17 +1794,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
-                            UDP_TABLE_OWNER_PID, 0);
-
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
-                                UDP_TABLE_OWNER_PID, 0) == 0)
+        if (error == NO_ERROR)
         {
             udp4Table = table;
 
@@ -1814,8 +1848,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // UDP IPv6
@@ -1828,17 +1868,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedUdpTable(NULL, &tableSize, FALSE,
-                            AF_INET6, UDP_TABLE_OWNER_PID, 0);
-
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET6,
-                                UDP_TABLE_OWNER_PID, 0) == 0)
+        if (error == NO_ERROR)
         {
             udp6Table = table;
 
@@ -1884,8 +1921,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     _psutil_conn_decref_objs();
@@ -2000,7 +2043,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (NtSetInformationProcess == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "couldn't get NtSetInformationProcess");
+                        "couldn't get NtSetInformationProcess syscall");
         return NULL;
     }
 
@@ -2232,7 +2275,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "GetIfEntry() or GetIfEntry2() failed.");
+                            "GetIfEntry() or GetIfEntry2() syscalls failed.");
             goto error;
         }
 
@@ -2684,34 +2727,32 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
  * denied. This is slower because it iterates over all processes.
  * Returned tuple includes the following process info:
  *
- * - num_threads
- * - ctx_switches
- * - num_handles (fallback)
- * - user/kernel times (fallback)
- * - create time (fallback)
- * - io counters (fallback)
+ * - num_threads()
+ * - ctx_switches()
+ * - num_handles() (fallback)
+ * - cpu_times() (fallback)
+ * - create_time() (fallback)
+ * - io_counters() (fallback)
+ * - memory_info() (fallback)
  */
 static PyObject *
 psutil_proc_info(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
-    ULONG num_handles;
     ULONG i;
     ULONG ctx_switches = 0;
     double user_time;
     double kernel_time;
     long long create_time;
-    int num_threads;
-    LONGLONG io_rcount, io_wcount, io_rbytes, io_wbytes;
-
+    SIZE_T mem_private;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
 
-    num_handles = process->HandleCount;
     for (i = 0; i < process->NumberOfThreads; i++)
         ctx_switches += process->Threads[i].ContextSwitches;
     user_time = (double)process->UserTime.HighPart * 429.4967296 + \
@@ -2730,26 +2771,44 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         create_time += process->CreateTime.LowPart - 116444736000000000LL;
         create_time /= 10000000;
     }
-    num_threads = (int)process->NumberOfThreads;
-    io_rcount = process->ReadOperationCount.QuadPart;
-    io_wcount = process->WriteOperationCount.QuadPart;
-    io_rbytes = process->ReadTransferCount.QuadPart;
-    io_wbytes = process->WriteTransferCount.QuadPart;
-    free(buffer);
 
-    return Py_BuildValue(
-        "kkdddiKKKK",
-        num_handles,
-        ctx_switches,
-        user_time,
-        kernel_time,
-        (double)create_time,
-        num_threads,
-        io_rcount,
-        io_wcount,
-        io_rbytes,
-        io_wbytes
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    mem_private = process->PrivatePageCount;
+#else
+    mem_private = 0;
+#endif
+
+    py_retlist = Py_BuildValue(
+#if defined(_WIN64)
+        "kkdddiKKKK" "kKKKKKKKKK",
+#else
+        "kkdddiKKKK" "kIIIIIIIII",
+#endif
+        process->HandleCount,                   // num handles
+        ctx_switches,                           // num ctx switches
+        user_time,                              // cpu user time
+        kernel_time,                            // cpu kernel time
+        (double)create_time,                    // create time
+        (int)process->NumberOfThreads,          // num threads
+        process->ReadOperationCount.QuadPart,   // io rcount
+        process->WriteOperationCount.QuadPart,  // io wcount
+        process->ReadTransferCount.QuadPart,    // io rbytes
+        process->WriteTransferCount.QuadPart,   // io wbytes
+        // memory
+        process->PageFaultCount,                // num page faults
+        process->PeakWorkingSetSize,            // peak wset
+        process->WorkingSetSize,                // wset
+        process->QuotaPeakPagedPoolUsage,       // peak paged pool
+        process->QuotaPagedPoolUsage,           // paged pool
+        process->QuotaPeakNonPagedPoolUsage,    // peak non paged pool
+        process->QuotaNonPagedPoolUsage,        // non paged pool
+        process->PagefileUsage,                 // pagefile
+        process->PeakPagefileUsage,             // peak pagefile
+        mem_private                             // private
     );
+
+    free(buffer);
+    return py_retlist;
 }
 
 
@@ -2911,9 +2970,18 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     unsigned int i = 0;
     ULONG family;
     PCTSTR intRet;
+    PCTSTR netmaskIntRet;
     char *ptr;
     char buff[100];
     DWORD bufflen = 100;
+    char netmask_buff[100];
+    DWORD netmask_bufflen = 100;
+    DWORD dwRetVal = 0;
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+    ULONG converted_netmask;
+    UINT netmask_bits;
+    struct in_addr in_netmask;
+#endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
@@ -2923,6 +2991,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
     PyObject *py_nic_name = NULL;
+    PyObject *py_netmask = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2935,6 +3004,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
+        netmaskIntRet = NULL;
         py_nic_name = NULL;
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName,
@@ -2996,6 +3066,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
                                        bufflen);
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+                    netmask_bits = pUnicast->OnLinkPrefixLength;
+                    dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
+                    if (dwRetVal == NO_ERROR) {
+                        in_netmask.s_addr = converted_netmask;
+                        netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
+                                                  netmask_bufflen);
+                    }
+#endif
                 }
                 else if (family == AF_INET6) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
@@ -3021,7 +3100,17 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 if (py_address == NULL)
                     goto error;
 
-                Py_INCREF(Py_None);
+                if (netmaskIntRet != NULL) {
+#if PY_MAJOR_VERSION >= 3
+                    py_netmask = PyUnicode_FromString(netmask_buff);
+#else
+                    py_netmask = PyString_FromString(netmask_buff);
+#endif
+                } else {
+                    Py_INCREF(Py_None);
+                    py_netmask = Py_None;
+                }
+
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
@@ -3029,7 +3118,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     py_nic_name,
                     family,
                     py_address,
-                    Py_None,  // netmask (not supported)
+                    py_netmask,
                     Py_None,  // broadcast (not supported)
                     Py_None  // ptp (not supported on Windows)
                 );
@@ -3040,6 +3129,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
                 Py_DECREF(py_address);
+                Py_DECREF(py_netmask);
 
                 pUnicast = pUnicast->Next;
             }
@@ -3058,6 +3148,7 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_netmask);
     return NULL;
 }
 
@@ -3108,7 +3199,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     // Make a second call to GetIfTable to get the actual
     // data we want.
     if ((dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE)) != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() failed");
+        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() syscall failed");
         goto error;
     }
 
@@ -3245,6 +3336,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
+
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
@@ -3282,10 +3374,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         interrupts += sppi[i].InterruptCount;
     }
 
-
     // done
     free(spi);
     free(InterruptInformation);
+    free(sppi);
     FreeLibrary(hNtDll);
     return Py_BuildValue(
         "kkkk",
@@ -3300,6 +3392,8 @@ error:
         free(spi);
     if (InterruptInformation)
         free(InterruptInformation);
+    if (sppi)
+        free(sppi);
     if (hNtDll)
         FreeLibrary(hNtDll);
     return NULL;
@@ -3330,8 +3424,6 @@ PsutilMethods[] = {
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
-     "Alternate implementation"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
      "Return the USS of the process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,

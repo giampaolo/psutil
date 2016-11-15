@@ -39,8 +39,8 @@
 #include <arpa/inet.h>
 
 
-#include "netbsd.h"
 #include "netbsd_socks.h"
+#include "netbsd.h"
 #include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
@@ -50,16 +50,6 @@
 // ============================================================================
 // Utility functions
 // ============================================================================
-
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
-}
 
 
 int
@@ -121,31 +111,6 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
-}
-
-
-int
-psutil_pid_exists(pid_t pid) {
-    // Return 1 if PID exists in the current process list, else 0, -1
-    // on error.
-    // TODO: this should live in _psutil_posix.c but for some reason if I
-    // move it there I get a "include undefined symbol" error.
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
 }
 
 
@@ -323,13 +288,14 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 
     if (kd == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed: %s", errbuf);
+        PyErr_Format(
+            PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf);
         return errno;
     }
 
     result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(kinfo_proc), &cnt);
     if (result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() failed");
+        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() syscall failed");
         kvm_close(kd);
         return errno;
     }
@@ -445,37 +411,32 @@ error:
 }
 
 
+/*
+ * Virtual memory stats, taken from:
+ * https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/
+ *     netbsd/memory.c
+ */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    int64_t total_physmem;
     size_t size;
     struct uvmexp_sysctl uv;
-    int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
-    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
+    int mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = getpagesize();
 
-    size = sizeof(total_physmem);
-    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
     size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
+    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total_physmem,  // total
-        (unsigned long long) uv.free * pagesize,  // free
-        (unsigned long long) uv.active * pagesize,  // active
-        (unsigned long long) uv.inactive * pagesize,  // inactive
-        (unsigned long long) uv.wired * pagesize,  // wired
-        // taken from:
-        // https://github.com/satterly/zabbix-stats/blob/master/src/libs/
-        //      zbxsysinfo/netbsd/memory.c
+        (unsigned long long) uv.npages << uv.pageshift,  // total
+        (unsigned long long) uv.free << uv.pageshift,  // free
+        (unsigned long long) uv.active << uv.pageshift,  // active
+        (unsigned long long) uv.inactive << uv.pageshift,  // inactive
+        (unsigned long long) uv.wired << uv.pageshift,  // wired
         (unsigned long long) uv.filepages + uv.execpages * pagesize,  // cached
+        // These are determined from /proc/meminfo in Python.
         (unsigned long long) 0,  // buffers
         (unsigned long long) 0  // shared
     );
@@ -509,8 +470,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
+            swap_total += swdev[i].se_nblks * DEV_BSIZE;
+            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse) * DEV_BSIZE;
         }
     }
     free(swdev);
@@ -528,9 +489,9 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("(LLLll)",
-                         swap_total * DEV_BSIZE,
-                         (swap_total - swap_free) * DEV_BSIZE,
-                         swap_free * DEV_BSIZE,
+                         swap_total,
+                         (swap_total - swap_free),
+                         swap_free,
                          (long) uv.pgswapin * pagesize,  // swap in
                          (long) uv.pgswapout * pagesize);  // swap out
 
@@ -549,9 +510,10 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         return NULL;
     }
     free(freep);
@@ -562,6 +524,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
+    // XXX: why static?
     static int maxcpus;
     int mib[3];
     int ncpu;

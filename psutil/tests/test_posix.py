@@ -22,6 +22,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil._compat import callable
 from psutil._compat import PY3
+from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
@@ -57,7 +58,7 @@ def ps(cmd):
         return output
 
 
-@unittest.skipUnless(POSIX, "not a POSIX system")
+@unittest.skipUnless(POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
@@ -122,8 +123,7 @@ class TestProcess(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name().lower()
         self.assertEqual(name_ps, name_psutil)
 
-    @unittest.skipIf(OSX or BSD,
-                     'ps -o start not available')
+    @unittest.skipIf(OSX or BSD, 'ps -o start not available')
     def test_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time()
@@ -212,7 +212,7 @@ class TestProcess(unittest.TestCase):
                          psutil.Process().cwd())
 
 
-@unittest.skipUnless(POSIX, "not a POSIX system")
+@unittest.skipUnless(POSIX, "POSIX only")
 class TestSystemAPIs(unittest.TestCase):
     """Test some system APIs."""
 
@@ -251,11 +251,13 @@ class TestSystemAPIs(unittest.TestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-    @unittest.skipIf(SUNOS, "test not reliable on SUNOS")
-    @unittest.skipIf(TRAVIS, "test not reliable on Travis")
+    @unittest.skipIf(SUNOS, "unreliable on SUNOS")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        if p.returncode != 0:
+            raise unittest.SkipTest('ifconfig returned no output')
         if PY3:
             output = str(output, sys.stdout.encoding)
         for nic in psutil.net_io_counters(pernic=True).keys():
@@ -267,6 +269,9 @@ class TestSystemAPIs(unittest.TestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
+    # can't find users on APPVEYOR or TRAVIS
+    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
+                     "unreliable on APPVEYOR or TRAVIS")
     @retry_before_failing()
     def test_users(self):
         out = sh("who")
