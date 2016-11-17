@@ -22,7 +22,6 @@ from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import open_binary
 from ._common import open_text
-from ._common import parse_environ_block
 from ._common import popenfile
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
@@ -557,10 +556,6 @@ class Process(object):
         if data.endswith('\x00'):
             data = data[:-1]
         return [x for x in data.split('\x00')]
-
-    @wrap_exceptions
-    def environ(self):
-        return parse_environ_block(cext.proc_environ(self._winpid))
 
     @wrap_exceptions
     def terminal(self):

@@ -1756,8 +1756,6 @@ PsutilMethods[] = {
      "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
-    {"proc_environ", psutil_proc_environ, METH_VARARGS,
-     "Return process environment data"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
     {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
