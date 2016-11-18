@@ -10,7 +10,7 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg?label=version
+.. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.python.org/pypi/psutil/
     :alt: Latest version
 
@@ -70,7 +70,7 @@ Also see https://github.com/giampaolo/psutil/tree/master/scripts.
 Projects using psutil
 =====================
 
-At the time of writing there are currently almost
+At the time of writing there are over
 `4000 projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
