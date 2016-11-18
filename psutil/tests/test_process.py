@@ -29,6 +29,7 @@ from socket import SOCK_STREAM
 import psutil
 
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import NETBSD
@@ -1087,7 +1088,8 @@ class TestProcess(unittest.TestCase):
                                psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
 
-    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX not supported')
+    @unittest.skipUnless(hasattr(socket, 'AF_UNIX') and not CYGWIN,
+                         'AF_UNIX is not supported')
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):

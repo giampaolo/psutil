@@ -358,6 +358,12 @@ def net_connections(kind, _pid=-1):
     if kind not in conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
+    elif kind == 'unix':
+        raise ValueError("invalid %r kind argument; although UNIX sockets "
+                         "are supported on Cygwin it is not possible to "
+                         "enumerate the UNIX sockets opened by a process"
+                         % kind)
+
     families, types = conn_tmap[kind]
     if _pid > 0:
         _pid = cygpid_to_winpid(_pid)
