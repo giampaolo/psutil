@@ -2552,7 +2552,7 @@ error:
  */
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
-    HANDLE hServer = NULL;
+    HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
     LPTSTR buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
     PWTS_SESSION_INFO sessions = NULL;
@@ -2580,12 +2580,6 @@ psutil_users(PyObject *self, PyObject *args) {
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW) \
         GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
-
-    hServer = WTSOpenServer('\0');
-    if (hServer == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromWindowsErr(0);
@@ -2671,7 +2665,6 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_XDECREF(py_tuple);
     }
 
-    WTSCloseServer(hServer);
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
@@ -2686,8 +2679,6 @@ error:
 
     if (hInstWinSta != NULL)
         FreeLibrary(hInstWinSta);
-    if (hServer != NULL)
-        WTSCloseServer(hServer);
     if (sessions != NULL)
         WTSFreeMemory(sessions);
     if (buffer_user != NULL)
