@@ -2100,6 +2100,39 @@ def users():
     return _psplatform.users()
 
 
+if hasattr(_psplatform, "temperatures"):
+
+    def temperatures(fahrenheit=False):
+        """Return hardware temperatures as a list of named tuples.
+        Each entry represents a "sensor" monitoring a certain hardware
+        resource.
+        The hardware resource may be a CPU, an hard disk or something
+        else, depending on the OS and its configuration.
+        All temperatures are expressed in celsius unless 'fahrenheit'
+        parameter is specified.
+        This function may raise NotImplementedError in case the OS
+        is not configured in order to provide these metrics.
+        """
+        def to_fahrenheit(n):
+            return (n * 9 / 5) + 32
+
+        ret = []
+        for rawtuple in _psplatform.temperatures():
+            name, label, current, high, critical = rawtuple
+            if fahrenheit:
+                current = to_fahrenheit(current)
+                if high is not None:
+                    high = to_fahrenheit(high)
+                if critical is not None:
+                    critical = to_fahrenheit(critical)
+            if high and not critical:
+                critical = high
+            elif critical and not high:
+                high = critical
+            ret.append(_common.shwtemp(name, label, current, high, critical))
+        return ret
+
+
 # =====================================================================
 # --- Windows services
 # =====================================================================

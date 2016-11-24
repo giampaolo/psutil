@@ -156,6 +156,8 @@ snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
+shwtemp = namedtuple(
+    'shwtemp', ['name', 'label', 'current', 'high', 'critical'])
 
 # --- for Process methods
 
