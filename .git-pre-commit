@@ -54,23 +54,23 @@ def main():
     py_files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
                 os.path.exists(x)]
 
+    lineno = 0
     for path in py_files:
         with open(path) as f:
-            data = f.read()
-
-        # pdb
-        if "pdb.set_trace" in data:
-            for lineno, line in enumerate(data.split('\n'), 1):
+            for line in f:
+                lineno += 1
+                # space at end of line
+                if line.endswith(' '):
+                    print("%s:%s %r" % (path, lineno, line))
+                    return exit(
+                        "commit aborted: space at end of line")
                 line = line.rstrip()
+                # pdb
                 if "pdb.set_trace" in line:
                     print("%s:%s %s" % (path, lineno, line))
                     return exit(
                         "commit aborted: you forgot a pdb in your python code")
-
-        # bare except clause
-        if "except:" in data:
-            for lineno, line in enumerate(data.split('\n'), 1):
-                line = line.rstrip()
+                # bare except clause
                 if "except:" in line and not line.endswith("# NOQA"):
                     print("%s:%s %s" % (path, lineno, line))
                     return exit("commit aborted: bare except clause")
