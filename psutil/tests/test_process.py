@@ -868,6 +868,10 @@ class TestProcess(unittest.TestCase):
             if hasattr(os, "sched_getaffinity"):
                 self.assertEqual(p.cpu_affinity(),
                                  list(os.sched_getaffinity(p.pid)))
+            # also test num_cpu()
+            if hasattr(p, "num_cpu"):
+                self.assertEqual(p.cpu_affinity()[0], p.num_cpu())
+
         #
         p.cpu_affinity(all_cpus)
         self.assertEqual(p.cpu_affinity(), all_cpus)
@@ -1814,6 +1818,9 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def cpu_affinity(self, ret, proc):
         assert ret != [], ret
+        cpus = range(psutil.cpu_count())
+        for n in ret:
+            self.assertIn(n, cpus)
 
     def terminal(self, ret, proc):
         if ret is not None:
