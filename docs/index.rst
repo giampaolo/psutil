@@ -1180,6 +1180,18 @@ Process class
 
     .. versionchanged:: 2.2.0 added support for FreeBSD
 
+  .. method:: cpu_num()
+
+    Return what CPU this process is currently running on.
+    The returned number should be ``<=`` :func:`psutil.cpu_count()` and
+    ``<= len(psutil.cpu_percent(percpu=True))``.
+    It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
+    observe the system workload distributed across multiple CPUs.
+
+    Availability: Linux
+
+    .. versionadded:: 5.1.0
+
   .. method:: memory_info()
 
     Return a namedtuple with variable fields depending on the platform

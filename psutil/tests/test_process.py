@@ -281,6 +281,12 @@ class TestProcess(unittest.TestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
+    @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
+                         "platform not supported")
+    def test_cpu_num(self):
+        p = psutil.Process()
+        self.assertIn(p.cpu_num(), range(psutil.cpu_count()))
+
     def test_create_time(self):
         sproc = get_test_subprocess()
         now = time.time()
@@ -1727,6 +1733,9 @@ class TestFetchAllProcesses(unittest.TestCase):
     def cpu_times(self, ret, proc):
         self.assertTrue(ret.user >= 0)
         self.assertTrue(ret.system >= 0)
+
+    def cpu_num(self, ret, proc):
+        self.assertIn(ret, range(psutil.cpu_count()))
 
     def memory_info(self, ret, proc):
         for name in ret._fields:

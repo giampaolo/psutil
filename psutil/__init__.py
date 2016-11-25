@@ -836,6 +836,18 @@ class Process(object):
             else:
                 self._proc.cpu_affinity_set(list(set(cpus)))
 
+    if hasattr(_psplatform.Process, "cpu_num"):
+
+        def cpu_num(self):
+            """Return what CPU this process is currently running on.
+            The returned number should be <= psutil.cpu_count()
+            and <= len(psutil.cpu_percent(percpu=True)).
+            It may be used in conjunction with
+            psutil.cpu_percent(percpu=True) to observe the system
+            workload distributed across CPUs.
+            """
+            return self._proc.cpu_num()
+
     # Linux, OSX and Windows only
     if hasattr(_psplatform.Process, "environ"):
 
