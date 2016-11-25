@@ -203,6 +203,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
+    unsigned char oncpu;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
@@ -257,11 +258,18 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
 
+    // what CPU we're on; top was used as an example:
+    // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
+    //     view=markup&pathrev=273835
+    if (kp.ki_stat == SRUN && kp.ki_oncpu != NOCPU)
+        oncpu = kp.ki_oncpu;
+    else
+        oncpu = kp.ki_lastcpu;
+
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
-        "(lillllllidllllddddlllllO)",
+        "(lillllllidllllddddlllllbO)",
 #ifdef __FreeBSD__
-        //
         (long)kp.ki_ppid,                // (long) ppid
         (int)kp.ki_stat,                 // (int) status
         // UIDs
@@ -292,8 +300,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
+        // others
+        oncpu,                            // (unsigned char) the CPU we are on
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-        //
         (long)kp.p_ppid,                 // (long) ppid
         (int)kp.p_stat,                  // (int) status
         // UIDs
@@ -326,6 +335,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
+        // others
+        oncpu,                            // (unsigned char) the CPU we are on
 #endif
         py_name                           // (pystr) name
     );

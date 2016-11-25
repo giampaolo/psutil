@@ -285,6 +285,10 @@ class TestProcess(unittest.TestCase):
                          "platform not supported")
     def test_cpu_num(self):
         p = psutil.Process()
+        num = p.cpu_num()
+        self.assertGreaterEqual(num, 0)
+        if psutil.cpu_count() == 1:
+            self.assertEqual(num, 0)
         self.assertIn(p.cpu_num(), range(psutil.cpu_count()))
 
     def test_create_time(self):
@@ -1735,6 +1739,9 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret.system >= 0)
 
     def cpu_num(self, ret, proc):
+        self.assertGreaterEqual(ret, 0)
+        if psutil.cpu_count() == 1:
+            self.assertEqual(ret, 0)
         self.assertIn(ret, range(psutil.cpu_count()))
 
     def memory_info(self, ret, proc):
