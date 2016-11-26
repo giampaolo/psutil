@@ -1671,11 +1671,16 @@ def cpu_percent(interval=None, percpu=False):
         raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
-        t1_all = sum(t1)
-        t1_busy = t1_all - t1.idle
+        # We have to substract guest and guest_nice, since those are already included in user
 
+        t1_all = sum(t1)
         t2_all = sum(t2)
+        if 'guest' in t1._fields and 'guest_nice' in t1._fields and 'guest' in t2._fields and 'guest_nice' in t2._fields:
+            t1_all = t1_all - t1.guest - t1.guest_nice
+            t2_all = t2_all - t2.guest - t2.guest_nice
+        t1_busy = t1_all - t1.idle
         t2_busy = t2_all - t2.idle
+
 
         # this usually indicates a float precision issue
         if t2_busy <= t1_busy:
@@ -1747,7 +1752,14 @@ def cpu_times_percent(interval=None, percpu=False):
 
     def calculate(t1, t2):
         nums = []
-        all_delta = sum(t2) - sum(t1)
+        t1_all = sum(t1)
+        t2_all = sum(t2)
+        if 'guest' in t1._fields and 'guest_nice' in t1._fields and 'guest' in t2._fields and 'guest_nice' in t2._fields:
+            t1_all = t1_all - t1.guest - t1.guest_nice
+            t2_all = t2_all - t2.guest - t2.guest_nice
+
+        # We have to substract guest and guest_nice, since those are already included in user
+        all_delta = t2_all - t1_all
         for field in t1._fields:
             field_delta = getattr(t2, field) - getattr(t1, field)
             try:
