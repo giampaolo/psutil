@@ -590,9 +590,10 @@ class Process(object):
             rawtuple[kinfo_proc_map['ch_user_time']],
             rawtuple[kinfo_proc_map['ch_sys_time']])
 
-    @wrap_exceptions
-    def cpu_num(self):
-        return self.oneshot()[kinfo_proc_map['cpunum']]
+    if FREEBSD:
+        @wrap_exceptions
+        def cpu_num(self):
+            return self.oneshot()[kinfo_proc_map['cpunum']]
 
     @wrap_exceptions
     def memory_info(self):

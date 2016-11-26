@@ -37,10 +37,11 @@ if psutil.POSIX:
 
 if psutil.LINUX:
     names += [
-        'cpu_times',
-        'gids',
         # 'memory_full_info',
         # 'memory_maps',
+        'cpu_num',
+        'cpu_times',
+        'gids',
         'name',
         'num_ctx_switches',
         'num_threads',
@@ -63,6 +64,8 @@ elif psutil.BSD:
         'terminal',
         'uids',
     ]
+    if psutil.FREEBSD:
+        names.append('cpu_num')
 elif psutil.SUNOS:
     names += [
         'cmdline',

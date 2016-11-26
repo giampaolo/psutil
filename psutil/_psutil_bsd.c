@@ -258,6 +258,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
 
+#ifdef __FreeBSD__
     // what CPU we're on; top was used as an example:
     // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
     //     view=markup&pathrev=273835
@@ -265,6 +266,13 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         oncpu = kp.ki_oncpu;
     else
         oncpu = kp.ki_lastcpu;
+#else
+    // On Net/OpenBSD we have kp.p_cpuid but it appears it's always
+    // set to KI_NOCPU. Even if it's not, ki_lastcpu does not exist
+    // so there's no way to determine where "sleeping" processes
+    // were. Not supported.
+    oncpu = -1;
+#endif
 
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
