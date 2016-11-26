@@ -247,9 +247,6 @@ Process management
     [0, 1, 2, 3]
     >>> p.cpu_affinity([0])  # set
     >>>
-    >>> p.memory_percent()
-    0.63423
-    >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
     >>> p.memory_full_info()  # "real" USS memory usage (Linux, OSX, Win only)
