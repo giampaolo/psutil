@@ -1003,7 +1003,8 @@ class Process(object):
                 return _timer() * num_cpus
         else:
             def timer():
-                return sum(cpu_times())
+                t = cpu_times()
+                return sum((t.user, t.system))
 
         if blocking:
             st1 = timer()
