@@ -61,21 +61,29 @@ CPU
   Every attribute represents the seconds the CPU has spent in the given mode.
   The attributes availability varies depending on the platform:
 
-  - **user**
-  - **system**
-  - **idle**
+  - **user**: time spent by normal processes executing in user mode; on Linux
+    this also includes **guest** time
+  - **system**: time spent by processes executing in kernel mode
+  - **idle**: time spent doing nothing
 
   Platform-specific fields:
 
-  - **nice** *(UNIX)*
-  - **iowait** *(Linux)*
-  - **irq** *(Linux, BSD)*
-  - **softirq** *(Linux)*
-  - **steal** *(Linux 2.6.11+)*
-  - **guest** *(Linux 2.6.24+)*
-  - **guest_nice** *(Linux 3.2.0+)*
-  - **interrupt** *(Windows)*
-  - **dpc** *(Windows)*
+  - **nice** *(UNIX)*: time spent by niced processes executing in user mode;
+    on Linux this also includes **guest_nice** time
+  - **iowait** *(Linux)*: time spent waiting for I/O to complete
+  - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
+  - **softirq** *(Linux)*: time spent for servicing software interrupts
+  - **steal** *(Linux 2.6.11+)*: time spent by other operating systems when
+    running in a virtualized environment
+  - **guest** *(Linux 2.6.24+)*: time spent running a virtual CPU for guest
+    operating systems under the control of the Linux kernel
+  - **guest_nice** *(Linux 3.2.0+)*: time spent running a niced guest
+    (virtual CPU for guest operating systems under the control of the Linux
+    kernel)
+  - **interrupt** *(Windows)*: time spent for servicing hardware interrupts (
+    similar to "irq" on UNIX)
+  - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
+    DPCs are interrupts that run at a lower priority than standard interrupts.
 
   When *percpu* is ``True`` return a list of namedtuples for each logical CPU
   on the system.
