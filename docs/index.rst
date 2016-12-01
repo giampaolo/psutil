@@ -138,6 +138,8 @@ CPU
   :func:`psutil.cpu_times(percpu=True)<cpu_times()>`.
   *interval* and
   *percpu* arguments have the same meaning as in :func:`cpu_percent()`.
+  On Linux "guest" and "guest_nice" percentages are not accounted in "user"
+  and "user_nice" percentages.
 
   .. warning::
     the first time this function is called with *interval* = ``0.0`` or
