@@ -461,6 +461,21 @@ class TestSystemCPU(unittest.TestCase):
         else:
             self.assertNotIn('guest_nice', fields)
 
+    @unittest.skipUnless(os.path.exists("/sys/devices/system/cpu/online"),
+                         "/sys/devices/system/cpu/online does not exist")
+    def test_cpu_count_logical_w_sysdev_cpu_online(self):
+        with open("/sys/devices/system/cpu/online") as f:
+            value = f.read().strip()
+        value = int(value.split('-')[1]) + 1
+        self.assertEqual(psutil.cpu_count(), value)
+
+    @unittest.skipUnless(os.path.exists("/sys/devices/system/cpu"),
+                         "/sys/devices/system/cpu does not exist")
+    def test_cpu_count_logical_w_sysdev_cpu_num(self):
+        ls = os.listdir("/sys/devices/system/cpu")
+        count = len([x for x in ls if re.search("cpu\d+$", x) is not None])
+        self.assertEqual(psutil.cpu_count(), count)
+
     @unittest.skipUnless(which("nproc"), "nproc utility not available")
     def test_cpu_count_logical_w_nproc(self):
         num = int(sh("nproc --all"))
