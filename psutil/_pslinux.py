@@ -628,7 +628,9 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq"):
         # scaling_* files seem preferable to cpuinfo_*, see:
         # http://unix.stackexchange.com/a/87537/168884
         ret = []
-        ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*")
+        # XXX
+        print(os.listdir("/sys/devices/system/cpu/cpufreq/"))
+        ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy*")
         # Sort the list so that '10' comes after '2'. This should
         # ensure the CPU order is consistent with other CPU functions
         # having a 'percpu' argument and returning results for multiple
