@@ -697,6 +697,16 @@ class TestSystemAPIs(unittest.TestCase):
             if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
+    @unittest.skipUnless(hasattr(psutil, "cpu_freq"),
+                         "platform not suported")
+    def test_cpu_freq(self):
+        ls = psutil.cpu_freq()
+        assert ls, ls
+        for nt in ls:
+            for name in nt._fields:
+                value = getattr(nt, name)
+                self.assertGreaterEqual(value, 0)
+
     def test_os_constants(self):
         names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
                  "NETBSD", "BSD", "SUNOS"]

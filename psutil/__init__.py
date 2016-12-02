@@ -1846,6 +1846,19 @@ def cpu_stats():
     return _psplatform.cpu_stats()
 
 
+if hasattr(_psplatform, "cpu_freq"):
+
+    def cpu_freq():
+        """Return CPU frequencies as a list of nameduples including
+        current, min and max CPU frequency.
+        The CPUs order is supposed to be consistent with other CPU
+        functions having a 'percpu' argument and returning results for
+        multiple CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
+        Values are expressed in Mhz.
+        """
+        return _psplatform.cpu_freq()
+
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
