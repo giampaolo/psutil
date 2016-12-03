@@ -165,6 +165,11 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
+def cpu_freq():
+    curr, min_, max_ = cext.cpu_freq()
+    return [_common.scpufreq(curr, min_, max_)]
+
+
 # =====================================================================
 # --- disks
 # =====================================================================

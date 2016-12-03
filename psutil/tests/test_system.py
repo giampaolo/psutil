@@ -701,7 +701,8 @@ class TestSystemAPIs(unittest.TestCase):
                          "platform not suported")
     def test_cpu_freq(self):
         ls = psutil.cpu_freq()
-        assert ls, ls
+        if not TRAVIS:
+            assert ls, ls
         for nt in ls:
             for name in nt._fields:
                 value = getattr(nt, name)

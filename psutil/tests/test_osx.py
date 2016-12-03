@@ -111,6 +111,8 @@ class TestProcess(unittest.TestCase):
 @unittest.skipUnless(OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
 
+    # --- disk
+
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
@@ -138,6 +140,8 @@ class TestSystemAPIs(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % usage.used, used)
 
+    # --- cpu
+
     def test_cpu_count_logical(self):
         num = sysctl("sysctl hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
@@ -145,6 +149,15 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_count_physical(self):
         num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
+
+    def test_cpu_freq(self):
+        freq = psutil.cpu_freq()[0]
+        self.assertEqual(
+            freq.curr * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+        self.assertEqual(
+            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
+        self.assertEqual(
+            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
 
     # --- virtual mem
 
@@ -205,6 +218,8 @@ class TestSystemAPIs(unittest.TestCase):
     #     self.assertEqual(psutil_smem.total, human2bytes(total))
     #     self.assertEqual(psutil_smem.used, human2bytes(used))
     #     self.assertEqual(psutil_smem.free, human2bytes(free))
+
+    # --- network
 
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
