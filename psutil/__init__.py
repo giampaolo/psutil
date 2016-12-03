@@ -1855,6 +1855,11 @@ if hasattr(_psplatform, "cpu_freq"):
         functions having a 'percpu' argument and returning results for
         multiple CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
         Values are expressed in Mhz.
+
+        Notes about OSX:
+        - it is not possible to get per-cpu freq
+        - reported freq never changes:
+          https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
         """
         return _psplatform.cpu_freq()
 
