@@ -1291,8 +1291,8 @@ Process class
     some platform (Linux, OSX, Windows), also provides additional metrics
     (USS, PSS and swap).
     The additional metrics provide a better representation of "effective"
-    process memory consumption (in case of USS) as explained in detail
-    `here <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
+    process memory consumption (in case of USS) as explained in detail in this
+    `blog post <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
     :meth:`memory_info` and is considerably slower.
@@ -1938,12 +1938,27 @@ Q&A
 ===
 
 * Q: What Windows versions are supported?
-* A: From Windows **Vista** onwards. Latest binary (wheel / exe) release
-  supporting Windows **2000**, **XP** and **2003 server** which can installed
-  via pip without a compiler being installed is
+* A: From Windows **Vista** onwards, both 32 and 64 bit versions.
+  Latest binary (wheel / exe) release which supports Windows **2000**, **XP**
+  and **2003 server** is
   `psutil 3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__.
-  More recent psutil versions may still be compiled from sources and work
-  (more or less) but they are no longer being tested or maintained.
+  On such old systems psutil is no longer tested or maintained, but it can
+  still be compiled from sources (you'll need `Visual Studio <(https://github.com/giampaolo/psutil/blob/master/INSTALL.rst#windows>`__)
+  and it should "work" (more or less).
+
+----
+
+* Q: Why do I get :class:`AccessDenied` for certain processes?
+* A: This may happen when you query processess owned by another user,
+  especially on `OSX <https://github.com/giampaolo/psutil/issues/883>`__ and
+  Windows.
+  Unfortunately there's not much you can do about this except running the
+  Python process with higher privileges.
+  On Unix you may run the the Python process as root or use the SUID bit
+  (this is the trick used by tools such as ``ps`` and ``netstat``).
+  On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
+  the Python script as a Windows service (this is the trick used by tools
+  such as ProcessHacker).
 
 
 Timeline
