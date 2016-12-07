@@ -1756,14 +1756,14 @@ Constants
 
 .. _const-oses:
 .. data:: POSIX
-          WINDOWS
-          LINUX
-          OSX
-          FREEBSD
-          NETBSD
-          OPENBSD
-          BSD
-          SUNOS
+.. data:: WINDOWS
+.. data:: LINUX
+.. data:: OSX
+.. data:: FREEBSD
+.. data:: NETBSD
+.. data:: OPENBSD
+.. data:: BSD
+.. data:: SUNOS
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
   *WINDOWS* constant will be ``True``, all others will be ``False``.
@@ -1784,18 +1784,18 @@ Constants
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
-          STATUS_SLEEPING
-          STATUS_DISK_SLEEP
-          STATUS_STOPPED
-          STATUS_TRACING_STOP
-          STATUS_ZOMBIE
-          STATUS_DEAD
-          STATUS_WAKE_KILL
-          STATUS_WAKING
-          STATUS_IDLE (OSX, FreeBSD)
-          STATUS_LOCKED (FreeBSD)
-          STATUS_WAITING (FreeBSD)
-          STATUS_SUSPENDED (NetBSD)
+.. data:: STATUS_SLEEPING
+.. data:: STATUS_DISK_SLEEP
+.. data:: STATUS_STOPPED
+.. data:: STATUS_TRACING_STOP
+.. data:: STATUS_ZOMBIE
+.. data:: STATUS_DEAD
+.. data:: STATUS_WAKE_KILL
+.. data:: STATUS_WAKING
+.. data:: STATUS_IDLE (OSX, FreeBSD)
+.. data:: STATUS_LOCKED (FreeBSD)
+.. data:: STATUS_WAITING (FreeBSD)
+.. data:: STATUS_SUSPENDED (NetBSD)
 
   A set of strings representing the status of a process.
   Returned by :meth:`psutil.Process.status()`.
@@ -1804,31 +1804,31 @@ Constants
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED
-          CONN_SYN_SENT
-          CONN_SYN_RECV
-          CONN_FIN_WAIT1
-          CONN_FIN_WAIT2
-          CONN_TIME_WAIT
-          CONN_CLOSE
-          CONN_CLOSE_WAIT
-          CONN_LAST_ACK
-          CONN_LISTEN
-          CONN_CLOSING
-          CONN_NONE
-          CONN_DELETE_TCB (Windows)
-          CONN_IDLE (Solaris)
-          CONN_BOUND (Solaris)
+.. data:: CONN_SYN_SENT
+.. data:: CONN_SYN_RECV
+.. data:: CONN_FIN_WAIT1
+.. data:: CONN_FIN_WAIT2
+.. data:: CONN_TIME_WAIT
+.. data:: CONN_CLOSE
+.. data:: CONN_CLOSE_WAIT
+.. data:: CONN_LAST_ACK
+.. data:: CONN_LISTEN
+.. data:: CONN_CLOSING
+.. data:: CONN_NONE
+.. data:: CONN_DELETE_TCB (Windows)
+.. data:: CONN_IDLE (Solaris)
+.. data:: CONN_BOUND (Solaris)
 
   A set of strings representing the status of a TCP connection.
   Returned by :meth:`psutil.Process.connections()` (`status` field).
 
 .. _const-prio:
 .. data:: ABOVE_NORMAL_PRIORITY_CLASS
-          BELOW_NORMAL_PRIORITY_CLASS
-          HIGH_PRIORITY_CLASS
-          IDLE_PRIORITY_CLASS
-          NORMAL_PRIORITY_CLASS
-          REALTIME_PRIORITY_CLASS
+.. data:: BELOW_NORMAL_PRIORITY_CLASS
+.. data:: HIGH_PRIORITY_CLASS
+.. data:: IDLE_PRIORITY_CLASS
+.. data:: NORMAL_PRIORITY_CLASS
+.. data:: REALTIME_PRIORITY_CLASS
 
   A set of integers representing the priority of a process on Windows (see
   `MSDN documentation <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__).
@@ -1844,9 +1844,9 @@ Constants
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
-          IOPRIO_CLASS_RT
-          IOPRIO_CLASS_BE
-          IOPRIO_CLASS_IDLE
+.. data:: IOPRIO_CLASS_RT
+.. data:: IOPRIO_CLASS_BE
+.. data:: IOPRIO_CLASS_IDLE
 
   A set of integers representing the I/O priority of a process on Linux. They
   can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
@@ -1872,22 +1872,22 @@ Constants
 
 .. _const-rlimit:
 .. data:: RLIM_INFINITY
-          RLIMIT_AS
-          RLIMIT_CORE
-          RLIMIT_CPU
-          RLIMIT_DATA
-          RLIMIT_FSIZE
-          RLIMIT_LOCKS
-          RLIMIT_MEMLOCK
-          RLIMIT_MSGQUEUE
-          RLIMIT_NICE
-          RLIMIT_NOFILE
-          RLIMIT_NPROC
-          RLIMIT_RSS
-          RLIMIT_RTPRIO
-          RLIMIT_RTTIME
-          RLIMIT_SIGPENDING
-          RLIMIT_STACK
+.. data:: RLIMIT_AS
+.. data:: RLIMIT_CORE
+.. data:: RLIMIT_CPU
+.. data:: RLIMIT_DATA
+.. data:: RLIMIT_FSIZE
+.. data:: RLIMIT_LOCKS
+.. data:: RLIMIT_MEMLOCK
+.. data:: RLIMIT_MSGQUEUE
+.. data:: RLIMIT_NICE
+.. data:: RLIMIT_NOFILE
+.. data:: RLIMIT_NPROC
+.. data:: RLIMIT_RSS
+.. data:: RLIMIT_RTPRIO
+.. data:: RLIMIT_RTTIME
+.. data:: RLIMIT_SIGPENDING
+.. data:: RLIMIT_STACK
 
   Constants used for getting and setting process resource limits to be used in
   conjunction with :meth:`psutil.Process.rlimit()`. See
@@ -1905,8 +1905,8 @@ Constants
 
 .. _const-duplex:
 .. data:: NIC_DUPLEX_FULL
-          NIC_DUPLEX_HALF
-          NIC_DUPLEX_UNKNOWN
+.. data:: NIC_DUPLEX_HALF
+.. data:: NIC_DUPLEX_UNKNOWN
 
   Constants which identifies whether a NIC (network interface card) has full or
   half mode speed.  NIC_DUPLEX_FULL means the NIC is able to send and receive
