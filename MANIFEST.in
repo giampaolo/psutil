@@ -5,7 +5,7 @@ include CREDITS*
 include IDEAS
 include INSTALL*
 include LICENSE*
-include make.bar
+include HISTORY*
 include Makefile
 include tox.ini
 

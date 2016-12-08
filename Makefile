@@ -173,7 +173,7 @@ flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
 check-manifest:
-	$(PYTHON) -m check_manifest -v
+	$(PYTHON) -m check_manifest -v $(ARGS)
 
 # ===================================================================
 # GIT
