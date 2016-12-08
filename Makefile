@@ -8,6 +8,7 @@ ARGS =
 
 # List of nice-to-have dev libs.
 DEPS = argparse \
+	check-manifest \
 	coverage \
 	flake8 \
 	futures \
@@ -170,6 +171,9 @@ pyflakes:
 
 flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
+
+check-manifest:
+	$(PYTHON) -m check_manifest -v
 
 # ===================================================================
 # GIT
