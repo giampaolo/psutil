@@ -4,4 +4,7 @@ include INSTALL*
 include LICENSE*
 include make.bar
 include Makefile
-recursive-include psutil *.py *.c *.h
+recursive-include psutil *.py *.c *.h *README*
+
+recursive-exclude docs/_build *
+recursive-include docs *.rst *.js *.html *.py *.bat *Makefile* *README*
