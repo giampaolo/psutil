@@ -845,6 +845,7 @@ class TestProcess(unittest.TestCase):
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
+        self.addCleanup(p.cpu_affinity, initial)
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
         self.assertEqual(len(initial), len(set(initial)))
