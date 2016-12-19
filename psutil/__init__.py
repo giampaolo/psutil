@@ -981,6 +981,14 @@ class Process(object):
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
 
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+
+        The returned value is explicitly *not* split evenly between
+        all available logical CPUs. This means that a busy loop process
+        running on a system with 2 logical CPUs will be reported as
+        having 100% CPU utilization instead of 50%.
+
         Examples:
 
           >>> import psutil

@@ -1118,9 +1118,9 @@ Process class
 
   .. method:: cpu_percent(interval=None)
 
-    Return a float representing the process CPU utilization as a percentage.
-    The returned value refers to the utilization of a single CPU, i.e. it is
-    not evenly split between the number of available CPU cores.
+    Return a float representing the process CPU utilization as a percentage
+    which can also be ``> 100.0`` in case of threads running on multiple
+    CPUs.
     When *interval* is > ``0.0`` compares process times to system CPU times
     elapsed before and after the interval (blocking). When interval is ``0.0``
     or ``None`` compares process times to system CPU times elapsed since last
@@ -1132,30 +1132,28 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>>
       >>> # blocking
       >>> p.cpu_percent(interval=1)
       2.0
       >>> # non-blocking (percentage since last call)
       >>> p.cpu_percent(interval=None)
       2.9
-      >>>
 
     .. note::
-      a percentage > 100 is legitimate as it can result from a process with
-      multiple threads running on different CPU cores.
+      the returned value can be > 100.0 in case of a process running multiple
+      threads on different CPU cores.
 
     .. note::
-      the returned value is explicitly **not** split evenly between all CPUs
-      cores (differently from :func:`psutil.cpu_percent()`).
-      This means that a busy loop process running on a system with 2 CPU
-      cores will be reported as having 100% CPU utilization instead of 50%.
-      This was done in order to be consistent with UNIX's "top" utility
+      the returned value is explicitly *not* split evenly between all available
+      logical CPUs (differently from :func:`psutil.cpu_percent()`).
+      This means that a busy loop process running on a system with 2 logical
+      CPUs will be reported as having 100% CPU utilization instead of 50%.
+      This was done in order to be consistent with UNIX's ``top`` utility
       and also to make it easier to identify processes hogging CPU resources
-      (independently from the number of CPU cores).
-      It must be noted that in the example above taskmgr.exe on Windows will
-      report 50% usage instead.
-      To emulate Windows's taskmgr.exe behavior you can do:
+      independently from the number of CPUs.
+      It must be noted that ``taskmgr.exe`` on Windows does not behave like
+      this (it would report 50% usage instead).
+      To emulate Windows ``taskmgr.exe`` behavior you can do:
       ``p.cpu_percent() / psutil.cpu_count()``.
 
     .. warning::
