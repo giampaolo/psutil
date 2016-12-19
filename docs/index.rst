@@ -453,7 +453,7 @@ Network
     else ``None``. On some platforms (e.g. Linux) the availability of this
     field changes depending on process privileges (root is needed).
 
-  The *kind* parameter is a string which filters for connections that fit the
+  The *kind* parameter is a string which filters for connections matching the
   following criteria:
 
   .. table::
@@ -461,27 +461,27 @@ Network
    +----------------+-----------------------------------------------------+
    | **Kind value** | **Connections using**                               |
    +================+=====================================================+
-   | "inet"         | IPv4 and IPv6                                       |
+   | ``"inet"``     | IPv4 and IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | "inet4"        | IPv4                                                |
+   | ``"inet4"``    | IPv4                                                |
    +----------------+-----------------------------------------------------+
-   | "inet6"        | IPv6                                                |
+   | ``"inet6"``    | IPv6                                                |
    +----------------+-----------------------------------------------------+
-   | "tcp"          | TCP                                                 |
+   | ``"tcp"``      | TCP                                                 |
    +----------------+-----------------------------------------------------+
-   | "tcp4"         | TCP over IPv4                                       |
+   | ``"tcp4"``     | TCP over IPv4                                       |
    +----------------+-----------------------------------------------------+
-   | "tcp6"         | TCP over IPv6                                       |
+   | ``"tcp6"``     | TCP over IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | "udp"          | UDP                                                 |
+   | ``"udp"``      | UDP                                                 |
    +----------------+-----------------------------------------------------+
-   | "udp4"         | UDP over IPv4                                       |
+   | ``"udp4"``     | UDP over IPv4                                       |
    +----------------+-----------------------------------------------------+
-   | "udp6"         | UDP over IPv6                                       |
+   | ``"udp6"``     | UDP over IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | "unix"         | UNIX socket (both UDP and TCP protocols)            |
+   | ``"unix"``     | UNIX socket (both UDP and TCP protocols)            |
    +----------------+-----------------------------------------------------+
-   | "all"          | the sum of all the possible families and protocols  |
+   | ``"all"``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
   On OSX this function requires root privileges.
@@ -632,12 +632,16 @@ Functions
 .. function:: pids()
 
   Return a list of current running PIDs. To iterate over all processes
-  :func:`process_iter()` should be preferred.
+  and avoid race conditions :func:`process_iter()` should be preferred.
+
+  >>> import psutil
+  >>> psutil.pids()
+  [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
 
 .. function:: pid_exists(pid)
 
   Check whether the given PID exists in the current process list. This is
-  faster than doing ``"pid in psutil.pids()"`` and should be preferred.
+  faster than doing ``pid in psutil.pids()`` and should be preferred.
 
 .. function:: process_iter()
 
@@ -678,18 +682,18 @@ Functions
   - give them some time to terminate
   - send SIGKILL to those ones which are still alive
 
-  Example::
+  Example which terminates and waits all the children of this process::
 
     import psutil
 
     def on_terminate(proc):
         print("process {} terminated with exit code {}".format(proc, proc.returncode))
 
-    procs = [...]  # a list of Process instances
+    procs = psutil.Process().children()
     for p in procs:
         p.terminate()
-    gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
-    for p in alive:
+    gone, still_alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
+    for p in still_alive:
         p.kill()
 
 Exceptions
@@ -702,8 +706,8 @@ Exceptions
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
   Raised by :class:`Process` class methods when no process with the given
-  pid* is found in the current process list or when a process no longer
-  exists. "name" is the name the process had before disappearing
+  *pid* is found in the current process list or when a process no longer
+  exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name()` was previously called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
@@ -858,7 +862,7 @@ Process class
 
   .. method:: ppid()
 
-    The process parent pid.  On Windows the return value is cached after first
+    The process parent PID.  On Windows the return value is cached after first
     call. Not on POSIX because
     `ppid may change <https://github.com/giampaolo/psutil/issues/321>`__
     if process becomes a zombie.
@@ -875,15 +879,27 @@ Process class
     On some systems this may also be an empty string.
     The return value is cached after first call.
 
+    >>> import psutil
+    >>> psutil.Process().exe()
+    '/usr/bin/python2.7'
+
   .. method:: cmdline()
 
-    The command line this process has been called with. The return value is not
-    cached because the cmdline of a process may change.
+    The command line this process has been called with as a list of strings.
+    The return value is not cached because the cmdline of a process may change.
+
+    >>> import psutil
+    >>> psutil.Process().cmdline()
+    ['python', 'manage.py', 'runserver']
 
   .. method:: environ()
 
     The environment variables of the process as a dict.  Note: this might not
     reflect changes made after the process started.
+
+    >>> import psutil
+    >>> psutil.Process().environ()
+    {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
 
     Availability: Linux, OSX, Windows
 
@@ -1100,7 +1116,7 @@ Process class
 
     Return threads opened by process as a list of namedtuples including thread
     id and thread CPU times (user/system). On OpenBSD this method requires
-    root access.
+    root privileges.
 
   .. method:: cpu_times()
 
@@ -1119,8 +1135,8 @@ Process class
   .. method:: cpu_percent(interval=None)
 
     Return a float representing the process CPU utilization as a percentage
-    which can also be ``> 100.0`` in case of threads running on multiple
-    CPUs.
+    which can also be ``> 100.0`` in case of a process running multiple threads
+    on different CPUs.
     When *interval* is > ``0.0`` compares process times to system CPU times
     elapsed before and after the interval (blocking). When interval is ``0.0``
     or ``None`` compares process times to system CPU times elapsed since last
@@ -1145,10 +1161,10 @@ Process class
 
     .. note::
       the returned value is explicitly *not* split evenly between all available
-      logical CPUs (differently from :func:`psutil.cpu_percent()`).
+      CPUs (differently from :func:`psutil.cpu_percent()`).
       This means that a busy loop process running on a system with 2 logical
       CPUs will be reported as having 100% CPU utilization instead of 50%.
-      This was done in order to be consistent with UNIX's ``top`` utility
+      This was done in order to be consistent with ``top`` UNIX utility
       and also to make it easier to identify processes hogging CPU resources
       independently from the number of CPUs.
       It must be noted that ``taskmgr.exe`` on Windows does not behave like
@@ -1388,7 +1404,13 @@ Process class
        pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
        pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
        ...]
-      >>>
+      >>> p.memory_maps(grouped=False)
+      [pmmap_ext(addr='00400000-006ea000', perms='r-xp', path='/usr/bin/python2.7', rss=2293760, size=3055616, pss=1157120, shared_clean=2273280, shared_dirty=0, private_clean=20480, private_dirty=0, referenced=2293760, anonymous=0, swap=0),
+       pmmap_ext(addr='008e9000-008eb000', perms='r--p', path='/usr/bin/python2.7', rss=8192, size=8192, pss=6144, shared_clean=4096, shared_dirty=0, private_clean=0, private_dirty=4096, referenced=8192, anonymous=4096, swap=0),
+       pmmap_ext(addr='008eb000-00962000', perms='rw-p', path='/usr/bin/python2.7', rss=417792, size=487424, pss=317440, shared_clean=200704, shared_dirty=0, private_clean=16384, private_dirty=200704, referenced=417792, anonymous=200704, swap=0),
+       pmmap_ext(addr='00962000-00985000', perms='rw-p', path='[anon]', rss=139264, size=143360, pss=139264, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=139264, referenced=139264, anonymous=139264, swap=0),
+       pmmap_ext(addr='02829000-02ccf000', perms='rw-p', path='[heap]', rss=4743168, size=4874240, pss=4743168, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=4743168, referenced=4718592, anonymous=4743168, swap=0),
+       ...]
 
     Availability: All platforms except OpenBSD and NetBSD.
 
@@ -1397,7 +1419,7 @@ Process class
     Return the children of this process as a list of :Class:`Process` objects,
     preemptively checking whether PID has been reused. If recursive is `True`
     return all the parent descendants.
-    Example assuming *A == this process*:
+    Pseudo code example assuming *A == this process*:
     ::
 
       A ─┐
@@ -1440,8 +1462,7 @@ Process class
     >>> f = open('file.ext', 'w')
     >>> p = psutil.Process()
     >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
-    popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
+    [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
 
     .. warning::
       on Windows this is not fully reliable as due to some limitations of the
@@ -1500,27 +1521,27 @@ Process class
     +----------------+-----------------------------------------------------+
     | **Kind value** | **Connections using**                               |
     +================+=====================================================+
-    | "inet"         | IPv4 and IPv6                                       |
+    | ``"inet"``     | IPv4 and IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | "inet4"        | IPv4                                                |
+    | ``"inet4"``    | IPv4                                                |
     +----------------+-----------------------------------------------------+
-    | "inet6"        | IPv6                                                |
+    | ``"inet6"``    | IPv6                                                |
     +----------------+-----------------------------------------------------+
-    | "tcp"          | TCP                                                 |
+    | ``"tcp"``      | TCP                                                 |
     +----------------+-----------------------------------------------------+
-    | "tcp4"         | TCP over IPv4                                       |
+    | ``"tcp4"``     | TCP over IPv4                                       |
     +----------------+-----------------------------------------------------+
-    | "tcp6"         | TCP over IPv6                                       |
+    | ``"tcp6"``     | TCP over IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | "udp"          | UDP                                                 |
+    | ``"udp"``      | UDP                                                 |
     +----------------+-----------------------------------------------------+
-    | "udp4"         | UDP over IPv4                                       |
+    | ``"udp4"``     | UDP over IPv4                                       |
     +----------------+-----------------------------------------------------+
-    | "udp6"         | UDP over IPv6                                       |
+    | ``"udp6"``     | UDP over IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | "unix"         | UNIX socket (both UDP and TCP protocols)            |
+    | ``"unix"``     | UNIX socket (both UDP and TCP protocols)            |
     +----------------+-----------------------------------------------------+
-    | "all"          | the sum of all the possible families and protocols  |
+    | ``"all"``      | the sum of all the possible families and protocols  |
     +----------------+-----------------------------------------------------+
 
     Example:
@@ -1600,6 +1621,10 @@ Process class
     either return immediately or raise :class:`TimeoutExpired`.
     To wait for multiple processes use :func:`psutil.wait_procs()`.
 
+    >>> import psutil
+    >>> p = psutil.Process(9891)
+    >>> p.terminate()
+    >>> p.wait()
 
 Popen class
 -----------
