@@ -21,18 +21,14 @@
     #include <ifaddrs.h>
 #endif
 
-#ifdef __linux
+#if defined(PSUTIL_LINUX)
     #include <netdb.h>
     #include <linux/if_packet.h>
-#endif
-
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
     #include <netinet/in.h>
     #include <net/if_dl.h>
-#endif
-
-#if defined(__sun)
+#elif defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
 #endif
@@ -50,7 +46,7 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-#if defined(__APPLE__)
+#ifdef PSUTIL_OSX
     priority = getpriority(PRIO_PROCESS, (id_t)pid);
 #else
     priority = getpriority(PRIO_PROCESS, pid);
@@ -73,7 +69,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
 
-#if defined(__APPLE__)
+#ifdef PSUTIL_OSX
     retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
 #else
     retval = setpriority(PRIO_PROCESS, pid, priority);
@@ -122,14 +118,13 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             return Py_BuildValue("s", buf);
         }
     }
-#ifdef __linux
+#ifdef PSUTIL_LINUX
     else if (family == AF_PACKET) {
         struct sockaddr_ll *lladdr = (struct sockaddr_ll *)addr;
         len = lladdr->sll_halen;
         data = (const char *)lladdr->sll_addr;
     }
-#endif
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     else if (addr->sa_family == AF_LINK) {
         // Note: prior to Python 3.4 socket module does not expose
         // AF_LINK so we'll do.
@@ -342,7 +337,7 @@ error:
 /*
  * net_if_stats() OSX/BSD implementation.
  */
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 
 #include <sys/sockio.h>
 #include <net/if_media.h>
@@ -379,7 +374,7 @@ int psutil_get_nic_speed(int ifm_active) {
                 case(IFM_1000_SX):  // 1000BaseSX - multi-mode fiber
                 case(IFM_1000_LX):  // 1000baseLX - single-mode fiber
                 case(IFM_1000_CX):  // 1000baseCX - 150ohm STP
-#if defined(IFM_1000_TX) && !defined(__OpenBSD__)
+#if defined(IFM_1000_TX) && !defined(PSUTIL_OPENBSD)
                 // FreeBSD 4 and others (but NOT OpenBSD) -> #define IFM_1000_T in net/if_media.h
                 case(IFM_1000_TX):
 #endif
@@ -552,7 +547,7 @@ PsutilMethods[] = {
      "Retrieve NIC MTU"},
     {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
      "Retrieve NIC flags"},
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},
 #endif
@@ -576,6 +571,7 @@ psutil_posix_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
+
 
 static int
 psutil_posix_clear(PyObject *m) {
@@ -611,7 +607,7 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__sun) || defined(__NetBSD__)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 
