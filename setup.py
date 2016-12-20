@@ -254,7 +254,7 @@ else:
 
 
 def main():
-    setup_args = dict(
+    setup(
         name='psutil',
         version=VERSION,
         description=__doc__.replace('\n', '').strip(),
@@ -271,6 +271,7 @@ def main():
         platforms='Platform Independent',
         license='BSD',
         packages=['psutil', 'psutil.tests'],
+        ext_modules=extensions,
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',
@@ -317,9 +318,6 @@ def main():
             'Topic :: Utilities',
         ],
     )
-    if extensions is not None:
-        setup_args["ext_modules"] = extensions
-    setup(**setup_args)
 
 
 if __name__ == '__main__':
