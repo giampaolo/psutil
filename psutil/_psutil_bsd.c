@@ -64,14 +64,7 @@
 #ifdef PSUTIL_FREEBSD
     #include "arch/bsd/freebsd.h"
     #include "arch/bsd/freebsd_socks.h"
-#elif PSUTIL_OPENBSD
-    #include "arch/bsd/openbsd.h"
-#elif PSUTIL_NETBSD
-    #include "arch/bsd/netbsd.h"
-    #include "arch/bsd/netbsd_socks.h"
-#endif
 
-#ifdef PSUTIL_FREEBSD
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
     #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap)
@@ -80,25 +73,27 @@
     #else
         #include <utmpx.h>
     #endif
-#endif
+#elif PSUTIL_OPENBSD
+    #include "arch/bsd/openbsd.h"
 
-#ifdef PSUTIL_OPENBSD
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
     #define _KERNEL  // for DTYPE_VNODE
     #include <sys/file.h>
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
-#endif
+#elif PSUTIL_NETBSD
+    #include "arch/bsd/netbsd.h"
+    #include "arch/bsd/netbsd_socks.h"
 
-#if defined(PSUTIL_NETBSD)
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
     #ifndef DTYPE_VNODE
-    #define DTYPE_VNODE 1
+        #define DTYPE_VNODE 1
     #endif
 #endif
+
 
 
 // convert a timeval struct to a double
@@ -412,7 +407,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
-#if defined(PSUTIL_NETBSD)
+#ifdef PSUTIL_NETBSD
     u_int64_t cpu_time[CPUSTATES];
 #else
     long cpu_time[CPUSTATES];
@@ -479,12 +474,12 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                 (kif->kf_vnode_type == KF_VTYPE_VREG))
         {
             py_tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
-#elif defined(PSUTIL_OPENBSD)
+#elif PSUTIL_OPENBSD
         if ((kif->f_type == DTYPE_VNODE) &&
                 (kif->v_type == VREG))
         {
             py_tuple = Py_BuildValue("(si)", "", kif->fd_fd);
-#elif defined(PSUTIL_NETBSD)
+#elif PSUTIL_NETBSD
         if ((kif->ki_ftype == DTYPE_VNODE) &&
                 (kif->ki_vtype == VREG))
         {
@@ -521,7 +516,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     long len;
     uint64_t flags;
     char opts[200];
-#if defined(PSUTIL_NETBSD)
+#ifdef PSUTIL_NETBSD
     struct statvfs *fs = NULL;
 #else
     struct statfs *fs = NULL;
@@ -534,7 +529,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
-#if defined(PSUTIL_NETBSD)
+#ifdef PSUTIL_NETBSD
     num = getvfsstat(NULL, 0, MNT_NOWAIT);
 #else
     num = getfsstat(NULL, 0, MNT_NOWAIT);
@@ -553,7 +548,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     Py_BEGIN_ALLOW_THREADS
-#if defined(PSUTIL_NETBSD)
+#ifdef PSUTIL_NETBSD
     num = getvfsstat(fs, len, MNT_NOWAIT);
 #else
     num = getfsstat(fs, len, MNT_NOWAIT);
@@ -567,7 +562,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     for (i = 0; i < num; i++) {
         py_tuple = NULL;
         opts[0] = 0;
-#if defined(PSUTIL_NETBSD)
+#ifdef PSUTIL_NETBSD
         flags = fs[i].f_flag;
 #else
         flags = fs[i].f_flags;
@@ -618,17 +613,17 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",union", sizeof(opts));
         if (flags & MNT_NOCOREDUMP)
             strlcat(opts, ",nocoredump", sizeof(opts));
-#if defined(MNT_RELATIME)
+#ifdef MNT_RELATIME
         if (flags & MNT_RELATIME)
             strlcat(opts, ",relatime", sizeof(opts));
 #endif
         if (flags & MNT_IGNORE)
             strlcat(opts, ",ignore", sizeof(opts));
-#if defined(MNT_DISCARD)
+#ifdef MNT_DISCARD
         if (flags & MNT_DISCARD)
             strlcat(opts, ",discard", sizeof(opts));
 #endif
-#if defined(MNT_EXTATTR)
+#ifdef MNT_EXTATTR
         if (flags & MNT_EXTATTR)
             strlcat(opts, ",extattr", sizeof(opts));
 #endif
