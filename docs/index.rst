@@ -156,13 +156,14 @@ CPU
   in Python 3.4).
   If *logical* is ``False`` return the number of physical cores only (hyper
   thread CPUs are excluded). Return ``None`` if undetermined.
+  On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
+  ``None``. Example on a system having 2 physical hyper-thread CPU cores:
 
     >>> import psutil
     >>> psutil.cpu_count()
     4
     >>> psutil.cpu_count(logical=False)
     2
-    >>>
 
 .. function:: cpu_stats()
 
