@@ -18,6 +18,7 @@
 - 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly
   taken into account.
+- 944_: [OpenBSD] psutil.pids() was omitting PID 0.
 
 
 5.0.0
