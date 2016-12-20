@@ -16,25 +16,25 @@
 #include <net/if.h>
 
 #ifdef PSUTIL_SUNOS10
-#include "arch/solaris/v10/ifaddrs.h"
+    #include "arch/solaris/v10/ifaddrs.h"
 #else
-#include <ifaddrs.h>
+    #include <ifaddrs.h>
 #endif
 
 #ifdef __linux
-#include <netdb.h>
-#include <linux/if_packet.h>
-#endif  // end linux
+    #include <netdb.h>
+    #include <linux/if_packet.h>
+#endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
-#include <netdb.h>
-#include <netinet/in.h>
-#include <net/if_dl.h>
+    #include <netdb.h>
+    #include <netinet/in.h>
+    #include <net/if_dl.h>
 #endif
 
 #if defined(__sun)
-#include <netdb.h>
-#include <sys/sockio.h>
+    #include <netdb.h>
+    #include <sys/sockio.h>
 #endif
 
 
@@ -264,8 +264,11 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;
     int ret;
-    int mtu;
+#ifdef PSUTIL_SUNOS10
+    struct lifreq lifr;
+#else
     struct ifreq ifr;
+#endif
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
@@ -274,14 +277,21 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
 
+#ifdef PSUTIL_SUNOS10
+    strncpy(lifr.lifr_name, nic_name, sizeof(lifr.lifr_name));
+#else
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+#endif
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
     if (ret == -1)
         goto error;
     close(sock);
-    mtu = ifr.ifr_mtu;
 
-    return Py_BuildValue("i", mtu);
+#ifdef PSUTIL_SUNOS10
+    return Py_BuildValue("i", lifr.lifr_mtu);
+#else
+    return Py_BuildValue("i", ifr.ifr_mtu);
+#endif
 
 error:
     if (sock != 0)

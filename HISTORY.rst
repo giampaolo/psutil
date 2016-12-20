@@ -13,6 +13,7 @@
 
 **Bug fixes**
 
+- 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
 - 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly

@@ -1948,15 +1948,6 @@ Constants
       >>> if psutil.version_info >= (4, 5):
       ...    pass
 
-
-Development guide
-=================
-
-If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
-take a look at the
-`development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
-
-
 Q&A
 ===
 
@@ -1968,6 +1959,11 @@ Q&A
   On such old systems psutil is no longer tested or maintained, but it can
   still be compiled from sources (you'll need `Visual Studio <(https://github.com/giampaolo/psutil/blob/master/INSTALL.rst#windows>`__)
   and it should "work" (more or less).
+
+----
+
+* Q: What SunOS versions are supported?
+* A: From Solaris 10 onwards.
 
 ----
 
@@ -1983,6 +1979,12 @@ Q&A
   the Python script as a Windows service (this is the trick used by tools
   such as ProcessHacker).
 
+Development guide
+=================
+
+If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
+take a look at the
+`development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
 
 Timeline
 ========
