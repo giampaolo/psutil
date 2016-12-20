@@ -274,10 +274,11 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
 
 #ifdef PSUTIL_SUNOS10
     strncpy(lifr.lifr_name, nic_name, sizeof(lifr.lifr_name));
+    ret = ioctl(sock, SIOCGIFMTU, &lifr);
 #else
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-#endif
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
+#endif
     if (ret == -1)
         goto error;
     close(sock);
