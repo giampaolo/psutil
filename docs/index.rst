@@ -1991,7 +1991,7 @@ Timeline
 ========
 
 - 2016-12-21: `5.0.1 <https://pypi.python.org/pypi?name=psutil&version=5.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#550>`__
-- 2016-11-06: `5.5.0 <https://pypi.python.org/pypi?name=psutil&version=5.5.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#550>`__
+- 2016-11-06: `5.0.0 <https://pypi.python.org/pypi?name=psutil&version=5.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#550>`__
 - 2016-10-26: `4.4.2 <https://pypi.python.org/pypi?name=psutil&version=4.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#442>`__
 - 2016-10-25: `4.4.1 <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
 - 2016-10-23: `4.4.0 <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__
