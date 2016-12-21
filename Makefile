@@ -253,3 +253,9 @@ bench-oneshot: install
 # same as above but using perf module (supposed to be more precise)
 bench-oneshot-2: install
 	$(PYTHON) scripts/internal/bench_oneshot_2.py
+
+# generate a doc.zip file and manually upload it to PYPI.
+doc:
+	cd docs && make html && cd _build/html/ && zip doc.zip -r .
+	mv docs/_build/html/doc.zip .
+	echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
