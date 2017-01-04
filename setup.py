@@ -255,7 +255,7 @@ def main():
     setup(
         name='psutil',
         version=VERSION,
-        description=__doc__ or ''.replace('\n', '').strip(),
+        description=__doc__ .replace('\n', '').strip() if __doc__ else '',
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
