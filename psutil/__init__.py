@@ -143,8 +143,8 @@ elif SUNOS:
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
-    # This is public API and it will be retrieved from _pssunos.py
-    # via sys.modules.
+    # This is public writable API which is read from _pslinux.py and
+    # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
@@ -221,6 +221,7 @@ if (int(__version__.replace('.', '')) !=
 # =====================================================================
 # --- exceptions
 # =====================================================================
+
 
 class Error(Exception):
     """Base exception class. All other psutil exceptions inherit

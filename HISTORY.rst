@@ -1,5 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.0.2
+=====
+
+**Bug fixes**
+
+- 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+
+
 5.0.1
 =====
 
