@@ -62,7 +62,7 @@ versions.
 OSX
 ===
 
-Install `XcodeTools <https://developer.apple.com/downloads/?name=Xcode>`__
+Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__
 first, then:
 
 ::
