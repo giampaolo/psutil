@@ -738,10 +738,12 @@ Process class
 
 .. class:: Process(pid=None)
 
-  Represents an OS process with the given *pid*. If *pid* is omitted current
-  process *pid* (`os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__)
-  is used.
+  Represents an OS process with the given *pid*.
+  If *pid* is omitted current process *pid*
+  (`os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__) is used.
   Raise :class:`NoSuchProcess` if *pid* does not exist.
+  On Linux *pid* can also refer to a thread ID (the *id* field returned by
+  :meth:`threads` method).
   When accessing methods of this class always be  prepared to catch
   :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
   exceptions.

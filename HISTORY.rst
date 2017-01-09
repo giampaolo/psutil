@@ -3,8 +3,12 @@
 5.0.2
 =====
 
+*XXXX-XX-XX*
+
 **Bug fixes**
 
+- 687_: [Linux] pid_exists() no longer returns True if passed a process thread
+  ID.
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 
 

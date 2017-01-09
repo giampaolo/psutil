@@ -501,10 +501,8 @@ class TestProcess(unittest.TestCase):
         try:
             step2 = p.num_threads()
             self.assertEqual(step2, step1 + 1)
-            thread.stop()
         finally:
-            if thread._running:
-                thread.stop()
+            thread.stop()
 
     @unittest.skipUnless(WINDOWS, 'WINDOWS only')
     def test_num_handles(self):
@@ -524,7 +522,6 @@ class TestProcess(unittest.TestCase):
 
         thread = ThreadTask()
         thread.start()
-
         try:
             step2 = p.threads()
             self.assertEqual(len(step2), len(step1) + 1)
@@ -536,11 +533,8 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.id, athread[0])
             self.assertEqual(athread.user_time, athread[1])
             self.assertEqual(athread.system_time, athread[2])
-            # test num threads
-            thread.stop()
         finally:
-            if thread._running:
-                thread.stop()
+            thread.stop()
 
     @retry_before_failing()
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
