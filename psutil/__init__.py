@@ -143,8 +143,8 @@ elif SUNOS:
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
-    # This is public API and it will be retrieved from _pssunos.py
-    # via sys.modules.
+    # This is public writable API which is read from _pslinux.py and
+    # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
@@ -189,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.0.1"
+__version__ = "5.0.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -221,6 +221,7 @@ if (int(__version__.replace('.', '')) !=
 # =====================================================================
 # --- exceptions
 # =====================================================================
+
 
 class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
@@ -453,6 +454,11 @@ class Process(object):
             self._hash = hash(self._ident)
         return self._hash
 
+    @property
+    def pid(self):
+        """The process PID."""
+        return self._pid
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -600,11 +606,6 @@ class Process(object):
             return False
 
     # --- actual API
-
-    @property
-    def pid(self):
-        """The process PID."""
-        return self._pid
 
     @memoize_when_activated
     def ppid(self):
@@ -981,6 +982,14 @@ class Process(object):
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
 
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+
+        The returned value is explicitly *not* split evenly between
+        all available logical CPUs. This means that a busy loop process
+        running on a system with 2 logical CPUs will be reported as
+        having 100% CPU utilization instead of 50%.
+
         Examples:
 
           >>> import psutil
@@ -1185,6 +1194,8 @@ class Process(object):
         all             the sum of all the possible families and protocols
         """
         return self._proc.connections(kind)
+
+    # --- signals
 
     if POSIX:
         def _send_signal(self, sig):

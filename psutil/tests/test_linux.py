@@ -40,6 +40,7 @@ from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFN
+from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
@@ -1003,6 +1004,24 @@ class TestMisc(unittest.TestCase):
         finally:
             importlib.reload(psutil._pslinux)
             importlib.reload(psutil)
+
+    def test_issue_687(self):
+        # In case of thread ID:
+        # - pid_exists() is supposed to return False
+        # - Process(tid) is supposed to work
+        # - pids() should not return the TID
+        # See: https://github.com/giampaolo/psutil/issues/687
+        t = ThreadTask()
+        t.start()
+        try:
+            p = psutil.Process()
+            tid = p.threads()[1].id
+            assert not psutil.pid_exists(tid), tid
+            pt = psutil.Process(tid)
+            pt.as_dict()
+            self.assertNotIn(tid, psutil.pids())
+        finally:
+            t.stop()
 
 
 # =====================================================================
