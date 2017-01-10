@@ -454,6 +454,11 @@ class Process(object):
             self._hash = hash(self._ident)
         return self._hash
 
+    @property
+    def pid(self):
+        """The process PID."""
+        return self._pid
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -601,11 +606,6 @@ class Process(object):
             return False
 
     # --- actual API
-
-    @property
-    def pid(self):
-        """The process PID."""
-        return self._pid
 
     @memoize_when_activated
     def ppid(self):
@@ -1194,6 +1194,8 @@ class Process(object):
         all             the sum of all the possible families and protocols
         """
         return self._proc.connections(kind)
+
+    # --- signals
 
     if POSIX:
         def _send_signal(self, sig):
