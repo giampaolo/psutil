@@ -210,7 +210,7 @@ win-download-exes:
 # Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:
 	$(PYTHON) -m twine upload dist/*.exe
-	$(PYTHON) -m twine upload dist/*.wheel
+	$(PYTHON) -m twine upload dist/*.whl
 
 # All the necessary steps before making a release.
 pre-release:
