@@ -174,14 +174,14 @@ def build():
 def build_exe():
     """Create exe file."""
     build()
-    sh("%s setup.py bdist_wininst -i" % PYTHON)
+    sh("%s setup.py bdist_wininst" % PYTHON)
 
 
 @cmd
 def build_wheel():
     """Create wheel file."""
     build()
-    sh("%s setup.py bdist_wheel -i" % PYTHON)
+    sh("%s setup.py bdist_wheel" % PYTHON)
 
 
 @cmd
