@@ -581,7 +581,8 @@ class TestSystemNetwork(unittest.TestCase):
             except RuntimeError:
                 pass
             else:
-                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
+                # Not always reliable.
+                # self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
                                  int(re.findall('MTU:(\d+)', out)[0]))
 
@@ -1264,7 +1265,7 @@ class TestProcessAgainstStatus(unittest.TestCase):
         self.assertEqual(self.proc.gids(), value)
 
     @retry_before_failing()
-    def test_ctx_switches(self):
+    def test_num_ctx_switches(self):
         value = self.read_status_file("voluntary_ctxt_switches:")
         self.assertEqual(self.proc.num_ctx_switches().voluntary, value)
         value = self.read_status_file("nonvoluntary_ctxt_switches:")
