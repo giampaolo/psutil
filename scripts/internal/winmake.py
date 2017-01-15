@@ -171,6 +171,20 @@ def build():
 
 
 @cmd
+def build_exe():
+    """Create exe file."""
+    build()
+    sh("%s setup.py bdist_wininst -i" % PYTHON)
+
+
+@cmd
+def build_wheel():
+    """Create wheel file."""
+    build()
+    sh("%s setup.py bdist_wheel -i" % PYTHON)
+
+
+@cmd
 def install_pip():
     """Install pip"""
     try:

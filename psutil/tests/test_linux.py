@@ -1081,7 +1081,8 @@ class TestProcess(unittest.TestCase):
                         delta=2)
                 elif line.startswith('Cpus_allowed_list'):
                     min_, max_ = map(int, line.split()[1].split('-'))
-                    self.assertEqual(p.cpu_affinity(), range(min_, max_ + 1))
+                    self.assertEqual(
+                        p.cpu_affinity(), list(range(min_, max_ + 1)))
 
     def test_memory_full_info(self):
         src = textwrap.dedent("""
