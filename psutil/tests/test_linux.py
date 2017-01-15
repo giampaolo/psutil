@@ -1037,53 +1037,6 @@ class TestProcess(unittest.TestCase):
 
     tearDown = setUp
 
-    def test_compare_stat_and_status_files(self):
-        # /proc/pid/stat and /proc/pid/status have many values in common.
-        # Whenever possible, psutil uses /proc/pid/stat (it's faster).
-        # For all those cases we check that the value found in
-        # /proc/pid/stat (by psutil) matches the one found in
-        # /proc/pid/status.
-        p = psutil.Process()
-        with psutil._psplatform.open_text('/proc/%s/status' % p.pid) as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('Name:'):
-                    name = line.split()[1]
-                    # Name is truncated to 15 chars
-                    self.assertEqual(p.name()[:15], name[:15])
-                elif line.startswith('State:'):
-                    status = line[line.find('(') + 1:line.rfind(')')]
-                    status = status.replace(' ', '-')
-                    self.assertEqual(p.status(), status)
-                elif line.startswith('PPid:'):
-                    ppid = int(line.split()[1])
-                    self.assertEqual(p.ppid(), ppid)
-                # The ones below internally are determined by reading
-                # 'status' file but we use a re to extract the info
-                # so it makes sense to check them.
-                elif line.startswith('Threads:'):
-                    num_threads = int(line.split()[1])
-                    self.assertEqual(p.num_threads(), num_threads)
-                elif line.startswith('Uid:'):
-                    uids = tuple(map(int, line.split()[1:4]))
-                    self.assertEqual(tuple(p.uids()), uids)
-                elif line.startswith('Gid:'):
-                    gids = tuple(map(int, line.split()[1:4]))
-                    self.assertEqual(tuple(p.gids()), gids)
-                elif line.startswith('voluntary_ctxt_switches:'):
-                    vol = int(line.split()[1])
-                    self.assertAlmostEqual(
-                        p.num_ctx_switches().voluntary, vol, delta=2)
-                elif line.startswith('nonvoluntary_ctxt_switches:'):
-                    invol = int(line.split()[1])
-                    self.assertAlmostEqual(
-                        p.num_ctx_switches().involuntary, invol,
-                        delta=2)
-                elif line.startswith('Cpus_allowed_list'):
-                    min_, max_ = map(int, line.split()[1].split('-'))
-                    self.assertEqual(
-                        p.cpu_affinity(), list(range(min_, max_ + 1)))
-
     def test_memory_full_info(self):
         src = textwrap.dedent("""
             import time
@@ -1253,6 +1206,75 @@ class TestProcess(unittest.TestCase):
             with mock.patch('psutil._pslinux.os.path.lexists',
                             return_value=False):
                 self.assertRaises(psutil.ZombieProcess, psutil.Process().exe)
+
+
+@unittest.skipUnless(LINUX, "LINUX only")
+class TestProcessAgainstStatus(unittest.TestCase):
+    """/proc/pid/stat and /proc/pid/status have many values in common.
+    Whenever possible, psutil uses /proc/pid/stat (it's faster).
+    For all those cases we check that the value found in
+    /proc/pid/stat (by psutil) matches the one found in
+    /proc/pid/status.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.proc = psutil.Process()
+
+    def read_status_file(self, linestart):
+        with psutil._psplatform.open_text(
+                '/proc/%s/status' % self.proc.pid) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith(linestart):
+                    value = line.partition('\t')[2]
+                    try:
+                        return int(value)
+                    except ValueError:
+                        return value
+            else:
+                raise ValueError("can't find %r" % linestart)
+
+    def test_name(self):
+        value = self.read_status_file("Name:")
+        self.assertEqual(self.proc.name(), value)
+
+    def test_status(self):
+        value = self.read_status_file("State:")
+        value = value[value.find('(') + 1:value.rfind(')')]
+        value = value.replace(' ', '-')
+        self.assertEqual(self.proc.status(), value)
+
+    def test_ppid(self):
+        value = self.read_status_file("PPid:")
+        self.assertEqual(self.proc.ppid(), value)
+
+    def test_num_threads(self):
+        value = self.read_status_file("Threads:")
+        self.assertEqual(self.proc.num_threads(), value)
+
+    def test_uids(self):
+        value = self.read_status_file("Uid:")
+        value = tuple(map(int, value.split()[1:4]))
+        self.assertEqual(self.proc.uids(), value)
+
+    def test_gids(self):
+        value = self.read_status_file("Gid:")
+        value = tuple(map(int, value.split()[1:4]))
+        self.assertEqual(self.proc.gids(), value)
+
+    @retry_before_failing()
+    def test_ctx_switches(self):
+        value = self.read_status_file("voluntary_ctxt_switches:")
+        self.assertEqual(self.proc.num_ctx_switches().voluntary, value)
+        value = self.read_status_file("nonvoluntary_ctxt_switches:")
+        self.assertEqual(self.proc.num_ctx_switches().involuntary, value)
+
+    def test_cpu_affinity(self):
+        value = self.read_status_file("Cpus_allowed_list:")
+        min_, max_ = map(int, value.split('-'))
+        self.assertEqual(
+            self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
 
 
 if __name__ == '__main__':
