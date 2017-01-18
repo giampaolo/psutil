@@ -71,7 +71,7 @@ Projects using psutil
 =====================
 
 At the time of writing there are over
-`4000 projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`4200 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -246,9 +246,6 @@ Process management
     >>> p.cpu_affinity()
     [0, 1, 2, 3]
     >>> p.cpu_affinity([0])  # set
-    >>>
-    >>> p.memory_percent()
-    0.63423
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)

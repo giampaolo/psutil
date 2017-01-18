@@ -143,8 +143,8 @@ elif SUNOS:
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
-    # This is public API and it will be retrieved from _pssunos.py
-    # via sys.modules.
+    # This is public writable API which is read from _pslinux.py and
+    # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
@@ -189,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.0.1"
+__version__ = "5.0.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -221,6 +221,7 @@ if (int(__version__.replace('.', '')) !=
 # =====================================================================
 # --- exceptions
 # =====================================================================
+
 
 class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
@@ -453,6 +454,11 @@ class Process(object):
             self._hash = hash(self._ident)
         return self._hash
 
+    @property
+    def pid(self):
+        """The process PID."""
+        return self._pid
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -600,11 +606,6 @@ class Process(object):
             return False
 
     # --- actual API
-
-    @property
-    def pid(self):
-        """The process PID."""
-        return self._pid
 
     @memoize_when_activated
     def ppid(self):
@@ -981,6 +982,14 @@ class Process(object):
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
 
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+
+        The returned value is explicitly *not* split evenly between
+        all available logical CPUs. This means that a busy loop process
+        running on a system with 2 logical CPUs will be reported as
+        having 100% CPU utilization instead of 50%.
+
         Examples:
 
           >>> import psutil
@@ -1003,7 +1012,8 @@ class Process(object):
                 return _timer() * num_cpus
         else:
             def timer():
-                return sum(cpu_times())
+                t = cpu_times()
+                return sum((t.user, t.system))
 
         if blocking:
             st1 = timer()
@@ -1184,6 +1194,8 @@ class Process(object):
         all             the sum of all the possible families and protocols
         """
         return self._proc.connections(kind)
+
+    # --- signals
 
     if POSIX:
         def _send_signal(self, sig):
@@ -1629,6 +1641,41 @@ except Exception:
     traceback.print_exc()
 
 
+def _cpu_tot_time(times):
+    """Given a cpu_time() ntuple calculates the total CPU time
+    (including idle time).
+    """
+    tot = sum(times)
+    if LINUX:
+        # On Linux guest times are already accounted in "user" or
+        # "nice" times, so we subtract them from total.
+        # Htop does the same. References:
+        # https://github.com/giampaolo/psutil/pull/940
+        # http://unix.stackexchange.com/questions/178045
+        # https://github.com/torvalds/linux/blob/
+        #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/
+        #     cputime.c#L158
+        tot -= getattr(times, "guest", 0)  # Linux 2.6.24+
+        tot -= getattr(times, "guest_nice", 0)  # Linux 3.2.0+
+    return tot
+
+
+def _cpu_busy_time(times):
+    """Given a cpu_time() ntuple calculates the busy CPU time.
+    We do so by subtracting all idle CPU times.
+    """
+    busy = _cpu_tot_time(times)
+    busy -= times.idle
+    # Linux: "iowait" is time during which the CPU does not do anything
+    # (waits for IO to complete). On Linux IO wait is *not* accounted
+    # in "idle" time so we subtract it. Htop does the same.
+    # References:
+    # https://github.com/torvalds/linux/blob/
+    #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/cputime.c#L244
+    busy -= getattr(times, "iowait", 0)
+    return busy
+
+
 def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
@@ -1671,11 +1718,11 @@ def cpu_percent(interval=None, percpu=False):
         raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
-        t1_all = sum(t1)
-        t1_busy = t1_all - t1.idle
+        t1_all = _cpu_tot_time(t1)
+        t1_busy = _cpu_busy_time(t1)
 
-        t2_all = sum(t2)
-        t2_busy = t2_all - t2.idle
+        t2_all = _cpu_tot_time(t2)
+        t2_busy = _cpu_busy_time(t2)
 
         # this usually indicates a float precision issue
         if t2_busy <= t1_busy:
@@ -1747,7 +1794,7 @@ def cpu_times_percent(interval=None, percpu=False):
 
     def calculate(t1, t2):
         nums = []
-        all_delta = sum(t2) - sum(t1)
+        all_delta = _cpu_tot_time(t2) - _cpu_tot_time(t1)
         for field in t1._fields:
             field_delta = getattr(t2, field) - getattr(t1, field)
             try:

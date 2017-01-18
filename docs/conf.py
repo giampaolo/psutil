@@ -35,6 +35,7 @@ def get_version():
         else:
             raise ValueError("couldn't find version string")
 
+
 VERSION = get_version()
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -45,7 +46,7 @@ needs_sphinx = '1.0'
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.imgmath',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx']
 

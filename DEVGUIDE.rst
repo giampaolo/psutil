@@ -1,6 +1,6 @@
-=====
-Setup
-=====
+=======================
+Setup and running tests
+=======================
 
 If you plan on hacking on psutil this is what you're supposed to do first:
 
