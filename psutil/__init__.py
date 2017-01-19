@@ -1007,13 +1007,8 @@ class Process(object):
             raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
 
-        if POSIX:
-            def timer():
-                return _timer() * num_cpus
-        else:
-            def timer():
-                t = cpu_times()
-                return sum((t.user, t.system))
+        def timer():
+            return _timer() * num_cpus
 
         if blocking:
             st1 = timer()
