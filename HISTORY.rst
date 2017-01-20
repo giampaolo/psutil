@@ -10,6 +10,8 @@
 - 687_: [Linux] pid_exists() no longer returns True if passed a process thread
   ID.
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+  higher number than real usage.
 
 
 5.0.1

@@ -39,11 +39,12 @@ The psutil documentation you're reading is distributed as a single HTML page.
 Install
 -------
 
-On Windows, or on UNIX if you have a C compiler installed, the easiest way to
-install psutil is via ``pip``::
+The easiest way to install psutil is via ``pip``::
 
     pip install psutil
 
+On UNIX this requires a C compiler (e.g. gcc) installed. On Windows pip will
+automatically retrieve a pre-compiled wheel version.
 Alternatively, see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 instructions.
