@@ -299,6 +299,12 @@ def cpu_stats():
                              syscalls)
 
 
+def cpu_freq():
+    curr, max_ = cext.cpu_freq()
+    min_ = 0
+    return [_common.scpufreq(curr, min_, max_)]
+
+
 # =====================================================================
 # --- network
 # =====================================================================

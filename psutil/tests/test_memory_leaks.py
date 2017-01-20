@@ -458,6 +458,11 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
 
+    @skip_if_linux()
+    @unittest.skipUnless(hasattr(psutil, "cpu_freq"), "platform not supported")
+    def test_cpu_freq(self):
+        self.execute(psutil.cpu_freq)
+
     # --- mem
 
     def test_virtual_memory(self):

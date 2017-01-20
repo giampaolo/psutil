@@ -122,7 +122,7 @@ if WINDOWS:
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "iphlpapi", "wtsapi32", "ws2_32",
+            "iphlpapi", "wtsapi32", "ws2_32", "PowrProf",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
