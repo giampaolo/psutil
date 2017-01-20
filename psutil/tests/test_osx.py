@@ -153,7 +153,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()[0]
         self.assertEqual(
-            freq.curr * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
         self.assertEqual(
             freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
         self.assertEqual(
