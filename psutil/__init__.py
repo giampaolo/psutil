@@ -181,7 +181,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",
+    "cpu_stats",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -1850,6 +1850,36 @@ def cpu_times_percent(interval=None, percpu=False):
 def cpu_stats():
     """Return CPU statistics."""
     return _psplatform.cpu_stats()
+
+
+if hasattr(_psplatform, "cpu_freq"):
+
+    def cpu_freq(percpu=False):
+        """Return CPU frequency as a nameduple including current,
+        min and max frequency expressed in Mhz.
+
+        If percpu is True and the system supports per-cpu frequency
+        retrieval (Linux only) a list of frequencies is returned for
+        each CPU. If not a list with one element is returned.
+        """
+        ret = _psplatform.cpu_freq()
+        if percpu:
+            return ret
+        else:
+            num_cpus = len(ret)
+            if num_cpus == 1:
+                return ret[0]
+            currs, mins, maxs = [], [], []
+            for cpu in ret:
+                currs.append(cpu.current)
+                mins.append(cpu.min)
+                maxs.append(cpu.max)
+            return _common.scpufreq(
+                sum(currs) / num_cpus,
+                sum(mins) / num_cpus,
+                sum(maxs) / num_cpus)
+
+    __all__.append("cpu_freq")
 
 
 # =====================================================================

@@ -9,6 +9,7 @@ from __future__ import division
 import base64
 import errno
 import functools
+import glob
 import os
 import re
 import socket
@@ -132,6 +133,8 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
+
+_DEFAULT = object()
 
 
 # =====================================================================
@@ -274,6 +277,18 @@ def set_scputimes_ntuple(procfs_path):
         fields.append('guest_nice')
     scputimes = namedtuple('scputimes', fields)
     return scputimes
+
+
+def cat(fname, fallback=_DEFAULT, binary=True):
+    """Return file content."""
+    try:
+        with open_binary(fname) if binary else open_text(fname) as f:
+            return f.read()
+    except IOError:
+        if fallback != _DEFAULT:
+            return fallback
+        else:
+            raise
 
 
 try:
@@ -605,6 +620,26 @@ def cpu_stats():
     syscalls = 0
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls)
+
+
+if os.path.exists("/sys/devices/system/cpu/cpufreq"):
+
+    def cpu_freq():
+        # scaling_* files seem preferable to cpuinfo_*, see:
+        # http://unix.stackexchange.com/a/87537/168884
+        ret = []
+        ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy*")
+        # Sort the list so that '10' comes after '2'. This should
+        # ensure the CPU order is consistent with other CPU functions
+        # having a 'percpu' argument and returning results for multiple
+        # CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
+        ls.sort(key=lambda x: int(os.path.basename(x)[6:]))
+        for path in ls:
+            curr = int(cat(os.path.join(path, "scaling_cur_freq"))) / 1000
+            max_ = int(cat(os.path.join(path, "scaling_max_freq"))) / 1000
+            min_ = int(cat(os.path.join(path, "scaling_min_freq"))) / 1000
+            ret.append(_common.scpufreq(curr, min_, max_))
+        return ret
 
 
 # =====================================================================

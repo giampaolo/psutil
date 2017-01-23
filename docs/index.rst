@@ -191,6 +191,33 @@ CPU
   .. versionadded:: 4.1.0
 
 
+.. function:: cpu_freq(percpu=False)
+
+    Return CPU frequency as a nameduple including *current*, *min* and *max*
+    frequencies expressed in Mhz.
+    If *percpu* is ``True`` and the system supports per-cpu frequency
+    retrieval (Linux only) a list of frequencies is returned for each CPU,
+    if not, a list with a single element is returned.
+    If *min* and *max* cannot be determined they are set to ``0``.
+
+    Example (Linux):
+
+    .. code-block:: python
+
+       >>> import psutil
+       >>> psutil.cpu_freq()
+       scpufreq(current=931.42925, min=800.0, max=3500.0)
+       >>> psutil.cpu_freq(percpu=True)
+       [scpufreq(current=2394.945, min=800.0, max=3500.0),
+        scpufreq(current=2236.812, min=800.0, max=3500.0),
+        scpufreq(current=1703.609, min=800.0, max=3500.0),
+        scpufreq(current=1754.289, min=800.0, max=3500.0)]
+
+    Availability: Linux, OSX, Windows
+
+    .. versionadded:: 5.1.0
+
+
 Memory
 ------
 

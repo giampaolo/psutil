@@ -24,6 +24,7 @@
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 #include <Winsvc.h>
+#include <PowrProf.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -144,6 +145,16 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 #endif
+
+typedef struct _PROCESSOR_POWER_INFORMATION {
+   ULONG Number;
+   ULONG MaxMhz;
+   ULONG CurrentMhz;
+   ULONG MhzLimit;
+   ULONG MaxIdleState;
+   ULONG CurrentIdleState;
+} PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
+
 
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
@@ -3391,6 +3402,60 @@ error:
 }
 
 
+/*
+ * Return CPU frequency.
+ */
+static PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    PROCESSOR_POWER_INFORMATION *ppi;
+    NTSTATUS ret;
+    size_t size;
+    LPBYTE pBuffer = NULL;
+    ULONG current;
+    ULONG max;
+    unsigned int num_cpus;
+    SYSTEM_INFO system_info;
+    system_info.dwNumberOfProcessors = 0;
+
+    // Get the number of CPUs.
+    GetSystemInfo(&system_info);
+    if (system_info.dwNumberOfProcessors == 0)
+        num_cpus = 1;
+    else
+        num_cpus = system_info.dwNumberOfProcessors;
+
+    // Allocate size.
+    size = num_cpus * sizeof(PROCESSOR_POWER_INFORMATION);
+    pBuffer = (BYTE*)LocalAlloc(LPTR, size);
+    if (! pBuffer) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    // Syscall.
+    ret = CallNtPowerInformation(
+        ProcessorInformation, NULL, 0, pBuffer, size);
+    if (ret != 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "CallNtPowerInformation syscall failed");
+        goto error;
+    }
+
+    // Results.
+    ppi = (PROCESSOR_POWER_INFORMATION *)pBuffer;
+    max = ppi->MaxMhz;
+    current = ppi->CurrentMhz;
+    LocalFree(pBuffer);
+
+    return Py_BuildValue("kk", current, max);
+
+error:
+    if (pBuffer != NULL)
+        LocalFree(pBuffer);
+    return NULL;
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3495,6 +3560,8 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return NICs stats."},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return CPU frequency."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

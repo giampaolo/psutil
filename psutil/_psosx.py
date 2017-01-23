@@ -165,6 +165,16 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
+def cpu_freq():
+    """Return CPU frequency.
+    On OSX per-cpu frequency is not supported.
+    Also, the returned frequency never changes, see:
+    https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
+    """
+    curr, min_, max_ = cext.cpu_freq()
+    return [_common.scpufreq(curr, min_, max_)]
+
+
 # =====================================================================
 # --- disks
 # =====================================================================

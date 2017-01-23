@@ -809,6 +809,35 @@ error:
 
 
 /*
+ * Retrieve CPU frequency.
+ */
+static PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int64_t curr;
+    int64_t min;
+    int64_t max;
+    size_t size = sizeof(int64_t);
+
+    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
+        goto error;
+
+    return Py_BuildValue(
+        "KKK",
+        curr / 1000 / 1000,
+        min / 1000 / 1000,
+        max / 1000 / 1000);
+
+error:
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
  * Return a Python float indicating the system boot time expressed in
  * seconds since the epoch.
  */
@@ -1778,6 +1807,8 @@ PsutilMethods[] = {
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return cpu current frequency"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,

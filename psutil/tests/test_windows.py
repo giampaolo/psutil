@@ -85,6 +85,12 @@ class TestSystemAPIs(unittest.TestCase):
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
         self.assertEqual(num_cpus, psutil.cpu_count())
 
+    def test_cpu_freq(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
+        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
+
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         self.assertEqual(int(w.TotalPhysicalMemory),
