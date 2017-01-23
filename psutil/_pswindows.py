@@ -300,9 +300,12 @@ def cpu_stats():
 
 
 def cpu_freq():
+    """Return CPU frequency.
+    On Windows per-cpu frequency is not supported.
+    """
     curr, max_ = cext.cpu_freq()
-    min_ = 0
-    return [_common.scpufreq(curr, min_, max_)]
+    min_ = 0.0
+    return [_common.scpufreq(float(curr), min_, float(max_))]
 
 
 # =====================================================================

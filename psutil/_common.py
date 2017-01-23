@@ -157,7 +157,7 @@ snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
 # psutil.cpu_freq()
-scpufreq = namedtuple('scpufreq', ['curr', 'min', 'max'])
+scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
 
 # --- for Process methods
 

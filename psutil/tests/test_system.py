@@ -700,13 +700,21 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipUnless(hasattr(psutil, "cpu_freq"),
                          "platform not suported")
     def test_cpu_freq(self):
-        ls = psutil.cpu_freq()
+        def check_ls(ls):
+            for nt in ls:
+                self.assertLessEqual(nt.current, nt.max)
+                for name in nt._fields:
+                    value = getattr(nt, name)
+                    self.assertGreaterEqual(value, 0)
+
+        ls = psutil.cpu_freq(percpu=True)
         if not TRAVIS:
             assert ls, ls
-        for nt in ls:
-            for name in nt._fields:
-                value = getattr(nt, name)
-                self.assertGreaterEqual(value, 0)
+
+        check_ls([psutil.cpu_freq(percpu=False)])
+
+        if LINUX:
+            self.assertEqual(len(ls), psutil.cpu_count())
 
     def test_os_constants(self):
         names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
