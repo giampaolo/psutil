@@ -1245,9 +1245,10 @@ Process class
     The returned number should be ``<=`` :func:`psutil.cpu_count()` and
     ``<= len(psutil.cpu_percent(percpu=True))``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
-    observe the system workload distributed across multiple CPUs.
+    observe the system workload distributed across multiple CPUs as shown by
+    `cpu_workload.py <https://github.com/giampaolo/psutil/blob/master/scripts/cpu_workload.py>`__ example script.
 
-    Availability: Linux
+    Availability: Linux, FreeBSD
 
     .. versionadded:: 5.1.0
 
