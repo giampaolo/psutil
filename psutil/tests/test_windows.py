@@ -88,8 +88,8 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
-        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq()[0].curr)
-        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq()[0].max)
+        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
+        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
