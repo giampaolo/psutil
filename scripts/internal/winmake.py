@@ -225,11 +225,12 @@ def install():
 @cmd
 def uninstall():
     """Uninstall psutil"""
-    clean()
     try:
         import psutil
     except ImportError:
+        clean()
         return
+    clean()
     install_pip()
     sh("%s -m pip uninstall -y psutil" % PYTHON)
 
@@ -244,6 +245,7 @@ def uninstall():
             try:
                 import psutil  # NOQA
             except ImportError:
+                clean()
                 return
             sh("%s -m pip uninstall -y psutil" % PYTHON)
     finally:
