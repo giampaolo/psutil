@@ -198,6 +198,7 @@ CPU
     If *percpu* is ``True`` and the system supports per-cpu frequency
     retrieval (Linux only) a list of frequencies is returned for each CPU,
     if not, a list with a single element is returned.
+    If *min* and *max* cannot be determined they are set to ``0``.
 
     Example (Linux):
 
