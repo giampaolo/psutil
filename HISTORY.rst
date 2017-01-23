@@ -1,9 +1,23 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.0.1
+5.0.2
 =====
 
 *XXXX-XX-XX*
+
+**Bug fixes**
+
+- 687_: [Linux] pid_exists() no longer returns True if passed a process thread
+  ID.
+- 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+  higher number than real usage.
+
+
+5.0.1
+=====
+
+*2016-12-21*
 
 **Enhancements**
 
@@ -13,10 +27,12 @@
 
 **Bug fixes**
 
+- 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
 - 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly
   taken into account.
+- 944_: [OpenBSD] psutil.pids() was omitting PID 0.
 
 
 5.0.0

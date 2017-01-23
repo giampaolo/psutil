@@ -17,6 +17,7 @@ from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
 from ._common import FREEBSD
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NETBSD
 from ._common import OPENBSD
@@ -421,7 +422,26 @@ def users():
 # =====================================================================
 
 
-pids = cext.pids
+@memoize
+def _pid_0_exists():
+    try:
+        Process(0).name()
+    except NoSuchProcess:
+        return False
+    except AccessDenied:
+        return True
+    else:
+        return True
+
+
+def pids():
+    ret = cext.pids()
+    if OPENBSD and (0 not in ret) and _pid_0_exists():
+        # On OpenBSD the kernel does not return PID 0 (neither does
+        # ps) but it's actually querable (Process(0) will succeed).
+        ret.insert(0, 0)
+    return ret
+
 
 if OPENBSD or NETBSD:
     def pid_exists(pid):

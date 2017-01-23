@@ -171,6 +171,20 @@ def build():
 
 
 @cmd
+def build_exe():
+    """Create exe file."""
+    build()
+    sh("%s setup.py bdist_wininst" % PYTHON)
+
+
+@cmd
+def build_wheel():
+    """Create wheel file."""
+    build()
+    sh("%s setup.py bdist_wheel" % PYTHON)
+
+
+@cmd
 def install_pip():
     """Install pip"""
     try:
@@ -211,11 +225,12 @@ def install():
 @cmd
 def uninstall():
     """Uninstall psutil"""
-    clean()
     try:
         import psutil
     except ImportError:
+        clean()
         return
+    clean()
     install_pip()
     sh("%s -m pip uninstall -y psutil" % PYTHON)
 
@@ -230,6 +245,7 @@ def uninstall():
             try:
                 import psutil  # NOQA
             except ImportError:
+                clean()
                 return
             sh("%s -m pip uninstall -y psutil" % PYTHON)
     finally:

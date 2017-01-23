@@ -71,7 +71,7 @@ Projects using psutil
 =====================
 
 At the time of writing there are over
-`4000 projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`4200 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -122,6 +122,9 @@ CPU
     >>>
     >>> psutil.cpu_stats()
     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
+    >>>
+    >>> psutil.cpu_freq()
+    scpufreq(current=931.42925, min=800.0, max=3500.0)
 
 Memory
 ======

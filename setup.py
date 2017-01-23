@@ -85,18 +85,6 @@ def silenced_output(stream_name):
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
-
-# POSIX
-if POSIX:
-    posix_extension = Extension(
-        'psutil._psutil_posix',
-        sources=['psutil/_psutil_posix.c'])
-    if SUNOS:
-        posix_extension.libraries.append('socket')
-        if platform.release() == '5.10':
-            posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
-            posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
-
 # Windows
 if WINDOWS:
     def get_winver():
@@ -134,12 +122,11 @@ if WINDOWS:
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "iphlpapi", "wtsapi32", "ws2_32",
+            "iphlpapi", "wtsapi32", "ws2_32", "PowrProf",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
     )
-    extensions = [ext]
 
 # OS X
 elif OSX:
@@ -155,7 +142,6 @@ elif OSX:
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
         ])
-    extensions = [ext, posix_extension]
 
 # FreeBSD
 elif FREEBSD:
@@ -170,7 +156,6 @@ elif FREEBSD:
         ],
         define_macros=macros,
         libraries=["devstat"])
-    extensions = [ext, posix_extension]
 
 # OpenBSD
 elif OPENBSD:
@@ -184,7 +169,6 @@ elif OPENBSD:
         ],
         define_macros=macros,
         libraries=["kvm"])
-    extensions = [ext, posix_extension]
 
 # NetBSD
 elif NETBSD:
@@ -199,7 +183,6 @@ elif NETBSD:
         ],
         define_macros=macros,
         libraries=["kvm"])
-    extensions = [ext, posix_extension]
 
 # Linux
 elif LINUX:
@@ -229,15 +212,15 @@ elif LINUX:
         else:
             return None
 
-    macros.append(("PSUTIL_LINUX", 1))
     ETHTOOL_MACRO = get_ethtool_macro()
+
+    macros.append(("PSUTIL_LINUX", 1))
     if ETHTOOL_MACRO is not None:
         macros.append(ETHTOOL_MACRO)
     ext = Extension(
         'psutil._psutil_linux',
         sources=['psutil/_psutil_linux.c'],
         define_macros=macros)
-    extensions = [ext, posix_extension]
 
 # Solaris
 elif SUNOS:
@@ -247,17 +230,32 @@ elif SUNOS:
         sources=['psutil/_psutil_sunos.c'],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
-    extensions = [ext, posix_extension]
 
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
+# POSIX
+if POSIX:
+    posix_extension = Extension(
+        'psutil._psutil_posix',
+        define_macros=macros,
+        sources=['psutil/_psutil_posix.c'])
+    if SUNOS:
+        posix_extension.libraries.append('socket')
+        if platform.release() == '5.10':
+            posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
+            posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+
+    extensions = [ext, posix_extension]
+else:
+    extensions = [ext]
+
 
 def main():
-    setup_args = dict(
+    setup(
         name='psutil',
         version=VERSION,
-        description=__doc__.replace('\n', '').strip(),
+        description=__doc__ .replace('\n', '').strip() if __doc__ else '',
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
@@ -271,6 +269,7 @@ def main():
         platforms='Platform Independent',
         license='BSD',
         packages=['psutil', 'psutil.tests'],
+        ext_modules=extensions,
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',
@@ -302,6 +301,7 @@ def main():
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',
@@ -317,9 +317,6 @@ def main():
             'Topic :: Utilities',
         ],
     )
-    if extensions is not None:
-        setup_args["ext_modules"] = extensions
-    setup(**setup_args)
 
 
 if __name__ == '__main__':

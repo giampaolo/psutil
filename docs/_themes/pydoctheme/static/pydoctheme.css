@@ -185,3 +185,13 @@ div.body h3 {
 div.body h2 {
     padding-left:10px;
 }
+
+.data {
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+}
+
+.data dd {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}

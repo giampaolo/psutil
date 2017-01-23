@@ -143,8 +143,8 @@ elif SUNOS:
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
-    # This is public API and it will be retrieved from _pssunos.py
-    # via sys.modules.
+    # This is public writable API which is read from _pslinux.py and
+    # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
@@ -181,7 +181,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",
+    "cpu_stats",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -189,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.0.1"
+__version__ = "5.0.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -221,6 +221,7 @@ if (int(__version__.replace('.', '')) !=
 # =====================================================================
 # --- exceptions
 # =====================================================================
+
 
 class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
@@ -453,6 +454,11 @@ class Process(object):
             self._hash = hash(self._ident)
         return self._hash
 
+    @property
+    def pid(self):
+        """The process PID."""
+        return self._pid
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -600,11 +606,6 @@ class Process(object):
             return False
 
     # --- actual API
-
-    @property
-    def pid(self):
-        """The process PID."""
-        return self._pid
 
     @memoize_when_activated
     def ppid(self):
@@ -993,6 +994,14 @@ class Process(object):
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
 
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+
+        The returned value is explicitly *not* split evenly between
+        all available logical CPUs. This means that a busy loop process
+        running on a system with 2 logical CPUs will be reported as
+        having 100% CPU utilization instead of 50%.
+
         Examples:
 
           >>> import psutil
@@ -1010,13 +1019,8 @@ class Process(object):
             raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
 
-        if POSIX:
-            def timer():
-                return _timer() * num_cpus
-        else:
-            def timer():
-                t = cpu_times()
-                return sum((t.user, t.system))
+        def timer():
+            return _timer() * num_cpus
 
         if blocking:
             st1 = timer()
@@ -1197,6 +1201,8 @@ class Process(object):
         all             the sum of all the possible families and protocols
         """
         return self._proc.connections(kind)
+
+    # --- signals
 
     if POSIX:
         def _send_signal(self, sig):
@@ -1856,6 +1862,36 @@ def cpu_times_percent(interval=None, percpu=False):
 def cpu_stats():
     """Return CPU statistics."""
     return _psplatform.cpu_stats()
+
+
+if hasattr(_psplatform, "cpu_freq"):
+
+    def cpu_freq(percpu=False):
+        """Return CPU frequency as a nameduple including current,
+        min and max frequency expressed in Mhz.
+
+        If percpu is True and the system supports per-cpu frequency
+        retrieval (Linux only) a list of frequencies is returned for
+        each CPU. If not a list with one element is returned.
+        """
+        ret = _psplatform.cpu_freq()
+        if percpu:
+            return ret
+        else:
+            num_cpus = len(ret)
+            if num_cpus == 1:
+                return ret[0]
+            currs, mins, maxs = [], [], []
+            for cpu in ret:
+                currs.append(cpu.current)
+                mins.append(cpu.min)
+                maxs.append(cpu.max)
+            return _common.scpufreq(
+                sum(currs) / num_cpus,
+                sum(mins) / num_cpus,
+                sum(maxs) / num_cpus)
+
+    __all__.append("cpu_freq")
 
 
 # =====================================================================

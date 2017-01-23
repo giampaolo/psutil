@@ -7,8 +7,8 @@
  * Platform-specific module methods for NetBSD.
  */
 
-#if defined(__NetBSD__)
-#define _KMEMUSER
+#if defined(PSUTIL_NETBSD)
+    #define _KMEMUSER
 #endif
 
 #include <Python.h>
