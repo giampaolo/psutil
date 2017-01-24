@@ -1876,6 +1876,9 @@ if hasattr(_psplatform, "cpu_freq"):
         each CPU. If not a list with one element is returned.
         """
         ret = _psplatform.cpu_freq()
+        # XXX
+        from pprint import pprint as pp
+        pp(ret)
         if percpu:
             return ret
         else:
