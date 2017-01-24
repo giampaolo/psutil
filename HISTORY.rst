@@ -1,9 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.0.2
+5.1.0
 =====
 
 *XXXX-XX-XX*
+
+**Enhancements**
+
+- 357_: added Process.cpu_num() (what CPU the process is on).
 
 **Bug fixes**
 
