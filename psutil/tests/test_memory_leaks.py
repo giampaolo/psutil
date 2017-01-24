@@ -267,6 +267,12 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.cpu_times)
 
     @skip_if_linux()
+    @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
+                         "platform not supported")
+    def test_cpu_num(self):
+        self.execute(self.proc.cpu_num)
+
+    @skip_if_linux()
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 

@@ -1299,6 +1299,11 @@ class Process(object):
         return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
+    def cpu_num(self):
+        """What CPU the process is on."""
+        return int(self._parse_stat_file()[37])
+
+    @wrap_exceptions
     def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
