@@ -1062,39 +1062,8 @@ def disk_partitions(all=False):
 
 
 # =====================================================================
-# --- other system functions
+# --- sensors
 # =====================================================================
-
-
-def users():
-    """Return currently connected users as a list of namedtuples."""
-    retlist = []
-    rawlist = cext.users()
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname == ':0.0' or hostname == ':0':
-            hostname = 'localhost'
-        nt = _common.suser(user, tty or None, hostname, tstamp)
-        retlist.append(nt)
-    return retlist
-
-
-def boot_time():
-    """Return the system boot time expressed in seconds since the epoch."""
-    global BOOT_TIME
-    with open_binary('%s/stat' % get_procfs_path()) as f:
-        for line in f:
-            if line.startswith(b'btime'):
-                ret = float(line.strip().split()[1])
-                BOOT_TIME = ret
-                return ret
-        raise RuntimeError(
-            "line 'btime' not found in %s/stat" % get_procfs_path())
 
 
 if os.path.exists('/sys/class/hwmon'):
@@ -1131,6 +1100,42 @@ if os.path.exists('/sys/class/hwmon'):
             ret[name].append((label, current, high, critical))
 
         return ret
+
+
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = cext.users()
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        # note: the underlying C function includes entries about
+        # system boot, run level and others.  We might want
+        # to use them in the future.
+        if not user_process:
+            continue
+        if hostname == ':0.0' or hostname == ':0':
+            hostname = 'localhost'
+        nt = _common.suser(user, tty or None, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
+
+
+def boot_time():
+    """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        for line in f:
+            if line.startswith(b'btime'):
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
+        raise RuntimeError(
+            "line 'btime' not found in %s/stat" % get_procfs_path())
 
 
 # =====================================================================
