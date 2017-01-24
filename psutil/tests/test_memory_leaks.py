@@ -184,7 +184,7 @@ class TestProcessObjectLeaks(TestMemLeak):
             "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
             "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
             "nice", "oneshot", "parent", "rlimit", "send_signal", "suspend",
-            "suspend", "terminate", "wait"))
+            "terminate", "wait"))
         for name in dir(psutil.Process):
             if name.startswith('_'):
                 continue
@@ -460,6 +460,17 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 class TestModuleFunctionsLeaks(TestMemLeak):
     """Test leaks of psutil module functions."""
 
+    def test_coverage(self):
+        skip = set((
+            "version_info", "__version__", "process_iter", "wait_procs",
+            "cpu_percent", "cpu_times_percent", "cpu_count"))
+        for name in psutil.__all__:
+            if not name.islower():
+                continue
+            if name in skip:
+                continue
+            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+
     # --- cpu
 
     @skip_if_linux()
@@ -517,6 +528,12 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @skip_if_linux()
     def test_disk_io_counters(self):
         self.execute(psutil.disk_io_counters)
+
+    # --- proc
+
+    @skip_if_linux()
+    def test_pids(self):
+        self.execute(psutil.pids)
 
     # --- net
 
