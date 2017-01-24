@@ -469,10 +469,11 @@ class TestScripts(unittest.TestCase):
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "platform not supported")
     def test_sensors(self):
-        self.assert_stdout('sensors.py')
+        if hasattr(psutil, "sensors_temperatures"):
+            self.assert_stdout('sensors.py')
+        else:
+            self.assert_syntax('sensors.py')
 
 
 # ===================================================================
