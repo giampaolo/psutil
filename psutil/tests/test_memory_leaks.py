@@ -179,6 +179,19 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     proc = thisproc
 
+    def test_coverage(self):
+        skip = set((
+            "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
+            "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
+            "nice", "oneshot", "parent", "rlimit", "send_signal", "suspend",
+            "terminate", "wait"))
+        for name in dir(psutil.Process):
+            if name.startswith('_'):
+                continue
+            if name in skip:
+                continue
+            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+
     @skip_if_linux()
     def test_name(self):
         self.execute(self.proc.name)
@@ -257,6 +270,10 @@ class TestProcessObjectLeaks(TestMemLeak):
     @skip_if_linux()
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
+
+    @skip_if_linux()
+    def test_num_ctx_switches(self):
+        self.execute(self.proc.num_ctx_switches)
 
     @skip_if_linux()
     def test_threads(self):
@@ -443,6 +460,17 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 class TestModuleFunctionsLeaks(TestMemLeak):
     """Test leaks of psutil module functions."""
 
+    def test_coverage(self):
+        skip = set((
+            "version_info", "__version__", "process_iter", "wait_procs",
+            "cpu_percent", "cpu_times_percent", "cpu_count"))
+        for name in psutil.__all__:
+            if not name.islower():
+                continue
+            if name in skip:
+                continue
+            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+
     # --- cpu
 
     @skip_if_linux()
@@ -500,6 +528,12 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @skip_if_linux()
     def test_disk_io_counters(self):
         self.execute(psutil.disk_io_counters)
+
+    # --- proc
+
+    @skip_if_linux()
+    def test_pids(self):
+        self.execute(psutil.pids)
 
     # --- net
 

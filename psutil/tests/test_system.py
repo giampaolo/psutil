@@ -705,6 +705,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertLessEqual(nt.current, nt.max)
                 for name in nt._fields:
                     value = getattr(nt, name)
+                    self.assertIsInstance(value, (int, long, float))
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)

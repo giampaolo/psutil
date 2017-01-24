@@ -466,6 +466,9 @@ class TestScripts(unittest.TestCase):
     def test_winservices(self):
         self.assert_stdout('winservices.py')
 
+    def test_cpu_distribution(self):
+        self.assert_syntax('cpu_distribution.py')
+
 
 # ===================================================================
 # --- Unit tests for test utilities.
