@@ -1876,24 +1876,33 @@ if hasattr(_psplatform, "cpu_freq"):
         each CPU. If not a list with one element is returned.
         """
         ret = _psplatform.cpu_freq()
-        # XXX
-        from pprint import pprint as pp
-        pp(ret)
         if percpu:
             return ret
         else:
-            num_cpus = len(ret)
-            if num_cpus == 1:
+            num_cpus = float(len(ret))
+            if num_cpus == 0:
+                return []
+            elif num_cpus == 1:
                 return ret[0]
-            currs, mins, maxs = [], [], []
-            for cpu in ret:
-                currs.append(cpu.current)
-                mins.append(cpu.min)
-                maxs.append(cpu.max)
-            return _common.scpufreq(
-                sum(currs) / num_cpus,
-                sum(mins) / num_cpus,
-                sum(maxs) / num_cpus)
+            else:
+                currs, mins, maxs = [], [], []
+                for cpu in ret:
+                    currs.append(cpu.current)
+                    mins.append(cpu.min)
+                    maxs.append(cpu.max)
+                try:
+                    current = sum(currs) / num_cpus,
+                except ZeroDivisionError:
+                    current = 0.0
+                try:
+                    min_ = sum(mins) / num_cpus,
+                except ZeroDivisionError:
+                    min_ = 0.0
+                try:
+                    max_ = sum(maxs) / num_cpus,
+                except ZeroDivisionError:
+                    max_ = 0.0
+                return _common.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
 
