@@ -469,6 +469,10 @@ class Process(object):
         return _common.pcputimes(*times)
 
     @wrap_exceptions
+    def cpu_num(self):
+        return cext.proc_cpu_num(self.pid, self._procfs_path)
+
+    @wrap_exceptions
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False

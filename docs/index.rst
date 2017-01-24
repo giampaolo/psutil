@@ -1242,13 +1242,12 @@ Process class
   .. method:: cpu_num()
 
     Return what CPU this process is currently running on.
-    The returned number should be ``<=`` :func:`psutil.cpu_count()` and
-    ``<= len(psutil.cpu_percent(percpu=True))``.
+    The returned number should be ``<=`` :func:`psutil.cpu_count()`.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
     `cpu_workload.py <https://github.com/giampaolo/psutil/blob/master/scripts/cpu_workload.py>`__ example script.
 
-    Availability: Linux, FreeBSD
+    Availability: Linux, FreeBSD, SunOS
 
     .. versionadded:: 5.1.0
 
