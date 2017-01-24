@@ -617,6 +617,41 @@ Network
   .. versionadded:: 3.0.0
 
 
+Sensors
+-------
+
+.. function:: sensors_temperatures(fahrenheit=False)
+
+  Return hardware temperatures. Each entry is a namedtuple representing a
+  certain hardware sensor (it may be a CPU, an hard disk or something
+  else, depending on the OS and its configuration).
+  All temperatures are expressed in celsius unless *fahrenheit* is set to
+  ``True``. Example::
+
+    >>> import psutil
+    >>> psutil.sensors_temperatures()
+    {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
+     'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
+     'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
+
+  See also `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
+  for an example application.
+
+  .. warning::
+
+    This API is experimental. Backwards incompatible changes may occur if
+    deemed necessary.
+
+  Availability: Linux
+
+  .. versionadded:: 5.1.0
+
+
+
 Other system info
 -----------------
 

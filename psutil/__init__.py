@@ -2180,15 +2180,12 @@ def net_if_stats():
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):
-        """Return hardware temperatures as a list of named tuples.
-        Each entry represents a "sensor" monitoring a certain hardware
-        resource.
-        The hardware resource may be a CPU, an hard disk or something
-        else, depending on the OS and its configuration.
-        All temperatures are expressed in celsius unless 'fahrenheit'
-        parameter is specified.
-        This function may raise NotImplementedError in case the OS
-        is not configured in order to provide these metrics.
+        """Return hardware temperatures. Each entry is a namedtuple
+        representing a certain hardware sensor (it may be a CPU, an
+        hard disk or something else, depending on the OS and its
+        configuration).
+        All temperatures are expressed in celsius unless *fahrenheit*
+        is set to True.
         """
         def to_fahrenheit(n):
             return (float(n) * 9 / 5) + 32
