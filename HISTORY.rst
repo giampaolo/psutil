@@ -7,7 +7,8 @@
 
 **Enhancements**
 
-- 357_: added Process.cpu_num() (what CPU the process is on).
+- 357_: added psutil.Process.cpu_num() (what CPU a process is on).
+- 941_: added psutil.cpu_freq() (CPU frequency).
 
 **Bug fixes**
 
