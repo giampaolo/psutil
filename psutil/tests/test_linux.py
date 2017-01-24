@@ -462,6 +462,14 @@ class TestSystemCPU(unittest.TestCase):
         else:
             self.assertNotIn('guest_nice', fields)
 
+    @unittest.skipUnless(os.path.exists("/sys/devices/system/cpu/possible"),
+                         "/sys/devices/system/cpu/possible does not exist")
+    def test_cpu_count(self):
+        with open("/sys/devices/system/cpu/possible", "rb") as f:
+            data = f.read().strip()
+        highest = int(data.split('-')[1]) + 1
+        self.assertEqual(psutil.cpu_count(), highest)
+
     @unittest.skipUnless(os.path.exists("/sys/devices/system/cpu/online"),
                          "/sys/devices/system/cpu/online does not exist")
     def test_cpu_count_logical_w_sysdev_cpu_online(self):
