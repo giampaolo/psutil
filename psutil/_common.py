@@ -160,7 +160,7 @@ scpustats = namedtuple(
 scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
 # psutil.sensors_temperatures()
 shwtemp = namedtuple(
-    'shwtemp', ['name', 'label', 'current', 'high', 'critical'])
+    'shwtemp', ['label', 'current', 'high', 'critical'])
 
 # --- for Process methods
 

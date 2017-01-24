@@ -2191,23 +2191,30 @@ if hasattr(_psplatform, "sensors_temperatures"):
         is not configured in order to provide these metrics.
         """
         def to_fahrenheit(n):
-            return (n * 9 / 5) + 32
+            return (float(n) * 9 / 5) + 32
 
-        ret = []
-        for rawtuple in _psplatform.sensors_temperatures():
-            name, label, current, high, critical = rawtuple
-            if fahrenheit:
-                current = to_fahrenheit(current)
-                if high is not None:
-                    high = to_fahrenheit(high)
-                if critical is not None:
-                    critical = to_fahrenheit(critical)
-            if high and not critical:
-                critical = high
-            elif critical and not high:
-                high = critical
-            ret.append(_common.shwtemp(name, label, current, high, critical))
-        return ret
+        ret = collections.defaultdict(list)
+        rawdict = _psplatform.sensors_temperatures()
+
+        for name, values in rawdict.items():
+            while values:
+                label, current, high, critical = values.pop(0)
+                if fahrenheit:
+                    current = to_fahrenheit(current)
+                    if high is not None:
+                        high = to_fahrenheit(high)
+                    if critical is not None:
+                        critical = to_fahrenheit(critical)
+
+                if high and not critical:
+                    critical = high
+                elif critical and not high:
+                    high = critical
+
+                ret[name].append(
+                    _common.shwtemp(label, current, high, critical))
+
+        return dict(ret)
 
     __all__.append("sensors_temperatures")
 

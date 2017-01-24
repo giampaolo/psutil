@@ -7,6 +7,7 @@
 from __future__ import division
 
 import base64
+import collections
 import errno
 import functools
 import glob
@@ -1096,7 +1097,8 @@ def boot_time():
 
 
 if os.path.exists('/sys/class/hwmon'):
-    def sensors_temps():
+
+    def sensors_temperatures():
         """Return hardware (CPU and others) temperatures as a list
         of named tuples including name, label, current, max and
         critical temperatures.
@@ -1121,22 +1123,23 @@ if os.path.exists('/sys/class/hwmon'):
                 with f:
                     return f.read().strip()
 
-        ret = []
+        ret = collections.defaultdict(list)
         basenames = sorted(set(
             [x.split('_')[0] for x in
              glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
         for base in basenames:
             name = cat(os.path.join(os.path.dirname(base), 'name'))
             label = cat(base + '_label', replace='')
-            current = int(cat(base + '_input')) / 1000.0
+            current = float(cat(base + '_input')) / 1000.0
             high = cat(base + '_max', replace=None)
             critical = cat(base + '_crit', replace=None)
-            if high is not None:
-                high = int(high) / 1000.0
-            if critical is not None:
-                critical = int(critical) / 1000.0
 
-            ret.append((name, label, current, high, critical))
+            if high is not None:
+                high = float(high) / 1000.0
+            if critical is not None:
+                critical = float(critical) / 1000.0
+
+            ret[name].append((label, current, high, critical))
 
         return ret
 
