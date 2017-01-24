@@ -285,7 +285,7 @@ def cat(fname, fallback=_DEFAULT, binary=True):
     """Return file content."""
     try:
         with open_binary(fname) if binary else open_text(fname) as f:
-            return f.read()
+            return f.read().strip()
     except IOError:
         if fallback != _DEFAULT:
             return fallback
@@ -1111,28 +1111,16 @@ if os.path.exists('/sys/class/hwmon'):
         - /sys/class/thermal/thermal_zone* is another one but it's more
           difficult to parse
         """
-        def cat(fname, replace=_DEFAULT):
-            try:
-                f = open(fname)
-            except IOError:
-                if replace != _DEFAULT:
-                    return replace
-                else:
-                    raise
-            else:
-                with f:
-                    return f.read().strip()
-
         ret = collections.defaultdict(list)
         basenames = sorted(set(
             [x.split('_')[0] for x in
              glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
         for base in basenames:
             name = cat(os.path.join(os.path.dirname(base), 'name'))
-            label = cat(base + '_label', replace='')
+            label = cat(base + '_label', fallback='')
             current = float(cat(base + '_input')) / 1000.0
-            high = cat(base + '_max', replace=None)
-            critical = cat(base + '_crit', replace=None)
+            high = cat(base + '_max', fallback=None)
+            critical = cat(base + '_crit', fallback=None)
 
             if high is not None:
                 high = float(high) / 1000.0
