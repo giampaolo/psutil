@@ -850,35 +850,37 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     | Linux                        | Windows                       | OSX                          | BSD                          | SunOS                    |
     +==============================+===============================+==============================+==============================+==========================+
-    | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_percent` | :meth:`name`             |
+    | :meth:`cpu_num`              | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`cpu_num`              | :meth:`name`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_times`    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_times`   | :meth:`cmdline`          |
+    | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_times`    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_percent` | :meth:`cmdline`          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`create_time`          | :meth:`create_time`      |
+    | :meth:`~Process.cpu_times`   | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`~Process.cpu_times`   | :meth:`create_time`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`ionice`                | :meth:`memory_percent`       | :meth:`gids`                 |                          |
+    | :meth:`create_time`          | :meth:`ionice`                | :meth:`memory_percent`       | :meth:`create_time`          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`memory_info`           | :meth:`num_ctx_switches`     | :meth:`io_counters`          | :meth:`memory_info`      |
+    | :meth:`name`                 | :meth:`memory_info`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`status`               | :meth:`nice`                  | :meth:`num_threads`          | :meth:`name`                 | :meth:`memory_percent`   |
+    | :meth:`ppid`                 | :meth:`nice`                  | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`memory_maps`           |                              | :meth:`memory_info`          | :meth:`nice`             |
+    | :meth:`status`               | :meth:`memory_maps`           |                              | :meth:`name`                 | :meth:`nice`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              | :meth:`num_ctx_switches`      | :meth:`create_time`          | :meth:`memory_percent`       | :meth:`num_threads`      |
+    | :meth:`terminal`             | :meth:`num_ctx_switches`      | :meth:`create_time`          | :meth:`memory_info`          | :meth:`num_threads`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`num_handles`           | :meth:`gids`                 | :meth:`num_ctx_switches`     | :meth:`ppid`             |
+    |                              | :meth:`num_handles`           | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`ppid`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`num_threads`           | :meth:`name`                 | :meth:`ppid`                 | :meth:`status`           |
+    | :meth:`gids`                 | :meth:`num_threads`           | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`status`           |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_threads`          | :meth:`username`              | :meth:`ppid`                 | :meth:`status`               | :meth:`terminal`         |
+    | :meth:`num_ctx_switches`     | :meth:`username`              | :meth:`ppid`                 | :meth:`ppid`                 | :meth:`terminal`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`status`               | :meth:`terminal`             |                          |
+    | :meth:`num_threads`          |                               | :meth:`status`               | :meth:`status`               |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`terminal`             | :meth:`uids`                 | :meth:`gids`             |
+    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`gids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              |                               | :meth:`uids`                 | :meth:`username`             | :meth:`uids`             |
+    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               | :meth:`username`             |                              | :meth:`username`         |
+    |                              |                               | :meth:`username`             | :meth:`username`             | :meth:`username`         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`memory_full_info`     |                               |                              |                              |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
