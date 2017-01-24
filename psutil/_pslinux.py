@@ -1086,7 +1086,7 @@ if os.path.exists('/sys/class/hwmon'):
             [x.split('_')[0] for x in
              glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
         for base in basenames:
-            name = cat(os.path.join(os.path.dirname(base), 'name'))
+            unit_name = cat(os.path.join(os.path.dirname(base), 'name'))
             label = cat(base + '_label', fallback='')
             current = float(cat(base + '_input')) / 1000.0
             high = cat(base + '_max', fallback=None)
@@ -1097,7 +1097,7 @@ if os.path.exists('/sys/class/hwmon'):
             if critical is not None:
                 critical = float(critical) / 1000.0
 
-            ret[name].append((label, current, high, critical))
+            ret[unit_name].append((label, current, high, critical))
 
         return ret
 
