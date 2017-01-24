@@ -284,13 +284,14 @@ def set_scputimes_ntuple(procfs_path):
 def cat(fname, fallback=_DEFAULT, binary=True):
     """Return file content."""
     try:
-        with open_binary(fname) if binary else open_text(fname) as f:
-            return f.read().strip()
+        f = open_binary(fname) if binary else open_text(fname)
     except IOError:
         if fallback != _DEFAULT:
             return fallback
-        else:
-            raise
+        raise
+    else:
+        with f:
+            return f.read().strip()
 
 
 try:

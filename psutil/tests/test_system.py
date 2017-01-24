@@ -759,7 +759,6 @@ class TestSystemAPIs(unittest.TestCase):
                          "platform not suported")
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
-        assert temps, temps
         for name, entries in temps.items():
             self.assertIsInstance(name, (str, unicode))
             for entry in entries:
