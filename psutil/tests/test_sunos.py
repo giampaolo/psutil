@@ -36,6 +36,10 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.used, used)
         self.assertEqual(psutil_swap.free, free)
 
+    def test_cpu_count(self):
+        out = sh("/usr/sbin/psrinfo")
+        self.assertEqual(psutil.cpu_count(), len(out.split('\n')))
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
