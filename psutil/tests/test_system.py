@@ -753,6 +753,18 @@ class TestSystemAPIs(unittest.TestCase):
         for name in names:
             self.assertIs(getattr(psutil, name), False, msg=name)
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "platform not suported")
+    def test_sensors_temperatures(self):
+        ls = psutil.sensors_temperatures()
+        for entry in ls:
+            if entry.current is not None:
+                self.assertGreaterEqual(entry.current, 0)
+            if entry.high is not None:
+                self.assertGreaterEqual(entry.high, 0)
+            if entry.critical is not None:
+                self.assertGreaterEqual(entry.critical, 0)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

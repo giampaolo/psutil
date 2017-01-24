@@ -1096,7 +1096,7 @@ def boot_time():
 
 
 if os.path.exists('/sys/class/hwmon'):
-    def temperatures():
+    def sensors_temps():
         """Return hardware (CPU and others) temperatures as a list
         of named tuples including name, label, current, max and
         critical temperatures.
