@@ -185,7 +185,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "users", "boot_time",                                           # others
+    "users", "boot_time",  # "temperatures"                         # others
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
@@ -2216,6 +2216,8 @@ if hasattr(_psplatform, "temperatures"):
                 high = critical
             ret.append(_common.shwtemp(name, label, current, high, critical))
         return ret
+
+    __all__.append("temperatures")
 
 
 # =====================================================================

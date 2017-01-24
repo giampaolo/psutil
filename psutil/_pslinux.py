@@ -1095,54 +1095,50 @@ def boot_time():
             "line 'btime' not found in %s/stat" % get_procfs_path())
 
 
-def temperatures():
-    """Return hardware (CPU and others) temperatures as a list
-    of named tuples including name, label, current, max and
-    critical temperatures.
+if os.path.exists('/sys/class/hwmon'):
+    def temperatures():
+        """Return hardware (CPU and others) temperatures as a list
+        of named tuples including name, label, current, max and
+        critical temperatures.
 
-    Implementation notes:
-    - /sys/class/hwmon looks like the most recent interface to
-      retrieve this info, and this implementation relies on it
-      only (old distros will probably use something else)
-    - lm-sensors on Ubuntu 16.04 relies on /sys/class/hwmon
-    - /sys/class/thermal/thermal_zone* is another one but it's more
-      difficult to parse
-    """
-    def cat(fname, replace=_DEFAULT):
-        try:
-            f = open(fname)
-        except IOError:
-            if replace != _DEFAULT:
-                return replace
+        Implementation notes:
+        - /sys/class/hwmon looks like the most recent interface to
+          retrieve this info, and this implementation relies on it
+          only (old distros will probably use something else)
+        - lm-sensors on Ubuntu 16.04 relies on /sys/class/hwmon
+        - /sys/class/thermal/thermal_zone* is another one but it's more
+          difficult to parse
+        """
+        def cat(fname, replace=_DEFAULT):
+            try:
+                f = open(fname)
+            except IOError:
+                if replace != _DEFAULT:
+                    return replace
+                else:
+                    raise
             else:
-                raise
-        else:
-            with f:
-                return f.read().strip()
+                with f:
+                    return f.read().strip()
 
-    path = '/sys/class/hwmon'
-    if not os.path.exists(path):
-        raise NotImplementedError(
-            "%s hwmon fs does not exist on this platform" % path)
+        ret = []
+        basenames = sorted(set(
+            [x.split('_')[0] for x in
+             glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
+        for base in basenames:
+            name = cat(os.path.join(os.path.dirname(base), 'name'))
+            label = cat(base + '_label', replace='')
+            current = int(cat(base + '_input')) / 1000.0
+            high = cat(base + '_max', replace=None)
+            critical = cat(base + '_crit', replace=None)
+            if high is not None:
+                high = int(high) / 1000.0
+            if critical is not None:
+                critical = int(critical) / 1000.0
 
-    ret = []
-    basenames = sorted(set(
-        [x.split('_')[0] for x in
-         glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
-    for base in basenames:
-        name = cat(os.path.join(os.path.dirname(base), 'name'))
-        label = cat(base + '_label', replace='')
-        current = int(cat(base + '_input')) / 1000.0
-        high = cat(base + '_max', replace=None)
-        if high is not None:
-            high = int(high) / 1000.0
-        critical = cat(base + '_crit', replace=None)
-        if critical is not None:
-            critical = int(critical) / 1000.0
+            ret.append((name, label, current, high, critical))
 
-        ret.append((name, label, current, high, critical))
-
-    return ret
+        return ret
 
 
 # =====================================================================
