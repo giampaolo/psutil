@@ -198,6 +198,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
+    unsigned char oncpu;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
@@ -252,9 +253,25 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
 
+#ifdef PSUTIL_FREEBSD
+    // what CPU we're on; top was used as an example:
+    // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
+    //     view=markup&pathrev=273835
+    if (kp.ki_stat == SRUN && kp.ki_oncpu != NOCPU)
+        oncpu = kp.ki_oncpu;
+    else
+        oncpu = kp.ki_lastcpu;
+#else
+    // On Net/OpenBSD we have kp.p_cpuid but it appears it's always
+    // set to KI_NOCPU. Even if it's not, ki_lastcpu does not exist
+    // so there's no way to determine where "sleeping" processes
+    // were. Not supported.
+    oncpu = -1;
+#endif
+
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
-        "(lillllllidllllddddlllllO)",
+        "(lillllllidllllddddlllllbO)",
 #ifdef PSUTIL_FREEBSD
         //
         (long)kp.ki_ppid,                // (long) ppid
@@ -287,6 +304,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
+        // others
+        oncpu,                            // (unsigned char) the CPU we are on
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
         //
         (long)kp.p_ppid,                 // (long) ppid
@@ -321,6 +340,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
+        // others
+        oncpu,                            // (unsigned char) the CPU we are on
 #endif
         py_name                           // (pystr) name
     );

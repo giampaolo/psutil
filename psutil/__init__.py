@@ -181,7 +181,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",
+    "cpu_stats",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -189,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.0.2"
+__version__ = "5.1.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -837,6 +837,19 @@ class Process(object):
             else:
                 self._proc.cpu_affinity_set(list(set(cpus)))
 
+    # Linux, FreeBSD, SunOS
+    if hasattr(_psplatform.Process, "cpu_num"):
+
+        def cpu_num(self):
+            """Return what CPU this process is currently running on.
+            The returned number should be <= psutil.cpu_count()
+            and <= len(psutil.cpu_percent(percpu=True)).
+            It may be used in conjunction with
+            psutil.cpu_percent(percpu=True) to observe the system
+            workload distributed across CPUs.
+            """
+            return self._proc.cpu_num()
+
     # Linux, OSX and Windows only
     if hasattr(_psplatform.Process, "environ"):
 
@@ -1007,13 +1020,8 @@ class Process(object):
             raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
 
-        if POSIX:
-            def timer():
-                return _timer() * num_cpus
-        else:
-            def timer():
-                t = cpu_times()
-                return sum((t.user, t.system))
+        def timer():
+            return _timer() * num_cpus
 
         if blocking:
             st1 = timer()
@@ -1855,6 +1863,36 @@ def cpu_times_percent(interval=None, percpu=False):
 def cpu_stats():
     """Return CPU statistics."""
     return _psplatform.cpu_stats()
+
+
+if hasattr(_psplatform, "cpu_freq"):
+
+    def cpu_freq(percpu=False):
+        """Return CPU frequency as a nameduple including current,
+        min and max frequency expressed in Mhz.
+
+        If percpu is True and the system supports per-cpu frequency
+        retrieval (Linux only) a list of frequencies is returned for
+        each CPU. If not a list with one element is returned.
+        """
+        ret = _psplatform.cpu_freq()
+        if percpu:
+            return ret
+        else:
+            num_cpus = len(ret)
+            if num_cpus == 1:
+                return ret[0]
+            currs, mins, maxs = [], [], []
+            for cpu in ret:
+                currs.append(cpu.current)
+                mins.append(cpu.min)
+                maxs.append(cpu.max)
+            return _common.scpufreq(
+                sum(currs) / num_cpus,
+                sum(mins) / num_cpus,
+                sum(maxs) / num_cpus)
+
+    __all__.append("cpu_freq")
 
 
 # =====================================================================

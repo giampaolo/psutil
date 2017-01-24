@@ -79,8 +79,6 @@ FEATURES
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
 
-- #357: what CPU a process is on.
-
 - Doc / wiki which compares similarities between UNIX cli tools and psutil.
   Example:
   ```

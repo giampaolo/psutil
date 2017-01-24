@@ -156,6 +156,9 @@ snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
+# psutil.cpu_freq()
+scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
+# psutil.temperatures()
 shwtemp = namedtuple(
     'shwtemp', ['name', 'label', 'current', 'high', 'critical'])
 

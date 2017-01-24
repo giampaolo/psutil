@@ -191,6 +191,33 @@ CPU
   .. versionadded:: 4.1.0
 
 
+.. function:: cpu_freq(percpu=False)
+
+    Return CPU frequency as a nameduple including *current*, *min* and *max*
+    frequencies expressed in Mhz.
+    If *percpu* is ``True`` and the system supports per-cpu frequency
+    retrieval (Linux only) a list of frequencies is returned for each CPU,
+    if not, a list with a single element is returned.
+    If *min* and *max* cannot be determined they are set to ``0``.
+
+    Example (Linux):
+
+    .. code-block:: python
+
+       >>> import psutil
+       >>> psutil.cpu_freq()
+       scpufreq(current=931.42925, min=800.0, max=3500.0)
+       >>> psutil.cpu_freq(percpu=True)
+       [scpufreq(current=2394.945, min=800.0, max=3500.0),
+        scpufreq(current=2236.812, min=800.0, max=3500.0),
+        scpufreq(current=1703.609, min=800.0, max=3500.0),
+        scpufreq(current=1754.289, min=800.0, max=3500.0)]
+
+    Availability: Linux, OSX, Windows
+
+    .. versionadded:: 5.1.0
+
+
 Memory
 ------
 
@@ -823,39 +850,41 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     | Linux                        | Windows                       | OSX                          | BSD                          | SunOS                    |
     +==============================+===============================+==============================+==============================+==========================+
-    | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_percent` | :meth:`name`             |
+    | :meth:`cpu_num`              | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`cpu_num`              | :meth:`name`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_times`    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_times`   | :meth:`cmdline`          |
+    | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_times`    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_percent` | :meth:`cmdline`          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`create_time`          | :meth:`create_time`      |
+    | :meth:`~Process.cpu_times`   | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`~Process.cpu_times`   | :meth:`create_time`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`ionice`                | :meth:`memory_percent`       | :meth:`gids`                 |                          |
+    | :meth:`create_time`          | :meth:`ionice`                | :meth:`memory_percent`       | :meth:`create_time`          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`memory_info`           | :meth:`num_ctx_switches`     | :meth:`io_counters`          | :meth:`memory_info`      |
+    | :meth:`name`                 | :meth:`memory_info`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`status`               | :meth:`nice`                  | :meth:`num_threads`          | :meth:`name`                 | :meth:`memory_percent`   |
+    | :meth:`ppid`                 | :meth:`nice`                  | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`memory_maps`           |                              | :meth:`memory_info`          | :meth:`nice`             |
+    | :meth:`status`               | :meth:`memory_maps`           |                              | :meth:`name`                 | :meth:`nice`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              | :meth:`num_ctx_switches`      | :meth:`create_time`          | :meth:`memory_percent`       | :meth:`num_threads`      |
+    | :meth:`terminal`             | :meth:`num_ctx_switches`      | :meth:`create_time`          | :meth:`memory_info`          | :meth:`num_threads`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`num_handles`           | :meth:`gids`                 | :meth:`num_ctx_switches`     | :meth:`ppid`             |
+    |                              | :meth:`num_handles`           | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`ppid`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`num_threads`           | :meth:`name`                 | :meth:`ppid`                 | :meth:`status`           |
+    | :meth:`gids`                 | :meth:`num_threads`           | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`status`           |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_threads`          | :meth:`username`              | :meth:`ppid`                 | :meth:`status`               | :meth:`terminal`         |
+    | :meth:`num_ctx_switches`     | :meth:`username`              | :meth:`ppid`                 | :meth:`ppid`                 | :meth:`terminal`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`status`               | :meth:`terminal`             |                          |
+    | :meth:`num_threads`          |                               | :meth:`status`               | :meth:`status`               |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`terminal`             | :meth:`uids`                 | :meth:`gids`             |
+    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`gids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              |                               | :meth:`uids`                 | :meth:`username`             | :meth:`uids`             |
+    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               | :meth:`username`             |                              | :meth:`username`         |
+    |                              |                               | :meth:`username`             | :meth:`username`             | :meth:`username`         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`memory_full_info`     |                               |                              |                              |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | *speedup: +2.5x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         |
+    | *speedup: +2.6x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
 
     .. versionadded:: 5.0.0
@@ -1211,6 +1240,18 @@ Process class
     Availability: Linux, Windows, FreeBSD
 
     .. versionchanged:: 2.2.0 added support for FreeBSD
+
+  .. method:: cpu_num()
+
+    Return what CPU this process is currently running on.
+    The returned number should be ``<=`` :func:`psutil.cpu_count()`.
+    It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
+    observe the system workload distributed across multiple CPUs as shown by
+    `cpu_workload.py <https://github.com/giampaolo/psutil/blob/master/scripts/cpu_workload.py>`__ example script.
+
+    Availability: Linux, FreeBSD, SunOS
+
+    .. versionadded:: 5.1.0
 
   .. method:: memory_info()
 

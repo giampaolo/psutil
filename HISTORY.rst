@@ -1,15 +1,22 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.0.2
+5.1.0
 =====
 
 *XXXX-XX-XX*
+
+**Enhancements**
+
+- 357_: added psutil.Process.cpu_num() (what CPU a process is on).
+- 941_: added psutil.cpu_freq() (CPU frequency).
 
 **Bug fixes**
 
 - 687_: [Linux] pid_exists() no longer returns True if passed a process thread
   ID.
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+  higher number than real usage.
 
 
 5.0.1

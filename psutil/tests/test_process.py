@@ -281,6 +281,16 @@ class TestProcess(unittest.TestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
+    @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
+                         "platform not supported")
+    def test_cpu_num(self):
+        p = psutil.Process()
+        num = p.cpu_num()
+        self.assertGreaterEqual(num, 0)
+        if psutil.cpu_count() == 1:
+            self.assertEqual(num, 0)
+        self.assertIn(p.cpu_num(), range(psutil.cpu_count()))
+
     def test_create_time(self):
         sproc = get_test_subprocess()
         now = time.time()
@@ -853,6 +863,10 @@ class TestProcess(unittest.TestCase):
             if hasattr(os, "sched_getaffinity"):
                 self.assertEqual(p.cpu_affinity(),
                                  list(os.sched_getaffinity(p.pid)))
+            # also test num_cpu()
+            if hasattr(p, "num_cpu"):
+                self.assertEqual(p.cpu_affinity()[0], p.num_cpu())
+
         #
         p.cpu_affinity(all_cpus)
         self.assertEqual(p.cpu_affinity(), all_cpus)
@@ -1723,6 +1737,12 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret.user >= 0)
         self.assertTrue(ret.system >= 0)
 
+    def cpu_num(self, ret, proc):
+        self.assertGreaterEqual(ret, 0)
+        if psutil.cpu_count() == 1:
+            self.assertEqual(ret, 0)
+        self.assertIn(ret, range(psutil.cpu_count()))
+
     def memory_info(self, ret, proc):
         for name in ret._fields:
             self.assertGreaterEqual(getattr(ret, name), 0)
@@ -1793,6 +1813,9 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def cpu_affinity(self, ret, proc):
         assert ret != [], ret
+        cpus = range(psutil.cpu_count())
+        for n in ret:
+            self.assertIn(n, cpus)
 
     def terminal(self, ret, proc):
         if ret is not None:

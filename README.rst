@@ -122,6 +122,9 @@ CPU
     >>>
     >>> psutil.cpu_stats()
     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
+    >>>
+    >>> psutil.cpu_freq()
+    scpufreq(current=931.42925, min=800.0, max=3500.0)
 
 Memory
 ======
@@ -246,6 +249,8 @@ Process management
     >>> p.cpu_affinity()
     [0, 1, 2, 3]
     >>> p.cpu_affinity([0])  # set
+    >>> p.cpu_num()
+    2
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
