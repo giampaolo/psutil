@@ -837,6 +837,7 @@ class Process(object):
             else:
                 self._proc.cpu_affinity_set(list(set(cpus)))
 
+    # Linux, FreeBSD, SunOS
     if hasattr(_psplatform.Process, "cpu_num"):
 
         def cpu_num(self):

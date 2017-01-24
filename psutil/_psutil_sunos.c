@@ -169,6 +169,86 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return what CPU the process is running on.
+ */
+static PyObject *
+psutil_proc_cpu_num(PyObject *self, PyObject *args) {
+    int fd = NULL;
+    int pid;
+    char path[1000];
+    struct prheader header;
+    struct lwpsinfo *lwp;
+    char *lpsinfo = NULL;
+    char *ptr = NULL;
+    int nent;
+    int size;
+    int proc_num;
+    size_t nbytes;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+
+    sprintf(path, "%s/%i/lpsinfo", procfs_path, pid);
+    fd = open(path, O_RDONLY);
+    if (fd == -1) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
+        return NULL;
+    }
+
+    // read header
+    nbytes = pread(fd, &header, sizeof(header), 0);
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != sizeof(header)) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // malloc
+    nent = header.pr_nent;
+    size = header.pr_entsize * nent;
+    ptr = lpsinfo = malloc(size);
+    if (lpsinfo == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    // read the rest
+    nbytes = pread(fd, lpsinfo, size, sizeof(header));
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != size) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // done
+    lwp = (lwpsinfo_t *)ptr;
+    proc_num = lwp->pr_onpro;
+    close(fd);
+    free(ptr);
+    free(lpsinfo);
+    return Py_BuildValue("i", proc_num);
+
+error:
+    if (fd != NULL)
+        close(fd);
+    if (ptr != NULL)
+        free(ptr);
+    if (lpsinfo != NULL)
+        free(lpsinfo);
+    return NULL;
+}
+
+
+/*
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
@@ -1340,6 +1420,8 @@ PsutilMethods[] = {
      "Return process memory mappings"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
+    {"proc_cpu_num", psutil_proc_cpu_num, METH_VARARGS,
+     "Return what CPU the process is on"},
 
     // --- system-related functions
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
