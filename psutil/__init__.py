@@ -1885,21 +1885,21 @@ if hasattr(_psplatform, "cpu_freq"):
             elif num_cpus == 1:
                 return ret[0]
             else:
-                currs, mins, maxs = [], [], []
+                currs, mins, maxs = 0.0, 0.0, 0.0
                 for cpu in ret:
-                    currs.append(cpu.current)
-                    mins.append(cpu.min)
-                    maxs.append(cpu.max)
+                    currs += cpu.current
+                    mins += cpu.min
+                    maxs += cpu.max
                 try:
-                    current = sum(currs) / num_cpus,
+                    current = currs / num_cpus
                 except ZeroDivisionError:
                     current = 0.0
                 try:
-                    min_ = sum(mins) / num_cpus,
+                    min_ = mins / num_cpus
                 except ZeroDivisionError:
                     min_ = 0.0
                 try:
-                    max_ = sum(maxs) / num_cpus,
+                    max_ = maxs / num_cpus
                 except ZeroDivisionError:
                     max_ = 0.0
                 return _common.scpufreq(current, min_, max_)
