@@ -622,19 +622,22 @@ Sensors
 
 .. function:: sensors_battery()
 
-  Return a namedtuple with the following values:
+  Return battery status information as a namedtuple including the following
+  values:
 
   - **percent**: battery power left as a percentage.
-  - **secsleft**: number of seconds left before battery run out of power; this
-    may also be :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`
-    or :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
+  - **secsleft**: (rough approximation) number of seconds left before the
+    battery run out of power; this may be set to
+    :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`
+    or :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>` in
+    case the remaining time cannot be determined or is unlimited.
 
   If no battery is installed this function will return ``None``. Example::
 
     >>> def secs2hours(secs):
-    ...     m, s = divmod(secs, 60)
-    ...     h, m = divmod(m, 60)
-    ...     return "%d:%02d:%02d" % (h, m, s)
+    ...     mm, ss = divmod(secs, 60)
+    ...     hh, mm = divmod(m, 60)
+    ...     return "%d:%02d:%02d" % (hh, mm, ss)
     ...
     >>> batt = psutil.sensors_battery()
     >>> batt
@@ -2018,8 +2021,9 @@ Constants
 .. data:: POWER_TIME_UNKNOWN
 .. data:: POWER_TIME_UNLIMITED
 
-  This can be the value of *secsleft* field of
-  :func:`psutil.sensors_battery()`.
+  Whether the remaining time of the battery cannot be determined or is
+  unlimited.
+  May be assigned to :func:`psutil.sensors_battery()`'s *secsleft* field.
 
   .. versionadded:: 5.1.0
 

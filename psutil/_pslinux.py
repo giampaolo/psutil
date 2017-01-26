@@ -1072,7 +1072,10 @@ def sensors_battery():
     energy_now = int(cat(root + "energy_now"))
     power_now = int(cat(root + "power_now"))
     percent = int(cat(root + "capacity"))
-    secsleft = int(energy_now / power_now * 3600)
+    try:
+        secsleft = int(energy_now / power_now * 3600)
+    except ZeroDivisionError:
+        secsleft = _common.POWER_TIME_UNKNOWN
     return _common.sbattery(percent, secsleft)
 
 
