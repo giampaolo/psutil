@@ -36,6 +36,7 @@ DEPS = [
     "perf",
     "pip",
     "pypiwin32",
+    "pyreadline",
     "setuptools",
     "unittest2",
     "wheel",
