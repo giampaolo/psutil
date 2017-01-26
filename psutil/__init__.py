@@ -195,6 +195,8 @@ __author__ = "Giampaolo Rodola'"
 __version__ = "5.1.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
+POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
+POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
 _timer = getattr(time, 'monotonic', time.time)
 

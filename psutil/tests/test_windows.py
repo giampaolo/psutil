@@ -159,6 +159,53 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 # ===================================================================
+# sensors_battery()
+# ===================================================================
+
+
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
+class TestSensorsBattery(unittest.TestCase):
+
+    def test_percent(self):
+        w = wmi.WMI()
+        battery_psutil = psutil.sensors_battery()
+        battery_wmi = w.query('select * from Win32_Battery')[0]
+        if battery_psutil is None:
+            self.assertNot(battery_wmi.EstimatedChargeRemaining)
+        else:
+            self.assertAlmostEqual(
+                battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,
+                delta=1)
+
+    def test_emulate_no_battery(self):
+        with mock.patch("psutil._pswindows.cext.sensors_battery",
+                        return_value=(0, 128, 0, 0)) as m:
+            self.assertIsNone(psutil.sensors_battery())
+            assert m.called
+
+    def test_emulate_power_connected(self):
+        with mock.patch("psutil._pswindows.cext.sensors_battery",
+                        return_value=(1, 0, 0, 0)) as m:
+            self.assertEqual(psutil.sensors_battery().secsleft,
+                             psutil.POWER_TIME_UNLIMITED)
+            assert m.called
+
+    def test_emulate_power_charging(self):
+        with mock.patch("psutil._pswindows.cext.sensors_battery",
+                        return_value=(0, 8, 0, 0)) as m:
+            self.assertEqual(psutil.sensors_battery().secsleft,
+                             psutil.POWER_TIME_UNLIMITED)
+            assert m.called
+
+    def test_emulate_secs_left_unknown(self):
+        with mock.patch("psutil._pswindows.cext.sensors_battery",
+                        return_value=(0, 0, 0, -1)) as m:
+            self.assertEqual(psutil.sensors_battery().secsleft,
+                             psutil.POWER_TIME_UNKNOWN)
+            assert m.called
+
+
+# ===================================================================
 # Process APIs
 # ===================================================================
 
