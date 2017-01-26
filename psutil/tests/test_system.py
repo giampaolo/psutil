@@ -709,9 +709,10 @@ class TestSystemAPIs(unittest.TestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        if not TRAVIS:
-            assert ls, ls
+        if TRAVIS and not ls:
+            return
 
+        assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])
 
         if LINUX:
