@@ -629,7 +629,18 @@ Sensors
     may also be :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`
     or :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
 
-  If no battery is installed this function will return ``None``.
+  If no battery is installed this function will return ``None``. Example::
+
+    >>> def secs2hours(secs):
+    ...     m, s = divmod(secs, 60)
+    ...     h, m = divmod(m, 60)
+    ...     return "%d:%02d:%02d" % (h, m, s)
+    ...
+    >>> batt = psutil.sensors_battery()
+    >>> batt
+    sbattery(percent=93, secsleft=16628)
+    >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
+    charge = 93%, time left = 4:37:08
 
   Availability: Linux, Windows
 

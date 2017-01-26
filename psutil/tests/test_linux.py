@@ -1024,6 +1024,12 @@ class TestMisc(unittest.TestCase):
         finally:
             t.stop()
 
+    def test_sensors_battery_percent(self):
+        out = sh("acpi -b")
+        acpi_value = int(out.split(",")[1].strip().replace('%', ''))
+        psutil_value = psutil.sensors_battery().percent
+        self.assertAlmostEqual(acpi_value, psutil_value, delta=1)
+
 
 # =====================================================================
 # test process

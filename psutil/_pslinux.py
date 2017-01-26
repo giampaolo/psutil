@@ -1069,13 +1069,11 @@ def sensors_battery():
     if not os.path.exists(root.rstrip('/')):
         return None
 
-    # TODO: figure out the algorithm to calculate residual time.
-    # energy_now = int(cat(root + "energy_now"))
-    # power_now = int(cat(root + "power_now"))
-    # energy_full = int(cat(root + "energy_full"))
-    # secsleft = 3600 * energy_now / power_now
+    energy_now = int(cat(root + "energy_now"))
+    power_now = int(cat(root + "power_now"))
     percent = int(cat(root + "capacity"))
-    return _common.sbattery(percent, 0)
+    secsleft = int(energy_now / power_now * 3600)
+    return _common.sbattery(percent, secsleft)
 
 
 # =====================================================================
