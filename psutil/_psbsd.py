@@ -396,6 +396,20 @@ def net_connections(kind):
 
 
 # =====================================================================
+#  --- sensors
+# =====================================================================
+
+
+def sensors_battery():
+    percent, minsleft = cext.sensors_battery()
+    if minsleft == -1:
+        secsleft = _common.POWER_TIME_UNLIMITED
+    else:
+        secsleft = minsleft * 60
+    return _common.sbattery(percent, secsleft)
+
+
+# =====================================================================
 #  --- other system functions
 # =====================================================================
 

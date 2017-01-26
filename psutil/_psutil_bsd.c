@@ -934,6 +934,10 @@ PsutilMethods[] = {
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},
 #endif
+#if defined(PSUTIL_FREEBSD)
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery information."},
+#endif
     {NULL, NULL, 0, NULL}
 };
 
