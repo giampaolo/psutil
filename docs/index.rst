@@ -617,6 +617,25 @@ Network
   .. versionadded:: 3.0.0
 
 
+Sensors
+-------
+
+.. function:: sensors_battery()
+
+  Return a namedtuple with the following values:
+
+  - **percent**: battery power left as a percentage.
+  - **secsleft**: number of seconds left before battery run out of power; this
+    may also be :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`
+    or :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
+
+  If no battery is installed this function will return ``None``.
+
+  Availability: Linux, Windows
+
+  .. versionadded:: 5.1.0
+
+
 Other system info
 -----------------
 
@@ -1983,6 +2002,15 @@ Constants
   To be used in conjunction with :func:`psutil.net_if_stats()`.
 
   .. versionadded:: 3.0.0
+
+.. _const-power:
+.. data:: POWER_TIME_UNKNOWN
+.. data:: POWER_TIME_UNLIMITED
+
+  This can be the value of *secsleft* field of
+  :func:`psutil.sensors_battery()`.
+
+  .. versionadded:: 5.1.0
 
 .. _const-version-info:
 .. data:: version_info

@@ -3456,6 +3456,31 @@ error:
 }
 
 
+/*
+ * Return battery usage stats.
+ */
+static PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    SYSTEM_POWER_STATUS sps;
+
+    if (GetSystemPowerStatus(&sps) == 0) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return Py_BuildValue(
+        "iiiI",
+        sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
+        // status flag:
+        // 1, 2, 4 = high, low, critical
+        // 8 = charging
+        // 128 = no battery
+        sps.BatteryFlag,
+        sps.BatteryLifePercent,  // percent
+        sps.BatteryLifeTime  // remaining secs
+    );
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3562,6 +3587,8 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return CPU frequency."},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery metrics usage."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

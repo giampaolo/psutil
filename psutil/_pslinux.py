@@ -1075,7 +1075,7 @@ def sensors_battery():
     # energy_full = int(cat(root + "energy_full"))
     # secsleft = 3600 * energy_now / power_now
     percent = int(cat(root + "capacity"))
-    return _common.sbattery(percent)
+    return _common.sbattery(percent, 0)
 
 
 # =====================================================================

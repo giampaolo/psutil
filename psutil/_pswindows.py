@@ -362,6 +362,32 @@ def net_if_addrs():
 
 
 # =====================================================================
+# --- sensors
+# =====================================================================
+
+
+def sensors_battery():
+    acline_status, flags, percent, secsleft = cext.sensors_battery()
+    power_connected = acline_status == 1
+    no_battery = bool(flags & 128)
+    charging = bool(flags & 8)
+
+    # print("acline_status=%s, flags=%s, percent=%s, secsleft=%s" % (
+    #     acline_status, flags, percent, secsleft))
+    # print("power_connected=%s, no_battery=%s, charging=%s" % (
+    #     power_connected, no_battery, charging))
+
+    if no_battery:
+        return None
+    if power_connected or charging:
+        secsleft = _common.POWER_TIME_UNLIMITED
+    elif secsleft == -1:
+        secsleft = _common.POWER_TIME_UNKNOWN
+
+    return _common.sbattery(percent, secsleft)
+
+
+# =====================================================================
 # --- other system functions
 # =====================================================================
 
