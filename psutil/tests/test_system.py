@@ -712,6 +712,9 @@ class TestSystemAPIs(unittest.TestCase):
         if not TRAVIS:
             assert ls, ls
 
+        # XXX
+        from pprint import pprint as pp
+        pp(psutil.cpu_freq(percpu=False))
         check_ls([psutil.cpu_freq(percpu=False)])
 
         if LINUX:
