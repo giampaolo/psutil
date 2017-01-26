@@ -754,6 +754,14 @@ class TestSystemAPIs(unittest.TestCase):
         for name in names:
             self.assertIs(getattr(psutil, name), False, msg=name)
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
+                         "platform not supported")
+    def test_sensors_battery(self):
+        ret = psutil.sensors_battery()
+        if ret.percent is not None:
+            self.assertGreaterEqual(ret.percent, 0)
+            self.assertLessEqual(ret.percent, 100)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

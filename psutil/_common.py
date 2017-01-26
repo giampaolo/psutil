@@ -158,6 +158,8 @@ scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
 # psutil.cpu_freq()
 scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
+# psutil.sensors_battery()
+sbattery = namedtuple('sbattery', ['percent'])
 
 # --- for Process methods
 

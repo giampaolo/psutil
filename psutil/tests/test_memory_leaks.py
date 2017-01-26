@@ -556,6 +556,14 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
 
+    # --- sensors
+
+    @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
+                         "platform not supported")
+    @skip_if_linux()
+    def test_sensors_battery(self):
+        self.execute(psutil.sensors_battery())
+
     # --- others
 
     @skip_if_linux()

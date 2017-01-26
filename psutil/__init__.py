@@ -185,6 +185,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    # "sensors_battery",                                            # sensors
     "users", "boot_time",                                           # others
 ]
 __all__.extend(_psplatform.__extra__all__)
@@ -2170,6 +2171,22 @@ def net_if_stats():
      - mtu: the maximum transmission unit expressed in bytes.
     """
     return _psplatform.net_if_stats()
+
+
+# =====================================================================
+# --- sensors
+# =====================================================================
+
+
+if hasattr(_psplatform, "sensors_battery"):
+
+    def sensors_battery():
+        """Return information about battery. If no battery can be found
+        returns None.
+        """
+        return _psplatform.sensors_battery()
+
+    __all__.append("sensors_battery")
 
 
 # =====================================================================

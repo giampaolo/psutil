@@ -1060,6 +1060,25 @@ def disk_partitions(all=False):
 
 
 # =====================================================================
+# --- sensors
+# =====================================================================
+
+
+def sensors_battery():
+    root = "/sys/class/power_supply/BAT0/"
+    if not os.path.exists(root.rstrip('/')):
+        return None
+
+    # TODO: figure out the algorithm to calculate residual time.
+    # energy_now = int(cat(root + "energy_now"))
+    # power_now = int(cat(root + "power_now"))
+    # energy_full = int(cat(root + "energy_full"))
+    # secsleft = 3600 * energy_now / power_now
+    percent = int(cat(root + "capacity"))
+    return _common.sbattery(percent)
+
+
+# =====================================================================
 # --- other system functions
 # =====================================================================
 
