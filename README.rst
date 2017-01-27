@@ -383,7 +383,6 @@ A lot of time and effort went into making psutil as it is right now.
 If you feel psutil is useful to you or your business and want to support its
 future development please consider donating me
 (`Giampaolo <http://grodola.blogspot.com/p/about.html>`_) some money.
-I only ask for a small donation, but of course I appreciate any amount.
 
 .. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
     :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
