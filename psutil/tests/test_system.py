@@ -755,7 +755,7 @@ class TestSystemAPIs(unittest.TestCase):
         for name in names:
             self.assertIs(getattr(psutil, name), False, msg=name)
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
+    @unittest.skipUnless(LINUX or WINDOWS or FREEBSD,
                          "platform not supported")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()

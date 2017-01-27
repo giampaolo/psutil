@@ -61,6 +61,7 @@ __extra__all__ = [
 # --- constants
 # =====================================================================
 
+POWER_SUPPLY_PATH = "/sys/class/power_supply"
 
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
@@ -1065,7 +1066,7 @@ def disk_partitions(all=False):
 
 
 def sensors_battery():
-    root = "/sys/class/power_supply/BAT0"
+    root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
     if not os.path.exists(root):
         return None
 
