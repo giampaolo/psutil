@@ -126,11 +126,11 @@ if enum is None:
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
 else:
-    class Power(enum.IntEnum):
+    class BatteryTime(enum.IntEnum):
         POWER_TIME_UNKNOWN = -1
         POWER_TIME_UNLIMITED = -2
 
-    globals().update(NicDuplex.__members__)
+    globals().update(BatteryTime.__members__)
 
 
 # ===================================================================
@@ -170,7 +170,7 @@ scpustats = namedtuple(
 # psutil.cpu_freq()
 scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
 # psutil.sensors_battery()
-sbattery = namedtuple('sbattery', ['percent', 'secsleft'])
+sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 
 # --- for Process methods
 

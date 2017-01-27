@@ -627,10 +627,11 @@ Sensors
 
   - **percent**: battery power left as a percentage.
   - **secsleft**: (rough approximation) number of seconds left before the
-    battery run out of power; this may be set to
-    :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`
-    or :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>` in
-    case the remaining time cannot be determined or is unlimited.
+    battery run out of power. If the AC power cable is connected this will be
+    set to :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
+    If it can't be determined it will be set to
+    :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
+  - **power_plugged**: ``True`` if the AC power cable is connected.
 
   If no battery is installed this function will return ``None``. Example::
 
@@ -641,9 +642,14 @@ Sensors
     ...
     >>> batt = psutil.sensors_battery()
     >>> batt
-    sbattery(percent=93, secsleft=16628)
+    sbattery(percent=93, secsleft=16628, power_plugged=False)
     >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
     charge = 93%, time left = 4:37:08
+
+  .. warning::
+
+    This API is experimental. Backward incompatible changes may occur if
+    deemed necessary.
 
   Availability: Linux, Windows
 

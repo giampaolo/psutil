@@ -1065,18 +1065,25 @@ def disk_partitions(all=False):
 
 
 def sensors_battery():
-    root = "/sys/class/power_supply/BAT0/"
-    if not os.path.exists(root.rstrip('/')):
+    root = "/sys/class/power_supply/BAT0"
+    if not os.path.exists(root):
         return None
 
-    energy_now = int(cat(root + "energy_now"))
-    power_now = int(cat(root + "power_now"))
-    percent = int(cat(root + "capacity"))
-    try:
-        secsleft = int(energy_now / power_now * 3600)
-    except ZeroDivisionError:
-        secsleft = _common.POWER_TIME_UNKNOWN
-    return _common.sbattery(percent, secsleft)
+    power_plugged = \
+        cat("/sys/class/power_supply/AC0/online", fallback=b"0") == b"1"
+    energy_now = int(cat(root + "/energy_now"))
+    power_now = int(cat(root + "/power_now"))
+    percent = int(cat(root + "/capacity"))
+
+    if power_plugged:
+        secsleft = _common.POWER_TIME_UNLIMITED
+    else:
+        try:
+            secsleft = int(energy_now / power_now * 3600)
+        except ZeroDivisionError:
+            secsleft = _common.POWER_TIME_UNKNOWN
+
+    return _common.sbattery(percent, secsleft, power_plugged)
 
 
 # =====================================================================

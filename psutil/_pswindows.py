@@ -384,7 +384,8 @@ def sensors_battery():
     elif secsleft == -1:
         secsleft = _common.POWER_TIME_UNKNOWN
 
-    return _common.sbattery(percent, secsleft)
+    # TODO: implement power_plugged
+    return _common.sbattery(percent, secsleft, False)
 
 
 # =====================================================================
