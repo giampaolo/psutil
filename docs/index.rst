@@ -399,7 +399,7 @@ Disks
   .. warning::
     on some systems such as Linux, on a very busy or long-lived system these
     numbers may wrap (restart from zero), see
-    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    `issue #802 <https://github.com/giampaolo/psutil/issues/802>`__.
     Applications should be prepared to deal with that.
 
   .. versionchanged::
@@ -1834,7 +1834,7 @@ Constants
 .. data:: SUNOS
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
-  *WINDOWS* constant will be ``True``, all others will be ``False``.
+  :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
 
