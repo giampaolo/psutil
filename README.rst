@@ -381,21 +381,18 @@ Windows services
      'username': 'NT AUTHORITY\\LocalService'}
 
 ======
-Donate
+Author
 ======
 
+psutil was created and is maintained by
+`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`_.
 A lot of time and effort went into making psutil as it is right now.
-If you feel psutil is useful to you or your business and want to support its future development please consider donating me (`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`_) some money.
-I only ask for a small donation, but of course I appreciate any amount.
+If you feel psutil is useful to you or your business and want to support its
+future development please consider donating me
+(`Giampaolo <http://grodola.blogspot.com/p/about.html>`_) some money.
 
 .. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
     :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
     :alt: Donate via PayPal
 
 Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
-
-============
-Mailing list
-============
-
-http://groups.google.com/group/psutil/
