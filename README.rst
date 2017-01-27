@@ -181,6 +181,13 @@ Network
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
 
+Sensors
+=======
+
+    >>> psutil.sensors_battery()
+    sbattery(percent=93, secsleft=16628, power_plugged=False)
+
+
 Other system info
 =================
 

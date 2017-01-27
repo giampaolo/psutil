@@ -626,8 +626,8 @@ Sensors
   values:
 
   - **percent**: battery power left as a percentage.
-  - **secsleft**: (rough approximation) number of seconds left before the
-    battery run out of power. If the AC power cable is connected this will be
+  - **secsleft**: a rough approximation of how many seconds are left before the
+    battery runs out of power. If the AC power cable is connected this will be
     set to :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
     If it can't be determined it will be set to
     :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
@@ -651,7 +651,7 @@ Sensors
     This API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
-  Availability: Linux, Windows
+  Availability: Linux, Windows, FreeBSD
 
   .. versionadded:: 5.1.0
 
