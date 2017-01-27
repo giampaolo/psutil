@@ -623,18 +623,21 @@ Sensors
 .. function:: sensors_battery()
 
   Return battery status information as a namedtuple including the following
-  values:
+  values. If no battery is installed returns ``None``.
 
   - **percent**: battery power left as a percentage.
   - **secsleft**: a rough approximation of how many seconds are left before the
-    battery runs out of power. If the AC power cable is connected this will be
-    set to :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
-    If it can't be determined it will be set to
+    battery runs out of power.
+    If the AC power cable is connected this is set to
+    :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
+    If it can't be determined it is set to
     :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
   - **power_plugged**: ``True`` if the AC power cable is connected.
 
-  If no battery is installed this function will return ``None``. Example::
+  Example::
 
+    >>> import psutil
+    >>>
     >>> def secs2hours(secs):
     ...     mm, ss = divmod(secs, 60)
     ...     hh, mm = divmod(mm, 60)

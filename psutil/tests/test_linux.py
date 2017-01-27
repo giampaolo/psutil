@@ -1025,14 +1025,20 @@ class TestMisc(unittest.TestCase):
             t.stop()
 
 
+@unittest.skipUnless(LINUX, "LINUX only")
+@unittest.skipUnless(hasattr(psutil, "sensors_battery") and
+                     psutil.sensors_battery() is not None,
+                     "no battery")
 class TestSensorsBattery(unittest.TestCase):
 
+    @unittest.skipUnless(which("acpi"), "acpi utility not available")
     def test_percent(self):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))
         psutil_value = psutil.sensors_battery().percent
         self.assertAlmostEqual(acpi_value, psutil_value, delta=1)
 
+    @unittest.skipUnless(which("acpi"), "acpi utility not available")
     def test_power_plugged(self):
         out = sh("acpi -b")
         plugged = "Charging" in out.split('\n')[0]

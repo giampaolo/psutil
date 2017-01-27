@@ -8,7 +8,7 @@
 Show battery information.
 
 $ python battery.py
-charge:     49%
+charge:     74%
 left:       2:11:31
 status:     discharging
 plugged in: no

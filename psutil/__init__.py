@@ -2182,11 +2182,18 @@ def net_if_stats():
 # =====================================================================
 
 
+# Linux, Windows, FreeBSD
 if hasattr(_psplatform, "sensors_battery"):
 
     def sensors_battery():
-        """Return information about battery. If no battery can be found
+        """Return battery information. If no battery is installed
         returns None.
+
+        - percent: battery power left as a percentage.
+        - secsleft: a rough approximation of how many seconds are left
+                    before the battery runs out of power.
+                    May be POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
+        - power_plugged: True if the AC power cable is connected.
         """
         return _psplatform.sensors_battery()
 

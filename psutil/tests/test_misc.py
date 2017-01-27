@@ -469,6 +469,12 @@ class TestScripts(unittest.TestCase):
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_battery") and
+                         psutil.sensors_battery() is not None,
+                         "no battery")
+    def test_battery(self):
+        self.assert_stdout('battery.py')
+
 
 # ===================================================================
 # --- Unit tests for test utilities.
