@@ -637,14 +637,17 @@ Sensors
 
     >>> def secs2hours(secs):
     ...     mm, ss = divmod(secs, 60)
-    ...     hh, mm = divmod(m, 60)
+    ...     hh, mm = divmod(mm, 60)
     ...     return "%d:%02d:%02d" % (hh, mm, ss)
     ...
-    >>> batt = psutil.sensors_battery()
-    >>> batt
+    >>> battery = psutil.sensors_battery()
+    >>> battery
     sbattery(percent=93, secsleft=16628, power_plugged=False)
     >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
     charge = 93%, time left = 4:37:08
+
+  See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__
+  for an example application.
 
   .. warning::
 
