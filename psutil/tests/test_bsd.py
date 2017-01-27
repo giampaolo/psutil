@@ -357,6 +357,8 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         btime = int(s)
         self.assertEqual(btime, psutil.boot_time())
 
+    # --- sensors_battery
+
     @unittest.skipUnless(psutil.sensors_battery(), "no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
@@ -371,7 +373,21 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         percent = int(fields['Remaining capacity:'].replace('%', ''))
         remaining_time = fields['Remaining time:']
         self.assertEqual(metrics.percent, percent)
-        self.assertEqual(secs2hours(metrics.secsleft), remaining_time)
+        if remaining_time == 'unknown':
+            self.assertEqual(metrics.secsleft, psutil.POWER_TIME_UNLIMITED)
+        else:
+            self.assertEqual(secs2hours(metrics.secsleft), remaining_time)
+
+    def test_sensors_battery_against_sysctl(self):
+        self.assertEqual(psutil.sensors_battery().percent,
+                         sysctl("hw.acpi.battery.life"))
+        self.assertEqual(psutil.sensors_battery().power_plugged,
+                         sysctl("hw.acpi.acline") == 1)
+        secsleft = psutil.sensors_battery().secsleft
+        if secsleft < 0:
+            self.assertEqual(sysctl("hw.acpi.battery.time"), -1)
+        else:
+            self.assertEqual(secsleft, sysctl("hw.acpi.battery.time") * 60)
 
 
 # =====================================================================
