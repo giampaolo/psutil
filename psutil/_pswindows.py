@@ -367,25 +367,22 @@ def net_if_addrs():
 
 
 def sensors_battery():
+    # For constants meaning see:
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/
+    #     aa373232(v=vs.85).aspx
     acline_status, flags, percent, secsleft = cext.sensors_battery()
-    power_connected = acline_status == 1
+    power_plugged = acline_status == 1
     no_battery = bool(flags & 128)
     charging = bool(flags & 8)
 
-    # print("acline_status=%s, flags=%s, percent=%s, secsleft=%s" % (
-    #     acline_status, flags, percent, secsleft))
-    # print("power_connected=%s, no_battery=%s, charging=%s" % (
-    #     power_connected, no_battery, charging))
-
     if no_battery:
         return None
-    if power_connected or charging:
+    if power_plugged or charging:
         secsleft = _common.POWER_TIME_UNLIMITED
     elif secsleft == -1:
         secsleft = _common.POWER_TIME_UNKNOWN
 
-    # TODO: implement power_plugged
-    return _common.sbattery(percent, secsleft, False)
+    return _common.sbattery(percent, secsleft, power_plugged)
 
 
 # =====================================================================

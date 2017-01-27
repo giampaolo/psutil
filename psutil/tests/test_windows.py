@@ -172,10 +172,13 @@ class TestSensorsBattery(unittest.TestCase):
         battery_wmi = w.query('select * from Win32_Battery')[0]
         if battery_psutil is None:
             self.assertNot(battery_wmi.EstimatedChargeRemaining)
-        else:
-            self.assertAlmostEqual(
-                battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,
-                delta=1)
+            return
+
+        self.assertAlmostEqual(
+            battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,
+            delta=1)
+        self.assertEqual(
+            battery_psutil.power_plugged, battery_wmi.BatteryStatus == 1)
 
     def test_emulate_no_battery(self):
         with mock.patch("psutil._pswindows.cext.sensors_battery",
