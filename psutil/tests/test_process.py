@@ -849,10 +849,13 @@ class TestProcess(unittest.TestCase):
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
+        assert initial, initial
         self.addCleanup(p.cpu_affinity, initial)
+
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
         self.assertEqual(len(initial), len(set(initial)))
+
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
@@ -867,9 +870,14 @@ class TestProcess(unittest.TestCase):
             if hasattr(p, "num_cpu"):
                 self.assertEqual(p.cpu_affinity()[0], p.num_cpu())
 
-        #
-        p.cpu_affinity(all_cpus)
-        self.assertEqual(p.cpu_affinity(), all_cpus)
+        # [] is an alias for "all eligible CPUs"; on Linux this may
+        # not be equal to all available CPUs, see:
+        # https://github.com/giampaolo/psutil/issues/956
+        p.cpu_affinity([])
+        if LINUX:
+            self.assertEqual(p.cpu_affinity(), p._proc._get_eligible_cpus())
+        else:
+            self.assertEqual(p.cpu_affinity(), all_cpus)
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(p.cpu_affinity(),
                              list(os.sched_getaffinity(p.pid)))

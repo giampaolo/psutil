@@ -248,9 +248,9 @@ Process management
     12.1
     >>> p.cpu_affinity()
     [0, 1, 2, 3]
-    >>> p.cpu_affinity([0])  # set
+    >>> p.cpu_affinity([0, 1])  # set
     >>> p.cpu_num()
-    2
+    1
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)

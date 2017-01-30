@@ -828,6 +828,8 @@ class Process(object):
             """Get or set process CPU affinity.
             If specified 'cpus' must be a list of CPUs for which you
             want to set the affinity (e.g. [0, 1]).
+            If an empty list is passed, all egible CPUs are assumed
+            (and set).
             (Windows, Linux and BSD only).
             """
             # Automatically remove duplicates both on get and
@@ -836,6 +838,11 @@ class Process(object):
             if cpus is None:
                 return list(set(self._proc.cpu_affinity_get()))
             else:
+                if not cpus:
+                    if hasattr(self._proc, "_get_eligible_cpus"):
+                        cpus = self._proc._get_eligible_cpus()
+                    else:
+                        cpus = tuple(range(len(cpu_times(percpu=True))))
                 self._proc.cpu_affinity_set(list(set(cpus)))
 
     # Linux, FreeBSD, SunOS
