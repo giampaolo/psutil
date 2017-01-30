@@ -1522,14 +1522,14 @@ class Process(object):
         return cext.proc_cpu_affinity_get(self.pid)
 
     def _get_eligible_cpus(
-            self, _re=re.compile("Cpus_allowed_list:\t(\d+)-(\d+)")):
+            self, _re=re.compile(b"Cpus_allowed_list:\t(\d+)-(\d+)")):
         # See: https://github.com/giampaolo/psutil/issues/956
         data = self._read_status_file()
         match = _re.findall(data)
         if match:
-            return tuple(range(int(match[0][0]), int(match[0][1]) + 1))
+            return list(range(int(match[0][0]), int(match[0][1]) + 1))
         else:
-            return tuple(range(len(per_cpu_times())))
+            return list(range(len(per_cpu_times())))
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
