@@ -1149,6 +1149,7 @@ class TestProcess(unittest.TestCase):
         self.fail("num ctx switches still the same after 50.000 iterations")
 
     def test_parent_ppid(self):
+        reap_children(recursive=True)
         this_parent = os.getpid()
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
