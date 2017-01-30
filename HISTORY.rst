@@ -17,6 +17,7 @@
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 - 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
   higher number than real usage.
+- 959_: psutil exception objects could not be pickled.
 
 
 5.0.1
