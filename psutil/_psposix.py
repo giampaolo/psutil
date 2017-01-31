@@ -110,7 +110,7 @@ def wait_pid(pid, timeout=None):
             # process exited due to a signal; return the integer of
             # that signal
             if os.WIFSIGNALED(status):
-                return os.WTERMSIG(status)
+                return -os.WTERMSIG(status)
             # process exited using exit(2) system call; return the
             # integer exit(2) system call has been called with
             elif os.WIFEXITED(status):

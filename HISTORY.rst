@@ -20,6 +20,8 @@
 - 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
   higher number than real usage.
 - 959_: psutil exception objects could not be pickled.
+- 960_: Popen.wait() did not return the correct negative exit status if process
+  is ``kill()``ed by a signal.
 
 
 5.0.1

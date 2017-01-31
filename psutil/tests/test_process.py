@@ -104,7 +104,7 @@ class TestProcess(unittest.TestCase):
         sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
         if POSIX:
-            self.assertEqual(sig, signal.SIGKILL)
+            self.assertEqual(sig, -signal.SIGKILL)
 
     def test_terminate(self):
         sproc = get_test_subprocess()
@@ -114,7 +114,7 @@ class TestProcess(unittest.TestCase):
         sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
         if POSIX:
-            self.assertEqual(sig, signal.SIGTERM)
+            self.assertEqual(sig, -signal.SIGTERM)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
@@ -124,7 +124,7 @@ class TestProcess(unittest.TestCase):
         exit_sig = p.wait()
         self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
-            self.assertEqual(exit_sig, sig)
+            self.assertEqual(exit_sig, -sig)
             #
             sproc = get_test_subprocess()
             p = psutil.Process(sproc.pid)
@@ -155,7 +155,7 @@ class TestProcess(unittest.TestCase):
         p.kill()
         code = p.wait()
         if POSIX:
-            self.assertEqual(code, signal.SIGKILL)
+            self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
@@ -165,7 +165,7 @@ class TestProcess(unittest.TestCase):
         p.terminate()
         code = p.wait()
         if POSIX:
-            self.assertEqual(code, signal.SIGTERM)
+            self.assertEqual(code, -signal.SIGTERM)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
@@ -231,7 +231,7 @@ class TestProcess(unittest.TestCase):
             else:
                 break
         if POSIX:
-            self.assertEqual(code, signal.SIGKILL)
+            self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
