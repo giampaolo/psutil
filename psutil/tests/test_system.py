@@ -111,7 +111,7 @@ class TestSystemAPIs(unittest.TestCase):
         gone, alive = test(procs, callback)
         self.assertIn(sproc3.pid, [x.pid for x in gone])
         if POSIX:
-            self.assertEqual(gone.pop().returncode, signal.SIGTERM)
+            self.assertEqual(gone.pop().returncode, -signal.SIGTERM)
         else:
             self.assertEqual(gone.pop().returncode, 1)
         self.assertEqual(l, [sproc3.pid])
