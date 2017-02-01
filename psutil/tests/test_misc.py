@@ -469,11 +469,17 @@ class TestScripts(unittest.TestCase):
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
-    def test_sensors(self):
+    def test_temperatures(self):
         if hasattr(psutil, "sensors_temperatures"):
-            self.assert_stdout('sensors.py')
+            self.assert_stdout('temperatures.py')
         else:
-            self.assert_syntax('sensors.py')
+            self.assert_syntax('temperatures.py')
+
+    def test_battery(self):
+        if hasattr(psutil, "sensors_battery"):
+            self.assert_stdout('battery.py')
+        else:
+            self.assert_syntax('battery.py')
 
 
 # ===================================================================

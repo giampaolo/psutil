@@ -1025,6 +1025,73 @@ class TestMisc(unittest.TestCase):
             t.stop()
 
 
+@unittest.skipUnless(LINUX, "LINUX only")
+@unittest.skipUnless(hasattr(psutil, "sensors_battery") and
+                     psutil.sensors_battery() is not None,
+                     "no battery")
+class TestSensorsBattery(unittest.TestCase):
+
+    @unittest.skipUnless(which("acpi"), "acpi utility not available")
+    def test_percent(self):
+        out = sh("acpi -b")
+        acpi_value = int(out.split(",")[1].strip().replace('%', ''))
+        psutil_value = psutil.sensors_battery().percent
+        self.assertAlmostEqual(acpi_value, psutil_value, delta=1)
+
+    @unittest.skipUnless(which("acpi"), "acpi utility not available")
+    def test_power_plugged(self):
+        out = sh("acpi -b")
+        plugged = "Charging" in out.split('\n')[0]
+        self.assertEqual(psutil.sensors_battery().power_plugged, plugged)
+
+    def test_emulate_power_plugged(self):
+        # Pretend the AC power cable is connected.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/AC0/online"):
+                return io.BytesIO(b"1")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().power_plugged, True)
+            self.assertEqual(
+                psutil.sensors_battery().secsleft, psutil.POWER_TIME_UNLIMITED)
+            assert m.called
+
+    def test_emulate_power_not_plugged(self):
+        # Pretend the AC power cable is not connected.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/AC0/online"):
+                return io.BytesIO(b"0")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().power_plugged, False)
+            self.assertGreaterEqual(psutil.sensors_battery().secsleft, 0)
+            assert m.called
+
+    def test_emulate_power_undetermined(self):
+        # Pretend we can't know whether the AC power cable not
+        # connected (assert fallback to False).
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/AC0/online"):
+                raise IOError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().power_plugged, False)
+            self.assertGreaterEqual(psutil.sensors_battery().secsleft, 0)
+            assert m.called
+
+
 # =====================================================================
 # test process
 # =====================================================================

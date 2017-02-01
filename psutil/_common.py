@@ -121,6 +121,17 @@ else:
 
     globals().update(NicDuplex.__members__)
 
+# sensors_battery()
+if enum is None:
+    POWER_TIME_UNKNOWN = -1
+    POWER_TIME_UNLIMITED = -2
+else:
+    class BatteryTime(enum.IntEnum):
+        POWER_TIME_UNKNOWN = -1
+        POWER_TIME_UNLIMITED = -2
+
+    globals().update(BatteryTime.__members__)
+
 
 # ===================================================================
 # --- namedtuples
@@ -161,6 +172,8 @@ scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
 # psutil.sensors_temperatures()
 shwtemp = namedtuple(
     'shwtemp', ['label', 'current', 'high', 'critical'])
+# psutil.sensors_battery()
+sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 
 # --- for Process methods
 

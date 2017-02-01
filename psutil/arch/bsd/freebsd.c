@@ -994,3 +994,27 @@ error:
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+/*
+ * Return battery information.
+ */
+PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    int percent;
+    int minsleft;
+    int power_plugged;
+    size_t size = sizeof(percent);
+
+    if (sysctlbyname("hw.acpi.battery.life", &percent, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.acpi.battery.time", &minsleft, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.acpi.acline", &power_plugged, &size, NULL, 0))
+        goto error;
+    return Py_BuildValue("iii", percent, minsleft, power_plugged);
+
+error:
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}

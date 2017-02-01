@@ -171,6 +171,8 @@ __all__ = [
 
     "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
 
+    "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
+
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
     "WINDOWS",
 
@@ -185,7 +187,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    # "sensors_temperatures",                                       # sensors
+    # "sensors_temperatures", "sensors_battery",                    # sensors
     "users", "boot_time",                                           # others
 ]
 __all__.extend(_psplatform.__extra__all__)
@@ -193,6 +195,8 @@ __author__ = "Giampaolo Rodola'"
 __version__ = "5.1.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
+POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
+POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
 _timer = getattr(time, 'monotonic', time.time)
 
@@ -2186,6 +2190,7 @@ def net_if_stats():
 # =====================================================================
 
 
+# Linux
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):
@@ -2223,6 +2228,24 @@ if hasattr(_psplatform, "sensors_temperatures"):
         return dict(ret)
 
     __all__.append("sensors_temperatures")
+
+
+# Linux, Windows, FreeBSD
+if hasattr(_psplatform, "sensors_battery"):
+
+    def sensors_battery():
+        """Return battery information. If no battery is installed
+        returns None.
+
+        - percent: battery power left as a percentage.
+        - secsleft: a rough approximation of how many seconds are left
+                    before the battery runs out of power.
+                    May be POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
+        - power_plugged: True if the AC power cable is connected.
+        """
+        return _psplatform.sensors_battery()
+
+    __all__.append("sensors_battery")
 
 
 # =====================================================================

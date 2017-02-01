@@ -641,15 +641,49 @@ Sensors
   See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__
   for an example application.
 
-  .. warning::
-
-    This API is experimental. Backwards incompatible changes may occur if
-    deemed necessary.
-
   Availability: Linux
 
   .. versionadded:: 5.1.0
 
+  .. warning::
+
+    This API is experimental. Backward incompatible changes may occur if
+    deemed necessary.
+
+.. function:: sensors_battery()
+
+  Return battery status information as a namedtuple including the following
+  values. If no battery is installed returns ``None``.
+
+  - **percent**: battery power left as a percentage.
+  - **secsleft**: a rough approximation of how many seconds are left before the
+    battery runs out of power.
+    If the AC power cable is connected this is set to
+    :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
+    If it can't be determined it is set to
+    :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
+  - **power_plugged**: ``True`` if the AC power cable is connected.
+
+  Example::
+
+    >>> import psutil
+    >>>
+    >>> def secs2hours(secs):
+    ...     mm, ss = divmod(secs, 60)
+    ...     hh, mm = divmod(mm, 60)
+    ...     return "%d:%02d:%02d" % (hh, mm, ss)
+    ...
+    >>> battery = psutil.sensors_battery()
+    >>> battery
+    sbattery(percent=93, secsleft=16628, power_plugged=False)
+    >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
+    charge = 93%, time left = 4:37:08
+
+  See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__
+
+  Availability: Linux, Windows, FreeBSD
+
+  .. versionadded:: 5.1.0
 
 
 Other system info
@@ -2021,6 +2055,16 @@ Constants
   To be used in conjunction with :func:`psutil.net_if_stats()`.
 
   .. versionadded:: 3.0.0
+
+.. _const-power:
+.. data:: POWER_TIME_UNKNOWN
+.. data:: POWER_TIME_UNLIMITED
+
+  Whether the remaining time of the battery cannot be determined or is
+  unlimited.
+  May be assigned to :func:`psutil.sensors_battery()`'s *secsleft* field.
+
+  .. versionadded:: 5.1.0
 
 .. _const-version-info:
 .. data:: version_info

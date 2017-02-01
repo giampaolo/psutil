@@ -195,6 +195,9 @@ Sensors
                   shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
+    >>>
+    >>> psutil.sensors_battery()
+    sbattery(percent=93, secsleft=16628, power_plugged=False)
 
 Other system info
 =================

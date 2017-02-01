@@ -771,6 +771,22 @@ class TestSystemAPIs(unittest.TestCase):
                 if entry.critical is not None:
                     self.assertGreaterEqual(entry.critical, 0)
 
+    @unittest.skipUnless(LINUX or WINDOWS or FREEBSD,
+                         "platform not supported")
+    def test_sensors_battery(self):
+        ret = psutil.sensors_battery()
+        if ret is None:
+            return  # no battery
+        self.assertGreaterEqual(ret.percent, 0)
+        self.assertLessEqual(ret.percent, 100)
+        if ret.secsleft not in (psutil.POWER_TIME_UNKNOWN,
+                                psutil.POWER_TIME_UNLIMITED):
+            self.assertGreaterEqual(ret.secsleft, 0)
+        else:
+            if ret.secsleft == psutil.POWER_TIME_UNLIMITED:
+                self.assertTrue(ret.power_plugged)
+        self.assertIsInstance(ret.power_plugged, bool)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
