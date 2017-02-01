@@ -17,6 +17,8 @@
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 - 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
   higher number than real usage.
+- 961_: [Windows] WindowsService.description() may fail with
+  ERROR_MUI_FILE_NOT_FOUND.
 
 
 5.0.1

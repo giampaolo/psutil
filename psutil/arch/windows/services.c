@@ -376,6 +376,12 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     bytesNeeded = 0;
     QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
                         &bytesNeeded);
+    if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
+        // Also services.msc fails in the same manner, so we return an
+        // empty string.
+        CloseServiceHandle(hService);
+        return Py_BuildValue("s", "");
+    }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
