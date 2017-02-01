@@ -10,6 +10,7 @@
 - 357_: added psutil.Process.cpu_num() (what CPU a process is on).
 - 371_: added psutil.sensors_temperatures() (Linux only).
 - 941_: added psutil.cpu_freq() (CPU frequency).
+- 955_: added psutil.sensors_battery() (Linux, Windows, only).
 - 956_: cpu_affinity([]) can now be used as an alias to set affinity against
   all eligible CPUs.
 
@@ -25,7 +26,6 @@
   is ``kill()``ed by a signal.
 - 961_: [Windows] WindowsService.description() may fail with
   ERROR_MUI_FILE_NOT_FOUND.
-
 
 5.0.1
 =====
@@ -47,7 +47,6 @@
   taken into account.
 - 944_: [OpenBSD] psutil.pids() was omitting PID 0.
 
-
 5.0.0
 =====
 
@@ -65,7 +64,6 @@
   raising an exception.
 - 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
 
-
 4.4.2
 =====
 
@@ -75,7 +73,6 @@
 
 - 931_: psutil no longer compiles on Solaris.
 
-
 4.4.1
 =====
 
@@ -84,7 +81,6 @@
 **Bug fixes**
 
 - 927_: ``Popen.__del__`` may cause maximum recursion depth error.
-
 
 4.4.0
 =====
@@ -122,7 +118,6 @@
   OSError with no exception set if process is gone.
 - 916_: [OSX] fix many compilation warnings.
 
-
 4.3.1
 =====
 
@@ -147,7 +142,6 @@
   unit (ms instead of sec).
 - 870_: [Windows] Handle leak inside psutil_get_process_data.
 
-
 4.3.0
 =====
 
@@ -171,7 +165,6 @@
 - 816_: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
-
 4.2.0
 =====
 
@@ -193,7 +186,6 @@
 - 797_: [Linux] net_if_stats() may raise OSError for certain NIC cards.
 - 813_: Process.as_dict() should ignore extraneous attribute names which gets
   attached to the Process instance.
-
 
 4.1.0
 =====
@@ -221,7 +213,6 @@
 - 786_: net_if_addrs() may report incomplete MAC addresses.
 - 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
 - 790_: [OSX] psutil won't compile on OSX 10.4.
-
 
 4.0.0
 =====
@@ -266,7 +257,6 @@
   broken on 2.4 kernels.
 - 770_: [NetBSD] disk_io_counters() metrics didn't update.
 
-
 3.4.2
 =====
 
@@ -281,7 +271,6 @@
 
 - 724_: [FreeBSD] psutil.virtual_memory().total is incorrect.
 - 730_: [FreeBSD] psutil.virtual_memory() crashes.
-
 
 3.4.1
 =====
@@ -306,7 +295,6 @@
   due to missing /proc/vmstat.
 - 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
 
-
 3.3.0
 =====
 
@@ -321,7 +309,6 @@
 **Bug fixes**
 
 - 692_: [UNIX] Process.name() is no longer cached as it may change.
-
 
 3.2.2
 =====
@@ -341,7 +328,6 @@
 - 688_: [Windows] compilation fails with MSVC 2015, Python 3.5. (patch by
   Mike Sarahan)
 
-
 3.2.1
 =====
 
@@ -350,7 +336,6 @@
 **Bug fixes**
 
 - 677_: [Linux] can't install psutil due to bug in setup.py.
-
 
 3.2.0
 =====
@@ -391,7 +376,6 @@
 - 675_: [Linux] net_connections(); UnicodeDecodeError may occur when listing
   UNIX sockets.
 
-
 3.1.1
 =====
 
@@ -402,7 +386,6 @@
 - 603_: [Linux] ionice_set value range is incorrect.  (patch by spacewander)
 - 645_: [Linux] psutil.cpu_times_percent() may produce negative results.
 - 656_: 'from psutil import *' does not work.
-
 
 3.1.0
 =====
@@ -436,7 +419,6 @@
 - 653_: [Windows] Add inet_ntop function for Windows XP to support IPv6.
 - 641_: [Windows] Replace deprecated string functions with safe equivalents.
 
-
 3.0.1
 =====
 
@@ -448,7 +430,6 @@
 - 634_: [Linux] Proces.cmdline() does not include empty string arguments.
 - 635_: [UNIX] crash on module import if 'enum' package is installed on python
   < 3.4.
-
 
 3.0.0
 =====
@@ -497,7 +478,6 @@
 - 628_: [Linux] Process.name() truncates process name in case it contains
   spaces or parentheses.
 
-
 2.2.1
 =====
 
@@ -507,7 +487,6 @@
 
 - 496_: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
   (patch by Bruno Binet)
-
 
 2.2.0
 =====
@@ -539,14 +518,12 @@
 - 571_: [Linux] Process.open_files() might swallow AccessDenied exceptions and
   return an incomplete list of open files.
 
-
 2.1.3
 =====
 
 *2014-09-26*
 
 - 536_: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
-
 
 2.1.2
 =====
@@ -578,7 +555,6 @@
   (< 2.6.5)  (patch by Yaolong Huang)
 - 533_: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
 
-
 2.1.1
 =====
 
@@ -590,7 +566,6 @@
   (patch by Szigeti Gabor Niif)
 - 460_: [Windows] net_io_counters() wraps after 4G.
 - 491_: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
-
 
 2.1.0
 =====
@@ -606,7 +581,6 @@
 - 421_: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
   Roudsari)
 - 489_: [Linux] psutil.disk_partitions() return an empty list.
-
 
 2.0.0
 =====
@@ -776,7 +750,6 @@ DeprecationWarning.
 - Process instances' "retcode" attribute returned by psutil.wait_procs() has
   been renamed to "returncode" for consistency with subprocess.Popen.
 
-
 1.2.1
 =====
 
@@ -788,7 +761,6 @@ DeprecationWarning.
   import.
 - 425_: [Solaris] crash on import due to failure at determining BOOT_TIME.
 - 443_: [Linux] can't set CPU affinity on systems with more than 64 cores.
-
 
 1.2.0
 =====
@@ -807,7 +779,6 @@ DeprecationWarning.
 - 348_: [Windows XP/Vista] fix "ImportError: DLL load failed" occurring on
   module import.
 
-
 1.1.3
 =====
 
@@ -817,7 +788,6 @@ DeprecationWarning.
 
 - 442_: [Linux] psutil won't compile on certain version of Linux because of
   missing prlimit(2) syscall.
-
 
 1.1.2
 =====
@@ -829,7 +799,6 @@ DeprecationWarning.
 - 442_: [Linux] psutil won't compile on Debian 6.0 because of missing
   prlimit(2) syscall.
 
-
 1.1.1
 =====
 
@@ -839,7 +808,6 @@ DeprecationWarning.
 
 - 442_: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
   prlimit(2) syscall.
-
 
 1.1.0
 =====
@@ -871,7 +839,6 @@ DeprecationWarning.
 
 - 408_: turn STATUS_* and CONN_* constants into plain Python strings.
 
-
 1.0.1
 =====
 
@@ -880,7 +847,6 @@ DeprecationWarning.
 **Bug fixes**
 
 - 405_: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
-
 
 1.0.0
 =====
@@ -911,7 +877,6 @@ DeprecationWarning.
   renamed to 'laddr' and 'raddr'.
 - psutil.network_io_counters() renamed to psutil.net_io_counters().
 
-
 0.7.1
 =====
 
@@ -924,7 +889,6 @@ DeprecationWarning.
 - 370_: [BSD] Process.get_connections() requires root.  (patch by John Baldwin)
 - 372_: [BSD] different process methods raise NoSuchProcess instead of
   AccessDenied.
-
 
 0.7.0
 =====
@@ -989,7 +953,6 @@ DeprecationWarning.
   will raise NotImplementedError instead of RuntimeError.
 - psutil.error module is deprecated and scheduled for removal.
 
-
 0.6.1
 =====
 
@@ -1009,7 +972,6 @@ DeprecationWarning.
 
 - process exe can now return an empty string instead of raising AccessDenied.
 - process exe is no longer resolved in case it's a symlink.
-
 
 0.6.0
 =====
@@ -1100,7 +1062,6 @@ DeprecationWarning.
 - [Windows and BSD] psutil.virtmem_usage() now returns information about swap
   memory instead of virtual memory.
 
-
 0.5.1
 =====
 
@@ -1115,7 +1076,6 @@ DeprecationWarning.
 
 - 292_: [Linux] race condition in process files/threads/connections.
 - 294_: [Windows] Process CPU affinity is only able to set CPU #0.
-
 
 0.5.0
 =====
@@ -1187,7 +1147,6 @@ DeprecationWarning.
 - psutil.STATUS_* constants can now be compared by using their string
   representation.
 
-
 0.4.1
 =====
 
@@ -1201,7 +1160,6 @@ DeprecationWarning.
   different than "free" command.
 - 236_: [Windows] memory/handle leak in Process's get_memory_info(),
   suspend() and resume() methods.
-
 
 0.4.0
 =====
@@ -1243,7 +1201,6 @@ DeprecationWarning.
   line in /proc/meminfo.
 - 226_: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
-
 0.3.0
 =====
 
@@ -1272,7 +1229,6 @@ DeprecationWarning.
 - 178_: OSX - Process.get_threads() leaks memory
 - 180_: [Windows] Process's get_num_threads() and get_threads() methods can
   raise NoSuchProcess exception while process still exists.
-
 
 0.2.1
 =====
@@ -1315,7 +1271,6 @@ DeprecationWarning.
 
 - Process "uid" and "gid" properties are deprecated in favor of "uids" and
   "gids" properties.
-
 
 0.2.0
 =====
@@ -1378,7 +1333,6 @@ DeprecationWarning.
 - psutil.Process.get_cpu_percent() and psutil.cpu_percent() no longer returns
   immediately by default (see issue 123).
 
-
 0.1.3
 =====
 
@@ -1409,7 +1363,6 @@ DeprecationWarning.
 - 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
   used first.
 
-
 0.1.2
 =====
 
@@ -1432,7 +1385,6 @@ DeprecationWarning.
 - 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
 - 40_: test_get_cpu_times() failing on FreeBSD and OS X.
 - 42_: [Windows] get_memory_percent() raises AccessDenied.
-
 
 0.1.1
 =====
