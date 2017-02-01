@@ -1344,6 +1344,11 @@ class TestProcessAgainstStatus(unittest.TestCase):
         self.assertEqual(
             self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
 
+    def test_cpu_affinity_eligible_cpus(self):
+        with mock.patch("psutil._pslinux.per_cpu_times") as m:
+            self.proc._proc._get_eligible_cpus()
+        assert not m.called
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

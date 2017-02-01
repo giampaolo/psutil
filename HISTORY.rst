@@ -9,6 +9,8 @@
 
 - 357_: added psutil.Process.cpu_num() (what CPU a process is on).
 - 941_: added psutil.cpu_freq() (CPU frequency).
+- 956_: cpu_affinity([]) can now be used as an alias to set affinity against
+  all eligible CPUs.
 
 **Bug fixes**
 
@@ -17,6 +19,11 @@
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 - 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
   higher number than real usage.
+- 959_: psutil exception objects could not be pickled.
+- 960_: Popen.wait() did not return the correct negative exit status if process
+  is ``kill()``ed by a signal.
+- 961_: [Windows] WindowsService.description() may fail with
+  ERROR_MUI_FILE_NOT_FOUND.
 
 
 5.0.1
@@ -2460,3 +2467,204 @@ DeprecationWarning.
 .. _997: https://github.com/giampaolo/psutil/issues/997
 .. _998: https://github.com/giampaolo/psutil/issues/998
 .. _999: https://github.com/giampaolo/psutil/issues/999
+.. _1000: https://github.com/giampaolo/psutil/issues/1000
+.. _1001: https://github.com/giampaolo/psutil/issues/1001
+.. _1002: https://github.com/giampaolo/psutil/issues/1002
+.. _1003: https://github.com/giampaolo/psutil/issues/1003
+.. _1004: https://github.com/giampaolo/psutil/issues/1004
+.. _1005: https://github.com/giampaolo/psutil/issues/1005
+.. _1006: https://github.com/giampaolo/psutil/issues/1006
+.. _1007: https://github.com/giampaolo/psutil/issues/1007
+.. _1008: https://github.com/giampaolo/psutil/issues/1008
+.. _1009: https://github.com/giampaolo/psutil/issues/1009
+.. _1010: https://github.com/giampaolo/psutil/issues/1010
+.. _1011: https://github.com/giampaolo/psutil/issues/1011
+.. _1012: https://github.com/giampaolo/psutil/issues/1012
+.. _1013: https://github.com/giampaolo/psutil/issues/1013
+.. _1014: https://github.com/giampaolo/psutil/issues/1014
+.. _1015: https://github.com/giampaolo/psutil/issues/1015
+.. _1016: https://github.com/giampaolo/psutil/issues/1016
+.. _1017: https://github.com/giampaolo/psutil/issues/1017
+.. _1018: https://github.com/giampaolo/psutil/issues/1018
+.. _1019: https://github.com/giampaolo/psutil/issues/1019
+.. _1020: https://github.com/giampaolo/psutil/issues/1020
+.. _1021: https://github.com/giampaolo/psutil/issues/1021
+.. _1022: https://github.com/giampaolo/psutil/issues/1022
+.. _1023: https://github.com/giampaolo/psutil/issues/1023
+.. _1024: https://github.com/giampaolo/psutil/issues/1024
+.. _1025: https://github.com/giampaolo/psutil/issues/1025
+.. _1026: https://github.com/giampaolo/psutil/issues/1026
+.. _1027: https://github.com/giampaolo/psutil/issues/1027
+.. _1028: https://github.com/giampaolo/psutil/issues/1028
+.. _1029: https://github.com/giampaolo/psutil/issues/1029
+.. _1030: https://github.com/giampaolo/psutil/issues/1030
+.. _1031: https://github.com/giampaolo/psutil/issues/1031
+.. _1032: https://github.com/giampaolo/psutil/issues/1032
+.. _1033: https://github.com/giampaolo/psutil/issues/1033
+.. _1034: https://github.com/giampaolo/psutil/issues/1034
+.. _1035: https://github.com/giampaolo/psutil/issues/1035
+.. _1036: https://github.com/giampaolo/psutil/issues/1036
+.. _1037: https://github.com/giampaolo/psutil/issues/1037
+.. _1038: https://github.com/giampaolo/psutil/issues/1038
+.. _1039: https://github.com/giampaolo/psutil/issues/1039
+.. _1040: https://github.com/giampaolo/psutil/issues/1040
+.. _1041: https://github.com/giampaolo/psutil/issues/1041
+.. _1042: https://github.com/giampaolo/psutil/issues/1042
+.. _1043: https://github.com/giampaolo/psutil/issues/1043
+.. _1044: https://github.com/giampaolo/psutil/issues/1044
+.. _1045: https://github.com/giampaolo/psutil/issues/1045
+.. _1046: https://github.com/giampaolo/psutil/issues/1046
+.. _1047: https://github.com/giampaolo/psutil/issues/1047
+.. _1048: https://github.com/giampaolo/psutil/issues/1048
+.. _1049: https://github.com/giampaolo/psutil/issues/1049
+.. _1050: https://github.com/giampaolo/psutil/issues/1050
+.. _1051: https://github.com/giampaolo/psutil/issues/1051
+.. _1052: https://github.com/giampaolo/psutil/issues/1052
+.. _1053: https://github.com/giampaolo/psutil/issues/1053
+.. _1054: https://github.com/giampaolo/psutil/issues/1054
+.. _1055: https://github.com/giampaolo/psutil/issues/1055
+.. _1056: https://github.com/giampaolo/psutil/issues/1056
+.. _1057: https://github.com/giampaolo/psutil/issues/1057
+.. _1058: https://github.com/giampaolo/psutil/issues/1058
+.. _1059: https://github.com/giampaolo/psutil/issues/1059
+.. _1060: https://github.com/giampaolo/psutil/issues/1060
+.. _1061: https://github.com/giampaolo/psutil/issues/1061
+.. _1062: https://github.com/giampaolo/psutil/issues/1062
+.. _1063: https://github.com/giampaolo/psutil/issues/1063
+.. _1064: https://github.com/giampaolo/psutil/issues/1064
+.. _1065: https://github.com/giampaolo/psutil/issues/1065
+.. _1066: https://github.com/giampaolo/psutil/issues/1066
+.. _1067: https://github.com/giampaolo/psutil/issues/1067
+.. _1068: https://github.com/giampaolo/psutil/issues/1068
+.. _1069: https://github.com/giampaolo/psutil/issues/1069
+.. _1070: https://github.com/giampaolo/psutil/issues/1070
+.. _1071: https://github.com/giampaolo/psutil/issues/1071
+.. _1072: https://github.com/giampaolo/psutil/issues/1072
+.. _1073: https://github.com/giampaolo/psutil/issues/1073
+.. _1074: https://github.com/giampaolo/psutil/issues/1074
+.. _1075: https://github.com/giampaolo/psutil/issues/1075
+.. _1076: https://github.com/giampaolo/psutil/issues/1076
+.. _1077: https://github.com/giampaolo/psutil/issues/1077
+.. _1078: https://github.com/giampaolo/psutil/issues/1078
+.. _1079: https://github.com/giampaolo/psutil/issues/1079
+.. _1080: https://github.com/giampaolo/psutil/issues/1080
+.. _1081: https://github.com/giampaolo/psutil/issues/1081
+.. _1082: https://github.com/giampaolo/psutil/issues/1082
+.. _1083: https://github.com/giampaolo/psutil/issues/1083
+.. _1084: https://github.com/giampaolo/psutil/issues/1084
+.. _1085: https://github.com/giampaolo/psutil/issues/1085
+.. _1086: https://github.com/giampaolo/psutil/issues/1086
+.. _1087: https://github.com/giampaolo/psutil/issues/1087
+.. _1088: https://github.com/giampaolo/psutil/issues/1088
+.. _1089: https://github.com/giampaolo/psutil/issues/1089
+.. _1090: https://github.com/giampaolo/psutil/issues/1090
+.. _1091: https://github.com/giampaolo/psutil/issues/1091
+.. _1092: https://github.com/giampaolo/psutil/issues/1092
+.. _1093: https://github.com/giampaolo/psutil/issues/1093
+.. _1094: https://github.com/giampaolo/psutil/issues/1094
+.. _1095: https://github.com/giampaolo/psutil/issues/1095
+.. _1096: https://github.com/giampaolo/psutil/issues/1096
+.. _1097: https://github.com/giampaolo/psutil/issues/1097
+.. _1098: https://github.com/giampaolo/psutil/issues/1098
+.. _1099: https://github.com/giampaolo/psutil/issues/1099
+.. _1100: https://github.com/giampaolo/psutil/issues/1100
+.. _1101: https://github.com/giampaolo/psutil/issues/1101
+.. _1102: https://github.com/giampaolo/psutil/issues/1102
+.. _1103: https://github.com/giampaolo/psutil/issues/1103
+.. _1104: https://github.com/giampaolo/psutil/issues/1104
+.. _1105: https://github.com/giampaolo/psutil/issues/1105
+.. _1106: https://github.com/giampaolo/psutil/issues/1106
+.. _1107: https://github.com/giampaolo/psutil/issues/1107
+.. _1108: https://github.com/giampaolo/psutil/issues/1108
+.. _1109: https://github.com/giampaolo/psutil/issues/1109
+.. _1110: https://github.com/giampaolo/psutil/issues/1110
+.. _1111: https://github.com/giampaolo/psutil/issues/1111
+.. _1112: https://github.com/giampaolo/psutil/issues/1112
+.. _1113: https://github.com/giampaolo/psutil/issues/1113
+.. _1114: https://github.com/giampaolo/psutil/issues/1114
+.. _1115: https://github.com/giampaolo/psutil/issues/1115
+.. _1116: https://github.com/giampaolo/psutil/issues/1116
+.. _1117: https://github.com/giampaolo/psutil/issues/1117
+.. _1118: https://github.com/giampaolo/psutil/issues/1118
+.. _1119: https://github.com/giampaolo/psutil/issues/1119
+.. _1120: https://github.com/giampaolo/psutil/issues/1120
+.. _1121: https://github.com/giampaolo/psutil/issues/1121
+.. _1122: https://github.com/giampaolo/psutil/issues/1122
+.. _1123: https://github.com/giampaolo/psutil/issues/1123
+.. _1124: https://github.com/giampaolo/psutil/issues/1124
+.. _1125: https://github.com/giampaolo/psutil/issues/1125
+.. _1126: https://github.com/giampaolo/psutil/issues/1126
+.. _1127: https://github.com/giampaolo/psutil/issues/1127
+.. _1128: https://github.com/giampaolo/psutil/issues/1128
+.. _1129: https://github.com/giampaolo/psutil/issues/1129
+.. _1130: https://github.com/giampaolo/psutil/issues/1130
+.. _1131: https://github.com/giampaolo/psutil/issues/1131
+.. _1132: https://github.com/giampaolo/psutil/issues/1132
+.. _1133: https://github.com/giampaolo/psutil/issues/1133
+.. _1134: https://github.com/giampaolo/psutil/issues/1134
+.. _1135: https://github.com/giampaolo/psutil/issues/1135
+.. _1136: https://github.com/giampaolo/psutil/issues/1136
+.. _1137: https://github.com/giampaolo/psutil/issues/1137
+.. _1138: https://github.com/giampaolo/psutil/issues/1138
+.. _1139: https://github.com/giampaolo/psutil/issues/1139
+.. _1140: https://github.com/giampaolo/psutil/issues/1140
+.. _1141: https://github.com/giampaolo/psutil/issues/1141
+.. _1142: https://github.com/giampaolo/psutil/issues/1142
+.. _1143: https://github.com/giampaolo/psutil/issues/1143
+.. _1144: https://github.com/giampaolo/psutil/issues/1144
+.. _1145: https://github.com/giampaolo/psutil/issues/1145
+.. _1146: https://github.com/giampaolo/psutil/issues/1146
+.. _1147: https://github.com/giampaolo/psutil/issues/1147
+.. _1148: https://github.com/giampaolo/psutil/issues/1148
+.. _1149: https://github.com/giampaolo/psutil/issues/1149
+.. _1150: https://github.com/giampaolo/psutil/issues/1150
+.. _1151: https://github.com/giampaolo/psutil/issues/1151
+.. _1152: https://github.com/giampaolo/psutil/issues/1152
+.. _1153: https://github.com/giampaolo/psutil/issues/1153
+.. _1154: https://github.com/giampaolo/psutil/issues/1154
+.. _1155: https://github.com/giampaolo/psutil/issues/1155
+.. _1156: https://github.com/giampaolo/psutil/issues/1156
+.. _1157: https://github.com/giampaolo/psutil/issues/1157
+.. _1158: https://github.com/giampaolo/psutil/issues/1158
+.. _1159: https://github.com/giampaolo/psutil/issues/1159
+.. _1160: https://github.com/giampaolo/psutil/issues/1160
+.. _1161: https://github.com/giampaolo/psutil/issues/1161
+.. _1162: https://github.com/giampaolo/psutil/issues/1162
+.. _1163: https://github.com/giampaolo/psutil/issues/1163
+.. _1164: https://github.com/giampaolo/psutil/issues/1164
+.. _1165: https://github.com/giampaolo/psutil/issues/1165
+.. _1166: https://github.com/giampaolo/psutil/issues/1166
+.. _1167: https://github.com/giampaolo/psutil/issues/1167
+.. _1168: https://github.com/giampaolo/psutil/issues/1168
+.. _1169: https://github.com/giampaolo/psutil/issues/1169
+.. _1170: https://github.com/giampaolo/psutil/issues/1170
+.. _1171: https://github.com/giampaolo/psutil/issues/1171
+.. _1172: https://github.com/giampaolo/psutil/issues/1172
+.. _1173: https://github.com/giampaolo/psutil/issues/1173
+.. _1174: https://github.com/giampaolo/psutil/issues/1174
+.. _1175: https://github.com/giampaolo/psutil/issues/1175
+.. _1176: https://github.com/giampaolo/psutil/issues/1176
+.. _1177: https://github.com/giampaolo/psutil/issues/1177
+.. _1178: https://github.com/giampaolo/psutil/issues/1178
+.. _1179: https://github.com/giampaolo/psutil/issues/1179
+.. _1180: https://github.com/giampaolo/psutil/issues/1180
+.. _1181: https://github.com/giampaolo/psutil/issues/1181
+.. _1182: https://github.com/giampaolo/psutil/issues/1182
+.. _1183: https://github.com/giampaolo/psutil/issues/1183
+.. _1184: https://github.com/giampaolo/psutil/issues/1184
+.. _1185: https://github.com/giampaolo/psutil/issues/1185
+.. _1186: https://github.com/giampaolo/psutil/issues/1186
+.. _1187: https://github.com/giampaolo/psutil/issues/1187
+.. _1188: https://github.com/giampaolo/psutil/issues/1188
+.. _1189: https://github.com/giampaolo/psutil/issues/1189
+.. _1190: https://github.com/giampaolo/psutil/issues/1190
+.. _1191: https://github.com/giampaolo/psutil/issues/1191
+.. _1192: https://github.com/giampaolo/psutil/issues/1192
+.. _1193: https://github.com/giampaolo/psutil/issues/1193
+.. _1194: https://github.com/giampaolo/psutil/issues/1194
+.. _1195: https://github.com/giampaolo/psutil/issues/1195
+.. _1196: https://github.com/giampaolo/psutil/issues/1196
+.. _1197: https://github.com/giampaolo/psutil/issues/1197
+.. _1198: https://github.com/giampaolo/psutil/issues/1198
+.. _1199: https://github.com/giampaolo/psutil/issues/1199
+.. _1200: https://github.com/giampaolo/psutil/issues/1200
