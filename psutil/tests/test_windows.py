@@ -169,10 +169,14 @@ class TestSensorsBattery(unittest.TestCase):
     def test_percent(self):
         w = wmi.WMI()
         battery_psutil = psutil.sensors_battery()
-        battery_wmi = w.query('select * from Win32_Battery')[0]
         if battery_psutil is None:
-            self.assertNot(battery_wmi.EstimatedChargeRemaining)
-            return
+            with self.assertRaises(IndexError):
+                w.query('select * from Win32_Battery')[0]
+        else:
+            battery_wmi = w.query('select * from Win32_Battery')[0]
+            if battery_psutil is None:
+                self.assertNot(battery_wmi.EstimatedChargeRemaining)
+                return
 
         self.assertAlmostEqual(
             battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,

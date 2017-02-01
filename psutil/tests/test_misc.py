@@ -476,7 +476,8 @@ class TestScripts(unittest.TestCase):
             self.assert_syntax('temperatures.py')
 
     def test_battery(self):
-        if hasattr(psutil, "sensors_battery"):
+        if hasattr(psutil, "sensors_battery") and \
+                psutil.sensors_battery() is not None:
             self.assert_stdout('battery.py')
         else:
             self.assert_syntax('battery.py')
