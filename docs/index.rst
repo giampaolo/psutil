@@ -638,7 +638,7 @@ Sensors
                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  See also `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
+  See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__
   for an example application.
 
   .. warning::
