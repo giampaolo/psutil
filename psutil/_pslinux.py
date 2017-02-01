@@ -7,6 +7,7 @@
 from __future__ import division
 
 import base64
+import collections
 import errno
 import functools
 import glob
@@ -65,6 +66,7 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
+_DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
 if HAS_PRLIMIT:
@@ -1063,6 +1065,42 @@ def disk_partitions(all=False):
 # =====================================================================
 # --- sensors
 # =====================================================================
+
+
+if os.path.exists('/sys/class/hwmon'):
+
+    def sensors_temperatures():
+        """Return hardware (CPU and others) temperatures as a dict
+        including hardware name, label, current, max and critical
+        temperatures.
+
+        Implementation notes:
+        - /sys/class/hwmon looks like the most recent interface to
+          retrieve this info, and this implementation relies on it
+          only (old distros will probably use something else)
+        - lm-sensors on Ubuntu 16.04 relies on /sys/class/hwmon
+        - /sys/class/thermal/thermal_zone* is another one but it's more
+          difficult to parse
+        """
+        ret = collections.defaultdict(list)
+        basenames = sorted(set(
+            [x.split('_')[0] for x in
+             glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
+        for base in basenames:
+            unit_name = cat(os.path.join(os.path.dirname(base), 'name'))
+            label = cat(base + '_label', fallback='')
+            current = float(cat(base + '_input')) / 1000.0
+            high = cat(base + '_max', fallback=None)
+            critical = cat(base + '_crit', fallback=None)
+
+            if high is not None:
+                high = float(high) / 1000.0
+            if critical is not None:
+                critical = float(critical) / 1000.0
+
+            ret[unit_name].append((label, current, high, critical))
+
+        return ret
 
 
 def sensors_battery():

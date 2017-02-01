@@ -169,6 +169,9 @@ scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
 # psutil.cpu_freq()
 scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
+# psutil.sensors_temperatures()
+shwtemp = namedtuple(
+    'shwtemp', ['label', 'current', 'high', 'critical'])
 # psutil.sensors_battery()
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 

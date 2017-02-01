@@ -8,6 +8,7 @@
 **Enhancements**
 
 - 357_: added psutil.Process.cpu_num() (what CPU a process is on).
+- 371_: added psutil.sensors_temperatures() (Linux only).
 - 941_: added psutil.cpu_freq() (CPU frequency).
 - 956_: cpu_affinity([]) can now be used as an alias to set affinity against
   all eligible CPUs.

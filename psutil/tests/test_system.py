@@ -29,6 +29,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
+from psutil._compat import unicode
 from psutil.tests import AF_INET6
 from psutil.tests import APPVEYOR
 from psutil.tests import check_net_address
@@ -754,6 +755,21 @@ class TestSystemAPIs(unittest.TestCase):
         # assert all other constants are set to False
         for name in names:
             self.assertIs(getattr(psutil, name), False, msg=name)
+
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "platform not suported")
+    def test_sensors_temperatures(self):
+        temps = psutil.sensors_temperatures()
+        for name, entries in temps.items():
+            self.assertIsInstance(name, (str, unicode))
+            for entry in entries:
+                self.assertIsInstance(entry.label, (str, unicode))
+                if entry.current is not None:
+                    self.assertGreaterEqual(entry.current, 0)
+                if entry.high is not None:
+                    self.assertGreaterEqual(entry.high, 0)
+                if entry.critical is not None:
+                    self.assertGreaterEqual(entry.critical, 0)
 
     @unittest.skipUnless(LINUX or WINDOWS or FREEBSD,
                          "platform not supported")
