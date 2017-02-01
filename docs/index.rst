@@ -195,6 +195,8 @@ CPU
 
     Return CPU frequency as a nameduple including *current*, *min* and *max*
     frequencies expressed in Mhz.
+    On Linux **current** frequency reports the real-time value, on all other
+    platforms it represents the nominal "fixed" value.
     If *percpu* is ``True`` and the system supports per-cpu frequency
     retrieval (Linux only) a list of frequencies is returned for each CPU,
     if not, a list with a single element is returned.
