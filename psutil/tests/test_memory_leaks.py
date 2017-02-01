@@ -567,6 +567,12 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_users(self):
         self.execute(psutil.users)
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "platform not supported")
+    @skip_if_linux()
+    def test_sensors_temperatures(self):
+        self.execute(psutil.users)
+
     if WINDOWS:
 
         # --- win services
