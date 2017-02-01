@@ -1418,8 +1418,13 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
     fullName[domainNameSize + 1 + nameSize] = '\0';
 
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
+    py_unicode = PyUnicode_DecodeLocaleAndSize(
+        fullName, _tcslen(fullName), "surrogateescape");
+#else
     py_unicode = PyUnicode_Decode(
         fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
+#endif
 
     free(fullName);
     free(name);
@@ -2660,9 +2665,15 @@ psutil_users(PyObject *self, PyObject *args) {
             station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
+        py_buffer_user_encoded = PyUnicode_DecodeLocaleAndSize(
+            buffer_user, _tcslen(buffer_user), "surrogateescape");
+#else
         py_buffer_user_encoded = PyUnicode_Decode(
             buffer_user, _tcslen(buffer_user), Py_FileSystemDefaultEncoding,
             "replace");
+#endif
+
         if (py_buffer_user_encoded == NULL)
             goto error;
         py_tuple = Py_BuildValue("OOd", py_buffer_user_encoded, py_address,

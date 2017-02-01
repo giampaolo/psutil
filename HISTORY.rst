@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.1.1
+=====
+
+*XXXX-XX-XX*
+
+**Bug fixes**
+
+- 964_: [Windows] Process.username() and psutil.users() may return badly
+  decoding character on Python 3.
+
 5.1.0
 =====
 
