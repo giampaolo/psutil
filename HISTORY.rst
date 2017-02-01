@@ -22,6 +22,8 @@
 - 959_: psutil exception objects could not be pickled.
 - 960_: Popen.wait() did not return the correct negative exit status if process
   is ``kill()``ed by a signal.
+- 961_: [Windows] WindowsService.description() may fail with
+  ERROR_MUI_FILE_NOT_FOUND.
 
 
 5.0.1

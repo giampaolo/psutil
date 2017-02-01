@@ -1809,7 +1809,10 @@ class TestFetchAllProcesses(unittest.TestCase):
                 st = os.stat(ret)
             except OSError as err:
                 # directory has been removed in mean time
-                if err.errno != errno.ENOENT:
+                if WINDOWS and err.errno in \
+                        psutil._psplatform.ACCESS_DENIED_SET:
+                    pass
+                elif err.errno != errno.ENOENT:
                     raise
             else:
                 self.assertTrue(stat.S_ISDIR(st.st_mode))
