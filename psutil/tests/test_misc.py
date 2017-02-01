@@ -469,6 +469,7 @@ class TestScripts(unittest.TestCase):
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
+    @unittest.skipIf(TRAVIS, "unreliable on travis")
     def test_temperatures(self):
         if hasattr(psutil, "sensors_temperatures"):
             self.assert_stdout('temperatures.py')
