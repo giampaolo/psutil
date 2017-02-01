@@ -5,6 +5,7 @@ A collection of ideas and notes about stuff to implement in future versions.
 "#NNN" occurrences refer to bug tracker issues at:
 https://github.com/giampaolo/psutil/issues
 
+
 PLATFORMS
 =========
 
@@ -15,14 +16,10 @@ PLATFORMS
 - HP-UX
 
 
-APIS
-====
-
-- cpu_info() (#550)
-
-
 FEATURES
 ========
+
+- #371: sensors_temperatures() at least for OSX.
 
 - #669: Windows / net_if_addrs(): return broadcast addr.
 
@@ -49,9 +46,6 @@ FEATURES
 
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
-
-- #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
-  lm-sensors lib).
 
 - #269: NIC rx/tx queue. This should probably go into net_if_stats().
   Figure out on what platforms this is supported:
@@ -152,8 +146,6 @@ FEATURES
 - round Process.memory_percent() result?
 
 - #550: number of threads per core.
-
-- Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
 
 
 BUGFIXES
