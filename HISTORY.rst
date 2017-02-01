@@ -21,6 +21,7 @@
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 - 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
   higher number than real usage.
+- 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
 - 960_: Popen.wait() did not return the correct negative exit status if process
   is ``kill()``ed by a signal.
