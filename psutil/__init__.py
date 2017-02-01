@@ -185,6 +185,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    # "sensors_temperatures",                                       # sensors
     "users", "boot_time",                                           # others
 ]
 __all__.extend(_psplatform.__extra__all__)
@@ -2178,6 +2179,50 @@ def net_if_stats():
      - mtu: the maximum transmission unit expressed in bytes.
     """
     return _psplatform.net_if_stats()
+
+
+# =====================================================================
+# --- sensors
+# =====================================================================
+
+
+if hasattr(_psplatform, "sensors_temperatures"):
+
+    def sensors_temperatures(fahrenheit=False):
+        """Return hardware temperatures. Each entry is a namedtuple
+        representing a certain hardware sensor (it may be a CPU, an
+        hard disk or something else, depending on the OS and its
+        configuration).
+        All temperatures are expressed in celsius unless *fahrenheit*
+        is set to True.
+        """
+        def to_fahrenheit(n):
+            return (float(n) * 9 / 5) + 32
+
+        ret = collections.defaultdict(list)
+        rawdict = _psplatform.sensors_temperatures()
+
+        for name, values in rawdict.items():
+            while values:
+                label, current, high, critical = values.pop(0)
+                if fahrenheit:
+                    current = to_fahrenheit(current)
+                    if high is not None:
+                        high = to_fahrenheit(high)
+                    if critical is not None:
+                        critical = to_fahrenheit(critical)
+
+                if high and not critical:
+                    critical = high
+                elif critical and not high:
+                    high = critical
+
+                ret[name].append(
+                    _common.shwtemp(label, current, high, critical))
+
+        return dict(ret)
+
+    __all__.append("sensors_temperatures")
 
 
 # =====================================================================

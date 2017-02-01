@@ -181,6 +181,21 @@ Network
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
 
+Sensors (Linux only)
+====================
+
+.. code-block:: python
+
+    >>> import psutil
+    >>> psutil.sensors_temperatures()
+    {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
+     'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
+     'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
+                  shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
+
 Other system info
 =================
 

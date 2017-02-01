@@ -388,7 +388,7 @@ class TestScripts(unittest.TestCase):
             src = f.read()
         ast.parse(src)
 
-    def test_check_presence(self):
+    def test_coverage(self):
         # make sure all example scripts have a test method defined
         meths = dir(self)
         for name in os.listdir(SCRIPTS_DIR):
@@ -468,6 +468,12 @@ class TestScripts(unittest.TestCase):
 
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
+
+    def test_sensors(self):
+        if hasattr(psutil, "sensors_temperatures"):
+            self.assert_stdout('sensors.py')
+        else:
+            self.assert_syntax('sensors.py')
 
 
 # ===================================================================
