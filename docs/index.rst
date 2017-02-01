@@ -399,7 +399,7 @@ Disks
   .. warning::
     on some systems such as Linux, on a very busy or long-lived system these
     numbers may wrap (restart from zero), see
-    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    `issue #802 <https://github.com/giampaolo/psutil/issues/802>`__.
     Applications should be prepared to deal with that.
 
   .. versionchanged::
@@ -1249,32 +1249,35 @@ Process class
 
     Get or set process current
     `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
-    CPU affinity consists in telling the OS to run a certain process on a
-    limited set of CPUs only.
+    CPU affinity consists in telling the OS to run a process on a limited set
+    of CPUs only.
     On Linux this is done via the ``taskset`` command.
-    The number of eligible CPUs can be obtained with
-    ``list(range(psutil.cpu_count()))``.
-    ``ValueError`` will be raised on set in case an invalid CPU number is
-    specified.
+    If no argument is passed it returns the current CPU affinity as a list
+    of integers.
+    If passed it must be a list of integers specifying the new CPUs affinity.
+    If an empty list is passed all eligible CPUs are assumed (and set);
+    on Linux this may not necessarily mean all available CPUs as in
+    ``list(range(psutil.cpu_count()))``).
 
       >>> import psutil
       >>> psutil.cpu_count()
       4
       >>> p = psutil.Process()
-      >>> p.cpu_affinity()  # get
-      [0, 1, 2, 3]
-      >>> p.cpu_affinity([0])  # set; from now on, process will run on CPU #0 only
+      >>> # get
       >>> p.cpu_affinity()
-      [0]
-      >>>
-      >>> # reset affinity against all CPUs
-      >>> all_cpus = list(range(psutil.cpu_count()))
-      >>> p.cpu_affinity(all_cpus)
-      >>>
+      [0, 1, 2, 3]
+      >>> # set; from now on, process will run on CPU #0 and #1 only
+      >>> p.cpu_affinity([0, 1])
+      >>> p.cpu_affinity()
+      [0, 1]
+      >>> # reset affinity against all eligible CPUs
+      >>> p.cpu_affinity([])
 
     Availability: Linux, Windows, FreeBSD
 
     .. versionchanged:: 2.2.0 added support for FreeBSD
+    .. versionchanged:: 5.1.0 an empty list can be passed to set affinity
+      against all eligible CPUs.
 
   .. method:: cpu_num()
 
@@ -1869,7 +1872,7 @@ Constants
 .. data:: SUNOS
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
-  *WINDOWS* constant will be ``True``, all others will be ``False``.
+  :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
 

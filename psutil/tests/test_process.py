@@ -104,7 +104,7 @@ class TestProcess(unittest.TestCase):
         sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
         if POSIX:
-            self.assertEqual(sig, signal.SIGKILL)
+            self.assertEqual(sig, -signal.SIGKILL)
 
     def test_terminate(self):
         sproc = get_test_subprocess()
@@ -114,7 +114,7 @@ class TestProcess(unittest.TestCase):
         sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
         if POSIX:
-            self.assertEqual(sig, signal.SIGTERM)
+            self.assertEqual(sig, -signal.SIGTERM)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
@@ -124,7 +124,7 @@ class TestProcess(unittest.TestCase):
         exit_sig = p.wait()
         self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
-            self.assertEqual(exit_sig, sig)
+            self.assertEqual(exit_sig, -sig)
             #
             sproc = get_test_subprocess()
             p = psutil.Process(sproc.pid)
@@ -155,7 +155,7 @@ class TestProcess(unittest.TestCase):
         p.kill()
         code = p.wait()
         if POSIX:
-            self.assertEqual(code, signal.SIGKILL)
+            self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
@@ -165,7 +165,7 @@ class TestProcess(unittest.TestCase):
         p.terminate()
         code = p.wait()
         if POSIX:
-            self.assertEqual(code, signal.SIGTERM)
+            self.assertEqual(code, -signal.SIGTERM)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
@@ -231,7 +231,7 @@ class TestProcess(unittest.TestCase):
             else:
                 break
         if POSIX:
-            self.assertEqual(code, signal.SIGKILL)
+            self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
@@ -849,10 +849,13 @@ class TestProcess(unittest.TestCase):
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
+        assert initial, initial
         self.addCleanup(p.cpu_affinity, initial)
+
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
         self.assertEqual(len(initial), len(set(initial)))
+
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
@@ -867,9 +870,14 @@ class TestProcess(unittest.TestCase):
             if hasattr(p, "num_cpu"):
                 self.assertEqual(p.cpu_affinity()[0], p.num_cpu())
 
-        #
-        p.cpu_affinity(all_cpus)
-        self.assertEqual(p.cpu_affinity(), all_cpus)
+        # [] is an alias for "all eligible CPUs"; on Linux this may
+        # not be equal to all available CPUs, see:
+        # https://github.com/giampaolo/psutil/issues/956
+        p.cpu_affinity([])
+        if LINUX:
+            self.assertEqual(p.cpu_affinity(), p._proc._get_eligible_cpus())
+        else:
+            self.assertEqual(p.cpu_affinity(), all_cpus)
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(p.cpu_affinity(),
                              list(os.sched_getaffinity(p.pid)))
@@ -1141,6 +1149,7 @@ class TestProcess(unittest.TestCase):
         self.fail("num ctx switches still the same after 50.000 iterations")
 
     def test_parent_ppid(self):
+        reap_children(recursive=True)
         this_parent = os.getpid()
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)

@@ -1,3 +1,5 @@
+# Build: 0 (bump this up by 1 to force an appveyor run)
+
 os: Visual Studio 2015
 
 environment:
@@ -124,4 +126,3 @@ only_commits:
     psutil/tests/test_windows.py
     scripts/*
     setup.py
-
