@@ -1149,7 +1149,6 @@ class TestProcess(unittest.TestCase):
         self.fail("num ctx switches still the same after 50.000 iterations")
 
     def test_parent_ppid(self):
-        reap_children(recursive=True)
         this_parent = os.getpid()
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -1160,7 +1159,8 @@ class TestProcess(unittest.TestCase):
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue
-            self.assertNotEqual(p.ppid(), this_parent)
+            # XXX: sometimes this fails on Windows; not sure why.
+            self.assertNotEqual(p.ppid(), this_parent, msg=p)
 
     def test_children(self):
         p = psutil.Process()
