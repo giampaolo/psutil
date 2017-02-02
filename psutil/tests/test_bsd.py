@@ -359,7 +359,9 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- sensors_battery
 
-    @unittest.skipUnless(psutil.sensors_battery(), "no battery")
+    @unittest.skipUnless(
+        hasattr(psutil, "sensors_battery") and psutil.sensors_battery(),
+        "no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
             m, s = divmod(secs, 60)
