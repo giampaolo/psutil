@@ -270,6 +270,8 @@ def main():
         license='BSD',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
+        test_suite="psutil.tests.runner.get_suite",
+        tests_require=['ipaddress', 'mock', 'unittest2'],
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',
