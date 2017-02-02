@@ -33,7 +33,7 @@ def main():
     if batt is None:
         return sys.exit("no battery is installed")
 
-    print("charge:     %s%%" % batt.percent)
+    print("charge:     %s%%" % round(batt.percent, 2))
     if batt.power_plugged:
         print("status:     %s" % (
             "charging" if batt.percent < 100 else "fully charged"))

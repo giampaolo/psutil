@@ -1101,16 +1101,56 @@ def sensors_temperatures():
 
 
 def sensors_battery():
+    """Return battery information.
+    Implementation note: it appears /sys/class/power_supply/BAT0/
+    directory structure may vary and provide files with the same
+    meaning but under different names, see:
+    https://github.com/giampaolo/psutil/issues/966
+    """
+    null = object()
+
+    def multi_cat(*paths):
+        """Read content of multiple files which may not exist.
+        # If none of them exist returns None.
+        """
+        for path in paths:
+            ret = cat(path, fallback=null)
+            if ret != null:
+                return int(ret)
+        return None
+
     root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
     if not os.path.exists(root):
         return None
 
+    # Base metrics.
+    energy_now = multi_cat(
+        root + "/energy_now",
+        root + "/charge_now")
+    power_now = multi_cat(
+        root + "/power_now",
+        root + "/current_now")
+    energy_full = multi_cat(
+        root + "/energy_full",
+        root + "/charge_full")
+    if energy_now is None or power_now is None:
+        return None
+
+    # Percent. If we have energy_full the percentage will be more
+    # accurate compared to reading /capacity file (float vs. int).
+    if energy_full is not None:
+        try:
+            percent = 100.0 * energy_now / energy_full
+        except ZeroDivisionError:
+            percent = 0.0
+    else:
+        percent = int(cat(root + "/capacity"), fallback=null)
+        if percent == null:
+            return None
+
+    # Secs left.
     power_plugged = cat(os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
                         fallback=b"0") == b"1"
-    energy_now = int(cat(root + "/energy_now"))
-    power_now = int(cat(root + "/power_now"))
-    percent = int(cat(root + "/capacity"))
-
     if power_plugged:
         secsleft = _common.POWER_TIME_UNLIMITED
     else:

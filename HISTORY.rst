@@ -11,6 +11,8 @@
   decoding character on Python 3.
 - 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
   wrong number of bytes read and written.
+- 966_: [Linux] sensors_battery() fails with no such file error.
+
 
 5.1.0
 =====
