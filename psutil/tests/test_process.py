@@ -1239,20 +1239,32 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(d['connections'], 'foo')
 
         # Test ad_value is set on AccessDenied.
-        with mock.patch('psutil.Process.name', create=True,
+        with mock.patch('psutil.Process.nice', create=True,
                         side_effect=psutil.AccessDenied):
             self.assertEqual(
-                p.as_dict(attrs=["name"], ad_value=1), {"name": 1})
+                p.as_dict(attrs=["nice"], ad_value=1), {"nice": 1})
+
+        # Test that NoSuchProcess bubbles up.
+        with mock.patch('psutil.Process.nice', create=True,
+                        side_effect=psutil.NoSuchProcess(p.pid, "name")):
+            self.assertRaises(
+                psutil.NoSuchProcess, p.as_dict, attrs=["nice"])
+
+        # Test that ZombieProcess is swallowed.
+        with mock.patch('psutil.Process.nice', create=True,
+                        side_effect=psutil.ZombieProcess(p.pid, "name")):
+            self.assertEqual(
+                p.as_dict(attrs=["nice"], ad_value="foo"), {"nice": "foo"})
 
         # By default APIs raising NotImplementedError are
         # supposed to be skipped.
-        with mock.patch('psutil.Process.name', create=True,
+        with mock.patch('psutil.Process.nice', create=True,
                         side_effect=NotImplementedError):
             d = p.as_dict()
-            self.assertNotIn('name', list(d.keys()))
+            self.assertNotIn('nice', list(d.keys()))
             # ...unless the user explicitly asked for some attr.
             with self.assertRaises(NotImplementedError):
-                p.as_dict(attrs=["name"])
+                p.as_dict(attrs=["nice"])
 
         # errors
         with self.assertRaises(TypeError):
