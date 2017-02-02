@@ -1146,9 +1146,26 @@ def sensors_battery():
         if percent == null:
             return None
 
-    # Secs left.
-    power_plugged = cat(os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
-                        fallback=b"0") == b"1"
+    # Is AC power cable plugged in?
+    if os.path.exists(os.path.join(POWER_SUPPLY_PATH, "AC0/online")):
+        power_plugged = cat(
+            os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
+            fallback=b"0") == b"1"
+    elif os.path.exists(root + "/status"):
+        status = cat(root + "/status", fallback="").lower()
+        if status == "discharging":
+            power_plugged = False
+        elif status in ("charging", "full"):
+            power_plugged = True
+        else:
+            power_plugged = None
+    else:
+        power_plugged = None
+
+    # Seconds left.
+    # Note to self: we may also calculate the charging ETA as per:
+    # https://github.com/thialfihar/dotfiles/blob/
+    #     013937745fd9050c30146290e8f963d65c0179e6/bin/battery.py#L55
     if power_plugged:
         secsleft = _common.POWER_TIME_UNLIMITED
     else:

@@ -665,7 +665,8 @@ Sensors
     :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
     If it can't be determined it is set to
     :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
-  - **power_plugged**: ``True`` if the AC power cable is connected.
+  - **power_plugged**: ``True`` if the AC power cable is connected, ``False``
+    if not or ``None`` if it can't be determined.
 
   Example::
 
