@@ -655,7 +655,8 @@ Sensors
 .. function:: sensors_battery()
 
   Return battery status information as a namedtuple including the following
-  values. If no battery is installed returns ``None``.
+  values. If no battery is installed or metrics can't be determined returns
+  ``None``.
 
   - **percent**: battery power left as a percentage.
   - **secsleft**: a rough approximation of how many seconds are left before the

@@ -282,14 +282,12 @@ def set_scputimes_ntuple(procfs_path):
 def cat(fname, fallback=_DEFAULT, binary=True):
     """Return file content."""
     try:
-        f = open_binary(fname) if binary else open_text(fname)
+        with open_binary(fname) if binary else open_text(fname) as f:
+            return f.read().strip()
     except IOError:
         if fallback != _DEFAULT:
             return fallback
         raise
-    else:
-        with f:
-            return f.read().strip()
 
 
 try:
@@ -1110,8 +1108,8 @@ def sensors_battery():
     null = object()
 
     def multi_cat(*paths):
-        """Read content of multiple files which may not exist.
-        # If none of them exist returns None.
+        """Attempt to read the content of multiple files which may
+        not exist. If none of them exist return None.
         """
         for path in paths:
             ret = cat(path, fallback=null)
