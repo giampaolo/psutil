@@ -1238,15 +1238,22 @@ class TestProcess(unittest.TestCase):
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
+        # Test ad_value is set on AccessDenied.
+        with mock.patch('psutil.Process.name', create=True,
+                        side_effect=psutil.AccessDenied):
+            self.assertEqual(
+                p.as_dict(attrs=["name"], ad_value=1), {"name": 1})
+
+        # By default APIs raising NotImplementedError are
+        # supposed to be skipped.
         with mock.patch('psutil.Process.name', create=True,
                         side_effect=NotImplementedError):
-            # By default APIs raising NotImplementedError are
-            # supposed to be skipped.
             d = p.as_dict()
             self.assertNotIn('name', list(d.keys()))
             # ...unless the user explicitly asked for some attr.
             with self.assertRaises(NotImplementedError):
                 p.as_dict(attrs=["name"])
+
         # errors
         with self.assertRaises(TypeError):
             p.as_dict('name')
