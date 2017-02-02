@@ -9,6 +9,8 @@
 
 - 964_: [Windows] Process.username() and psutil.users() may return badly
   decoding character on Python 3.
+- 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
+  wrong number of bytes read and written.
 
 5.1.0
 =====
