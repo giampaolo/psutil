@@ -5,6 +5,11 @@
 
 *XXXX-XX-XX*
 
+
+**Enhancements**
+
+- 966_: [Linux] sensors_battery().percent is a float and is more precise.
+
 **Bug fixes**
 
 - 964_: [Windows] Process.username() and psutil.users() may return badly
