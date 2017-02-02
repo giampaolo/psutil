@@ -51,7 +51,7 @@ SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
 if LINUX:
-    SECTOR_SIZE = psutil._psplatform.SECTOR_SIZE
+    SECTOR_SIZE = 512
 
 
 # =====================================================================
@@ -987,7 +987,7 @@ class TestMisc(unittest.TestCase):
         def open_mock(name, *args, **kwargs):
             if PY3 and isinstance(name, bytes):
                 name = name.decode()
-            if name.startswith("/sys/block/sda/queue/hw_sector_size"):
+            if "hw_sector_size" in name:
                 flag.append(None)
                 raise IOError(errno.ENOENT, '')
             else:
@@ -996,15 +996,9 @@ class TestMisc(unittest.TestCase):
         flag = []
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        try:
-            with mock.patch(patch_point, side_effect=open_mock):
-                importlib.reload(psutil._pslinux)
-                importlib.reload(psutil)
-                self.assertEqual(flag, [None])
-                self.assertEqual(psutil._pslinux.SECTOR_SIZE, 512)
-        finally:
-            importlib.reload(psutil._pslinux)
-            importlib.reload(psutil)
+        with mock.patch(patch_point, side_effect=open_mock):
+            psutil.disk_io_counters()
+            self.assertTrue(flag)
 
     def test_issue_687(self):
         # In case of thread ID:
