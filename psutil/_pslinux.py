@@ -1153,7 +1153,7 @@ def sensors_battery():
             os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
             fallback=b"0") == b"1"
     elif os.path.exists(root + "/status"):
-        status = cat(root + "/status", fallback="").lower()
+        status = cat(root + "/status", fallback="", binary=False).lower()
         if status == "discharging":
             power_plugged = False
         elif status in ("charging", "full"):
