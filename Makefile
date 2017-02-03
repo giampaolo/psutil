@@ -20,7 +20,6 @@ DEPS = argparse \
 	requests \
 	setuptools \
 	sphinx \
-	sphinx-pypi-upload \
 	twine \
 	unittest2
 
@@ -196,12 +195,6 @@ install-git-hooks:
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean
 	$(PYTHON) setup.py sdist upload
-
-# Build and upload doc on https://pythonhosted.org/psutil/.
-# Requires "pip install sphinx-pypi-upload".
-upload-doc:
-	cd docs && make html
-	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
 
 # Download exes/wheels hosted on appveyor.
 win-download-exes:
