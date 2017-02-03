@@ -210,6 +210,7 @@ else:
 
 
 def get_procfs_path():
+    """Return updated psutil.PROCFS_PATH constant."""
     return sys.modules['psutil'].PROCFS_PATH
 
 
@@ -234,6 +235,9 @@ def readlink(path):
 
 
 def file_flags_to_mode(flags):
+    """Convert file's open() flags into a readable string.
+    Used by Process.open_files().
+    """
     modes_map = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
     mode = modes_map[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
     if flags & os.O_APPEND:
@@ -244,22 +248,25 @@ def file_flags_to_mode(flags):
 
 
 def get_sector_size(partition):
+    """Return the sector size of a partition.
+    Used by disk_io_counters().
+    """
     try:
         with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
             return int(f.read())
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
-        # have a size of 512 bytes since 2.4 kernels. This value is
-        # needed to calculate the amount of disk I/O in bytes.
+        # have a size of 512 bytes since 2.4 kernels.
         return 512
 
 
 @memoize
 def set_scputimes_ntuple(procfs_path):
-    """Return a namedtuple of variable fields depending on the
-    CPU times available on this Linux kernel version which may be:
+    """Set a namedtuple of variable fields depending on the CPU times
+    available on this Linux kernel version which may be:
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
+    Used by cpu_times() function.
     """
     global scputimes
     with open_binary('%s/stat' % procfs_path) as f:
@@ -276,11 +283,14 @@ def set_scputimes_ntuple(procfs_path):
         # Linux >= 3.2.0
         fields.append('guest_nice')
     scputimes = namedtuple('scputimes', fields)
-    return scputimes
 
 
 def cat(fname, fallback=_DEFAULT, binary=True):
-    """Return file content."""
+    """Return file content.
+    fallback: the value returned in case the file does not exist or
+              cannot be read
+    binary: whether to open the file in binary or text mode.
+    """
     try:
         with open_binary(fname) if binary else open_text(fname) as f:
             return f.read().strip()
@@ -291,7 +301,7 @@ def cat(fname, fallback=_DEFAULT, binary=True):
 
 
 try:
-    scputimes = set_scputimes_ntuple("/proc")
+    set_scputimes_ntuple("/proc")
 except Exception:
     # Don't want to crash at import time.
     traceback.print_exc()
@@ -469,6 +479,7 @@ def virtual_memory():
 
 
 def swap_memory():
+    """Return swap memory metrics."""
     _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
     total *= unit_multiplier
     free *= unit_multiplier
@@ -602,6 +613,7 @@ def cpu_count_physical():
 
 
 def cpu_stats():
+    """Return various CPU stats as a named tuple."""
     with open_binary('%s/stat' % get_procfs_path()) as f:
         ctx_switches = None
         interrupts = None
@@ -624,6 +636,10 @@ def cpu_stats():
 if os.path.exists("/sys/devices/system/cpu/cpufreq"):
 
     def cpu_freq():
+        """Return frequency metrics for all CPUs.
+        Contrarily to other OSes, Linux updates these values in
+        real-time.
+        """
         # scaling_* files seem preferable to cpuinfo_*, see:
         # http://unix.stackexchange.com/a/87537/168884
         ret = []
@@ -1031,7 +1047,7 @@ def disk_io_counters():
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples"""
+    """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
     with open_text("%s/filesystems" % get_procfs_path()) as f:
         for line in f:

@@ -185,6 +185,7 @@ disk_io_counters = cext.disk_io_counters
 
 
 def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of namedtuples."""
     retlist = []
     partitions = cext.disk_partitions()
     for partition in partitions:
@@ -209,6 +210,7 @@ net_if_addrs = cext_posix.net_if_addrs
 
 
 def net_connections(kind='inet'):
+    """System-wide network connections."""
     # Note: on OSX this will fail with AccessDenied unless
     # the process is owned by root.
     ret = []
@@ -250,6 +252,7 @@ def boot_time():
 
 
 def users():
+    """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:

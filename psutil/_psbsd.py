@@ -229,6 +229,7 @@ else:
     # crash at psutil import time.
     # Next calls will fail with NotImplementedError
     def per_cpu_times():
+        """Return system CPU times as a namedtuple"""
         if cpu_count_logical() == 1:
             return [cpu_times()]
         if per_cpu_times.__called__:
@@ -278,6 +279,7 @@ else:
 
 
 def cpu_stats():
+    """Return various CPU stats as a named tuple."""
     if FREEBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
@@ -353,6 +355,7 @@ def net_if_stats():
 
 
 def net_connections(kind):
+    """System-wide network connections."""
     if OPENBSD:
         ret = []
         for pid in pids():
@@ -403,6 +406,7 @@ def net_connections(kind):
 if FREEBSD:
 
     def sensors_battery():
+        """Return battery info."""
         percent, minsleft, power_plugged = cext.sensors_battery()
         power_plugged = power_plugged == 1
         if power_plugged:
@@ -425,6 +429,7 @@ def boot_time():
 
 
 def users():
+    """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
@@ -454,6 +459,7 @@ def _pid_0_exists():
 
 
 def pids():
+    """Returns a list of PIDs currently running on the system."""
     ret = cext.pids()
     if OPENBSD and (0 not in ret) and _pid_0_exists():
         # On OpenBSD the kernel does not return PID 0 (neither does
@@ -464,6 +470,7 @@ def pids():
 
 if OPENBSD or NETBSD:
     def pid_exists(pid):
+        """Return True if pid exists."""
         exists = _psposix.pid_exists(pid)
         if not exists:
             # We do this because _psposix.pid_exists() lies in case of
@@ -502,6 +509,7 @@ def wrap_exceptions(fun):
 
 @contextlib.contextmanager
 def wrap_exceptions_procfs(inst):
+    """Same as above, for routines relying on reading /proc fs."""
     try:
         yield
     except EnvironmentError as err:

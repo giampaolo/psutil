@@ -174,9 +174,11 @@ TimeoutExpired = None
 
 @lru_cache(maxsize=512)
 def convert_dos_path(s):
-    # convert paths using native DOS format like:
-    # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
-    # into: "C:\Windows\systemew\file.txt"
+    """Convert paths using native DOS format like:
+        "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+    into:
+        "C:\Windows\systemew\file.txt"
+    """
     if PY3 and not isinstance(s, str):
         s = s.decode('utf8')
     rawdrive = '\\'.join(s.split('\\')[:3])
@@ -185,6 +187,9 @@ def convert_dos_path(s):
 
 
 def py2_strencode(s, encoding=sys.getfilesystemencoding()):
+    """Encode a string in the given encoding. Falls back on returning
+    the string as is if it can't be encoded.
+    """
     if PY3 or isinstance(s, str):
         return s
     else:
@@ -333,6 +338,7 @@ def net_connections(kind, _pid=-1):
 
 
 def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
     ret = cext.net_if_stats()
     for name, items in ret.items():
         name = py2_strencode(name)
@@ -344,11 +350,15 @@ def net_if_stats():
 
 
 def net_io_counters():
+    """Return network I/O statistics for every network interface
+    installed on the system as a dict of raw tuples.
+    """
     ret = cext.net_io_counters()
     return dict([(py2_strencode(k), v) for k, v in ret.items()])
 
 
 def net_if_addrs():
+    """Return the addresses associated to each NIC."""
     ret = []
     for items in cext.net_if_addrs():
         items = list(items)
@@ -363,6 +373,7 @@ def net_if_addrs():
 
 
 def sensors_battery():
+    """Return battery information."""
     # For constants meaning see:
     # https://msdn.microsoft.com/en-us/library/windows/desktop/
     #     aa373232(v=vs.85).aspx

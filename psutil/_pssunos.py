@@ -102,6 +102,7 @@ TimeoutExpired = None
 
 
 def get_procfs_path():
+    """Return updated psutil.PROCFS_PATH constant."""
     return sys.modules['psutil'].PROCFS_PATH
 
 
@@ -111,7 +112,8 @@ def get_procfs_path():
 
 
 def virtual_memory():
-    # we could have done this with kstat, but imho this is good enough
+    """Report virtual memory metrics."""
+    # we could have done this with kstat, but IMHO this is good enough
     total = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
     # note: there's no difference on Solaris
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
@@ -121,6 +123,7 @@ def virtual_memory():
 
 
 def swap_memory():
+    """Report swap memory metrics."""
     sin, sout = cext.swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
@@ -184,6 +187,7 @@ def cpu_count_physical():
 
 
 def cpu_stats():
+    """Return various CPU stats as a named tuple."""
     ctx_switches, interrupts, syscalls, traps = cext.cpu_stats()
     soft_interrupts = 0
     return _common.scpustats(ctx_switches, interrupts, soft_interrupts,
