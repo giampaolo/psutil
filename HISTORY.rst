@@ -3,8 +3,7 @@
 5.1.1
 =====
 
-*XXXX-XX-XX*
-
+*2017-02-03*
 
 **Enhancements**
 
@@ -18,7 +17,6 @@
   wrong number of bytes read and written.
 - 966_: [Linux] sensors_battery() may fail with "no such file error".
 - 966_: [Linux] sensors_battery().power_plugged may lie.
-
 
 5.1.0
 =====
