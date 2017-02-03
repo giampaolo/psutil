@@ -132,6 +132,7 @@ Memory
 
 .. code-block:: python
 
+    >>> import psutil
     >>> psutil.virtual_memory()
     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
     >>> psutil.swap_memory()
@@ -143,6 +144,7 @@ Disks
 
 .. code-block:: python
 
+    >>> import psutil
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
      sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
@@ -159,6 +161,7 @@ Network
 
 .. code-block:: python
 
+    >>> import psutil
     >>> psutil.net_io_counters(pernic=True)
     {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
      'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
@@ -207,6 +210,7 @@ Other system info
 
 .. code-block:: python
 
+    >>> import psutil
     >>> psutil.users()
     [user(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
      user(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
