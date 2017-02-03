@@ -14,7 +14,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
-
+sys.exit(0)
 
 def term_supports_colors():
     try:

@@ -1143,8 +1143,8 @@ def sensors_battery():
         except ZeroDivisionError:
             percent = 0.0
     else:
-        percent = int(cat(root + "/capacity", fallback=null))
-        if percent == null:
+        percent = int(cat(root + "/capacity", fallback=-1))
+        if percent == -1:
             return None
 
     # Is AC power cable plugged in?
