@@ -1114,7 +1114,7 @@ def sensors_battery():
         for path in paths:
             ret = cat(path, fallback=null)
             if ret != null:
-                return int(ret)
+                return int(ret) if ret.isdigit() else ret
         return None
 
     root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
