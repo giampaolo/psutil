@@ -21,16 +21,16 @@ About
 
 psutil (python system and process utilities) is a cross-platform library for
 retrieving information on running
-**processes** and **system utilization** (CPU, memory, disks, network) in
-**Python**.
-It is useful mainly for **system monitoring**, **profiling** and **limiting
-process resources** and **management of running processes**.
+**processes** and **system utilization** (CPU, memory, disks, network, sensors)
+in **Python**.
+It is useful mainly for **system monitoring**, **profiling**, **limiting
+process resources** and the **management of running processes**.
 It implements many functionalities offered by command line tools
 such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
 It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
 and **NetBSD**, both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
+versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
 `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
 `PyPy <http://pypy.org/>`__ is also known to work.
 
@@ -44,7 +44,8 @@ The easiest way to install psutil is via ``pip``::
     pip install psutil
 
 On UNIX this requires a C compiler (e.g. gcc) installed. On Windows pip will
-automatically retrieve a pre-compiled wheel version.
+automatically retrieve a pre-compiled wheel version from
+`PYPI repository <https://pypi.python.org/pypi/psutil>`__.
 Alternatively, see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 instructions.
@@ -58,7 +59,7 @@ CPU
 
 .. function:: cpu_times(percpu=False)
 
-  Return system CPU times as a namedtuple.
+  Return system CPU times as a named tuple.
   Every attribute represents the seconds the CPU has spent in the given mode.
   The attributes availability varies depending on the platform:
 
@@ -69,13 +70,13 @@ CPU
 
   Platform-specific fields:
 
-  - **nice** *(UNIX)*: time spent by niced processes executing in user mode;
-    on Linux this also includes **guest_nice** time
+  - **nice** *(UNIX)*: time spent by niced (prioritized) processes executing in
+    user mode; on Linux this also includes **guest_nice** time
   - **iowait** *(Linux)*: time spent waiting for I/O to complete
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
-  - **steal** *(Linux 2.6.11+)*: time spent by other operating systems when
-    running in a virtualized environment
+  - **steal** *(Linux 2.6.11+)*: time spent by other operating systems running
+    in a virtualized environment
   - **guest** *(Linux 2.6.24+)*: time spent running a virtual CPU for guest
     operating systems under the control of the Linux kernel
   - **guest_nice** *(Linux 3.2.0+)*: time spent running a niced guest
@@ -86,7 +87,7 @@ CPU
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
-  When *percpu* is ``True`` return a list of namedtuples for each logical CPU
+  When *percpu* is ``True`` return a list of named tuples for each logical CPU
   on the system.
   First element of the list refers to first CPU, second element to second CPU
   and so on.
@@ -108,8 +109,8 @@ CPU
   since last call or module import, returning immediately.
   That means the first time this is called it will return a meaningless ``0.0``
   value which you are supposed to ignore.
-  In this case is recommended for accuracy that this function be called with at
-  least ``0.1`` seconds between calls.
+  In this case it is recommended for accuracy that this function be called with
+  at least ``0.1`` seconds between calls.
   When *percpu* is ``True`` returns a list of floats representing the
   utilization as a percentage for each CPU.
   First element of the list refers to first CPU, second element to second CPU
@@ -168,7 +169,7 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a namedtuple:
+  Return various CPU statistics as a named tuple:
 
   - **ctx_switches**:
     number of context switches (voluntary + involuntary) since boot.
@@ -195,7 +196,7 @@ CPU
 
     Return CPU frequency as a nameduple including *current*, *min* and *max*
     frequencies expressed in Mhz.
-    On Linux **current** frequency reports the real-time value, on all other
+    On Linux *current* frequency reports the real-time value, on all other
     platforms it represents the nominal "fixed" value.
     If *percpu* is ``True`` and the system supports per-cpu frequency
     retrieval (Linux only) a list of frequencies is returned for each CPU,
@@ -225,7 +226,7 @@ Memory
 
 .. function:: virtual_memory()
 
-  Return statistics about system memory usage as a namedtuple including the
+  Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes. Main metrics:
 
   - **total**: total physical memory.
@@ -281,7 +282,7 @@ Memory
 
 .. function:: swap_memory()
 
-  Return system swap memory statistics as a namedtuple including the following
+  Return system swap memory statistics as a named tuple including the following
   fields:
 
   * **total**: total swap memory in bytes
@@ -306,7 +307,7 @@ Disks
 
 .. function:: disk_partitions(all=False)
 
-  Return all mounted disk partitions as a list of namedtuples including device,
+  Return all mounted disk partitions as a list of named tuples including device,
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
   parameter is ``False`` it tries to distinguish and return physical devices
   only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
@@ -314,7 +315,7 @@ Disks
   `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`__).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
-  Namedtuple's **fstype** field is a string which varies depending on the
+  Named tuple's **fstype** field is a string which varies depending on the
   platform.
   On Linux it can be one of the values found in /proc/filesystems (e.g.
   ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
@@ -333,7 +334,7 @@ Disks
 
 .. function:: disk_usage(path)
 
-  Return disk usage statistics about the given *path* as a namedtuple including
+  Return disk usage statistics about the given *path* as a named tuple including
   **total**, **used** and **free** space expressed in bytes, plus the
   **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
@@ -362,7 +363,7 @@ Disks
 
 .. function:: disk_io_counters(perdisk=False)
 
-  Return system-wide disk I/O statistics as a namedtuple including the
+  Return system-wide disk I/O statistics as a named tuple including the
   following fields:
 
   - **read_count**: number of reads
@@ -385,7 +386,7 @@ Disks
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
-  the namedtuple described above as the values.
+  the named tuple described above as the values.
   See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
 
@@ -416,7 +417,7 @@ Network
 
 .. function:: net_io_counters(pernic=False)
 
-  Return system-wide network I/O statistics as a namedtuple including the
+  Return system-wide network I/O statistics as a named tuple including the
   following attributes:
 
   - **bytes_sent**: number of bytes sent
@@ -431,7 +432,7 @@ Network
 
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
-  names as the keys and the namedtuple described above as the values.
+  names as the keys and the named tuple described above as the values.
 
     >>> import psutil
     >>> psutil.net_io_counters()
@@ -453,8 +454,8 @@ Network
 
 .. function:: net_connections(kind='inet')
 
-  Return system-wide socket connections as a list of namedtuples.
-  Every namedtuple provides 7 attributes:
+  Return system-wide socket connections as a list of named tuples.
+  Every named tuple provides 7 attributes:
 
   - **fd**: the socket file descriptor, if retrievable, else ``-1``.
     If the connection refers to the current process this may be passed to
@@ -542,8 +543,8 @@ Network
 
   Return the addresses associated to each NIC (network interface card)
   installed on the system as a dictionary whose keys are the NIC names and
-  value is a list of namedtuples for each address assigned to the NIC.
-  Each namedtuple includes 5 fields:
+  value is a list of named tuples for each address assigned to the NIC.
+  Each named tuple includes 5 fields:
 
   - **family**: the address family, either
     `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
@@ -594,7 +595,7 @@ Network
 .. function:: net_if_stats()
 
   Return information about each NIC (network interface card) installed on the
-  system as a dictionary whose keys are the NIC names and value is a namedtuple
+  system as a dictionary whose keys are the NIC names and value is a named tuple
   with the following fields:
 
   - **isup**: a bool indicating whether the NIC is up and running.
@@ -624,7 +625,7 @@ Sensors
 
 .. function:: sensors_temperatures(fahrenheit=False)
 
-  Return hardware temperatures. Each entry is a namedtuple representing a
+  Return hardware temperatures. Each entry is a named tuple representing a
   certain hardware sensor (it may be a CPU, an hard disk or something
   else, depending on the OS and its configuration).
   All temperatures are expressed in celsius unless *fahrenheit* is set to
@@ -654,7 +655,7 @@ Sensors
 
 .. function:: sensors_battery()
 
-  Return battery status information as a namedtuple including the following
+  Return battery status information as a named tuple including the following
   values. If no battery is installed or metrics can't be determined returns
   ``None``.
 
@@ -708,7 +709,7 @@ Other system info
 
 .. function:: users()
 
-  Return users currently connected on the system as a list of namedtuples
+  Return users currently connected on the system as a list of named tuples
   including the following fields:
 
   - **user**: the name of the user.
@@ -1072,7 +1073,7 @@ Process class
   .. method:: uids()
 
     The real, effective and saved user ids of this process as a
-    namedtuple. This is the same as
+    named tuple. This is the same as
     `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
     but can be used for any process PID.
 
@@ -1081,7 +1082,7 @@ Process class
   .. method:: gids()
 
     The real, effective and saved group ids of this process as a
-    namedtuple. This is the same as
+    named tuple. This is the same as
     `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
     but can be used for any process PID.
 
@@ -1182,7 +1183,7 @@ Process class
 
   .. method:: io_counters()
 
-    Return process I/O statistics as a namedtuple including the number of read
+    Return process I/O statistics as a named tuple including the number of read
     and write operations performed by the process and the amount of bytes read
     and written. For Linux refer to
     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
@@ -1220,13 +1221,13 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by process as a list of namedtuples including thread
+    Return threads opened by process as a list of named tuples including thread
     id and thread CPU times (user/system). On OpenBSD this method requires
     root privileges.
 
   .. method:: cpu_times()
 
-    Return a `(user, system, children_user, children_system)` namedtuple
+    Return a `(user, system, children_user, children_system)` named tuple
     representing the accumulated process time, in seconds (see
     `explanation <http://stackoverflow.com/questions/556405/>`__).
     On Windows and OSX only *user* and *system* are filled, the others are
@@ -1331,7 +1332,7 @@ Process class
 
   .. method:: memory_info()
 
-    Return a namedtuple with variable fields depending on the platform
+    Return a named tuple with variable fields depending on the platform
     representing memory information about the process.
     The "portable" fields available on all plaforms are `rss` and `vms`.
     All numbers are expressed in bytes.
@@ -1470,7 +1471,7 @@ Process class
     Compare process memory to total physical system memory and calculate
     process memory utilization as a percentage.
     *memtype* argument is a string that dictates what type of process memory
-    you want to compare against. You can choose between the namedtuple field
+    you want to compare against. You can choose between the named tuple field
     names returned by :meth:`memory_info` and :meth:`memory_full_info`
     (defaults to ``"rss"``).
 
@@ -1478,7 +1479,7 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's mapped memory regions as a list of namedtuples whose
+    Return process's mapped memory regions as a list of named tuples whose
     fields are variable depending on the platform.
     This method is useful to obtain a detailed representation of process
     memory usage as explained
@@ -1487,7 +1488,7 @@ Process class
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
     is ``False`` each mapped region is shown as a single entity and the
-    namedtuple will also include the mapped region's address space (*addr*)
+    named tuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
     See `pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
     for an example application.
@@ -1561,7 +1562,7 @@ Process class
 
   .. method:: open_files()
 
-    Return regular files opened by process as a list of namedtuples including
+    Return regular files opened by process as a list of named tuples including
     the following fields:
 
     - **path**: the absolute file name.
@@ -1608,9 +1609,9 @@ Process class
 
   .. method:: connections(kind="inet")
 
-    Return socket connections opened by process as a list of namedtuples.
+    Return socket connections opened by process as a list of named tuples.
     To get system-wide connections use :func:`psutil.net_connections()`.
-    Every namedtuple provides 6 attributes:
+    Every named tuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. This can be passed to
       `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__

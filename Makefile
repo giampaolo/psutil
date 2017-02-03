@@ -258,4 +258,4 @@ bench-oneshot-2: install
 doc:
 	cd docs && make html && cd _build/html/ && zip doc.zip -r .
 	mv docs/_build/html/doc.zip .
-	echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
+	@echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
