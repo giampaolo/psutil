@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.1.2
+=====
+
+*2017-02-03*
+
+**Bug fixes**
+
+- 968_: [Linux] disk_io_counters() raises TypeError on python 3.
+
 5.1.1
 =====
 

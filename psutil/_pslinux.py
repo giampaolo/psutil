@@ -245,7 +245,7 @@ def file_flags_to_mode(flags):
 
 def get_sector_size(partition):
     try:
-        with open(b"/sys/block/%s/queue/hw_sector_size" % partition) as f:
+        with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
             return int(f.read())
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
