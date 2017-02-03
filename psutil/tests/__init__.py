@@ -199,7 +199,7 @@ def get_test_subprocess(cmd=None, **kwds):
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     if cmd is None:
-        assert not os.path.exists(_TESTFN)
+        safe_rmpath(_TESTFN)
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % _TESTFN
         pyline += "sleep(60)"
