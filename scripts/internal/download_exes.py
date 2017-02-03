@@ -85,16 +85,36 @@ def safe_rmtree(path):
     shutil.rmtree(path, onerror=onerror)
 
 
+def bytes2human(n):
+    """
+    >>> bytes2human(10000)
+    '9.8 K'
+    >>> bytes2human(100001221)
+    '95.4 M'
+    """
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
+    for s in reversed(symbols):
+        if n >= prefix[s]:
+            value = float(n) / prefix[s]
+            return '%.2f %s' % (value, s)
+    return '%.2f B' % (n)
+
+
 def download_file(url):
     local_fname = url.split('/')[-1]
     local_fname = os.path.join('dist', local_fname)
-    print(local_fname)
     safe_makedirs('dist')
     r = requests.get(url, stream=True)
+    tot_bytes = 0
     with open(local_fname, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
+        for chunk in r.iter_content(chunk_size=16384):
             if chunk:    # filter out keep-alive new chunks
                 f.write(chunk)
+                tot_bytes += len(chunk)
+    print("downloaded %-45s %s" % (local_fname, bytes2human(tot_bytes)))
     return local_fname
 
 
