@@ -1082,8 +1082,9 @@ def sensors_temperatures():
         [x.split('_')[0] for x in
          glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
     for base in basenames:
-        unit_name = cat(os.path.join(os.path.dirname(base), 'name'))
-        label = cat(base + '_label', fallback='')
+        unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
+                        binary=False)
+        label = cat(base + '_label', fallback='', binary=False)
         current = float(cat(base + '_input')) / 1000.0
         high = cat(base + '_max', fallback=None)
         critical = cat(base + '_crit', fallback=None)

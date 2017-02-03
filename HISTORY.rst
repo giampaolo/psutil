@@ -8,6 +8,8 @@
 **Bug fixes**
 
 - 968_: [Linux] disk_io_counters() raises TypeError on python 3.
+- 970_: [Linux] sensors_battery()'s name and label fields on Python 3 are bytes
+  instead of str.
 
 5.1.1
 =====

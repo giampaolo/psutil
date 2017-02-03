@@ -454,6 +454,10 @@ class TestSystemAPIs(unittest.TestCase):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
+            self.assertIsInstance(disk.device, (str, unicode))
+            self.assertIsInstance(disk.mountpoint, (str, unicode))
+            self.assertIsInstance(disk.fstype, (str, unicode))
+            self.assertIsInstance(disk.opts, (str, unicode))
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -468,7 +472,6 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
-            self.assertIsInstance(disk.opts, str)
 
         # all = True
         ls = psutil.disk_partitions(all=True)
@@ -512,6 +515,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIn(conn.family, families, msg=conn)
                 if conn.family != getattr(socket, 'AF_UNIX', object()):
                     self.assertIn(conn.type, types_, msg=conn)
+                self.assertIsInstance(conn.status, (str, unicode))
 
         from psutil._common import conn_tmap
         for kind, groups in conn_tmap.items():
@@ -547,6 +551,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertNotEqual(ret, [])
         for key in ret:
             self.assertTrue(key)
+            self.assertIsInstance(key, (str, unicode))
             check_ntuple(ret[key])
 
     def test_net_if_addrs(self):
@@ -562,6 +567,7 @@ class TestSystemAPIs(unittest.TestCase):
 
         families = set([socket.AF_INET, AF_INET6, psutil.AF_LINK])
         for nic, addrs in nics.items():
+            self.assertIsInstance(nic, (str, unicode))
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
                 self.assertIsInstance(addr.family, int)
@@ -684,6 +690,9 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
+            self.assertIsInstance(user.name, (str, unicode))
+            self.assertIsInstance(user.terminal, (str, unicode, None))
+            self.assertIsInstance(user.host, (str, unicode, None))
             user.terminal
             user.host
             assert user.started > 0.0, user
