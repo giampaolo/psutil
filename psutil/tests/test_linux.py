@@ -1066,7 +1066,6 @@ class TestSensorsBattery(unittest.TestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
             self.assertEqual(psutil.sensors_battery().power_plugged, False)
-            self.assertGreaterEqual(psutil.sensors_battery().secsleft, 0)
             assert m.called
 
     def test_emulate_power_undetermined(self):
@@ -1082,9 +1081,81 @@ class TestSensorsBattery(unittest.TestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
             self.assertEqual(psutil.sensors_battery().power_plugged, False)
-            self.assertGreaterEqual(psutil.sensors_battery().secsleft, 0)
             assert m.called
 
+    def test_emulate_no_base_files(self):
+        # Emulate a case where base metrics files are not present,
+        # in which case we're supposed to get None.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/BAT0/energy_now") or \
+                    name.startswith("/sys/class/power_supply/BAT0/charge_now"):
+                raise IOError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertIsNone(psutil.sensors_battery())
+            assert m.called
+
+    def test_emulate_energy_full_0(self):
+        # Emulate a case where energy_full files returns 0.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
+                return io.BytesIO(b"0")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().percent, 0)
+            assert m.called
+
+    def test_emulate_energy_full_not_avail(self):
+        # Emulate a case where energy_full file does not exist.
+        # Expected fallback on /capacity.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
+                raise IOError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertGreaterEqual(psutil.sensors_battery().percent, 0)
+            assert m.called
+
+    def test_emulate_no_ac0_online(self):
+        # Emulate a case where /AC0/online file does not exist.
+        def path_exists_mock(name):
+            if name.startswith("/sys/class/power_supply/AC0/online"):
+                return False
+            else:
+                return orig_path_exists(name)
+
+        orig_path_exists = os.path.exists
+        with mock.patch("psutil._pslinux.os.path.exists",
+                        side_effect=path_exists_mock) as m:
+            psutil.sensors_battery()
+            assert m.called
+
+    def test_emulate_no_power(self):
+        # Emulate a case where /AC0/online file nor /BAT0/status exist.
+        def path_exists_mock(name):
+            if name.startswith("/sys/class/power_supply/AC0/online") or \
+                    name.startswith("/sys/class/power_supply/BAT0/status"):
+                return False
+            else:
+                return orig_path_exists(name)
+
+        orig_path_exists = os.path.exists
+        with mock.patch("psutil._pslinux.os.path.exists",
+                        side_effect=path_exists_mock) as m:
+            self.assertIsNone(psutil.sensors_battery().power_plugged)
+            assert m.called
 
 # =====================================================================
 # test process

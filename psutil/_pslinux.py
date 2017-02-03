@@ -1142,7 +1142,7 @@ def sensors_battery():
         except ZeroDivisionError:
             percent = 0.0
     else:
-        percent = int(cat(root + "/capacity"), fallback=null)
+        percent = int(cat(root + "/capacity", fallback=null))
         if percent == null:
             return None
 
