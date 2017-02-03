@@ -173,10 +173,6 @@ TimeoutExpired = None
 
 
 @lru_cache(maxsize=512)
-def _win32_QueryDosDevice(s):
-    return cext.win32_QueryDosDevice(s)
-
-
 def convert_dos_path(s):
     # convert paths using native DOS format like:
     # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
@@ -184,7 +180,7 @@ def convert_dos_path(s):
     if PY3 and not isinstance(s, str):
         s = s.decode('utf8')
     rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = _win32_QueryDosDevice(rawdrive)
+    driveletter = cext.win32_QueryDosDevice(rawdrive)
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
