@@ -1096,7 +1096,7 @@ def sensors_temperatures():
     # Will return an empty dict if path does not exist.
     basenames = sorted(set(
         [x.split('_')[0] for x in
-         glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
+         glob.glob('/sys/class/hwmon/hwmon*/**/temp*_*')]))
     for base in basenames:
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
