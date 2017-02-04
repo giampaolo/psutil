@@ -1408,6 +1408,9 @@ class TestProcessAgainstStatus(unittest.TestCase):
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")
         min_, max_ = map(int, value.split('-'))
+        self.proc.cpu_affinity(list(range(min_, max_ + 1)))
+        value = self.read_status_file("Cpus_allowed_list:")
+        min_, max_ = map(int, value.split('-'))
         self.assertEqual(
             self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
 
