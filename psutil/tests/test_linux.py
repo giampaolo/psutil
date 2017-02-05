@@ -467,8 +467,9 @@ class TestSystemCPU(unittest.TestCase):
     def test_cpu_count_logical_w_sysdev_cpu_online(self):
         with open("/sys/devices/system/cpu/online") as f:
             value = f.read().strip()
-        value = int(value.split('-')[1]) + 1
-        self.assertEqual(psutil.cpu_count(), value)
+        if "-" in str(value):
+            value = int(value.split('-')[1]) + 1
+            self.assertEqual(psutil.cpu_count(), value)
 
     @unittest.skipUnless(os.path.exists("/sys/devices/system/cpu"),
                          "/sys/devices/system/cpu does not exist")
@@ -1407,14 +1408,19 @@ class TestProcessAgainstStatus(unittest.TestCase):
 
     def test_cpu_affinity(self):
         value = self.read_status_file("Cpus_allowed_list:")
-        min_, max_ = map(int, value.split('-'))
-        self.assertEqual(
-            self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
+        if '-' in str(value):
+            min_, max_ = map(int, value.split('-'))
+            self.assertEqual(
+                self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
 
     def test_cpu_affinity_eligible_cpus(self):
+        value = self.read_status_file("Cpus_allowed_list:")
         with mock.patch("psutil._pslinux.per_cpu_times") as m:
             self.proc._proc._get_eligible_cpus()
-        assert not m.called
+        if '-' in str(value):
+            assert not m.called
+        else:
+            assert m.called
 
 
 if __name__ == '__main__':
