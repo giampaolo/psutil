@@ -1077,13 +1077,15 @@ class TestSensorsBattery(unittest.TestCase):
         def open_mock(name, *args, **kwargs):
             if name.startswith("/sys/class/power_supply/AC0/online"):
                 raise IOError(errno.ENOENT, "")
+            elif name.startswith("/sys/class/power_supply/BAT0/status"):
+                return io.BytesIO(b"???")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertEqual(psutil.sensors_battery().power_plugged, False)
+            self.assertIsNone(psutil.sensors_battery().power_plugged)
             assert m.called
 
     def test_emulate_no_base_files(self):
