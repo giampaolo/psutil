@@ -1093,10 +1093,13 @@ def sensors_temperatures():
       difficult to parse
     """
     ret = collections.defaultdict(list)
-    # Will return an empty dict if path does not exist.
-    basenames = sorted(set(
-        [x.split('_')[0] for x in
-         glob.glob('/sys/class/hwmon/hwmon*/temp*_*')]))
+    basenames = glob.glob('/sys/class/hwmon/hwmon*/temp*_*')
+    if not basenames:
+        # CentOS has an intermediate /device directory:
+        # https://github.com/giampaolo/psutil/issues/971
+        basenames = glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*')
+
+    basenames = sorted(set([x.split('_')[0] for x in basenames]))
     for base in basenames:
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
