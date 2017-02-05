@@ -1167,6 +1167,8 @@ def sensors_battery():
             return None
 
     # Is AC power cable plugged in?
+    # Note: AC0 is not always available. Sometimes (e.g. CentOS7)
+    # it's called "AC".
     if os.path.exists(os.path.join(POWER_SUPPLY_PATH, "AC0/online")):
         power_plugged = cat(
             os.path.join(POWER_SUPPLY_PATH, "AC0/online"),

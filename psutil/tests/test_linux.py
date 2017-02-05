@@ -1060,6 +1060,8 @@ class TestSensorsBattery(unittest.TestCase):
         def open_mock(name, *args, **kwargs):
             if name.startswith("/sys/class/power_supply/AC0/online"):
                 return io.BytesIO(b"0")
+            elif name.startswith("/sys/class/power_supply/BAT0/status"):
+                return io.BytesIO(b"discharging")
             else:
                 return orig_open(name, *args, **kwargs)
 
