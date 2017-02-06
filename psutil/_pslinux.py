@@ -1169,21 +1169,18 @@ def sensors_battery():
     # Is AC power cable plugged in?
     # Note: AC0 is not always available and sometimes (e.g. CentOS7)
     # it's called "AC".
+    power_plugged = None
     online = multi_cat(
         os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
         os.path.join(POWER_SUPPLY_PATH, "AC/online"))
     if online is not None:
         power_plugged = online == 1
-    elif os.path.exists(root + "/status"):
+    else:
         status = cat(root + "/status", fallback="", binary=False).lower()
         if status == "discharging":
             power_plugged = False
         elif status in ("charging", "full"):
             power_plugged = True
-        else:
-            power_plugged = None
-    else:
-        power_plugged = None
 
     # Seconds left.
     # Note to self: we may also calculate the charging ETA as per:

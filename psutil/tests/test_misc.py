@@ -471,7 +471,8 @@ class TestScripts(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "unreliable on travis")
     def test_temperatures(self):
-        if hasattr(psutil, "sensors_temperatures"):
+        if hasattr(psutil, "sensors_temperatures") and \
+                psutil.sensors_temperatures():
             self.assert_stdout('temperatures.py')
         else:
             self.assert_syntax('temperatures.py')

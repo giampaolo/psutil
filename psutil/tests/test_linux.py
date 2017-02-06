@@ -1075,7 +1075,8 @@ class TestSensorsBattery(unittest.TestCase):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC0/online"):
+            if name.startswith("/sys/class/power_supply/AC0/online") or \
+                    name.startswith("/sys/class/power_supply/AC/online"):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
@@ -1151,16 +1152,17 @@ class TestSensorsBattery(unittest.TestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        def path_exists_mock(name):
-            if name.startswith("/sys/class/power_supply/AC0/online") or \
+        def open_mock(name, *args, **kwargs):
+            if name.startswith("/sys/class/power_supply/AC/online") or \
+                    name.startswith("/sys/class/power_supply/AC0/online") or \
                     name.startswith("/sys/class/power_supply/BAT0/status"):
-                return False
+                raise IOError(errno.ENOENT, "")
             else:
-                return orig_path_exists(name)
+                return orig_open(name, *args, **kwargs)
 
-        orig_path_exists = os.path.exists
-        with mock.patch("psutil._pslinux.os.path.exists",
-                        side_effect=path_exists_mock) as m:
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
             self.assertIsNone(psutil.sensors_battery().power_plugged)
             assert m.called
 
