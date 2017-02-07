@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+*2017-02-07*
+
+5.1.3
+=====
+
+**Bug fixes**
+
+- 971_: [Linux] sensors_temperatures() didn't work on CentOS 7.
+
 5.1.2
 =====
 
