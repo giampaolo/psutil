@@ -8,6 +8,7 @@
 **Bug fixes**
 
 - 971_: [Linux] sensors_temperatures() didn't work on CentOS 7.
+- 973_: cpu_percent() may raise ZeroDivisionError.
 
 5.1.2
 =====

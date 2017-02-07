@@ -1751,8 +1751,12 @@ def cpu_percent(interval=None, percpu=False):
 
         busy_delta = t2_busy - t1_busy
         all_delta = t2_all - t1_all
-        busy_perc = (busy_delta / all_delta) * 100
-        return round(busy_perc, 1)
+        try:
+            busy_perc = (busy_delta / all_delta) * 100
+        except ZeroDivisionError:
+            return 0.0
+        else:
+            return round(busy_perc, 1)
 
     # system-wide usage
     if not percpu:
