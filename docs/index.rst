@@ -1185,7 +1185,7 @@ Process class
 
     Return process I/O statistics as a named tuple including the number of read
     and write operations performed by the process and the amount of bytes read
-    and written. For Linux refer to
+    and written (cumulative). For Linux you can refer to
     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
     On BSD there's apparently no way to retrieve bytes counters, hence ``-1``
     is returned for **read_bytes** and **write_bytes** fields. OSX is not
@@ -1201,23 +1201,24 @@ Process class
   .. method:: num_ctx_switches()
 
     The number voluntary and involuntary context switches performed by
-    this process.
+    this process (cumulative).
 
   .. method:: num_fds()
 
-    The number of file descriptors used by this process.
+    The number of file descriptors currently opened by this process
+    (non cumulative).
 
     Availability: UNIX
 
   .. method:: num_handles()
 
-    The number of handles used by this process.
+    The number of handles currently used by this process (non cumulative).
 
     Availability: Windows
 
   .. method:: num_threads()
 
-    The number of threads used by this process.
+    The number of threads currently used by this process (non cumulative).
 
   .. method:: threads()
 
