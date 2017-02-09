@@ -692,7 +692,8 @@ class TestSystemAPIs(unittest.TestCase):
             assert user.name, user
             self.assertIsInstance(user.name, (str, unicode))
             self.assertIsInstance(user.terminal, (str, unicode, None))
-            self.assertIsInstance(user.host, (str, unicode, None))
+            if user.host is not None:
+                self.assertIsInstance(user.host, (str, unicode, None))
             user.terminal
             user.host
             assert user.started > 0.0, user
