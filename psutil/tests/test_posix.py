@@ -365,10 +365,10 @@ class TestSystemAPIs(unittest.TestCase):
     @retry_before_failing()
     def test_users(self):
         out = sh("who")
-        lines = out.split('\n')
-        users = [x.split()[0] for x in lines]
+        lines = [x.strip() for x in out.split('\n')]
+        users = [x.split()[0] for x in lines if x]
         self.assertEqual(len(users), len(psutil.users()))
-        terminals = [x.split()[1] for x in lines]
+        terminals = [x.split()[1] for x in lines if x]
         for u in psutil.users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
