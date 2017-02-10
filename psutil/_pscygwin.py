@@ -414,6 +414,10 @@ def net_connections(kind, _pid=-1):
     if _pid > 0:
         _pid = cygpid_to_winpid(_pid)
 
+    # Note: This lists *all* net connections on the system, not just ones by
+    # Cygwin processes; below we whittle it down just to Cygwin processes, but
+    # we might consider an extra option for showing non-Cygwin processes as
+    # well
     rawlist = cext.net_connections(_pid, families, types)
     ret = set()
     for item in rawlist:
@@ -421,8 +425,11 @@ def net_connections(kind, _pid=-1):
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type = socktype_to_enum(type)
-        # TODO: This should probably return the cygwin pid, not the Windows pid
         if _pid == -1:
+            try:
+                pid = winpid_to_cygpid(pid)
+            except NoSuchProcess:
+                continue
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
