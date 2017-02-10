@@ -10,6 +10,7 @@
 import datetime
 import errno
 import os
+import re
 import subprocess
 import sys
 import time
@@ -38,25 +39,123 @@ from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
 
-def ps(cmd):
-    """Expects a ps command with a -o argument and parse the result
-    returning only the value of interest.
-    """
-    if not LINUX:
-        cmd = cmd.replace(" --no-headers ", " ")
-    if SUNOS:
-        cmd = cmd.replace("-o command", "-o comm")
-        cmd = cmd.replace("-o start", "-o stime")
-    p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
+def run(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     output = p.communicate()[0].strip()
+
     if PY3:
         output = str(output, sys.stdout.encoding)
-    if not LINUX:
-        output = output.split('\n')[1].strip()
-    try:
-        return int(output)
-    except ValueError:
-        return output
+
+    return output
+
+
+def ps(fmt, pid=None):
+    """
+    Wrapper for calling the ps command with a little bit of cross-platform
+    support for a narrow range of features.
+    """
+
+    # The ps on Cygwin bears only small resemblance to the *nix ps, and
+    # probably shouldn't even be used for these tests; this tries as
+    # best as possible to emulate it as used currently by these tests
+    cmd = ['ps']
+
+    if LINUX:
+        cmd.append('--no-headers')
+
+    if pid is not None:
+        cmd.extend(['-p', str(pid)])
+    else:
+        if SUNOS:
+            cmd.append('-A')
+        elif CYGWIN:
+            cmd.append('-a')
+        else:
+            cmd.append('ax')
+
+    if SUNOS:
+        fmt_map = {'command', 'comm',
+                   'start', 'stime'}
+        fmt = fmt_map.get(fmt, fmt)
+
+    if not CYGWIN:
+        cmd.extend(['-o', fmt])
+    else:
+        cmd.append('-l')
+
+    output = run(cmd)
+
+    if LINUX:
+        output = output.splitlines()
+    else:
+        output = output.splitlines()[1:]
+
+    if CYGWIN:
+        cygwin_ps_re = re.compile(r'I?\s*(?P<pid>\d+)\s*(?P<ppid>\d+)\s*'
+                                  '(?P<pgid>\d+)\s*(?P<winpid>\d+)\s*'
+                                  '(?P<tty>[a-z0-9?]+)\s*(?P<uid>\d+)\s*'
+                                  '(?:(?P<stime>\d{2}:\d{2}:\d{2})|'
+                                  '   (?P<sdate>[A-Za-z]+\s+\d+))\s*'
+                                  '(?P<command>/.+)')
+
+        def cygwin_output(line, fmt):
+            # NOTE: Cygwin's ps is very limited in what it outputs, so we work
+            # around that by looking to various other sources for some
+            # information
+            fmt_map = {'start': 'stime'}
+            fmt = fmt_map.get(fmt, fmt)
+
+            m = cygwin_ps_re.match(line)
+            if not m:
+                return ''
+
+            if fmt in cygwin_ps_re.groupindex:
+                output = m.group(fmt)
+                if output is None:
+                    output = ''
+            elif fmt == 'rgid':
+                pid = m.group('pid')
+                output = open('/proc/{0}/gid'.format(pid)).readline().strip()
+            elif fmt == 'user':
+                # Cygwin's ps only returns UID
+                uid = m.group('uid')
+                output = run(['getent', 'passwd', uid])
+                output = output.splitlines()[0].split(':')[0]
+            elif fmt == 'rss':
+                winpid = m.group('winpid')
+                output = run(['wmic', 'process', winpid, 'get',
+                              'WorkingSetSize'])
+                output = int(output.split('\n')[-1].strip()) / 1024
+            elif fmt == 'vsz':
+                winpid = m.group('winpid')
+                output = run(['wmic', 'process', winpid, 'get',
+                              'PrivatePageCount'])
+                output = int(output.split('\n')[-1].strip()) / 1024
+            else:
+                raise ValueError('format %s not supported on Cygwin' % fmt)
+
+            return output
+
+    all_output = []
+    for line in output:
+        if CYGWIN:
+            output = cygwin_output(line, fmt)
+
+            if not output:
+                continue
+
+        try:
+            output = int(output)
+        except ValueError:
+            pass
+
+        all_output.append(output)
+
+    if pid is None:
+        return all_output
+    else:
+        return all_output[0]
 
 
 @unittest.skipUnless(POSIX, "POSIX only")
@@ -76,22 +175,22 @@ class TestProcess(unittest.TestCase):
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def test_ppid(self):
-        ppid_ps = ps("ps --no-headers -o ppid -p %s" % self.pid)
+        ppid_ps = ps('ppid', self.pid)
         ppid_psutil = psutil.Process(self.pid).ppid()
         self.assertEqual(ppid_ps, ppid_psutil)
 
     def test_uid(self):
-        uid_ps = ps("ps --no-headers -o uid -p %s" % self.pid)
+        uid_ps = ps('uid', self.pid)
         uid_psutil = psutil.Process(self.pid).uids().real
         self.assertEqual(uid_ps, uid_psutil)
 
     def test_gid(self):
-        gid_ps = ps("ps --no-headers -o rgid -p %s" % self.pid)
+        gid_ps = ps('rgid', self.pid)
         gid_psutil = psutil.Process(self.pid).gids().real
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_username(self):
-        username_ps = ps("ps --no-headers -o user -p %s" % self.pid)
+        username_ps = ps('user', self.pid)
         username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
 
@@ -101,7 +200,7 @@ class TestProcess(unittest.TestCase):
         # give python interpreter some time to properly initialize
         # so that the results are the same
         time.sleep(0.1)
-        rss_ps = ps("ps --no-headers -o rss -p %s" % self.pid)
+        rss_ps = ps('rss', self.pid)
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
@@ -111,14 +210,13 @@ class TestProcess(unittest.TestCase):
         # give python interpreter some time to properly initialize
         # so that the results are the same
         time.sleep(0.1)
-        vsz_ps = ps("ps --no-headers -o vsz -p %s" % self.pid)
+        vsz_ps = ps('vsz', self.pid)
         vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_name(self):
         # use command + arg since "comm" keyword not supported on all platforms
-        name_ps = ps("ps --no-headers -o command -p %s" % (
-            self.pid)).split(' ')[0]
+        name_ps = ps('command', self.pid).split(' ')[0]
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
@@ -126,7 +224,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(OSX or BSD, 'ps -o start not available')
     def test_create_time(self):
-        time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
+        time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
         time_psutil_tstamp = datetime.datetime.fromtimestamp(
             time_psutil).strftime("%H:%M:%S")
@@ -138,8 +236,7 @@ class TestProcess(unittest.TestCase):
         self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
     def test_exe(self):
-        ps_pathname = ps("ps --no-headers -o command -p %s" %
-                         self.pid).split(' ')[0]
+        ps_pathname = ps('command', self.pid).split(' ')[0]
         psutil_pathname = psutil.Process(self.pid).exe()
         try:
             self.assertEqual(ps_pathname, psutil_pathname)
@@ -154,10 +251,10 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
     def test_cmdline(self):
-        ps_cmdline = ps("ps --no-headers -o command -p %s" % self.pid)
+        ps_cmdline = ps('command', self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        if SUNOS:
-            # ps on Solaris only shows the first part of the cmdline
+        if SUNOS or CYGWIN:
+            # ps on Solaris and Cygwin only shows the first part of the cmdline
             psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
@@ -169,7 +266,7 @@ class TestProcess(unittest.TestCase):
     # really need is the process's "priority class" which is different
     @unittest.skipIf(CYGWIN, "this is not supported by Cygwin")
     def test_nice(self):
-        ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
+        ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
         self.assertEqual(ps_nice, psutil_nice)
 
@@ -228,22 +325,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        if SUNOS:
-            cmd = ["ps", "-A", "-o", "pid"]
-        else:
-            cmd = ["ps", "ax", "-o", "pid"]
-        p = get_test_subprocess(cmd, stdout=subprocess.PIPE)
-        output = p.communicate()[0].strip()
-        assert p.poll() == 0
-        if PY3:
-            output = str(output, sys.stdout.encoding)
-        pids_ps = []
-        for line in output.split('\n')[1:]:
-            if line:
-                pid = int(line.split()[0].strip())
-                pids_ps.append(pid)
-        # remove ps subprocess pid which is supposed to be dead in meantime
-        pids_ps.remove(p.pid)
+        pids_ps = ps('pid')
         pids_psutil = psutil.pids()
         pids_ps.sort()
         pids_psutil.sort()
