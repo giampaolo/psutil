@@ -28,6 +28,9 @@
     #include <netdb.h>
     #include <netinet/in.h>
     #include <net/if_dl.h>
+    #include <sys/sockio.h>
+    #include <net/if_media.h>
+    #include <net/if.h>
 #elif defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
@@ -339,10 +342,6 @@ error:
  * net_if_stats() OSX/BSD implementation.
  */
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-
-#include <sys/sockio.h>
-#include <net/if_media.h>
-#include <net/if.h>
 
 int psutil_get_nic_speed(int ifm_active) {
     // Determine NIC speed. Taken from:
