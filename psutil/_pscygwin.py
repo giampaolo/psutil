@@ -43,6 +43,23 @@ __extra__all__ = ["PROCFS_PATH"]
 # --- constants
 # =====================================================================
 
+_cygwin_version_re = re.compile(r'(?P<major>\d+)\.(?P<minor>\d+)\.'
+                                '(?P<micro>\d+)\((?P<api_major>\d+)\.'
+                                '(?P<api_minor>\d+)/(?P<shared_data>\d+)/'
+                                '(?P<mount_registry>\d+)\)')
+_cygwin_version = _cygwin_version_re.match(os.uname()[2]).groupdict()
+
+CYGWIN_VERSION = (int(_cygwin_version['major']),
+                  int(_cygwin_version['minor']),
+                  int(_cygwin_version['micro']))
+
+CYGWIN_VERSION_API = (int(_cygwin_version['api_major']),
+                      int(_cygwin_version['api_minor']))
+
+CYGWIN_VERSION_SHARED_DATA = int(_cygwin_version['shared_data'])
+
+CYGWIN_VERSION_MOUNT_REGISTRY = int(_cygwin_version['mount_registry'])
+
 
 if enum is None:
     AF_LINK = -1
