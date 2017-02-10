@@ -1194,8 +1194,10 @@ class TestProcess(unittest.TestCase):
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue
-            # XXX: sometimes this fails on Windows; not sure why.
-            self.assertNotEqual(p.ppid(), this_parent, msg=p)
+            try:
+                self.assertNotEqual(p.ppid(), this_parent, msg=p)
+            except psutil.AccessDenied:
+                pass
 
     def test_children(self):
         p = psutil.Process()
@@ -1239,7 +1241,18 @@ class TestProcess(unittest.TestCase):
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
-        pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
+        for pid, _ in sorted(table.items(), key=lambda x: x[1], reverse=True):
+            try:
+                # Just make sure the process can be accessed and still actually
+                # exists (or exists in the first place--e.g. there is no such
+                # process with pid=1 on Cygwin even though it is the default
+                # ppid
+                p = psutil.Process(pid)
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                continue
+
+            break
+
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)
