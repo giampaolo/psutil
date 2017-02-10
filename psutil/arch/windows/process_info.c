@@ -39,6 +39,8 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER)
             NoSuchProcess();
+        else if (GetLastError() == ERROR_ACCESS_DENIED)
+            AccessDenied();
         else
             PyErr_SetFromWindowsErr(0);
         return NULL;

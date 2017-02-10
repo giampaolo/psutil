@@ -488,7 +488,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     if (SetProcessAffinityMask(hProcess, mask) == 0) {
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     CloseHandle(hProcess);
