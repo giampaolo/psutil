@@ -1367,7 +1367,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.terminate()
         p.wait()
-        if WINDOWS:
+        if WINDOWS or CYGWIN:
             call_until(psutil.pids, "%s not in ret" % p.pid)
         self.assertFalse(p.is_running())
         # self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" %
