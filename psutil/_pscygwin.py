@@ -135,8 +135,37 @@ def cygpid_to_winpid(pid):
     """
 
     procfs_path = get_procfs_path()
+    path = '%s/%s/winpid' % (procfs_path, pid)
+    if not os.path.exists(path):
+        raise NoSuchProcess(pid)
+
     with open_binary('%s/%s/winpid' % (procfs_path, pid)) as f:
         return int(f.readline().strip())
+
+
+def winpid_to_cygpid(pid):
+    """
+    Converts a Windows PID to its associated Cygwin PID.
+    """
+
+    # TODO: This is quite ineffecient--Cygwin provides an API for this that we
+    # can use later
+    procfs_path = get_procfs_path()
+    for path in os.listdir(procfs_path):
+        if not path.isdigit():
+            continue
+
+        winpid_path = '%s/%s/winpid' % (procfs_path, path)
+
+        if not os.path.exists(winpid_path):
+            continue
+
+        with open_binary(winpid_path) as f:
+            winpid = int(f.readline().strip())
+            if winpid == pid:
+                return int(path)
+
+    raise NoSuchProcess(pid)
 
 
 @lru_cache(maxsize=512)
