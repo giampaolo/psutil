@@ -48,7 +48,12 @@ def main():
                 # ENOENT, pop-up a Windows GUI error for a non-ready
                 # partition or just hang.
                 continue
+        if not os.path.exists(part.mountpoint):
+            # In case the mount point itself has been deleted
+            continue
+
         usage = psutil.disk_usage(part.mountpoint)
+
         print(templ % (
             part.device,
             bytes2human(usage.total),

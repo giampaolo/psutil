@@ -420,6 +420,9 @@ class TestSystemAPIs(unittest.TestCase):
 
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
+            if not os.path.exists(part.mountpoint):
+                continue
+
             usage = psutil.disk_usage(part.mountpoint)
             try:
                 total, used, free, percent = df(part.device)
