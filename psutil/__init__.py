@@ -976,7 +976,7 @@ class Process(object):
                 for p in process_iter():
                     try:
                         table[p.ppid()].append(p)
-                    except (NoSuchProcess, ZombieProcess):
+                    except (AccessDenied, NoSuchProcess, ZombieProcess):
                         pass
             else:  # pragma: no cover
                 for pid, ppid in ppid_map.items():
