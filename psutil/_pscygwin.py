@@ -607,6 +607,9 @@ class Process(object):
             data = data[:-1]
         return [x for x in data.split('\x00')]
 
+    # TODO: /proc/<pid>/environ will be available in newer versions of
+    # Cygwin--do a version check and provide it if available.
+
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()[5])
