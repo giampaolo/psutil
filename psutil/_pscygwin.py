@@ -70,7 +70,6 @@ else:
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-BOOT_TIME = None  # set later
 
 
 # TODO: Update me to properly reflect Cygwin-recognized process statuses
@@ -498,6 +497,11 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
+def boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return cext.boot_time()
+
+
 # TODO: Copied verbatim from the Linux module
 def users():
     """Return currently connected users as a list of namedtuples."""
@@ -515,19 +519,6 @@ def users():
         nt = _common.suser(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
-
-
-def boot_time():
-    """Return the system boot time expressed in seconds since the epoch."""
-    global BOOT_TIME
-    with open_binary('%s/stat' % get_procfs_path()) as f:
-        for line in f:
-            if line.startswith(b'btime'):
-                ret = float(line.strip().split()[1])
-                BOOT_TIME = ret
-                return ret
-        raise RuntimeError(
-            "line 'btime' not found in %s/stat" % get_procfs_path())
 
 
 # =====================================================================
@@ -655,14 +646,12 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        values = self._parse_stat_file()
-        # According to source, starttime is in field 22 and the
-        # unit is jiffies (clock ticks).
-        # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch, in UTC.
-        # Also use cached value if available.
-        bt = BOOT_TIME or boot_time()
-        return (float(values[21]) / CLOCK_TICKS) + bt
+        try:
+            return cext.proc_create_time(self._winpid)
+        except OSError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                return ntpinfo(*cext.proc_info(self._winpid)).create_time
+            raise
 
     def _get_raw_meminfo(self):
         try:

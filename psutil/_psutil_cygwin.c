@@ -148,26 +148,58 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
 }
 
 
+static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
+
 /*
- * Return process cmdline as a Python list of cmdline arguments.
+ * Return a Python float representing the system uptime expressed in seconds
+ * since the epoch.
  */
 static PyObject *
-psutil_proc_environ(PyObject *self, PyObject *args) {
-    long pid;
-    int pid_return;
+psutil_boot_time(PyObject *self, PyObject *args) {
+    double uptime;
+    double pt;
+    FILETIME fileTime;
+    long long ll;
+    HINSTANCE hKernel32;
+    psutil_GetTickCount64 = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if ((pid == 0) || (pid == 4))
-        return Py_BuildValue("s", "");
+    GetSystemTimeAsFileTime(&fileTime);
 
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return NoSuchProcess();
-    if (pid_return == -1)
-        return NULL;
+    /*
+    HUGE thanks to:
+    http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
 
-    return psutil_get_environ(pid);
+    This function converts the FILETIME structure to a 32-bit Unix time.
+    The Unix time is a 32-bit value for the number of seconds since
+    January 1, 1970. A FILETIME is a 64-bit for the number of
+    100-nanosecond periods since January 1, 1601. Convert by
+    subtracting the number of 100-nanosecond period betwee 01-01-1970
+    and 01-01-1601, from time_t the divide by 1e+7 to get to the same
+    base granularity.
+    */
+    ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) \
+        + fileTime.dwLowDateTime;
+    pt = (double)(ll - 116444736000000000ull) / 1e7;
+
+    // GetTickCount64() is Windows Vista+ only. Dinamically load
+    // GetTickCount64() at runtime. We may have used
+    // "#if (_WIN32_WINNT >= 0x0600)" pre-processor but that way
+    // the produced exe/wheels cannot be used on Windows XP, see:
+    // https://github.com/giampaolo/psutil/issues/811#issuecomment-230639178
+    hKernel32 = GetModuleHandleW(L"KERNEL32");
+    psutil_GetTickCount64 = (void*)GetProcAddress(hKernel32, "GetTickCount64");
+    if (psutil_GetTickCount64 != NULL) {
+        // Windows >= Vista
+        uptime = (double)psutil_GetTickCount64() / 1000.00;
+    }
+    else {
+        // Windows XP.
+        // GetTickCount() time will wrap around to zero if the
+        // system is run continuously for 49.7 days.
+        uptime = (double)GetTickCount() / 1000.00;
+    }
+
+    return Py_BuildValue("d", floor(pt - uptime));
 }
 
 
@@ -494,6 +526,76 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     Py_RETURN_NONE;
+}
+
+
+/*
+ * Return a Python float indicating the process create time expressed in
+ * seconds since the epoch.
+ */
+static PyObject *
+psutil_proc_create_time(PyObject *self, PyObject *args) {
+    long        pid;
+    long long   unix_time;
+    DWORD       exitCode;
+    HANDLE      hProcess;
+    BOOL        ret;
+    FILETIME    ftCreate, ftExit, ftKernel, ftUser;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    // special case for PIDs 0 and 4, return system boot time
+    if (0 == pid || 4 == pid)
+        return psutil_boot_time(NULL, NULL);
+
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL) 
+        return NULL;
+
+    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        CloseHandle(hProcess);
+        printf("GetLastError() = %d\n", GetLastError());
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            // usually means the process has died so we throw a
+            // NoSuchProcess here
+            return NoSuchProcess();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    }
+
+    // Make sure the process is not gone as OpenProcess alone seems to be
+    // unreliable in doing so (it seems a previous call to p.wait() makes
+    // it unreliable).
+    // This check is important as creation time is used to make sure the
+    // process is still running.
+    ret = GetExitCodeProcess(hProcess, &exitCode);
+    CloseHandle(hProcess);
+    if (ret != 0) {
+        if (exitCode != STILL_ACTIVE)
+            return NoSuchProcess();
+    }
+    else {
+        // Ignore access denied as it means the process is still alive.
+        // For all other errors, we want an exception.
+        if (GetLastError() != ERROR_ACCESS_DENIED) {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    }
+
+    /*
+    Convert the FILETIME structure to a Unix time.
+    It's the best I could find by googling and borrowing code here and there.
+    The time returned has a precision of 1 second.
+    */
+    unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
+    unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
+    unix_time /= 10000000;
+    return Py_BuildValue("d", (double)unix_time);
 }
 
 
@@ -1746,6 +1848,8 @@ PsutilMethods[] = {
      "Convert a Cygwin path to a Windows path"},
     {"winpath_to_cygpath", psutil_winpath_to_cygpath, METH_VARARGS,
      "Convert a Windows path to a Cygwin path"},
+    {"boot_time", psutil_boot_time, METH_VARARGS,
+     "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
@@ -1771,6 +1875,9 @@ PsutilMethods[] = {
      "Get process I/O counters."},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads information as a list of tuple"},
+    {"proc_create_time", psutil_proc_create_time, METH_VARARGS,
+     "Return a float indicating the process create time expressed in "
+     "seconds since the epoch"},
     // --- alternative pinfo interface
     {"proc_info", psutil_proc_info, METH_VARARGS,
      "Various process information"},
