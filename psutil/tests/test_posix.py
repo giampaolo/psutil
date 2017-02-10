@@ -16,6 +16,7 @@ import time
 
 import psutil
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import OSX
 from psutil import POSIX
@@ -160,6 +161,13 @@ class TestProcess(unittest.TestCase):
             psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    # To be more specific, process priorities are complicated in Windows and
+    # there's no simple way, from the command line, to get the information
+    # needed to reproduce the way Cygwin maps Windows process priorties to
+    # 'nice' values (not even through Cygwin's /proc API, which only returns
+    # the "base priority" which actually is not sufficient because what we
+    # really need is the process's "priority class" which is different
+    @unittest.skipIf(CYGWIN, "this is not supported by Cygwin")
     def test_nice(self):
         ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
         psutil_nice = psutil.Process().nice()

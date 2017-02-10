@@ -20,6 +20,7 @@ import time
 
 import psutil
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import NETBSD
@@ -519,7 +520,7 @@ class TestSystemAPIs(unittest.TestCase):
 
         from psutil._common import conn_tmap
         for kind, groups in conn_tmap.items():
-            if SUNOS and kind == 'unix':
+            if (SUNOS or CYGWIN) and kind == 'unix':
                 continue
             families, types_ = groups
             cons = psutil.net_connections(kind)

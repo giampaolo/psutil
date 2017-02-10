@@ -41,7 +41,7 @@ import sys
 import psutil
 
 
-if not (psutil.LINUX or psutil.OSX or psutil.WINDOWS):
+if not (psutil.LINUX or psutil.OSX or psutil.WINDOWS or psutil.CYGWIN):
     sys.exit("platform not supported")
 
 

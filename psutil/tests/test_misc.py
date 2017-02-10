@@ -19,6 +19,7 @@ import socket
 import stat
 import sys
 
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import NETBSD
 from psutil import OPENBSD
@@ -442,7 +443,8 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(OSX or WINDOWS or LINUX, "platform not supported")
+    @unittest.skipUnless(OSX or WINDOWS or LINUX or CYGWIN,
+                         "platform not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 

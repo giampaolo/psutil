@@ -1406,7 +1406,14 @@ class TestProcess(unittest.TestCase):
                     "NoSuchProcess exception not raised for %r, retval=%s" % (
                         name, ret))
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipUnless(POSIX and not CYGWIN, 'POSIX only')
+    # This test can't really work on Cygwin since some psutil interfaces
+    # (such as create_time, currently) rely on the Windows API, and while
+    # Cygwin does support zombie processes, the real Windows processes are
+    # already gone in that case, and the zombie "processes" only remain
+    # in Cygwin's internal process table
+    # TODO: In the future it would be nice to have cleaner handling of
+    # zombie processes on Cygwin
     def test_zombie_process(self):
         def succeed_or_zombie_p_exc(fun, *args, **kwargs):
             try:
