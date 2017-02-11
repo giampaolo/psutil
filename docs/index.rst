@@ -653,6 +653,25 @@ Sensors
     This API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
+.. function:: sensors_fans()
+
+  Return hardware fans speed. Each entry is a named tuple representing a
+  certain hardware sensor.
+  All speed is expressed in RPM (round per minut). Example::
+
+    >>> import psutil
+    >>> psutil.sensors_fans()
+    defaultdict(<type 'list'>, {'dell_smm': [('Processor Fan', 3028)]})
+
+  Availability: Linux
+
+  .. versionadded:: 5.1.4
+
+  .. warning::
+
+    This API is experimental. Backward incompatible changes may occur if
+    deemed necessary.
+
 .. function:: sensors_battery()
 
   Return battery status information as a named tuple including the following

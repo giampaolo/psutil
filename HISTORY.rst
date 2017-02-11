@@ -2,6 +2,13 @@
 
 *2017-02-07*
 
+5.1.4
+=====
+
+**Enhancements**
+
+- 971_: [Linux] Add sensors_fans method.
+
 5.1.3
 =====
 
