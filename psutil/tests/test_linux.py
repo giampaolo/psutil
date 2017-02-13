@@ -55,7 +55,7 @@ if LINUX:
 
 
 # =====================================================================
-# utils
+# --- utils
 # =====================================================================
 
 
@@ -141,7 +141,7 @@ def get_free_version_info():
 
 
 # =====================================================================
-# system virtual memory
+# --- system virtual memory
 # =====================================================================
 
 
@@ -375,7 +375,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
 
 # =====================================================================
-# system swap memory
+# --- system swap memory
 # =====================================================================
 
 
@@ -437,7 +437,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 
 
 # =====================================================================
-# system CPU
+# --- system CPU
 # =====================================================================
 
 
@@ -538,7 +538,7 @@ class TestSystemCPU(unittest.TestCase):
 
 
 # =====================================================================
-# system CPU stats
+# --- system CPU stats
 # =====================================================================
 
 
@@ -559,7 +559,7 @@ class TestSystemCPUStats(unittest.TestCase):
 
 
 # =====================================================================
-# system network
+# --- system network
 # =====================================================================
 
 
@@ -671,7 +671,7 @@ class TestSystemNetwork(unittest.TestCase):
 
 
 # =====================================================================
-# system disk
+# --- system disk
 # =====================================================================
 
 
@@ -829,7 +829,7 @@ class TestSystemDisks(unittest.TestCase):
 
 
 # =====================================================================
-# misc
+# --- misc
 # =====================================================================
 
 
@@ -1020,17 +1020,9 @@ class TestMisc(unittest.TestCase):
             t.stop()
 
 
-@unittest.skipUnless(LINUX, "LINUX only")
-@unittest.skipUnless(hasattr(psutil, "sensors_fans") and
-                     psutil.sensors_fans() is not None,
-                     "no fan")
-class TestSensorsFans(unittest.TestCase):
-
-    def test_current(self):
-        psutil_value = psutil.sensors_fans()
-        for fk in psutil_value:
-            # Fan speed should always be > 0
-            self.assertTrue(psutil_value[fk][0][1] >= 0)
+# =====================================================================
+# --- sensors
+# =====================================================================
 
 
 @unittest.skipUnless(LINUX, "LINUX only")
@@ -1179,8 +1171,9 @@ class TestSensorsBattery(unittest.TestCase):
             self.assertIsNone(psutil.sensors_battery().power_plugged)
             assert m.called
 
+
 # =====================================================================
-# test process
+# --- test process
 # =====================================================================
 
 

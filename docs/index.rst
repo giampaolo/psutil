@@ -657,7 +657,7 @@ Sensors
 
   Return hardware fans speed. Each entry is a named tuple representing a
   certain hardware sensor fan.
-  All speed is expressed in RPM (round per minut). Example::
+  Fan speed is expressed in RPM (round per minute). Example::
 
     >>> import psutil
     >>> psutil.sensors_fans()

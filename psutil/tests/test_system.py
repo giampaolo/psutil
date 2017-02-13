@@ -81,9 +81,9 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_wait_procs(self):
         def callback(p):
-            l.append(p.pid)
+            pids.append(p.pid)
 
-        l = []
+        pids = []
         sproc1 = get_test_subprocess()
         sproc2 = get_test_subprocess()
         sproc3 = get_test_subprocess()
@@ -96,7 +96,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertLess(time.time() - t, 0.5)
         self.assertEqual(gone, [])
         self.assertEqual(len(alive), 3)
-        self.assertEqual(l, [])
+        self.assertEqual(pids, [])
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
@@ -115,7 +115,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(gone.pop().returncode, -signal.SIGTERM)
         else:
             self.assertEqual(gone.pop().returncode, 1)
-        self.assertEqual(l, [sproc3.pid])
+        self.assertEqual(pids, [sproc3.pid])
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
@@ -130,7 +130,7 @@ class TestSystemAPIs(unittest.TestCase):
         sproc1.terminate()
         sproc2.terminate()
         gone, alive = test(procs, callback)
-        self.assertEqual(set(l), set([sproc1.pid, sproc2.pid, sproc3.pid]))
+        self.assertEqual(set(pids), set([sproc1.pid, sproc2.pid, sproc3.pid]))
         for p in gone:
             self.assertTrue(hasattr(p, 'returncode'))
 
@@ -767,7 +767,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIs(getattr(psutil, name), False, msg=name)
 
     @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "platform not suported")
+                         "platform not supported")
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
@@ -781,7 +781,7 @@ class TestSystemAPIs(unittest.TestCase):
                 if entry.critical is not None:
                     self.assertGreaterEqual(entry.critical, 0)
 
-    @unittest.skipUnless(LINUX or WINDOWS or FREEBSD,
+    @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
                          "platform not supported")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()
@@ -796,6 +796,17 @@ class TestSystemAPIs(unittest.TestCase):
             if ret.secsleft == psutil.POWER_TIME_UNLIMITED:
                 self.assertTrue(ret.power_plugged)
         self.assertIsInstance(ret.power_plugged, bool)
+
+    @unittest.skipUnless(hasattr(psutil, "sensors_fans"),
+                         "platform not supported")
+    def test_sensors_fans(self):
+        fans = psutil.sensors_fans()
+        for name, entries in fans.items():
+            self.assertIsInstance(name, (str, unicode))
+            for entry in entries:
+                self.assertIsInstance(entry.label, (str, unicode))
+                self.assertIsInstance(entry.current, (int, long))
+                self.assertGreaterEqual(entry.current, 0)
 
 
 if __name__ == '__main__':
