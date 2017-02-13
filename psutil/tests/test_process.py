@@ -1148,7 +1148,9 @@ class TestProcess(unittest.TestCase):
                 return
         self.fail("num ctx switches still the same after 50.000 iterations")
 
-    def test_parent_ppid(self):
+    def test_ppid(self):
+        if hasattr(os, 'getppid'):
+            self.assertEqual(psutil.Process().ppid(), os.getppid())
         this_parent = os.getpid()
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)

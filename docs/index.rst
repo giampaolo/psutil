@@ -2142,6 +2142,13 @@ Q&A
   the Python script as a Windows service (this is the trick used by tools
   such as ProcessHacker).
 
+----
+
+* Q: What about load average?
+* A: psutil does not expose any load average function as it's already available
+  in python as
+  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__
+
 Development guide
 =================
 
