@@ -491,7 +491,7 @@ class TestScripts(unittest.TestCase):
         else:
             self.assert_syntax('battery.py')
 
-    @unittest.skipIf(APPVEYOR, "unreliable on appveyor")
+    @unittest.skipIf(APPVEYOR or TRAVIS, "unreliable on CI")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
