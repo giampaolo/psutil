@@ -872,7 +872,9 @@ psutil_get_nic_addresses() {
             return NULL;
         }
 
-        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, pAddresses,
+        dwRetVal = GetAdaptersAddresses(AF_UNSPEC,
+                                        GAA_FLAG_INCLUDE_ALL_INTERFACES,
+                                        NULL, pAddresses,
                                         &outBufLen);
         if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
             free(pAddresses);
@@ -901,8 +903,10 @@ psutil_get_nic_addresses() {
  */
 
 /* TODO: This and the helper get_nic_addresses are copied *almost* verbatim
-   from the windows module.  The only difference is the use of snprintf with
-   the %ls format, as opposed to using sprintf_s from MSCRT */
+   from the windows module.  One difference is the use of snprintf with
+   the %ls format, as opposed to using sprintf_s from MSCRT
+   The other difference is that get_nic_addresses() returns all interfaces,
+   */
 static PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
     int i;

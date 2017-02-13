@@ -437,8 +437,17 @@ def net_connections(kind, _pid=-1):
 
 
 def net_if_stats():
-    ret = cext.net_if_stats()
-    for name, items in ret.items():
+    ret = {}
+    if_stats = cext.net_if_stats()
+    # NOTE: Cygwin does some tricky things in how getifaddrs is handled
+    # which our net_if_stats does not do, such that net_if_stats does not
+    # return all the same interfaces as net_if_stats, so here we artifically
+    # limit the net_if_stats() results to just those interfaces returned by
+    # net_if_addrs
+    if_names = set(addr[0] for addr in net_if_addrs())
+    for name, items in if_stats.items():
+        if name not in if_names:
+            continue
         name = encode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
