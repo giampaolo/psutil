@@ -1021,6 +1021,19 @@ class TestMisc(unittest.TestCase):
 
 
 @unittest.skipUnless(LINUX, "LINUX only")
+@unittest.skipUnless(hasattr(psutil, "sensors_fans") and
+                     psutil.sensors_fans() is not None,
+                     "no fan")
+class TestSensorsFans(unittest.TestCase):
+
+    def test_current(self):
+        psutil_value = psutil.sensors_fans()
+        for fk in psutil_value:
+            # Fan speed should always be > 0
+            self.assertTrue(psutil_value[fk][0][1] >= 0)
+
+
+@unittest.skipUnless(LINUX, "LINUX only")
 @unittest.skipUnless(hasattr(psutil, "sensors_battery") and
                      psutil.sensors_battery() is not None,
                      "no battery")

@@ -187,7 +187,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    # "sensors_temperatures", "sensors_battery",                    # sensors
+    # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
 __all__.extend(_psplatform.__extra__all__)
@@ -2232,6 +2232,19 @@ if hasattr(_psplatform, "sensors_temperatures"):
         return dict(ret)
 
     __all__.append("sensors_temperatures")
+
+
+# Linux
+if hasattr(_psplatform, "sensors_fans"):
+
+    def sensors_fans():
+        """Return fans speed. Each entry is a namedtuple
+        representing a certain hardware sensor.
+        All speed are expressed in RPM (rounds per minute).
+        """
+        return _psplatform.sensors_fans()
+
+    __all__.append("sensors_fans")
 
 
 # Linux, Windows, FreeBSD
