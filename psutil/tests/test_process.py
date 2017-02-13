@@ -2124,6 +2124,16 @@ class TestInvalidUnicode(TestUnicode):
         uexe = TESTFN + b"f\xc0\x80"
         udir = TESTFN + b"d\xc0\x80"
 
+    # NOTE: Cygwin uses its own scheme for encoding characters in filenames
+    # that are not valid unicode codepoints (such as \x80) (specifically, it
+    # converts them to codepoints in a private use area, e.g. u+f080).  So
+    # the filename ends up being reported as the utf-8 encoding of u+f080
+    # This seems to be handled better on a problem on Python 3, however.
+    @unittest.skipIf(not PY3 and CYGWIN,
+                     "Cygwin does not treat arbitrary bytes as on POSIX")
+    def test_proc_exe(self):
+        return super(TestInvalidUnicode, self).test_proc_exe()
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
