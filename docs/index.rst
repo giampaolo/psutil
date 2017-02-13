@@ -641,7 +641,7 @@ Sensors
                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__
+  See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
   Availability: Linux
@@ -663,7 +663,7 @@ Sensors
     >>> psutil.sensors_fans()
     {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__
+  See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
   Availability: Linux
@@ -706,7 +706,7 @@ Sensors
     >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
     charge = 93%, time left = 4:37:08
 
-  See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__
+  See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__ for an example application.
 
   Availability: Linux, Windows, FreeBSD
 

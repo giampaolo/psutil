@@ -7,7 +7,7 @@
 """
 Show battery information.
 
-$ python battery.py
+$ python scripts/battery.py
 charge:     74%
 left:       2:11:31
 status:     discharging
