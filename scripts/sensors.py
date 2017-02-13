@@ -9,32 +9,23 @@
 A clone of 'sensors' utility on Linux printing hardware temperatures.
 
 $ python scripts/sensors.py
-SENSORS
-=======
-
 asus
     Temperatures:
-        asus                 50.0 °C (high=None °C, critical=None °C)
+        asus                 57.0 °C (high=None °C, critical=None °C)
     Fans:
-        cpu_fan              3300 RPM
-
+        cpu_fan              3500 RPM
 acpitz
     Temperatures:
-        acpitz               50.0 °C (high=108.0 °C, critical=108.0 °C)
-
+        acpitz               57.0 °C (high=108.0 °C, critical=108.0 °C)
 coretemp
     Temperatures:
-        Physical id 0        51.0 °C (high=87.0 °C, critical=105.0 °C)
-        Core 0               49.0 °C (high=87.0 °C, critical=105.0 °C)
-        Core 1               51.0 °C (high=87.0 °C, critical=105.0 °C)
-
-BATTERY
-=======
-
-    charge:     87.51%
-    left:       1:12:28
-    status:     discharging
-    plugged in: no
+        Physical id 0        61.0 °C (high=87.0 °C, critical=105.0 °C)
+        Core 0               61.0 °C (high=87.0 °C, critical=105.0 °C)
+        Core 1               59.0 °C (high=87.0 °C, critical=105.0 °C)
+Battery:
+    charge:     84.95%
+    status:     charging
+    plugged in: yes
 """
 
 from __future__ import print_function
@@ -66,10 +57,6 @@ def main():
     if not any((temps, fans, battery)):
         return sys.exit("can't read any temperature, fans or battery info")
 
-    if temps or fans:
-        print("SENSORS")
-        print("=======\n")
-
     names = set(temps.keys() + fans.keys())
     for name in names:
         print(name)
@@ -87,12 +74,9 @@ def main():
                 print("        %-20s %s RPM" % (
                     entry.label or name, entry.current))
 
-        print()
-
     # Battery
     if battery:
-        print("BATTERY")
-        print("=======\n")
+        print("Battery:")
         print("    charge:     %s%%" % round(battery.percent, 2))
         if battery.power_plugged:
             print("    status:     %s" % (
