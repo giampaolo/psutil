@@ -367,12 +367,15 @@ class TestSystemAPIs(unittest.TestCase):
     def test_users(self):
         out = sh("who")
         lines = [x.strip() for x in out.split('\n')]
-        users = [x.split()[0] for x in lines if x]
-        self.assertEqual(len(users), len(psutil.users()))
-        terminals = [x.split()[1] for x in lines if x]
+        self.assertEqual(len(lines), len(psutil.users()))
         for u in psutil.users():
-            self.assertTrue(u.name in users, u.name)
-            self.assertTrue(u.terminal in terminals, u.terminal)
+            for line in lines:
+                if line.startswith(u.name):
+                    rest = line[len(u.name):].split()
+                    self.assertTrue(u.terminal == rest[0].strip(), u.terminal)
+                    break
+            else:
+                self.fail("couldn't find %s in who output" % u.name)
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
