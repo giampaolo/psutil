@@ -92,9 +92,12 @@ class TestProcess(unittest.TestCase):
         reap_children()
 
     def test_pid(self):
-        self.assertEqual(psutil.Process().pid, os.getpid())
+        p = psutil.Process()
+        self.assertEqual(p.pid, os.getpid())
         sproc = get_test_subprocess()
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
+        with self.assertRaises(AttributeError):
+            p.pid = 33
 
     def test_kill(self):
         sproc = get_test_subprocess()
@@ -792,11 +795,17 @@ class TestProcess(unittest.TestCase):
             finally:
                 p.nice(psutil.NORMAL_PRIORITY_CLASS)
         else:
+            first_nice = p.nice()
             try:
-                first_nice = p.nice()
+                if hasattr(os, "getpriority"):
+                    self.assertEqual(
+                        os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
                 p.nice(1)
                 self.assertEqual(p.nice(), 1)
-                # going back to previous nice value raises
+                if hasattr(os, "getpriority"):
+                    self.assertEqual(
+                        os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
+                # XXX - going back to previous nice value raises
                 # AccessDenied on OSX
                 if not OSX:
                     p.nice(0)
