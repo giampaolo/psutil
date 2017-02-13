@@ -491,6 +491,9 @@ class TestScripts(unittest.TestCase):
         else:
             self.assert_syntax('battery.py')
 
+    def test_sensors(self):
+        self.assert_stdout('sensors.py')
+
 
 # ===================================================================
 # --- Unit tests for test utilities.
