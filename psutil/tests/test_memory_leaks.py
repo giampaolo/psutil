@@ -562,7 +562,19 @@ class TestModuleFunctionsLeaks(TestMemLeak):
                          "platform not supported")
     @skip_if_linux()
     def test_sensors_battery(self):
-        self.execute(psutil.sensors_battery())
+        self.execute(psutil.sensors_battery)
+
+    @skip_if_linux()
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "platform not supported")
+    def test_sensors_temperatures(self):
+        self.execute(psutil.sensors_temperatures)
+
+    @unittest.skipUnless(hasattr(psutil, "sensors_fans"),
+                         "platform not supported")
+    @skip_if_linux()
+    def test_sensors_fans(self):
+        self.execute(psutil.sensors_fans)
 
     # --- others
 
@@ -573,12 +585,6 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     # XXX - on Windows this produces a false positive
     @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
-        self.execute(psutil.users)
-
-    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "platform not supported")
-    @skip_if_linux()
-    def test_sensors_temperatures(self):
         self.execute(psutil.users)
 
     if WINDOWS:
