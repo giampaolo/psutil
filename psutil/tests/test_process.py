@@ -1878,6 +1878,11 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def cwd(self, ret, proc):
         if ret is not None:  # BSD may return None
+            if CYGWIN and ret == '<defunct>':
+                # This can happen on Cygwin for processes that we can't access
+                # without elevation
+                return
+
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)
