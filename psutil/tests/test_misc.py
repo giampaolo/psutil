@@ -477,6 +477,13 @@ class TestScripts(unittest.TestCase):
         else:
             self.assert_syntax('temperatures.py')
 
+    @unittest.skipIf(TRAVIS, "unreliable on travis")
+    def test_fans(self):
+        if hasattr(psutil, "sensors_fans") and psutil.sensors_fans():
+            self.assert_stdout('fans.py')
+        else:
+            self.assert_syntax('fans.py')
+
     def test_battery(self):
         if hasattr(psutil, "sensors_battery") and \
                 psutil.sensors_battery() is not None:

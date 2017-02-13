@@ -41,12 +41,14 @@ Summary
 
 psutil (process and system utilities) is a cross-platform library for
 retrieving information on **running processes** and **system utilization**
-(CPU, memory, disks, network) in Python. It is useful mainly for **system
-monitoring**, **profiling and limiting process resources** and **management of
-running processes**. It implements many functionalities offered by command line
-tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
-ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
-**Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD** and **NetBSD**,
+(CPU, memory, disks, networkm sensors) in Python.
+It is useful mainly for **system monitoring**, **profiling and limiting process
+resources** and **management of running processes**.
+It implements many functionalities offered by command line tools such as:
+ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
+iotop, uptime, pidof, tty, taskset, pmap.
+It currently supports **Linux**, **Windows**, **OSX**, **Sun Solaris**,
+**FreeBSD**, **OpenBSD** and **NetBSD**,
 both **32-bit** and **64-bit** architectures, with Python versions from **2.6
 to 3.5** (users of Python 2.4 and 2.5 may use
 `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
@@ -200,6 +202,9 @@ Sensors
                   shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
+    >>>
+    >>> psutil.sensors_fans()
+    {'asus': [sfan(label='cpu_fan', current=3200)]}
     >>>
     >>> psutil.sensors_battery()
     sbattery(percent=93, secsleft=16628, power_plugged=False)

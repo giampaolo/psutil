@@ -626,8 +626,8 @@ Sensors
 .. function:: sensors_temperatures(fahrenheit=False)
 
   Return hardware temperatures. Each entry is a named tuple representing a
-  certain hardware sensor (it may be a CPU, an hard disk or something
-  else, depending on the OS and its configuration).
+  certain hardware temperature sensor (it may be a CPU, an hard disk or
+  something else, depending on the OS and its configuration).
   All temperatures are expressed in celsius unless *fahrenheit* is set to
   ``True``. Example::
 
@@ -656,16 +656,19 @@ Sensors
 .. function:: sensors_fans()
 
   Return hardware fans speed. Each entry is a named tuple representing a
-  certain hardware sensor.
+  certain hardware sensor fan.
   All speed is expressed in RPM (round per minut). Example::
 
     >>> import psutil
     >>> psutil.sensors_fans()
-    defaultdict(<type 'list'>, {'dell_smm': [('Processor Fan', 3028)]})
+    {'asus': [sfan(label='cpu_fan', current=3200)]}
+
+  See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__
+  for an example application.
 
   Availability: Linux
 
-  .. versionadded:: 5.1.4
+  .. versionadded:: 5.2.0
 
   .. warning::
 
@@ -709,6 +712,10 @@ Sensors
 
   .. versionadded:: 5.1.0
 
+  .. warning::
+
+    This API is experimental. Backward incompatible changes may occur if
+    deemed necessary.
 
 Other system info
 -----------------

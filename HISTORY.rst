@@ -2,12 +2,12 @@
 
 *2017-02-07*
 
-5.1.4
+5.2.0
 =====
 
 **Enhancements**
 
-- 971_: [Linux] Add sensors_fans method.
+- 971_: [Linux] Add psutil.sensors_fans() function.  (patch by Nicolas Hennion)
 
 5.1.3
 =====

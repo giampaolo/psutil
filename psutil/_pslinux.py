@@ -1142,9 +1142,9 @@ def sensors_fans():
         label = cat(base + '_label', fallback='', binary=False)
         current = int(cat(base + '_input'))
 
-        ret[unit_name].append((label, current))
+        ret[unit_name].append(_common.sfan(label, current))
 
-    return ret
+    return dict(ret)
 
 
 def sensors_battery():
