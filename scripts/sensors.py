@@ -74,7 +74,7 @@ def main():
                 print("        %-20s %s RPM" % (
                     entry.label or name, entry.current))
 
-    # Battery
+    # Battery.
     if battery:
         print("Battery:")
         print("    charge:     %s%%" % round(battery.percent, 2))

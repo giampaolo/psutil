@@ -629,7 +629,9 @@ Sensors
   certain hardware temperature sensor (it may be a CPU, an hard disk or
   something else, depending on the OS and its configuration).
   All temperatures are expressed in celsius unless *fahrenheit* is set to
-  ``True``. Example::
+  ``True``.
+  If sensors are not supported by the OS an empty dict is returned.
+  Example::
 
     >>> import psutil
     >>> psutil.sensors_temperatures()
@@ -657,7 +659,9 @@ Sensors
 
   Return hardware fans speed. Each entry is a named tuple representing a
   certain hardware sensor fan.
-  Fan speed is expressed in RPM (round per minute). Example::
+  Fan speed is expressed in RPM (round per minute).
+  If sensors are not supported by the OS an empty dict is returned.
+  Example::
 
     >>> import psutil
     >>> psutil.sensors_fans()
@@ -678,8 +682,8 @@ Sensors
 .. function:: sensors_battery()
 
   Return battery status information as a named tuple including the following
-  values. If no battery is installed or metrics can't be determined returns
-  ``None``.
+  values. If no battery is installed or metrics can't be determined ``None``
+  is returned.
 
   - **percent**: battery power left as a percentage.
   - **secsleft**: a rough approximation of how many seconds are left before the
