@@ -759,10 +759,11 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(real, os.getuid())
         # os.geteuid() refers to "effective" uid
         self.assertEqual(effective, os.geteuid())
-        # no such thing as os.getsuid() ("saved" uid), but starting
-        # from python 2.7 we have os.getresuid()[2]
+        # No such thing as os.getsuid() ("saved" uid), but starting
+        # from python 2.7 we have os.getresuid() which returns all
+        # of them.
         if hasattr(os, "getresuid"):
-            self.assertEqual(saved, os.getresuid()[2])
+            self.assertEqual(os.getresuid(), p.uids())
 
     @unittest.skipUnless(POSIX, 'POSIX only')
     def test_gids(self):
@@ -772,10 +773,11 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid
         self.assertEqual(effective, os.getegid())
-        # no such thing as os.getsgid() ("saved" gid), but starting
-        # from python 2.7 we have os.getresgid()[2]
+        # No such thing as os.getsgid() ("saved" gid), but starting
+        # from python 2.7 we have os.getresgid() which returns all
+        # of them.
         if hasattr(os, "getresuid"):
-            self.assertEqual(saved, os.getresgid()[2])
+            self.assertEqual(os.getresgid(), p.gids())
 
     def test_nice(self):
         p = psutil.Process()
