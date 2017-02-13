@@ -1829,17 +1829,17 @@ class TestFetchAllProcesses(unittest.TestCase):
     def memory_info(self, ret, proc):
         for name in ret._fields:
             self.assertGreaterEqual(getattr(ret, name), 0)
-        if POSIX and ret.vms != 0:
+        if WINDOWS or CYGWIN:
+            assert ret.peak_wset >= ret.wset, ret
+            assert ret.peak_paged_pool >= ret.paged_pool, ret
+            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
+            assert ret.peak_pagefile >= ret.pagefile, ret
+        elif POSIX and ret.vms != 0:
             # VMS is always supposed to be the highest
             for name in ret._fields:
                 if name != 'vms':
                     value = getattr(ret, name)
                     assert ret.vms > value, ret
-        elif WINDOWS:
-            assert ret.peak_wset >= ret.wset, ret
-            assert ret.peak_paged_pool >= ret.paged_pool, ret
-            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
-            assert ret.peak_pagefile >= ret.pagefile, ret
 
     def memory_full_info(self, ret, proc):
         total = psutil.virtual_memory().total
