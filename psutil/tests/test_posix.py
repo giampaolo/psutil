@@ -334,7 +334,8 @@ class TestSystemAPIs(unittest.TestCase):
         if OSX and 0 not in pids_ps:
             pids_ps.insert(0, 0)
 
-        if pids_ps != pids_psutil:
+        # There will often be one more process in pids_ps for ps itself
+        if len(pids_ps) - len(pids_psutil) > 1:
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
