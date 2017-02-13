@@ -1118,6 +1118,8 @@ class TestProcess(unittest.TestCase):
                          'socket.fromfd() not supported')
     @unittest.skipIf(WINDOWS or SUNOS,
                      'connection fd not available on this platform')
+    @unittest.skipIf(CYGWIN,
+                     'cannot map sockets to their fds on Cygwin')
     def test_connection_fromfd(self):
         with contextlib.closing(socket.socket()) as sock:
             sock.bind(('localhost', 0))
