@@ -343,6 +343,11 @@ class TestProcess(unittest.TestCase):
             else:
                 self.assertEqual(a, b)
 
+    def test_username(self):
+        sys_value = win32api.GetUserName()
+        psutil_value = psutil.Process(self.pid).username()
+        self.assertEqual(sys_value, psutil_value.split('\\')[1])
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
