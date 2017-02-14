@@ -153,6 +153,17 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 self.fail("can't find partition %s" % repr(ps_part))
 
+    def test_disk_usage(self):
+        for disk in psutil.disk_partitions():
+            sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
+            psutil_value = psutil.disk_usage(disk.mountpoint)
+            self.assertAlmostEqual(sys_value[0], psutil_value.free,
+                                   delta=1024 * 1024)
+            self.assertAlmostEqual(sys_value[1], psutil_value.total,
+                                   delta=1024 * 1024)
+            self.assertEqual(psutil_value.used,
+                             psutil_value.total - psutil_value.free)
+
     def test_net_if_stats(self):
         ps_names = set(cext.net_if_stats())
         wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
