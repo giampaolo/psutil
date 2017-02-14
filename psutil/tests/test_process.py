@@ -348,6 +348,10 @@ class TestProcess(unittest.TestCase):
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         assert io2.read_count >= io1.read_count, (io1, io2)
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
+        # sanity check
+        for i in range(len(io2)):
+            self.assertGreaterEqual(io2[i], 0)
+            self.assertGreaterEqual(io2[i], 0)
 
     @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
                          'platform not supported')

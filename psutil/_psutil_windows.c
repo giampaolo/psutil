@@ -2101,11 +2101,13 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
         return PyErr_SetFromWindowsErr(0);
     }
     CloseHandle(hProcess);
-    return Py_BuildValue("(KKKK)",
+    return Py_BuildValue("(KKKKKK)",
                          IoCounters.ReadOperationCount,
                          IoCounters.WriteOperationCount,
                          IoCounters.ReadTransferCount,
-                         IoCounters.WriteTransferCount);
+                         IoCounters.WriteTransferCount,
+                         IoCounters.OtherOperationCount,
+                         IoCounters.OtherTransferCount);
 }
 
 
@@ -2793,9 +2795,9 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 
     py_retlist = Py_BuildValue(
 #if defined(_WIN64)
-        "kkdddiKKKK" "kKKKKKKKKK",
+        "kkdddiKKKKKK" "kKKKKKKKKK",
 #else
-        "kkdddiKKKK" "kIIIIIIIII",
+        "kkdddiKKKKKK" "kIIIIIIIII",
 #endif
         process->HandleCount,                   // num handles
         ctx_switches,                           // num ctx switches
@@ -2803,10 +2805,13 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         kernel_time,                            // cpu kernel time
         (double)create_time,                    // create time
         (int)process->NumberOfThreads,          // num threads
+        // IO counters
         process->ReadOperationCount.QuadPart,   // io rcount
         process->WriteOperationCount.QuadPart,  // io wcount
         process->ReadTransferCount.QuadPart,    // io rbytes
         process->WriteTransferCount.QuadPart,   // io wbytes
+        process->OtherOperationCount.QuadPart,  // io others count
+        process->OtherTransferCount.QuadPart,   // io others bytes
         // memory
         process->PageFaultCount,                // num page faults
         process->PeakWorkingSetSize,            // peak wset

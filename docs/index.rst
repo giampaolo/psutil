@@ -1213,13 +1213,20 @@ Process class
 
   .. method:: io_counters()
 
-    Return process I/O statistics as a named tuple including the number of read
-    and write operations performed by the process and the amount of bytes read
-    and written (cumulative). For Linux you can refer to
+    Return process I/O statistics as a named tuple.
+    For Linux you can refer to
     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
-    On BSD there's apparently no way to retrieve bytes counters, hence ``-1``
-    is returned for **read_bytes** and **write_bytes** fields. OSX is not
-    supported.
+
+    - **read_count**: the number of read operations performed (cumulative).
+    - **write_count**: the number of write operations performed (cumulative).
+    - **read_bytes**: the number of bytes read (cumulative).
+      Always ``-1`` on  BSD.
+    - **write_bytes**: the number of bytes written (cumulative).
+      Always ``-1`` on  BSD.
+    - **other_count** *(Windows)*: the number of I/O operations performed,
+      other than read and write operations.
+    - **other_bytes** *(Windows)*: the number of bytes transferred during
+      operations other than read and write operations.
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1227,6 +1234,9 @@ Process class
       pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
 
     Availability: all platforms except OSX and Solaris
+
+    .. versionchanged:: 5.2.0 added *other_count* and *other_bytes* Windows
+      metrics.
 
   .. method:: num_ctx_switches()
 

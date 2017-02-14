@@ -461,6 +461,10 @@ class TestProcess(unittest.TestCase):
             psutil_value.read_bytes, sys_value['ReadTransferCount'])
         self.assertEqual(
             psutil_value.write_bytes, sys_value['WriteTransferCount'])
+        self.assertEqual(
+            psutil_value.other_count, sys_value['OtherOperationCount'])
+        self.assertEqual(
+            psutil_value.other_bytes, sys_value['OtherTransferCount'])
 
     def test_num_handles(self):
         import ctypes
@@ -610,8 +614,6 @@ class TestDualProcessImplementation(unittest.TestCase):
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
             for i in range(len(io_counters_1)):
-                self.assertGreaterEqual(io_counters_1[i], 0)
-                self.assertGreaterEqual(io_counters_2[i], 0)
                 self.assertAlmostEqual(
                     io_counters_1[i], io_counters_2[i], delta=5)
             assert fun.called

@@ -120,16 +120,18 @@ pinfo_map = dict(
     io_wcount=7,
     io_rbytes=8,
     io_wbytes=9,
-    num_page_faults=10,
-    peak_wset=11,
-    wset=12,
-    peak_paged_pool=13,
-    paged_pool=14,
-    peak_non_paged_pool=15,
-    non_paged_pool=16,
-    pagefile=17,
-    peak_pagefile=18,
-    mem_private=19,
+    io_count_others=10,
+    io_bytes_others=11,
+    num_page_faults=12,
+    peak_wset=13,
+    wset=14,
+    peak_paged_pool=15,
+    paged_pool=16,
+    peak_non_paged_pool=17,
+    non_paged_pool=18,
+    pagefile=19,
+    peak_pagefile=20,
+    mem_private=21,
 )
 
 
@@ -154,6 +156,10 @@ ntpinfo = namedtuple(
     'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
                 'create_time', 'num_threads', 'io_rcount', 'io_wcount',
                 'io_rbytes', 'io_wbytes'])
+# psutil.Process.io_counters()
+pio = namedtuple('pio', ['read_count', 'write_count',
+                         'read_bytes', 'write_bytes',
+                         'other_count', 'other_bytes'])
 
 
 # =====================================================================
@@ -900,10 +906,12 @@ class Process(object):
                     info[pinfo_map['io_wcount']],
                     info[pinfo_map['io_rbytes']],
                     info[pinfo_map['io_wbytes']],
+                    info[pinfo_map['io_count_others']],
+                    info[pinfo_map['io_bytes_others']],
                 )
             else:
                 raise
-        return _common.pio(*ret)
+        return pio(*ret)
 
     @wrap_exceptions
     def status(self):
