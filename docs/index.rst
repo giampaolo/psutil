@@ -1003,6 +1003,7 @@ Process class
     call. Not on POSIX because
     `ppid may change <https://github.com/giampaolo/psutil/issues/321>`__
     if process becomes a zombie.
+    See also :meth:`parent` method.
 
   .. method:: name()
 
@@ -1085,6 +1086,7 @@ Process class
     Utility method which returns the parent process as a :class:`Process`
     object preemptively checking whether PID has been reused. If no parent
     PID is known return ``None``.
+    See also :meth:`ppid` method.
 
   .. method:: status()
 
