@@ -398,6 +398,33 @@ class TestProcess(unittest.TestCase):
         psutil_value = psutil.Process().nice()
         self.assertEqual(psutil_value, sys_value)
 
+    def test_memory_info(self):
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, self.pid)
+        self.addCleanup(win32api.CloseHandle, handle)
+        sys_value = win32process.GetProcessMemoryInfo(handle)
+        psutil_value = psutil.Process(self.pid).memory_info()
+        self.assertEqual(
+            sys_value['PeakWorkingSetSize'], psutil_value.peak_wset)
+        self.assertEqual(
+            sys_value['WorkingSetSize'], psutil_value.wset)
+        self.assertEqual(
+            sys_value['QuotaPeakPagedPoolUsage'], psutil_value.peak_paged_pool)
+        self.assertEqual(
+            sys_value['QuotaPagedPoolUsage'], psutil_value.paged_pool)
+        self.assertEqual(
+            sys_value['QuotaPeakNonPagedPoolUsage'],
+            psutil_value.peak_nonpaged_pool)
+        self.assertEqual(
+            sys_value['QuotaNonPagedPoolUsage'], psutil_value.nonpaged_pool)
+        self.assertEqual(
+            sys_value['PagefileUsage'], psutil_value.pagefile)
+        self.assertEqual(
+            sys_value['PeakPagefileUsage'], psutil_value.peak_pagefile)
+
+        self.assertEqual(psutil_value.rss, psutil_value.wset)
+        self.assertEqual(psutil_value.vms, psutil_value.pagefile)
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
