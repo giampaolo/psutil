@@ -291,7 +291,7 @@ class TestProcess(unittest.TestCase):
             except psutil.Error:
                 pass
 
-    def test_num_handles(self):
+    def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
         handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
@@ -462,6 +462,21 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(
             psutil_value.write_bytes, sys_value['WriteTransferCount'])
 
+    def test_num_handles(self):
+        import ctypes
+        import ctypes.wintypes
+        PROCESS_QUERY_INFORMATION = 0x400
+        handle = ctypes.windll.kernel32.OpenProcess(
+            PROCESS_QUERY_INFORMATION, 0, os.getpid())
+        self.addCleanup(ctypes.windll.kernel32.CloseHandle, handle)
+        hndcnt = ctypes.wintypes.DWORD()
+        ctypes.windll.kernel32.GetProcessHandleCount(
+            handle, ctypes.byref(hndcnt))
+        sys_value = hndcnt.value
+        psutil_value = psutil.Process().num_handles()
+        ctypes.windll.kernel32.CloseHandle(handle)
+        self.assertEqual(psutil_value, sys_value + 1)
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
@@ -591,8 +606,6 @@ class TestDualProcessImplementation(unittest.TestCase):
 
     def test_io_counters(self):
         io_counters_1 = psutil.Process(self.pid).io_counters()
-        print("")
-        print(io_counters_1)
         with mock.patch("psutil._psplatform.cext.proc_io_counters",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
