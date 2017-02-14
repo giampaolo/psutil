@@ -435,6 +435,18 @@ class TestProcess(unittest.TestCase):
         sys_value = win32process.GetExitCodeProcess(handle)
         self.assertEqual(psutil_value, sys_value)
 
+    def test_cpu_affinity(self):
+        def from_bitmask(x):
+            return [i for i in range(64) if (1 << i) & x]
+
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, self.pid)
+        self.addCleanup(win32api.CloseHandle, handle)
+        sys_value = from_bitmask(
+            win32process.GetProcessAffinityMask(handle)[0])
+        psutil_value = psutil.Process(self.pid).cpu_affinity()
+        self.assertEqual(psutil_value, sys_value)
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
