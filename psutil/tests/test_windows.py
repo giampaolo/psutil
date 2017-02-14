@@ -447,6 +447,21 @@ class TestProcess(unittest.TestCase):
         psutil_value = psutil.Process(self.pid).cpu_affinity()
         self.assertEqual(psutil_value, sys_value)
 
+    def test_io_counters(self):
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, os.getpid())
+        self.addCleanup(win32api.CloseHandle, handle)
+        sys_value = win32process.GetProcessIoCounters(handle)
+        psutil_value = psutil.Process().io_counters()
+        self.assertEqual(
+            psutil_value.read_count, sys_value['ReadOperationCount'])
+        self.assertEqual(
+            psutil_value.write_count, sys_value['WriteOperationCount'])
+        self.assertEqual(
+            psutil_value.read_bytes, sys_value['ReadTransferCount'])
+        self.assertEqual(
+            psutil_value.write_bytes, sys_value['WriteTransferCount'])
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
