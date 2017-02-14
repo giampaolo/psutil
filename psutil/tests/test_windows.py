@@ -208,6 +208,12 @@ class TestSensorsBattery(unittest.TestCase):
             self.assertEqual(
                 battery_psutil.power_plugged, battery_wmi.BatteryStatus == 1)
 
+    def test_battery_present(self):
+        if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
+            self.assertIsNotNone(psutil.sensors_battery())
+        else:
+            self.assertIsNone(psutil.sensors_battery())
+
     def test_emulate_no_battery(self):
         with mock.patch("psutil._pswindows.cext.sensors_battery",
                         return_value=(0, 128, 0, 0)) as m:
