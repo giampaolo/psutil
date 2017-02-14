@@ -383,12 +383,20 @@ class TestProcess(unittest.TestCase):
         handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
                                       win32con.FALSE, os.getpid())
         self.addCleanup(win32api.CloseHandle, handle)
-        sys_times = win32process.GetProcessTimes(handle)
-        psutil_times = psutil.Process().cpu_times()
+        sys_value = win32process.GetProcessTimes(handle)
+        psutil_value = psutil.Process().cpu_times()
         self.assertAlmostEqual(
-            psutil_times.user, sys_times['UserTime'] / 10000000.0, delta=0.2)
+            psutil_value.user, sys_value['UserTime'] / 10000000.0, delta=0.2)
         self.assertAlmostEqual(
-            psutil_times.user, sys_times['KernelTime'] / 10000000.0, delta=0.2)
+            psutil_value.user, sys_value['KernelTime'] / 10000000.0, delta=0.2)
+
+    def test_nice(self):
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, os.getpid())
+        self.addCleanup(win32api.CloseHandle, handle)
+        sys_value = win32process.GetPriorityClass(handle)
+        psutil_value = psutil.Process().nice()
+        self.assertEqual(psutil_value, sys_value)
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
