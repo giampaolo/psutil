@@ -350,10 +350,13 @@ class TestProcess(unittest.TestCase):
             else:
                 f.write("x" * 1000000)
         io2 = p.io_counters()
-        assert io2.write_count >= io1.write_count, (io1, io2)
-        assert io2.write_bytes >= io1.write_bytes, (io1, io2)
-        assert io2.read_count >= io1.read_count, (io1, io2)
-        assert io2.read_bytes >= io1.read_bytes, (io1, io2)
+        self.assertGreaterEqual(io2.write_count, io1.write_count)
+        self.assertGreaterEqual(io2.write_bytes, io1.write_bytes)
+        self.assertGreaterEqual(io2.read_count, io1.read_count)
+        self.assertGreaterEqual(io2.read_bytes, io1.read_bytes)
+        if LINUX:
+            self.assertGreater(io2.write_chars, io1.write_chars)
+            self.assertGreaterEqual(io2.read_chars, io1.read_chars)
 
         # sanity check
         for i in range(len(io2)):
