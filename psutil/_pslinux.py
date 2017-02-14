@@ -59,11 +59,11 @@ __extra__all__ = [
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
-POWER_SUPPLY_PATH = "/sys/class/power_supply"
 
+POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 _DEFAULT = object()
@@ -136,14 +136,6 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
-
-_DEFAULT = object()
-
-
-# =====================================================================
-# -- exceptions
-# =====================================================================
-
 
 # these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
@@ -529,7 +521,7 @@ def swap_memory():
 
 
 # =====================================================================
-# --- CPUs
+# --- CPU
 # =====================================================================
 
 

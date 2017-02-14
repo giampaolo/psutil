@@ -26,7 +26,7 @@ __extra__all__ = []
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
 
@@ -82,27 +82,35 @@ pidtaskinfo_map = dict(
     volctxsw=7,
 )
 
-scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
-
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'wired'])
-
-pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-
-pmmap_grouped = namedtuple(
-    'pmmap_grouped',
-    'path rss private swapped dirtied ref_count shadow_depth')
-
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-
 # these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# =====================================================================
+# --- named tuples
+# =====================================================================
+
+
+# psutil.cpu_times()
+scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
+# psutil.virtual_memory()
+svmem = namedtuple(
+    'svmem', ['total', 'available', 'percent', 'used', 'free',
+              'active', 'inactive', 'wired'])
+# psutil.Process.memory_info()
+pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
+# psutil.Process.memory_full_info()
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
+# psutil.Process.memory_maps(grouped=True)
+pmmap_grouped = namedtuple(
+    'pmmap_grouped',
+    'path rss private swapped dirtied ref_count shadow_depth')
+# psutil.Process.memory_maps(grouped=False)
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================

@@ -30,7 +30,7 @@ __extra__all__ = []
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
 
@@ -126,26 +126,39 @@ kinfo_proc_map = dict(
     name=24,
 )
 
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
 
 # =====================================================================
 # --- named tuples
 # =====================================================================
 
 
-# extend base mem ntuple with BSD-specific memory metrics
+# psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
+# psutil.cpu_times()
 scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+# psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
+# psutil.Process.memory_full_info()
 pfullmem = pmem
+# psutil.Process.cpu_times()
 pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system'])
+# psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
+# psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
+# psutil.disk_io_counters()
 if FREEBSD:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes',
@@ -154,18 +167,6 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
-
-
-# =====================================================================
-# --- exceptions
-# =====================================================================
-
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

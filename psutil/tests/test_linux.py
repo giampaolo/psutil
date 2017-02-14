@@ -1293,13 +1293,6 @@ class TestProcess(unittest.TestCase):
             p.cmdline() == ['foo', 'bar', '']
             assert m.called
 
-    def test_io_counters_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
-            self.assertRaises(
-                NotImplementedError,
-                psutil._pslinux.Process(os.getpid()).io_counters)
-            assert m.called
-
     def test_readlink_path_deleted_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         return_value='/home/foo (deleted)'):

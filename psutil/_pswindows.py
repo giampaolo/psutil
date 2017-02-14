@@ -67,7 +67,7 @@ __extra__all__ = [
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
 
@@ -134,43 +134,39 @@ pinfo_map = dict(
     mem_private=21,
 )
 
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
 
 # =====================================================================
 # --- named tuples
 # =====================================================================
 
 
+# psutil.cpu_times()
 scputimes = namedtuple('scputimes',
                        ['user', 'system', 'idle', 'interrupt', 'dpc'])
+# psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+# psutil.Process.memory_info()
 pmem = namedtuple(
     'pmem', ['rss', 'vms',
              'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
+# psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
+# psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
+# psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-ntpinfo = namedtuple(
-    'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
-                'create_time', 'num_threads', 'io_rcount', 'io_wcount',
-                'io_rbytes', 'io_wbytes'])
 # psutil.Process.io_counters()
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
-
-
-# =====================================================================
-# --- exceptions
-# =====================================================================
-
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

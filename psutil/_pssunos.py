@@ -28,7 +28,7 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
 
@@ -66,34 +66,34 @@ TCP_STATUSES = {
     cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
 
 # =====================================================================
 # --- named tuples
 # =====================================================================
 
 
+# psutil.cpu_times()
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+# psutil.cpu_times(percpu=True)
 pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system'])
+# psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+# psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms'])
 pfullmem = pmem
+# psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple('pmmap_grouped',
                            ['path', 'rss', 'anonymous', 'locked'])
+# psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-
-
-# =====================================================================
-# --- exceptions
-# =====================================================================
-
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
