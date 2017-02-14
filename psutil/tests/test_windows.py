@@ -11,6 +11,7 @@ import errno
 import glob
 import os
 import platform
+import re
 import signal
 import subprocess
 import sys
@@ -345,8 +346,13 @@ class TestProcess(unittest.TestCase):
 
     def test_username(self):
         sys_value = win32api.GetUserName()
-        psutil_value = psutil.Process(self.pid).username()
+        psutil_value = psutil.Process().username()
         self.assertEqual(sys_value, psutil_value.split('\\')[1])
+
+    def test_cmdline(self):
+        sys_value = re.sub(' +', ' ', win32api.GetCommandLine())
+        psutil_value = ' '.join(psutil.Process().cmdline())
+        self.assertEqual(sys_value, psutil_value)
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
