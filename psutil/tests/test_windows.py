@@ -20,6 +20,7 @@ import time
 try:
     import win32api  # requires "pip install pypiwin32" / "make setup-dev-env"
     import win32con
+    import win32process
     import wmi  # requires "pip install wmi" / "make setup-dev-env"
 except ImportError:
     if os.name == 'nt':
@@ -377,6 +378,17 @@ class TestProcess(unittest.TestCase):
         sys_value = re.sub(' +', ' ', win32api.GetCommandLine())
         psutil_value = ' '.join(psutil.Process().cmdline())
         self.assertEqual(sys_value, psutil_value)
+
+    def test_cpu_times(self):
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, os.getpid())
+        self.addCleanup(win32api.CloseHandle, handle)
+        sys_times = win32process.GetProcessTimes(handle)
+        psutil_times = psutil.Process().cpu_times()
+        self.assertAlmostEqual(
+            psutil_times.user, sys_times['UserTime'] / 10000000.0, delta=0.2)
+        self.assertAlmostEqual(
+            psutil_times.user, sys_times['KernelTime'] / 10000000.0, delta=0.2)
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
