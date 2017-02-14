@@ -326,16 +326,22 @@ class TestProcess(unittest.TestCase):
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
+
         # test reads
         io1 = p.io_counters()
         with open(PYTHON, 'rb') as f:
             f.read()
         io2 = p.io_counters()
         if not BSD:
-            assert io2.read_count > io1.read_count, (io1, io2)
+            self.assertGreater(io2.read_count, io1.read_count)
             self.assertEqual(io2.write_count, io1.write_count)
-        assert io2.read_bytes >= io1.read_bytes, (io1, io2)
-        assert io2.write_bytes >= io1.write_bytes, (io1, io2)
+            if LINUX:
+                self.assertGreater(io2.read_chars, io1.read_chars)
+                self.assertEqual(io2.write_chars, io1.write_chars)
+        else:
+            self.assertGreaterEqual(io2.read_bytes, io1.read_bytes)
+            self.assertGreaterEqual(io2.write_bytes, io1.write_bytes)
+
         # test writes
         io1 = p.io_counters()
         with tempfile.TemporaryFile(prefix=TESTFILE_PREFIX) as f:
@@ -348,6 +354,7 @@ class TestProcess(unittest.TestCase):
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         assert io2.read_count >= io1.read_count, (io1, io2)
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
+
         # sanity check
         for i in range(len(io2)):
             self.assertGreaterEqual(io2[i], 0)

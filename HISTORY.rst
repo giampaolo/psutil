@@ -10,6 +10,8 @@
 - 971_: [Linux] Add psutil.sensors_fans() function.  (patch by Nicolas Hennion)
 - 976_: [Windows] Process.io_counters() has 2 new fields: *other_count* and
   *other_bytes*.
+- 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
+  *write_chars*.
 
 5.1.3
 =====

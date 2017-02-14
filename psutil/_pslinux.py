@@ -157,25 +157,36 @@ TimeoutExpired = None
 # =====================================================================
 
 
+# psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached', 'shared'])
+# psutil.disk_io_counters()
 sdiskio = namedtuple(
     'sdiskio', ['read_count', 'write_count',
                 'read_bytes', 'write_bytes',
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
+# psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
+# psutil.Process().memory_info()
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+# psutil.Process().memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
+# psutil.Process().memory_maps(grouped=True)
 pmmap_grouped = namedtuple(
     'pmmap_grouped',
     ['path', 'rss', 'size', 'pss', 'shared_clean', 'shared_dirty',
      'private_clean', 'private_dirty', 'referenced', 'anonymous', 'swap'])
+# psutil.Process().memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+# psutil.Process.io_counters()
+pio = namedtuple('pio', ['read_count', 'write_count',
+                         'read_bytes', 'write_bytes',
+                         'read_chars', 'write_chars'])
 
 
 # =====================================================================
@@ -1436,22 +1447,19 @@ class Process(object):
         @wrap_exceptions
         def io_counters(self):
             fname = "%s/%s/io" % (self._procfs_path, self.pid)
+            fields = {}
             with open_binary(fname) as f:
-                rcount = wcount = rbytes = wbytes = None
                 for line in f:
-                    if rcount is None and line.startswith(b"syscr"):
-                        rcount = int(line.split()[1])
-                    elif wcount is None and line.startswith(b"syscw"):
-                        wcount = int(line.split()[1])
-                    elif rbytes is None and line.startswith(b"read_bytes"):
-                        rbytes = int(line.split()[1])
-                    elif wbytes is None and line.startswith(b"write_bytes"):
-                        wbytes = int(line.split()[1])
-                for x in (rcount, wcount, rbytes, wbytes):
-                    if x is None:
-                        raise NotImplementedError(
-                            "couldn't read all necessary info from %r" % fname)
-                return _common.pio(rcount, wcount, rbytes, wbytes)
+                    name, value = line.split(b': ')
+                    fields[name] = int(value)
+            return pio(
+                fields[b'syscr'],  # read syscalls
+                fields[b'syscw'],  # write syscalls
+                fields[b'read_bytes'],  # read bytes
+                fields[b'write_bytes'],  # write bytes
+                fields[b'rchar'],  # read chars
+                fields[b'wchar'],  # write chars
+            )
     else:
         def io_counters(self):
             raise NotImplementedError("couldn't find /proc/%s/io (kernel "

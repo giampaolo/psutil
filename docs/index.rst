@@ -1215,7 +1215,7 @@ Process class
 
     Return process I/O statistics as a named tuple.
     For Linux you can refer to
-    `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__, ``/proc/<pid>/io`` section.
+    `/proc filesysem documentation <http://stackoverflow.com/a/3634088>`__.
 
     - **read_count**: the number of read operations performed (cumulative).
       This is supposed to count the number of read-related syscalls such as
@@ -1227,6 +1227,14 @@ Process class
       Always ``-1`` on  BSD.
     - **write_bytes**: the number of bytes written (cumulative).
       Always ``-1`` on  BSD.
+    - **read_chars** *(Linux)*: the amount of bytes which this process passed
+      to ``read()`` and ``pread()`` syscalls (cumulative).
+      Differently from *read_bytes* it doesn't care whether or not actual
+      physical disk IO occurred.
+    - **write_chars** *(Linux)*: the amount of bytes which this process passed
+      to ``write()`` and ``pwrite()`` syscalls (cumulative).
+      Differently from *write_bytes* it doesn't care whether or not actual
+      physical disk IO occurred.
     - **other_count** *(Windows)*: the number of I/O operations performed
       other than read and write operations.
     - **other_bytes** *(Windows)*: the number of bytes transferred during
@@ -1239,8 +1247,8 @@ Process class
 
     Availability: all platforms except OSX and Solaris
 
-    .. versionchanged:: 5.2.0 added *other_count* and *other_bytes* Windows
-      metrics.
+    .. versionchanged:: 5.2.0 added *read_chars* and *write_chars* on Linux;
+      added *other_count* and *other_bytes* Windows.
 
   .. method:: num_ctx_switches()
 
