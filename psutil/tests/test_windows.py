@@ -425,6 +425,16 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(psutil_value.rss, psutil_value.wset)
         self.assertEqual(psutil_value.vms, psutil_value.pagefile)
 
+    def test_wait(self):
+        handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                      win32con.FALSE, self.pid)
+        self.addCleanup(win32api.CloseHandle, handle)
+        p = psutil.Process(self.pid)
+        p.terminate()
+        psutil_value = p.wait()
+        sys_value = win32process.GetExitCodeProcess(handle)
+        self.assertEqual(psutil_value, sys_value)
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
