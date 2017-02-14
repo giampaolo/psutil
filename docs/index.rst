@@ -1215,23 +1215,27 @@ Process class
 
     Return process I/O statistics as a named tuple.
     For Linux you can refer to
-    `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
+    `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__, ``/proc/<pid>/io`` section.
 
     - **read_count**: the number of read operations performed (cumulative).
+      This is supposed to count the number of read-related syscalls such as
+      ``read()`` and ``pread()`` on UNIX.
     - **write_count**: the number of write operations performed (cumulative).
+      This is supposed to count the number of write-related syscalls such as
+      ``write()`` and ``pwrite()`` on UNIX.
     - **read_bytes**: the number of bytes read (cumulative).
       Always ``-1`` on  BSD.
     - **write_bytes**: the number of bytes written (cumulative).
       Always ``-1`` on  BSD.
-    - **other_count** *(Windows)*: the number of I/O operations performed,
+    - **other_count** *(Windows)*: the number of I/O operations performed
       other than read and write operations.
     - **other_bytes** *(Windows)*: the number of bytes transferred during
       operations other than read and write operations.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.io_counters()
-      pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
+    >>> import psutil
+    >>> p = psutil.Process()
+    >>> p.io_counters()
+    pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
 
     Availability: all platforms except OSX and Solaris
 
