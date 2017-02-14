@@ -1227,14 +1227,20 @@ Process class
       Always ``-1`` on  BSD.
     - **write_bytes**: the number of bytes written (cumulative).
       Always ``-1`` on  BSD.
+
+    Linux specific:
+
     - **read_chars** *(Linux)*: the amount of bytes which this process passed
       to ``read()`` and ``pread()`` syscalls (cumulative).
       Differently from *read_bytes* it doesn't care whether or not actual
-      physical disk IO occurred.
+      physical disk I/O occurred.
     - **write_chars** *(Linux)*: the amount of bytes which this process passed
       to ``write()`` and ``pwrite()`` syscalls (cumulative).
       Differently from *write_bytes* it doesn't care whether or not actual
-      physical disk IO occurred.
+      physical disk I/O occurred.
+
+    Windows specific:
+
     - **other_count** *(Windows)*: the number of I/O operations performed
       other than read and write operations.
     - **other_bytes** *(Windows)*: the number of bytes transferred during
@@ -1248,7 +1254,7 @@ Process class
     Availability: all platforms except OSX and Solaris
 
     .. versionchanged:: 5.2.0 added *read_chars* and *write_chars* on Linux;
-      added *other_count* and *other_bytes* Windows.
+      added *other_count* and *other_bytes* on Windows.
 
   .. method:: num_ctx_switches()
 
