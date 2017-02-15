@@ -141,6 +141,8 @@ Install:
 Install from sources
 ====================
 
+::
+
     git clone https://github.com/giampaolo/psutil.git
     cd psutil
     python setup.py install
