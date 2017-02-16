@@ -32,6 +32,8 @@
     typedef __u16 u16;
     typedef __u8 u8;
 #endif
+/* Avoid redefinition of struct sysinfo with musl libc */
+#define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
 
 /* The minimum number of CPUs allocated in a cpu_set_t */
