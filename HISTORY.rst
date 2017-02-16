@@ -13,6 +13,10 @@
 - 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
   *write_chars*.
 
+**Bug fixes**
+
+- 872_: [Linux] can now compile on Linux by using MUSL C library.
+
 5.1.3
 =====
 
