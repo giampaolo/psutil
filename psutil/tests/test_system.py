@@ -470,7 +470,7 @@ class TestSystemAPIs(unittest.TestCase):
             if SUNOS:
                 # on solaris apparently mount points can also be files
                 assert os.path.exists(disk.mountpoint), disk
-            else:
+            elif not CYGWIN:
                 assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
 
@@ -478,7 +478,7 @@ class TestSystemAPIs(unittest.TestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
-            if not WINDOWS:
+            if not (WINDOWS or CYGWIN):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
