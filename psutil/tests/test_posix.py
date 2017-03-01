@@ -370,15 +370,21 @@ class TestSystemAPIs(unittest.TestCase):
                      "unreliable on APPVEYOR or TRAVIS")
     @retry_before_failing()
     def test_users(self):
-        out = sh("who")
+        if CYGWIN:
+            # NOTE: For reasons I haven't been able to figure out (possibly a
+            # bug in Cygwin) `who` sometimes fails without explicitly
+            # specifying the utmp file.
+            out = sh("who /var/run/utmp")
+        else:
+            out = sh("who")
         lines = [x.strip() for x in out.split('\n')]
         self.assertEqual(len(lines), len(psutil.users()))
         for u in psutil.users():
             for line in lines:
                 if line.startswith(u.name):
                     rest = line[len(u.name):].split()
-                    self.assertTrue(u.terminal == rest[0].strip(), u.terminal)
-                    break
+                    if u.terminal == rest[0].strip():
+                        break
             else:
                 self.fail("couldn't find %s in who output" % u.name)
 
