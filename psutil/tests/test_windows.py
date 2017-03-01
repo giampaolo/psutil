@@ -68,7 +68,13 @@ def wrap_exceptions(fun):
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestSystemAPIs(unittest.TestCase):
 
+    # Note: Implemented as a staticmethod for ease of sharing with test_posix
+    # for running this test on Cygwin
     def test_nic_names(self):
+        return self._test_nic_names(self)
+
+    @staticmethod
+    def _test_nic_names(test_case):
         p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
         out = p.communicate()[0]
         if PY3:
@@ -78,7 +84,7 @@ class TestSystemAPIs(unittest.TestCase):
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
             if nic not in out:
-                self.fail(
+                test_case.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
 
     @unittest.skipUnless('NUMBER_OF_PROCESSORS' in os.environ,

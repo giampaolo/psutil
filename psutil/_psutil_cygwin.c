@@ -858,7 +858,7 @@ error:
 
 
 PIP_ADAPTER_ADDRESSES
-psutil_get_nic_addresses() {
+psutil_get_nic_addresses(int all) {
     // allocate a 15 KB buffer to start with
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
@@ -872,10 +872,11 @@ psutil_get_nic_addresses() {
             return NULL;
         }
 
-        dwRetVal = GetAdaptersAddresses(AF_UNSPEC,
-                                        GAA_FLAG_INCLUDE_ALL_INTERFACES,
-                                        NULL, pAddresses,
-                                        &outBufLen);
+        dwRetVal = GetAdaptersAddresses(
+                AF_UNSPEC,
+                all ? GAA_FLAG_INCLUDE_ALL_INTERFACES : 0,
+                NULL, pAddresses,
+                &outBufLen);
         if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
             free(pAddresses);
             pAddresses = NULL;
@@ -927,7 +928,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(1);
     if (pAddresses == NULL)
         goto error;
 
@@ -1045,7 +1046,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(0);
     if (pAddresses == NULL)
         goto error;
     pCurrAddresses = pAddresses;

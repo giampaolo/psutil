@@ -345,6 +345,11 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_nic_names(self):
+        if CYGWIN:
+            # On Cygwin perform the version of this test that uses ipconfig
+            from psutil.tests.test_windows import TestSystemAPIs
+            return TestSystemAPIs._test_nic_names(self)
+
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
         if p.returncode != 0:
