@@ -312,8 +312,8 @@ psutil_NtQueryObject() {
 }
 
 
-void
-psutil_NtQueryObjectThread() {
+DWORD WINAPI
+psutil_NtQueryObjectThread(LPVOID lpvParam) {
     // Prevent the thread stack from leaking when this
     // thread gets terminated due to NTQueryObject hanging
     g_fiber = ConvertThreadToFiber(NULL);
@@ -329,6 +329,8 @@ psutil_NtQueryObjectThread() {
                                    &g_dwLength);
         SetEvent(g_hEvtFinish);
     }
+
+    return 0;
 }
 
 
