@@ -130,22 +130,30 @@ class TestProcess(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
             self.assertEqual(exit_sig, -sig)
-            #
-            sproc = get_test_subprocess()
-            p = psutil.Process(sproc.pid)
-            p.send_signal(sig)
-            with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.ESRCH, "")):
-                with self.assertRaises(psutil.NoSuchProcess):
-                    p.send_signal(sig)
-            #
-            sproc = get_test_subprocess()
-            p = psutil.Process(sproc.pid)
-            p.send_signal(sig)
-            with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.EPERM, "")):
-                with self.assertRaises(psutil.AccessDenied):
-                    psutil.Process().send_signal(sig)
+
+            if not CYGWIN:
+                # NOTE: This portion of the test is not reliable on Cygwin due
+                # to an apparent bug (?) in Cygwin that prevents zombie
+                # processes from remaining accessible before wait() in some
+                # cases.  See
+                # https://www.cygwin.com/ml/cygwin/2017-02/msg00187.html
+
+                sproc = get_test_subprocess()
+                p = psutil.Process(sproc.pid)
+                p.send_signal(sig)
+                with mock.patch('psutil.os.kill',
+                                side_effect=OSError(errno.ESRCH, "")):
+                    with self.assertRaises(psutil.NoSuchProcess):
+                        p.send_signal(sig)
+                #
+                sproc = get_test_subprocess()
+                p = psutil.Process(sproc.pid)
+                p.send_signal(sig)
+                with mock.patch('psutil.os.kill',
+                                side_effect=OSError(errno.EPERM, "")):
+                    with self.assertRaises(psutil.AccessDenied):
+                        psutil.Process().send_signal(sig)
+
             # Sending a signal to process with PID 0 is not allowed as
             # it would affect every process in the process group of
             # the calling process (os.getpid()) instead of PID 0").
