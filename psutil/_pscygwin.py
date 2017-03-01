@@ -564,8 +564,22 @@ class Process(object):
         position N, always subscract 2 (e.g starttime pos 22 in
         'man proc' == pos 20 in the list returned here).
         """
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
+
+        stat_filename = "%s/%s/stat" % (self._procfs_path, self.pid)
+
+        # NOTE: On Cygwin, if the stat file exists but reading it raises an
+        # EINVAL, this indicates that we are probably looking at a zombie
+        # process (this doesn't happen in all cases--seems to be a bug in
+        # Cygwin)
+        try:
+            with open_binary(stat_filename) as f:
+                data = f.read()
+        except IOError as err:
+            if (err.errno == errno.EINVAL and
+                    os.path.exists(err.filename)):
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+
+            raise
         # Process name is between parentheses. It can contain spaces and
         # other parentheses. This is taken into account by looking for
         # the first occurrence of "(" and the last occurence of ")".
