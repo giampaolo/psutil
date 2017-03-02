@@ -280,7 +280,7 @@ psutil_NtQueryObject() {
         g_hThread = CreateThread(
             NULL,
             0,
-            (LPTHREAD_START_ROUTINE)psutil_NtQueryObjectThread,
+            psutil_NtQueryObjectThread,
             NULL,
             0,
             NULL);
