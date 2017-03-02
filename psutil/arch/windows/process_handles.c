@@ -19,7 +19,6 @@ HANDLE g_hThread = NULL;
 PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
-PVOID g_fiber = NULL;
 
 
 PVOID
@@ -300,11 +299,6 @@ psutil_NtQueryObject() {
         WaitForSingleObject(g_hThread, INFINITE);
         CloseHandle(g_hThread);
 
-        // Cleanup Fiber
-        if (g_fiber != NULL)
-            DeleteFiber(g_fiber);
-        g_fiber = NULL;
-
         g_hThread = NULL;
     }
 
@@ -314,10 +308,6 @@ psutil_NtQueryObject() {
 
 DWORD WINAPI
 psutil_NtQueryObjectThread(LPVOID lpvParam) {
-    // Prevent the thread stack from leaking when this
-    // thread gets terminated due to NTQueryObject hanging
-    g_fiber = ConvertThreadToFiber(NULL);
-
     // Loop infinitely waiting for work
     while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
@@ -329,8 +319,6 @@ psutil_NtQueryObjectThread(LPVOID lpvParam) {
                                    &g_dwLength);
         SetEvent(g_hEvtFinish);
     }
-
-    return 0;
 }
 
 
