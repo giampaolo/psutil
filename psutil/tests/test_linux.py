@@ -1041,6 +1041,8 @@ class TestSensorsBattery(unittest.TestCase):
     @unittest.skipUnless(which("acpi"), "acpi utility not available")
     def test_power_plugged(self):
         out = sh("acpi -b")
+        if 'unknown' in out.lower():
+            return unittest.skip("acpi output not reliable")
         plugged = "Charging" in out.split('\n')[0]
         self.assertEqual(psutil.sensors_battery().power_plugged, plugged)
 
