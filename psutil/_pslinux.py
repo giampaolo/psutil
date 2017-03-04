@@ -1617,7 +1617,16 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
-        return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
+        try:
+            return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
+        except OSError as err:
+            # https://github.com/giampaolo/psutil/issues/986
+            if err.errno in (errno.ENOENT, errno.ESRCH):
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+            raise
 
     @wrap_exceptions
     def num_ctx_switches(self, _ctxsw_re=re.compile(b'ctxt_switches:\t(\d+)')):

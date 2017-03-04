@@ -17,6 +17,7 @@
 
 - 872_: [Linux] can now compile on Linux by using MUSL C library.
 - 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread for `NtQueryObject` times out.
+- 986_: [Linux] Process.cwd() may raise NoSuchProcess instead of ZombieProcess.
 
 5.1.3
 =====
