@@ -1251,7 +1251,7 @@ Process class
     >>> import psutil
     >>> p = psutil.Process()
     >>> p.io_counters()
-    pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
+    pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
 
     Availability: all platforms except OSX and Solaris
 
