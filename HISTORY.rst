@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-*2017-02-07*
+*2017-03-05*
 
 5.2.0
 =====

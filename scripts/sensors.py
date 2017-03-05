@@ -11,17 +11,17 @@ A clone of 'sensors' utility on Linux printing hardware temperatures.
 $ python scripts/sensors.py
 asus
     Temperatures:
-        asus                 57.0 °C (high=None °C, critical=None °C)
+        asus                 57.0°C (high=None°C, critical=None°C)
     Fans:
         cpu_fan              3500 RPM
 acpitz
     Temperatures:
-        acpitz               57.0 °C (high=108.0 °C, critical=108.0 °C)
+        acpitz               57.0°C (high=108.0°C, critical=108.0°C)
 coretemp
     Temperatures:
-        Physical id 0        61.0 °C (high=87.0 °C, critical=105.0 °C)
-        Core 0               61.0 °C (high=87.0 °C, critical=105.0 °C)
-        Core 1               59.0 °C (high=87.0 °C, critical=105.0 °C)
+        Physical id 0        61.0°C (high=87.0°C, critical=105.0°C)
+        Core 0               61.0°C (high=87.0°C, critical=105.0°C)
+        Core 1               59.0°C (high=87.0°C, critical=105.0°C)
 Battery:
     charge:     84.95%
     status:     charging
@@ -64,7 +64,7 @@ def main():
         if name in temps:
             print("    Temperatures:")
             for entry in temps[name]:
-                print("        %-20s %s °C (high=%s °C, critical=%s °C)" % (
+                print("        %-20s %s°C (high=%s°C, critical=%s°C)" % (
                     entry.label or name, entry.current, entry.high,
                     entry.critical))
         # Fans.

@@ -2321,13 +2321,13 @@ def test():  # pragma: no cover
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'memory_percent', 'name', 'cpu_times',
-             'create_time', 'memory_info']
+    attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
+             'memory_info']
     if POSIX:
         attrs.append('uids')
         attrs.append('terminal')
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY",
-                   "START", "TIME", "COMMAND"))
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
+                   "COMMAND"))
     for p in process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
