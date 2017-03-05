@@ -6,7 +6,8 @@
 # found in the LICENSE file.
 
 """
-A clone of 'sensors' utility on Linux printing hardware temperatures.
+A clone of 'sensors' utility on Linux printing hardware temperatures,
+fans speed and battery info.
 
 $ python scripts/sensors.py
 asus
