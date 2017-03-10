@@ -40,7 +40,9 @@ def bytes2human(n):
     # >>> bytes2human(100001221)
     # '95.4M'
     symbols = 'KMGTPEZY'
-    prefix = {s: 1 << (i + 1) * 10 for i, s in enumerate(symbols)}
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
