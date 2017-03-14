@@ -36,6 +36,7 @@ except ImportError:
     import mock  # NOQA - requires "pip install mock"
 
 import psutil
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -101,6 +102,10 @@ GLOBAL_TIMEOUT = 3
 AF_INET6 = getattr(socket, "AF_INET6")
 AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
+
+if CYGWIN:
+    PYTHON = os.path.splitext(PYTHON)[0]
+
 DEVNULL = open(os.devnull, 'r+')
 
 TESTFILE_PREFIX = '$testfn'
