@@ -256,6 +256,11 @@ class TestProcess(unittest.TestCase):
         if SUNOS or CYGWIN:
             # ps on Solaris and Cygwin only shows the first part of the cmdline
             psutil_cmdline = psutil_cmdline.split(" ")[0]
+        if CYGWIN:
+            # resolve symlinks
+            if os.path.islink(psutil_cmdline):
+                psutil_cmdline = os.path.splitext(
+                    os.path.realpath(psutil_cmdline))[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     # To be more specific, process priorities are complicated in Windows and
