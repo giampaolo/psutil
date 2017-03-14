@@ -1845,6 +1845,31 @@ error:
 
 
 /*
+ * Return battery usage stats.
+ */
+static PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    SYSTEM_POWER_STATUS sps;
+
+    if (GetSystemPowerStatus(&sps) == 0) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return Py_BuildValue(
+        "iiiI",
+        sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
+        // status flag:
+        // 1, 2, 4 = high, low, critical
+        // 8 = charging
+        // 128 = no battery
+        sps.BatteryFlag,
+        sps.BatteryLifePercent,  // percent
+        sps.BatteryLifeTime  // remaining secs
+    );
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1864,6 +1889,8 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return dict of tuples of networks I/O information."},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery metrics usage."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,

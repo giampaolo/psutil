@@ -464,6 +464,32 @@ def net_io_counters():
 
 
 # =====================================================================
+# --- sensors
+# =====================================================================
+
+
+# TODO: Copied verbatim from the Windows module
+def sensors_battery():
+    """Return battery information."""
+    # For constants meaning see:
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/
+    #     aa373232(v=vs.85).aspx
+    acline_status, flags, percent, secsleft = cext.sensors_battery()
+    power_plugged = acline_status == 1
+    no_battery = bool(flags & 128)
+    charging = bool(flags & 8)
+
+    if no_battery:
+        return None
+    if power_plugged or charging:
+        secsleft = _common.POWER_TIME_UNLIMITED
+    elif secsleft == -1:
+        secsleft = _common.POWER_TIME_UNKNOWN
+
+    return _common.sbattery(percent, secsleft, power_plugged)
+
+
+# =====================================================================
 # --- disks
 # =====================================================================
 
