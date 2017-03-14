@@ -30,6 +30,7 @@ from ._common import wrap_exceptions
 from ._compat import PY3
 from ._compat import b
 from ._compat import lru_cache
+from ._compat import xrange
 
 if sys.version_info >= (3, 4):
     import enum
