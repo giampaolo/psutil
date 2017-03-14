@@ -20,6 +20,7 @@ from ._common import decode
 from ._common import encode
 from ._common import get_procfs_path
 from ._common import isfile_strict
+from ._common import memoize_when_activated
 from ._common import open_binary
 from ._common import open_text
 from ._common import popenfile
@@ -558,6 +559,7 @@ class Process(object):
         self._procfs_path = get_procfs_path()
         self._winpid = cygpid_to_winpid(pid)
 
+    @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file. Return a list of fields where
         process name is in position 0.
@@ -589,9 +591,27 @@ class Process(object):
         fields_after_name = data[rpar + 2:].split()
         return [name] + fields_after_name
 
+    @memoize_when_activated
     def _read_status_file(self):
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
+
+    @memoize_when_activated
+    def oneshot_info(self):
+        """Return multiple information about this process as a
+        raw tuple.
+        """
+        return cext.proc_info(self._winpid)
+
+    def oneshot_enter(self):
+        self._parse_stat_file.cache_activate()
+        self._read_status_file.cache_activate()
+        self.oneshot_info.cache_activate()
+
+    def oneshot_exit(self):
+        self._parse_stat_file.cache_deactivate()
+        self._read_status_file.cache_deactivate()
+        self.oneshot_info.cache_deactivate()
 
     @wrap_exceptions
     def name(self):
@@ -649,7 +669,7 @@ class Process(object):
             ret = cext.proc_io_counters(self._winpid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self._winpid))
+                nt = ntpinfo(*self.oneshot_info())
                 ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
             else:
                 raise
@@ -677,7 +697,7 @@ class Process(object):
             return cext.proc_create_time(self._winpid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self._winpid)).create_time
+                return ntpinfo(*self.oneshot_info()).create_time
             raise
 
     def _get_raw_meminfo(self):
@@ -729,13 +749,13 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = ntpinfo(*cext.proc_info(self._winpid)).ctx_switches
+        ctx_switches = ntpinfo(*self.oneshot_info()).ctx_switches
         # only voluntary ctx switches are supported
         return _common.pctxsw(ctx_switches, 0)
 
     @wrap_exceptions
     def num_threads(self):
-        return ntpinfo(*cext.proc_info(self._winpid)).num_threads
+        return ntpinfo(*self.oneshot_info()).num_threads
 
     @wrap_exceptions
     def threads(self):
