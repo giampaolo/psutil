@@ -104,6 +104,7 @@ install:
           }
           Invoke-WebRequest "https://bootstrap.pypa.io/get-pip.py" -OutFile "C:\get-pip.py"
           & $Env:CYG_ROOT\setup-$Env:ARCH.exe -q -P $python $python-devel gcc-core
+          $Env:PATH = "$Env:CYG_ROOT\bin;$Env:PATH"
           & $Env:PYTHON "C:\get-pip.py"
       } else {
           & powershell .ci\\appveyor\\install.ps1
