@@ -1266,7 +1266,6 @@ class TestProcess(unittest.TestCase):
 
             break
 
-        p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)
         except psutil.AccessDenied:  # windows
