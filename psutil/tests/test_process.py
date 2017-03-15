@@ -327,7 +327,10 @@ class TestProcess(unittest.TestCase):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty() or sys.stdout.isatty():
             tty = os.path.realpath(sh('tty'))
-            self.assertEqual(terminal, tty)
+            if CYGWIN and terminal == '/dev/console':
+                self.assertTrue(tty.startswith('/dev/cons'))
+            else:
+                self.assertEqual(terminal, tty)
         else:
             self.assertIsNone(terminal)
 
