@@ -21,6 +21,7 @@ import socket
 import stat
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import textwrap
 import threading
@@ -102,9 +103,11 @@ GLOBAL_TIMEOUT = 3
 AF_INET6 = getattr(socket, "AF_INET6")
 AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
+EXE_SUFFIX = sysconfig.get_config_var('EXE') or ''
 
-if CYGWIN:
-    PYTHON = os.path.splitext(PYTHON)[0]
+if CYGWIN and EXE_SUFFIX:
+    if PYTHON.endswith(EXE_SUFFIX):
+        PYTHON = PYTHON[:-len(EXE_SUFFIX)]
 
 DEVNULL = open(os.devnull, 'r+')
 
