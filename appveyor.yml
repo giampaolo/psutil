@@ -127,7 +127,7 @@ install:
           $project_path = & $Env:CYG_ROOT\bin\cygpath -u -a $Env:APPVEYOR_BUILD_FOLDER
           $cmd = "& $Env:CYG_ROOT\bin\dash -lc `"cd '$project_path' && {0}`""
           Invoke-Expression ($cmd -f "find $project_path/psutil -name '*.dll' > rebase.tmp")
-          Invoke-Expression ($cmd -f "rebaseall -v -T rebase.tmp")
+          Invoke-Expression ($cmd -f "rebaseall -T rebase.tmp")
       }
 
 build: off
