@@ -194,6 +194,7 @@ class TestProcess(unittest.TestCase):
         username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
 
+    @unittest.skipIf(APPVEYOR and CYGWIN, "test not reliable on appveyor")
     @skip_on_access_denied()
     @retry_before_failing()
     def test_rss_memory(self):
@@ -204,6 +205,7 @@ class TestProcess(unittest.TestCase):
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
+    @unittest.skipIf(APPVEYOR and CYGWIN, "test not reliable on appveyor")
     @skip_on_access_denied()
     @retry_before_failing()
     def test_vsz_memory(self):
