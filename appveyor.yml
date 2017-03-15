@@ -117,6 +117,12 @@ install:
       }
       Invoke-Expression $cmd
   - "%WITH_COMPILER% %PYTHON% -m pip freeze"
+  - ps: |-
+      if ( "$Env:OS" -ieq "Cygwin" ) {
+          $project_path = & $Env:CYG_ROOT\bin\cygpath -u -a $Env:APPVEYOR_BUILD_FOLDER
+          $cmd = "& $Env:CYG_ROOT\bin\dash -lc `"cd '$project_path' && {0}`""
+          Invoke-Expression ($cmd -f "rebaseall")
+      }
   - "%WITH_COMPILER% %PYTHON% setup.py build"
   - "%WITH_COMPILER% %PYTHON% setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON% setup.py develop"
