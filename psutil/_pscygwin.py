@@ -831,7 +831,11 @@ class Process(object):
                     raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
-        cext.proc_cpu_affinity_set(self._winpid, bitmask)
+        try:
+            cext.proc_cpu_affinity_set(self._winpid, bitmask)
+        except OSError as exc:
+            if exc.errno == errno.EIO:
+                raise AccessDenied(self.pid, self._name)
 
     @wrap_exceptions
     def status(self):

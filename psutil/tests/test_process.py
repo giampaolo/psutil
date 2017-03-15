@@ -1422,6 +1422,8 @@ class TestProcess(unittest.TestCase):
             except psutil.AccessDenied:
                 if OPENBSD and name in ('threads', 'num_threads'):
                     pass
+                elif APPVEYOR and CYGWIN and name == 'cpu_affinity':
+                    pass
                 else:
                     raise
             except NotImplementedError:
