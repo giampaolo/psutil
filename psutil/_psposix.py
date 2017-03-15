@@ -173,9 +173,9 @@ def get_terminal_map():
     Used by Process.terminal()
     """
     ret = {}
-    # NOTE: On Cygwin pseudo-ttys are mapped to /dev/ptyN
+    # NOTE: On Cygwin pseudo-ttys are mapped to /dev/ptyN or /dev/consN
     ls = (glob.glob('/dev/tty*') + glob.glob('/dev/pts/*') +
-          glob.glob('/dev/pty*'))
+          glob.glob('/dev/pty*') + glob.glob('/dev/cons*'))
     for name in ls:
         assert name not in ret, name
         try:
