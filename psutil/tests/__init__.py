@@ -190,6 +190,104 @@ class ThreadTask(threading.Thread):
 
 
 # ===================================================================
+# --- sync primitives
+# ===================================================================
+
+
+class retry(object):
+    """A retry decorator."""
+
+    def __init__(self,
+                 exception=Exception,
+                 timeout=None,
+                 retries=None,
+                 interval=0.001,
+                 logfun=lambda s: print(s, file=sys.stderr),
+                 ):
+        if timeout and retries:
+            raise ValueError("timeout and retries args are mutually exclusive")
+        self.exception = exception
+        self.timeout = timeout
+        self.retries = retries
+        self.interval = interval
+        self.logfun = logfun
+
+    def __iter__(self):
+        if self.timeout:
+            stop_at = time.time() + self.timeout
+            while time.time() < stop_at:
+                yield
+        elif self.retries:
+            for _ in range(self.retries):
+                yield
+        else:
+            while True:
+                yield
+
+    def sleep(self):
+        if self.interval is not None:
+            time.sleep(self.interval)
+
+    def __call__(self, fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            exc = None
+            for _ in self:
+                try:
+                    return fun(*args, **kwargs)
+                except self.exception as _:
+                    exc = _
+                    if self.logfun is not None:
+                        self.logfun(exc)
+                    self.sleep()
+            else:
+                if PY3:
+                    raise exc
+                else:
+                    raise
+
+        # This way the user of the decorated function can change config
+        # parameters.
+        wrapper.decorator = self
+        return wrapper
+
+
+@retry(exception=psutil.NoSuchProcess, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def wait_for_pid(pid):
+    """Wait for pid to show up in the process list then return.
+    Used in the test suite to give time the sub process to initialize.
+    """
+    psutil.Process(pid)
+    if WINDOWS:
+        # give it some more time to allow better initialization
+        time.sleep(0.01)
+
+
+@retry(exception=(EnvironmentError, AssertionError), logfun=None,
+       timeout=GLOBAL_TIMEOUT, interval=0.001)
+def wait_for_file(fname, delete_file=True, empty=False):
+    """Wait for a file to be written on disk with some content."""
+    with open(fname, "rb") as f:
+        data = f.read()
+    if not empty:
+        assert data
+    if delete_file:
+        os.remove(fname)
+    return data
+
+
+@retry(exception=AssertionError, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def call_until(fun, expr):
+    """Keep calling function for timeout secs and exit if eval()
+    expression is True.
+    """
+    ret = fun()
+    assert eval(expr)
+    return ret
+
+# ===================================================================
 # --- subprocesses
 # ===================================================================
 
@@ -197,6 +295,7 @@ class ThreadTask(threading.Thread):
 _subprocesses_started = set()
 
 
+@retry(exception=EnvironmentError, timeout=GLOBAL_TIMEOUT, interval=1)
 def get_test_subprocess(cmd=None, **kwds):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
@@ -374,105 +473,6 @@ else:
             else:
                 sp = 0
         return (wv[0], wv[1], sp)
-
-
-# ===================================================================
-# --- sync primitives
-# ===================================================================
-
-
-class retry(object):
-    """A retry decorator."""
-
-    def __init__(self,
-                 exception=Exception,
-                 timeout=None,
-                 retries=None,
-                 interval=0.001,
-                 logfun=lambda s: print(s, file=sys.stderr),
-                 ):
-        if timeout and retries:
-            raise ValueError("timeout and retries args are mutually exclusive")
-        self.exception = exception
-        self.timeout = timeout
-        self.retries = retries
-        self.interval = interval
-        self.logfun = logfun
-
-    def __iter__(self):
-        if self.timeout:
-            stop_at = time.time() + self.timeout
-            while time.time() < stop_at:
-                yield
-        elif self.retries:
-            for _ in range(self.retries):
-                yield
-        else:
-            while True:
-                yield
-
-    def sleep(self):
-        if self.interval is not None:
-            time.sleep(self.interval)
-
-    def __call__(self, fun):
-        @functools.wraps(fun)
-        def wrapper(*args, **kwargs):
-            exc = None
-            for _ in self:
-                try:
-                    return fun(*args, **kwargs)
-                except self.exception as _:
-                    exc = _
-                    if self.logfun is not None:
-                        self.logfun(exc)
-                    self.sleep()
-            else:
-                if PY3:
-                    raise exc
-                else:
-                    raise
-
-        # This way the user of the decorated function can change config
-        # parameters.
-        wrapper.decorator = self
-        return wrapper
-
-
-@retry(exception=psutil.NoSuchProcess, logfun=None, timeout=GLOBAL_TIMEOUT,
-       interval=0.001)
-def wait_for_pid(pid):
-    """Wait for pid to show up in the process list then return.
-    Used in the test suite to give time the sub process to initialize.
-    """
-    psutil.Process(pid)
-    if WINDOWS:
-        # give it some more time to allow better initialization
-        time.sleep(0.01)
-
-
-@retry(exception=(EnvironmentError, AssertionError), logfun=None,
-       timeout=GLOBAL_TIMEOUT, interval=0.001)
-def wait_for_file(fname, delete_file=True, empty=False):
-    """Wait for a file to be written on disk with some content."""
-    with open(fname, "rb") as f:
-        data = f.read()
-    if not empty:
-        assert data
-    if delete_file:
-        os.remove(fname)
-    return data
-
-
-@retry(exception=AssertionError, logfun=None, timeout=GLOBAL_TIMEOUT,
-       interval=0.001)
-def call_until(fun, expr):
-    """Keep calling function for timeout secs and exit if eval()
-    expression is True.
-    """
-    ret = fun()
-    assert eval(expr)
-    return ret
 
 
 # ===================================================================
