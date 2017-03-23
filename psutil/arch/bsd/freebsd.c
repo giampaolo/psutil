@@ -468,8 +468,9 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         goto error;
     if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
         goto error;
+    // https://github.com/giampaolo/psutil/issues/997
     if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
-        goto error;
+        cached = 0;
     if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
         goto error;
     if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))

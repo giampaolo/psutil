@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+*XXXX-XX-XX*
+
+5.2.1
+=====
+
+**Bug fixes**
+
+- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
+  FreeBSD 12.
+
 *2017-03-05*
 
 5.2.0

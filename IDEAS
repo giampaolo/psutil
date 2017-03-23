@@ -9,8 +9,8 @@ https://github.com/giampaolo/psutil/issues
 PLATFORMS
 =========
 
-- #355 (patch): Android
-- #605 (branch): AIX
+- #355: Android (with patch)
+- #605: AIX (with branch)
 - #276: GNU/Hurd
 - DragonFlyBSD
 - HP-UX
