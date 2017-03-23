@@ -1,7 +1,5 @@
 # Build: 1 (bump this up by 1 to force an appveyor run)
 
-os: Visual Studio 2015
-
 environment:
 
   global:
@@ -16,53 +14,75 @@ environment:
 
     # 32 bits
 
-    - PYTHON: "C:\\Python27"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python27\\python.exe"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python33"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python33\\python.exe"
       PYTHON_VERSION: "3.3.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python34\\python.exe"
       PYTHON_VERSION: "3.4.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python35"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python35\\python.exe"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python36"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python36\\python.exe"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "32"
 
     # 64 bits
 
-    - PYTHON: "C:\\Python27-x64"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python27-x64\\python.exe"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python33-x64"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python33-x64\\python.exe"
       PYTHON_VERSION: "3.3.x"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34-x64"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python34-x64\\python.exe"
       PYTHON_VERSION: "3.4.x"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python35-x64"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python35-x64\\python.exe"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
       ARCH: x86_64
       VS_VER: "2015"
       INSTANCENAME: "SQL2012SP1"
 
-    - PYTHON: "C:\\Python36-x64"
+    - os: Visual Studio 2015
+      PYTHON: "C:\\Python36-x64\\python.exe"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
       ARCH: x86_64
       VS_VER: "2015"
       INSTANCENAME: "SQL2012SP1"
+
+    - os: Cygwin
+      CYG_ROOT: "C:\\cygwin64"
+      PYTHON: "C:\\cygwin64\\bin\\python2.7.exe"
+      PYTHON_VERSION: "2.7"
+      ARCH: x86_64
+
+    - os: Cygwin
+      CYG_ROOT: "C:\\cygwin64"
+      PYTHON: "C:\\cygwin64\\bin\\python3.4m.exe"
+      PYTHON_VERSION: "3.4"
+      ARCH: x86_64
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
@@ -75,26 +95,63 @@ init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
-  - "powershell .ci\\appveyor\\install.ps1"
+  - ps: >-
+      if ( "$Env:OS" -ieq "Cygwin" ) {
+          if ( $Env:PYTHON[0] -ieq "2") {
+              $python = "python"
+          } else {
+              $python = "python" + $Env:PYTHON[0]
+          }
+          Invoke-WebRequest "https://bootstrap.pypa.io/get-pip.py" -OutFile "C:\get-pip.py"
+          & $Env:CYG_ROOT\setup-$Env:ARCH.exe -q -P $python $python-devel gcc-core
+          & $Env:PYTHON "C:\get-pip.py"
+      } else {
+          & powershell .ci\\appveyor\\install.ps1
+      }
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
+  - "%WITH_COMPILER% %PYTHON% -m pip --version"
+  - ps: |-
+      $cmd = "& $Env:WITH_COMPILER $Env:PYTHON -m pip install --upgrade --user unittest2 ipaddress wheel"
+      if ( "$Env:OS" -ine "Cygwin" ) {
+          $cmd += " pypiwin32 wmi"
+      }
+      Invoke-Expression $cmd
+  - "%WITH_COMPILER% %PYTHON% -m pip freeze"
+  - "%WITH_COMPILER% %PYTHON% setup.py build"
+  - "%WITH_COMPILER% %PYTHON% setup.py build build_ext -i"
+  - "%WITH_COMPILER% %PYTHON% setup.py develop"
   # 1.0.1 is the latest release supporting python 2.6
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install mock==1.0.1"
+  - "%WITH_COMPILER% %PYTHON% -m pip install mock==1.0.1"
+  - ps: |-
+      if ( "$Env:OS" -ieq "Cygwin" ) {
+          $project_path = & $Env:CYG_ROOT\bin\cygpath -u -a $Env:APPVEYOR_BUILD_FOLDER
+          $cmd = "& $Env:CYG_ROOT\bin\dash -lc `"cd '$project_path' && {0}`""
+          Invoke-Expression ($cmd -f "find $project_path/psutil -name '*.dll' > rebase.tmp")
+          Invoke-Expression ($cmd -f "rebaseall -v -T rebase.tmp")
+      }
 
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
+  - "%WITH_COMPILER% %PYTHON% -V"
+
+# The test runner does not actually find packages on Cygwin unless the
+# path to the test runner is given with the correct slashes
+  - ps: |-
+      $cmd = "& $Env:WITH_COMPILER $Env:Python "
+      if ( "$Env:OS" -ieq "Cygwin" ) {
+          $cmd += "psutil/tests/runner.py"
+      } else {
+          $cmd += "psutil\\tests\\runner.py"
+      }
+      Invoke-Expression $cmd
 
 after_test:
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wininst"
+  - "%WITH_COMPILER% %PYTHON% setup.py bdist_wheel"
+  - ps: >-
+      if ( "$Env:OS" -ine "CYGWIN" ) {
+          Invoke-Expression "& $Env:WITH_COMPILER $Env:PYTHON setup.py bdist_wininst"
+      }
 
 artifacts:
   - path: dist\*
@@ -126,3 +183,7 @@ only_commits:
     psutil/tests/test_windows.py
     scripts/*
     setup.py
+
+# Uncomment these lines to enable post-build debugging over RDP
+# on_finish:
+#    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

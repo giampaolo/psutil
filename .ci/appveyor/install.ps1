@@ -77,9 +77,10 @@ function InstallPackage ($python_home, $pkg) {
 }
 
 function main () {
-    InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
-    InstallPip $env:PYTHON
-    InstallPackage $env:PYTHON wheel
+    $python_home = Split-Path $env:PYTHON -parent
+    InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $python_home
+    InstallPip $python_home
+    InstallPackage $python_home wheel
 }
 
 main

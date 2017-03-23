@@ -35,6 +35,14 @@ SET COMMAND_TO_RUN=%*
 SET WIN_SDK_ROOT=C:\Program Files\Microsoft SDKs\Windows
 SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 
+:: The rest of this script does not apply when testing on Cygwin
+IF DEFINED CYG_ROOT (
+    ECHO Executing: %COMMAND_TO_RUN%
+    SET "PATH=%CYG_ROOT%\bin;%PATH%"
+    call %COMMAND_TO_RUN% || EXIT 1
+    EXIT 0
+)
+
 :: Extract the major and minor versions, and allow for the minor version to be
 :: more than 9.  This requires the version number to have two dots in it.
 SET MAJOR_PYTHON_VERSION=%PYTHON_VERSION:~0,1%
