@@ -78,11 +78,11 @@ environment:
       PYTHON_VERSION: "2.7"
       ARCH: x86_64
 
-    - os: Cygwin
-      CYG_ROOT: "C:\\cygwin64"
-      PYTHON: "C:\\cygwin64\\bin\\python3.4m.exe"
-      PYTHON_VERSION: "3.4"
-      ARCH: x86_64
+#    - os: Cygwin
+#      CYG_ROOT: "C:\\cygwin64"
+#      PYTHON: "C:\\cygwin64\\bin\\python3.4m.exe"
+#      PYTHON_VERSION: "3.4"
+#      ARCH: x86_64
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
