@@ -7,6 +7,7 @@
 
 **Bug fixes**
 
+- 996_: [Linux] sensors_temperatures() may not show all temperatures.
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
 
