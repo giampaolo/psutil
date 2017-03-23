@@ -360,6 +360,9 @@ class TestProcess(unittest.TestCase):
 
         # sanity check
         for i in range(len(io2)):
+            if BSD and i >= 2:
+                # On BSD read_bytes and write_bytes are always set to -1.
+                continue
             self.assertGreaterEqual(io2[i], 0)
             self.assertGreaterEqual(io2[i], 0)
 
