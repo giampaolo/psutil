@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-*XXXX-XX-XX*
+*2017-03-24*
 
 5.2.1
 =====
@@ -11,6 +11,8 @@
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
 - 981_: [Linux] cpu_freq() may return an empty list.
+- 993_: [Windows] Process.memory_maps() on Python 3 may raise
+  UnicodeDecodeError.
 
 *2017-03-05*
 
