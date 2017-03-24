@@ -541,6 +541,7 @@ class TestSystemCPU(unittest.TestCase):
         with mock.patch("psutil._pslinux.glob.glob", return_value=[]):
             self.assertIsNone(psutil.cpu_freq())
 
+    @unittest.skipIf(TRAVIS, "fails on Travis")
     def test_cpu_freq_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def glob_mock(pattern):
@@ -555,8 +556,7 @@ class TestSystemCPU(unittest.TestCase):
         orig_glob = glob.glob
         with mock.patch("psutil._pslinux.glob.glob", side_effect=glob_mock,
                         create=True):
-            if not TRAVIS:
-                assert psutil.cpu_freq()
+            assert psutil.cpu_freq()
             self.assertEqual(len(flags), 2)
 
 
