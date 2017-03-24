@@ -2873,6 +2873,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     LPVOID maxAddr;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_str = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2896,17 +2897,28 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
+
+#if PY_MAJOR_VERSION >= 3
+            py_str = PyUnicode_Decode(
+                mappedFileName, _tcslen(mappedFileName),
+                Py_FileSystemDefaultEncoding, "surrogateescape");
+#else
+            py_str = Py_BuildValue("s", mappedFileName);
+#endif
+            if (py_str == NULL)
+                goto error;
+
 #ifdef _WIN64
            py_tuple = Py_BuildValue(
-              "(KssI)",
+              "(KsOI)",
               (unsigned long long)baseAddress,
 #else
            py_tuple = Py_BuildValue(
-              "(kssI)",
+              "(ksOI)",
               (unsigned long)baseAddress,
 #endif
               get_region_protection_string(basicInfo.Protect),
-              mappedFileName,
+              py_str,
               basicInfo.RegionSize);
 
             if (!py_tuple)
@@ -2924,6 +2936,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_str);
     Py_DECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);
