@@ -6,8 +6,15 @@
 
 """
 This gets executed on 'git commit' and rejects the commit in case the
-submitted code does not pass validation.
-Install it with "make install-git-hooks".
+submitted code does not pass validation. Validation is run only against
+the *.py files which were modified in the commit. Checks:
+
+- assert no space at EOLs
+- assert not pdb.set_trace in code
+- assert no bare except clause ("except:") in code
+- assert "flake8" returns no warnings
+
+Install this with "make install-git-hooks".
 """
 
 from __future__ import print_function
