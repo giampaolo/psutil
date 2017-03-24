@@ -334,9 +334,9 @@ Disks
 
 .. function:: disk_usage(path)
 
-  Return disk usage statistics about the given *path* as a named tuple including
-  **total**, **used** and **free** space expressed in bytes, plus the
-  **percentage** usage.
+  Return disk usage statistics about the partition which contains the given
+  *path* as a named tuple including **total**, **used** and **free** space
+  expressed in bytes, plus the **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
   raised if *path* does not exist.
   Starting from `Python 3.3 <http://bugs.python.org/issue12442>`__  this is
