@@ -10,6 +10,7 @@
 - 996_: [Linux] sensors_temperatures() may not show all temperatures.
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
+- 981_: [Linux] cpu_freq() may return an empty list.
 
 *2017-03-05*
 

@@ -636,8 +636,8 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if os.path.exists("/sys/devices/system/cpu/cpufreq"):
-
+if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
+        os.path.exists("/sys/devices/system/cpu/cpu0"):
     def cpu_freq():
         """Return frequency metrics for all CPUs.
         Contrarily to other OSes, Linux updates these values in
@@ -647,11 +647,17 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq"):
         # http://unix.stackexchange.com/a/87537/168884
         ret = []
         ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy*")
-        # Sort the list so that '10' comes after '2'. This should
-        # ensure the CPU order is consistent with other CPU functions
-        # having a 'percpu' argument and returning results for multiple
-        # CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
-        ls.sort(key=lambda x: int(os.path.basename(x)[6:]))
+        if ls:
+            # Sort the list so that '10' comes after '2'. This should
+            # ensure the CPU order is consistent with other CPU functions
+            # having a 'percpu' argument and returning results for multiple
+            # CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
+            ls.sort(key=lambda x: int(os.path.basename(x)[6:]))
+        else:
+            # https://github.com/giampaolo/psutil/issues/981
+            ls = glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
+            ls.sort(key=lambda x: int(re.search('[0-9]+', x).group(0)))
+
         for path in ls:
             curr = int(cat(os.path.join(path, "scaling_cur_freq"))) / 1000
             max_ = int(cat(os.path.join(path, "scaling_max_freq"))) / 1000

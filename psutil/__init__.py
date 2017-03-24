@@ -1898,7 +1898,7 @@ if hasattr(_psplatform, "cpu_freq"):
         else:
             num_cpus = float(len(ret))
             if num_cpus == 0:
-                return []
+                return None
             elif num_cpus == 1:
                 return ret[0]
             else:

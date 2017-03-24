@@ -10,6 +10,7 @@ from __future__ import division
 import collections
 import contextlib
 import errno
+import glob
 import io
 import os
 import pprint
@@ -535,6 +536,27 @@ class TestSystemCPU(unittest.TestCase):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
+
+    def test_cpu_freq_no_result(self):
+        with mock.patch("psutil._pslinux.glob.glob", return_value=[]):
+            self.assertIsNone(psutil.cpu_freq())
+
+    def test_cpu_freq_use_second_file(self):
+        # https://github.com/giampaolo/psutil/issues/981
+        def glob_mock(pattern):
+            if pattern.startswith("/sys/devices/system/cpu/cpufreq/policy"):
+                flags.append(None)
+                return []
+            else:
+                flags.append(None)
+                return orig_glob(pattern)
+
+        flags = []
+        orig_glob = glob.glob
+        with mock.patch("psutil._pslinux.glob.glob", side_effect=glob_mock,
+                        create=True):
+            assert psutil.cpu_freq()
+            self.assertEqual(len(flags), 2)
 
 
 # =====================================================================
