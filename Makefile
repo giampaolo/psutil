@@ -217,7 +217,6 @@ pre-release:
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history; \
 		"
-	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} win-download-exes
 	$(PYTHON) setup.py sdist
 

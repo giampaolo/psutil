@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+*XXXX-XX-XX*
+
+5.2.2
+=====
+
+**Bug fixes**
+
+- 1000_: fixed some setup.py warnings.
+
 *2017-03-24*
 
 5.2.1
