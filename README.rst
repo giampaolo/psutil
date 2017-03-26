@@ -50,7 +50,7 @@ iotop, uptime, pidof, tty, taskset, pmap.
 It currently supports **Linux**, **Windows**, **OSX**, **Sun Solaris**,
 **FreeBSD**, **OpenBSD** and **NetBSD**,
 both **32-bit** and **64-bit** architectures, with Python versions from **2.6
-to 3.5** (users of Python 2.4 and 2.5 may use
+to 3.6** (users of Python 2.4 and 2.5 may use
 `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
 `PyPy <http://pypy.org/>`__ is also known to work.
 
@@ -73,7 +73,7 @@ Projects using psutil
 =====================
 
 At the time of writing there are over
-`4600 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`4800 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -306,7 +306,7 @@ Process management
      ...]
     >>>
     >>> p.io_counters()
-    pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
+    pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
     >>>
     >>> p.open_files()
     [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
