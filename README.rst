@@ -93,6 +93,7 @@ Portings
 - Node: https://github.com/christkv/node-psutil
 - Rust: https://github.com/borntyping/rust-psutil
 - Ruby: https://github.com/spacewander/posixpsutil
+- Nim: https://github.com/johnscillieri/psutil-nim
 
 ==============
 Example usages
