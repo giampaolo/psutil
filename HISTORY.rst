@@ -8,6 +8,8 @@
 **Bug fixes**
 
 - 1000_: fixed some setup.py warnings.
+- 1002_: remove C macro which will not be available on new Solaris versions.
+  (patch by Danek Duvall)
 
 *2017-03-24*
 
