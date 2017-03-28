@@ -713,9 +713,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         sprintf(perms, "%c%c%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
                 p->pr_mflags & MA_WRITE ? 'w' : '-',
                 p->pr_mflags & MA_EXEC ? 'x' : '-',
-                p->pr_mflags & MA_SHARED ? 's' : '-',
-                p->pr_mflags & MA_NORESERVE ? 'R' : '-',
-                p->pr_mflags & MA_RESERVED1 ? '*' : ' ');
+                p->pr_mflags & MA_SHARED ? 's' : '-');
 
         // name
         if (strlen(p->pr_mapname) > 0) {
