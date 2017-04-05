@@ -8,8 +8,9 @@
 **Bug fixes**
 
 - 1000_: fixed some setup.py warnings.
-- 1002_: remove C macro which will not be available on new Solaris versions.
-  (patch by Danek Duvall)
+- 1002_: [SunOS] remove C macro which will not be available on new Solaris
+  versions. (patch by Danek Duvall)
+- 1004_: [Linux] Process.io_counters() may raise ValueError.
 
 *2017-03-24*
 
@@ -18,12 +19,12 @@
 
 **Bug fixes**
 
-- 996_: [Linux] sensors_temperatures() may not show all temperatures.
-- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
-  FreeBSD 12.
 - 981_: [Linux] cpu_freq() may return an empty list.
 - 993_: [Windows] Process.memory_maps() on Python 3 may raise
   UnicodeDecodeError.
+- 996_: [Linux] sensors_temperatures() may not show all temperatures.
+- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
+  FreeBSD 12.
 
 *2017-03-05*
 

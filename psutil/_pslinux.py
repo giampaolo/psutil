@@ -1448,8 +1448,13 @@ class Process(object):
             fields = {}
             with open_binary(fname) as f:
                 for line in f:
-                    name, value = line.split(b': ')
-                    fields[name] = int(value)
+                    # https://github.com/giampaolo/psutil/issues/1004
+                    line = line.strip()
+                    if line:
+                        name, value = line.split(b': ')
+                        fields[name] = int(value)
+            if not fields:
+                raise RuntimeError("%s file was empty" % fname)
             return pio(
                 fields[b'syscr'],  # read syscalls
                 fields[b'syscw'],  # write syscalls
