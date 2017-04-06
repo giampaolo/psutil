@@ -11,6 +11,7 @@ PLATFORMS
 
 - #355: Android (with patch)
 - #605: AIX (with branch)
+- #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
 - DragonFlyBSD
 - HP-UX

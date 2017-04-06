@@ -637,7 +637,7 @@ def cpu_stats():
 
 
 if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
-        os.path.exists("/sys/devices/system/cpu/cpu0"):
+        os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
     def cpu_freq():
         """Return frequency metrics for all CPUs.
         Contrarily to other OSes, Linux updates these values in
