@@ -1066,7 +1066,10 @@ class TestSensorsBattery(unittest.TestCase):
         out = sh("acpi -b")
         if 'unknown' in out.lower():
             return unittest.skip("acpi output not reliable")
-        plugged = "Charging" in out.split('\n')[0]
+        if 'discharging at zero rate' in out:
+            plugged = True
+        else:
+            plugged = "Charging" in out.split('\n')[0]
         self.assertEqual(psutil.sensors_battery().power_plugged, plugged)
 
     def test_emulate_power_plugged(self):

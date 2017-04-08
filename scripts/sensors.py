@@ -58,7 +58,7 @@ def main():
     if not any((temps, fans, battery)):
         return sys.exit("can't read any temperature, fans or battery info")
 
-    names = set(temps.keys() + fans.keys())
+    names = set(list(temps.keys()) + list(fans.keys()))
     for name in names:
         print(name)
         # Temperatures.
