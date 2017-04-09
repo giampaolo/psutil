@@ -172,6 +172,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
             free_value, psutil_value, delta=MEMORY_TOLERANCE,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @retry_before_failing()
     def test_free(self):
         # _, _, free_value, _ = free_physmem()
@@ -1203,6 +1204,7 @@ class TestSensorsBattery(unittest.TestCase):
 @unittest.skipUnless(LINUX, "LINUX only")
 class TestSensorsTemperatures(unittest.TestCase):
 
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_emulate_eio_error(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("_input"):
