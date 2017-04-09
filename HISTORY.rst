@@ -13,6 +13,7 @@
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
 - 1006_: [Linux] cpu_freq() may return None on some Linux versions does not
   support the function; now the function is not declared instead.
+- 1009_: [Linux] sensors_temperatures() may raise OSError.
 
 *2017-03-24*
 

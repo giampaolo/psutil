@@ -1112,10 +1112,18 @@ def sensors_temperatures():
     for base in basenames:
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
-        label = cat(base + '_label', fallback='', binary=False)
-        current = float(cat(base + '_input')) / 1000.0
         high = cat(base + '_max', fallback=None)
         critical = cat(base + '_crit', fallback=None)
+        label = cat(base + '_label', fallback='', binary=False)
+        try:
+            current = float(cat(base + '_input')) / 1000.0
+        except OSError as err:
+            # https://github.com/giampaolo/psutil/issues/1009
+            if err.errno == errno.EIO:
+                warnings.warn("ignoring %r" % err, RuntimeWarning)
+                continue
+            else:
+                raise
 
         if high is not None:
             high = float(high) / 1000.0

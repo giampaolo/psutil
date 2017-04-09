@@ -1200,6 +1200,25 @@ class TestSensorsBattery(unittest.TestCase):
             assert m.called
 
 
+@unittest.skipUnless(LINUX, "LINUX only")
+class TestSensorsTemperatures(unittest.TestCase):
+
+    def test_emulate_eio_error(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith("_input"):
+                raise OSError(errno.EIO, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                self.assertEqual(psutil.sensors_temperatures(), {})
+                assert m.called
+                self.assertIn("ignoring", str(ws[0].message))
+
+
 # =====================================================================
 # --- test process
 # =====================================================================
