@@ -2189,6 +2189,7 @@ take a look at the
 Timeline
 ========
 
+- 2017-04-17: `5.2.2 <https://pypi.python.org/pypi?name=psutil&version=5.2.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#522>`__
 - 2017-03-24: `5.2.1 <https://pypi.python.org/pypi?name=psutil&version=5.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#521>`__
 - 2017-03-05: `5.2.0 <https://pypi.python.org/pypi?name=psutil&version=5.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#520>`__
 - 2017-02-07: `5.1.3 <https://pypi.python.org/pypi?name=psutil&version=5.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#513>`__
