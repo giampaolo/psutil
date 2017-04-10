@@ -14,6 +14,7 @@
 - 1006_: [Linux] cpu_freq() may return None on some Linux versions does not
   support the function; now the function is not declared instead.
 - 1009_: [Linux] sensors_temperatures() may raise OSError.
+- 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
 
 *2017-03-24*
 

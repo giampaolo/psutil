@@ -396,8 +396,12 @@ def virtual_memory():
     # returned by sysinfo(2); as such we assume they are always there.
     total = mems[b'MemTotal:']
     free = mems[b'MemFree:']
-    buffers = mems[b'Buffers:']
-
+    try:
+        buffers = mems[b'Buffers:']
+    except KeyError:
+        # https://github.com/giampaolo/psutil/issues/1010
+        buffers = 0
+        missing_fields.append('buffers')
     try:
         cached = mems[b"Cached:"]
     except KeyError:
