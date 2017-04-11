@@ -240,7 +240,7 @@ elif CYGWIN:
     # sys.getwindowsversion() is not available in Cygwin's Python
     import re
     import subprocess
-    winver_re = re.compile(br'\[Version (?P<major>\d+)\.(?P<minor>\d+)\.'
+    winver_re = re.compile(br'\[.+ (?P<major>\d+)\.(?P<minor>\d+)\.'
                            br'(?P<build>\d+)\]')
 
     def get_winver():
