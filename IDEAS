@@ -13,9 +13,9 @@ PLATFORMS
 - #605: AIX (with branch)
 - #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
+- #693: Windows Nano
 - DragonFlyBSD
 - HP-UX
-
 
 FEATURES
 ========

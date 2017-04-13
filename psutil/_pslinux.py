@@ -83,6 +83,7 @@ BOOT_TIME = None  # set later
 # speedup, see: https://github.com/giampaolo/psutil/issues/708
 BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
+SECTOR_SIZE_FALLBACK = 512
 if PY3:
     FS_ENCODING = sys.getfilesystemencoding()
     ENCODING_ERRORS_HANDLER = 'surrogateescape'
@@ -250,7 +251,7 @@ def file_flags_to_mode(flags):
     return mode
 
 
-def get_sector_size(partition):
+def get_sector_size(partition, fallback=SECTOR_SIZE_FALLBACK):
     """Return the sector size of a partition.
     Used by disk_io_counters().
     """
@@ -260,7 +261,7 @@ def get_sector_size(partition):
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
         # have a size of 512 bytes since 2.4 kernels.
-        return 512
+        return fallback
 
 
 @memoize
@@ -298,9 +299,10 @@ def cat(fname, fallback=_DEFAULT, binary=True):
         with open_binary(fname) if binary else open_text(fname) as f:
             return f.read().strip()
     except IOError:
-        if fallback != _DEFAULT:
+        if fallback is not _DEFAULT:
             return fallback
-        raise
+        else:
+            raise
 
 
 try:
