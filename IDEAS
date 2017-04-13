@@ -5,7 +5,6 @@ A collection of ideas and notes about stuff to implement in future versions.
 "#NNN" occurrences refer to bug tracker issues at:
 https://github.com/giampaolo/psutil/issues
 
-
 PLATFORMS
 =========
 
@@ -148,18 +147,15 @@ FEATURES
 
 - #550: number of threads per core.
 
-
 BUGFIXES
 ========
 
 - #600: windows / open_files(): support network file handles.
 
-
 REJECTED
 ========
 
 - #550: threads per core
-
 
 RESOURCES
 =========

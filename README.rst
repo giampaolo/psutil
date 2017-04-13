@@ -376,6 +376,7 @@ Further process APIs
 
 .. code-block:: python
 
+    >>> import psutil
     >>> for p in psutil.process_iter():
     ...     print(p)
     ...
@@ -383,6 +384,9 @@ Further process APIs
     psutil.Process(pid=2, name='kthreadd')
     psutil.Process(pid=3, name='ksoftirqd/0')
     ...
+    >>>
+    >>> psutil.pid_exists(3)
+    True
     >>>
     >>> def on_terminate(proc):
     ...     print("process {} terminated".format(proc))
