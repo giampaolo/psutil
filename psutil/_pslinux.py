@@ -1296,7 +1296,9 @@ def pids():
 
 
 def pid_exists(pid):
-    """Check for the existence of a unix PID."""
+    """Check for the existence of a unix PID. Linux TIDs are not
+    supported (always return False).
+    """
     if not _psposix.pid_exists(pid):
         return False
     else:
@@ -1333,13 +1335,18 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except EnvironmentError as err:
-            # ENOENT (no such file or directory) gets raised on open().
-            # ESRCH (no such process) can get raised on read() if
-            # process is gone in meantime.
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
+            # ESRCH (no such process) can be raised on read() if
+            # process is gone in the meantime.
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(self.pid, self._name)
+            # ENOENT (no such file or directory) can be raised on open().
+            if err.errno == errno.ENOENT and not os.path.exists("%s/%s" % (
+                    self._procfs_path, self.pid)):
+                raise NoSuchProcess(self.pid, self._name)
+            # Note: zombies will keep existing under /proc until they're
+            # gone so there's no way to distinguish them in here.
             raise
     return wrapper
 

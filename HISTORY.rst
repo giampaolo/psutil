@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+*XXXX-XX-XX*
+
+5.2.3
+=====
+
+**Bug fixes**
+
+- 1014_: Linux can mask legitimate ENOENT exceptions as NoSuchProcess.
+
 *2017-04-10*
 
 5.2.2
