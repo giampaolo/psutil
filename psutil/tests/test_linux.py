@@ -1397,6 +1397,24 @@ class TestProcess(unittest.TestCase):
                             return_value=False):
                 self.assertRaises(psutil.ZombieProcess, psutil.Process().exe)
 
+    def test_issue_1014(self):
+        # Emulates a case where smaps file does not exist. In this case
+        # wrap_exception decorator should not raise NoSuchProcess.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith('/proc/%s/smaps' % os.getpid()):
+                raise IOError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            p = psutil.Process()
+            with self.assertRaises(IOError) as err:
+                p.memory_maps()
+            self.assertEqual(err.exception.errno, errno.ENOENT)
+            assert m.called
+
 
 @unittest.skipUnless(LINUX, "LINUX only")
 class TestProcessAgainstStatus(unittest.TestCase):
