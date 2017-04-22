@@ -24,5 +24,6 @@ after_success:
     # upload test reports to coveralls.io
     - |
         if [ "$(uname -s)" != 'Darwin' ]; then
+            echo "sending results to coveralls.io"
             coveralls
         fi
