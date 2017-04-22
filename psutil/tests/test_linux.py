@@ -381,15 +381,15 @@ class TestSystemVirtualMemory(unittest.TestCase):
 # =====================================================================
 
 
-def meminfo_has_swap_info():
-    """Return True if /proc/meminfo provides swap metrics."""
-    with open("/proc/meminfo") as f:
-        data = f.read()
-    return 'SwapTotal:' in data and 'SwapFree:' in data
-
-
 @unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemSwapMemory(unittest.TestCase):
+
+    @staticmethod
+    def meminfo_has_swap_info():
+        """Return True if /proc/meminfo provides swap metrics."""
+        with open("/proc/meminfo") as f:
+            data = f.read()
+        return 'SwapTotal:' in data and 'SwapFree:' in data
 
     def test_total(self):
         free_value = free_swap().total
@@ -451,12 +451,12 @@ class TestSystemSwapMemory(unittest.TestCase):
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
-    @unittest.skipUnless(meminfo_has_swap_info(),
-                         "/proc/meminfo has no swap metrics")
     def test_meminfo_against_sysinfo(self):
         # Make sure the content of /proc/meminfo about swap memory
         # matches sysinfo() syscall, see:
         # https://github.com/giampaolo/psutil/issues/1015
+        if not self.meminfo_has_swap_info():
+            return unittest.skip("/proc/meminfo has no swap metrics")
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
