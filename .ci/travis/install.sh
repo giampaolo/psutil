@@ -50,12 +50,4 @@ elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]] || [[ $PYVER == 'py33' ]]; then
     pip install -U ipaddress
 fi
 
-pip install --upgrade setuptools
-
-if [ "$PYVER" == "2.7" ] && [ "$(uname -s)" != 'Darwin' ]; then
-    pip install --upgrade coverage coveralls flake8
-fi
-
-if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
-    pip install --upgrade flake8
-fi
+pip install --upgrade coverage coveralls setuptools flake8
