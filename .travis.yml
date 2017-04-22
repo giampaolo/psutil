@@ -21,9 +21,8 @@ install:
 script:
     - ./.ci/travis/run.sh
 after_success:
-    # upload test reports to coveralls.io
     - |
-        if [ "$(uname -s)" != 'Darwin' ]; then
-            echo "sending results to coveralls.io"
+        if [ "$PYVER" == "2.7" ] && [ "$(uname -s)" != 'Darwin' ]; then
+            echo "sending test coverage results to coveralls.io"
             coveralls
         fi

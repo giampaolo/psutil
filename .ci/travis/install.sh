@@ -41,14 +41,21 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
+# old python versions
 if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]] || [[ $PYVER == 'py26' ]]; then
     pip install -U ipaddress unittest2 argparse mock==1.0.1
 elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
-    pip install -U ipaddress mock
-elif [[ $TRAVIS_PYTHON_VERSION == '3.2' ]] || [[ $PYVER == 'py32' ]]; then
     pip install -U ipaddress mock
 elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]] || [[ $PYVER == 'py33' ]]; then
     pip install -U ipaddress
 fi
 
-pip install --upgrade coverage coveralls flake8 pep8 setuptools
+pip install --upgrade setuptools
+
+if [ "$PYVER" == "2.7" ] && [ "$(uname -s)" != 'Darwin' ]; then
+    pip install --upgrade coverage coveralls flake8
+fi
+
+if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
+    pip install --upgrade flake8
+fi
