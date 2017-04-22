@@ -499,8 +499,8 @@ def swap_memory():
     # for linux containers, see:
     # https://github.com/giampaolo/psutil/issues/1015
     try:
-        total = mems['SwapTotal:']
-        free = mems['SwapFree:']
+        total = mems[b'SwapTotal:']
+        free = mems[b'SwapFree:']
     except KeyError:
         _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
         total *= unit_multiplier
