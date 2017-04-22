@@ -421,8 +421,15 @@ class TestSystemSwapMemory(unittest.TestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        with mock.patch('psutil._pslinux.open', create=True,
-                        side_effect=IOError) as m:
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/vmstat":
+                raise IOError(errno.ENOENT, 'no such file or directory')
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -436,6 +443,17 @@ class TestSystemSwapMemory(unittest.TestCase):
                     str(w.message))
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
+
+    def test_against_sysinfo(self):
+        with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
+            swap = psutil.swap_memory()
+        assert not m.called
+        import psutil._psutil_linux as cext
+        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        total *= unit_multiplier
+        free *= unit_multiplier
+        self.assertEqual(swap.total, total)
+        self.assertEqual(swap.free, free)
 
 
 # =====================================================================

@@ -489,9 +489,23 @@ def virtual_memory():
 
 def swap_memory():
     """Return swap memory metrics."""
-    _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
-    total *= unit_multiplier
-    free *= unit_multiplier
+    mems = {}
+    with open_binary('%s/meminfo' % get_procfs_path()) as f:
+        for line in f:
+            fields = line.split()
+            mems[fields[0]] = int(fields[1]) * 1024
+    # We prefer /proc/meminfo over sysinfo() syscall so that
+    # psutil.PROCFS_PATH can be used in order to allow retrieval
+    # for linux containers, see:
+    # https://github.com/giampaolo/psutil/issues/1015
+    try:
+        total = mems['SwapTotal:']
+        free = mems['SwapFree:']
+    except KeyError:
+        _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+        total *= unit_multiplier
+        free *= unit_multiplier
+
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts

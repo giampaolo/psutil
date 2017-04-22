@@ -5,6 +5,12 @@
 5.2.3
 =====
 
+**Enhancements**
+
+- 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
+  so that it can be used in conjunction with PROCFS_PATH in order to retrieve
+  memory info about Linux containers such as Docker and Heroku.
+
 **Bug fixes**
 
 - 1014_: Linux can mask legitimate ENOENT exceptions as NoSuchProcess.

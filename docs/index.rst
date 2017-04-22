@@ -302,6 +302,11 @@ Memory
     >>> psutil.swap_memory()
     sswap(total=2097147904L, used=886620160L, free=1210527744L, percent=42.3, sin=1050411008, sout=1906720768)
 
+  .. versionchanged:: 5.2.3 on Linux this function relies on /proc fs instead
+     of sysinfo() syscall so that it can be used in conjunction with
+     :const:`psutil.PROCFS_PATH` in order to retrieve memory info about
+     Linux containers such as Docker and Heroku.
+
 Disks
 -----
 
@@ -1979,9 +1984,18 @@ Constants
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux and Solaris (defaults to "/proc").
+  The path of the /proc filesystem on Linux and Solaris (defaults to
+  ``"/proc"``).
   You may want to re-set this constant right after importing psutil in case
-  your /proc filesystem is mounted elsewhere.
+  your /proc filesystem is mounted elsewhere or if you want to retrieve
+  information about Linux containers such as
+  `Docker <https://www.docker.io/>`__,
+  `Heroku <https://www.heroku.com/>`__ or
+  `LXC <https://linuxcontainers.org/>`__ (see
+  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`__
+  for more info).
+  It must be noted that this trick works only for APIs which rely on /proc
+  filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
 
   Availability: Linux, Solaris
 
