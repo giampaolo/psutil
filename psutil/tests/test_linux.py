@@ -381,6 +381,13 @@ class TestSystemVirtualMemory(unittest.TestCase):
 # =====================================================================
 
 
+def meminfo_has_swap_info():
+    """Return True if /proc/meminfo provides swap metrics."""
+    with open("/proc/meminfo") as f:
+        data = f.read()
+    return 'SwapTotal:' in data and 'SwapFree:' in data
+
+
 @unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemSwapMemory(unittest.TestCase):
 
@@ -444,7 +451,12 @@ class TestSystemSwapMemory(unittest.TestCase):
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
-    def test_against_sysinfo(self):
+    @unittest.skipUnless(meminfo_has_swap_info(),
+                         "/proc/meminfo has no swap metrics")
+    def test_meminfo_against_sysinfo(self):
+        # Make sure the content of /proc/meminfo about swap memory
+        # matches sysinfo() syscall, see:
+        # https://github.com/giampaolo/psutil/issues/1015
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
@@ -454,6 +466,22 @@ class TestSystemSwapMemory(unittest.TestCase):
         free *= unit_multiplier
         self.assertEqual(swap.total, total)
         self.assertEqual(swap.free, free)
+
+    def test_emulate_meminfo_has_no_metrics(self):
+        # Emulate a case where /proc/meminfo provides no swap metrics
+        # in which case sysinfo() syscall is supposed to be used
+        # as a fallback.
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(b"")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            psutil.swap_memory()
+            assert m.called
 
 
 # =====================================================================
