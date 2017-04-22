@@ -492,6 +492,7 @@ class TestScripts(unittest.TestCase):
             self.assert_syntax('battery.py')
 
     @unittest.skipIf(APPVEYOR or TRAVIS, "unreliable on CI")
+    @unittest.skipIf(OSX, "platform not supported")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
