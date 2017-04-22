@@ -42,11 +42,11 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
 fi
 
 # old python versions
-if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]] || [[ $PYVER == 'py26' ]]; then
+if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then
     pip install -U ipaddress unittest2 argparse mock==1.0.1
-elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
+elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
     pip install -U ipaddress mock
-elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]] || [[ $PYVER == 'py33' ]]; then
+elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then
     pip install -U ipaddress
 fi
 

@@ -22,7 +22,7 @@ script:
     - ./.ci/travis/run.sh
 after_success:
     - |
-        if [ "$PYVER" == "2.7" ] && [ "$(uname -s)" != 'Darwin' ]; then
+        if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
             echo "sending test coverage results to coveralls.io"
             coveralls
         fi
