@@ -768,8 +768,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
                          "platform not supported")
-    def test_sensors_temperatures(self):
-        temps = psutil.sensors_temperatures()
+    def test_sensors_temperatures(self, fahrenheit=False):
+        temps = psutil.sensors_temperatures(fahrenheit=fahrenheit)
         for name, entries in temps.items():
             self.assertIsInstance(name, (str, unicode))
             for entry in entries:
@@ -780,6 +780,11 @@ class TestSystemAPIs(unittest.TestCase):
                     self.assertGreaterEqual(entry.high, 0)
                 if entry.critical is not None:
                     self.assertGreaterEqual(entry.critical, 0)
+
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "platform not supported")
+    def test_sensors_temperatures_fahreneit(self):
+        self.test_sensors_temperatures(fahrenheit=True)
 
     @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
                          "platform not supported")

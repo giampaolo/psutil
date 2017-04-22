@@ -90,18 +90,35 @@ __all__ = [
 # --- constants
 # ===================================================================
 
+# --- platforms
 
-# conf for retry_before_failing() decorator
+TOX = os.getenv('TOX') or '' in ('1', 'true')
+PYPY = '__pypy__' in sys.builtin_module_names
+WIN_VISTA = (6, 0, 0) if WINDOWS else None
+# whether we're running this test suite on Travis (https://travis-ci.org/)
+TRAVIS = bool(os.environ.get('TRAVIS'))
+# whether we're running this test suite on Appveyor for Windows
+# (http://www.appveyor.com/)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
+
+# --- configurable defaults
+
+# how many times retry_before_failing() decorator will retry
 NO_RETRIES = 10
-# bytes tolerance for OS memory related tests
+# bytes tolerance for system-wide memory related tests
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 3
+# test output verbosity
+VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
+# be more tolerant if we're on travis / appveyor in order to avoid
+# false positives
+if TRAVIS or APPVEYOR:
+    NO_RETRIES *= 3
+    MEMORY_TOLERANCE *= 3
+    GLOBAL_TIMEOUT *= 3
 
-AF_INET6 = getattr(socket, "AF_INET6")
-AF_UNIX = getattr(socket, "AF_UNIX", None)
-PYTHON = os.path.realpath(sys.executable)
-DEVNULL = open(os.devnull, 'r+')
+# --- files
 
 TESTFILE_PREFIX = '$testfn'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
@@ -113,25 +130,19 @@ if not PY3:
     except UnicodeDecodeError:
         TESTFN_UNICODE = TESTFN + "-???"
 
-TOX = os.getenv('TOX') or '' in ('1', 'true')
-PYPY = '__pypy__' in sys.builtin_module_names
+# --- paths
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                        '..', '..'))
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
-WIN_VISTA = (6, 0, 0) if WINDOWS else None
+# --- misc
+
+AF_INET6 = getattr(socket, "AF_INET6")
+AF_UNIX = getattr(socket, "AF_UNIX", None)
+PYTHON = os.path.realpath(sys.executable)
+DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
-# whether we're running this test suite on Travis (https://travis-ci.org/)
-TRAVIS = bool(os.environ.get('TRAVIS'))
-# whether we're running this test suite on Appveyor for Windows
-# (http://www.appveyor.com/)
-APPVEYOR = bool(os.environ.get('APPVEYOR'))
-
-if TRAVIS or APPVEYOR:
-    GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
-VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 
 # assertRaisesRegexp renamed to assertRaisesRegex in 3.3; add support
 # for the new name

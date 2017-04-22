@@ -18,7 +18,7 @@ python setup.py build
 python setup.py develop
 
 # run tests
-if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
+if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
     coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
 else
     python psutil/tests/runner.py
@@ -26,7 +26,7 @@ fi
 
 # Run memory leak tests and linter only on Linux and latest major Python
 # versions.
-if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then
+if [[ $PYVER == '2.7' ]] || [[ $PYVER == '3.6' ]]; then
     python psutil/tests/test_memory_leaks.py
 
     if [[ "$(uname -s)" != 'Darwin' ]]; then

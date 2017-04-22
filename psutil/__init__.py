@@ -2205,8 +2205,9 @@ if hasattr(_psplatform, "sensors_temperatures"):
         All temperatures are expressed in celsius unless *fahrenheit*
         is set to True.
         """
-        def to_fahrenheit(n):
-            return (float(n) * 9 / 5) + 32
+        def convert(n):
+            if n is not None:
+                return (float(n) * 9 / 5) + 32 if fahrenheit else n
 
         ret = collections.defaultdict(list)
         rawdict = _psplatform.sensors_temperatures()
@@ -2214,12 +2215,9 @@ if hasattr(_psplatform, "sensors_temperatures"):
         for name, values in rawdict.items():
             while values:
                 label, current, high, critical = values.pop(0)
-                if fahrenheit:
-                    current = to_fahrenheit(current)
-                    if high is not None:
-                        high = to_fahrenheit(high)
-                    if critical is not None:
-                        critical = to_fahrenheit(critical)
+                current = convert(current)
+                high = convert(high)
+                critical = convert(critical)
 
                 if high and not critical:
                     critical = high
