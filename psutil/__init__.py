@@ -2083,8 +2083,6 @@ def net_io_counters(pernic=False):
     described above as the values.
     """
     rawdict = _psplatform.net_io_counters()
-    if not rawdict:
-        raise RuntimeError("couldn't find any network interface")
     if pernic:
         for nic, fields in rawdict.items():
             rawdict[nic] = _common.snetio(*fields)
