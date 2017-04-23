@@ -1183,7 +1183,6 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.ppid(), this_parent)
-        self.assertEqual(p.parent().pid, this_parent)
         # no other process is supposed to have us as parent
         reap_children(recursive=True)
         if APPVEYOR:
@@ -1196,6 +1195,20 @@ class TestProcess(unittest.TestCase):
                 continue
             # XXX: sometimes this fails on Windows; not sure why.
             self.assertNotEqual(p.ppid(), this_parent, msg=p)
+
+    def test_parent(self):
+        this_parent = os.getpid()
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.parent().pid, this_parent)
+
+    def test_parent_disappeared(self):
+        # Emulate a case where the parent process disappeared.
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        with mock.patch("psutil.Process",
+                        side_effect=psutil.NoSuchProcess(0, 'foo')):
+            self.assertIsNone(p.parent())
 
     def test_children(self):
         p = psutil.Process()
