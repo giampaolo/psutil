@@ -6,6 +6,7 @@ set -x
 PYVER=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
 
 uname -a
+echo $PYVER
 
 if [[ "$(uname -s)" == 'Darwin' ]]; then
     brew update || brew update

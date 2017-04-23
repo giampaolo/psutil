@@ -115,7 +115,6 @@ VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 # false positives
 if TRAVIS or APPVEYOR:
     NO_RETRIES *= 3
-    MEMORY_TOLERANCE *= 3
     GLOBAL_TIMEOUT *= 3
 
 # --- files
@@ -143,11 +142,6 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
-
-# assertRaisesRegexp renamed to assertRaisesRegex in 3.3; add support
-# for the new name
-if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-    unittest.TestCase.assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
 # ===================================================================
@@ -554,14 +548,20 @@ def create_exe(outpath, c_code=None):
 
 class TestCase(unittest.TestCase):
 
+    # Print a full path representation of the single unit tests
+    # being run.
     def __str__(self):
         return "%s.%s.%s" % (
             self.__class__.__module__, self.__class__.__name__,
             self._testMethodName)
 
+    # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
+    # add support for the new name.
+    if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
-# Hack that overrides default unittest.TestCase in order to print
-# a full path representation of the single unit tests being run.
+
+# override default unittest.TestCase
 unittest.TestCase = TestCase
 
 
