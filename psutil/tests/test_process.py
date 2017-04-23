@@ -399,20 +399,6 @@ class TestProcess(unittest.TestCase):
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 7)
-                #
-                self.assertRaises(ValueError, p.ionice, 2, 10)
-                self.assertRaises(ValueError, p.ionice, 2, -1)
-                self.assertRaises(ValueError, p.ionice, 4)
-                self.assertRaises(TypeError, p.ionice, 2, "foo")
-                self.assertRaisesRegex(
-                    ValueError, "can't specify value with IOPRIO_CLASS_NONE",
-                    p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
-                self.assertRaisesRegex(
-                    ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
-                    p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
-                self.assertRaisesRegex(
-                    ValueError, "'ioclass' argument must be specified",
-                    p.ionice, value=1)
             finally:
                 p.ionice(IOPRIO_CLASS_NONE)
         else:
@@ -427,7 +413,27 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(p.ionice(), value)
             finally:
                 p.ionice(original)
-            #
+
+    @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
+                         'platform not supported')
+    def test_ionice_errs(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        if LINUX:
+            self.assertRaises(ValueError, p.ionice, 2, 10)
+            self.assertRaises(ValueError, p.ionice, 2, -1)
+            self.assertRaises(ValueError, p.ionice, 4)
+            self.assertRaises(TypeError, p.ionice, 2, "foo")
+            self.assertRaisesRegex(
+                ValueError, "can't specify value with IOPRIO_CLASS_NONE",
+                p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
+            self.assertRaisesRegex(
+                ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
+                p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
+            self.assertRaisesRegex(
+                ValueError, "'ioclass' argument must be specified",
+                p.ionice, value=1)
+        else:
             self.assertRaises(ValueError, p.ionice, 3)
             self.assertRaises(TypeError, p.ionice, 2, 1)
 
@@ -915,6 +921,11 @@ class TestProcess(unittest.TestCase):
         # it should work with all iterables, not only lists
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
+
+    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD, 'platform not supported')
+    def test_cpu_affinity_errs(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
