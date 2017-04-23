@@ -3,16 +3,23 @@ language: python
 cache: pip
 matrix:
     include:
-        - python: 2.6
-        - python: 2.7
-        - python: 3.3
-        - python: 3.4
-        - python: 3.5
-        - python: 3.6
-        - "pypy"
+        # - python: 2.6
+        # - python: 2.7
+        # - python: 3.3
+        # - python: 3.4
+        # - python: 3.5
+        # - python: 3.6
+        # - "pypy"
         - language: generic
           os: osx
-          env: PYVER=py27
+          before_install:
+            - brew update
+            - brew install python
+            - virtualenv env -p python
+            - source env/bin/activate
+        # - language: generic
+        #   os: osx
+        #   env: PYVER=py27
         # - language: generic
         #   os: osx
         #   env: PYVER=py34
