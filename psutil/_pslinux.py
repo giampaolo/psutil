@@ -251,7 +251,7 @@ def file_flags_to_mode(flags):
     return mode
 
 
-def get_sector_size(partition, fallback=SECTOR_SIZE_FALLBACK):
+def get_sector_size(partition):
     """Return the sector size of a partition.
     Used by disk_io_counters().
     """
@@ -261,7 +261,7 @@ def get_sector_size(partition, fallback=SECTOR_SIZE_FALLBACK):
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
         # have a size of 512 bytes since 2.4 kernels.
-        return fallback
+        return SECTOR_SIZE_FALLBACK
 
 
 @memoize
@@ -1654,7 +1654,7 @@ class Process(object):
                 ))
             return ls
 
-    else:
+    else:  # pragma: no cover
         def memory_maps(self):
             raise NotImplementedError(
                 "/proc/%s/smaps does not exist on kernels < 2.6.14 or "

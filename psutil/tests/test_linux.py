@@ -24,6 +24,7 @@ import time
 import warnings
 
 import psutil
+from psutil import _pslinux
 from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
@@ -1539,6 +1540,36 @@ class TestProcessAgainstStatus(unittest.TestCase):
             assert not m.called
         else:
             assert m.called
+
+
+# =====================================================================
+# --- test utils
+# =====================================================================
+
+
+@unittest.skipUnless(LINUX, "LINUX only")
+class TestUtils(unittest.TestCase):
+
+    def test_open_text(self):
+        with _pslinux.open_text(__file__) as f:
+            self.assertEqual(f.mode, 'rt')
+
+    def test_open_binary(self):
+        with _pslinux.open_binary(__file__) as f:
+            self.assertEqual(f.mode, 'rb')
+
+    def test_readlink(self):
+        with mock.patch("os.readlink", return_value="foo (deleted)") as m:
+            self.assertEqual(_pslinux.readlink("bar"), "foo")
+            assert m.called
+
+    def test_cat(self):
+        fname = os.path.abspath(TESTFN)
+        with open(fname, "wt") as f:
+            f.write("foo ")
+        self.assertEqual(_pslinux.cat(TESTFN, binary=False), "foo")
+        self.assertEqual(_pslinux.cat(TESTFN, binary=True), b"foo")
+        self.assertEqual(_pslinux.cat(TESTFN + '??', fallback="bar"), "bar")
 
 
 if __name__ == '__main__':
