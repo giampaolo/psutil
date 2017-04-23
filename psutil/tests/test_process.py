@@ -1514,6 +1514,26 @@ class TestProcess(unittest.TestCase):
             finally:
                 reap_children(recursive=True)
 
+    @unittest.skipUnless(POSIX, 'POSIX only')
+    def test_zombie_process_is_running_w_exc(self):
+        # Emulate a case where internally is_running() raises
+        # ZombieProcess.
+        p = psutil.Process()
+        with mock.patch("psutil.Process",
+                        side_effect=psutil.ZombieProcess(0)) as m:
+            assert p.is_running()
+            assert m.called
+
+    @unittest.skipUnless(POSIX, 'POSIX only')
+    def test_zombie_process_status_w_exc(self):
+        # Emulate a case where internally status() raises
+        # ZombieProcess.
+        p = psutil.Process()
+        with mock.patch("psutil._psplatform.Process.status",
+                        side_effect=psutil.ZombieProcess(0)) as m:
+            self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
+            assert m.called
+
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
