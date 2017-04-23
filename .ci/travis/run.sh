@@ -6,12 +6,12 @@ set -x
 PYVER=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
 
 # setup OSX venv
-if [ "$(uname -s)" == 'Darwin' ]; then
-    if which pyenv > /dev/null; then
-        eval "$(pyenv init -)"
-    fi
-    pyenv activate psutil
-fi
+# if [ "$(uname -s)" == 'Darwin' ]; then
+#     if which pyenv > /dev/null; then
+#         eval "$(pyenv init -)"
+#     fi
+#     pyenv activate psutil
+# fi
 
 # install
 python setup.py build
