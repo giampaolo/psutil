@@ -1425,9 +1425,9 @@ class TestProcess(unittest.TestCase):
 
     # not sure why (doesn't fail locally)
     # https://travis-ci.org/giampaolo/psutil/jobs/108629915
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
+    # @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_exe_mocked(self):
-        with mock.patch('psutil._pslinux.os.readlink',
+        with mock.patch('psutil._pslinux.readlink',
                         side_effect=OSError(errno.ENOENT, "")) as m:
             # No such file error; might be raised also if /proc/pid/exe
             # path actually exists for system processes with low pids

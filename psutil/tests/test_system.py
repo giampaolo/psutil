@@ -438,7 +438,7 @@ class TestSystemAPIs(unittest.TestCase):
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
-    @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
+    # @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_disk_partitions(self):
         # all = False
         ls = psutil.disk_partitions(all=False)
