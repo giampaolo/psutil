@@ -122,12 +122,7 @@ if TRAVIS or APPVEYOR:
 TESTFILE_PREFIX = '$testfn'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 _TESTFN = TESTFN + '-internal'
-TESTFN_UNICODE = TESTFN + "-ƒőő"
-if not PY3:
-    try:
-        TESTFN_UNICODE = unicode(TESTFN, sys.getfilesystemencoding())
-    except UnicodeDecodeError:
-        TESTFN_UNICODE = TESTFN + "-???"
+TESTFN_UNICODE = TESTFN + u"-ƒőő"
 
 # --- paths
 

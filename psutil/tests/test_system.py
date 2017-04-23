@@ -433,8 +433,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.fail("OSError not raised")
 
     def test_disk_usage_unicode(self):
-        # Related to https://github.com/giampaolo/psutil/issues/416
-        # but doesn't really excercise it.
+        # See: https://github.com/giampaolo/psutil/issues/416
         safe_rmpath(TESTFN_UNICODE)
         self.addCleanup(safe_rmpath, TESTFN_UNICODE)
         os.mkdir(TESTFN_UNICODE)
