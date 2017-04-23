@@ -768,8 +768,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
                          "platform not supported")
-    def test_sensors_temperatures(self, fahrenheit=False):
-        temps = psutil.sensors_temperatures(fahrenheit=fahrenheit)
+    def test_sensors_temperatures(self):
+        temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
             self.assertIsInstance(name, (str, unicode))
             for entry in entries:
@@ -784,7 +784,15 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
                          "platform not supported")
     def test_sensors_temperatures_fahreneit(self):
-        self.test_sensors_temperatures(fahrenheit=True)
+        d = {'coretemp': [('label', 50.0, 60.0, 70.0)]}
+        with mock.patch("psutil._psplatform.sensors_temperatures",
+                        return_value=d) as m:
+            temps = psutil.sensors_temperatures(
+                fahrenheit=True)['coretemp'][0]
+            assert m.called
+            self.assertEqual(temps.current, 122.0)
+            self.assertEqual(temps.high, 140.0)
+            self.assertEqual(temps.critical, 158.0)
 
     @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
                          "platform not supported")
