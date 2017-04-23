@@ -123,6 +123,42 @@ class TestProcess(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name().lower()
         self.assertEqual(name_ps, name_psutil)
 
+    def test_name_long(self):
+        # On UNIX the kernel truncates the name to the first 15
+        # characters. In sich a case psutil tries to determine the
+        # full name from the cmdline.
+        name = "long-program-name"
+        cmdline = ["long-program-name-extended", "foo", "bar"]
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            return_value=cmdline):
+                p = psutil.Process()
+                self.assertEqual(p.name(), "long-program-name-extended")
+
+    def test_name_long_cmdline_ad_exc(self):
+        # Same as above but emulates a case where cmdline() raises
+        # AccessDenied in which case psutil is supposed to return
+        # the truncated name instead of crashing.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            side_effect=psutil.AccessDenied(0, "")):
+                p = psutil.Process()
+                self.assertEqual(p.name(), "long-program-name")
+
+    def test_name_long_cmdline_nsp_exc(self):
+        # Same as above but emulates a case where cmdline() raises NSP
+        # which is supposed to propagate.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            side_effect=psutil.NoSuchProcess(0, "")):
+                p = psutil.Process()
+                self.assertRaises(psutil.NoSuchProcess, p.name)
+
     @unittest.skipIf(OSX or BSD, 'ps -o start not available')
     def test_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
