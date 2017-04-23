@@ -3,38 +3,33 @@ language: python
 cache: pip
 matrix:
     include:
-        # - python: 2.6
-        # - python: 2.7
-        # - python: 3.3
-        # - python: 3.4
-        # - python: 3.5
-        # - python: 3.6
-        # - "pypy"
-        - language: generic  # osx + python2
+        - python: 2.6
+        - python: 2.7
+        - python: 3.3
+        - python: 3.4
+        - python: 3.5
+        - python: 3.6
+        - "pypy"
+        # XXX - commented because OSX builds are deadly slow
+        # - language: generic
+        #   os: osx
+        #   env: PYVER=py26
+        - language: generic
           os: osx
-          before_install:
-            - brew update
-            - brew unlink python
-            - brew install python
-            - virtualenv env -p python
-            - source env/bin/activate
-        - language: generic  # osx + python3
+          env: PYVER=py27
+        # XXX - commented because OSX builds are deadly slow
+        # - language: generic
+        #   os: osx
+        #   env: PYVER=py33
+        - language: generic
           os: osx
-          before_install:
-            - brew update
-            - brew unlink python3
-            - brew install python3
-            - virtualenv env -p python3
-            - source env/bin/activate
-install: |
-    if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then
-        pip install -U ipaddress unittest2 argparse mock==1.0.1
-    elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
-        pip install -U ipaddress mock
-    elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then
-        pip install -U ipaddress
-    fi
-    pip install --upgrade coverage coveralls setuptools flake8
+          env: PYVER=py34
+        # XXX - not supported yet
+        # - language: generic
+        #   os: osx
+        #   env: PYVER=py35
+install:
+    - ./.ci/travis/install.sh
 script:
     - ./.ci/travis/run.sh
 after_success:
