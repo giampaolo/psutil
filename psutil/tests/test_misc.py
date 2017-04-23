@@ -282,10 +282,9 @@ class TestMisc(unittest.TestCase):
                 assert not supports_ipv6()
                 assert s.called
         else:
-            if hasattr(socket, 'AF_INET6'):
-                with self.assertRaises(Exception):
-                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                    sock.bind(("::1", 0))
+            with self.assertRaises(Exception):
+                sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                sock.bind(("::1", 0))
 
     def test_isfile_strict(self):
         from psutil._common import isfile_strict

@@ -23,6 +23,7 @@ import time
 import traceback
 import types
 from socket import AF_INET
+from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
@@ -42,7 +43,6 @@ from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil._compat import unicode
-from psutil.tests import AF_INET6
 from psutil.tests import AF_UNIX
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until

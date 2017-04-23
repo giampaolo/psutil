@@ -27,6 +27,7 @@ import threading
 import time
 import warnings
 from socket import AF_INET
+from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
@@ -131,7 +132,6 @@ SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 # --- misc
 
-AF_INET6 = getattr(socket, "AF_INET6")
 AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')

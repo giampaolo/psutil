@@ -30,7 +30,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
 from psutil._compat import unicode
-from psutil.tests import AF_INET6
 from psutil.tests import APPVEYOR
 from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
@@ -559,7 +558,7 @@ class TestSystemAPIs(unittest.TestCase):
         # self.assertEqual(sorted(nics.keys()),
         #                  sorted(psutil.net_io_counters(pernic=True).keys()))
 
-        families = set([socket.AF_INET, AF_INET6, psutil.AF_LINK])
+        families = set([socket.AF_INET, socket.AF_INET6, psutil.AF_LINK])
         for nic, addrs in nics.items():
             self.assertIsInstance(nic, (str, unicode))
             self.assertEqual(len(set(addrs)), len(addrs))
@@ -592,7 +591,7 @@ class TestSystemAPIs(unittest.TestCase):
                         # TODO: skip AF_INET6 for now because I get:
                         # AddressValueError: Only hex digits permitted in
                         # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
-                        if addr.family != AF_INET6:
+                        if addr.family != socket.AF_INET6:
                             check_net_address(ip, addr.family)
                 # broadcast and ptp addresses are mutually exclusive
                 if addr.broadcast:
