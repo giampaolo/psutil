@@ -10,7 +10,7 @@ matrix:
         # - python: 3.5
         # - python: 3.6
         # - "pypy"
-        - language: generic
+        - language: generic  # osx + python2
           os: osx
           before_install:
             - brew update
@@ -18,14 +18,23 @@ matrix:
             - brew install python
             - virtualenv env -p python
             - source env/bin/activate
-        # - language: generic
-        #   os: osx
-        #   env: PYVER=py27
-        # - language: generic
-        #   os: osx
-        #   env: PYVER=py34
-install:
-    - ./.ci/travis/install.sh
+        - language: generic  # osx + python3
+          os: osx
+          before_install:
+            - brew update
+            - brew unlink python3
+            - brew install python3
+            - virtualenv env -p python3
+            - source env/bin/activate
+install: |
+    if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then
+        pip install -U ipaddress unittest2 argparse mock==1.0.1
+    elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
+        pip install -U ipaddress mock
+    elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then
+        pip install -U ipaddress
+    fi
+    pip install --upgrade coverage coveralls setuptools flake8
 script:
     - ./.ci/travis/run.sh
 after_success:
