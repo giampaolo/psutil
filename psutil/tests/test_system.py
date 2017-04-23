@@ -403,8 +403,6 @@ class TestSystemAPIs(unittest.TestCase):
                 for percent in cpu:
                     self._test_cpu_percent(percent, None, None)
 
-    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() not available")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage.total > 0, usage
@@ -434,17 +432,14 @@ class TestSystemAPIs(unittest.TestCase):
         else:
             self.fail("OSError not raised")
 
-    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() not available")
     def test_disk_usage_unicode(self):
-        # see: https://github.com/giampaolo/psutil/issues/416
+        # Related to https://github.com/giampaolo/psutil/issues/416
+        # but doesn't really excercise it.
         safe_rmpath(TESTFN_UNICODE)
         self.addCleanup(safe_rmpath, TESTFN_UNICODE)
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
-    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() not available")
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_disk_partitions(self):
         # all = False
