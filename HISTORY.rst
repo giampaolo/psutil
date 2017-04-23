@@ -14,6 +14,7 @@
 **Bug fixes**
 
 - 1014_: Linux can mask legitimate ENOENT exceptions as NoSuchProcess.
+- 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
 
 *2017-04-10*
 
