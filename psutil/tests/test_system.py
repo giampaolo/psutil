@@ -480,7 +480,7 @@ class TestSystemAPIs(unittest.TestCase):
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
-                    if SUNOS:
+                    if SUNOS or TRAVIS:
                         # on solaris apparently mount points can also be files
                         assert os.path.exists(disk.mountpoint), disk
                     else:
