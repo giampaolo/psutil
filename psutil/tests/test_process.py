@@ -368,7 +368,6 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
                          'platform not supported')
-    # @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_ionice(self):
         if LINUX:
             from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
@@ -573,8 +572,6 @@ class TestProcess(unittest.TestCase):
             thread.stop()
 
     @retry_before_failing()
-    # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
-    # @unittest.skipIf(OSX and TRAVIS, "fails on TRAVIS + OSX")
     @skip_on_access_denied(only_if=OSX)
     def test_threads_2(self):
         sproc = get_test_subprocess()
@@ -879,7 +876,6 @@ class TestProcess(unittest.TestCase):
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD, 'platform not supported')
-    # @unittest.skipIf(LINUX and TRAVIS, "unreliable on TRAVIS")
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()

@@ -438,7 +438,6 @@ class TestSystemAPIs(unittest.TestCase):
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
-    # @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_disk_partitions(self):
         # all = False
         ls = psutil.disk_partitions(all=False)
@@ -459,7 +458,7 @@ class TestSystemAPIs(unittest.TestCase):
                 # we cannot make any assumption about this, see:
                 # http://goo.gl/p9c43
                 disk.device
-            if SUNOS:
+            if SUNOS or TRAVIS:
                 # on solaris apparently mount points can also be files
                 assert os.path.exists(disk.mountpoint), disk
             else:
