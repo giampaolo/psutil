@@ -14,6 +14,7 @@ matrix:
           os: osx
           before_install:
             - brew update
+            - brew unlink python
             - brew install python
             - virtualenv env -p python
             - source env/bin/activate
