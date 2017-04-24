@@ -19,9 +19,9 @@ python setup.py develop
 
 # run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
-    coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
+    coverage run psutil/tests/__main__.py --include="psutil/*" --omit="test/*,*setup*"
 else
-    python psutil/tests/runner.py
+    python psutil/tests/__main__.py
 fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then

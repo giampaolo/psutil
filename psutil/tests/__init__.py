@@ -127,6 +127,7 @@ TESTFN_UNICODE = TESTFN + u"-ƒőő"
 
 # --- paths
 
+HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
@@ -560,11 +561,23 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-def retry_before_failing(retries=NO_RETRIES):
-    """Decorator which runs a test function and retries N times before
-    actually failing.
-    """
-    return retry(exception=AssertionError, timeout=None, retries=retries)
+def get_suite():
+    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
+                   if x.endswith('.py') and x.startswith('test_') and not
+                   x.startswith('test_memory_leaks')]
+    suite = unittest.TestSuite()
+    for tm in testmodules:
+        # ...so that the full test paths are printed on screen
+        tm = "psutil.tests.%s" % tm
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
+    return suite
+
+
+def run_suite():
+    """Run unit tests."""
+    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
+    success = result.wasSuccessful()
+    sys.exit(0 if success else 1)
 
 
 def run_test_module_by_name(name):
@@ -576,6 +589,13 @@ def run_test_module_by_name(name):
     result = unittest.TextTestRunner(verbosity=VERBOSITY).run(suite)
     success = result.wasSuccessful()
     sys.exit(0 if success else 1)
+
+
+def retry_before_failing(retries=NO_RETRIES):
+    """Decorator which runs a test function and retries N times before
+    actually failing.
+    """
+    return retry(exception=AssertionError, timeout=None, retries=retries)
 
 
 def skip_on_access_denied(only_if=None):

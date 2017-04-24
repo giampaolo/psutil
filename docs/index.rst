@@ -2193,6 +2193,18 @@ Q&A
   in python as
   `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__
 
+Running tests
+=============
+
+There are two ways of running tests. If psutil is already installed use::
+
+    $ python -m psutil.tests
+
+You can use this method as a quick way to make sure psutil fully works on your
+platform. If you have a copy of the source code you can also use::
+
+    $ make test
+
 Development guide
 =================
 

@@ -90,7 +90,7 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
+  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
@@ -118,7 +118,7 @@ only_commits:
     psutil/_pswindows.py
     psutil/arch/windows/*
     psutil/tests/__init__.py
-    psutil/tests/runner.py
+    psutil/tests/__main__.py
     psutil/tests/test_memory_leaks.py
     psutil/tests/test_misc.py
     psutil/tests/test_process.py

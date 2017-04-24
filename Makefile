@@ -3,7 +3,7 @@
 # You can set the variables below from the command line.
 
 PYTHON = python
-TSCRIPT = psutil/tests/runner.py
+TSCRIPT = psutil/tests/__main__.py
 ARGS =
 
 # List of nice-to-have dev libs.
@@ -121,11 +121,11 @@ test: install
 
 # Test psutil process-related APIs.
 test-process: install
-	$(PYTHON) -m unittest -v psutil.tests.test_process
+	$(PYTHON) -m unittest -v psutil.test.test_process
 
 # Test psutil system-related APIs.
 test-system: install
-	$(PYTHON) -m unittest -v psutil.tests.test_system
+	$(PYTHON) -m unittest -v psutil.test.test_system
 
 # Test misc.
 test-misc: install
@@ -144,7 +144,7 @@ test-platform: install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Run a specific test by name, e.g.
-# make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
+# make test-by-name psutil.test.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
 	@$(PYTHON) -m unittest -v $(ARGS)
 

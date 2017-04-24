@@ -9,7 +9,6 @@ running processes and system utilization (CPU, memory, disks, network)
 in Python.
 """
 
-import atexit
 import contextlib
 import io
 import os
@@ -195,13 +194,6 @@ elif LINUX:
                 suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
 
-        @atexit.register
-        def on_exit():
-            try:
-                os.remove(f.name)
-            except OSError:
-                pass
-
         compiler = UnixCCompiler()
         try:
             with silenced_output('stderr'):
@@ -211,6 +203,11 @@ elif LINUX:
             return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
         else:
             return None
+        finally:
+            try:
+                os.remove(f.name)
+            except OSError:
+                pass
 
     ETHTOOL_MACRO = get_ethtool_macro()
 
@@ -270,7 +267,7 @@ def main():
         license='BSD',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
-        test_suite="psutil.tests.runner.get_suite",
+        test_suite="psutil.tests.get_suite",
         tests_require=['ipaddress', 'mock', 'unittest2'],
         zip_safe=False,   # http://stackoverflow.com/questions/19548957
         # see: python setup.py register --list-classifiers
