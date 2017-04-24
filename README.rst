@@ -395,6 +395,21 @@ Further process APIs
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
     >>>
 
+Popen wrapper:
+
+    >>> import psutil
+    >>> from subprocess import PIPE
+    >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
+    >>> p.name()
+    'python'
+    >>> p.username()
+    'giampaolo'
+    >>> p.communicate()
+    ('hello\n', None)
+    >>> p.wait(timeout=2)
+    0
+    >>>
+
 Windows services
 ================
 

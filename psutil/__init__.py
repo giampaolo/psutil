@@ -1067,7 +1067,7 @@ class Process(object):
             # interval was too low
             return 0.0
         else:
-            # Note 1.
+            # Note 1:
             # in order to emulate "top" we multiply the value for the num
             # of CPU cores. This way the busy process will be reported as
             # having 100% (or more) usage.
@@ -1076,7 +1076,7 @@ class Process(object):
             # taskmgr.exe on Windows differs in that it will show 50%
             # instead.
             #
-            # Note #3:
+            # Note 3:
             # a percentage > 100 is legitimate as it can result from a
             # process with multiple threads running on different CPU
             # cores (top does the same), see:
