@@ -606,6 +606,28 @@ class TestSystemCPU(unittest.TestCase):
             assert psutil.cpu_freq()
             self.assertEqual(len(flags), 2)
 
+    def test_cpu_freq_emulate_data(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/scaling_cur_freq'):
+                return io.BytesIO(b"500000")
+            elif name.endswith('/scaling_min_freq'):
+                return io.BytesIO(b"600000")
+            elif name.endswith('/scaling_max_freq'):
+                return io.BytesIO(b"700000")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch(
+                    'glob.glob',
+                    return_value=['/sys/devices/system/cpu/cpufreq/policy0']):
+                freq = psutil.cpu_freq()
+                self.assertEqual(freq.current, 500.0)
+                self.assertEqual(freq.min, 600.0)
+                self.assertEqual(freq.max, 700.0)
+
 
 # =====================================================================
 # --- system CPU stats
@@ -1269,9 +1291,9 @@ class TestSensorsTemperatures(unittest.TestCase):
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('name'):
-                return io.BytesIO(b"name")
+                return io.StringIO("name")
             elif name.endswith('label'):
-                return io.BytesIO(b"label")
+                return io.StringIO("label")
             elif name.endswith('temp1_input'):
                 return io.BytesIO(b"30000")
             elif name.endswith('temp1_max'):
