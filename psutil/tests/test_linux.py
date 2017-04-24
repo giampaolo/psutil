@@ -1290,15 +1290,15 @@ class TestSensorsTemperatures(unittest.TestCase):
 
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
-            if name.endswith('name'):
-                return io.StringIO("name")
-            elif name.endswith('label'):
-                return io.StringIO("label")
-            elif name.endswith('temp1_input'):
+            if name.endswith('/name'):
+                return io.StringIO(u("name"))
+            elif name.endswith('/temp1_label'):
+                return io.StringIO(u("label"))
+            elif name.endswith('/temp1_input'):
                 return io.BytesIO(b"30000")
-            elif name.endswith('temp1_max'):
+            elif name.endswith('/temp1_max'):
                 return io.BytesIO(b"40000")
-            elif name.endswith('temp1_crit'):
+            elif name.endswith('/temp1_crit'):
                 return io.BytesIO(b"50000")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1313,6 +1313,30 @@ class TestSensorsTemperatures(unittest.TestCase):
                 self.assertEqual(temp.current, 30.0)
                 self.assertEqual(temp.high, 40.0)
                 self.assertEqual(temp.critical, 50.0)
+
+
+@unittest.skipUnless(LINUX, "LINUX only")
+class TestSensorsFans(unittest.TestCase):
+
+    def test_emulate_data(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/name'):
+                return io.StringIO(u("name"))
+            elif name.endswith('/fan1_label'):
+                return io.StringIO(u("label"))
+            elif name.endswith('/fan1_input'):
+                return io.StringIO(u("2000"))
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch('glob.glob',
+                            return_value=['/sys/class/hwmon/hwmon2/fan1']):
+                fan = psutil.sensors_fans()['name'][0]
+                self.assertEqual(fan.label, 'label')
+                self.assertEqual(fan.current, 2000)
 
 
 # =====================================================================
