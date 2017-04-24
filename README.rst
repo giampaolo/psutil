@@ -397,6 +397,8 @@ Further process APIs
 
 Popen wrapper:
 
+.. code-block:: python
+
     >>> import psutil
     >>> from subprocess import PIPE
     >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
