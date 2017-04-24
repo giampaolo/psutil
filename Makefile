@@ -121,11 +121,11 @@ test: install
 
 # Test psutil process-related APIs.
 test-process: install
-	$(PYTHON) -m unittest -v psutil.test.test_process
+	$(PYTHON) -m unittest -v psutil.tests.test_process
 
 # Test psutil system-related APIs.
 test-system: install
-	$(PYTHON) -m unittest -v psutil.test.test_system
+	$(PYTHON) -m unittest -v psutil.tests.test_system
 
 # Test misc.
 test-misc: install

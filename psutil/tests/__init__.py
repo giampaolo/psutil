@@ -13,11 +13,11 @@ import atexit
 import contextlib
 import errno
 import functools
-import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
 import os
 import re
 import shutil
 import socket
+import ssl
 import stat
 import subprocess
 import sys
@@ -30,6 +30,11 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
+try:
+    from urllib.request import urlopen  # py3
+except ImportError:
+    from urllib2 import urlopen
 
 try:
     from unittest import mock  # py3
@@ -74,6 +79,8 @@ __all__ = [
     'check_connection_ntuple', 'check_net_address', 'unittest', 'cleanup',
     'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
     'run_test_module_by_name',
+    # install utils
+    'install_pip', 'install_test_deps',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe',
     # subprocesses
@@ -138,6 +145,14 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
+GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
+TEST_DEPS = []
+if sys.version_info[:2] == (2, 6):
+    TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
+elif sys.version_info[:2] == (2, 7) or sys.version_info[:2] <= (3, 2):
+    TEST_DEPS.extend(["ipaddress", "mock"])
+elif sys.version_info[:2] == (3, 3):
+    TEST_DEPS.extend(["ipaddress"])
 
 
 # ===================================================================
@@ -638,6 +653,7 @@ def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
     """
+    import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
     if enum and PY3:
         assert isinstance(family, enum.IntEnum), family
     if family == AF_INET:
@@ -732,6 +748,48 @@ def cleanup():
 
 atexit.register(cleanup)
 atexit.register(lambda: DEVNULL.close())
+
+
+# ===================================================================
+# --- install
+# ===================================================================
+
+
+def install_pip():
+    """Install pip. Returns the exit code of the subprocess."""
+    try:
+        import pip  # NOQA
+    except ImportError:
+        f = tempfile.NamedTemporaryFile(suffix='.py')
+        with contextlib.closing(f):
+            print("downloading %s to %s" % (GET_PIP_URL, f.name))
+            if hasattr(ssl, '_create_unverified_context'):
+                ctx = ssl._create_unverified_context()
+            else:
+                ctx = None
+            kwargs = dict(context=ctx) if ctx else {}
+            req = urlopen(GET_PIP_URL, **kwargs)
+            data = req.read()
+            f.write(data)
+            f.flush()
+
+            print("installing pip")
+            code = os.system('%s %s --user' % (sys.executable, f.name))
+            return code
+
+
+def install_test_deps(deps=None):
+    """Install test dependencies via pip."""
+    if deps is None:
+        deps = TEST_DEPS
+    deps = set(deps)
+    if deps:
+        is_venv = hasattr(sys, 'real_prefix')
+        opts = "--user" if not is_venv else ""
+        install_pip()
+        code = os.system('%s -m pip install %s --upgrade %s' % (
+            sys.executable, opts, " ".join(deps)))
+        return code
 
 
 # ===================================================================
