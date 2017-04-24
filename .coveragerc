@@ -2,32 +2,31 @@
 
 include =
     *psutil*
-
 omit =
+    psutil/_compat.py
     psutil/tests/*
     setup.py
-    psutil/_compat.py
-
 exclude_lines =
-    pragma: no cover
-    if PY3:
-    if __name__ == .__main__.:
-    if sys.platform.startswith
-    if _WINDOWS:
-    import enum
-    if enum is not None:
-    if enum is None:
-    if has_enums:
-    if LITTLE_ENDIAN:
     enum.IntEnum
     except ImportError:
-    raise NotImplementedError
-    if WINDOWS
-    if OSX
+    globals().update
+    if __name__ == .__main__.:
+    if _WINDOWS:
     if BSD
+    if enum is None:
+    if enum is not None:
     if FREEBSD
-    if OPENBSD
-    if NETBSD
-    if SUNOS
+    if has_enums:
     if LINUX
+    if LITTLE_ENDIAN:
+    if NETBSD
+    if OPENBSD
+    if OSX
     if ppid_map is None:
+    if PY3:
+    if SUNOS
+    if sys.platform.startswith
+    if WINDOWS
+    import enum
+    pragma: no cover
+    raise NotImplementedError

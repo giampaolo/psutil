@@ -1266,6 +1266,32 @@ class TestSensorsTemperatures(unittest.TestCase):
                 assert m.called
                 self.assertIn("ignoring", str(ws[0].message))
 
+    def test_emulate_data(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('name'):
+                return io.BytesIO(b"name")
+            elif name.endswith('label'):
+                return io.BytesIO(b"label")
+            elif name.endswith('temp1_input'):
+                return io.BytesIO(b"30000")
+            elif name.endswith('temp1_max'):
+                return io.BytesIO(b"40000")
+            elif name.endswith('temp1_crit'):
+                return io.BytesIO(b"50000")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch('glob.glob',
+                            return_value=['/sys/class/hwmon/hwmon0/temp1']):
+                temp = psutil.sensors_temperatures()['name'][0]
+                self.assertEqual(temp.label, 'label')
+                self.assertEqual(temp.current, 30.0)
+                self.assertEqual(temp.high, 40.0)
+                self.assertEqual(temp.critical, 50.0)
+
 
 # =====================================================================
 # --- test process

@@ -627,7 +627,7 @@ class Process(object):
         # Process.parent()?
         if POSIX:
             return self._proc.ppid()
-        else:
+        else:  # pragma: no cover
             self._ppid = self._ppid or self._proc.ppid()
             return self._ppid
 

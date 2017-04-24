@@ -125,7 +125,7 @@ class TestProcess(unittest.TestCase):
 
     def test_name_long(self):
         # On UNIX the kernel truncates the name to the first 15
-        # characters. In sich a case psutil tries to determine the
+        # characters. In such a case psutil tries to determine the
         # full name from the cmdline.
         name = "long-program-name"
         cmdline = ["long-program-name-extended", "foo", "bar"]
