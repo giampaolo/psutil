@@ -628,6 +628,29 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.min, 600.0)
                 self.assertEqual(freq.max, 700.0)
 
+    def test_cpu_freq_emulate_multi_cpu(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/scaling_cur_freq'):
+                return io.BytesIO(b"100000")
+            elif name.endswith('/scaling_min_freq'):
+                return io.BytesIO(b"200000")
+            elif name.endswith('/scaling_max_freq'):
+                return io.BytesIO(b"300000")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        policies = ['/sys/devices/system/cpu/cpufreq/policy0',
+                    '/sys/devices/system/cpu/cpufreq/policy1',
+                    '/sys/devices/system/cpu/cpufreq/policy2']
+        with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch('glob.glob', return_value=policies):
+                freq = psutil.cpu_freq()
+                self.assertEqual(freq.current, 100.0)
+                self.assertEqual(freq.min, 200.0)
+                self.assertEqual(freq.max, 300.0)
+
 
 # =====================================================================
 # --- system CPU stats
