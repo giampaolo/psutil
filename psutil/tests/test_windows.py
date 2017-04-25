@@ -626,7 +626,8 @@ class TestDualProcessImplementation(unittest.TestCase):
         num_handles = psutil.Process(self.pid).num_handles()
         with mock.patch("psutil._psplatform.cext.proc_num_handles",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process(self.pid).num_handles() == num_handles
+            self.assertEqual(psutil.Process(self.pid).num_handles(),
+                             num_handles)
             assert fun.called
 
 

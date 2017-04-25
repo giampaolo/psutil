@@ -1528,12 +1528,12 @@ class TestProcess(unittest.TestCase):
         fake_file = io.StringIO(u('foo\x00bar\x00'))
         with mock.patch('psutil._pslinux.open',
                         return_value=fake_file, create=True) as m:
-            p.cmdline() == ['foo', 'bar']
+            self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo\x00bar\x00\x00'))
         with mock.patch('psutil._pslinux.open',
                         return_value=fake_file, create=True) as m:
-            p.cmdline() == ['foo', 'bar', '']
+            self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
     def test_readlink_path_deleted_mocked(self):
@@ -1659,8 +1659,7 @@ class TestProcessAgainstStatus(unittest.TestCase):
                         return int(value)
                     except ValueError:
                         return value
-            else:
-                raise ValueError("can't find %r" % linestart)
+            raise ValueError("can't find %r" % linestart)
 
     def test_name(self):
         value = self.read_status_file("Name:")

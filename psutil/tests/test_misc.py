@@ -367,7 +367,8 @@ class TestMisc(unittest.TestCase):
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
-    def assert_stdout(self, exe, args=None):
+    @staticmethod
+    def assert_stdout(exe, args=None):
         exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
@@ -381,7 +382,8 @@ class TestScripts(unittest.TestCase):
         assert out, out
         return out
 
-    def assert_syntax(self, exe, args=None):
+    @staticmethod
+    def assert_syntax(exe, args=None):
         exe = os.path.join(SCRIPTS_DIR, exe)
         with open(exe, 'r') as f:
             src = f.read()

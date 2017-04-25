@@ -415,7 +415,8 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 @unittest.skipUnless(NETBSD, "NETBSD only")
 class NetBSDSpecificTestCase(unittest.TestCase):
 
-    def parse_meminfo(self, look_for):
+    @staticmethod
+    def parse_meminfo(look_for):
         with open('/proc/meminfo', 'rb') as f:
             for line in f:
                 if line.startswith(look_for):

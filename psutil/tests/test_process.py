@@ -852,7 +852,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.username(), pwd.getpwuid(os.getuid()).pw_name)
             with mock.patch("psutil.pwd.getpwuid",
                             side_effect=KeyError) as fun:
-                p.username() == str(p.uids().real)
+                self.assertEqual(p.username(), str(p.uids().real))
                 assert fun.called
 
         elif WINDOWS and 'USERNAME' in os.environ:

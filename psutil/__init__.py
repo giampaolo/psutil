@@ -272,7 +272,7 @@ class ZombieProcess(NoSuchProcess):
     """
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
-        Error.__init__(self, msg)
+        NoSuchProcess.__init__(self, msg)
         self.pid = pid
         self.ppid = ppid
         self.name = name

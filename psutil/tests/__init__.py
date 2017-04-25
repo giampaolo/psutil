@@ -166,20 +166,19 @@ class ThreadTask(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._running = False
-        self._interval = None
+        self._interval = 0.001
         self._flag = threading.Event()
 
     def __repr__(self):
         name = self.__class__.__name__
         return '<%s running=%s at %#x>' % (name, self._running, id(self))
 
-    def start(self, interval=0.001):
+    def start(self):
         """Start thread and keep it running until an explicit
         stop() request. Polls for shutdown every 'timeout' seconds.
         """
         if self._running:
             raise ValueError("already started")
-        self._interval = interval
         threading.Thread.start(self)
         self._flag.wait()
 
@@ -435,11 +434,11 @@ class retry(object):
                     if self.logfun is not None:
                         self.logfun(exc)
                     self.sleep()
+                    continue
+            if PY3:
+                raise exc
             else:
-                if PY3:
-                    raise exc
-                else:
-                    raise
+                raise
 
         # This way the user of the decorated function can change config
         # parameters.
