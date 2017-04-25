@@ -1279,7 +1279,7 @@ def users():
         # to use them in the future.
         if not user_process:
             continue
-        if hostname == ':0.0' or hostname == ':0':
+        if hostname in (':0.0', ':0'):
             hostname = 'localhost'
         nt = _common.suser(user, tty or None, hostname, tstamp)
         retlist.append(nt)
