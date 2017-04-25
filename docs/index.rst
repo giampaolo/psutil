@@ -1625,6 +1625,8 @@ Process class
 
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
+    :meth:`children()` behaviour is well summaried by this
+    `unit test <https://github.com/giampaolo/psutil/blob/7666871497e930ff1a318d90bbcec93da851afbf/psutil/tests/test_process.py#L1236-L1247>`__.
 
   .. method:: open_files()
 

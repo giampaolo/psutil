@@ -1234,13 +1234,13 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(children[0].ppid(), os.getpid())
 
     def test_children_recursive(self):
-        # Test children() against two sub processes, A and B, where
-        # A (our child) spawned B (our grandchild).
+        # Test children() against two sub processes, p1 and p2, where
+        # p1 (our child) spawned p2 (our grandchild).
         p1, p2 = create_proc_children_pair()
         p = psutil.Process()
         self.assertEqual(p.children(), [p1])
         self.assertEqual(p.children(recursive=True), [p1, p2])
-        # If the intermediate process is gone there's no wait for
+        # If the intermediate process is gone there's no way for
         # children() to recursively find it.
         p1.terminate()
         p1.wait()
