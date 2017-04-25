@@ -659,7 +659,10 @@ class TestTestUtils(unittest.TestCase):
         self.assertEqual(len(children), 2)
         self.assertIn(p1, children)
         self.assertIn(p2, children)
-        # make sure both or them are cleanup up
+        self.assertEqual(p1.ppid(), os.getpid())
+        self.assertEqual(p2.ppid(), p1.pid)
+
+        # make sure both of them are cleaned up
         reap_children()
         assert not p1.is_running()
         assert not p2.is_running()

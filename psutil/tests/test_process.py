@@ -49,6 +49,7 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_exe
+from psutil.tests import create_proc_children_pair
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
@@ -1233,25 +1234,17 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(children[0].ppid(), os.getpid())
 
     def test_children_recursive(self):
-        # here we create a subprocess which creates another one as in:
-        # A (parent) -> B (child) -> C (grandchild)
-        s = "import subprocess, os, sys, time;"
-        s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(60);'];"
-        s += "subprocess.Popen(cmd);"
-        s += "time.sleep(60);"
-        get_test_subprocess(cmd=[PYTHON, "-c", s])
+        # Test children() against two sub processes, A and B, where
+        # A (our child) spawned B (our grandchild).
+        p1, p2 = create_proc_children_pair()
         p = psutil.Process()
-        self.assertEqual(len(p.children(recursive=False)), 1)
-        # give the grandchild some time to start
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
-            children = p.children(recursive=True)
-            if len(children) > 1:
-                break
-        self.assertEqual(len(children), 2)
-        self.assertEqual(children[0].ppid(), os.getpid())
-        self.assertEqual(children[1].ppid(), children[0].pid)
+        self.assertEqual(p.children(), [p1])
+        self.assertEqual(p.children(recursive=True), [p1, p2])
+        # If the intermediate process is gone there's no wait for
+        # children() to recursively find it.
+        p1.terminate()
+        p1.wait()
+        self.assertEqual(p.children(recursive=True), [])
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children

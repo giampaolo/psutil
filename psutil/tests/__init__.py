@@ -234,15 +234,17 @@ def create_proc_children_pair():
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
     """
-    s = "import subprocess, os, sys, time;"
-    s += "PYTHON = os.path.realpath(sys.executable);"
-    s += "cmd = [PYTHON, '-c', 'import time; time.sleep(60);'];"
-    s += "sproc = subprocess.Popen(cmd);"
-    s += "f = open('%s', 'w');" % TESTFN
-    s += "f.write(str(sproc.pid));"
-    s += "f.close();"
-    s += "time.sleep(60);"
-    child1 = psutil.Process(get_test_subprocess(cmd=[PYTHON, "-c", s]).pid)
+    s = textwrap.dedent("""\
+        import subprocess, os, sys, time
+        PYTHON = os.path.realpath(sys.executable)
+        cmd = [PYTHON, '-c', 'import time; time.sleep(60);']
+        sproc = subprocess.Popen(cmd)
+        f = open('%s', 'w')
+        f.write(str(sproc.pid))
+        f.close()
+        time.sleep(60)
+        """ % TESTFN)
+    child1 = psutil.Process(pyrun(s).pid)
     data = wait_for_file(TESTFN, delete=False, empty=False)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
