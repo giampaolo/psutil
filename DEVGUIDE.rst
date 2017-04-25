@@ -8,23 +8,21 @@ If you plan on hacking on psutil this is what you're supposed to do first:
 
   $ git clone git@github.com:giampaolo/psutil.git
 
-- install system deps (see `install instructions <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__).
-
-- install development deps; these are useful for running tests (e.g. mock,
-  unittest2), building doc (e.g. sphinx), running linters (flake8), etc. ::
+- install test deps and GIT hooks::
 
   $ make setup-dev-env
 
-- bear in mind that ``make`` (see `Makefile <https://github.com/giampaolo/psutil/blob/master/Makefile>`_)
+- run tests::
+
+  $ make test
+
+- bear in mind that ``make``
+  (see `Makefile <https://github.com/giampaolo/psutil/blob/master/Makefile>`_)
   is the designated tool to run tests, build, install etc. and that it is also
   available on Windows
   (see `make.bat <https://github.com/giampaolo/psutil/blob/master/make.bat>`_).
-- bear in mind that both psutil (``make install``) and any other lib
-  (``make setup-dev-env``) is installed as a limited user
-  (``pip install --user ...``), so develop as such (don't use root).
-- (UNIX only) run ``make install-git-hooks``: this will reject your commits
-  if python code is not PEP8 compliant.
-- run ``make test`` to run tests.
+- do not use ``sudo``; ``make install`` installs psutil as a limited user in
+  "edit" mode; also ``make setup-dev-env`` installs deps as a limited user.
 
 ============
 Coding style
@@ -43,7 +41,7 @@ Some useful make commands::
 
   $ make install        # install
   $ make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
-  $ make test           # run all tests
+  $ make test           # run unit tests
   $ make test-memleaks  # run memory leak tests
   $ make coverage       # run test coverage
   $ make flake8         # run PEP8 linter

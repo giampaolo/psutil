@@ -27,7 +27,6 @@ DEPS = \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 
-
 all: test
 
 # ===================================================================
@@ -73,7 +72,8 @@ build: _
 # Install this package + GIT hooks. Install is done:
 # - as the current user, in order to avoid permission issues
 # - in development / edit mode, so that source can be modified on the fly
-install: build
+install:
+	${MAKE} build
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
 	$(PYTHON) -c "import setuptools"
 	$(PYTHON) setup.py develop $(INSTALL_OPTS)
@@ -103,12 +103,10 @@ install-pip:
 		f.close(); \
 		sys.exit(code);"
 
-# Install:
-# - GIT hooks
-# - pip (if necessary)
-# - useful deps which are nice to have while developing / testing;
-#   deps these are also upgraded
-setup-dev-env: install-git-hooks install-pip
+# Install GIT hooks, pip, test deps (also upgrades them).
+setup-dev-env:
+	${MAKE} install-git-hooks
+	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade $(DEPS)
 
@@ -117,39 +115,48 @@ setup-dev-env: install-git-hooks install-pip
 # ===================================================================
 
 # Run all tests.
-test: install
+test:
+	${MAKE} install
 	$(PYTHON) $(TSCRIPT)
 
 # Test psutil process-related APIs.
-test-process: install
+test-process:
+	${MAKE} install
 	$(PYTHON) -m unittest -v psutil.tests.test_process
 
 # Test psutil system-related APIs.
-test-system: install
+test-system:
+	${MAKE} install
 	$(PYTHON) -m unittest -v psutil.tests.test_system
 
 # Test misc.
-test-misc: install
+test-misc:
+	${MAKE} install
 	$(PYTHON) psutil/tests/test_misc.py
 
 # Test POSIX.
-test-posix: install
+test-posix:
+	${MAKE} install
 	$(PYTHON) psutil/tests/test_posix.py
 
 # Test memory leaks.
-test-memleaks: install
+test-memleaks:
+	${MAKE} install
 	$(PYTHON) psutil/tests/test_memory_leaks.py
 
 # Run specific platform tests only.
-test-platform: install
+test-platform:
+	${MAKE} install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Run a specific test by name, e.g.
-# make test-by-name psutil.testss.test_system.TestSystemAPIs.test_cpu_times
-test-by-name: install
+# make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
+test-by-name:
+	${MAKE} install
 	@$(PYTHON) -m unittest -v $(ARGS)
 
-coverage: install
+coverage:
+	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
 	$(PYTHON) -m coverage run $(TSCRIPT)
@@ -194,7 +201,8 @@ install-git-hooks:
 # ===================================================================
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
-upload-src: clean
+upload-src:
+	${MAKE} clean
 	$(PYTHON) setup.py sdist upload
 
 # Download exes/wheels hosted on appveyor.
@@ -240,11 +248,13 @@ grep-todos:
 	git grep -EIn "TODO|FIXME|XXX"
 
 # run script which benchmarks oneshot() ctx manager (see #799)
-bench-oneshot: install
+bench-oneshot:
+	${MAKE} install
 	$(PYTHON) scripts/internal/bench_oneshot.py
 
 # same as above but using perf module (supposed to be more precise)
-bench-oneshot-2: install
+bench-oneshot-2:
+	${MAKE} install
 	$(PYTHON) scripts/internal/bench_oneshot_2.py
 
 # generate a doc.zip file and manually upload it to PYPI.
