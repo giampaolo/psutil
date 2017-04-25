@@ -1146,7 +1146,7 @@ class TestMisc(unittest.TestCase):
         # psutil is supposed to fall back on using pids().
         def open_mock(name, *args, **kwargs):
             if name == "/proc/%s/status" % os.getpid():
-                return io.BytesIO("")
+                return io.StringIO(u(""))
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -1208,7 +1208,7 @@ class TestSensorsBattery(unittest.TestCase):
             if name.endswith("AC0/online") or name.endswith("AC/online"):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith("/status"):
-                return io.BytesIO(b"charging")
+                return io.StringIO(u("charging"))
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -1239,7 +1239,7 @@ class TestSensorsBattery(unittest.TestCase):
             if name.endswith("AC0/online") or name.endswith("AC/online"):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith("/status"):
-                return io.BytesIO(b"discharging")
+                return io.StringIO(u("discharging"))
             else:
                 return orig_open(name, *args, **kwargs)
 
