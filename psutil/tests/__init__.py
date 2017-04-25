@@ -202,6 +202,7 @@ class ThreadTask(threading.Thread):
 
 
 _subprocesses_started = set()
+_pids_started = set()
 
 
 def get_test_subprocess(cmd=None, **kwds):
@@ -226,6 +227,27 @@ def get_test_subprocess(cmd=None, **kwds):
         wait_for_pid(sproc.pid)
     _subprocesses_started.add(sproc)
     return sproc
+
+
+def create_proc_children_pair():
+    """Create a subprocess which creates another one as in:
+    A (us) -> B (child) -> C (grandchild).
+    Return a (child, grandchild) tuple.
+    """
+    s = "import subprocess, os, sys, time;"
+    s += "PYTHON = os.path.realpath(sys.executable);"
+    s += "cmd = [PYTHON, '-c', 'import time; time.sleep(60);'];"
+    s += "sproc = subprocess.Popen(cmd);"
+    s += "f = open('%s', 'w');" % TESTFN
+    s += "f.write(str(sproc.pid));"
+    s += "f.close();"
+    s += "time.sleep(60);"
+    child1 = psutil.Process(get_test_subprocess(cmd=[PYTHON, "-c", s]).pid)
+    data = wait_for_file(TESTFN, delete=False, empty=False)
+    child2_pid = int(data)
+    _pids_started.add(child2_pid)
+    child2 = psutil.Process(child2_pid)
+    return (child1, child2)
 
 
 _testfiles = []
@@ -279,9 +301,9 @@ def reap_children(recursive=False):
     # processes as we don't want to lose the intermediate reference
     # in case of grandchildren.
     if recursive:
-        children = psutil.Process().children(recursive=True)
+        children = set(psutil.Process().children(recursive=True))
     else:
-        children = []
+        children = set()
 
     # Terminate subprocess.Popen instances "cleanly" by closing their
     # fds and wiat()ing for them in order to avoid zombies.
@@ -309,7 +331,17 @@ def reap_children(recursive=False):
                 if err.errno != errno.ECHILD:
                     raise
 
-    # Terminates grandchildren.
+    # Terminate started pids.
+    for pid in _pids_started:
+        try:
+            p = psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            children.add(p)
+    _pids_started.clear()
+
+    # Terminate grandchildren.
     if children:
         for p in children:
             try:
@@ -323,7 +355,7 @@ def reap_children(recursive=False):
                 p.kill()
             except psutil.NoSuchProcess:
                 pass
-        _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
+        gone, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
         if alive:
             for p in alive:
                 warn("process %r survived kill()" % p)

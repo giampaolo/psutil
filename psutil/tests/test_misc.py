@@ -30,6 +30,7 @@ from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
 from psutil.tests import chdir
+from psutil.tests import create_proc_children_pair
 from psutil.tests import get_test_subprocess
 from psutil.tests import importlib
 from psutil.tests import mock
@@ -46,6 +47,7 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
+import psutil.tests
 
 
 class TestMisc(unittest.TestCase):
@@ -645,6 +647,24 @@ class TestTestUtils(unittest.TestCase):
         assert p.is_running()
         reap_children()
         assert not p.is_running()
+        assert not psutil.tests._pids_started
+        assert not psutil.tests._subprocesses_started
+
+    def test_create_proc_children_pair(self):
+        p1, p2 = create_proc_children_pair()
+        self.assertNotEqual(p1.pid, p2.pid)
+        assert p1.is_running()
+        assert p2.is_running()
+        children = psutil.Process().children(recursive=True)
+        self.assertEqual(len(children), 2)
+        self.assertIn(p1, children)
+        self.assertIn(p2, children)
+        # make sure both or them are cleanup up
+        reap_children()
+        assert not p1.is_running()
+        assert not p2.is_running()
+        assert not psutil.tests._pids_started
+        assert not psutil.tests._subprocesses_started
 
 
 if __name__ == '__main__':
