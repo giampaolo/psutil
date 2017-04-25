@@ -1137,6 +1137,21 @@ class TestMisc(unittest.TestCase):
         finally:
             t.stop()
 
+    def test_pid_exists_no_proc_status(self):
+        # Internally pid_exists relies on /proc/{pid}/status.
+        # Emulate a case where this file is empty in which case
+        # psutil is supposed to fall back on using pids().
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/%s/status" % os.getpid():
+                return io.BytesIO("")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            assert psutil.pid_exists(os.getpid())
+
 
 # =====================================================================
 # --- sensors
@@ -1170,7 +1185,7 @@ class TestSensorsBattery(unittest.TestCase):
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC0/online"):
+            if name.endswith("AC0/online") or name.endswith("AC/online"):
                 return io.BytesIO(b"1")
             else:
                 return orig_open(name, *args, **kwargs)
