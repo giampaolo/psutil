@@ -46,6 +46,7 @@ from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
+from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
@@ -82,15 +83,16 @@ __all__ = [
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_exe',
+    'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
+    'create_proc_children_pair',
     # os
     'get_winver', 'get_kernel_version',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # others
-    'warn', 'decode_path', 'encode_path',
+    'warn',
 ]
 
 
@@ -130,7 +132,7 @@ if TRAVIS or APPVEYOR:
 TESTFILE_PREFIX = '$testfn'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 _TESTFN = TESTFN + '-internal'
-TESTFN_UNICODE = TESTFN + u"-ƒőő"
+TESTFN_UNICODE = TESTFN + u("-ƒőő")
 
 # --- paths
 
@@ -153,6 +155,10 @@ elif sys.version_info[:2] == (2, 7) or sys.version_info[:2] <= (3, 2):
     TEST_DEPS.extend(["ipaddress", "mock"])
 elif sys.version_info[:2] == (3, 3):
     TEST_DEPS.extend(["ipaddress"])
+
+_subprocesses_started = set()
+_pids_started = set()
+_testfiles = set()
 
 
 # ===================================================================
@@ -201,14 +207,11 @@ class ThreadTask(threading.Thread):
 # ===================================================================
 
 
-_subprocesses_started = set()
-_pids_started = set()
-
-
 def get_test_subprocess(cmd=None, **kwds):
-    """Return a subprocess.Popen object to use in tests.
-    By default stdout and stderr are redirected to /dev/null and the
-    python interpreter is used as test process.
+    """Creates a python subprocess which does nothing for 60 secs and
+    return it as subprocess.Popen instance.
+    If "cmd" is specified that is used instead of python.
+    By default stdout and stderr are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
     initialized state.
     """
@@ -233,37 +236,37 @@ def create_proc_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
+    The 2 processes are fully initialized and will live for 60 secs.
     """
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         PYTHON = os.path.realpath(sys.executable)
-        cmd = [PYTHON, '-c', 'import time; time.sleep(60);']
-        sproc = subprocess.Popen(cmd)
-        f = open('%s', 'w')
-        f.write(str(sproc.pid))
-        f.close()
+        s = "import os, time;"
+        s += "f = open('%s', 'w');"
+        s += "f.write(str(os.getpid()));"
+        s += "f.close();"
+        s += "time.sleep(60);"
+        subprocess.Popen([PYTHON, '-c', s])
         time.sleep(60)
-        """ % TESTFN)
+        """ % _TESTFN)
     child1 = psutil.Process(pyrun(s).pid)
-    data = wait_for_file(TESTFN, delete=False, empty=False)
+    data = wait_for_file(_TESTFN, delete=False, empty=False)
+    os.remove(_TESTFN)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
     return (child1, child2)
 
 
-_testfiles = []
-
-
 def pyrun(src):
     """Run python 'src' code in a separate interpreter.
-    Return interpreter subprocess.
+    Returns a subprocess.Popen instance.
     """
     if PY3:
         src = bytes(src, 'ascii')
     with tempfile.NamedTemporaryFile(
             prefix=TESTFILE_PREFIX, delete=False) as f:
-        _testfiles.append(f.name)
+        _testfiles.add(f.name)
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
@@ -585,6 +588,24 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
+# In Python 3 paths are unicode objects by default.  Surrogate escapes
+# are used to handle non-character data.
+def encode_path(path):
+    if PY3:
+        return path.encode(sys.getfilesystemencoding(),
+                           errors="surrogateescape")
+    else:
+        return path
+
+
+def decode_path(path):
+    if PY3:
+        return path.decode(sys.getfilesystemencoding(),
+                           errors="surrogateescape")
+    else:
+        return path
+
+
 # ===================================================================
 # --- testing
 # ===================================================================
@@ -833,21 +854,3 @@ def install_test_deps(deps=None):
 def warn(msg):
     """Raise a warning msg."""
     warnings.warn(msg, UserWarning)
-
-
-# In Python 3 paths are unicode objects by default.  Surrogate escapes
-# are used to handle non-character data.
-def encode_path(path):
-    if PY3:
-        return path.encode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
-
-
-def decode_path(path):
-    if PY3:
-        return path.decode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
