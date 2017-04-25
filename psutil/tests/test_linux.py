@@ -1069,18 +1069,18 @@ class TestMisc(unittest.TestCase):
         # to 'localhost'.
         with mock.patch('psutil._pslinux.cext.users',
                         return_value=[('giampaolo', 'pts/2', ':0',
-                                       1436573184.0, True)]) as m:
+                                       1436573184.0, True, 2)]) as m:
             self.assertEqual(psutil.users()[0].host, 'localhost')
             assert m.called
         with mock.patch('psutil._pslinux.cext.users',
                         return_value=[('giampaolo', 'pts/2', ':0.0',
-                                       1436573184.0, True)]) as m:
+                                       1436573184.0, True, 2)]) as m:
             self.assertEqual(psutil.users()[0].host, 'localhost')
             assert m.called
         # ...otherwise it should be returned as-is
         with mock.patch('psutil._pslinux.cext.users',
                         return_value=[('giampaolo', 'pts/2', 'foo',
-                                       1436573184.0, True)]) as m:
+                                       1436573184.0, True, 2)]) as m:
             self.assertEqual(psutil.users()[0].host, 'foo')
             assert m.called
 
