@@ -99,18 +99,18 @@ Test files controlling these are
 and
 `appveyor.yml <https://github.com/giampaolo/psutil/blob/master/appveyor.yml>`_.
 Both services run psutil test suite against all supported python version
-(2.6 - 3.5).
+(2.6 - 3.6).
 Two icons in the home page (README) always show the build status:
 
-.. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
 
-.. image:: https://ci.appveyor.com/api/projects/status/qdwvw7v1t915ywr5/branch/master?svg=true
+.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-OSX, FreeBSD and Solaris are currently tested manually (sigh!).
+OSX, BSD and Solaris are currently tested manually (sigh!).
 
 Test coverage
 -------------
@@ -133,7 +133,6 @@ Documentation
   and it's built with `sphinx <http://sphinx-doc.org/>`_.
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
 - public doc is hosted on http://pythonhosted.org/psutil/.
-- it is uploaded on every new release with ``make upload-doc``.
 
 =======================
 Releasing a new version

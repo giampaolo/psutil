@@ -18,5 +18,6 @@ Instructions for running tests
 
 * Every time a commit is pushed tests are automatically run on Travis
   (Linux, OSX) and appveyor (Windows):
+
   * Travis builds: https://travis-ci.org/giampaolo/psutil
   * AppVeyor builds: https://ci.appveyor.com/project/giampaolo/psutil
