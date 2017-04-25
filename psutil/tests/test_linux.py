@@ -1183,12 +1183,44 @@ class TestSensorsBattery(unittest.TestCase):
                 psutil.sensors_battery().secsleft, psutil.POWER_TIME_UNLIMITED)
             assert m.called
 
+    def test_emulate_power_plugged_2(self):
+        # Same as above but pretend /AC0/online does not exist in which
+        # case code relies on /status file.
+        def open_mock(name, *args, **kwargs):
+            if name.endswith("AC0/online") or name.endswith("AC/online"):
+                raise IOError(errno.ENOENT, "")
+            elif name.endswith("/status"):
+                return io.BytesIO(b"charging")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().power_plugged, True)
+            assert m.called
+
     def test_emulate_power_not_plugged(self):
         # Pretend the AC power cable is not connected.
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC0/online"):
+            if name.endswith("AC0/online") or name.endswith("AC/online"):
                 return io.BytesIO(b"0")
-            elif name.startswith("/sys/class/power_supply/BAT0/status"):
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            self.assertEqual(psutil.sensors_battery().power_plugged, False)
+            assert m.called
+
+    def test_emulate_power_not_plugged_2(self):
+        # Same as above but pretend /AC0/online does not exist in which
+        # case code relies on /status file.
+        def open_mock(name, *args, **kwargs):
+            if name.endswith("AC0/online") or name.endswith("AC/online"):
+                raise IOError(errno.ENOENT, "")
+            elif name.endswith("/status"):
                 return io.BytesIO(b"discharging")
             else:
                 return orig_open(name, *args, **kwargs)
