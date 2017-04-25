@@ -1623,6 +1623,17 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(exc.exception.pid, p.pid)
         self.assertEqual(exc.exception.name, p.name())
 
+    def test_cwd_zombie(self):
+        with mock.patch("psutil._pslinux.os.readlink",
+                        side_effect=OSError(errno.ENOENT, "")) as m:
+            p = psutil.Process()
+            p.name()
+            with self.assertRaises(psutil.ZombieProcess) as exc:
+                p.cwd()
+            assert m.called
+        self.assertEqual(exc.exception.pid, p.pid)
+        self.assertEqual(exc.exception.name, p.name())
+
 
 @unittest.skipUnless(LINUX, "LINUX only")
 class TestProcessAgainstStatus(unittest.TestCase):
