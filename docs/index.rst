@@ -1633,6 +1633,9 @@ Process class
 
     - **path**: the absolute file name.
     - **fd**: the file descriptor number; on Windows this is always ``-1``.
+
+    Linux only:
+
     - **position** (*Linux*): the file (offset) position.
     - **mode** (*Linux*): a string indicating how the file was opened, similarly
       `open <https://docs.python.org/3/library/functions.html#open>`__'s
@@ -1653,18 +1656,20 @@ Process class
     [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
 
     .. warning::
-      on Windows this is not fully reliable as due to some limitations of the
-      Windows API the underlying implementation may hang when retrieving
-      certain file handles.
-      In order to work around that psutil on Windows Vista (and higher) spawns
-      a thread and kills it if it's not responding after 100ms.
-      That implies that on Windows this method is not guaranteed to enumerate
-      all regular file handles (see full
-      `discussion <https://github.com/giampaolo/psutil/pull/597>`_).
+      on Windows this method is not reliable due to some limitations of the
+      underlying Windows API which may hang when retrieving certain file
+      handles.
+      In order to work around that psutil spawns a thread for each handle and
+      kills it if it's not responding after 100ms.
+      That implies that this method on Windows is not guaranteed to enumerate
+      all regular file handles (see
+      `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
+      Also, it will only list files living in the C:\\ drive (see
+      `issue 1020 <https://github.com/giampaolo/psutil/pull/1020>`_).
 
     .. warning::
-      on BSD this method can return files with a 'null' path due to a kernel
-      bug hence it's not reliable
+      on BSD this method can return files with a null path ("") due to a
+      kernel bug, hence it's not reliable
       (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
     .. versionchanged::
