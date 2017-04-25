@@ -1879,12 +1879,23 @@ class Process(object):
                     # Get file position and flags.
                     file = "%s/%s/fdinfo/%s" % (
                         self._procfs_path, self.pid, fd)
-                    with open_binary(file) as f:
-                        pos = int(f.readline().split()[1])
-                        flags = int(f.readline().split()[1], 8)
-                    mode = file_flags_to_mode(flags)
-                    ntuple = popenfile(path, int(fd), int(pos), mode, flags)
-                    retlist.append(ntuple)
+                    try:
+                        with open_binary(file) as f:
+                            pos = int(f.readline().split()[1])
+                            flags = int(f.readline().split()[1], 8)
+                    except IOError as err:
+                        if err.errno == errno.ENOENT:
+                            # fd gone in the meantime; does not
+                            # necessarily mean the process disappeared
+                            # on us.
+                            hit_enoent = True
+                        else:
+                            raise
+                    else:
+                        mode = file_flags_to_mode(flags)
+                        ntuple = popenfile(
+                            path, int(fd), int(pos), mode, flags)
+                        retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('%s/%s' % (self._procfs_path, self.pid))

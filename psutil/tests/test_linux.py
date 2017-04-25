@@ -1506,6 +1506,22 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(p.open_files(), [])
                 assert m.called
 
+    def test_open_files_fd_gone(self):
+        # Simulate a case where /proc/{pid}/fdinfo/{fd} disappears
+        # while iterating through fds.
+        # https://travis-ci.org/giampaolo/psutil/jobs/225694530
+        p = psutil.Process()
+        files = p.open_files()
+        with tempfile.NamedTemporaryFile():
+            # give the kernel some time to see the new file
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+            with mock.patch(patch_point,
+                            side_effect=IOError(errno.ENOENT, "")) as m:
+                files = p.open_files()
+                assert not files
+                assert m.called
+
     # --- mocked tests
 
     def test_terminal_mocked(self):

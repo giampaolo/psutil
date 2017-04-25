@@ -13,10 +13,13 @@
 
 **Bug fixes**
 
-- 1014_: Linux can mask legitimate ENOENT exceptions as NoSuchProcess.
+- 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
+  NoSuchProcess.
 - 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
 - 1017_: net_io_counters() raises RuntimeError on a system with no network
   cards installed.
+- 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
+  skipping a file which gets deleted while open files are retrieved.
 
 *2017-04-10*
 
