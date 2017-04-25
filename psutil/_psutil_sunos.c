@@ -461,12 +461,14 @@ psutil_users(PyObject *self, PyObject *args) {
         else
             py_user_proc = Py_False;
         py_tuple = Py_BuildValue(
-            "(sssfO)",
+            "(sssfiO)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc);            // (bool) user process
+            py_user_proc,             // (bool) user process
+            ut->ut_pid                // process id
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

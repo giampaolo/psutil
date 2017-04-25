@@ -799,11 +799,13 @@ psutil_users(PyObject *self, PyObject *args) {
         if (*ut.ut_name == '\0')
             continue;
         py_tuple = Py_BuildValue(
-            "(sssf)",
+            "(sssfi)",
             ut.ut_name,         // username
             ut.ut_line,         // tty
             ut.ut_host,         // hostname
-           (float)ut.ut_time);  // start time
+           (float)ut.ut_time,   // start time
+            ut.ut_pid           // process id
+        );
         if (!py_tuple) {
             fclose(fp);
             goto error;

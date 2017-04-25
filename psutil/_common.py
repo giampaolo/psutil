@@ -156,7 +156,7 @@ snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'errin', 'errout',
                                'dropin', 'dropout'])
 # psutil.users()
-suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
+suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
 # psutil.net_connections()
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
