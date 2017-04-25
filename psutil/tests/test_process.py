@@ -199,26 +199,26 @@ class TestProcess(unittest.TestCase):
         # timeout < 0 not allowed
         self.assertRaises(ValueError, p.wait, -1)
 
-    # XXX why is this skipped on Windows?
-    @unittest.skipUnless(POSIX, 'skipped on Windows')
     def test_wait_non_children(self):
-        # test wait() against processes which are not our children
-        code = "import sys;"
-        code += "from subprocess import Popen, PIPE;"
-        code += "cmd = ['%s', '-c', 'import time; time.sleep(60)'];" % PYTHON
-        code += "sp = Popen(cmd, stdout=PIPE);"
-        code += "sys.stdout.write(str(sp.pid));"
-        sproc = get_test_subprocess([PYTHON, "-c", code],
-                                    stdout=subprocess.PIPE)
-        grandson_pid = int(sproc.stdout.read())
-        grandson_proc = psutil.Process(grandson_pid)
-        try:
-            self.assertRaises(psutil.TimeoutExpired, grandson_proc.wait, 0.01)
-            grandson_proc.kill()
-            ret = grandson_proc.wait()
-            self.assertEqual(ret, None)
-        finally:
-            reap_children(recursive=True)
+        # Test wait() against a process which is not our direct
+        # child.
+        p1, p2 = create_proc_children_pair()
+        self.assertRaises(psutil.TimeoutExpired, p1.wait, 0.01)
+        self.assertRaises(psutil.TimeoutExpired, p2.wait, 0.01)
+        # We also terminate the direct child otherwise the
+        # grandchild will hang until the parent is gone.
+        p1.terminate()
+        p2.terminate()
+        ret1 = p1.wait()
+        ret2 = p2.wait()
+        if POSIX:
+            self.assertEqual(ret1, -signal.SIGTERM)
+            # For processes which are not our children we're supposed
+            # to get None.
+            self.assertEqual(ret2, None)
+        else:
+            self.assertEqual(ret1, 0)
+            self.assertEqual(ret1, 0)
 
     def test_wait_timeout_0(self):
         sproc = get_test_subprocess()
@@ -1633,18 +1633,18 @@ class TestProcess(unittest.TestCase):
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""
-        #include <unistd.h>
-        #include <fcntl.h>
-        char * const argv[] = {"cat", 0};
-        char * const envp[] = {"A=1", "X", "C=3", 0};
-        int main(void) {
-            /* Close stderr on exec so parent can wait for the execve to
-             * finish. */
-            if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
-                return 0;
-            return execve("/bin/cat", argv, envp);
-        }
-        """)
+            #include <unistd.h>
+            #include <fcntl.h>
+            char * const argv[] = {"cat", 0};
+            char * const envp[] = {"A=1", "X", "C=3", 0};
+            int main(void) {
+                /* Close stderr on exec so parent can wait for the execve to
+                 * finish. */
+                if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
+                    return 0;
+                return execve("/bin/cat", argv, envp);
+            }
+            """)
         path = TESTFN
         create_exe(path, c_code=code)
         self.addCleanup(safe_rmpath, path)
