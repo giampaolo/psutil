@@ -231,7 +231,10 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 free_value, psutil_value, delta=MEMORY_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
-    def test_warnings_mocked(self):
+    def test_warnings_on_misses(self):
+        # Emulate a case where /proc/meminfo provides few info.
+        # psutil is supposed to set the missing fields to 0 and
+        # raise a warning.
         def open_mock(name, *args, **kwargs):
             if name == '/proc/meminfo':
                 return io.BytesIO(textwrap.dedent("""\
@@ -414,7 +417,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         return self.assertAlmostEqual(
             free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
-    def test_warnings_mocked(self):
+    def test_missing_sin_sout(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
@@ -1605,6 +1608,20 @@ class TestProcess(unittest.TestCase):
                 p.memory_maps()
             self.assertEqual(err.exception.errno, errno.ENOENT)
             assert m.called
+
+    def test_rlimit_zombie(self):
+        # Emulate a case where rlimit() raises ENOSYS, which may
+        # happen in case of zombie process:
+        # https://travis-ci.org/giampaolo/psutil/jobs/51368273
+        with mock.patch("psutil._pslinux.cext.linux_prlimit",
+                        side_effect=OSError(errno.ENOSYS, "")) as m:
+            p = psutil.Process()
+            p.name()
+            with self.assertRaises(psutil.ZombieProcess) as exc:
+                p.rlimit(psutil.RLIMIT_NOFILE)
+            assert m.called
+        self.assertEqual(exc.exception.pid, p.pid)
+        self.assertEqual(exc.exception.name, p.name())
 
 
 @unittest.skipUnless(LINUX, "LINUX only")
