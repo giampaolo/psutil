@@ -1096,6 +1096,9 @@ class TestProcess(unittest.TestCase):
                                psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
 
+        # err
+        self.assertRaises(ValueError, p.connections, kind='???')
+
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX not supported')
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):

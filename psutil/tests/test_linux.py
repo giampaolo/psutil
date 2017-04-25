@@ -237,10 +237,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 return io.BytesIO(textwrap.dedent("""\
                     Active(anon):    6145416 kB
                     Active(file):    2950064 kB
-                    Buffers:          287952 kB
                     Inactive(anon):   574764 kB
                     Inactive(file):  1567648 kB
-                    MemAvailable:    6574984 kB
+                    MemAvailable:         -1 kB
                     MemFree:         2057400 kB
                     MemTotal:       16325648 kB
                     SReclaimable:     346648 kB
@@ -264,10 +263,14 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertIn("shared", str(w.message))
                 self.assertIn("active", str(w.message))
                 self.assertIn("inactive", str(w.message))
+                self.assertIn("buffers", str(w.message))
+                self.assertIn("available", str(w.message))
                 self.assertEqual(ret.cached, 0)
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
                 self.assertEqual(ret.shared, 0)
+                self.assertEqual(ret.buffers, 0)
+                self.assertEqual(ret.available, 0)
 
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels

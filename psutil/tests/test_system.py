@@ -518,6 +518,8 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(cons), len(set(cons)))
             check(cons, families, types_)
 
+        self.assertRaises(ValueError, psutil.net_connections, kind='???')
+
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
