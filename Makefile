@@ -7,7 +7,8 @@ TSCRIPT = psutil/tests/__main__.py
 ARGS =
 
 # List of nice-to-have dev libs.
-DEPS = argparse \
+DEPS = \
+	argparse \
 	check-manifest \
 	coverage \
 	flake8 \
@@ -144,7 +145,7 @@ test-platform: install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Run a specific test by name, e.g.
-# make test-by-name psutil.test.test_system.TestSystemAPIs.test_cpu_times
+# make test-by-name psutil.testss.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
 	@$(PYTHON) -m unittest -v $(ARGS)
 
