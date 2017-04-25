@@ -37,7 +37,7 @@ def main():
     else:
         for dep in TEST_DEPS:
             try:
-                __import__(dep)
+                __import__(dep.split("==")[0])
             except ImportError:
                 sys.exit("%r lib is not installed; run:\n"
                          "%s -m psutil.tests --install-deps" % (dep, PYTHON))
