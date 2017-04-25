@@ -434,10 +434,10 @@ def users():
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
-        user, tty, hostname, tstamp = item
+        user, tty, hostname, tstamp, pid = item
         if tty == '~':
             continue  # reboot or shutdown
-        nt = _common.suser(user, tty or None, hostname, tstamp)
+        nt = _common.suser(user, tty or None, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 

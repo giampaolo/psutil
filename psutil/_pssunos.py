@@ -291,7 +291,7 @@ def users():
     rawlist = cext.users()
     localhost = (':0.0', ':0')
     for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
+        user, tty, hostname, tstamp, pid, user_process = item
         # note: the underlying C function includes entries about
         # system boot, run level and others.  We might want
         # to use them in the future.
@@ -299,7 +299,7 @@ def users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp)
+        nt = _common.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 

@@ -411,7 +411,7 @@ def users():
     for item in rawlist:
         user, hostname, tstamp = item
         user = py2_strencode(user)
-        nt = _common.suser(user, None, hostname, tstamp)
+        nt = _common.suser(user, None, hostname, tstamp, None)
         retlist.append(nt)
     return retlist
 
