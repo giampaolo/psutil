@@ -466,8 +466,9 @@ psutil_users(PyObject *self, PyObject *args) {
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            ut->ut_pid,               // process id
-            py_user_proc);            // (bool) user process
+            py_user_proc,             // (bool) user process
+            ut->ut_pid                // process id
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

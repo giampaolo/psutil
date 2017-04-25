@@ -804,7 +804,8 @@ psutil_users(PyObject *self, PyObject *args) {
             ut.ut_line,         // tty
             ut.ut_host,         // hostname
            (float)ut.ut_time,   // start time
-            ut.ut_pid);         // process id
+            ut.ut_pid           // process id
+        );
         if (!py_tuple) {
             fclose(fp);
             goto error;
