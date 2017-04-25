@@ -600,7 +600,7 @@ class TestSyncTestUtils(unittest.TestCase):
     def test_wait_for_file_no_delete(self):
         with open(TESTFN, 'w') as f:
             f.write('foo')
-        wait_for_file(TESTFN, delete_file=False)
+        wait_for_file(TESTFN, delete=False)
         assert os.path.exists(TESTFN)
 
 

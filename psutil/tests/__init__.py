@@ -220,7 +220,7 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
-        wait_for_file(_TESTFN, delete_file=True, empty=True)
+        wait_for_file(_TESTFN, delete=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         wait_for_pid(sproc.pid)
@@ -460,13 +460,13 @@ def wait_for_pid(pid):
 
 @retry(exception=(EnvironmentError, AssertionError), logfun=None,
        timeout=GLOBAL_TIMEOUT, interval=0.001)
-def wait_for_file(fname, delete_file=True, empty=False):
+def wait_for_file(fname, delete=True, empty=False):
     """Wait for a file to be written on disk with some content."""
     with open(fname, "rb") as f:
         data = f.read()
     if not empty:
         assert data
-    if delete_file:
+    if delete:
         os.remove(fname)
     return data
 
