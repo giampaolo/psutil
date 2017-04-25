@@ -690,6 +690,10 @@ class TestSystemAPIs(unittest.TestCase):
             user.host
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
+            if POSIX:
+                psutil.Process(user.pid)
+            else:
+                self.assertIsNone(user.pid)
 
     def test_cpu_stats(self):
         # Tested more extensively in per-platform test modules.

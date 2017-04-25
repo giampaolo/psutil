@@ -2,16 +2,15 @@
 
 *XXXX-XX-XX*
 
-5.2.3
+5.3.0
 =====
 
 **Enhancements**
 
-- 1022_: [Linux, BSD, OSX, SunOS] Provide the process id in the output of
-  users(), which is provided by utmp.
 - 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
+- 1022_: psutil.users() provides a new "pid" field.
 
 **Bug fixes**
 

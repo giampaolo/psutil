@@ -450,7 +450,7 @@ psutil_users(PyObject *self, PyObject *args) {
         else
             py_user_proc = Py_False;
         py_tuple = Py_BuildValue(
-            "(sssfiO)",
+            "(sssfOi)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname

@@ -313,11 +313,11 @@ class TestSystemAPIs(unittest.TestCase):
         out = sh("who")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
-        self.assertEqual(len(users), len(psutil.users()))
         terminals = [x.split()[1] for x in lines]
+        self.assertEqual(len(users), len(psutil.users()))
         for u in psutil.users():
-            self.assertTrue(u.name in users, u.name)
-            self.assertTrue(u.terminal in terminals, u.terminal)
+            self.assertIn(u.name, users)
+            self.assertIn(u.terminal, terminals)
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill

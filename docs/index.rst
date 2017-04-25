@@ -753,13 +753,18 @@ Other system info
   - **host**: the host name associated with the entry, if any.
   - **started**: the creation time as a floating point number expressed in
     seconds since the epoch.
+  - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
+    ...). On Windows this is always set to ``None``.
 
   Example::
 
     >>> import psutil
     >>> psutil.users()
-    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
-     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
+    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
+     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+
+  .. versionchanged::
+    5.3.0 added "pid" field
 
 Processes
 =========
