@@ -377,12 +377,12 @@ Further process APIs
 .. code-block:: python
 
     >>> import psutil
-    >>> for p in psutil.process_iter():
-    ...     print(p)
+    >>> for proc in psutil.process_iter(attrs=['pid', 'name']):
+    ...     print(proc.info)
     ...
-    psutil.Process(pid=1, name='init')
-    psutil.Process(pid=2, name='kthreadd')
-    psutil.Process(pid=3, name='ksoftirqd/0')
+    {'pid': 1, 'name': 'systemd'}
+    {'pid': 2, 'name': 'kthreadd'}
+    {'pid': 3, 'name': 'ksoftirqd/0'}
     ...
     >>>
     >>> psutil.pid_exists(3)

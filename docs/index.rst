@@ -786,7 +786,7 @@ Functions
   Check whether the given PID exists in the current process list. This is
   faster than doing ``pid in psutil.pids()`` and should be preferred.
 
-.. function:: process_iter()
+.. function:: process_iter(attrs=None, ad_value=None)
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
@@ -798,17 +798,52 @@ Functions
   This is should be preferred over :func:`psutil.pids()` for iterating over
   processes.
   Sorting order in which processes are returned is
-  based on their PID. Example usage::
+  based on their PID.
+  *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
+  If *attrs* is specified :meth:`Process.as_dict()` is called and the resulting
+  dict is stored as a ``info`` attribute which is attached to the returned
+  :class:`Process`  instance.
+  If *attrs* is an empty list it will retrieve all process info (slow).
+  Example usage::
 
-    import psutil
+    >>> import psutil
+    >>> for proc in psutil.process_iter():
+    ...     try:
+    ...         pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
+    ...     except psutil.NoSuchProcess:
+    ...         pass
+    ...     else:
+    ...         print(pinfo)
+    ...
+    {'name': 'systemd', 'pid': 1, 'username': 'root'}
+    {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
+    {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
+    ...
 
-    for proc in psutil.process_iter():
-        try:
-            pinfo = proc.as_dict(attrs=['pid', 'name'])
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            print(pinfo)
+  More compact version using *attrs* parameter::
+
+    >>> import psutil
+    >>> for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
+    ...     print(proc.info)
+    ...
+    {'username': 'root', 'pid': 1, 'name': 'systemd'}
+    {'username': 'root', 'pid': 2, 'name': 'kthreadd'}
+    {'username': 'root', 'pid': 3, 'name': 'ksoftirqd/0'}
+    ...}
+
+  Example of a dict comprehensions to create a ``{pid: info, ...}`` data
+  structure:
+
+  >>> import psutil
+  >>> info = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['pid', 'name', 'username'])])
+  >>> info
+  {1: {'name': 'systemd', 'pid': 1, 'username': 'root'},
+   2: {'name': 'kthreadd', 'pid': 2, 'username': 'root'},
+   3: {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'},
+   ...}
+
+  .. versionchanged::
+    5.3.0 added "attrs" and "ad_value" parameters.
 
 .. function:: wait_procs(procs, timeout=None, callback=None)
 

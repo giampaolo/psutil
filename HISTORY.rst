@@ -11,6 +11,10 @@
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
 - 1022_: psutil.users() provides a new "pid" field.
+- 1025_: process_iter() accepts two new parameters in order to invoke
+  Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
+  processes in one shot without needing to catch NoSuchProcess and do list/dict
+  comprehensions.
 
 **Bug fixes**
 

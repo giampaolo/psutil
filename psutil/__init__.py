@@ -1451,7 +1451,7 @@ def pid_exists(pid):
 _pmap = {}
 
 
-def process_iter():
+def process_iter(attrs=None, ad_value=None):
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -1464,9 +1464,18 @@ def process_iter():
 
     The sorting order in which processes are yielded is based on
     their PIDs.
+
+    "attrs" and "ad_value" have the same meaning as in
+    Process.as_dict(). If "attrs" is specified as_dict() is called
+    and the resulting dict is stored as a 'info' attribute attached
+    to returned Process instance.
+    If "attrs" is an empty list it will retrieve all process info
+    (slow).
     """
     def add(pid):
         proc = Process(pid)
+        if attrs is not None:
+            proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
         _pmap[proc.pid] = proc
         return proc
 
@@ -1489,6 +1498,9 @@ def process_iter():
                 # use is_running() to check whether PID has been reused by
                 # another process in which case yield a new Process instance
                 if proc.is_running():
+                    if attrs is not None:
+                        proc.info = proc.as_dict(
+                            attrs=attrs, ad_value=ad_value)
                     yield proc
                 else:
                     yield add(pid)
