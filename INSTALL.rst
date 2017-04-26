@@ -1,19 +1,21 @@
-PIP
-===
+Install pip
+===========
 
 pip is the easiest way to install psutil.
-It is shipped by default with Python 2.7.9+ and 3.4+. If you're using an
-older Python version `install pip <https://pip.pypa.io/en/latest/installing/>`__
-first.
-If you GIT cloned psutil source code you can also install pip and/or upgrade
-it to latest version with::
+It is shipped by default with Python 2.7.9+ and 3.4+. For other Python versions
+you can install it manually.
+On Linux or via wget::
 
-    make install-pip
+    wget https://bootstrap.pypa.io/get-pip.py -O - | python
 
-Unless you're on Windows, in order to install psutil with pip you'll also need
-a C compiler installed (e.g. gcc).
-pip will retrieve psutil source code or binaries from
-`PYPI <https://pypi.python.org/pypi/psutil>`__ repository.
+On OSX or via curl::
+
+    python < <(curl -s https://bootstrap.pypa.io/get-pip.py)
+
+On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`, open
+cmd.exe and install it::
+
+    C:\Python27\python.exe get-pip.py
 
 Permission issues (UNIX)
 ========================
