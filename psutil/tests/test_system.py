@@ -78,6 +78,25 @@ class TestSystemAPIs(unittest.TestCase):
             with self.assertRaises(psutil.AccessDenied):
                 list(psutil.process_iter())
 
+    def test_prcess_iter_w_params(self):
+        for p in psutil.process_iter(attrs=['pid']):
+            self.assertEqual(p.info.keys(), ['pid'])
+        with self.assertRaises(ValueError):
+            list(psutil.process_iter(attrs=['foo']))
+        with mock.patch("psutil._psplatform.Process.name",
+                        side_effect=psutil.AccessDenied(0, "")) as m:
+            for p in psutil.process_iter(attrs=["pid", "name"]):
+                self.assertIsNone(p.info['name'])
+                self.assertGreaterEqual(p.info['pid'], 0)
+            assert m.called
+        with mock.patch("psutil._psplatform.Process.name",
+                        side_effect=psutil.AccessDenied(0, "")) as m:
+            flag = object()
+            for p in psutil.process_iter(attrs=["pid", "name"], ad_value=flag):
+                self.assertIs(p.info['name'], flag)
+                self.assertGreaterEqual(p.info['pid'], 0)
+            assert m.called
+
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
