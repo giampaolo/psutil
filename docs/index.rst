@@ -829,18 +829,18 @@ Functions
     {'username': 'root', 'pid': 1, 'name': 'systemd'}
     {'username': 'root', 'pid': 2, 'name': 'kthreadd'}
     {'username': 'root', 'pid': 3, 'name': 'ksoftirqd/0'}
-    ...}
+    ...
 
   Example of a dict comprehensions to create a ``{pid: info, ...}`` data
   structure as a one-liner:
 
-  >>> import psutil
-  >>> procs = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'username'])])
-  >>> procs
-  {1: {'name': 'systemd', 'username': 'root'},
-   2: {'name': 'kthreadd', 'username': 'root'},
-   3: {'name': 'ksoftirqd/0', 'username': 'root'},
-   ...}
+    >>> import psutil
+    >>> procs = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'username'])])
+    >>> procs
+    {1: {'name': 'systemd', 'username': 'root'},
+     2: {'name': 'kthreadd', 'username': 'root'},
+     3: {'name': 'ksoftirqd/0', 'username': 'root'},
+     ...}
 
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
