@@ -826,9 +826,9 @@ Functions
     >>> for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
     ...     print(proc.info)
     ...
-    {'username': 'root', 'pid': 1, 'name': 'systemd'}
-    {'username': 'root', 'pid': 2, 'name': 'kthreadd'}
-    {'username': 'root', 'pid': 3, 'name': 'ksoftirqd/0'}
+    {'name': 'systemd', 'pid': 1, 'username': 'root'}
+    {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
+    {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
     ...
 
   Example of a dict comprehensions to create a ``{pid: info, ...}`` data
@@ -841,6 +841,12 @@ Functions
      2: {'name': 'kthreadd', 'username': 'root'},
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
+
+  Example showing how to filter processes by name::
+
+    >>> [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']]
+    [{'name': 'python3', 'pid': 21947},
+     {'name': 'python', 'pid': 23835}]
 
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
