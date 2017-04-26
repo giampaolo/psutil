@@ -80,7 +80,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_prcess_iter_w_params(self):
         for p in psutil.process_iter(attrs=['pid']):
-            self.assertEqual(p.info.keys(), ['pid'])
+            self.assertEqual(list(p.info.keys()), ['pid'])
         with self.assertRaises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch("psutil._psplatform.Process.name",

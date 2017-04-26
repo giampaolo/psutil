@@ -832,14 +832,14 @@ Functions
     ...}
 
   Example of a dict comprehensions to create a ``{pid: info, ...}`` data
-  structure:
+  structure as a one-liner:
 
   >>> import psutil
-  >>> info = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['pid', 'name', 'username'])])
-  >>> info
-  {1: {'name': 'systemd', 'pid': 1, 'username': 'root'},
-   2: {'name': 'kthreadd', 'pid': 2, 'username': 'root'},
-   3: {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'},
+  >>> procs = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'username'])])
+  >>> procs
+  {1: {'name': 'systemd', 'username': 'root'},
+   2: {'name': 'kthreadd', 'username': 'root'},
+   3: {'name': 'ksoftirqd/0', 'username': 'root'},
    ...}
 
   .. versionchanged::
