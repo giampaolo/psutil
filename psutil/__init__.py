@@ -2325,44 +2325,39 @@ def test():  # pragma: no cover
         attrs.append('terminal')
     print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
                    "COMMAND"))
-    for p in process_iter():
-        try:
-            pinfo = p.as_dict(attrs, ad_value='')
-        except NoSuchProcess:
-            pass
-        else:
-            if pinfo['create_time']:
-                ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
-                if ctime.date() == today_day:
-                    ctime = ctime.strftime("%H:%M")
-                else:
-                    ctime = ctime.strftime("%b%d")
+    for p in process_iter(attrs=attrs, ad_value=''):
+        if p.info['create_time']:
+            ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
+            if ctime.date() == today_day:
+                ctime = ctime.strftime("%H:%M")
             else:
-                ctime = ''
-            cputime = time.strftime("%M:%S",
-                                    time.localtime(sum(pinfo['cpu_times'])))
-            try:
-                user = p.username()
-            except Error:
-                user = ''
-            if WINDOWS and '\\' in user:
-                user = user.split('\\')[1]
-            vms = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].vms / 1024) or '?'
-            rss = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].rss / 1024) or '?'
-            memp = pinfo['memory_percent'] and \
-                round(pinfo['memory_percent'], 1) or '?'
-            print(templ % (
-                user[:10],
-                pinfo['pid'],
-                memp,
-                vms,
-                rss,
-                pinfo.get('terminal', '') or '?',
-                ctime,
-                cputime,
-                pinfo['name'].strip() or '?'))
+                ctime = ctime.strftime("%b%d")
+        else:
+            ctime = ''
+        cputime = time.strftime("%M:%S",
+                                time.localtime(sum(p.info['cpu_times'])))
+        try:
+            user = p.username()
+        except Error:
+            user = ''
+        if WINDOWS and '\\' in user:
+            user = user.split('\\')[1]
+        vms = p.info['memory_info'] and \
+            int(p.info['memory_info'].vms / 1024) or '?'
+        rss = p.info['memory_info'] and \
+            int(p.info['memory_info'].rss / 1024) or '?'
+        memp = p.info['memory_percent'] and \
+            round(p.info['memory_percent'], 1) or '?'
+        print(templ % (
+            user[:10],
+            p.info['pid'],
+            memp,
+            vms,
+            rss,
+            p.info.get('terminal', '') or '?',
+            ctime,
+            cputime,
+            p.info['name'].strip() or '?'))
 
 
 del memoize, memoize_when_activated, division, deprecated_method

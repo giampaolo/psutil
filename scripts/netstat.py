@@ -41,11 +41,8 @@ def main():
         "Proto", "Local address", "Remote address", "Status", "PID",
         "Program name"))
     proc_names = {}
-    for p in psutil.process_iter():
-        try:
-            proc_names[p.pid] = p.name()
-        except psutil.Error:
-            pass
+    for p in psutil.process_iter(attrs=['pid', 'name']):
+        proc_names[p.info['pid']] = p.info['name']
     for c in psutil.net_connections(kind='inet'):
         laddr = "%s:%s" % (c.laddr)
         raddr = ""

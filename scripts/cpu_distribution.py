@@ -74,14 +74,8 @@ def main():
 
         # processes
         procs = collections.defaultdict(list)
-        for p in psutil.process_iter():
-            try:
-                name = p.name()[:5]
-                cpunum = p.cpu_num()
-            except psutil.Error:
-                continue
-            else:
-                procs[cpunum].append(name)
+        for p in psutil.process_iter(attrs=['name', 'cpu_num']):
+            procs[p.info['cpu_num']].append(p.info['name'][:5])
 
         end_marker = [[] for x in range(total)]
         while True:
