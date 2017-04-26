@@ -12,7 +12,7 @@ On OSX or via curl::
 
     python < <(curl -s https://bootstrap.pypa.io/get-pip.py)
 
-On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`, open
+On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`__, open
 cmd.exe and install it::
 
     C:\Python27\python.exe get-pip.py
