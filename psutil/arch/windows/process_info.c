@@ -154,27 +154,6 @@ psutil_pid_is_running(DWORD pid) {
 }
 
 
-int
-psutil_pid_in_proclist(DWORD pid) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
-
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
-        return -1;
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (pid == proclist[i]) {
-            free(proclist);
-            return 1;
-        }
-    }
-
-    free(proclist);
-    return 0;
-}
-
-
 // Check exit code from a process handle. Return FALSE on an error also
 // XXX - not used anymore
 int

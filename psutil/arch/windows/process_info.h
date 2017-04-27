@@ -21,7 +21,6 @@ HANDLE psutil_handle_from_pid(DWORD pid);
 HANDLE psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
 
 int psutil_handlep_is_running(HANDLE hProcess);
-int psutil_pid_in_proclist(DWORD pid);
 int psutil_pid_is_running(DWORD pid);
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_get_cwd(long pid);
