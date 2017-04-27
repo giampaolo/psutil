@@ -105,90 +105,63 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
+/*
+/* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
+/* Returns:
+ * 1: pid exists
+ * 0: it doesn't
+ * -1: error
+ */
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
+    DWORD WINAPI err;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
         return 1;
     if (pid < 0)
         return 0;
-
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, pid);
     if (NULL == hProcess) {
-        // invalid parameter is no such process
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            CloseHandle(hProcess);
+        err = GetLastError();
+        // Yeah, this is the actual error code in case of "no such process".
+        if (err == ERROR_INVALID_PARAMETER) {
             return 0;
         }
-
-        // access denied obviously means there's a process to deny access to...
-        if (GetLastError() == ERROR_ACCESS_DENIED) {
-            CloseHandle(hProcess);
+        // Access denied obviously means there's a process to deny access to.
+        else if (err == ERROR_ACCESS_DENIED) {
             return 1;
         }
-
-        CloseHandle(hProcess);
-        PyErr_SetFromWindowsErr(0);
-        return -1;
+        // Be strict and raise an exception; the caller is supposed
+        // to take -1 into account.
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return -1;
+        }
     }
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
         CloseHandle(hProcess);
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
         return (exitCode == STILL_ACTIVE);
     }
-
     // access denied means there's a process there so we'll assume
     // it's running
-    if (GetLastError() == ERROR_ACCESS_DENIED) {
-        CloseHandle(hProcess);
+    err = GetLastError();
+    CloseHandle(hProcess);
+    if (err == ERROR_ACCESS_DENIED) {
         return 1;
     }
-
-    PyErr_SetFromWindowsErr(0);
-    CloseHandle(hProcess);
-    return -1;
-}
-
-
-int
-psutil_pid_in_proclist(DWORD pid) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
-
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
+    else {
+        PyErr_SetFromWindowsErr(0);
         return -1;
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (pid == proclist[i]) {
-            free(proclist);
-            return 1;
-        }
     }
-
-    free(proclist);
-    return 0;
 }
 
-
-// Check exit code from a process handle. Return FALSE on an error also
-// XXX - not used anymore
-int
-handlep_is_running(HANDLE hProcess) {
-    DWORD dwCode;
-
-    if (NULL == hProcess)
-        return 0;
-    if (GetExitCodeProcess(hProcess, &dwCode)) {
-        if (dwCode == STILL_ACTIVE)
-            return 1;
-    }
-    return 0;
-}
 
 // Helper structures to access the memory correctly.  Some of these might also
 // be defined in the winternl.h header file but unfortunately not in a usable
