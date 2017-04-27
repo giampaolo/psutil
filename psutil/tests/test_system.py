@@ -451,10 +451,14 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
-        safe_rmpath(TESTFN_UNICODE)
-        self.addCleanup(safe_rmpath, TESTFN_UNICODE)
-        os.mkdir(TESTFN_UNICODE)
-        psutil.disk_usage(TESTFN_UNICODE)
+        if sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii'):
+            with self.assertRaises(UnicodeEncodeError):
+                psutil.disk_usage(TESTFN_UNICODE)
+        else:
+            safe_rmpath(TESTFN_UNICODE)
+            self.addCleanup(safe_rmpath, TESTFN_UNICODE)
+            os.mkdir(TESTFN_UNICODE)
+            psutil.disk_usage(TESTFN_UNICODE)
 
     def test_disk_partitions(self):
         # all = False
