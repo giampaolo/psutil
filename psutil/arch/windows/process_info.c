@@ -116,24 +116,23 @@ int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
-    DWORD WINAPI lasterr;
+    DWORD WINAPI err;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
         return 1;
     if (pid < 0)
         return 0;
-
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, pid);
     if (NULL == hProcess) {
-        lasterr = GetLastError();
+        err = GetLastError();
         // Yeah, this is the actual error code in case of "no such process".
-        if (lasterr == ERROR_INVALID_PARAMETER) {
+        if (err == ERROR_INVALID_PARAMETER) {
             return 0;
         }
         // Access denied obviously means there's a process to deny access to.
-        else if (lasterr == ERROR_ACCESS_DENIED) {
+        else if (err == ERROR_ACCESS_DENIED) {
             return 1;
         }
         // Be strict and raise an exception; the caller is supposed
@@ -146,19 +145,21 @@ psutil_pid_is_running(DWORD pid) {
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
         CloseHandle(hProcess);
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
         return (exitCode == STILL_ACTIVE);
     }
-
     // access denied means there's a process there so we'll assume
     // it's running
-    if (GetLastError() == ERROR_ACCESS_DENIED) {
-        CloseHandle(hProcess);
+    err = GetLastError();
+    CloseHandle(hProcess);
+    if (err == ERROR_ACCESS_DENIED) {
         return 1;
     }
-
-    PyErr_SetFromWindowsErr(0);
-    CloseHandle(hProcess);
-    return -1;
+    else {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
 }
 
 
