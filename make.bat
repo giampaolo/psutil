@@ -23,7 +23,7 @@ if "%PYTHON%" == "" (
     set PYTHON=C:\Python27\python.exe
 )
 if "%TSCRIPT%" == "" (
-    set TSCRIPT=psutil\tests\runner.py
+    set TSCRIPT=psutil\tests\__main__.py
 )
 
 rem Needed to locate the .pypirc file and upload exes on PYPI.
