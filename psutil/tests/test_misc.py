@@ -692,38 +692,32 @@ class TestUnicodeFilesystemAPIS(unittest.TestCase):
     Make sure that fs-related APIs returning a string are able to
     handle unicode, see: https://github.com/giampaolo/psutil/issues/655
     """
-    uexe = TESTFN_UNICODE
-    udir = TESTFN_UNICODE + '-dir'
+    funky_name = TESTFN_UNICODE
 
     @classmethod
     def setUpClass(cls):
-        safe_rmpath(cls.uexe)
-        safe_rmpath(cls.udir)
-        create_exe(cls.uexe)
-        os.mkdir(cls.udir)
-
-    @classmethod
-    def tearDownClass(cls):
-        if not APPVEYOR:
-            safe_rmpath(cls.uexe)
-            safe_rmpath(cls.udir)
+        safe_rmpath(cls.funky_name)
 
     def setUp(self):
+        safe_rmpath(self.funky_name)
         reap_children()
 
+    tearDownClass = setUpClass
     tearDown = setUp
 
     def test_proc_exe(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
+        create_exe(self.funky_name)
+        subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
         if not OSX and TRAVIS:
-            self.assertEqual(p.exe(), self.uexe)
+            self.assertEqual(p.exe(), self.funky_name)
         else:
             p.exe()
 
     def test_proc_name(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
+        create_exe(self.funky_name)
+        subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
             # XXX: why is this like this?
             from psutil._pswindows import py2_strencode
@@ -731,23 +725,25 @@ class TestUnicodeFilesystemAPIS(unittest.TestCase):
         else:
             name = psutil.Process(subp.pid).name()
         if not OSX and TRAVIS:
-            self.assertEqual(name, os.path.basename(self.uexe))
+            self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
+        create_exe(self.funky_name)
+        subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         self.assertIsInstance("".join(p.cmdline()), str)
         if not OSX and TRAVIS:
-            self.assertEqual(p.cmdline(), [self.uexe])
+            self.assertEqual(p.cmdline(), [self.funky_name])
         else:
             p.cmdline()
 
     def test_proc_cwd(self):
-        with chdir(self.udir):
+        os.mkdir(self.funky_name)
+        with chdir(self.funky_name):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
             if not OSX and TRAVIS:
-                self.assertEqual(p.cwd(), self.udir)
+                self.assertEqual(p.cwd(), self.funky_name)
             else:
                 p.cwd()
 
@@ -755,7 +751,7 @@ class TestUnicodeFilesystemAPIS(unittest.TestCase):
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
-        with open(self.uexe, 'rb'):
+        with open(self.funky_name, 'wb'):
             new = set(p.open_files())
         path = (new - start).pop().path
         if BSD and not path:
@@ -765,10 +761,11 @@ class TestUnicodeFilesystemAPIS(unittest.TestCase):
         self.assertIsInstance(path, str)
         if not OSX and TRAVIS:
             self.assertEqual(os.path.normcase(path),
-                             os.path.normcase(self.uexe))
+                             os.path.normcase(self.funky_name))
 
     def test_disk_usage(self):
-        psutil.disk_usage(self.udir)
+        os.mkdir(self.funky_name)
+        psutil.disk_usage(self.funky_name)
 
 
 @unittest.skipIf(ASCII_FS, "ASCII fs")
