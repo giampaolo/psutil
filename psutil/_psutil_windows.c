@@ -379,10 +379,8 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             // return None instead.
             Py_RETURN_NONE;
         }
-        else {
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
-        }
+        else
+            return PyErr_SetFromWindowsErr(0);
     }
 
     // wait until the process has terminated
@@ -392,7 +390,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     if (retVal == WAIT_FAILED) {
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(GetLastError());
+        return PyErr_SetFromWindowsErr(0);
     }
     if (retVal == WAIT_TIMEOUT) {
         CloseHandle(hProcess);
@@ -437,8 +435,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
             return NoSuchProcess();
         }
         else {
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
+            return PyErr_SetFromWindowsErr(0);
         }
     }
 
@@ -494,8 +491,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
             return NoSuchProcess();
         }
         else {
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
+            return PyErr_SetFromWindowsErr(0);
         }
     }
 
@@ -513,10 +509,8 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     else {
         // Ignore access denied as it means the process is still alive.
         // For all other errors, we want an exception.
-        if (GetLastError() != ERROR_ACCESS_DENIED) {
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
-        }
+        if (GetLastError() != ERROR_ACCESS_DENIED)
+            return PyErr_SetFromWindowsErr(0);
     }
 
     /*
@@ -672,8 +666,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
+        return PyErr_SetFromWindowsErr(0);
     }
     CloseHandle(hProcess);
     return Py_BuildValue("u", exe);
@@ -696,16 +689,13 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
-    if (hSnapShot == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
+    if (hSnapShot == INVALID_HANDLE_VALUE)
+        return PyErr_SetFromWindowsErr(0);
     pentry.dwSize = sizeof(PROCESSENTRY32W);
     ok = Process32FirstW(hSnapShot, &pentry);
     if (! ok) {
         CloseHandle(hSnapShot);
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
+        return PyErr_SetFromWindowsErr(0);
     }
     while (ok) {
         if (pentry.th32ProcessID == pid) {
@@ -1978,10 +1968,8 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
         return NULL;
     priority = GetPriorityClass(hProcess);
     CloseHandle(hProcess);
-    if (priority == 0) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
+    if (priority == 0)
+        return PyErr_SetFromWindowsErr(0);
     return Py_BuildValue("i", priority);
 }
 
@@ -2004,10 +1992,8 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
         return NULL;
     retval = SetPriorityClass(hProcess, priority);
     CloseHandle(hProcess);
-    if (retval == 0) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
+    if (retval == 0)
+        return PyErr_SetFromWindowsErr(0);
     Py_RETURN_NONE;
 }
 
@@ -3456,10 +3442,8 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // Allocate size.
     size = num_cpus * sizeof(PROCESSOR_POWER_INFORMATION);
     pBuffer = (BYTE*)LocalAlloc(LPTR, size);
-    if (! pBuffer) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
+    if (! pBuffer)
+        return PyErr_SetFromWindowsErr(0);
 
     // Syscall.
     ret = CallNtPowerInformation(
@@ -3492,10 +3476,8 @@ static PyObject *
 psutil_sensors_battery(PyObject *self, PyObject *args) {
     SYSTEM_POWER_STATUS sps;
 
-    if (GetSystemPowerStatus(&sps) == 0) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
+    if (GetSystemPowerStatus(&sps) == 0)
+        return PyErr_SetFromWindowsErr(0);
     return Py_BuildValue(
         "iiiI",
         sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
