@@ -31,6 +31,7 @@ from psutil import WINDOWS
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import APPVEYOR
+from psutil.tests import ASCII_FS
 from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
 from psutil.tests import enum
@@ -451,7 +452,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
-        if sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii'):
+        if ASCII_FS:
             with self.assertRaises(UnicodeEncodeError):
                 psutil.disk_usage(TESTFN_UNICODE)
         else:

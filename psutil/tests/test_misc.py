@@ -32,6 +32,7 @@ from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
+from psutil.tests import ASCII_FS
 from psutil.tests import chdir
 from psutil.tests import create_exe
 from psutil.tests import create_proc_children_pair
@@ -685,10 +686,11 @@ class TestProcessUtils(unittest.TestCase):
 # ===================================================================
 
 
-class TestUnicode(unittest.TestCase):
+@unittest.skipIf(ASCII_FS, "ASCII fs")
+class TestUnicodeFilesystemAPIS(unittest.TestCase):
     """
-    Make sure that APIs returning a string are able to handle unicode,
-    see: https://github.com/giampaolo/psutil/issues/655
+    Make sure that fs-related APIs returning a string are able to
+    handle unicode, see: https://github.com/giampaolo/psutil/issues/655
     """
     uexe = TESTFN_UNICODE
     udir = TESTFN_UNICODE + '-dir'
@@ -768,6 +770,24 @@ class TestUnicode(unittest.TestCase):
     def test_disk_usage(self):
         psutil.disk_usage(self.udir)
 
+
+@unittest.skipIf(ASCII_FS, "ASCII fs")
+class TestInvalidUnicodeFilesystemAPIS(TestUnicodeFilesystemAPIS):
+    """Like above but uses an invalid UTF8 file name."""
+    # XXX: maybe this doesn't work as intended and should be removed.
+    if PY3:
+        uexe = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
+            'utf8', 'surrogateescape')
+        udir = (TESTFN.encode('utf8') + b"d\xc0\x80").decode(
+            'utf8', 'surrogateescape')
+    else:
+        uexe = TESTFN + b"f\xc0\x80"
+        udir = TESTFN + b"d\xc0\x80"
+
+
+class TestUnicodeNonFsAPIS(unittest.TestCase):
+    """Unicode tests for non fs-related APIs."""
+
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
     def test_proc_environ(self):
@@ -783,18 +803,6 @@ class TestUnicode(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         env = p.environ()
         self.assertEqual(env['FUNNY_ARG'], funny_str)
-
-
-class TestInvalidUnicode(TestUnicode):
-    """Test handling of invalid utf8 data."""
-    if PY3:
-        uexe = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-        udir = (TESTFN.encode('utf8') + b"d\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-    else:
-        uexe = TESTFN + b"f\xc0\x80"
-        udir = TESTFN + b"d\xc0\x80"
 
 
 if __name__ == '__main__':

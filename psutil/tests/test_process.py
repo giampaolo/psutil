@@ -1661,6 +1661,7 @@ class TestProcess(unittest.TestCase):
 # --- Featch all processes test
 # ===================================================================
 
+
 class TestFetchAllProcesses(unittest.TestCase):
     """Test which iterates over all running processes and performs
     some sanity checks against Process API's returned values.

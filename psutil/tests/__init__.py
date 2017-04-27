@@ -133,6 +133,7 @@ TESTFILE_PREFIX = '$testfn'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 _TESTFN = TESTFN + '-internal'
 TESTFN_UNICODE = TESTFN + u("-ƒőő")
+ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
 
