@@ -105,10 +105,18 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
+/*
+/* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
+/* Returns:
+ * 1: pid exists
+ * 0: it doesn't
+ * -1: error
+ */
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
+    DWORD WINAPI lasterr;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
@@ -119,21 +127,21 @@ psutil_pid_is_running(DWORD pid) {
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, pid);
     if (NULL == hProcess) {
-        // invalid parameter is no such process
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            CloseHandle(hProcess);
+        lasterr = GetLastError();
+        // Yeah, this is the actual error code in case of "no such process".
+        if (lasterr == ERROR_INVALID_PARAMETER) {
             return 0;
         }
-
-        // access denied obviously means there's a process to deny access to...
-        if (GetLastError() == ERROR_ACCESS_DENIED) {
-            CloseHandle(hProcess);
+        // Access denied obviously means there's a process to deny access to.
+        else if (lasterr == ERROR_ACCESS_DENIED) {
             return 1;
         }
-
-        CloseHandle(hProcess);
-        PyErr_SetFromWindowsErr(0);
-        return -1;
+        // Be strict and raise an exception; the caller is supposed
+        // to take -1 into account.
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return -1;
+        }
     }
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
