@@ -2245,6 +2245,7 @@ A bit more advanced, check string against process :meth:`Process.name()`,
 
   def find_procs_by_name(name):
       "Return a list of processes matching 'name'."
+      assert name, name
       ls = []
       for p in psutil.process_iter():
           name_, exe, cmdline = "", "", []
@@ -2295,6 +2296,33 @@ resources.
           print("process {} survived SIGKILL; giving up" % p)
 
   reap_children()
+
+Kill process tree
+-----------------
+
+::
+
+  import psutil
+  import signal
+  import os
+
+  def kill_proc_tree(pid, sig=signal.SIGTERM, recursive=True, include_parent=True,
+                     timeout=None, on_terminate=None):
+      """Kill a process tree with signal "sig" and return a
+      (gone, still_alive) tuple.
+      If recursive is True also attempts to kill grandchildren.
+      """
+      if pid == os.getpid():
+          raise RuntimeError("I refuse to kill myself")
+      parent = psutil.Process(pid)
+      children = parent.children(recursive=recursive)
+      if include_parent:
+          children.append(parent)
+      for p in children:
+          p.send_signal(sig)
+      gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                      callback=on_terminate)
+      return (gone, alive)
 
 Q&A
 ===
