@@ -2323,17 +2323,15 @@ resources.
           p.terminate()
       gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
       if not alive:
-          return
-      # send SIGKILL
-      for p in alive:
-          print("process {} survived SIGTERM; trying SIGKILL" % p)
-          p.kill()
-      gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
-      if not alive:
-          return
-      # give up
-      for p in alive:
-          print("process {} survived SIGKILL; giving up" % p)
+          # send SIGKILL
+          for p in alive:
+              print("process {} survived SIGTERM; trying SIGKILL" % p)
+              p.kill()
+          gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
+          if not alive:
+              # give up
+              for p in alive:
+                  print("process {} survived SIGKILL; giving up" % p)
 
   reap_children()
 
@@ -2359,26 +2357,8 @@ Processes owned by user::
   >>> import getpass
   >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(attrs=['name', 'username']) if p.info['username'] == getpass.getuser()])
   (16832, 'bash'),
-  (18841, 'chrome'),
   (19772, 'ssh'),
-  (20028, 'chrome'),
-  (20492, 'python'),
-  (31658, 'VBoxSVC')]
-
-Processes having open network connections::
-
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'connections']) if p.info['connections']])
-  [(2650,
-    {'name': 'chrome',
-     'connections': [pconn(fd=131, family=2, type=2, laddr=('192.168.1.7', 48653), raddr=('151.5.1.14', 443), status='NONE'),
-                     pconn(fd=223, family=2, type=1, laddr=('192.168.1.7', 42642), raddr=('192.168.1.2', 8008), status='ESTABLISHED')]}),
-   (19772,
-    'name': 'ssh'
-    {'connections': [pconn(fd=3, family=2, type=1, laddr=('127.0.0.1', 39082), raddr=('127.0.0.1', 2222), status='ESTABLISHED')],}),
-   (21932,
-    'name': 'plugin_host'
-    {'connections': [pconn(fd=26, family=2, type=1, laddr=('192.168.1.7', 59698), raddr=('209.20.75.76', 80), status='CLOSE_WAIT'),
-                     pconn(fd=27, family=2, type=2, laddr=('127.0.0.1', 55580), raddr=('127.0.1.1', 53), status='NONE')]})]
+  (20492, 'python')]
 
 Processes actively running::
 
@@ -2398,7 +2378,6 @@ Processes using log files::
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
-  2274  gvfsd-meta /home/giampaolo/.local/share/gvfs-metadata/root-1d9eaa2d.log
   2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
 
 Processes consuming more than 500M of memory::
@@ -2406,43 +2385,33 @@ Processes consuming more than 500M of memory::
   >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(attrs=['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
    (3038, 'chrome', 1120088064),
-   (3249, 'chrome', 1503940608),
-   (18841, 'chrome', 582803456),
    (21915, 'sublime_text', 615407616)]
 
-Top 5 most memory consuming processes::
+Top 3 most memory consuming processes::
 
-  >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'memory_percent']), key=lambda p: p.info['memory_percent'])][-5:])
-  [(2650, {'memory_percent': 3.1836352240031873, 'name': 'chrome'}),
-   (18841, {'memory_percent': 3.482724332758809, 'name': 'chrome'}),
-   (21915, {'memory_percent': 3.6815453247662737, 'name': 'sublime_text'}),
+  >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'memory_percent']), key=lambda p: p.info['memory_percent'])][-3:])
+  [(21915, {'memory_percent': 3.6815453247662737, 'name': 'sublime_text'}),
    (3038, {'memory_percent': 6.732935429979187, 'name': 'chrome'}),
    (3249, {'memory_percent': 8.994554843376399, 'name': 'chrome'})]
 
-Top 5 processes which consumed the most CPU time::
+Top 3 processes which consumed the most CPU time::
 
-  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(attrs=['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-5:])
-  [(3249, 'chrome', 6392.240000000001),
-   (1888, 'compiz', 8833.04),
-   (2721, 'chrome', 10219.73),
+  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(attrs=['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
+  [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
 
-Top 5 processes which caused the most I/O::
+Top 3 processes which caused the most I/O::
 
-  >>> pp([(p.pid, p.info['name']) for p in sorted(psutil.process_iter(attrs=['name', 'io_counters']), key=lambda p: p.info['io_counters'] and p.info['io_counters'][:2])][-5:])
+  >>> pp([(p.pid, p.info['name']) for p in sorted(psutil.process_iter(attrs=['name', 'io_counters']), key=lambda p: p.info['io_counters'] and p.info['io_counters'][:2])][-3:])
   [(21915, 'sublime_text'),
-   (2175, 'indicator-multiload'),
    (1871, 'pulseaudio'),
-   (1510, 'upstart'),
-   (2650, 'chrome')]
+   (1510, 'upstart')]
 
-Top 5 processes opening more file descriptors::
+Top 3 processes opening more file descriptors::
 
-   >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'num_fds']), key=lambda p: p.info['num_fds'])][-5:])
-  [(3038, {'name': 'chrome', 'num_fds': 100}),
-   (21915, {'name': 'sublime_text', 'num_fds': 105}),
-   (18841, {'name': 'chrome', 'num_fds': 144}),
+   >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'num_fds']), key=lambda p: p.info['num_fds'])][-3:])
+  [(21915, {'name': 'sublime_text', 'num_fds': 105}),
    (2721, {'name': 'chrome', 'num_fds': 185}),
    (2650, {'name': 'chrome', 'num_fds': 354})]
 
