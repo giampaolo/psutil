@@ -686,11 +686,11 @@ class TestProcessUtils(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(ASCII_FS, "ASCII fs")
-class TestUnicodeFilesystemAPIS(unittest.TestCase):
+class _UnicodeFilesystemAPIS(unittest.TestCase):
     """
     Make sure that fs-related APIs returning a string are able to
     handle unicode, see: https://github.com/giampaolo/psutil/issues/655
+    This is a base class which is tested by the mixins below.
     """
     funky_name = TESTFN_UNICODE
 
@@ -769,17 +769,17 @@ class TestUnicodeFilesystemAPIS(unittest.TestCase):
 
 
 @unittest.skipIf(ASCII_FS, "ASCII fs")
-class TestInvalidUnicodeFilesystemAPIS(TestUnicodeFilesystemAPIS):
+class TestUnicodeFilesystemAPISMixin(_UnicodeFilesystemAPIS):
+    funky_name = TESTFN_UNICODE
+
+
+class TestInvalidUnicodeFilesystemAPISMixin(_UnicodeFilesystemAPIS):
     """Like above but uses an invalid UTF8 file name."""
-    # XXX: maybe this doesn't work as intended and should be removed.
     if PY3:
-        uexe = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-        udir = (TESTFN.encode('utf8') + b"d\xc0\x80").decode(
+        funky_name = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
             'utf8', 'surrogateescape')
     else:
-        uexe = TESTFN + b"f\xc0\x80"
-        udir = TESTFN + b"d\xc0\x80"
+        funky_name = TESTFN + b"f\xc0\x80"
 
 
 class TestUnicodeNonFsAPIS(unittest.TestCase):
