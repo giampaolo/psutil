@@ -275,18 +275,20 @@ def pyrun(src):
         return subp
 
 
-def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
+def sh(cmd):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    p = subprocess.Popen(cmdline, shell=True, stdout=stdout, stderr=stderr,
-                         universal_newlines=True)
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
         warn(stderr)
-    return stdout.strip()
+    if stdout.endswith('\n'):
+        stdout = stdout[:-1]
+    return stdout
 
 
 def reap_children(recursive=False):

@@ -56,8 +56,24 @@ def exit(msg):
     sys.exit(1)
 
 
+def sh(cmd):
+    """run cmd in a subprocess and return its output.
+    raises RuntimeError on error.
+    """
+    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, universal_newlines=True)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        raise RuntimeError(stderr)
+    if stderr:
+        print(stderr, file=sys.stderr)
+    if stdout.endswith('\n'):
+        stdout = stdout[:-1]
+    return stdout
+
+
 def main():
-    out = subprocess.check_output("git diff --cached --name-only", shell=True)
+    out = sh("git diff --cached --name-only")
     py_files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
                 os.path.exists(x)]
 
