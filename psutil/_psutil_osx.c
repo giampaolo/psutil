@@ -575,10 +575,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     }
 
     len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
@@ -819,21 +817,17 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     size_t size = sizeof(int64_t);
 
     if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0))
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
     if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
     if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
 
     return Py_BuildValue(
         "KKK",
         curr / 1000 / 1000,
         min / 1000 / 1000,
         max / 1000 / 1000);
-
-error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
 }
 
 
@@ -849,10 +843,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     size_t result_len = sizeof result;
     time_t boot_time = 0;
 
-    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     boot_time = result.tv_sec;
     return Py_BuildValue("f", (float)boot_time);
 }
