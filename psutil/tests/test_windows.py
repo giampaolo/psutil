@@ -69,7 +69,7 @@ def wrap_exceptions(fun):
 class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
-        out = sh('ipconfig', '/all')
+        out = sh('ipconfig /all')
         nics = psutil.net_io_counters(pernic=True).keys()
         for nic in nics:
             if "pseudo-interface" in nic.replace(' ', '-').lower():
