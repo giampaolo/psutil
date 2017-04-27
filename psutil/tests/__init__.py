@@ -221,7 +221,7 @@ def get_test_subprocess(cmd=None, **kwds):
         safe_rmpath(_TESTFN)
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % _TESTFN
-        pyline += "sleep(60)"
+        pyline += "sleep(60);"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         wait_for_file(_TESTFN, delete=True, empty=True)

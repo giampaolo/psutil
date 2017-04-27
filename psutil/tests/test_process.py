@@ -68,6 +68,7 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
+from psutil.tests import TESTFN_UNICODE
 from psutil.tests import ThreadTask
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
@@ -2029,8 +2030,8 @@ class TestUnicode(unittest.TestCase):
     Make sure that APIs returning a string are able to handle unicode,
     see: https://github.com/giampaolo/psutil/issues/655
     """
-    uexe = TESTFN + 'èfile'
-    udir = TESTFN + 'èdir'
+    uexe = TESTFN_UNICODE
+    udir = TESTFN_UNICODE + '-dir'
 
     @classmethod
     def setUpClass(cls):
@@ -2104,24 +2105,24 @@ class TestUnicode(unittest.TestCase):
             self.assertEqual(os.path.normcase(path),
                              os.path.normcase(self.uexe))
 
+    def test_disk_usage(self):
+        psutil.disk_usage(self.udir)
+
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
     def test_proc_environ(self):
+        # Note: differently from others, this test does not deal
+        # with fs paths. On Python 2 subprocess module is broken as
+        # it's not able to handle with non-ASCII env vars, so
+        # we use "è", which is part of the extended ASCII table
+        # (unicode point <= 255).
         env = os.environ.copy()
-        env['FUNNY_ARG'] = self.uexe
+        funny_str = TESTFN_UNICODE if PY3 else 'è'
+        env['FUNNY_ARG'] = funny_str
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
-        if WINDOWS and not PY3:
-            uexe = self.uexe.decode(sys.getfilesystemencoding())
-        else:
-            uexe = self.uexe
-        if not OSX and TRAVIS:
-            self.assertEqual(p.environ()['FUNNY_ARG'], uexe)
-        else:
-            p.environ()
-
-    def test_disk_usage(self):
-        psutil.disk_usage(self.udir)
+        env = p.environ()
+        self.assertEqual(env['FUNNY_ARG'], funny_str)
 
 
 class TestInvalidUnicode(TestUnicode):
