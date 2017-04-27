@@ -19,8 +19,6 @@
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
 HANDLE psutil_handle_from_pid(DWORD pid);
 HANDLE psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
-PyObject* psutil_win32_OpenProcess(PyObject *self, PyObject *args);
-PyObject* psutil_win32_CloseHandle(PyObject *self, PyObject *args);
 
 int psutil_handlep_is_running(HANDLE hProcess);
 int psutil_pid_in_proclist(DWORD pid);
