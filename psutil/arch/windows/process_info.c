@@ -163,21 +163,6 @@ psutil_pid_is_running(DWORD pid) {
 }
 
 
-// Check exit code from a process handle. Return FALSE on an error also
-// XXX - not used anymore
-int
-handlep_is_running(HANDLE hProcess) {
-    DWORD dwCode;
-
-    if (NULL == hProcess)
-        return 0;
-    if (GetExitCodeProcess(hProcess, &dwCode)) {
-        if (dwCode == STILL_ACTIVE)
-            return 1;
-    }
-    return 0;
-}
-
 // Helper structures to access the memory correctly.  Some of these might also
 // be defined in the winternl.h header file but unfortunately not in a usable
 // way.

@@ -19,13 +19,12 @@
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
 HANDLE psutil_handle_from_pid(DWORD pid);
 HANDLE psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
-
-int psutil_handlep_is_running(HANDLE hProcess);
 int psutil_pid_is_running(DWORD pid);
+int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
+                         PVOID *retBuffer);
+
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_get_cwd(long pid);
 PyObject* psutil_get_environ(long pid);
-int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
-                         PVOID *retBuffer);
 
 #endif
