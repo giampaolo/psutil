@@ -178,10 +178,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     struct timeval boottime;
     size_t len = sizeof(boottime);
 
-    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("d", (double)boottime.tv_sec);
 }
 
@@ -442,11 +440,8 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     int mib[] = {CTL_KERN, KERN_CPTIME};
     ret = sysctl(mib, 2, &cpu_time, &size, NULL, 0);
 #endif
-    if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("(ddddd)",
                          (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
                          (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
