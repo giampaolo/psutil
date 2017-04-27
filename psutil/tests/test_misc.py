@@ -28,6 +28,7 @@ from psutil import WINDOWS
 from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
+from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
@@ -221,6 +222,7 @@ class TestMisc(unittest.TestCase):
 
     def test_memoize_when_activated(self):
         class Foo:
+
             @memoize_when_activated
             def foo(self):
                 calls.append(None)
@@ -387,7 +389,11 @@ class TestScripts(unittest.TestCase):
     @staticmethod
     def assert_syntax(exe, args=None):
         exe = os.path.join(SCRIPTS_DIR, exe)
-        with open(exe, 'r') as f:
+        if PY3:
+            f = open(exe, 'rt', encoding='utf8')
+        else:
+            f = open(exe, 'rt')
+        with f:
             src = f.read()
         ast.parse(src)
 
