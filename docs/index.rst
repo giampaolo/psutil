@@ -867,6 +867,8 @@ Functions
   argument).
   This tunction will return as soon as all processes terminate or when
   *timeout* occurs, if specified.
+  Differently from :meth:`Process.wait` it does not raise
+  :class:`TimeoutExpired` if timeout occurs.
   A typical use case may be:
 
   - send SIGTERM to a list of processes
