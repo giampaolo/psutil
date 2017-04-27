@@ -66,7 +66,8 @@ Example applications
 |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
 
-Also see https://github.com/giampaolo/psutil/tree/master/scripts.
+Also see https://github.com/giampaolo/psutil/tree/master/scripts and
+`doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
 
 =====================
 Projects using psutil
@@ -434,16 +435,21 @@ Windows services
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
 
+Other samples
+=============
+
+See `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+
 ======
 Author
 ======
 
 psutil was created and is maintained by
-`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`_.
+`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`__.
 A lot of time and effort went into making psutil as it is right now.
 If you feel psutil is useful to you or your business and want to support its
 future development please consider donating me
-(`Giampaolo <http://grodola.blogspot.com/p/about.html>`_) some money.
+(`Giampaolo <http://grodola.blogspot.com/p/about.html>`__) some money.
 
 .. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
     :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8

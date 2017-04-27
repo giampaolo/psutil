@@ -781,11 +781,6 @@ Functions
   >>> psutil.pids()
   [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
 
-.. function:: pid_exists(pid)
-
-  Check whether the given PID exists in the current process list. This is
-  faster than doing ``pid in psutil.pids()`` and should be preferred.
-
 .. function:: process_iter(attrs=None, ad_value=None)
 
   Return an iterator yielding a :class:`Process` class instance for all running
@@ -832,7 +827,7 @@ Functions
     ...
 
   Example of a dict comprehensions to create a ``{pid: info, ...}`` data
-  structure as a one-liner:
+  structure::
 
     >>> import psutil
     >>> procs = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'username'])])
@@ -844,6 +839,7 @@ Functions
 
   Example showing how to filter processes by name::
 
+    >>> import psutil
     >>> [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']]
     [{'name': 'python3', 'pid': 21947},
      {'name': 'python', 'pid': 23835}]
@@ -851,16 +847,24 @@ Functions
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
 
+.. function:: pid_exists(pid)
+
+  Check whether the given PID exists in the current process list. This is
+  faster than doing ``pid in psutil.pids()`` and should be preferred.
+
 .. function:: wait_procs(procs, timeout=None, callback=None)
 
   Convenience function which waits for a list of :class:`Process` instances to
   terminate. Return a ``(gone, alive)`` tuple indicating which processes are
   gone and which ones are still alive. The *gone* ones will have a new
-  *returncode* attribute indicating process exit status (it may be ``None``).
-  ``callback`` is a function which gets called every time a process terminates
-  (a :class:`Process` instance is passed as callback argument). Function will
-  return as soon as all processes terminate or when timeout occurs. Typical use
-  case is:
+  *returncode* attribute indicating process exit status (will be ``None`` for
+  processes which are not our children).
+  ``callback`` is a function which gets called when one of the processes being
+  waited on is terminated and a :class:`Process` instance is passed as callback
+  argument).
+  This tunction will return as soon as all processes terminate or when
+  *timeout* occurs, if specified.
+  A typical use case may be:
 
   - send SIGTERM to a list of processes
   - give them some time to terminate
@@ -876,7 +880,7 @@ Functions
     procs = psutil.Process().children()
     for p in procs:
         p.terminate()
-    gone, still_alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
+    gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
     for p in still_alive:
         p.kill()
 
@@ -2207,6 +2211,90 @@ Constants
       >>> import psutil
       >>> if psutil.version_info >= (4, 5):
       ...    pass
+
+Recipes
+=======
+
+Follows a collection of utilities and examples which are common but not generic
+enough to be part of the public API.
+
+Find process by name
+--------------------
+
+Check string against process :meth:`Process.name()`:
+
+::
+
+  import psutil
+
+  def find_procs_by_name(name):
+      "Return a list of processes matching 'name'."
+      ls = []
+      for p in psutil.process_iter(attrs=['name']):
+          if p.info['name'] == name:
+              ls.append(p)
+      return ls
+
+A bit more advanced, check string against process :meth:`Process.name()`,
+:meth:`Process.exe()` and :meth:`Process.cmdline()`:
+
+::
+
+  import os
+  import psutil
+
+  def find_procs_by_name(name):
+      "Return a list of processes matching 'name'."
+      ls = []
+      for p in psutil.process_iter():
+          name_, exe, cmdline = "", "", []
+          try:
+              name_ = p.name()
+              cmdline = p.cmdline()
+              exe = p.exe()
+          except psutil.NoSuchProcess:
+              continue
+          except psutil.AccessDenied:
+              pass
+          if name == name_ or cmdline[0] == name or os.path.basename(exe) == name:
+              ls.append(name)
+      return ls
+
+Terminate my children
+---------------------
+
+This may be useful in unit tests whenever sub-processes are started.
+This will help ensure that no extra children (zombies) stick around to hog
+resources.
+
+::
+
+  import psutil
+
+  def reap_children(timeout=3):
+      "Tries hard to terminate and ultimately kill all the children of this process."
+      def on_terminate(proc):
+          print("process {} terminated with exit code {}".format(proc, proc.returncode))
+
+      procs = psutil.Process().children()
+      # send SIGTERM
+      for p in procs:
+          p.terminate()
+      gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
+      if not alive:
+          return
+      # send SIGKILL to the survivors
+      for p in alive:
+          print("process {} survived SIGTERM; trying SIGKILL" % p)
+          p.kill()
+      gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
+      if not alive:
+          return
+      # give up
+      for p in alive:
+          print("process {} survived SIGKILL; giving up" % p)
+
+  reap_children()
 
 Q&A
 ===
