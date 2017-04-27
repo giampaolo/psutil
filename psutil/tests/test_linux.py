@@ -1625,6 +1625,9 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(err.exception.errno, errno.ENOENT)
             assert m.called
 
+    @unittest.skipUnless(
+        get_kernel_version() >= (2, 6, 36),
+        "prlimit() not available on this Linux kernel version")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:
