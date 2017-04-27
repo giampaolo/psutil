@@ -46,10 +46,7 @@ def ps(cmd):
     if SUNOS:
         cmd = cmd.replace("-o command", "-o comm")
         cmd = cmd.replace("-o start", "-o stime")
-    p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
-    output = p.communicate()[0].strip()
-    if PY3:
-        output = str(output, sys.stdout.encoding)
+    output = sh(cmd)
     if not LINUX:
         output = output.split('\n')[1].strip()
     try:
@@ -290,12 +287,7 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_nic_names(self):
-        p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0].strip()
-        if p.returncode != 0:
-            raise unittest.SkipTest('ifconfig returned no output')
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True).keys():
             for line in output.split():
                 if line.startswith(nic):

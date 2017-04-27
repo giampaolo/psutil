@@ -8,13 +8,10 @@
 
 import os
 import re
-import subprocess
-import sys
 import time
 
 import psutil
 from psutil import OSX
-from psutil._compat import PY3
 from psutil.tests import get_test_subprocess
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
@@ -25,20 +22,6 @@ from psutil.tests import unittest
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE") if OSX else None
-
-
-def sysctl(cmdline):
-    """Expects a sysctl command with an argument and parse the result
-    returning only the value of interest.
-    """
-    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-    result = p.communicate()[0].strip().split()[1]
-    if PY3:
-        result = str(result, sys.stdout.encoding)
-    try:
-        return int(result)
-    except ValueError:
-        return result
 
 
 def vm_stat(field):
@@ -91,11 +74,7 @@ class TestProcess(unittest.TestCase):
         reap_children()
 
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" % self.pid
-        p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0]
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()
         hhmmss = start_ps.split(' ')[-2]
         year = start_ps.split(' ')[-1]
@@ -143,26 +122,26 @@ class TestSystemAPIs(unittest.TestCase):
     # --- cpu
 
     def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
+        num = int(sh("sysctl hw.logicalcpu"))
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
     def test_cpu_count_physical(self):
-        num = sysctl("sysctl hw.physicalcpu")
+        num = int(sh("sysctl hw.physicalcpu"))
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(
-            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+            freq.current * 1000 * 1000, int(sh("sysctl hw.cpufrequency")))
         self.assertEqual(
-            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
+            freq.min * 1000 * 1000, int(sh("sysctl hw.cpufrequency_min")))
         self.assertEqual(
-            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
+            freq.max * 1000 * 1000, int(sh("sysctl hw.cpufrequency_max")))
 
     # --- virtual mem
 
     def test_vmem_total(self):
-        sysctl_hwphymem = sysctl('sysctl hw.memsize')
+        sysctl_hwphymem = int(sh('sysctl hw.memsize'))
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
     @retry_before_failing()

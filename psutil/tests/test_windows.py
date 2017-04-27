@@ -30,13 +30,13 @@ import psutil
 from psutil import WINDOWS
 from psutil._compat import basestring
 from psutil._compat import callable
-from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
+from psutil.tests import sh
 from psutil.tests import unittest
 
 
@@ -69,10 +69,7 @@ def wrap_exceptions(fun):
 class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
-        p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
-        out = p.communicate()[0]
-        if PY3:
-            out = str(out, sys.stdout.encoding or sys.getfilesystemencoding())
+        out = sh('ipconfig', '/all')
         nics = psutil.net_io_counters(pernic=True).keys()
         for nic in nics:
             if "pseudo-interface" in nic.replace(' ', '-').lower():

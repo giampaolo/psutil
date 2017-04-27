@@ -279,18 +279,13 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    p = subprocess.Popen(cmdline, shell=True, stdout=stdout, stderr=stderr)
+    p = subprocess.Popen(cmdline, shell=True, stdout=stdout, stderr=stderr,
+                         universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
-        if PY3:
-            stderr = str(stderr, sys.stderr.encoding or
-                         sys.getfilesystemencoding())
         warn(stderr)
-    if PY3:
-        stdout = str(stdout, sys.stdout.encoding or
-                     sys.getfilesystemencoding())
     return stdout.strip()
 
 

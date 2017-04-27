@@ -722,10 +722,8 @@ class TestProcess(unittest.TestCase):
                     # Tipically OSX. Really not sure what to do here.
                     pass
 
-        subp = subprocess.Popen([exe, '-c', 'import os; print("hey")'],
-                                stdout=subprocess.PIPE)
-        out, _ = subp.communicate()
-        self.assertEqual(out.strip(), b'hey')
+        out = sh("""%s -c 'import os; print("hey")'""" % exe)
+        self.assertEqual(out, 'hey')
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]

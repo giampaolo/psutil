@@ -13,8 +13,6 @@
 import datetime
 import os
 import re
-import subprocess
-import sys
 import time
 
 import psutil
@@ -22,7 +20,6 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil._compat import PY3
 from psutil.tests import get_test_subprocess
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
@@ -87,11 +84,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         reap_children()
 
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" % self.pid
-        p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0]
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time()
         start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
