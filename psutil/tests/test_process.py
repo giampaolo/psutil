@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -46,7 +45,6 @@ from psutil._compat import unicode
 from psutil.tests import AF_UNIX
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
-from psutil.tests import chdir
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_exe
 from psutil.tests import create_proc_children_pair
@@ -68,7 +66,6 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
-from psutil.tests import TESTFN_UNICODE
 from psutil.tests import ThreadTask
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
@@ -2018,123 +2015,6 @@ if POSIX and os.getuid() == 0:
         def test_zombie_process(self):
             # causes problems if test test suite is run as root
             pass
-
-
-# ===================================================================
-# --- Unicode tests
-# ===================================================================
-
-
-class TestUnicode(unittest.TestCase):
-    """
-    Make sure that APIs returning a string are able to handle unicode,
-    see: https://github.com/giampaolo/psutil/issues/655
-    """
-    uexe = TESTFN_UNICODE
-    udir = TESTFN_UNICODE + '-dir'
-
-    @classmethod
-    def setUpClass(cls):
-        safe_rmpath(cls.uexe)
-        safe_rmpath(cls.udir)
-        create_exe(cls.uexe)
-        os.mkdir(cls.udir)
-
-    @classmethod
-    def tearDownClass(cls):
-        if not APPVEYOR:
-            safe_rmpath(cls.uexe)
-            safe_rmpath(cls.udir)
-
-    def setUp(self):
-        reap_children()
-
-    tearDown = setUp
-
-    def test_proc_exe(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
-        p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.name(), str)
-        if not OSX and TRAVIS:
-            self.assertEqual(p.exe(), self.uexe)
-        else:
-            p.exe()
-
-    def test_proc_name(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
-        if WINDOWS:
-            # XXX: why is this like this?
-            from psutil._pswindows import py2_strencode
-            name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
-        else:
-            name = psutil.Process(subp.pid).name()
-        if not OSX and TRAVIS:
-            self.assertEqual(name, os.path.basename(self.uexe))
-
-    def test_proc_cmdline(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
-        p = psutil.Process(subp.pid)
-        self.assertIsInstance("".join(p.cmdline()), str)
-        if not OSX and TRAVIS:
-            self.assertEqual(p.cmdline(), [self.uexe])
-        else:
-            p.cmdline()
-
-    def test_proc_cwd(self):
-        with chdir(self.udir):
-            p = psutil.Process()
-            self.assertIsInstance(p.cwd(), str)
-            if not OSX and TRAVIS:
-                self.assertEqual(p.cwd(), self.udir)
-            else:
-                p.cwd()
-
-    # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
-    def test_proc_open_files(self):
-        p = psutil.Process()
-        start = set(p.open_files())
-        with open(self.uexe, 'rb'):
-            new = set(p.open_files())
-        path = (new - start).pop().path
-        if BSD and not path:
-            # XXX
-            # see https://github.com/giampaolo/psutil/issues/595
-            self.skipTest("open_files on BSD is broken")
-        self.assertIsInstance(path, str)
-        if not OSX and TRAVIS:
-            self.assertEqual(os.path.normcase(path),
-                             os.path.normcase(self.uexe))
-
-    def test_disk_usage(self):
-        psutil.disk_usage(self.udir)
-
-    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "platform not supported")
-    def test_proc_environ(self):
-        # Note: differently from others, this test does not deal
-        # with fs paths. On Python 2 subprocess module is broken as
-        # it's not able to handle with non-ASCII env vars, so
-        # we use "è", which is part of the extended ASCII table
-        # (unicode point <= 255).
-        env = os.environ.copy()
-        funny_str = TESTFN_UNICODE if PY3 else 'è'
-        env['FUNNY_ARG'] = funny_str
-        sproc = get_test_subprocess(env=env)
-        p = psutil.Process(sproc.pid)
-        env = p.environ()
-        self.assertEqual(env['FUNNY_ARG'], funny_str)
-
-
-class TestInvalidUnicode(TestUnicode):
-    """Test handling of invalid utf8 data."""
-    if PY3:
-        uexe = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-        udir = (TESTFN.encode('utf8') + b"d\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-    else:
-        uexe = TESTFN + b"f\xc0\x80"
-        udir = TESTFN + b"d\xc0\x80"
 
 
 if __name__ == '__main__':
