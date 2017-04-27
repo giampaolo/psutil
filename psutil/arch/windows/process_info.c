@@ -93,8 +93,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
         }
         if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
             free(procArray);
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
+            return PyErr_SetFromWindowsErr(0);
         }
     } while (enumReturnSz == procArraySz * sizeof(DWORD));
 
@@ -138,8 +137,7 @@ psutil_pid_is_running(DWORD pid) {
         // Be strict and raise an exception; the caller is supposed
         // to take -1 into account.
         else {
-            PyErr_SetFromWindowsErr(0);
-            return -1;
+            return PyErr_SetFromWindowsErr(err);
         }
     }
 
@@ -149,16 +147,15 @@ psutil_pid_is_running(DWORD pid) {
         // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
         return (exitCode == STILL_ACTIVE);
     }
-    // access denied means there's a process there so we'll assume
-    // it's running
-    err = GetLastError();
-    CloseHandle(hProcess);
-    if (err == ERROR_ACCESS_DENIED) {
-        return 1;
-    }
     else {
-        PyErr_SetFromWindowsErr(0);
-        return -1;
+        err = GetLastError();
+        CloseHandle(hProcess);
+        // Same as for OpenProcess, assume access denied means there's
+        // a process to deny access to.
+        if (err == ERROR_ACCESS_DENIED)
+            return 1;
+        else
+            return PyErr_SetFromWindowsErr(err);
     }
 }
 
