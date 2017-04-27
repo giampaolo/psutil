@@ -844,6 +844,9 @@ Functions
     [{'name': 'python3', 'pid': 21947},
      {'name': 'python', 'pid': 23835}]
 
+  See also `process filtering <#filtering-and-sorting-processes>`__ section for
+  more examples.
+
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
 
@@ -1065,6 +1068,7 @@ Process class
     The process name.  On Windows the return value is cached after first
     call. Not on POSIX because the process name
     `may change <https://github.com/giampaolo/psutil/issues/692>`__.
+    See also how to `find a process by name <#find-process-by-name>`__.
 
   .. method:: exe()
 
@@ -1677,6 +1681,8 @@ Process class
     returned either as the reference to process A is lost.
     This concept is well summaried by this
     `unit test <https://github.com/giampaolo/psutil/blob/fb9ae861cf3cf175c3da4a3cd4e558c6cbd6af91/psutil/tests/test_process.py#L1236-L1247>`__.
+    See also how to `kill a process tree <#kill-process-tree>`__ and
+    `terminate my children <#terminate-my-children>`__.
 
   .. method:: open_files()
 
@@ -1820,6 +1826,8 @@ Process class
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
     are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
+    See also how to `kill a process tree <#kill-process-tree>`__ and
+    `terminate my children <#terminate-my-children>`__.
 
     .. versionchanged::
       3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
@@ -1845,14 +1853,18 @@ Process class
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
+    See also how to `kill a process tree <#kill-process-tree>`__ and
+    `terminate my children <#terminate-my-children>`__.
 
   .. method:: kill()
 
-     Kill the current process by using *SIGKILL* signal preemptively
-     checking whether PID has been reused.
-     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
-     On Windows this is done by using
-     `TerminateProcess <http://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>`__.
+    Kill the current process by using *SIGKILL* signal preemptively
+    checking whether PID has been reused.
+    On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
+    On Windows this is done by using
+    `TerminateProcess <http://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>`__.
+    See also how to `kill a process tree <#kill-process-tree>`__ and
+    `terminate my children <#terminate-my-children>`__.
 
   .. method:: wait(timeout=None)
 
@@ -2221,7 +2233,7 @@ enough to be part of the public API.
 Find process by name
 --------------------
 
-Check string against process :meth:`Process.name()`:
+Check string against :meth:`Process.name()`:
 
 ::
 
@@ -2235,7 +2247,7 @@ Check string against process :meth:`Process.name()`:
               ls.append(p)
       return ls
 
-A bit more advanced, check string against process :meth:`Process.name()`,
+A bit more advanced, check string against :meth:`Process.name()`,
 :meth:`Process.exe()` and :meth:`Process.cmdline()`:
 
 ::
@@ -2253,13 +2265,40 @@ A bit more advanced, check string against process :meth:`Process.name()`,
               name_ = p.name()
               cmdline = p.cmdline()
               exe = p.exe()
+          except (psutil.AccessDenied, psutil.ZombieProcess):
+              pass
           except psutil.NoSuchProcess:
               continue
-          except psutil.AccessDenied:
-              pass
           if name == name_ or cmdline[0] == name or os.path.basename(exe) == name:
               ls.append(name)
       return ls
+
+Kill process tree
+-----------------
+
+::
+
+  import psutil
+  import signal
+  import os
+
+  def kill_proc_tree(pid, sig=signal.SIGTERM, recursive=True, include_parent=True,
+                     timeout=None, on_terminate=None):
+      """Kill a process tree with signal "sig" and return a
+      (gone, still_alive) tuple.
+      If recursive is True also attempts to kill grandchildren.
+      """
+      if pid == os.getpid():
+          raise RuntimeError("I refuse to kill myself")
+      parent = psutil.Process(pid)
+      children = parent.children(recursive=recursive)
+      if include_parent:
+          children.append(parent)
+      for p in children:
+          p.send_signal(sig)
+      gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                      callback=on_terminate)
+      return (gone, alive)
 
 Terminate my children
 ---------------------
@@ -2297,32 +2336,114 @@ resources.
 
   reap_children()
 
-Kill process tree
------------------
+Filtering and sorting processes
+-------------------------------
 
-::
+This is a collection of one-liners showing how to use :func:`process_iter()` in
+order to filter for processes and sort them.
 
-  import psutil
-  import signal
-  import os
+Setup::
 
-  def kill_proc_tree(pid, sig=signal.SIGTERM, recursive=True, include_parent=True,
-                     timeout=None, on_terminate=None):
-      """Kill a process tree with signal "sig" and return a
-      (gone, still_alive) tuple.
-      If recursive is True also attempts to kill grandchildren.
-      """
-      if pid == os.getpid():
-          raise RuntimeError("I refuse to kill myself")
-      parent = psutil.Process(pid)
-      children = parent.children(recursive=recursive)
-      if include_parent:
-          children.append(parent)
-      for p in children:
-          p.send_signal(sig)
-      gone, alive = psutil.wait_procs(children, timeout=timeout,
-                                      callback=on_terminate)
-      return (gone, alive)
+  >>> import psutil
+  >>> from pprint import pprint as pp
+
+Processes having "python" in their name::
+
+  >>> pp([p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']])
+  [{'name': 'python3', 'pid': 21947},
+   {'name': 'python', 'pid': 23835}]
+
+Processes owned by user::
+
+  >>> import getpass
+  >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(attrs=['name', 'username']) if p.info['username'] == getpass.getuser()])
+  (16832, 'bash'),
+  (18841, 'chrome'),
+  (19772, 'ssh'),
+  (20028, 'chrome'),
+  (20492, 'python'),
+  (31658, 'VBoxSVC')]
+
+Processes having open network connections::
+
+  >>> pp([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'connections']) if p.info['connections']])
+  [(2650,
+    {'name': 'chrome',
+     'connections': [pconn(fd=131, family=2, type=2, laddr=('192.168.1.7', 48653), raddr=('151.5.1.14', 443), status='NONE'),
+                     pconn(fd=223, family=2, type=1, laddr=('192.168.1.7', 42642), raddr=('192.168.1.2', 8008), status='ESTABLISHED')]}),
+   (19772,
+    'name': 'ssh'
+    {'connections': [pconn(fd=3, family=2, type=1, laddr=('127.0.0.1', 39082), raddr=('127.0.0.1', 2222), status='ESTABLISHED')],}),
+   (21932,
+    'name': 'plugin_host'
+    {'connections': [pconn(fd=26, family=2, type=1, laddr=('192.168.1.7', 59698), raddr=('209.20.75.76', 80), status='CLOSE_WAIT'),
+                     pconn(fd=27, family=2, type=2, laddr=('127.0.0.1', 55580), raddr=('127.0.1.1', 53), status='NONE')]})]
+
+Processes actively running::
+
+  >>> pp([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
+  [(1150, {'name': 'Xorg', 'status': 'running'}),
+   (1776, {'name': 'unity-panel-service', 'status': 'running'}),
+   (20492, {'name': 'python', 'status': 'running'})]
+
+Processes using log files::
+
+  >>> import os
+  >>> import psutil
+  >>> for p in psutil.process_iter(attrs=['name', 'open_files']):
+  ...      for file in p.info['open_files'] or []:
+  ...          if os.path.splitext(file.path)[1] == '.log':
+  ...               print("%-5s %-10s %s" % (p.pid, p.info['name'][:10], file.path))
+  ...
+  1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
+  2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
+  2274  gvfsd-meta /home/giampaolo/.local/share/gvfs-metadata/root-1d9eaa2d.log
+  2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
+
+Processes consuming more than 500M of memory::
+
+  >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(attrs=['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
+  [(2650, 'chrome', 532324352),
+   (3038, 'chrome', 1120088064),
+   (3249, 'chrome', 1503940608),
+   (18841, 'chrome', 582803456),
+   (21915, 'sublime_text', 615407616)]
+
+Top 5 most memory consuming processes::
+
+  >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'memory_percent']), key=lambda p: p.info['memory_percent'])][-5:])
+  [(2650, {'memory_percent': 3.1836352240031873, 'name': 'chrome'}),
+   (18841, {'memory_percent': 3.482724332758809, 'name': 'chrome'}),
+   (21915, {'memory_percent': 3.6815453247662737, 'name': 'sublime_text'}),
+   (3038, {'memory_percent': 6.732935429979187, 'name': 'chrome'}),
+   (3249, {'memory_percent': 8.994554843376399, 'name': 'chrome'})]
+
+Top 5 processes which consumed the most CPU time::
+
+  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(attrs=['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-5:])
+  [(3249, 'chrome', 6392.240000000001),
+   (1888, 'compiz', 8833.04),
+   (2721, 'chrome', 10219.73),
+   (1150, 'Xorg', 11116.989999999998),
+   (2650, 'chrome', 18451.97)]
+
+Top 5 processes which caused the most I/O::
+
+  >>> pp([(p.pid, p.info['name']) for p in sorted(psutil.process_iter(attrs=['name', 'io_counters']), key=lambda p: p.info['io_counters'] and p.info['io_counters'][:2])][-5:])
+  [(21915, 'sublime_text'),
+   (2175, 'indicator-multiload'),
+   (1871, 'pulseaudio'),
+   (1510, 'upstart'),
+   (2650, 'chrome')]
+
+Top 5 processes opening more file descriptors::
+
+   >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'num_fds']), key=lambda p: p.info['num_fds'])][-5:])
+  [(3038, {'name': 'chrome', 'num_fds': 100}),
+   (21915, {'name': 'sublime_text', 'num_fds': 105}),
+   (18841, {'name': 'chrome', 'num_fds': 144}),
+   (2721, {'name': 'chrome', 'num_fds': 185}),
+   (2650, {'name': 'chrome', 'num_fds': 354})]
 
 Q&A
 ===
