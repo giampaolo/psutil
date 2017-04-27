@@ -83,17 +83,18 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(list(p.info.keys()), ['pid'])
         with self.assertRaises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
-        with mock.patch("psutil._psplatform.Process.name",
+        with mock.patch("psutil._psplatform.Process.cpu_times",
                         side_effect=psutil.AccessDenied(0, "")) as m:
-            for p in psutil.process_iter(attrs=["pid", "name"]):
-                self.assertIsNone(p.info['name'])
+            for p in psutil.process_iter(attrs=["pid", "cpu_times"]):
+                self.assertIsNone(p.info['cpu_times'])
                 self.assertGreaterEqual(p.info['pid'], 0)
             assert m.called
-        with mock.patch("psutil._psplatform.Process.name",
+        with mock.patch("psutil._psplatform.Process.cpu_times",
                         side_effect=psutil.AccessDenied(0, "")) as m:
             flag = object()
-            for p in psutil.process_iter(attrs=["pid", "name"], ad_value=flag):
-                self.assertIs(p.info['name'], flag)
+            for p in psutil.process_iter(
+                    attrs=["pid", "cpu_times"], ad_value=flag):
+                self.assertIs(p.info['cpu_times'], flag)
                 self.assertGreaterEqual(p.info['pid'], 0)
             assert m.called
 
