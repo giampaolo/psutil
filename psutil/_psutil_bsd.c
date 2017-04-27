@@ -826,11 +826,12 @@ psutil_users(PyObject *self, PyObject *args) {
         if (utx->ut_type != USER_PROCESS)
             continue;
         py_tuple = Py_BuildValue(
-            "(sssf)",
+            "(sssfi)",
             utx->ut_user,  // username
             utx->ut_line,  // tty
             utx->ut_host,  // hostname
-            (float)utx->ut_tv.tv_sec  // start time
+            (float)utx->ut_tv.tv_sec,  // start time
+            utx->ut_pid  // process id
         );
 
         if (!py_tuple) {
