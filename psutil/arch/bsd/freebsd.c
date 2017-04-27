@@ -290,14 +290,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size = sizeof(pathname);
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        if (errno == ENOENT) {
-            // see: https://github.com/giampaolo/psutil/issues/907
+        // see: https://github.com/giampaolo/psutil/issues/907
+        if (errno == ENOENT)
             return Py_BuildValue("s", "");
-        }
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
+        else
+            return PyErr_SetFromErrno(PyExc_OSError);
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
@@ -492,8 +489,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     );
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -521,13 +517,13 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     kvm_close(kd);
 
     if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
 
     return Py_BuildValue("(iiiII)",
                          kvmsw[0].ksw_total,                     // total
@@ -536,9 +532,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          swapin + swapout,                       // swap in
                          nodein + nodeout);                      // swap out
 
-sbn_error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+error:
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -643,8 +638,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
         Py_DECREF(py_retlist);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
     long cpu_time[maxcpus][CPUSTATES];
 
@@ -881,10 +875,8 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
         return NULL;
     ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
                              sizeof(mask), &mask);
-    if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (ret != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -992,8 +984,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -1016,6 +1007,5 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     return Py_BuildValue("iii", percent, minsleft, power_plugged);
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
