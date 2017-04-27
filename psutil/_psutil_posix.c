@@ -295,8 +295,7 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
 error:
     if (sock != 0)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -333,8 +332,7 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 error:
     if (sock != 0)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -526,8 +524,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
 error:
     if (sock != 0)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 #endif  // net_if_stats() OSX/BSD implementation
 

@@ -534,8 +534,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 error:
     if (sock != -1)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
