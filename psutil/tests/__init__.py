@@ -279,7 +279,8 @@ def sh(cmd):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+    shell = True if isinstance(cmd, (str, unicode)) else False
+    p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:

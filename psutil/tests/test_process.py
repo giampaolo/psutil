@@ -722,7 +722,7 @@ class TestProcess(unittest.TestCase):
                     # Tipically OSX. Really not sure what to do here.
                     pass
 
-        out = sh("""%s -c 'import os; print("hey")'""" % exe)
+        out = sh([exe, "-c", "import os; print('hey')"])
         self.assertEqual(out, 'hey')
 
     def test_cmdline(self):
