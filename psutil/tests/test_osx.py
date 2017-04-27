@@ -24,6 +24,18 @@ from psutil.tests import unittest
 PAGESIZE = os.sysconf("SC_PAGE_SIZE") if OSX else None
 
 
+def sysctl(cmdline):
+    """Expects a sysctl command with an argument and parse the result
+    returning only the value of interest.
+    """
+    out = sh(cmdline)
+    result = out.split()[1]
+    try:
+        return int(result)
+    except ValueError:
+        return result
+
+
 def vm_stat(field):
     """Wrapper around 'vm_stat' cmdline utility."""
     out = sh('vm_stat')
@@ -122,26 +134,26 @@ class TestSystemAPIs(unittest.TestCase):
     # --- cpu
 
     def test_cpu_count_logical(self):
-        num = int(sh("sysctl hw.logicalcpu"))
+        num = sysctl("sysctl hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
     def test_cpu_count_physical(self):
-        num = int(sh("sysctl hw.physicalcpu"))
+        num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(
-            freq.current * 1000 * 1000, int(sh("sysctl hw.cpufrequency")))
+            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
         self.assertEqual(
-            freq.min * 1000 * 1000, int(sh("sysctl hw.cpufrequency_min")))
+            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
         self.assertEqual(
-            freq.max * 1000 * 1000, int(sh("sysctl hw.cpufrequency_max")))
+            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
 
     # --- virtual mem
 
     def test_vmem_total(self):
-        sysctl_hwphymem = int(sh('sysctl hw.memsize'))
+        sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
     @retry_before_failing()
