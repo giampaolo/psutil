@@ -1102,7 +1102,8 @@ class TestProcess(unittest.TestCase):
     def test_connections_unix(self):
         def check(type):
             safe_rmpath(TESTFN)
-            sock, name = bind_unix_socket(type=type)
+            sock, name = bind_unix_socket(
+                type=type, name=None if OSX else TESTFN)
             self.addCleanup(sock.close)
             self.addCleanup(safe_rmpath, name)
             cons = psutil.Process().connections(kind='unix')
