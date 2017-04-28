@@ -25,6 +25,8 @@
   cards installed.
 - 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
   skipping a file which gets deleted while open files are retrieved.
+- 1029_: [FreeBSD] Process.connections('unix') on Python 3 doesn't properly
+  handle unicode paths and may raise UnicodeDecodeError.
 
 *2017-04-10*
 
