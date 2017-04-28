@@ -60,6 +60,7 @@ from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -79,16 +80,18 @@ class _BaseFSAPIsTests(object):
 
     @classmethod
     def setUpClass(cls):
+        cls.funky_dirname = cls.funky_name + '2'
         safe_rmpath(cls.funky_name)
+        safe_mkdir(cls.funky_dirname)
+        create_exe(cls.funky_name)
 
-    tearDownClass = setUpClass
-
-    def setUp(self):
-        safe_rmpath(self.funky_name)
+    @classmethod
+    def tearDownClass(cls):
+        safe_rmpath(cls.funky_name)
+        safe_rmpath(cls.funky_dirname)
 
     def tearDown(self):
         reap_children()
-        safe_rmpath(self.funky_name)
 
     @classmethod
     def expect_exact_path_match(cls):
@@ -97,7 +100,6 @@ class _BaseFSAPIsTests(object):
         return PY3 or cls.funky_name in os.listdir('.')
 
     def test_proc_exe(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
@@ -106,7 +108,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(exe, self.funky_name)
 
     def test_proc_name(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
             # On Windows name() is determined from exe() first, because
@@ -121,7 +122,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
@@ -129,13 +129,12 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(cmdline, [self.funky_name])
 
     def test_proc_cwd(self):
-        os.mkdir(self.funky_name)
-        with chdir(self.funky_name):
+        with chdir(self.funky_dirname):
             p = psutil.Process()
             cwd = p.cwd()
         self.assertIsInstance(p.cwd(), str)
         if self.expect_exact_path_match():
-            self.assertEqual(cwd, self.funky_name)
+            self.assertEqual(cwd, self.funky_dirname)
 
     # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
@@ -154,8 +153,7 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     def test_disk_usage(self):
-        os.mkdir(self.funky_name)
-        psutil.disk_usage(self.funky_name)
+        psutil.disk_usage(self.funky_dirname)
 
 
 @unittest.skipIf(ASCII_FS, "ASCII fs")
