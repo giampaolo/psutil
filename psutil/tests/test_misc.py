@@ -10,6 +10,7 @@ Miscellaneous tests.
 """
 
 import ast
+import contextlib
 import errno
 import imp
 import json
@@ -30,6 +31,7 @@ from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
+from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import get_test_subprocess
@@ -46,6 +48,7 @@ from psutil.tests import TESTFN
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
@@ -681,16 +684,38 @@ class TestProcessUtils(unittest.TestCase):
 class TestNetUtils(unittest.TestCase):
 
     @unittest.skipUnless(POSIX, "POSIX only")
+    def test_bind_unix_socket(self):
+        with unix_socket_path() as name:
+            sock = bind_unix_socket(name)
+            with contextlib.closing(sock):
+                self.assertEqual(sock.family, socket.AF_UNIX)
+                self.assertEqual(sock.type, socket.SOCK_STREAM)
+                self.assertEqual(sock.getsockname(), name)
+                assert os.path.exists(name)
+                assert stat.S_ISSOCK(os.stat(name).st_mode)
+        # UDP
+        with unix_socket_path() as name:
+            sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
+            with contextlib.closing(sock):
+                self.assertEqual(sock.type, socket.SOCK_DGRAM)
+
+    @unittest.skipUnless(POSIX, "POSIX only")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
         assert not p.connections(kind='unix')
-        ssock, csock, name = unix_socketpair()
-        self.addCleanup(safe_rmpath, name)
-        assert os.path.exists(name)
-        assert stat.S_ISSOCK(os.stat(name).st_mode)
-        self.assertEqual(p.num_fds() - num_fds, 2)
-        self.assertEqual(len(p.connections(kind='unix')), 2)
+        with unix_socket_path() as name:
+            server, client = unix_socketpair(name)
+            try:
+                assert os.path.exists(name)
+                assert stat.S_ISSOCK(os.stat(name).st_mode)
+                self.assertEqual(p.num_fds() - num_fds, 2)
+                self.assertEqual(len(p.connections(kind='unix')), 2)
+                self.assertEqual(server.getsockname(), name)
+                self.assertEqual(client.getpeername(), name)
+            finally:
+                client.close()
+                server.close()
 
 
 if __name__ == '__main__':
