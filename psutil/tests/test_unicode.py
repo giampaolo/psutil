@@ -24,12 +24,12 @@ In psutil these are the APIs returning or dealing with a string:
 - disk_io_counters()           (not tested)
 - disk_partitions()            (not tested)
 - disk_usage(str)
-- net_connections('unix')      (not tested)
+- net_connections('unix')
 - net_if_addrs()               (not tested)
 - net_if_stats()               (not tested)
 - net_io_counters()            (not tested)
-- sensors_fans()
-- sensors_temperatures()
+- sensors_fans()               (not tested)
+- sensors_temperatures()       (not tested)
 - users()                      (not tested)
 - WindowsService               (not tested)
 
@@ -66,6 +66,8 @@ from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
+from psutil.tests import skip_on_access_denied
+from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import unittest
@@ -159,6 +161,29 @@ class _BaseFSAPIsTests(object):
         self.addCleanup(safe_rmpath, name)
         self.addCleanup(sock.close)
         conn = psutil.Process().connections(kind='unix')[0]
+        self.assertEqual(conn.laddr, name)
+
+    @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
+    @skip_on_access_denied()
+    def test_net_connections(self):
+        def find_sock(cons):
+            for conn in cons:
+                if os.path.basename(conn.laddr).startswith(TESTFILE_PREFIX):
+                    return conn
+            raise ValueError("connection not found")
+
+        try:
+            sock, name = bind_unix_socket(
+                suffix=os.path.basename(self.funky_name))
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
+        self.addCleanup(safe_rmpath, name)
+        self.addCleanup(sock.close)
+        cons = psutil.net_connections(kind='unix')
+        conn = find_sock(cons)
         self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
