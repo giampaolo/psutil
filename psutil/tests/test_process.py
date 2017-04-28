@@ -1129,7 +1129,7 @@ class TestProcess(unittest.TestCase):
                      'connection fd not available on this platform')
     def test_connection_fromfd(self):
         with contextlib.closing(socket.socket()) as sock:
-            sock.bind(('localhost', 0))
+            sock.bind(('127.0.0.1', 0))
             sock.listen(1)
             p = psutil.Process()
             for conn in p.connections():
