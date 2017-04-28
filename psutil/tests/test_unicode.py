@@ -12,7 +12,7 @@ Notes about unicode handling in psutil
 In psutil these are the APIs returning or dealing with a string:
 
 - Process.cmdline()
-- Process.connections('unix')  (not tested)
+- Process.connections('unix')
 - Process.cwd()
 - Process.environ()
 - Process.exe()
@@ -51,11 +51,16 @@ https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
 """
 
 import os
+import tempfile
+import contextlib
+import socket
 
 from psutil import BSD
+from psutil import OSX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil.tests import ASCII_FS
+from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import chdir
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
@@ -146,6 +151,28 @@ class _BaseFSAPIsTests(object):
         if self.expect_exact_path_match():
             self.assertEqual(os.path.normcase(path),
                              os.path.normcase(self.funky_name))
+
+    @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
+    def test_connections(self):
+        safe_rmpath(TESTFN)
+        # TODO: for some reason on OSX a UNIX socket cannot be
+        # deleted once created (EACCES) so we create a temp file
+        # which will remain around. :-\
+        if OSX:
+            tfile = tempfile.mktemp(
+                prefix=TESTFILE_PREFIX + self.funky_name)
+        else:
+            tfile = self.funky_name
+        self.addCleanup(safe_rmpath, tfile)
+
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        with contextlib.closing(sock):
+            try:
+                sock.bind(tfile)
+            except (socket.error, UnicodeEncodeError):
+                raise unittest.SkipTest("not supported")
+            conn = psutil.Process().connections(kind='unix')[0]
+            self.assertEqual(conn.laddr, tfile)
 
     def test_disk_usage(self):
         safe_mkdir(self.funky_name)
