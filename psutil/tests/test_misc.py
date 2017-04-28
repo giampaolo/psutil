@@ -689,8 +689,14 @@ class TestProcessUtils(unittest.TestCase):
 class _UnicodeFilesystemAPIS(unittest.TestCase):
     """
     Make sure that fs-related APIs returning a string are able to
-    handle unicode, see: https://github.com/giampaolo/psutil/issues/655
+    handle unicode, see:
+    https://github.com/giampaolo/psutil/issues/655
     This is a base class which is tested by the mixins below.
+    Note that on Python 2 we do not check whether the returned paths
+    match in case os.* functions are not able to so.
+    We just assume correct path handling on Python 2 is broken. In fact
+    it is broken for most os.* functions, see:
+    http://bugs.python.org/issue18695
     """
     funky_name = TESTFN_UNICODE
 
@@ -698,54 +704,61 @@ class _UnicodeFilesystemAPIS(unittest.TestCase):
     def setUpClass(cls):
         safe_rmpath(cls.funky_name)
 
+    tearDownClass = setUpClass
+
     def setUp(self):
         safe_rmpath(self.funky_name)
-        reap_children()
 
-    tearDownClass = setUpClass
-    tearDown = setUp
+    def tearDown(self):
+        reap_children()
+        safe_rmpath(self.funky_name)
+
+    @classmethod
+    def expect_exact_path_match(cls):
+        # Do not expect psutil to correctly handle unicode paths on
+        # Python 2 if os.listdir() is not able either.
+        return PY3 or cls.funky_name in os.listdir('.')
 
     def test_proc_exe(self):
         create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.name(), str)
-        if not OSX and TRAVIS:
-            self.assertEqual(p.exe(), self.funky_name)
-        else:
-            p.exe()
+        exe = p.exe()
+        self.assertIsInstance(exe, str)
+        if self.expect_exact_path_match():
+            self.assertEqual(exe, self.funky_name)
 
     def test_proc_name(self):
         create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
-            # XXX: why is this like this?
+            # On Windows name() is determined from exe() first, because
+            # it's faster; we want to overcome the internal optimization
+            # and test name() instead of exe().
             from psutil._pswindows import py2_strencode
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
-        if not OSX and TRAVIS:
+        self.assertIsInstance(name, str)
+        if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
         create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
-        self.assertIsInstance("".join(p.cmdline()), str)
-        if not OSX and TRAVIS:
-            self.assertEqual(p.cmdline(), [self.funky_name])
-        else:
-            p.cmdline()
+        cmdline = p.cmdline()
+        if self.expect_exact_path_match():
+            self.assertEqual(cmdline, [self.funky_name])
 
     def test_proc_cwd(self):
         os.mkdir(self.funky_name)
         with chdir(self.funky_name):
             p = psutil.Process()
+            cwd = p.cwd()
             self.assertIsInstance(p.cwd(), str)
-            if not OSX and TRAVIS:
-                self.assertEqual(p.cwd(), self.funky_name)
-            else:
-                p.cwd()
+            if self.expect_exact_path_match():
+                self.assertEqual(cwd, self.funky_name)
 
     # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
@@ -757,9 +770,9 @@ class _UnicodeFilesystemAPIS(unittest.TestCase):
         if BSD and not path:
             # XXX
             # see https://github.com/giampaolo/psutil/issues/595
-            self.skipTest("open_files on BSD is broken")
+            return self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
-        if not OSX and TRAVIS:
+        if self.expect_exact_path_match():
             self.assertEqual(os.path.normcase(path),
                              os.path.normcase(self.funky_name))
 
