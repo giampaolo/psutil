@@ -1101,6 +1101,9 @@ class TestProcess(unittest.TestCase):
     def test_connections_unix(self):
         def check(type):
             safe_rmpath(TESTFN)
+            # TODO: for some reason on OSX a UNIX socket cannot be
+            # deleted once created (EACCES) so we create a temp file
+            # which will remain around. :-\
             tfile = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
             sock = socket.socket(AF_UNIX, type)
             with contextlib.closing(sock):
