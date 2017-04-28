@@ -79,20 +79,12 @@ class _BaseFSAPIsTests(object):
 
     funky_name = None
 
-    @classmethod
-    def setUpClass(cls):
-        cls.funky_dirname = cls.funky_name + '2'
-        safe_rmpath(cls.funky_name)
-        safe_mkdir(cls.funky_dirname)
-        create_exe(cls.funky_name)
-
-    @classmethod
-    def tearDownClass(cls):
-        safe_rmpath(cls.funky_name)
-        safe_rmpath(cls.funky_dirname)
+    def setUp(self):
+        safe_rmpath(self.funky_name)
 
     def tearDown(self):
         reap_children()
+        safe_rmpath(self.funky_name)
 
     @classmethod
     def expect_exact_path_match(cls):
@@ -101,6 +93,7 @@ class _BaseFSAPIsTests(object):
         return PY3 or cls.funky_name in os.listdir('.')
 
     def test_proc_exe(self):
+        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
@@ -109,6 +102,7 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(exe, self.funky_name)
 
     def test_proc_name(self):
+        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
             # On Windows name() is determined from exe() first, because
@@ -123,6 +117,7 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
+        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
@@ -130,14 +125,14 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(cmdline, [self.funky_name])
 
     def test_proc_cwd(self):
-        with chdir(self.funky_dirname):
+        safe_mkdir(self.funky_name)
+        with chdir(self.funky_name):
             p = psutil.Process()
             cwd = p.cwd()
         self.assertIsInstance(p.cwd(), str)
         if self.expect_exact_path_match():
-            self.assertEqual(cwd, self.funky_dirname)
+            self.assertEqual(cwd, self.funky_name)
 
-    # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -145,8 +140,7 @@ class _BaseFSAPIsTests(object):
             new = set(p.open_files())
         path = (new - start).pop().path
         if BSD and not path:
-            # XXX
-            # see https://github.com/giampaolo/psutil/issues/595
+            # XXX - see https://github.com/giampaolo/psutil/issues/595
             return self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
         if self.expect_exact_path_match():
@@ -154,7 +148,8 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     def test_disk_usage(self):
-        psutil.disk_usage(self.funky_dirname)
+        safe_mkdir(self.funky_name)
+        psutil.disk_usage(self.funky_name)
 
 
 @unittest.skipIf(ASCII_FS, "ASCII fs")

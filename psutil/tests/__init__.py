@@ -559,7 +559,9 @@ def chdir(dirname):
 def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
-    if which("gcc"):
+    if c_code:
+        if not which("gcc"):
+            raise ValueError("gcc is not installed")
         if c_code is None:
             c_code = textwrap.dedent(
                 """
@@ -577,10 +579,7 @@ def create_exe(outpath, c_code=None):
         finally:
             safe_rmpath(f.name)
     else:
-        # fallback - use python's executable
-        if c_code is not None:
-            raise ValueError(
-                "can't specify c_code arg as gcc is not installed")
+        # copy python executable
         shutil.copyfile(sys.executable, outpath)
         if POSIX:
             st = os.stat(outpath)
