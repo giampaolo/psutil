@@ -145,7 +145,6 @@ SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 # --- misc
 
-AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
@@ -793,6 +792,7 @@ def check_net_address(addr, family):
 
 def check_connection_ntuple(conn):
     """Check validity of a connection namedtuple."""
+    AF_UNIX = getattr(socket, "AF_UNIX", object())
     valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if
                          x.startswith('CONN_')]
     assert conn[0] == conn.fd
@@ -869,6 +869,7 @@ def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix="",
             raise ValueError("name and suffix aregs are mutually exclusive")
     assert not os.path.exists(name), name
     sock = socket.socket(socket.AF_UNIX, type)
+    sock.settimeout(GLOBAL_TIMEOUT)
     try:
         sock.bind(name)
     except Exception:

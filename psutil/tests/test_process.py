@@ -42,7 +42,6 @@ from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil._compat import unicode
-from psutil.tests import AF_UNIX
 from psutil.tests import APPVEYOR
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
@@ -1111,7 +1110,7 @@ class TestProcess(unittest.TestCase):
             check_connection_ntuple(conn)
             if conn.fd != -1:  # != sunos and windows
                 self.assertEqual(conn.fd, sock.fileno())
-            self.assertEqual(conn.family, AF_UNIX)
+            self.assertEqual(conn.family, socket.AF_UNIX)
             self.assertEqual(conn.type, type)
             self.assertEqual(conn.laddr, name)
             if not SUNOS:
@@ -1448,10 +1447,9 @@ class TestProcess(unittest.TestCase):
                     pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
-        with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
+        sock, _ = bind_unix_socket(name=unix_file)
+        with contextlib.closing(sock):
             try:
-                sock.settimeout(GLOBAL_TIMEOUT)
-                sock.bind(unix_file)
                 sock.listen(1)
                 pyrun(src)
                 conn, _ = sock.accept()
