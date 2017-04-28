@@ -71,6 +71,7 @@ from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import unittest
+from psutil.tests import unix_socketpair
 import psutil
 import psutil.tests
 
@@ -151,17 +152,23 @@ class _BaseFSAPIsTests(object):
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     def test_proc_connections(self):
         try:
-            sock, name = bind_unix_socket(
+            server, client, name = unix_socketpair(
                 suffix=os.path.basename(self.funky_name))
         except UnicodeEncodeError:
             if PY3:
                 raise
             else:
                 raise unittest.SkipTest("not supported")
+
         self.addCleanup(safe_rmpath, name)
-        self.addCleanup(sock.close)
-        conn = psutil.Process().connections(kind='unix')[0]
-        self.assertEqual(conn.laddr, name)
+        self.addCleanup(client.close)
+        self.addCleanup(server.close)
+        cons = psutil.Process().connections(kind='unix')
+        self.assertEqual(len(cons), 2)
+        cmap = dict([(x.fd, x) for x in cons])
+        self.assertEqual(cmap[server.fileno()].laddr, name)
+        if cmap[client.fileno()].laddr:
+            self.assertEqual(cmap[client.fileno()].laddr, name)
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     @skip_on_access_denied()
