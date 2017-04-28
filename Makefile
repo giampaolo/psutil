@@ -48,7 +48,7 @@ clean:
 	rm -rf \
 		*.core \
 		*.egg-info \
-		*\$testfile* \
+		*\$testfn* \
 		.coverage \
 		.tox \
 		build/ \
