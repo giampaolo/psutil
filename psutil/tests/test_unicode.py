@@ -72,6 +72,7 @@ from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
+from psutil.tests import unix_socket_path
 import psutil
 import psutil.tests
 
@@ -151,24 +152,25 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     def test_proc_connections(self):
-        try:
-            server, client, name = unix_socketpair(
-                suffix=os.path.basename(self.funky_name))
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise unittest.SkipTest("not supported")
+        with unix_socket_path(
+                suffix=os.path.basename(self.funky_name)) as name:
+            try:
+                server, client = unix_socketpair(name)
+            except UnicodeEncodeError:
+                if PY3:
+                    raise
+                else:
+                    raise unittest.SkipTest("not supported")
 
-        self.addCleanup(safe_rmpath, name)
-        self.addCleanup(client.close)
-        self.addCleanup(server.close)
-        cons = psutil.Process().connections(kind='unix')
-        self.assertEqual(len(cons), 2)
-        cmap = dict([(x.fd, x) for x in cons])
-        self.assertEqual(cmap[server.fileno()].laddr, name)
-        if cmap[client.fileno()].laddr:
-            self.assertEqual(cmap[client.fileno()].laddr, name)
+            self.addCleanup(safe_rmpath, name)
+            self.addCleanup(client.close)
+            self.addCleanup(server.close)
+            cons = psutil.Process().connections(kind='unix')
+            self.assertEqual(len(cons), 2)
+            cmap = dict([(x.fd, x) for x in cons])
+            self.assertEqual(cmap[server.fileno()].laddr, name)
+            if cmap[client.fileno()].laddr:
+                self.assertEqual(cmap[client.fileno()].laddr, name)
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     @skip_on_access_denied()
@@ -179,19 +181,20 @@ class _BaseFSAPIsTests(object):
                     return conn
             raise ValueError("connection not found")
 
-        try:
-            sock, name = bind_unix_socket(
-                suffix=os.path.basename(self.funky_name))
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise unittest.SkipTest("not supported")
-        self.addCleanup(safe_rmpath, name)
-        self.addCleanup(sock.close)
-        cons = psutil.net_connections(kind='unix')
-        conn = find_sock(cons)
-        self.assertEqual(conn.laddr, name)
+        with unix_socket_path(
+                suffix=os.path.basename(self.funky_name)) as name:
+            try:
+                sock = bind_unix_socket(name)
+            except UnicodeEncodeError:
+                if PY3:
+                    raise
+                else:
+                    raise unittest.SkipTest("not supported")
+            self.addCleanup(safe_rmpath, name)
+            self.addCleanup(sock.close)
+            cons = psutil.net_connections(kind='unix')
+            conn = find_sock(cons)
+            self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         safe_mkdir(self.funky_name)

@@ -43,7 +43,6 @@ except ImportError:
 
 import psutil
 from psutil import LINUX
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -851,23 +850,24 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix=""):
+@contextlib.contextmanager
+def unix_socket_path(suffix=""):
+    assert psutil.POSIX, "not a POSIX system"
+    path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
+    try:
+        yield path
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def bind_unix_socket(name, type=socket.SOCK_STREAM):
     """Creates a listening unix socket.
     Return a (sock, filemame) tuple.
     """
-    # TODO: for some reason on OSX a UNIX socket cannot be
-    # deleted once created (EACCES) so we create a temp file
-    # which will remain around. :-\
     assert psutil.POSIX, "not a POSIX system"
-    if not name:
-        if OSX:
-            name = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
-        else:
-            name = TESTFN + suffix
-    else:
-        if suffix:
-            raise ValueError("name and suffix aregs are mutually exclusive")
-    safe_rmpath(name)
     assert not os.path.exists(name), name
     sock = socket.socket(socket.AF_UNIX, type)
     try:
@@ -875,26 +875,23 @@ def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix=""):
     except Exception:
         sock.close()
         raise
-    os.chmod(name, 0o600)
-    return (sock, name)
+    return sock
 
 
-def unix_socketpair(name=None, suffix=""):
+def unix_socketpair(name):
     """Build a pair of UNIX sockets connected to each other through
     the same UNIX file name.
     Return a (server_sock, client_sock, filename) tuple.
     """
     assert psutil.POSIX, "not a POSIX system"
-    listener, name = bind_unix_socket(name=name, suffix=suffix)
-    listener.setblocking(0)
-    listener.listen(1)
+    server = bind_unix_socket(name, type=socket.SOCK_STREAM)
+    server.setblocking(0)
+    server.listen(1)
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     client.setblocking(0)
-    # XXX - for some reason I don't have to select() even if they
-    # are non-blocking sockets. Why doesn't this raise EAGAIN?
     client.connect(name)
-    # new = listener.accept()
-    return (listener, client, name)
+    # new = server.accept()
+    return (server, client)
 
 
 # ===================================================================

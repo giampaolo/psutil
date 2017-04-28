@@ -70,6 +70,7 @@ from psutil.tests import ThreadTask
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import unix_socket_path
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
@@ -1101,23 +1102,23 @@ class TestProcess(unittest.TestCase):
     def test_connections_unix(self):
         def check(type):
             safe_rmpath(TESTFN)
-            sock, name = bind_unix_socket(
-                type=type, name=None if OSX else TESTFN)
-            self.addCleanup(safe_rmpath, name)
-            with contextlib.closing(sock):
-                cons = psutil.Process().connections(kind='unix')
-                self.assertEqual(len(cons), 1)
-                conn = cons[0]
-                check_connection_ntuple(conn)
-                if conn.fd != -1:  # != sunos and windows
-                    self.assertEqual(conn.fd, sock.fileno())
-                self.assertEqual(conn.family, socket.AF_UNIX)
-                self.assertEqual(conn.type, type)
-                self.assertEqual(conn.laddr, name)
-                if not SUNOS:
-                    # XXX Solaris can't retrieve system-wide UNIX
-                    # sockets.
-                    self.compare_proc_sys_cons(os.getpid(), cons)
+            with unix_socket_path() as name:
+                sock = bind_unix_socket(name, type=type)
+                self.addCleanup(safe_rmpath, name)
+                with contextlib.closing(sock):
+                    cons = psutil.Process().connections(kind='unix')
+                    self.assertEqual(len(cons), 1)
+                    conn = cons[0]
+                    check_connection_ntuple(conn)
+                    if conn.fd != -1:  # != sunos and windows
+                        self.assertEqual(conn.fd, sock.fileno())
+                    self.assertEqual(conn.family, socket.AF_UNIX)
+                    self.assertEqual(conn.type, type)
+                    self.assertEqual(conn.laddr, name)
+                    if not SUNOS:
+                        # XXX Solaris can't retrieve system-wide UNIX
+                        # sockets.
+                        self.compare_proc_sys_cons(os.getpid(), cons)
 
         check(SOCK_STREAM)
         check(SOCK_DGRAM)
@@ -1448,9 +1449,10 @@ class TestProcess(unittest.TestCase):
                     pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
-        sock, _ = bind_unix_socket(name=unix_file)
-        with contextlib.closing(sock):
+        with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
             try:
+                sock.settimeout(GLOBAL_TIMEOUT)
+                sock.bind(unix_file)
                 sock.listen(1)
                 pyrun(src)
                 conn, _ = sock.accept()
