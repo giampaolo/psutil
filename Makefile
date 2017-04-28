@@ -134,6 +134,11 @@ test-misc:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_misc.py
 
+# Test misc.
+test-unicode:
+	${MAKE} install
+	$(PYTHON) psutil/tests/test_unicode.py
+
 # Test POSIX.
 test-posix:
 	${MAKE} install

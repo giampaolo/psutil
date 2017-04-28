@@ -346,6 +346,13 @@ def test_misc():
 
 
 @cmd
+def test_unicode():
+    """Run unicode tests"""
+    install()
+    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
+
+
+@cmd
 def test_by_name():
     """Run test by name"""
     try:
