@@ -11,12 +11,6 @@ Notes about unicode handling in psutil
 
 In psutil these are the APIs returning or dealing with a string:
 
-- disk_io_counters()           (not tested)
-- disk_partitions()            (not tested)
-- disk_usage(str)
-- net_if_addrs()               (not tested)
-- net_if_stats()               (not tested)
-- net_io_counters()            (not tested)
 - Process.cmdline()
 - Process.connections('unix')  (not tested)
 - Process.cwd()
@@ -26,6 +20,13 @@ In psutil these are the APIs returning or dealing with a string:
 - Process.name()
 - Process.open_files()
 - Process.username()           (not tested)
+
+- disk_io_counters()           (not tested)
+- disk_partitions()            (not tested)
+- disk_usage(str)
+- net_if_addrs()               (not tested)
+- net_if_stats()               (not tested)
+- net_io_counters()            (not tested)
 - sensors_fans()
 - sensors_temperatures()
 - users()                      (not tested)
@@ -33,7 +34,7 @@ In psutil these are the APIs returning or dealing with a string:
 
 In here we create a unicode path with a funky non-ASCII name and (where
 possible) make psutil return it back (e.g. on name(), exe(),
-open_files(), etc.) and make sure it doesn't crash with
+open_files(), etc.) and make sure psutil never crashes with
 UnicodeDecodeError.
 
 On Python 3 the returned path is supposed to match 100% (and this
