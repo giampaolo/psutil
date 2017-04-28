@@ -55,6 +55,7 @@ import os
 import socket
 
 from psutil import BSD
+from psutil import OSX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil.tests import ASCII_FS
@@ -70,9 +71,10 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
+from psutil.tests import TRAVIS
 from psutil.tests import unittest
-from psutil.tests import unix_socketpair
 from psutil.tests import unix_socket_path
+from psutil.tests import unix_socketpair
 import psutil
 import psutil.tests
 
@@ -201,6 +203,7 @@ class _BaseFSAPIsTests(object):
         psutil.disk_usage(self.funky_name)
 
 
+@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # XXX
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
@@ -213,6 +216,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
         return PY3 or cls.funky_name in os.listdir('.')
 
 
+@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # XXX
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
     if PY3:
