@@ -1351,24 +1351,24 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             }
             else if (family == AF_UNIX) {
                 // decode laddr
-                #if PY_MAJOR_VERSION >= 3
+#if PY_MAJOR_VERSION >= 3
                     py_laddr = PyUnicode_DecodeFSDefault(
-                        si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
-                #else
+#else
                     py_laddr = Py_BuildValue("s",
-                        si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
-                #endif
+#endif
+                        si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path
+                    );
                     if (!py_laddr)
                         goto error;
 
                 // decode raddr
-                #if PY_MAJOR_VERSION >= 3
+#if PY_MAJOR_VERSION >= 3
                     py_raddr = PyUnicode_DecodeFSDefault(
-                        si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
-                #else
+#else
                     py_raddr = Py_BuildValue("s",
-                        si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
-                #endif
+#endif
+                        si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path
+                    );
                     if (!py_raddr)
                         goto error;
 

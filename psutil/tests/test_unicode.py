@@ -151,7 +151,7 @@ class _BaseFSAPIsTests(object):
         try:
             sock, name = bind_unix_socket(
                 suffix=os.path.basename(self.funky_name))
-        except UnicodeDecodeError:
+        except UnicodeEncodeError:
             if PY3:
                 raise
             else:
