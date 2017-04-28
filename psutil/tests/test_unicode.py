@@ -50,17 +50,16 @@ returning variable str/unicode types, see:
 https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
 """
 
-import os
-import tempfile
 import contextlib
+import os
 import socket
+import tempfile
 
 from psutil import BSD
 from psutil import OSX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil.tests import ASCII_FS
-from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import chdir
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
@@ -68,6 +67,7 @@ from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
+from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import unittest
@@ -81,7 +81,6 @@ import psutil.tests
 
 
 class _BaseFSAPIsTests(object):
-
     funky_name = None
 
     def setUp(self):
@@ -91,11 +90,8 @@ class _BaseFSAPIsTests(object):
         reap_children()
         safe_rmpath(self.funky_name)
 
-    @classmethod
-    def expect_exact_path_match(cls):
-        # Do not expect psutil to correctly handle unicode paths on
-        # Python 2 if os.listdir() is not able either.
-        return PY3 or cls.funky_name in os.listdir('.')
+    def expect_exact_path_match(self):
+        raise NotImplementedError("must be implemented in subclass")
 
     def test_proc_exe(self):
         create_exe(self.funky_name)
@@ -184,6 +180,12 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_name = TESTFN_UNICODE
 
+    @classmethod
+    def expect_exact_path_match(cls):
+        # Do not expect psutil to correctly handle unicode paths on
+        # Python 2 if os.listdir() is not able either.
+        return PY3 or cls.funky_name in os.listdir('.')
+
 
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
@@ -192,6 +194,11 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
             'utf8', 'surrogateescape')
     else:
         funky_name = TESTFN + "f\xc0\x80"
+
+    @classmethod
+    def expect_exact_path_match(cls):
+        # Invalid unicode names are supposed to work on Python 2.
+        return True
 
 
 # ===================================================================
