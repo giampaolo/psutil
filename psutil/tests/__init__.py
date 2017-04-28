@@ -43,6 +43,7 @@ except ImportError:
 
 import psutil
 from psutil import LINUX
+from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -848,6 +849,29 @@ def check_connection_ntuple(conn):
                 with contextlib.closing(dupsock):
                     assert dupsock.family == conn.family
                     assert dupsock.type == conn.type
+
+
+def bind_unix_socket(type=socket.SOCK_STREAM, suffix="", mode=0o600):
+    """Creates a listening unix socket.
+    Return a (sock, filemame) tuple.
+    """
+    # TODO: for some reason on OSX a UNIX socket cannot be
+    # deleted once created (EACCES) so we create a temp file
+    # which will remain around. :-\
+    if OSX:
+        file = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
+    else:
+        file = TESTFN + suffix
+    assert not os.path.exists(file), file
+    sock = socket.socket(socket.AF_UNIX, type)
+    try:
+        sock.bind(file)
+    except Exception:
+        sock.close()
+        raise
+    if mode is not None:
+        os.chmod(file, mode)
+    return (sock, file)
 
 
 # ===================================================================

@@ -44,6 +44,7 @@ from psutil._compat import PY3
 from psutil._compat import unicode
 from psutil.tests import AF_UNIX
 from psutil.tests import APPVEYOR
+from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_exe
@@ -1101,25 +1102,21 @@ class TestProcess(unittest.TestCase):
     def test_connections_unix(self):
         def check(type):
             safe_rmpath(TESTFN)
-            # TODO: for some reason on OSX a UNIX socket cannot be
-            # deleted once created (EACCES) so we create a temp file
-            # which will remain around. :-\
-            tfile = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
-            sock = socket.socket(AF_UNIX, type)
-            with contextlib.closing(sock):
-                sock.bind(tfile)
-                cons = psutil.Process().connections(kind='unix')
-                conn = cons[0]
-                check_connection_ntuple(conn)
-                if conn.fd != -1:  # != sunos and windows
-                    self.assertEqual(conn.fd, sock.fileno())
-                self.assertEqual(conn.family, AF_UNIX)
-                self.assertEqual(conn.type, type)
-                self.assertEqual(conn.laddr, tfile)
-                if not SUNOS:
-                    # XXX Solaris can't retrieve system-wide UNIX
-                    # sockets.
-                    self.compare_proc_sys_cons(os.getpid(), cons)
+            sock, name = bind_unix_socket(type=type)
+            self.addCleanup(sock.close)
+            self.addCleanup(safe_rmpath, name)
+            cons = psutil.Process().connections(kind='unix')
+            conn = cons[0]
+            check_connection_ntuple(conn)
+            if conn.fd != -1:  # != sunos and windows
+                self.assertEqual(conn.fd, sock.fileno())
+            self.assertEqual(conn.family, AF_UNIX)
+            self.assertEqual(conn.type, type)
+            self.assertEqual(conn.laddr, name)
+            if not SUNOS:
+                # XXX Solaris can't retrieve system-wide UNIX
+                # sockets.
+                self.compare_proc_sys_cons(os.getpid(), cons)
 
         check(SOCK_STREAM)
         check(SOCK_DGRAM)

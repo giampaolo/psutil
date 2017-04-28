@@ -50,16 +50,14 @@ returning variable str/unicode types, see:
 https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
 """
 
-import contextlib
 import os
 import socket
-import tempfile
 
 from psutil import BSD
-from psutil import OSX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil.tests import ASCII_FS
+from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
@@ -67,7 +65,6 @@ from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
-from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import unittest
@@ -150,25 +147,14 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     def test_connections(self):
-        safe_rmpath(TESTFN)
-        # TODO: for some reason on OSX a UNIX socket cannot be
-        # deleted once created (EACCES) so we create a temp file
-        # which will remain around. :-\
-        if OSX:
-            tfile = tempfile.mktemp(
-                prefix=TESTFILE_PREFIX + self.funky_name)
-        else:
-            tfile = self.funky_name
-        self.addCleanup(safe_rmpath, tfile)
-
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        with contextlib.closing(sock):
-            try:
-                sock.bind(tfile)
-            except (socket.error, UnicodeEncodeError):
-                raise unittest.SkipTest("not supported")
-            conn = psutil.Process().connections(kind='unix')[0]
-            self.assertEqual(conn.laddr, tfile)
+        try:
+            sock, name = bind_unix_socket(suffix=self.funky_name)
+        except (socket.error, UnicodeEncodeError):
+            raise unittest.SkipTest("not supported")
+        self.addCleanup(safe_rmpath, name)
+        self.addCleanup(sock.close)
+        conn = psutil.Process().connections(kind='unix')[0]
+        self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         safe_mkdir(self.funky_name)
