@@ -462,12 +462,16 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
-    int i, cnt;
+    int i;
+    int cnt;
+    int regular;
+    int fd;
+    char *path;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     kinfo_proc kipp;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -485,22 +489,25 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
+
 #ifdef PSUTIL_FREEBSD
-        if ((kif->kf_type == KF_TYPE_VNODE) &&
-                (kif->kf_vnode_type == KF_VTYPE_VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
+        regular = (kif->kf_type == KF_TYPE_VNODE) && \
+            (kif->kf_vnode_type == KF_VTYPE_VREG);
+        fd = kif->kf_fd;
+        path = kif->kf_path;
 #elif PSUTIL_OPENBSD
-        if ((kif->f_type == DTYPE_VNODE) &&
-                (kif->v_type == VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", "", kif->fd_fd);
+        regular = (kif->f_type == DTYPE_VNODE) && (kif->v_type == VREG);
+        fd = kif->fd_fd;
+        // XXX - it appears path is not exposed in the kinfo_file struct.
+        path = "";
 #elif PSUTIL_NETBSD
-        if ((kif->ki_ftype == DTYPE_VNODE) &&
-                (kif->ki_vtype == VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", "", kif->ki_fd);
+        regular = (kif->ki_ftype == DTYPE_VNODE) && (kif->ki_vtype == VREG);
+        fd = kif->ki_fd;
+        // XXX - it appears path is not exposed in the kinfo_file struct.
+        path = "";
 #endif
+        if (regular == 1) {
+            py_tuple = Py_BuildValue("(si)", path, fd);
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
