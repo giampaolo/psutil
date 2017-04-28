@@ -526,9 +526,10 @@ class TestSystemAPIs(unittest.TestCase):
     @skip_on_access_denied()
     def test_net_connections(self):
         def check(cons, families, types_):
+            AF_UNIX = getattr(socket, 'AF_UNIX', object())
             for conn in cons:
                 self.assertIn(conn.family, families, msg=conn)
-                if conn.family != getattr(socket, 'AF_UNIX', object()):
+                if conn.family != AF_UNIX:
                     self.assertIn(conn.type, types_, msg=conn)
                 self.assertIsInstance(conn.status, (str, unicode))
 

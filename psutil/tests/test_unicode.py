@@ -24,6 +24,7 @@ In psutil these are the APIs returning or dealing with a string:
 - disk_io_counters()           (not tested)
 - disk_partitions()            (not tested)
 - disk_usage(str)
+- net_connections('unix')      (not tested)
 - net_if_addrs()               (not tested)
 - net_if_stats()               (not tested)
 - net_io_counters()            (not tested)
@@ -146,7 +147,7 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
-    def test_connections(self):
+    def test_proc_connections(self):
         try:
             sock, name = bind_unix_socket(suffix=self.funky_name)
         except (socket.error, UnicodeEncodeError):
