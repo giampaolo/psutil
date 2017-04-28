@@ -487,7 +487,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     PyObject *py_type_filter = NULL;
     PyObject *py_family = NULL;
     PyObject *py_type = NULL;
-    PyObject *py_unix_path = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -598,11 +597,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     sun->sun_path);
 
 #if PY_MAJOR_VERSION >= 3
-                py_unix_path = PyUnicode_DecodeFSDefault(path);
+                py_laddr = PyUnicode_DecodeFSDefault(path);
 #else
-                py_unix_path = Py_BuildValue("s", path);
+                py_laddr = Py_BuildValue("s", path);
 #endif
-                if (! py_unix_path)
+                if (! py_laddr)
                     goto error;
 
                 py_tuple = Py_BuildValue(
@@ -610,7 +609,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     kif->kf_fd,
                     kif->kf_sock_domain,
                     kif->kf_sock_type,
-                    py_unix_path,
+                    py_laddr,
                     Py_None,
                     PSUTIL_CONN_NONE
                 );
@@ -631,7 +630,6 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
-    Py_XDECREF(py_unix_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);

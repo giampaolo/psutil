@@ -1103,20 +1103,21 @@ class TestProcess(unittest.TestCase):
             safe_rmpath(TESTFN)
             sock, name = bind_unix_socket(
                 type=type, name=None if OSX else TESTFN)
-            self.addCleanup(sock.close)
             self.addCleanup(safe_rmpath, name)
-            cons = psutil.Process().connections(kind='unix')
-            conn = cons[0]
-            check_connection_ntuple(conn)
-            if conn.fd != -1:  # != sunos and windows
-                self.assertEqual(conn.fd, sock.fileno())
-            self.assertEqual(conn.family, socket.AF_UNIX)
-            self.assertEqual(conn.type, type)
-            self.assertEqual(conn.laddr, name)
-            if not SUNOS:
-                # XXX Solaris can't retrieve system-wide UNIX
-                # sockets.
-                self.compare_proc_sys_cons(os.getpid(), cons)
+            with contextlib.closing(sock):
+                cons = psutil.Process().connections(kind='unix')
+                self.assertEqual(len(cons), 1)
+                conn = cons[0]
+                check_connection_ntuple(conn)
+                if conn.fd != -1:  # != sunos and windows
+                    self.assertEqual(conn.fd, sock.fileno())
+                self.assertEqual(conn.family, socket.AF_UNIX)
+                self.assertEqual(conn.type, type)
+                self.assertEqual(conn.laddr, name)
+                if not SUNOS:
+                    # XXX Solaris can't retrieve system-wide UNIX
+                    # sockets.
+                    self.compare_proc_sys_cons(os.getpid(), cons)
 
         check(SOCK_STREAM)
         check(SOCK_DGRAM)

@@ -149,9 +149,13 @@ class _BaseFSAPIsTests(object):
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     def test_proc_connections(self):
         try:
-            sock, name = bind_unix_socket(suffix=self.funky_name)
-        except (socket.error, UnicodeEncodeError):
-            raise unittest.SkipTest("not supported")
+            sock, name = bind_unix_socket(
+                suffix=os.path.basename(self.funky_name))
+        except UnicodeDecodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
         self.addCleanup(safe_rmpath, name)
         self.addCleanup(sock.close)
         conn = psutil.Process().connections(kind='unix')[0]
