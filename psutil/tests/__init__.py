@@ -851,14 +851,14 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix="",
-                     mode=0o600):
+def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix=""):
     """Creates a listening unix socket.
     Return a (sock, filemame) tuple.
     """
     # TODO: for some reason on OSX a UNIX socket cannot be
     # deleted once created (EACCES) so we create a temp file
     # which will remain around. :-\
+    assert psutil.POSIX, "not a POSIX system"
     if not name:
         if OSX:
             name = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
@@ -867,17 +867,34 @@ def bind_unix_socket(type=socket.SOCK_STREAM, name=None, suffix="",
     else:
         if suffix:
             raise ValueError("name and suffix aregs are mutually exclusive")
+    safe_rmpath(name)
     assert not os.path.exists(name), name
     sock = socket.socket(socket.AF_UNIX, type)
-    sock.settimeout(GLOBAL_TIMEOUT)
     try:
         sock.bind(name)
     except Exception:
         sock.close()
         raise
-    if mode is not None:
-        os.chmod(name, mode)
+    os.chmod(name, 0o600)
     return (sock, name)
+
+
+def unix_socketpair(name=None, suffix=""):
+    """Build a pair of UNIX sockets connected to each other through
+    the same UNIX file name.
+    Return a (server_sock, client_sock, filename) tuple.
+    """
+    assert psutil.POSIX, "not a POSIX system"
+    listener, name = bind_unix_socket(name=name, suffix=suffix)
+    listener.setblocking(0)
+    listener.listen(1)
+    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    client.setblocking(0)
+    # XXX - for some reason I don't have to select() even if they
+    # are non-blocking sockets. Why doesn't this raise EAGAIN?
+    client.connect(name)
+    # new = listener.accept()
+    return (listener, client, name)
 
 
 # ===================================================================

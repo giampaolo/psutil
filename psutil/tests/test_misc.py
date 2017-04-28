@@ -46,6 +46,7 @@ from psutil.tests import TESTFN
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
 import psutil
@@ -675,6 +676,21 @@ class TestProcessUtils(unittest.TestCase):
         assert not p2.is_running()
         assert not psutil.tests._pids_started
         assert not psutil.tests._subprocesses_started
+
+
+class TestNetUtils(unittest.TestCase):
+
+    @unittest.skipUnless(POSIX, "POSIX only")
+    def test_unix_socketpair(self):
+        p = psutil.Process()
+        num_fds = p.num_fds()
+        assert not p.connections(kind='unix')
+        ssock, csock, name = unix_socketpair()
+        self.addCleanup(safe_rmpath, name)
+        assert os.path.exists(name)
+        assert stat.S_ISSOCK(os.stat(name).st_mode)
+        self.assertEqual(p.num_fds() - num_fds, 2)
+        self.assertEqual(len(p.connections(kind='unix')), 2)
 
 
 if __name__ == '__main__':
