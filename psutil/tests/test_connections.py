@@ -10,7 +10,6 @@ import contextlib
 import os
 import socket
 import textwrap
-import unittest
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
@@ -19,6 +18,7 @@ from socket import SOCK_STREAM
 import psutil
 from psutil import FREEBSD
 from psutil import OSX
+from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
@@ -33,6 +33,7 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import unix_socket_path
 from psutil.tests import wait_for_file
+from psutil.tests import unittest
 
 
 AF_UNIX = getattr(socket, "AF_UNIX", object())
@@ -47,15 +48,21 @@ class TestProcessConnections(unittest.TestCase):
 
     def compare_proc_sys_cons(self, pid, proc_cons):
         from psutil._common import pconn
-        sys_cons = [c[:-1] for c in psutil.net_connections(kind='all')
-                    if c.pid == pid]
+        try:
+            syscons = psutil.net_connections(kind='all')
+        except psutil.AccessDenied:
+            # On OSX, system-wide connections are retrieved by iterating
+            # over all processes
+            if not OSX:
+                raise
+        # exclude PIDs from syscons
+        syscons = [c[:-1] for c in syscons if c.pid == pid]
         if FREEBSD:
-            # on FreeBSD all fds are set to -1
+            # on FreeBSD all fds are set to -1 so exclude them
             proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
-        self.assertEqual(sorted(proc_cons), sorted(sys_cons))
+        self.assertEqual(sorted(proc_cons), sorted(syscons))
 
-    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX not supported')
-    @skip_on_access_denied(only_if=OSX)
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_connections_unix(self):
         def check(type):
             with unix_socket_path() as name:

@@ -462,10 +462,11 @@ Network
   Return system-wide socket connections as a list of named tuples.
   Every named tuple provides 7 attributes:
 
-  - **fd**: the socket file descriptor, if retrievable, else ``-1``.
-    If the connection refers to the current process this may be passed to
+  - **fd**: the socket file descriptor. If the connection refers to the current
+    process this may be passed to
     `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
     to obtain a usable socket object.
+    On Windows, FreeBSD and SunOS this is always set to ``-1``.
   - **family**: the address family, either `AF_INET
     <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
     `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
@@ -1747,7 +1748,7 @@ Process class
     - **fd**: the socket file descriptor. This can be passed to
       `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
       to obtain a usable socket object.
-      This is only available on UNIX; on Windows ``-1`` is always returned.
+      On Windows, FreeBSD and SunOS this is always set to ``-1``.
     - **family**: the address family, either `AF_INET
       <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
       `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
