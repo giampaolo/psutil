@@ -37,6 +37,8 @@ def term_supports_colors():
 
 def hilite(s, ok=True, bold=False):
     """Return an highlighted version of 'string'."""
+    if not term_supports_colors():
+        return s
     attr = []
     if ok is None:  # no color
         pass
@@ -50,8 +52,7 @@ def hilite(s, ok=True, bold=False):
 
 
 def exit(msg):
-    if term_supports_colors():
-        msg = hilite(msg, ok=False)
+    msg = hilite(msg, ok=False)
     print(msg, file=sys.stderr)
     sys.exit(1)
 

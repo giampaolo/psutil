@@ -20,7 +20,6 @@ import os
 import requests
 import shutil
 import sys
-
 from concurrent.futures import ThreadPoolExecutor
 
 from psutil import __version__ as PSUTIL_VERSION
@@ -28,6 +27,7 @@ from psutil import __version__ as PSUTIL_VERSION
 
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5', '3.6']
+COLORS = True
 
 
 def exit(msg):
@@ -47,22 +47,23 @@ def term_supports_colors(file=sys.stdout):
         return True
 
 
-if term_supports_colors():
-    def hilite(s, ok=True, bold=False):
-        """Return an highlighted version of 'string'."""
-        attr = []
-        if ok is None:  # no color
-            pass
-        elif ok:   # green
-            attr.append('32')
-        else:   # red
-            attr.append('31')
-        if bold:
-            attr.append('1')
-        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
-else:
-    def hilite(s, *a, **k):
+COLORS = term_supports_colors()
+
+
+def hilite(s, ok=True, bold=False):
+    """Return an highlighted version of 'string'."""
+    if not COLORS:
         return s
+    attr = []
+    if ok is None:  # no color
+        pass
+    elif ok:   # green
+        attr.append('32')
+    else:   # red
+        attr.append('31')
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
 def safe_makedirs(path):
