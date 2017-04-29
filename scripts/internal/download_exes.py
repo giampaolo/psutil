@@ -15,11 +15,11 @@ http://code.saghul.net/index.php/2015/09/09/
 from __future__ import print_function
 import argparse
 import errno
-import multiprocessing
 import os
 import requests
 import shutil
 import sys
+from time import sleep
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -153,9 +153,14 @@ def rename_27_wheels():
 def main(options):
     files = []
     safe_rmtree('dist')
-    with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as e:
+    threads = []
+    with ThreadPoolExecutor() as e:
         for url in get_file_urls(options):
             fut = e.submit(download_file, url)
+            threads.append(fut)
+            # files.append(fut.result())
+        sleep(2)
+        for fut in threads:
             files.append(fut.result())
     # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
     expected = len(PY_VERSIONS) * 4
