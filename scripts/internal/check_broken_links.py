@@ -89,6 +89,9 @@ def main():
     """Main function
     """
     files = sys.argv[1:]
+
+    if not files:
+        return sys.exit("usage: %s <FILES...>" % __name__)
     fails = []
     for fname in files:
         urls = get_urls(fname)
@@ -104,7 +107,7 @@ def main():
 
     print()
     if len(fails) == 0:
-        print("All URLs are valid. Cheers!")
+        print("All links are valid. Cheers!")
     else:
         print("Total :", len(fails), "fails!")
         print("Writing failed urls to fails.txt")
