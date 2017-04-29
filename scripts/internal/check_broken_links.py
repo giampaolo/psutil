@@ -52,7 +52,9 @@ URL_REGEX = '(?:http|ftp|https)?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-
 def get_urls(filename):
     """Extracts all URLs available in specified filename
     """
-    fname = os.path.abspath(os.path.join(HERE, filename))
+    # fname = os.path.abspath(os.path.join(HERE, filename))
+    # expecting absolute path
+    fname = os.path.abspath(filename)
     print (fname)
     text = ''
     with open(fname) as f:
