@@ -273,3 +273,10 @@ doc:
 	cd docs && make html && cd _build/html/ && zip doc.zip -r .
 	mv docs/_build/html/doc.zip .
 	@echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
+
+# check whether the links mentioned in some files are valid.
+FILES_TO_CHECK_FOR_BROKEN_LINKS = $(PWD)/docs/index.rst \
+																	$(PWD)/DEVGUIDE.rst
+
+check-broken-links:
+	$(PYTHON) scripts/internal/check_broken_links.py $(FILES_TO_CHECK_FOR_BROKEN_LINKS)
