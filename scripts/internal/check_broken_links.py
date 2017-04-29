@@ -20,6 +20,7 @@ Method:
 * Remove duplicates (because regex is not 100% efficient as of now).
 * Check validity of URL, using HEAD request. (HEAD to save bandwidth)
   Uses requests module for others are painful to use. REFERENCES[9]
+  Handles redirects, http, https, ftp as well.
 
 REFERENCES:
 Using [1] with some modificatons for including ftp
@@ -44,7 +45,6 @@ import requests
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-print (HERE)
 
 URL_REGEX = '(?:http|ftp|https)?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
