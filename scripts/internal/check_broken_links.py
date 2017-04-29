@@ -41,7 +41,9 @@ from __future__ import print_function
 import os
 import re
 import sys
+import time
 
+from concurrent.futures import ThreadPoolExecutor
 import requests
 
 
@@ -85,6 +87,34 @@ def validate_url(url):
         return False
 
 
+def parallel_validator(urls):
+    """validates all urls in parallel
+    urls: tuple(filename, url)
+    """
+    fails = []  # list of tuples (filename, url)
+    completed = 0
+    total = len(urls)
+    threads = []
+
+    with ThreadPoolExecutor() as executor:
+        for url in urls:
+            fut = executor.submit(validate_url, url[1])
+            threads.append((url, fut))
+
+        # wait for threads to progress a little
+        time.sleep(2)
+        for thr in threads:
+            url = thr[0]
+            fut = thr[1]
+            if not fut.result():
+                fails.append((url[0], url[1]))
+            completed += 1
+            sys.stdout.write("\r" + str(completed)+' / '+str(total))
+            sys.stdout.flush()
+    print()
+    return fails
+
+
 def main():
     """Main function
     """
@@ -92,20 +122,13 @@ def main():
 
     if not files:
         return sys.exit("usage: %s <FILES...>" % __name__)
-    fails = []
+    all_urls = []
     for fname in files:
         urls = get_urls(fname)
-        i = 0
-        last = len(urls)
         for url in urls:
-            i += 1
-            if not validate_url(url):
-                fails.append((url, fname))
-            sys.stdout.write("\r " +
-                             fname + " : " + str(i) + " / " + str(last))
-            sys.stdout.flush()
+            all_urls.append((fname, url))
 
-    print()
+    fails = parallel_validator(all_urls)
     if len(fails) == 0:
         print("all links are valid. cheers!")
     else:
