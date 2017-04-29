@@ -56,7 +56,7 @@ def get_urls(filename):
     # fname = os.path.abspath(os.path.join(HERE, filename))
     # expecting absolute path
     fname = os.path.abspath(filename)
-    print (fname)
+    print(fname)
     text = ''
     with open(fname) as f:
         text = f.read()
@@ -106,8 +106,8 @@ def main():
     if len(fails) == 0:
         print("All URLs are valid. Cheers!")
     else:
-        print ("Total :", len(fails), "fails!")
-        print ("Writing failed urls to fails.txt")
+        print("Total :", len(fails), "fails!")
+        print("Writing failed urls to fails.txt")
         with open("../../fails.txt", 'w') as f:
             for fail in fails:
                 f.write(fail[1] + ' : ' + fail[0] + os.linesep)
