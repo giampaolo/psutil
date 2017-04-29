@@ -773,16 +773,6 @@ def get_free_port(host='127.0.0.1'):
         return sock.getsockname()[1]
 
 
-def bind_socket(addr, family, type):
-    """Binds a generic socket."""
-    sock = socket.socket(family, type)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
-    if type == socket.SOCK_STREAM:
-        sock.listen(1)
-    return sock
-
-
 @contextlib.contextmanager
 def unix_socket_path(suffix=""):
     """A context manager which returns a non-existent file name
@@ -799,6 +789,16 @@ def unix_socket_path(suffix=""):
             pass
 
 
+def bind_socket(addr, family, type):
+    """Binds a generic socket."""
+    sock = socket.socket(family, type)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(addr)
+    if type == socket.SOCK_STREAM:
+        sock.listen(10)
+    return sock
+
+
 def bind_unix_socket(name, type=socket.SOCK_STREAM):
     """Bind a UNIX socket."""
     assert psutil.POSIX, "not a POSIX system"
@@ -809,8 +809,32 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     except Exception:
         sock.close()
         raise
-    sock.listen(1)
+    if type == socket.SOCK_STREAM:
+        sock.listen(10)
     return sock
+
+
+def inet_socketpair(family, type, addr=("", 0)):
+    """Build a pair of INET sockets connected to each other.
+    Return a (server, client) tuple.
+    """
+    with contextlib.closing(socket.socket(family, type)) as ll:
+        ll.bind(addr)
+        ll.listen(10)
+        addr = ll.getsockname()
+        c = socket.socket(family, type)
+        try:
+            c.connect(addr)
+            caddr = c.getsockname()
+            while True:
+                a, addr = ll.accept()
+                # check that we've got the correct client
+                if addr == caddr:
+                    return c, a
+                a.close()
+        except OSError:
+            c.close()
+            raise
 
 
 def unix_socketpair(name):
@@ -821,7 +845,6 @@ def unix_socketpair(name):
     assert psutil.POSIX, "not a POSIX system"
     server = bind_unix_socket(name, type=socket.SOCK_STREAM)
     server.setblocking(0)
-    server.listen(1)
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     client.setblocking(0)
     client.connect(name)

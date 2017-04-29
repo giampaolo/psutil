@@ -36,6 +36,7 @@ from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import get_test_subprocess
 from psutil.tests import importlib
+from psutil.tests import inet_socketpair
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry
@@ -698,6 +699,14 @@ class TestNetUtils(unittest.TestCase):
             sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
             with contextlib.closing(sock):
                 self.assertEqual(sock.type, socket.SOCK_DGRAM)
+
+    def test_inet_socketpair(self):
+        server, client = inet_socketpair(socket.AF_INET, socket.SOCK_STREAM)
+        with contextlib.closing(server):
+            with contextlib.closing(client):
+                # ensure they are connected
+                self.assertEqual(server.getsockname(), client.getpeername())
+                self.assertEqual(server.getpeername(), client.getsockname())
 
     @unittest.skipUnless(POSIX, "POSIX only")
     def test_unix_socketpair(self):
