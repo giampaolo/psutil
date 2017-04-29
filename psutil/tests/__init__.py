@@ -151,6 +151,8 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 AF_UNIX = getattr(socket, "AF_UNIX", object())
+SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
+
 TEST_DEPS = []
 if sys.version_info[:2] == (2, 6):
     TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
@@ -778,7 +780,7 @@ def unix_socket_path(suffix=""):
     """A context manager which returns a non-existent file name
     and tries to delete it on exit.
     """
-    assert psutil.POSIX, "not a POSIX system"
+    assert psutil.POSIX
     path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
     try:
         yield path
@@ -801,7 +803,7 @@ def bind_socket(addr, family, type):
 
 def bind_unix_socket(name, type=socket.SOCK_STREAM):
     """Bind a UNIX socket."""
-    assert psutil.POSIX, "not a POSIX system"
+    assert psutil.POSIX
     assert not os.path.exists(name), name
     sock = socket.socket(socket.AF_UNIX, type)
     try:
@@ -925,8 +927,9 @@ def check_connection_ntuple(conn):
     elif conn.family == AF_UNIX:
         assert conn.status == psutil.CONN_NONE, conn.status
 
-    # check type
-    assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
+    # check type (SOCK_SEQPACKET may happen in case of AF_UNIX socks)
+    assert conn.type in (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET), \
+        repr(conn.type)
     if conn.type == SOCK_DGRAM:
         assert conn.status == psutil.CONN_NONE, conn.status
 
