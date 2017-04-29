@@ -23,6 +23,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import nested
+from psutil._compat import PY3
 from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
@@ -102,6 +103,9 @@ class Base(object):
 
         # local address
         laddr = sock.getsockname()
+        if not laddr and PY3 and isinstance(laddr, bytes):
+            # See: http://bugs.python.org/issue30205
+            laddr = laddr.decode()
         if sock.family == AF_INET6:
             laddr = laddr[:2]
         self.assertEqual(conn.laddr, laddr)
