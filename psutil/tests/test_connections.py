@@ -65,8 +65,7 @@ def compare_procsys_connections(pid, proc_cons, kind='all'):
     assert proc_cons == sys_cons, (proc_cons, sys_cons)
 
 
-class TestProcessConnections(unittest.TestCase):
-    """Tests for Process.connections()."""
+class Base(object):
 
     def setUp(self):
         cons = psutil.Process().connections(kind='all')
@@ -79,7 +78,16 @@ class TestProcessConnections(unittest.TestCase):
         cons = psutil.Process().connections(kind='all')
         assert not cons, cons
 
-    def check_socket(self, sock):
+
+# =====================================================================
+# --- Test unconnected sockets
+# =====================================================================
+
+
+class TestUnconnectedSockets(Base, unittest.TestCase):
+    """Tests sockets which are open but not connected to anything."""
+
+    def check_socket(self, sock, conn=None):
         """Given a socket, makes sure it matches the one obtained
         via psutil. It assumes this process created one connection
         only (the one supposed to be checked).
@@ -153,26 +161,19 @@ class TestProcessConnections(unittest.TestCase):
                 assert not conn.raddr
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
-    def test_connection_constants(self):
-        ints = []
-        strs = []
-        for name in dir(psutil):
-            if name.startswith('CONN_'):
-                num = getattr(psutil, name)
-                str_ = str(num)
-                assert str_.isupper(), str_
-                assert str_ not in strs, str_
-                assert num not in ints, num
-                ints.append(num)
-                strs.append(str_)
-        if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
-        if WINDOWS:
-            psutil.CONN_DELETE_TCB
+
+# =====================================================================
+# --- Test connected sockets
+# =====================================================================
+
+
+class TestConnectedSocketPairs(Base, unittest.TestCase):
+    """Test socket pairs which are are actually connected to
+    each other.
+    """
 
     @skip_on_access_denied(only_if=OSX)
-    def test_connections(self):
+    def test_combos(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
             all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
                          "tcp6", "udp", "udp4", "udp6")
@@ -270,8 +271,31 @@ class TestProcessConnections(unittest.TestCase):
         self.assertRaises(ValueError, p.connections, kind='???')
 
 
-class TestSystemConnections(unittest.TestCase):
+# =====================================================================
+# --- Miscellaneous tests
+# =====================================================================
+
+
+class TestMisc(Base, unittest.TestCase):
     """Tests for net_connections()."""
+
+    def test_connection_constants(self):
+        ints = []
+        strs = []
+        for name in dir(psutil):
+            if name.startswith('CONN_'):
+                num = getattr(psutil, name)
+                str_ = str(num)
+                assert str_.isupper(), str_
+                assert str_ not in strs, str_
+                assert num not in ints, num
+                ints.append(num)
+                strs.append(str_)
+        if SUNOS:
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
+        if WINDOWS:
+            psutil.CONN_DELETE_TCB
 
     @skip_on_access_denied()
     def test_net_connections(self):
