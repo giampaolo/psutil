@@ -53,6 +53,8 @@ https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
 
 import os
 import socket
+from contextlib import closing
+from contextlib import nested
 
 from psutil import BSD
 from psutil import OSX
@@ -163,16 +165,13 @@ class _BaseFSAPIsTests(object):
                     raise
                 else:
                     raise unittest.SkipTest("not supported")
-
-            self.addCleanup(safe_rmpath, name)
-            self.addCleanup(client.close)
-            self.addCleanup(server.close)
-            cons = psutil.Process().connections(kind='unix')
-            self.assertEqual(len(cons), 2)
-            cmap = dict([(x.fd, x) for x in cons])
-            self.assertEqual(cmap[server.fileno()].laddr, name)
-            if cmap[client.fileno()].laddr:
-                self.assertEqual(cmap[client.fileno()].laddr, name)
+            with nested(closing(server), closing(client)):
+                cons = psutil.Process().connections(kind='unix')
+                self.assertEqual(len(cons), 2)
+                cmap = dict([(x.fd, x) for x in cons])
+                self.assertEqual(cmap[server.fileno()].laddr, name)
+                if cmap[client.fileno()].laddr:
+                    self.assertEqual(cmap[client.fileno()].laddr, name)
 
     @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
     @skip_on_access_denied()
