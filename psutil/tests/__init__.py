@@ -36,11 +36,6 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-try:
-    from unittest import mock  # py3
-except ImportError:
-    import mock  # NOQA - requires "pip install mock"
-
 import psutil
 from psutil import LINUX
 from psutil import POSIX
@@ -54,6 +49,12 @@ if sys.version_info < (2, 7):
     import unittest2 as unittest  # requires "pip install unittest2"
 else:
     import unittest
+
+try:
+    from unittest import mock  # py3
+except ImportError:
+    import mock  # NOQA - requires "pip install mock"
+
 if sys.version_info >= (3, 4):
     import enum
 else:
