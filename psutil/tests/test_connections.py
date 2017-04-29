@@ -23,7 +23,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import nested
-from psutil._compat import unicode
 from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
@@ -97,7 +96,9 @@ class Base(object):
         if conn.fd != -1:
             self.assertEqual(conn.fd, sock.fileno())
         self.assertEqual(conn.family, sock.family)
-        self.assertEqual(conn.type, sock.type)
+        # see: http://bugs.python.org/issue30204
+        self.assertEqual(
+            conn.type, sock.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE))
 
         # local address
         laddr = sock.getsockname()
@@ -221,6 +222,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                 self.assertEqual(len(cons), 2)
                 server_conn, client_conn = self.distinguish_unix_socks(cons)
                 self.check_socket(server, conn=server_conn)
+
                 self.check_socket(client, conn=client_conn)
                 self.assertEqual(server_conn.laddr, name)
                 # TODO: https://github.com/giampaolo/psutil/issues/1035
@@ -361,7 +363,7 @@ class TestMisc(Base, unittest.TestCase):
                 self.assertIn(conn.family, families, msg=conn)
                 if conn.family != AF_UNIX:
                     self.assertIn(conn.type, types_, msg=conn)
-                self.assertIsInstance(conn.status, (str, unicode))
+                check_connection_ntuple(conn)
 
         from psutil._common import conn_tmap
         for kind, groups in conn_tmap.items():

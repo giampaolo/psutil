@@ -251,7 +251,7 @@ except ImportError:
 
 
 # A backport of contextlib.nested for Python 3.
-nested = getattr(contextlib, "nested")
+nested = getattr(contextlib, "nested", None)
 if nested is None:
     @contextlib.contextmanager
     def nested(*managers):

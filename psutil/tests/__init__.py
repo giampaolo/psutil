@@ -932,23 +932,21 @@ def check_connection_ntuple(conn):
 
     # check laddr (IP address and port sanity)
     for addr in (conn.laddr, conn.raddr):
-        if not addr:
-            continue
         if conn.family in (AF_INET, AF_INET6):
             assert isinstance(addr, tuple), addr
+            if not addr:
+                continue
             ip, port = addr
             assert isinstance(port, int), port
             assert 0 <= port <= 65535, port
             check_net_address(ip, conn.family)
         elif conn.family == AF_UNIX:
-            assert isinstance(addr, (str, None)), addr
-
-    # check raddr
-    assert isinstance(conn.status, (tuple, str, None)), repr(conn.status)
+            assert isinstance(addr, (str, type(None))), addr
 
     # check status
+    assert isinstance(conn.status, str), conn
     valids = [getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')]
-    assert conn.status in valids, conn.status
+    assert conn.status in valids, conn
 
 
 # ===================================================================
