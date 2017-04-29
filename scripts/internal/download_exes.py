@@ -15,7 +15,6 @@ http://code.saghul.net/index.php/2015/09/09/
 from __future__ import print_function
 import argparse
 import errno
-import multiprocessing
 import os
 import requests
 import shutil
@@ -155,7 +154,7 @@ def main(options):
     files = []
     safe_rmtree('dist')
     threads = []
-    with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as e:
+    with ThreadPoolExecutor() as e:
         for url in get_file_urls(options):
             fut = e.submit(download_file, url)
             threads.append(fut)
