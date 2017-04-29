@@ -41,7 +41,6 @@ from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
@@ -522,27 +521,6 @@ class TestSystemAPIs(unittest.TestCase):
                   psutil.disk_partitions(all=True)]
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
-
-    @skip_on_access_denied()
-    def test_net_connections(self):
-        def check(cons, families, types_):
-            AF_UNIX = getattr(socket, 'AF_UNIX', object())
-            for conn in cons:
-                self.assertIn(conn.family, families, msg=conn)
-                if conn.family != AF_UNIX:
-                    self.assertIn(conn.type, types_, msg=conn)
-                self.assertIsInstance(conn.status, (str, unicode))
-
-        from psutil._common import conn_tmap
-        for kind, groups in conn_tmap.items():
-            if SUNOS and kind == 'unix':
-                continue
-            families, types_ = groups
-            cons = psutil.net_connections(kind)
-            self.assertEqual(len(cons), len(set(cons)))
-            check(cons, families, types_)
-
-        self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
     def test_net_io_counters(self):
         def check_ntuple(nt):

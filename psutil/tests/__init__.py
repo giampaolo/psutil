@@ -763,6 +763,50 @@ def install_test_deps(deps=None):
 # ===================================================================
 
 
+@contextlib.contextmanager
+def unix_socket_path(suffix=""):
+    assert psutil.POSIX, "not a POSIX system"
+    path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
+    try:
+        yield path
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def bind_unix_socket(name, type=socket.SOCK_STREAM):
+    """Creates a listening unix socket.
+    Return a (sock, filemame) tuple.
+    """
+    assert psutil.POSIX, "not a POSIX system"
+    assert not os.path.exists(name), name
+    sock = socket.socket(socket.AF_UNIX, type)
+    try:
+        sock.bind(name)
+    except Exception:
+        sock.close()
+        raise
+    return sock
+
+
+def unix_socketpair(name):
+    """Build a pair of UNIX sockets connected to each other through
+    the same UNIX file name.
+    Return a (server_sock, client_sock, filename) tuple.
+    """
+    assert psutil.POSIX, "not a POSIX system"
+    server = bind_unix_socket(name, type=socket.SOCK_STREAM)
+    server.setblocking(0)
+    server.listen(1)
+    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    client.setblocking(0)
+    client.connect(name)
+    # new = server.accept()
+    return (server, client)
+
+
 def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
@@ -770,7 +814,7 @@ def check_net_address(addr, family):
     import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
     if enum and PY3:
         assert isinstance(family, enum.IntEnum), family
-    if family == AF_INET:
+    if family == socket.AF_INET:
         octs = [int(x) for x in addr.split('.')]
         assert len(octs) == 4, addr
         for num in octs:
@@ -778,7 +822,7 @@ def check_net_address(addr, family):
         if not PY3:
             addr = unicode(addr)
         ipaddress.IPv4Address(addr)
-    elif family == AF_INET6:
+    elif family == socket.AF_INET6:
         assert isinstance(addr, str), addr
         if not PY3:
             addr = unicode(addr)
@@ -848,50 +892,6 @@ def check_connection_ntuple(conn):
                 with contextlib.closing(dupsock):
                     assert dupsock.family == conn.family
                     assert dupsock.type == conn.type
-
-
-@contextlib.contextmanager
-def unix_socket_path(suffix=""):
-    assert psutil.POSIX, "not a POSIX system"
-    path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
-    try:
-        yield path
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
-def bind_unix_socket(name, type=socket.SOCK_STREAM):
-    """Creates a listening unix socket.
-    Return a (sock, filemame) tuple.
-    """
-    assert psutil.POSIX, "not a POSIX system"
-    assert not os.path.exists(name), name
-    sock = socket.socket(socket.AF_UNIX, type)
-    try:
-        sock.bind(name)
-    except Exception:
-        sock.close()
-        raise
-    return sock
-
-
-def unix_socketpair(name):
-    """Build a pair of UNIX sockets connected to each other through
-    the same UNIX file name.
-    Return a (server_sock, client_sock, filename) tuple.
-    """
-    assert psutil.POSIX, "not a POSIX system"
-    server = bind_unix_socket(name, type=socket.SOCK_STREAM)
-    server.setblocking(0)
-    server.listen(1)
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    client.setblocking(0)
-    client.connect(name)
-    # new = server.accept()
-    return (server, client)
 
 
 # ===================================================================

@@ -119,40 +119,45 @@ test:
 	${MAKE} install
 	$(PYTHON) $(TSCRIPT)
 
-# Test psutil process-related APIs.
+# Run process-related API tests.
 test-process:
 	${MAKE} install
 	$(PYTHON) -m unittest -v psutil.tests.test_process
 
-# Test psutil system-related APIs.
+# Run system-related API tests.
 test-system:
 	${MAKE} install
 	$(PYTHON) -m unittest -v psutil.tests.test_system
 
-# Test misc.
+# Run miscellaneous tests.
 test-misc:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_misc.py
 
-# Test misc.
+# Test APIs dealing with strings.
 test-unicode:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_unicode.py
 
-# Test POSIX.
+# Test net_connections() and Process.connections().
+test-connections:
+	${MAKE} install
+	$(PYTHON) psutil/tests/test_connections.py
+
+# POSIX specific tests.
 test-posix:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_posix.py
-
-# Test memory leaks.
-test-memleaks:
-	${MAKE} install
-	$(PYTHON) psutil/tests/test_memory_leaks.py
 
 # Run specific platform tests only.
 test-platform:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
+
+# Memory leak tests.
+test-memleaks:
+	${MAKE} install
+	$(PYTHON) psutil/tests/test_memory_leaks.py
 
 # Run a specific test by name, e.g.
 # make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
@@ -160,6 +165,7 @@ test-by-name:
 	${MAKE} install
 	@$(PYTHON) -m unittest -v $(ARGS)
 
+# Run test coverage.
 coverage:
 	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
