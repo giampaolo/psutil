@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # Author : Himanshu Shekhar < https://github.com/himanshub16 > (2017)
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
