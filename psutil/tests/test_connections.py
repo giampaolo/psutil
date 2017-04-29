@@ -39,6 +39,32 @@ from psutil.tests import unix_socket_path
 from psutil.tests import wait_for_file
 
 
+def compare_procsys_connections(pid, proc_cons, kind='all'):
+    """Given a process PID and its list of connections compare
+    those against system-wide connections retrieved via
+    psutil.net_connections.
+    """
+    from psutil._common import pconn
+    try:
+        sys_cons = psutil.net_connections(kind=kind)
+    except psutil.AccessDenied:
+        # On OSX, system-wide connections are retrieved by iterating
+        # over all processes
+        if OSX:
+            return
+        else:
+            raise
+    # exclude PIDs from syscons
+    sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
+    if FREEBSD:
+        # On FreeBSD all fds are set to -1 so exclude them
+        # for comparison.
+        proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
+    proc_cons.sort()
+    sys_cons.sort()
+    assert proc_cons == sys_cons, (proc_cons, sys_cons)
+
+
 class TestProcessConnections(unittest.TestCase):
     """Tests for Process.connections()."""
 
@@ -49,28 +75,15 @@ class TestProcessConnections(unittest.TestCase):
     def tearDown(self):
         safe_rmpath(TESTFN)
         reap_children()
+        # make sure we closed all resources
         cons = psutil.Process().connections(kind='all')
         assert not cons, cons
 
-    def compare_proc_sys_cons(self, pid, proc_cons):
-        from psutil._common import pconn
-        try:
-            syscons = psutil.net_connections(kind='all')
-        except psutil.AccessDenied:
-            # On OSX, system-wide connections are retrieved by iterating
-            # over all processes
-            if OSX:
-                return
-            else:
-                raise
-        # exclude PIDs from syscons
-        syscons = [c[:-1] for c in syscons if c.pid == pid]
-        if FREEBSD:
-            # on FreeBSD all fds are set to -1 so exclude them
-            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
-        self.assertEqual(sorted(proc_cons), sorted(syscons))
-
     def check_socket(self, sock):
+        """Given a socket, makes sure it matches the one obtained
+        via psutil. It assumes this process created one connection
+        only (the one supposed to be checked).
+        """
         cons = psutil.Process().connections(kind='all')
         self.assertEqual(len(cons), 1)
         conn = cons[0]
@@ -91,7 +104,7 @@ class TestProcessConnections(unittest.TestCase):
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
-            self.compare_proc_sys_cons(os.getpid(), cons)
+            compare_procsys_connections(os.getpid(), cons)
         return conn
 
     # --- non connected sockets
@@ -172,14 +185,14 @@ class TestProcessConnections(unittest.TestCase):
             for kind in all_kinds:
                 cons = proc.connections(kind=kind)
                 if kind in kinds:
-                    self.assertNotEqual(cons, [])
+                    assert cons
                 else:
-                    self.assertEqual(cons, [])
+                    assert not cons, cons
             # compare against system-wide connections
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
             if not SUNOS:
-                self.compare_proc_sys_cons(proc.pid, [conn])
+                compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
             import socket, time
