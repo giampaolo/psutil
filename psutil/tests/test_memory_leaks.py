@@ -32,6 +32,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import xrange
+from psutil.tests import bind_unix_socket
 from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
 from psutil.tests import RLIMIT_SUPPORT
@@ -40,6 +41,8 @@ from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import unix_socket_path
+from psutil.tests import unix_socketpair
 
 
 LOOPS = 1000
@@ -363,24 +366,31 @@ class TestProcessObjectLeaks(TestMemLeak):
                 sock.listen(1)
             return sock
 
+        # Open as many socket types as possible so that we excercise
+        # as much C code sections as possible.
         socks = []
         socks.append(create_socket(socket.AF_INET, socket.SOCK_STREAM))
         socks.append(create_socket(socket.AF_INET, socket.SOCK_DGRAM))
         if supports_ipv6():
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if hasattr(socket, 'AF_UNIX'):
-            safe_rmpath(TESTFN)
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.bind(TESTFN)
-            s.listen(1)
-            socks.append(s)
-        kind = 'all'
+        if POSIX and not SUNOS:  # TODO: SunOS
+            name1 = unix_socket_path().__enter__()
+            name2 = unix_socket_path().__enter__()
+            s1, s2 = unix_socketpair(name1)
+            s3 = bind_unix_socket(name2, type=socket.SOCK_DGRAM)
+            self.addCleanup(safe_rmpath, name1)
+            self.addCleanup(safe_rmpath, name2)
+            for s in (s1, s2, s3):
+                socks.append(s)
+
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
         # be executed.
-        if SUNOS:
-            kind = 'inet'
+        kind = 'inet' if SUNOS else 'all'
+        # Make sure we did a proper setup.
+        self.assertEqual(
+            len(psutil.Process().connections(kind=kind)), len(socks))
         try:
             self.execute(self.proc.connections, kind)
         finally:

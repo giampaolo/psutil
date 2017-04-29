@@ -765,6 +765,9 @@ def install_test_deps(deps=None):
 
 @contextlib.contextmanager
 def unix_socket_path(suffix=""):
+    """A context manager which returns a non-existent file name
+    and tries to delete it on exit.
+    """
     assert psutil.POSIX, "not a POSIX system"
     path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
     try:
@@ -794,7 +797,7 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
 def unix_socketpair(name):
     """Build a pair of UNIX sockets connected to each other through
     the same UNIX file name.
-    Return a (server_sock, client_sock, filename) tuple.
+    Return a (server, client) tuple.
     """
     assert psutil.POSIX, "not a POSIX system"
     server = bind_unix_socket(name, type=socket.SOCK_STREAM)

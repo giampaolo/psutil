@@ -203,7 +203,7 @@ class _BaseFSAPIsTests(object):
         psutil.disk_usage(self.funky_name)
 
 
-@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # XXX
+@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
@@ -216,7 +216,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
         return PY3 or cls.funky_name in os.listdir('.')
 
 
-@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # XXX
+@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
     if PY3:
