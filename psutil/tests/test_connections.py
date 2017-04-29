@@ -10,7 +10,6 @@ import os
 import socket
 import textwrap
 from contextlib import closing
-from contextlib import nested
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
@@ -23,6 +22,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
+from psutil._compat import nested
 from psutil._compat import unicode
 from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
@@ -38,6 +38,7 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
+from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
 
@@ -174,14 +175,25 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     """
 
     @staticmethod
-    def differentiate_tcp_socks(cons, server_addr):
+    def distinguish_tcp_socks(cons, server_addr):
         """Given a list of connections return a (server, client)
-        tuple.
+        connection ntuple.
         """
         if cons[0].laddr == server_addr:
             return (cons[0], cons[1])
         else:
-            assert cons[1].laddr == server_addr
+            assert cons[1].laddr == server_addr, (cons, server_addr)
+            return (cons[1], cons[0])
+
+    @staticmethod
+    def distinguish_unix_socks(cons):
+        """Given a list of connections and 2 sockets return a
+        (server, client) connection ntuple.
+        """
+        if cons[0].laddr:
+            return (cons[0], cons[1])
+        else:
+            assert cons[1].laddr, cons
             return (cons[1], cons[0])
 
     def test_tcp(self):
@@ -189,7 +201,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         server, client = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
         with nested(closing(server), closing(client)):
             cons = psutil.Process().connections(kind='all')
-            server_conn, client_conn = self.differentiate_tcp_socks(cons, addr)
+            server_conn, client_conn = self.distinguish_tcp_socks(cons, addr)
             self.check_socket(server, conn=server_conn)
             self.check_socket(client, conn=client_conn)
             self.assertEqual(server_conn.status, psutil.CONN_ESTABLISHED)
@@ -200,6 +212,21 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # cons = psutil.Process().connections(kind='all')
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
+
+    def test_unix(self):
+        with unix_socket_path() as name:
+            server, client = unix_socketpair(name)
+            with nested(closing(server), closing(client)):
+                cons = psutil.Process().connections(kind='unix')
+                self.assertEqual(len(cons), 2)
+                server_conn, client_conn = self.distinguish_unix_socks(cons)
+                self.check_socket(server, conn=server_conn)
+                self.check_socket(client, conn=client_conn)
+                self.assertEqual(server_conn.laddr, name)
+                # TODO: https://github.com/giampaolo/psutil/issues/1035
+                self.assertIn(server_conn.raddr, ("", None))
+                # TODO: https://github.com/giampaolo/psutil/issues/1035
+                self.assertIn(client_conn.laddr, ("", None))
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):

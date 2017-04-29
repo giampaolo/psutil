@@ -5,6 +5,7 @@
 """Module which provides compatibility with older Python versions."""
 
 import collections
+import contextlib
 import functools
 import os
 import sys
@@ -247,3 +248,51 @@ except ImportError:
                     if _access_check(name, mode):
                         return name
         return None
+
+
+# A backport of contextlib.nested for Python 3.
+nested = getattr(contextlib, "nested")
+if nested is None:
+    @contextlib.contextmanager
+    def nested(*managers):
+        """Support multiple context managers in a single with-statement.
+
+        Code like this:
+
+            with nested(A, B, C) as (X, Y, Z):
+                <body>
+
+        is equivalent to this:
+
+            with A as X:
+                with B as Y:
+                    with C as Z:
+                        <body>
+
+        """
+        exits = []
+        vars = []
+        exc = (None, None, None)
+        try:
+            for mgr in managers:
+                exit = mgr.__exit__
+                enter = mgr.__enter__
+                vars.append(enter())
+                exits.append(exit)
+            yield vars
+        except:  # NOQA
+            exc = sys.exc_info()
+        finally:
+            while exits:
+                exit = exits.pop()
+                try:
+                    if exit(*exc):
+                        exc = (None, None, None)
+                except:  # NOQA
+                    exc = sys.exc_info()
+            if exc != (None, None, None):
+                # Don't rely on sys.exc_info() still containing
+                # the right information. Another exception may
+                # have been raised and caught by an exit method
+                # exc[1] already has the __traceback__ attribute populated
+                raise exc[1]

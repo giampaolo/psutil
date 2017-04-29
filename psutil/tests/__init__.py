@@ -923,7 +923,6 @@ def check_connection_ntuple(conn):
                     if err.errno != errno.EADDRNOTAVAIL:
                         raise
     elif conn.family == AF_UNIX:
-        assert not conn.raddr, repr(conn.raddr)
         assert conn.status == psutil.CONN_NONE, conn.status
 
     # check type
