@@ -78,23 +78,15 @@ class Base(object):
         cons = psutil.Process().connections(kind='all')
         assert not cons, cons
 
-
-# =====================================================================
-# --- Test unconnected sockets
-# =====================================================================
-
-
-class TestUnconnectedSockets(Base, unittest.TestCase):
-    """Tests sockets which are open but not connected to anything."""
-
     def check_socket(self, sock, conn=None):
         """Given a socket, makes sure it matches the one obtained
         via psutil. It assumes this process created one connection
         only (the one supposed to be checked).
         """
         cons = psutil.Process().connections(kind='all')
-        self.assertEqual(len(cons), 1)
-        conn = cons[0]
+        if not conn:
+            self.assertEqual(len(cons), 1)
+            conn = cons[0]
 
         check_connection_ntuple(conn)
 
@@ -115,7 +107,14 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             compare_procsys_connections(os.getpid(), cons)
         return conn
 
-    # --- non connected sockets
+
+# =====================================================================
+# --- Test unconnected sockets
+# =====================================================================
+
+
+class TestUnconnectedSockets(Base, unittest.TestCase):
+    """Tests sockets which are open but not connected to anything."""
 
     def test_tcp_v4(self):
         addr = ("127.0.0.1", get_free_port())
@@ -171,6 +170,24 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     """Test socket pairs which are are actually connected to
     each other.
     """
+
+    @staticmethod
+    def differentiate_tcp_socks(cons, server_addr):
+        if cons[0].raddr == server_addr:
+            return (cons[0], cons[1])
+        else:
+            assert cons[1].raddr == server_addr
+            return (cons[1], cons[0])
+
+    def test_tcp(self):
+        from psutil.tests import inet_socketpair
+        addr = ("127.0.0.1", get_free_port())
+        s_sock, c_sock = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
+        cons = psutil.Process().connections(kind='all')
+        s_conn, c_conn = self.differentiate_tcp_socks(cons, addr)
+        self.check_socket(s_sock, conn=s_conn)
+        self.assertEqual(s_conn.status, psutil.CONN_ESTABLISHED)
+        self.assertEqual(c_conn.status, psutil.CONN_ESTABLISHED)
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):
