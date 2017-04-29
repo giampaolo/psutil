@@ -57,7 +57,6 @@ def get_urls(filename):
     # fname = os.path.abspath(os.path.join(HERE, filename))
     # expecting absolute path
     fname = os.path.abspath(filename)
-    print(fname)
     text = ''
     with open(fname) as f:
         text = f.read()
