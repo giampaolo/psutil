@@ -816,15 +816,15 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     return sock
 
 
-def inet_socketpair(family, type, addr=("", 0)):
-    """Build a pair of INET sockets connected to each other.
+def tcp_socketpair(family, addr=("", 0)):
+    """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with contextlib.closing(socket.socket(family, type)) as ll:
+    with contextlib.closing(socket.socket(family, SOCK_STREAM)) as ll:
         ll.bind(addr)
         ll.listen(10)
         addr = ll.getsockname()
-        c = socket.socket(family, type)
+        c = socket.socket(family, SOCK_STREAM)
         try:
             c.connect(addr)
             caddr = c.getsockname()
@@ -844,7 +844,7 @@ def unix_socketpair(name):
     the same UNIX file name.
     Return a (server, client) tuple.
     """
-    assert psutil.POSIX, "not a POSIX system"
+    assert psutil.POSIX
     server = bind_unix_socket(name, type=socket.SOCK_STREAM)
     server.setblocking(0)
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

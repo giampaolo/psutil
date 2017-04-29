@@ -29,12 +29,12 @@ from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_free_port
-from psutil.tests import inet_socketpair
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
+from psutil.tests import tcp_socketpair
 from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
@@ -203,7 +203,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
-        server, client = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
+        server, client = tcp_socketpair(AF_INET, addr=addr)
         with nested(closing(server), closing(client)):
             cons = psutil.Process().connections(kind='all')
             server_conn, client_conn = self.distinguish_tcp_socks(cons, addr)
