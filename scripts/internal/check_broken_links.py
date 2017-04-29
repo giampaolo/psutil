@@ -69,7 +69,7 @@ def get_urls(filename):
     # correct urls which are between < and/or >
     i = 0
     while i < len(urls):
-        urls[i] = re.sub("[<>]", '', urls[i])
+        urls[i] = re.sub("[\*<>]", '', urls[i])
         i += 1
 
     return urls
