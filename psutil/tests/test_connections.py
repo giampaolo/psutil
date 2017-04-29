@@ -6,10 +6,10 @@
 
 """Tests for net_connections() and Process.connections() APIs."""
 
-import contextlib
 import os
 import socket
 import textwrap
+from contextlib import closing
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
@@ -23,28 +23,34 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import unicode
+from psutil.tests import AF_UNIX
+from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
+from psutil.tests import get_free_port
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
+from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 from psutil.tests import wait_for_file
-from psutil.tests import unittest
-
-
-AF_UNIX = getattr(socket, "AF_UNIX", object())
 
 
 class TestProcessConnections(unittest.TestCase):
     """Tests for Process.connections()."""
 
+    def setUp(self):
+        cons = psutil.Process().connections(kind='all')
+        assert not cons, cons
+
     def tearDown(self):
         safe_rmpath(TESTFN)
         reap_children()
+        cons = psutil.Process().connections(kind='all')
+        assert not cons, cons
 
     def compare_proc_sys_cons(self, pid, proc_cons):
         from psutil._common import pconn
@@ -64,47 +70,75 @@ class TestProcessConnections(unittest.TestCase):
             proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         self.assertEqual(sorted(proc_cons), sorted(syscons))
 
+    def check_socket(self, sock):
+        cons = psutil.Process().connections(kind='all')
+        self.assertEqual(len(cons), 1)
+        conn = cons[0]
+
+        check_connection_ntuple(conn)
+
+        # fd, family, type
+        if conn.fd != -1:
+            self.assertEqual(conn.fd, sock.fileno())
+        self.assertEqual(conn.family, sock.family)
+        self.assertEqual(conn.type, sock.type)
+
+        # local address
+        laddr = sock.getsockname()
+        if sock.family == AF_INET6:
+            laddr = laddr[:2]
+        self.assertEqual(conn.laddr, laddr)
+
+        # XXX Solaris can't retrieve system-wide UNIX sockets
+        if not (SUNOS and sock.family == AF_UNIX):
+            self.compare_proc_sys_cons(os.getpid(), cons)
+        return conn
+
+    # --- non connected sockets
+
+    def test_tcp_v4(self):
+        addr = ("127.0.0.1", get_free_port())
+        with closing(bind_socket(addr, AF_INET, SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_LISTEN)
+
+    def test_tcp_v6(self):
+        addr = ("::1", get_free_port())
+        with closing(bind_socket(addr, AF_INET6, SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_LISTEN)
+
+    def test_udp_v4(self):
+        addr = ("127.0.0.1", get_free_port())
+        with closing(bind_socket(addr, AF_INET, SOCK_DGRAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
+
+    def test_udp_v6(self):
+        addr = ("127.0.0.1", get_free_port())
+        with closing(bind_socket(addr, AF_INET, SOCK_DGRAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
+
     @unittest.skipUnless(POSIX, 'POSIX only')
-    def test_connections_unix(self):
-        def check(type):
-            with unix_socket_path() as name:
-                sock = bind_unix_socket(name, type=type)
-                with contextlib.closing(sock):
-                    cons = psutil.Process().connections(kind='unix')
-                    self.assertEqual(len(cons), 1)
-                    conn = cons[0]
-                    check_connection_ntuple(conn)
-                    if conn.fd != -1:  # != sunos and windows
-                        self.assertEqual(conn.fd, sock.fileno())
-                    self.assertEqual(conn.family, AF_UNIX)
-                    self.assertEqual(conn.type, type)
-                    self.assertEqual(conn.laddr, name)
-                    if not SUNOS:
-                        # XXX Solaris can't retrieve system-wide UNIX
-                        # sockets.
-                        self.compare_proc_sys_cons(os.getpid(), cons)
+    def test_unix_tcp(self):
+        with unix_socket_path() as name:
+            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
+                conn = self.check_socket(sock)
+                assert not conn.raddr
+                self.assertEqual(conn.status, psutil.CONN_NONE)
 
-        check(SOCK_STREAM)
-        check(SOCK_DGRAM)
-
-    @unittest.skipUnless(hasattr(socket, "fromfd"),
-                         'socket.fromfd() not supported')
-    @unittest.skipIf(WINDOWS or SUNOS,
-                     'connection fd not available on this platform')
-    def test_connection_fromfd(self):
-        with contextlib.closing(socket.socket()) as sock:
-            sock.bind(('127.0.0.1', 0))
-            sock.listen(1)
-            p = psutil.Process()
-            for conn in p.connections():
-                if conn.fd == sock.fileno():
-                    break
-            else:
-                self.fail("couldn't find socket fd")
-            dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-            with contextlib.closing(dupsock):
-                self.assertEqual(dupsock.getsockname(), conn.laddr)
-                self.assertNotEqual(sock.fileno(), dupsock.fileno())
+    @unittest.skipUnless(POSIX, 'POSIX only')
+    def test_unix_udp(self):
+        with unix_socket_path() as name:
+            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
+                conn = self.check_socket(sock)
+                assert not conn.raddr
+                self.assertEqual(conn.status, psutil.CONN_NONE)
 
     def test_connection_constants(self):
         ints = []

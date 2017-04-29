@@ -150,6 +150,7 @@ DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
+AF_UNIX = getattr(socket, "AF_UNIX", object())
 TEST_DEPS = []
 if sys.version_info[:2] == (2, 6):
     TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
@@ -764,6 +765,24 @@ def install_test_deps(deps=None):
 # ===================================================================
 
 
+def get_free_port(host='127.0.0.1'):
+    """Return an unused TCP port."""
+    with contextlib.closing(socket.socket()) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((host, 0))
+        return sock.getsockname()[1]
+
+
+def bind_socket(addr, family, type):
+    """Binds a generic socket."""
+    sock = socket.socket(family, type)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(addr)
+    if type == socket.SOCK_STREAM:
+        sock.listen(1)
+    return sock
+
+
 @contextlib.contextmanager
 def unix_socket_path(suffix=""):
     """A context manager which returns a non-existent file name
@@ -781,9 +800,7 @@ def unix_socket_path(suffix=""):
 
 
 def bind_unix_socket(name, type=socket.SOCK_STREAM):
-    """Creates a listening unix socket.
-    Return a (sock, filemame) tuple.
-    """
+    """Bind a UNIX socket."""
     assert psutil.POSIX, "not a POSIX system"
     assert not os.path.exists(name), name
     sock = socket.socket(socket.AF_UNIX, type)
@@ -792,6 +809,7 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     except Exception:
         sock.close()
         raise
+    sock.listen(1)
     return sock
 
 
@@ -839,34 +857,35 @@ def check_net_address(addr, family):
 
 def check_connection_ntuple(conn):
     """Check validity of a connection namedtuple."""
-    AF_UNIX = getattr(socket, "AF_UNIX", object())
-    valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if
-                         x.startswith('CONN_')]
+    # check ntuple
+    assert len(conn) in (6, 7), conn
+    has_pid = len(conn) == 7
+    has_fd = getattr(conn, 'fd', -1) != -1
     assert conn[0] == conn.fd
     assert conn[1] == conn.family
     assert conn[2] == conn.type
     assert conn[3] == conn.laddr
     assert conn[4] == conn.raddr
     assert conn[5] == conn.status
-    assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
+    if has_pid:
+        assert conn[6] == conn.pid
+
+    # check fd
+    if has_fd:
+        assert conn.fd > 0, conn
+        if hasattr(socket, 'fromfd') and not WINDOWS:
+            try:
+                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+            except (socket.error, OSError) as err:
+                if err.args[0] != errno.EBADF:
+                    raise
+            else:
+                with contextlib.closing(dupsock):
+                    assert dupsock.family == conn.family
+                    assert dupsock.type == conn.type
+
+    # check family
     assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
-    assert conn.status in valid_conn_states, conn.status
-
-    # check IP address and port sanity
-    for addr in (conn.laddr, conn.raddr):
-        if not addr:
-            continue
-        if conn.family in (AF_INET, AF_INET6):
-            assert isinstance(addr, tuple), addr
-            ip, port = addr
-            assert isinstance(port, int), port
-            assert 0 <= port <= 65535, port
-            check_net_address(ip, conn.family)
-        elif conn.family == AF_UNIX:
-            assert isinstance(addr, (str, None)), addr
-        else:
-            raise ValueError("unknown family %r", conn.family)
-
     if conn.family in (AF_INET, AF_INET6):
         # actually try to bind the local socket; ignore IPv6
         # sockets as their address might be represented as
@@ -884,18 +903,30 @@ def check_connection_ntuple(conn):
         assert not conn.raddr, repr(conn.raddr)
         assert conn.status == psutil.CONN_NONE, conn.status
 
-    if getattr(conn, 'fd', -1) != -1:
-        assert conn.fd > 0, conn
-        if hasattr(socket, 'fromfd') and not WINDOWS:
-            try:
-                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-            except (socket.error, OSError) as err:
-                if err.args[0] != errno.EBADF:
-                    raise
-            else:
-                with contextlib.closing(dupsock):
-                    assert dupsock.family == conn.family
-                    assert dupsock.type == conn.type
+    # check type
+    assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
+    if conn.type == SOCK_DGRAM:
+        assert conn.status == psutil.CONN_NONE, conn.status
+
+    # check laddr (IP address and port sanity)
+    for addr in (conn.laddr, conn.raddr):
+        if not addr:
+            continue
+        if conn.family in (AF_INET, AF_INET6):
+            assert isinstance(addr, tuple), addr
+            ip, port = addr
+            assert isinstance(port, int), port
+            assert 0 <= port <= 65535, port
+            check_net_address(ip, conn.family)
+        elif conn.family == AF_UNIX:
+            assert isinstance(addr, (str, None)), addr
+
+    # check raddr
+    assert isinstance(conn.status, (tuple, str, None)), repr(conn.status)
+
+    # check status
+    valids = [getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')]
+    assert conn.status in valids, conn.status
 
 
 # ===================================================================
