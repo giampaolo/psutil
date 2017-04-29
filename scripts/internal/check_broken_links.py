@@ -24,7 +24,7 @@ Method:
 
 REFERENCES:
 Using [1] with some modificatons for including ftp
-[1] http://stackoverflow.com/questions/6883049/regex-to-find-urls-in-string-in-python
+[1] http://stackoverflow.com/a/6883094/5163807
 [2] http://stackoverflow.com/a/31952097/5163807
 [3] http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 [4] https://mathiasbynens.be/demo/url-regex
@@ -46,7 +46,8 @@ import requests
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-URL_REGEX = '(?:http|ftp|https)?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+REGEX = r'(?:http|ftp|https)?://'
+REGEX += r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
 
 def get_urls(filename):
@@ -60,7 +61,7 @@ def get_urls(filename):
     with open(fname) as f:
         text = f.read()
 
-    urls = re.findall(URL_REGEX, text)
+    urls = re.findall(REGEX, text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
     # correct urls which are between < and/or >
@@ -80,7 +81,7 @@ def validate_url(url):
     try:
         res = requests.head(url)
         return res.ok
-    except Exception as e:
+    except requests.exceptions.RequestException:
         return False
 
 
@@ -97,7 +98,8 @@ def main():
             i += 1
             if not validate_url(url):
                 fails.append((url, fname))
-            sys.stdout.write("\r " + fname + " : " + str(i) + " / " + str(last))
+            sys.stdout.write("\r " +
+                             fname + " : " + str(i) + " / " + str(last))
             sys.stdout.flush()
 
     print()
