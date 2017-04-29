@@ -34,6 +34,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
+from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import importlib
 from psutil.tests import inet_socketpair
@@ -701,12 +702,16 @@ class TestNetUtils(unittest.TestCase):
                 self.assertEqual(sock.type, socket.SOCK_DGRAM)
 
     def test_inet_socketpair(self):
-        server, client = inet_socketpair(socket.AF_INET, socket.SOCK_STREAM)
+        addr = ("127.0.0.1", get_free_port())
+        server, client = inet_socketpair(
+            socket.AF_INET, socket.SOCK_STREAM, addr=addr)
         with contextlib.closing(server):
             with contextlib.closing(client):
-                # ensure they are connected
-                self.assertEqual(server.getsockname(), client.getpeername())
-                self.assertEqual(server.getpeername(), client.getsockname())
+                # Ensure they are connected and the positions are
+                # correct.
+                self.assertEqual(server.getsockname(), addr)
+                self.assertEqual(client.getpeername(), addr)
+                self.assertNotEqual(client.getsockname(), addr)
 
     @unittest.skipUnless(POSIX, "POSIX only")
     def test_unix_socketpair(self):

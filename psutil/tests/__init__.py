@@ -830,7 +830,7 @@ def inet_socketpair(family, type, addr=("", 0)):
                 a, addr = ll.accept()
                 # check that we've got the correct client
                 if addr == caddr:
-                    return c, a
+                    return (a, c)
                 a.close()
         except OSError:
             c.close()

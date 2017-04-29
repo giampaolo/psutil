@@ -173,19 +173,23 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 
     @staticmethod
     def differentiate_tcp_socks(cons, server_addr):
-        if cons[0].raddr == server_addr:
+        """Given a list of connections return a (server, client)
+        tuple.
+        """
+        if cons[0].laddr == server_addr:
             return (cons[0], cons[1])
         else:
-            assert cons[1].raddr == server_addr
+            assert cons[1].laddr == server_addr
             return (cons[1], cons[0])
 
     def test_tcp(self):
         from psutil.tests import inet_socketpair
         addr = ("127.0.0.1", get_free_port())
-        s_sock, c_sock = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
+        server, c_sock = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
         cons = psutil.Process().connections(kind='all')
         s_conn, c_conn = self.differentiate_tcp_socks(cons, addr)
-        self.check_socket(s_sock, conn=s_conn)
+        self.check_socket(server, conn=s_conn)
+        self.check_socket(c_sock, conn=c_conn)
         self.assertEqual(s_conn.status, psutil.CONN_ESTABLISHED)
         self.assertEqual(c_conn.status, psutil.CONN_ESTABLISHED)
 
