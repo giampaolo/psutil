@@ -145,6 +145,7 @@ def main():
         for fail in fails:
             print(fail[1] + ' : ' + fail[0] + os.linesep)
         print('-' * 20)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
