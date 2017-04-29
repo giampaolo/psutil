@@ -107,15 +107,12 @@ def main():
 
     print()
     if len(fails) == 0:
-        print("All links are valid. Cheers!")
+        print("all links are valid. cheers!")
     else:
-        print("Total :", len(fails), "fails!")
-        print("Writing failed urls to fails.txt")
-        with open("../../fails.txt", 'w') as f:
-            for fail in fails:
-                f.write(fail[1] + ' : ' + fail[0] + os.linesep)
-            f.write('-' * 20)
-            f.write(os.linesep*2)
+        print("total :", len(fails), "fails!")
+        for fail in fails:
+            print(fail[1] + ' : ' + fail[0] + os.linesep)
+        print('-' * 20)
 
 
 if __name__ == '__main__':
