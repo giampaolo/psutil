@@ -367,7 +367,7 @@ class TestProcessObjectLeaks(TestMemLeak):
             return sock
 
         # Open as many socket types as possible so that we excercise
-        # as much C code sections as possible.
+        # as many C code sections as possible.
         socks = []
         socks.append(create_socket(socket.AF_INET, socket.SOCK_STREAM))
         socks.append(create_socket(socket.AF_INET, socket.SOCK_DGRAM))

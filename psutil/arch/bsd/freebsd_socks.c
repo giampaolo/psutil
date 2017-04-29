@@ -618,6 +618,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
+                Py_DECREF(py_laddr);
                 Py_INCREF(Py_None);
             }
         }

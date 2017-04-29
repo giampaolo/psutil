@@ -27,6 +27,8 @@
   skipping a file which gets deleted while open files are retrieved.
 - 1029_: [OSX, FreeBSD] Process.connections('unix') on Python 3 doesn't
   properly handle unicode paths and may raise UnicodeDecodeError.
+- 1033_: [OSX, FreeBSD] memory leak for net_connections() and
+  Process.connections() when retrieving UNIX sockets (kind='unix').
 
 *2017-04-10*
 

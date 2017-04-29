@@ -53,7 +53,9 @@ class TestProcessConnections(unittest.TestCase):
         except psutil.AccessDenied:
             # On OSX, system-wide connections are retrieved by iterating
             # over all processes
-            if not OSX:
+            if OSX:
+                return
+            else:
                 raise
         # exclude PIDs from syscons
         syscons = [c[:-1] for c in syscons if c.pid == pid]
