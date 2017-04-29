@@ -10,6 +10,7 @@ import os
 import socket
 import textwrap
 from contextlib import closing
+from contextlib import nested
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
@@ -28,6 +29,7 @@ from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_free_port
+from psutil.tests import inet_socketpair
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
@@ -183,15 +185,21 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             return (cons[1], cons[0])
 
     def test_tcp(self):
-        from psutil.tests import inet_socketpair
         addr = ("127.0.0.1", get_free_port())
-        server, c_sock = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
-        cons = psutil.Process().connections(kind='all')
-        s_conn, c_conn = self.differentiate_tcp_socks(cons, addr)
-        self.check_socket(server, conn=s_conn)
-        self.check_socket(c_sock, conn=c_conn)
-        self.assertEqual(s_conn.status, psutil.CONN_ESTABLISHED)
-        self.assertEqual(c_conn.status, psutil.CONN_ESTABLISHED)
+        server, client = inet_socketpair(AF_INET, SOCK_STREAM, addr=addr)
+        with nested(closing(server), closing(client)):
+            cons = psutil.Process().connections(kind='all')
+            server_conn, client_conn = self.differentiate_tcp_socks(cons, addr)
+            self.check_socket(server, conn=server_conn)
+            self.check_socket(client, conn=client_conn)
+            self.assertEqual(server_conn.status, psutil.CONN_ESTABLISHED)
+            self.assertEqual(client_conn.status, psutil.CONN_ESTABLISHED)
+            # May not be fast enough to change state so it stays
+            # commenteed.
+            # client.close()
+            # cons = psutil.Process().connections(kind='all')
+            # self.assertEqual(len(cons), 1)
+            # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):
