@@ -34,3 +34,19 @@ AccessDenied(void) {
     Py_XDECREF(exc);
     return NULL;
 }
+
+
+/*
+ * Alias for PyUnicode_DecodeFSDefault which is not available
+ * on Python 2. On Python 2 we just return a plain byte string
+ * which is never supposed to raise decoding errors.
+ * See: https://github.com/giampaolo/psutil/issues/1040
+ */
+PyObject *
+psutil_PyUnicode_DecodeFSDefault(char *s) {
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_DecodeFSDefault(s);
+#else
+    return Py_BuildValue("s", s);
+#endif
+}

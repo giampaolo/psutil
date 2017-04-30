@@ -596,11 +596,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                     sun->sun_path);
 
-#if PY_MAJOR_VERSION >= 3
-                py_laddr = PyUnicode_DecodeFSDefault(path);
-#else
-                py_laddr = Py_BuildValue("s", path);
-#endif
+                py_laddr = psutil_PyUnicode_DecodeFSDefault(path);
                 if (! py_laddr)
                     goto error;
 

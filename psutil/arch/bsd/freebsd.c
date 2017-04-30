@@ -238,11 +238,7 @@ psutil_get_cmdline(long pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-#if PY_MAJOR_VERSION >= 3
-            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
-#else
-            py_arg = Py_BuildValue("s", &argstr[pos]);
-#endif
+            py_arg = psutil_PyUnicode_DecodeFSDefault(&argstr[pos]);
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
@@ -292,7 +288,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (error == -1) {
         // see: https://github.com/giampaolo/psutil/issues/907
         if (errno == ENOENT)
-            return Py_BuildValue("s", "");
+            return psutil_PyUnicode_DecodeFSDefault("");
         else
             return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -306,12 +302,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             strcpy(pathname, "");
     }
 
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", pathname);
-#endif
-
+    return psutil_PyUnicode_DecodeFSDefault(pathname);
 }
 
 
@@ -564,11 +555,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
         if (kif->kf_fd == KF_FD_TYPE_CWD) {
-#if PY_MAJOR_VERSION >= 3
-            py_path = PyUnicode_DecodeFSDefault(kif->kf_path);
-#else
-            py_path = Py_BuildValue("s", kif->kf_path);
-#endif
+            py_path = psutil_PyUnicode_DecodeFSDefault(kif->kf_path);
             if (!py_path)
                 goto error;
             break;
@@ -580,7 +567,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
      * as root we return an empty string instead of AccessDenied.
      */
     if (py_path == NULL)
-        py_path = Py_BuildValue("s", "");
+        py_path = psutil_PyUnicode_DecodeFSDefault("");
     free(freep);
     return py_path;
 

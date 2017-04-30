@@ -215,11 +215,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-#if PY_MAJOR_VERSION >= 3
-    py_name = PyUnicode_DecodeFSDefault(str);
-#else
-    py_name = Py_BuildValue("s", str);
-#endif
+    py_name = psutil_PyUnicode_DecodeFSDefault(str);
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -372,12 +368,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefault(str);
-#else
-    return Py_BuildValue("s", str);
-#endif
+    return psutil_PyUnicode_DecodeFSDefault(str);
 }
 
 

@@ -8,3 +8,4 @@
 
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
+PyObject* psutil_PyUnicode_DecodeFSDefault(char *s);
