@@ -152,17 +152,27 @@ def rename_27_wheels():
 def main(options):
     safe_rmtree('dist')
     urls = get_file_urls(options)
+    completed = 0
+    exc = None
     with concurrent.futures.ThreadPoolExecutor() as e:
         fut_to_url = {e.submit(download_file, url): url for url in urls}
         for fut in concurrent.futures.as_completed(fut_to_url):
-            local_fname = fut.result()
-            print("downloaded %-45s %s" % (
-                local_fname, bytes2human(os.path.getsize(local_fname))))
+            url = fut_to_url[fut]
+            try:
+                local_fname = fut.result()
+            except Exception as _:
+                exc = _
+                print("error while downloading %s: %s" % (url, exc))
+            else:
+                completed += 1
+                print("downloaded %-45s %s" % (
+                    local_fname, bytes2human(os.path.getsize(local_fname))))
     # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
     expected = len(PY_VERSIONS) * 4
-    got = len(fut_to_url)
-    if expected != got:
-        return exit("expected %s files, got %s" % (expected, got))
+    if expected != completed:
+        return exit("expected %s files, got %s" % (expected, completed))
+    if exc:
+        return exit(1)
     rename_27_wheels()
 
 
