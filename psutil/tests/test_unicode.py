@@ -9,29 +9,36 @@
 Notes about unicode handling in psutil
 ======================================
 
-In psutil these are the APIs returning or dealing with a string:
+In psutil these are the APIs returning or dealing with a string
+('not tested' means they are not tested to deal with non-ASCII strings):
 
 - Process.cmdline()
 - Process.connections('unix')
 - Process.cwd()
 - Process.environ()
 - Process.exe()
-- Process.memory_maps()        (not tested)
+- Process.memory_maps()          (not tested)
 - Process.name()
 - Process.open_files()
-- Process.username()           (not tested)
+- Process.username()             (not tested)
 
-- disk_io_counters()           (not tested)
-- disk_partitions()            (not tested)
+- disk_io_counters()             (not tested)
+- disk_partitions()              (not tested)
 - disk_usage(str)
 - net_connections('unix')
-- net_if_addrs()               (not tested)
-- net_if_stats()               (not tested)
-- net_io_counters()            (not tested)
-- sensors_fans()               (not tested)
-- sensors_temperatures()       (not tested)
-- users()                      (not tested)
-- WindowsService               (not tested)
+- net_if_addrs()                 (not tested)
+- net_if_stats()                 (not tested)
+- net_io_counters()              (not tested)
+- sensors_fans()                 (not tested)
+- sensors_temperatures()         (not tested)
+- users()                        (not tested)
+
+- WindowsService.binpath()       (not tested)
+- WindowsService.description()   (not tested)
+- WindowsService.display_name()  (not tested)
+- WindowsService.name()          (not tested)
+- WindowsService.status()        (not tested)
+- WindowsService.username()      (not tested)
 
 In here we create a unicode path with a funky non-ASCII name and (where
 possible) make psutil return it back (e.g. on name(), exe(),
