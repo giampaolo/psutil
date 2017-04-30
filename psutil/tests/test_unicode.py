@@ -364,12 +364,15 @@ class TestAlwaysStrType(unittest.TestCase):
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
             self.assertIsInstance(ifname, str)
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_fans"), "not supported")
     def test_sensors_fans(self):
         for name, units in psutil.sensors_fans().items():
             self.assertIsInstance(name, str)
             for unit in units:
                 self.assertIsInstance(unit.label, str)
 
+    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
+                         "not supported")
     def test_sensors_temperatures(self):
         for name, units in psutil.sensors_temperatures().items():
             self.assertIsInstance(name, str)
