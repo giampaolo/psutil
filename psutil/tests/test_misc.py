@@ -34,6 +34,7 @@ from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import reap_children
@@ -452,8 +453,7 @@ class TestScripts(unittest.TestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(not hasattr(psutil.Process, "memory_maps"),
-                     "not supported")
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 

@@ -35,7 +35,12 @@ from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_SENSORS_BATTERY
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
+from psutil.tests import NO_BATTERY
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
@@ -716,8 +721,7 @@ class TestSystemAPIs(unittest.TestCase):
             if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
-    @unittest.skipIf(not hasattr(psutil, "cpu_freq"),
-                     "platform not suported")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not suported")
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:
@@ -775,8 +779,7 @@ class TestSystemAPIs(unittest.TestCase):
         for name in names:
             self.assertIs(getattr(psutil, name), False, msg=name)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_temperatures"),
-                     "platform not supported")
+    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
@@ -790,8 +793,7 @@ class TestSystemAPIs(unittest.TestCase):
                 if entry.critical is not None:
                     self.assertGreaterEqual(entry.critical, 0)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_temperatures"),
-                     "platform not supported")
+    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures_fahreneit(self):
         d = {'coretemp': [('label', 50.0, 60.0, 70.0)]}
         with mock.patch("psutil._psplatform.sensors_temperatures",
@@ -803,8 +805,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(temps.high, 140.0)
             self.assertEqual(temps.critical, 158.0)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_battery"),
-                     "platform not supported")
+    @unittest.skipIf(not HAS_SENSORS_BATTERY or NO_BATTERY, "not supported")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()
         if ret is None:
@@ -819,8 +820,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertTrue(ret.power_plugged)
         self.assertIsInstance(ret.power_plugged, bool)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_fans"),
-                     "platform not supported")
+    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     def test_sensors_fans(self):
         fans = psutil.sensors_fans()
         for name, entries in fans.items():

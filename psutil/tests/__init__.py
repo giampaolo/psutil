@@ -143,6 +143,21 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
+# --- support
+
+HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
+HAS_CPU_FREQ = hasattr(psutil.Process, "cpu_affinity")
+HAS_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
+HAS_IONICE = hasattr(psutil.Process, "ionice")
+HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
+HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
+HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
+HAS_BATTERY = HAS_SENSORS_BATTERY and psutil.sensors_battery()
+HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
+HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
+
 # --- misc
 
 PYTHON = os.path.realpath(sys.executable)

@@ -67,6 +67,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_ENVIRON
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
@@ -273,8 +274,7 @@ class TestWinProcessName(unittest.TestCase):
 class TestNonFSAPIS(unittest.TestCase):
     """Unicode tests for non fs-related APIs."""
 
-    @unittest.skipIf(not hasattr(psutil.Process, "environ"),
-                     "platform not supported")
+    @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths. On Python 2 subprocess module is broken as

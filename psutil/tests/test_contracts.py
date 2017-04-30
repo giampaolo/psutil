@@ -30,6 +30,8 @@ from psutil._compat import long
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_kernel_version
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
@@ -227,7 +229,7 @@ class TestSystem(unittest.TestCase):
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
             self.assertIsInstance(ifname, str)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_fans"), "not supported")
+    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
@@ -235,8 +237,7 @@ class TestSystem(unittest.TestCase):
             for unit in units:
                 self.assertIsInstance(unit.label, str)
 
-    @unittest.skipIf(not hasattr(psutil, "sensors_temperatures"),
-                     "1not supported")
+    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():
