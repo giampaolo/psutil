@@ -358,8 +358,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     char path[PATH_MAX];
 
     PyObject *py_tuple = NULL;
-    PyObject *py_laddr = NULL;
-    PyObject *py_raddr = NULL;
+    PyObject *py_lpath = NULL;
 
     switch (proto) {
         case SOCK_STREAM:
@@ -418,13 +417,23 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         snprintf(path, sizeof(path), "%.*s",
                  (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                  sun->sun_path);
+        py_lpath = psutil_PyUnicode_DecodeFSDefault(path);
+        if (! py_lpath)
+            goto error;
 
-        py_tuple = Py_BuildValue("(iiisOii)", -1, AF_UNIX, proto, path,
-                                 Py_None, PSUTIL_CONN_NONE, pid);
+        py_tuple = Py_BuildValue("(iiiOOii)",
+            -1,
+            AF_UNIX,
+            proto,
+            py_lpath,
+            Py_None,
+            PSUTIL_CONN_NONE,
+            pid);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_lpath);
         Py_DECREF(py_tuple);
         Py_INCREF(Py_None);
     }
@@ -434,8 +443,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
 
 error:
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_laddr);
-    Py_XDECREF(py_raddr);
+    Py_XDECREF(py_lpath);
     free(buf);
     return 0;
 }
