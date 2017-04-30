@@ -800,8 +800,10 @@ def unix_socket_path(suffix=""):
             pass
 
 
-def bind_socket(addr, family, type):
+def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
     """Binds a generic socket."""
+    if addr is None and family in (AF_INET, AF_INET6):
+        addr = ("", 0)
     sock = socket.socket(family, type)
     try:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

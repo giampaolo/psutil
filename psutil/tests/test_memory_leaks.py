@@ -31,6 +31,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import xrange
+from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
@@ -60,6 +61,7 @@ RETRY_FOR = 3
 SKIP_PYTHON_IMPL = True if TRAVIS else False
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
+SKIP_PYTHON_IMPL = True if TRAVIS else False
 
 
 # ===================================================================
@@ -360,21 +362,14 @@ class TestProcessObjectLeaks(TestMemLeak):
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
     def test_connections(self):
-        def create_socket(family, type):
-            sock = socket.socket(family, type)
-            sock.bind(('', 0))
-            if type == socket.SOCK_STREAM:
-                sock.listen(1)
-            return sock
-
         # Open as many socket types as possible so that we excercise
         # as many C code sections as possible.
         socks = []
-        socks.append(create_socket(socket.AF_INET, socket.SOCK_STREAM))
-        socks.append(create_socket(socket.AF_INET, socket.SOCK_DGRAM))
+        socks.append(bind_socket(socket.AF_INET, socket.SOCK_STREAM))
+        socks.append(bind_socket(socket.AF_INET, socket.SOCK_DGRAM))
         if supports_ipv6():
-            socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
-            socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
+            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
         if POSIX and not SUNOS:  # TODO: SunOS
             name1 = unix_socket_path().__enter__()
             name2 = unix_socket_path().__enter__()
