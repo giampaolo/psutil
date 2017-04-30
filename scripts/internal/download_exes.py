@@ -14,12 +14,12 @@ http://code.saghul.net/index.php/2015/09/09/
 
 from __future__ import print_function
 import argparse
+import concurrent.futures
 import errno
 import os
 import requests
 import shutil
 import sys
-from concurrent.futures import ThreadPoolExecutor
 
 from psutil import __version__ as PSUTIL_VERSION
 
@@ -114,7 +114,6 @@ def download_file(url):
             if chunk:    # filter out keep-alive new chunks
                 f.write(chunk)
                 tot_bytes += len(chunk)
-    print("downloaded %-45s %s" % (local_fname, bytes2human(tot_bytes)))
     return local_fname
 
 
@@ -151,15 +150,17 @@ def rename_27_wheels():
 
 
 def main(options):
-    files = []
     safe_rmtree('dist')
-    with ThreadPoolExecutor() as e:
-        for url in get_file_urls(options):
-            fut = e.submit(download_file, url)
-            files.append(fut.result())
+    urls = get_file_urls(options)
+    with concurrent.futures.ThreadPoolExecutor() as e:
+        fut_to_url = {e.submit(download_file, url): url for url in urls}
+        for fut in concurrent.futures.as_completed(fut_to_url):
+            local_fname = fut.result()
+            print("downloaded %-45s %s" % (
+                local_fname, bytes2human(os.path.getsize(local_fname))))
     # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
     expected = len(PY_VERSIONS) * 4
-    got = len(files)
+    got = len(fut_to_url)
     if expected != got:
         return exit("expected %s files, got %s" % (expected, got))
     rename_27_wheels()

@@ -831,7 +831,7 @@ Functions
   structure::
 
     >>> import psutil
-    >>> procs = dict([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'username'])])
+    >>> procs = {p.pid: p.info for p in psutil.process_iter(attrs=['name', 'username'])}
     >>> procs
     {1: {'name': 'systemd', 'username': 'root'},
      2: {'name': 'kthreadd', 'username': 'root'},
