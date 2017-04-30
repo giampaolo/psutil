@@ -82,6 +82,30 @@ import psutil
 import psutil.tests
 
 
+def can_deal_with_funky_name(name):
+    if PY3:
+        return True
+
+    safe_rmpath(name)
+    create_exe(name)
+    try:
+        get_test_subprocess(cmd=[name])
+    except UnicodeEncodeError:
+        return False
+    else:
+        reap_children()
+        return True
+
+
+if PY3:
+    INVALID_NAME = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
+        'utf8', 'surrogateescape')
+else:
+    INVALID_NAME = TESTFN + "f\xc0\x80"
+UNICODE_OK = can_deal_with_funky_name(TESTFN_UNICODE)
+INVALID_UNICODE_OK = can_deal_with_funky_name(INVALID_NAME)
+
+
 # ===================================================================
 # FS APIs
 # ===================================================================
@@ -89,20 +113,6 @@ import psutil.tests
 
 class _BaseFSAPIsTests(object):
     funky_name = None
-
-    @classmethod
-    def setUpClass(cls):
-        if not PY3:
-            create_exe(cls.funky_name)
-            try:
-                get_test_subprocess(cmd=[cls.funky_name])
-            except UnicodeEncodeError:
-                # We skip all tests if subprocess module is not able to
-                # deal with such an exe.
-                raise unittest.SkipTest(
-                    "subprocess module bumped into encoding error")
-            else:
-                reap_children()
 
     def setUp(self):
         safe_rmpath(self.funky_name)
@@ -218,6 +228,7 @@ class _BaseFSAPIsTests(object):
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
+@unittest.skipIf(not UNICODE_OK, "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_name = TESTFN_UNICODE
@@ -230,18 +241,28 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
+@unittest.skipIf(not INVALID_UNICODE_OK,
+                 "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
-    if PY3:
-        funky_name = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-            'utf8', 'surrogateescape')
-    else:
-        funky_name = TESTFN + "f\xc0\x80"
+    funky_name = INVALID_NAME
 
     @classmethod
     def expect_exact_path_match(cls):
         # Invalid unicode names are supposed to work on Python 2.
         return True
+
+
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
+class TestWinProcessName(unittest.TestCase):
+
+    def test_name_type(self):
+        # On Windows name() is determined from exe() first, because
+        # it's faster; we want to overcome the internal optimization
+        # and test name() instead of exe().
+        from psutil._pswindows import py2_strencode
+        name = py2_strencode(psutil._psplatform.cext.proc_name(os.getpid()))
+        self.assertIsInstance(name, str)
 
 
 # ===================================================================
