@@ -29,7 +29,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
-from psutil._compat import unicode
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import check_net_address
@@ -473,10 +472,10 @@ class TestSystemAPIs(unittest.TestCase):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
-            self.assertIsInstance(disk.device, (str, unicode))
-            self.assertIsInstance(disk.mountpoint, (str, unicode))
-            self.assertIsInstance(disk.fstype, (str, unicode))
-            self.assertIsInstance(disk.opts, (str, unicode))
+            self.assertIsInstance(disk.device, str)
+            self.assertIsInstance(disk.mountpoint, str)
+            self.assertIsInstance(disk.fstype, str)
+            self.assertIsInstance(disk.opts, str)
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -552,7 +551,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertNotEqual(ret, [])
         for key in ret:
             self.assertTrue(key)
-            self.assertIsInstance(key, (str, unicode))
+            self.assertIsInstance(key, str)
             check_ntuple(ret[key])
 
     def test_net_if_addrs(self):
@@ -568,7 +567,7 @@ class TestSystemAPIs(unittest.TestCase):
 
         families = set([socket.AF_INET, socket.AF_INET6, psutil.AF_LINK])
         for nic, addrs in nics.items():
-            self.assertIsInstance(nic, (str, unicode))
+            self.assertIsInstance(nic, str)
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
                 self.assertIsInstance(addr.family, int)
@@ -639,7 +638,8 @@ class TestSystemAPIs(unittest.TestCase):
         all_duplexes = (psutil.NIC_DUPLEX_FULL,
                         psutil.NIC_DUPLEX_HALF,
                         psutil.NIC_DUPLEX_UNKNOWN)
-        for nic, stats in nics.items():
+        for name, stats in nics.items():
+            self.assertIsInstance(name, str)
             isup, duplex, speed, mtu = stats
             self.assertIsInstance(isup, bool)
             self.assertIn(duplex, all_duplexes)
@@ -691,10 +691,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
-            self.assertIsInstance(user.name, (str, unicode))
-            self.assertIsInstance(user.terminal, (str, unicode, type(None)))
+            self.assertIsInstance(user.name, str)
+            self.assertIsInstance(user.terminal, (str, type(None)))
             if user.host is not None:
-                self.assertIsInstance(user.host, (str, unicode, type(None)))
+                self.assertIsInstance(user.host, (str, type(None)))
             user.terminal
             user.host
             assert user.started > 0.0, user
@@ -780,9 +780,9 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sensors_temperatures(self):
         temps = psutil.sensors_temperatures()
         for name, entries in temps.items():
-            self.assertIsInstance(name, (str, unicode))
+            self.assertIsInstance(name, str)
             for entry in entries:
-                self.assertIsInstance(entry.label, (str, unicode))
+                self.assertIsInstance(entry.label, str)
                 if entry.current is not None:
                     self.assertGreaterEqual(entry.current, 0)
                 if entry.high is not None:
@@ -824,9 +824,9 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sensors_fans(self):
         fans = psutil.sensors_fans()
         for name, entries in fans.items():
-            self.assertIsInstance(name, (str, unicode))
+            self.assertIsInstance(name, str)
             for entry in entries:
-                self.assertIsInstance(entry.label, (str, unicode))
+                self.assertIsInstance(entry.label, str)
                 self.assertIsInstance(entry.current, (int, long))
                 self.assertGreaterEqual(entry.current, 0)
 

@@ -120,7 +120,6 @@ class _BaseFSAPIsTests(object):
         p = psutil.Process(subp.pid)
         exe = p.exe()
         self.assertIsInstance(exe, str)
-        self.assertIsInstance(exe, str)
         if self.expect_exact_path_match():
             self.assertEqual(exe, self.funky_name)
 

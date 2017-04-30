@@ -6,6 +6,7 @@
 
 """Contracts tests. These tests mainly check API sanity in terms of
 returned types and APIs availability.
+Some of these are duplicates of tests test_system.py and test_process.py
 """
 
 import errno
@@ -159,7 +160,10 @@ class TestAvailability(unittest.TestCase):
 
 
 class TestSystem(unittest.TestCase):
-    """Check the return types of system related APIs."""
+    """Check the return types of system related APIs.
+    Mainly we want to test we never return unicode on Python 2, see:
+    https://github.com/giampaolo/psutil/issues/1039
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -169,6 +173,7 @@ class TestSystem(unittest.TestCase):
         safe_rmpath(TESTFN)
 
     def test_cpu_times(self):
+        # Duplicate of test_system.py. Keep it anyway.
         ret = psutil.cpu_times()
         assert is_namedtuple(ret)
         for n in ret:
@@ -176,10 +181,12 @@ class TestSystem(unittest.TestCase):
             self.assertGreaterEqual(n, 0)
 
     def test_io_counters(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for k in psutil.disk_io_counters(perdisk=True):
             self.assertIsInstance(k, str)
 
     def test_disk_partitions(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for disk in psutil.disk_partitions():
             self.assertIsInstance(disk.device, str)
             self.assertIsInstance(disk.mountpoint, str)
@@ -197,6 +204,7 @@ class TestSystem(unittest.TestCase):
                     self.assertIsInstance(conn.laddr, str)
 
     def test_net_if_addrs(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for ifname, addrs in psutil.net_if_addrs().items():
             self.assertIsInstance(ifname, str)
             for addr in addrs:
@@ -205,15 +213,18 @@ class TestSystem(unittest.TestCase):
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
 
     def test_net_if_stats(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_if_stats().items():
             self.assertIsInstance(ifname, str)
 
     def test_net_io_counters(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
             self.assertIsInstance(ifname, str)
 
     @unittest.skipUnless(hasattr(psutil, "sensors_fans"), "not supported")
     def test_sensors_fans(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
             self.assertIsInstance(name, str)
             for unit in units:
@@ -222,12 +233,14 @@ class TestSystem(unittest.TestCase):
     @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
                          "not supported")
     def test_sensors_temperatures(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():
             self.assertIsInstance(name, str)
             for unit in units:
                 self.assertIsInstance(unit.label, str)
 
     def test_users(self):
+        # Duplicate of test_system.py. Keep it anyway.
         for user in psutil.users():
             self.assertIsInstance(user.name, str)
             self.assertIsInstance(user.terminal, str)
@@ -299,8 +312,8 @@ class TestFetchAllProcesses(unittest.TestCase):
                             # make sure exception's name attr is set
                             # with the actual process name
                             self.assertEqual(err.name, p.name())
-                        self.assertTrue(str(err))
-                        self.assertTrue(err.msg)
+                        assert str(err)
+                        assert err.msg
                     except Exception as err:
                         s = '\n' + '=' * 70 + '\n'
                         s += "FAIL: test_%s (proc=%s" % (name, p)
@@ -324,7 +337,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
-        self.assertTrue(valid_procs > 0)
+        assert valid_procs
 
     def cmdline(self, ret, proc):
         self.assertIsInstance(ret, list)
@@ -343,7 +356,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
                     # XXX may fail on OSX
-                    self.assertTrue(os.access(ret, os.X_OK))
+                    assert os.access(ret, os.X_OK)
 
     def pid(self, ret, proc):
         self.assertIsInstance(ret, int)
@@ -355,7 +368,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def name(self, ret, proc):
         self.assertIsInstance(ret, str)
-        self.assertTrue(ret)
+        assert ret
 
     def create_time(self, ret, proc):
         self.assertIsInstance(ret, float)
@@ -392,14 +405,14 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def username(self, ret, proc):
         self.assertIsInstance(ret, str)
-        self.assertTrue(ret)
+        assert ret
         if POSIX:
             self.assertIn(ret, self.all_usernames)
 
     def status(self, ret, proc):
         self.assertIsInstance(ret, str)
-        self.assertTrue(ret != "")
-        self.assertTrue(ret != '?')
+        assert ret
+        self.assertNotEqual(ret, '?')  # XXX
         self.assertIn(ret, VALID_PROC_STATUSES)
 
     def io_counters(self, ret, proc):
@@ -407,17 +420,17 @@ class TestFetchAllProcesses(unittest.TestCase):
         for field in ret:
             self.assertIsInstance(field, (int, long))
             if field != -1:
-                self.assertTrue(field >= 0)
+                self.assertGreaterEqual(field, 0)
 
     def ionice(self, ret, proc):
         assert is_namedtuple(ret)
         for field in ret:
             self.assertIsInstance(field, int)
         if LINUX:
-            self.assertTrue(ret.ioclass >= 0)
-            self.assertTrue(ret.value >= 0)
+            self.assertGreaterEqual(ret.ioclass, 0)
+            self.assertGreaterEqual(ret.value, 0)
         else:
-            self.assertTrue(ret >= 0)
+            self.assertGreaterEqual(ret, 0)
             self.assertIn(ret, (0, 1, 2))
 
     def num_threads(self, ret, proc):
@@ -524,7 +537,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                 elif err.errno != errno.ENOENT:
                     raise
             else:
-                self.assertTrue(stat.S_ISDIR(st.st_mode))
+                assert stat.S_ISDIR(st.st_mode)
 
     def memory_percent(self, ret, proc):
         self.assertIsInstance(ret, float)
@@ -532,8 +545,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def is_running(self, ret, proc):
         self.assertIsInstance(ret, bool)
-        # XXX: racy
-        self.assertTrue(ret)
+        assert ret  # XXX: racy
 
     def cpu_affinity(self, ret, proc):
         self.assertIsInstance(ret, list)
@@ -563,7 +575,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         # '/foo/bar (deleted)'
                         # assert os.path.exists(nt.path), nt.path
                 elif fname in ('addr', 'perms'):
-                    self.assertTrue(value)
+                    assert value
                 else:
                     self.assertIsInstance(value, (int, long))
                     self.assertGreaterEqual(value, 0)

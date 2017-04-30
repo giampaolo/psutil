@@ -263,7 +263,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "memory stats couldn't be determined", str(w.message))
                 self.assertIn("cached", str(w.message))
@@ -429,7 +429,7 @@ class TestSystemSwapMemory(unittest.TestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined", str(w.message))
@@ -453,7 +453,7 @@ class TestSystemSwapMemory(unittest.TestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined and were set to 0",
@@ -1037,29 +1037,29 @@ class TestMisc(unittest.TestCase):
         p.rlimit(psutil.RLIMIT_NOFILE)
         # if prlimit() is supported *at least* these constants should
         # be available
-        self.assertTrue(hasattr(psutil, "RLIM_INFINITY"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_AS"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_CORE"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_CPU"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_DATA"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_FSIZE"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_LOCKS"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_MEMLOCK"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_NOFILE"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_NPROC"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_RSS"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_STACK"))
+        assert hasattr(psutil, "RLIM_INFINITY")
+        assert hasattr(psutil, "RLIMIT_AS")
+        assert hasattr(psutil, "RLIMIT_CORE")
+        assert hasattr(psutil, "RLIMIT_CPU")
+        assert hasattr(psutil, "RLIMIT_DATA")
+        assert hasattr(psutil, "RLIMIT_FSIZE")
+        assert hasattr(psutil, "RLIMIT_LOCKS")
+        assert hasattr(psutil, "RLIMIT_MEMLOCK")
+        assert hasattr(psutil, "RLIMIT_NOFILE")
+        assert hasattr(psutil, "RLIMIT_NPROC")
+        assert hasattr(psutil, "RLIMIT_RSS")
+        assert hasattr(psutil, "RLIMIT_STACK")
 
     @unittest.skipUnless(
         get_kernel_version() >= (3, 0),
         "prlimit constants not available on this Linux kernel version")
     def test_resource_consts_kernel_v(self):
         # more recent constants
-        self.assertTrue(hasattr(psutil, "RLIMIT_MSGQUEUE"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_NICE"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_RTPRIO"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_RTTIME"))
-        self.assertTrue(hasattr(psutil, "RLIMIT_SIGPENDING"))
+        assert hasattr(psutil, "RLIMIT_MSGQUEUE")
+        assert hasattr(psutil, "RLIMIT_NICE")
+        assert hasattr(psutil, "RLIMIT_RTPRIO")
+        assert hasattr(psutil, "RLIMIT_RTTIME")
+        assert hasattr(psutil, "RLIMIT_SIGPENDING")
 
     def test_boot_time_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
@@ -1124,7 +1124,7 @@ class TestMisc(unittest.TestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             psutil.disk_io_counters()
-            self.assertTrue(flag)
+            assert flag
 
     def test_issue_687(self):
         # In case of thread ID:
