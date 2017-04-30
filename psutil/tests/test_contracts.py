@@ -30,10 +30,10 @@ from psutil._compat import long
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_kernel_version
+from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
-from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
@@ -279,7 +279,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
             'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
         ])
-        if LINUX and not RLIMIT_SUPPORT:
+        if LINUX and not HAS_RLIMIT:
             excluded_names.add('rlimit')
         attrs = []
         for name in dir(psutil.Process):

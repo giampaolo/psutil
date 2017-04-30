@@ -28,6 +28,7 @@ from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import HAS_RLIMIT
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
@@ -35,7 +36,6 @@ from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
-from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
@@ -1592,7 +1592,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(err.exception.errno, errno.ENOENT)
             assert m.called
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "not supported")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:

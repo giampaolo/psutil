@@ -39,11 +39,11 @@ from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
+from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import reap_children
-from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
@@ -344,12 +344,12 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.memory_maps)
 
     @unittest.skipIf(not LINUX, "LINUX only")
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE)
 
     @unittest.skipIf(not LINUX, "LINUX only")
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)

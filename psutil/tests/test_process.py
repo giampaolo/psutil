@@ -45,13 +45,13 @@ from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
+from psutil.tests import HAS_RLIMIT
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
-from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
@@ -252,14 +252,6 @@ class TestProcess(unittest.TestCase):
         for name in times._fields:
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
 
-    # Test Process.cpu_times() against os.times()
-    # os.times() is broken on Python 2.6
-    # http://bugs.python.org/issue1040026
-    # XXX fails on OSX: not sure if it's for os.times(). We should
-    # try this with Python 2.7 and re-enable the test.
-
-    @unittest.skipIf(sys.version_info <= (2, 6, 1) and OSX,
-                     'os.times() broken on OSX + PY2.6.1')
     def test_cpu_times_2(self):
         user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
@@ -423,7 +415,7 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.ionice, 3)
             self.assertRaises(TypeError, p.ionice, 2, 1)
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -446,7 +438,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_set(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -459,7 +451,7 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
@@ -478,7 +470,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
@@ -493,7 +485,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_infinity_value(self):
         # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
         # big number on a platform with large file support.  On these
@@ -1193,7 +1185,7 @@ class TestProcess(unittest.TestCase):
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time',
                           'oneshot', 'memory_info_ex']
-        if LINUX and not RLIMIT_SUPPORT:
+        if LINUX and not HAS_RLIMIT:
             excluded_names.append('rlimit')
         for name in dir(p):
             if (name.startswith('_') or
@@ -1441,7 +1433,7 @@ class TestProcess(unittest.TestCase):
 
         self.assertEqual(d, d2)
 
-    @unittest.skipIf(not hasattr(psutil.Process, "environ"), "not supported")
+    @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign

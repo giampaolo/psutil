@@ -37,7 +37,6 @@ except ImportError:
     from urllib2 import urlopen
 
 import psutil
-from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -72,9 +71,9 @@ else:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
-    'PYPY', 'PYTHON', 'RLIMIT_SUPPORT', 'ROOT_DIR', 'SCRIPTS_DIR',
-    'TESTFILE_PREFIX', 'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS',
-    'VALID_PROC_STATUSES', 'VERBOSITY',
+    'PYPY', 'PYTHON', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
+    'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
+    'VERBOSITY',
     # classes
     'ThreadTask'
     # test utils
@@ -414,12 +413,6 @@ else:
         if len(nums) >= 3:
             micro = int(nums[2])
         return (major, minor, micro)
-
-
-if LINUX:
-    RLIMIT_SUPPORT = get_kernel_version() >= (2, 6, 36)
-else:
-    RLIMIT_SUPPORT = False
 
 
 if not WINDOWS:
