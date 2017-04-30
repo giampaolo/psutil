@@ -278,5 +278,3 @@ doc:
 # check whether the links mentioned in some files are valid.
 check-broken-links:
 		git ls-files | grep \\.rst$ | xargs $(PYTHON) scripts/internal/check_broken_links.py
-# Alternate method, DOCFILES need to be defined
-# 	$(PYTHON) scripts/internal/check_broken_links.py $(DOCFILES)
