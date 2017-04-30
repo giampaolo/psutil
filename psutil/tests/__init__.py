@@ -229,11 +229,12 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline += "sleep(60);"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
+        _subprocesses_started.add(sproc)
         wait_for_file(_TESTFN, delete=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
+        _subprocesses_started.add(sproc)
         wait_for_pid(sproc.pid)
-    _subprocesses_started.add(sproc)
     return sproc
 
 

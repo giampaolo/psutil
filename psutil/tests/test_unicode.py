@@ -87,6 +87,20 @@ import psutil.tests
 class _BaseFSAPIsTests(object):
     funky_name = None
 
+    @classmethod
+    def setUpClass(cls):
+        if not PY3:
+            create_exe(cls.funky_name)
+            try:
+                get_test_subprocess(cmd=[cls.funky_name])
+            except UnicodeEncodeError:
+                # We skip all tests if subprocess module is not able to
+                # deal with such an exe.
+                raise unittest.SkipTest(
+                    "subprocess module bumped into encoding error")
+            else:
+                reap_children()
+
     def setUp(self):
         safe_rmpath(self.funky_name)
 
