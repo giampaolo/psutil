@@ -71,7 +71,7 @@ def muse(field):
 # =====================================================================
 
 
-@unittest.skipUnless(BSD, "BSD only")
+@unittest.skipIf(not BSD, "BSD only")
 class BSDSpecificTestCase(unittest.TestCase):
     """Generic tests common to all BSD variants."""
 
@@ -145,7 +145,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(FREEBSD, "FREEBSD only")
+@unittest.skipIf(not FREEBSD, "FREEBSD only")
 class FreeBSDSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -274,47 +274,47 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- virtual_memory(); tests against muse
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     def test_muse_vmem_total(self):
         num = muse('Total')
         self.assertEqual(psutil.virtual_memory().total, num)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_active(self):
         num = muse('Active')
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_wired(self):
         num = muse('Wired')
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_cached(self):
         num = muse('Cache')
         self.assertAlmostEqual(psutil.virtual_memory().cached, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_free(self):
         num = muse('Free')
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_buffers(self):
         num = muse('Buffer')
@@ -352,9 +352,9 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- sensors_battery
 
-    @unittest.skipUnless(
-        hasattr(psutil, "sensors_battery") and psutil.sensors_battery(),
-        "no battery")
+    @unittest.skipIf(not (hasattr(psutil, "sensors_battery") and
+                          psutil.sensors_battery()),
+                     "no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
             m, s = divmod(secs, 60)
@@ -390,7 +390,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(OPENBSD, "OPENBSD only")
+@unittest.skipIf(not OPENBSD, "OPENBSD only")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
     def test_boot_time(self):
@@ -405,7 +405,7 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(NETBSD, "NETBSD only")
+@unittest.skipIf(not NETBSD, "NETBSD only")
 class NetBSDSpecificTestCase(unittest.TestCase):
 
     @staticmethod

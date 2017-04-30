@@ -21,8 +21,6 @@ import stat
 import sys
 
 from psutil import LINUX
-from psutil import NETBSD
-from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -414,7 +412,7 @@ class TestScripts(unittest.TestCase):
                     self.fail('no test defined for %r script'
                               % os.path.join(SCRIPTS_DIR, name))
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_executable(self):
         for name in os.listdir(SCRIPTS_DIR):
             if name.endswith('.py'):
@@ -454,11 +452,12 @@ class TestScripts(unittest.TestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(OPENBSD or NETBSD, "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "memory_maps"),
+                     "not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(OSX or WINDOWS or LINUX, "platform not supported")
+    @unittest.skipIf(not OSX or WINDOWS or LINUX, "platform not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 
@@ -478,14 +477,14 @@ class TestScripts(unittest.TestCase):
         output = self.assert_stdout('pidof.py', args=psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
-    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_winservices(self):
         self.assert_stdout('winservices.py')
 
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
-    @unittest.skipIf(TRAVIS, "unreliable on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
         if hasattr(psutil, "sensors_temperatures") and \
                 psutil.sensors_temperatures():
@@ -493,7 +492,7 @@ class TestScripts(unittest.TestCase):
         else:
             self.assert_syntax('temperatures.py')
 
-    @unittest.skipIf(TRAVIS, "unreliable on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
         if hasattr(psutil, "sensors_fans") and psutil.sensors_fans():
             self.assert_stdout('fans.py')
@@ -685,7 +684,7 @@ class TestProcessUtils(unittest.TestCase):
 
 class TestNetUtils(unittest.TestCase):
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
         with unix_socket_path() as name:
             sock = bind_unix_socket(name)
@@ -712,7 +711,7 @@ class TestNetUtils(unittest.TestCase):
                 self.assertEqual(client.getpeername(), addr)
                 self.assertNotEqual(client.getsockname(), addr)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()

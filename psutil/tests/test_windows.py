@@ -65,7 +65,7 @@ def wrap_exceptions(fun):
 # ===================================================================
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
@@ -78,8 +78,8 @@ class TestSystemAPIs(unittest.TestCase):
                 self.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
 
-    @unittest.skipUnless('NUMBER_OF_PROCESSORS' in os.environ,
-                         'NUMBER_OF_PROCESSORS env var is not available')
+    @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
+                     'NUMBER_OF_PROCESSORS env var is not available')
     def test_cpu_count(self):
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
         self.assertEqual(num_cpus, psutil.cpu_count())
@@ -185,7 +185,7 @@ class TestSystemAPIs(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSensorsBattery(unittest.TestCase):
 
     def test_percent(self):
@@ -245,7 +245,7 @@ class TestSensorsBattery(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestProcess(unittest.TestCase):
 
     @classmethod
@@ -343,8 +343,8 @@ class TestProcess(unittest.TestCase):
             except psutil.NoSuchProcess:
                 pass
 
-    @unittest.skipUnless(sys.version_info >= (2, 7),
-                         "CTRL_* signals not supported")
+    @unittest.skipIf(not sys.version_info >= (2, 7),
+                     "CTRL_* signals not supported")
     def test_ctrl_signals(self):
         p = psutil.Process(get_test_subprocess().pid)
         p.send_signal(signal.CTRL_C_EVENT)
@@ -483,7 +483,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(psutil_value, sys_value + 1)
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
     """Compare Process API results with WMI."""
 
@@ -549,7 +549,7 @@ class TestProcessWMI(unittest.TestCase):
         self.assertEqual(wmic_create, psutil_create)
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(unittest.TestCase):
     """
     Certain APIs on Windows have 2 internal implementations, one
@@ -628,7 +628,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             assert fun.called
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
@@ -723,7 +723,7 @@ class RemoteProcessTestCase(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestServices(unittest.TestCase):
 
     def test_win_service_iter(self):

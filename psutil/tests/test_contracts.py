@@ -198,7 +198,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     @skip_on_access_denied(only_if=OSX)
     def test_net_connections(self):
         with unix_socket_path() as name:
@@ -227,7 +227,7 @@ class TestSystem(unittest.TestCase):
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
             self.assertIsInstance(ifname, str)
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_fans"), "not supported")
+    @unittest.skipIf(not hasattr(psutil, "sensors_fans"), "not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
@@ -235,8 +235,8 @@ class TestSystem(unittest.TestCase):
             for unit in units:
                 self.assertIsInstance(unit.label, str)
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "not supported")
+    @unittest.skipIf(not hasattr(psutil, "sensors_temperatures"),
+                     "1not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():

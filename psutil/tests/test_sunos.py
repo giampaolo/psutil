@@ -15,7 +15,7 @@ from psutil.tests import sh
 from psutil.tests import unittest
 
 
-@unittest.skipUnless(SUNOS, "SUNOS only")
+@unittest.skipIf(not SUNOS, "SUNOS only")
 class SunOSSpecificTestCase(unittest.TestCase):
 
     def test_swap_memory(self):

@@ -23,7 +23,6 @@ import types
 import psutil
 
 from psutil import BSD
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import NETBSD
 from psutil import OPENBSD
@@ -254,8 +253,8 @@ class TestProcess(unittest.TestCase):
     # XXX fails on OSX: not sure if it's for os.times(). We should
     # try this with Python 2.7 and re-enable the test.
 
-    @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
-                         'os.times() broken on OSX + PY2.6.1')
+    @unittest.skipIf(sys.version_info <= (2, 6, 1) and OSX,
+                     'os.times() broken on OSX + PY2.6.1')
     def test_cpu_times_2(self):
         user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
@@ -269,8 +268,7 @@ class TestProcess(unittest.TestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
-    @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_num"), "not supported")
     def test_cpu_num(self):
         p = psutil.Process()
         num = p.cpu_num()
@@ -296,7 +294,7 @@ class TestProcess(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     @unittest.skipIf(TRAVIS, 'not reliable on TRAVIS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
@@ -306,8 +304,8 @@ class TestProcess(unittest.TestCase):
         else:
             self.assertIsNone(terminal)
 
-    @unittest.skipUnless(LINUX or BSD or WINDOWS,
-                         'platform not supported')
+    @unittest.skipIf(not hasattr(psutil.Process, "io_counters"),
+                     'not supported')
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
@@ -351,8 +349,8 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(io2[i], 0)
             self.assertGreaterEqual(io2[i], 0)
 
-    @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
-                         'platform not supported')
+    @unittest.skipIf(not hasattr(psutil.Process, "ionice"), "not supported")
+    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
     def test_ionice(self):
         if LINUX:
             from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
@@ -398,8 +396,8 @@ class TestProcess(unittest.TestCase):
             finally:
                 p.ionice(original)
 
-    @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
-                         'platform not supported')
+    @unittest.skipIf(not hasattr(psutil.Process, "ionice"), "not supported")
+    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
     def test_ionice_errs(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -421,7 +419,7 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.ionice, 3)
             self.assertRaises(TypeError, p.ionice, 2, 1)
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_get(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -444,7 +442,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -457,7 +455,7 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit(self):
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
@@ -476,7 +474,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
@@ -491,7 +489,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_infinity_value(self):
         # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
         # big number on a platform with large file support.  On these
@@ -524,7 +522,7 @@ class TestProcess(unittest.TestCase):
         finally:
             thread.stop()
 
-    @unittest.skipUnless(WINDOWS, 'WINDOWS only')
+    @unittest.skipIf(not WINDOWS, 'WINDOWS only')
     def test_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()
@@ -617,7 +615,7 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(mem.pss, 0)
             self.assertGreaterEqual(mem.swap, 0)
 
-    @unittest.skipIf(OPENBSD or NETBSD, "platfform not supported")
+    @unittest.skipIf(OPENBSD or NETBSD, "not supported")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -754,7 +752,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(os.path.normcase(p.exe()),
                          os.path.normcase(funky_path))
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_uids(self):
         p = psutil.Process()
         real, effective, saved = p.uids()
@@ -768,7 +766,7 @@ class TestProcess(unittest.TestCase):
         if hasattr(os, "getresuid"):
             self.assertEqual(os.getresuid(), p.uids())
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_gids(self):
         p = psutil.Process()
         real, effective, saved = p.gids()
@@ -858,7 +856,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD, 'platform not supported')
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
+                     'not supported')
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -901,7 +900,8 @@ class TestProcess(unittest.TestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD, 'platform not supported')
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
+                     'not supported')
     def test_cpu_affinity_errs(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -975,7 +975,7 @@ class TestProcess(unittest.TestCase):
             # test file is gone
             self.assertNotIn(fileobj.name, p.open_files())
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
         p = psutil.Process()
         start = p.num_fds()
@@ -1235,7 +1235,7 @@ class TestProcess(unittest.TestCase):
                     "NoSuchProcess exception not raised for %r, retval=%s" % (
                         name, ret))
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
         def succeed_or_zombie_p_exc(fun, *args, **kwargs):
             try:
@@ -1330,7 +1330,7 @@ class TestProcess(unittest.TestCase):
             finally:
                 reap_children(recursive=True)
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
         # Emulate a case where internally is_running() raises
         # ZombieProcess.
@@ -1340,7 +1340,7 @@ class TestProcess(unittest.TestCase):
             assert p.is_running()
             assert m.called
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_status_w_exc(self):
         # Emulate a case where internally status() raises
         # ZombieProcess.
@@ -1416,8 +1416,7 @@ class TestProcess(unittest.TestCase):
         assert proc.stderr.closed
         assert proc.stdin.closed
 
-    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "environ"), "not supported")
     def test_environ(self):
         self.maxDiff = None
         p = psutil.Process()
@@ -1440,9 +1439,8 @@ class TestProcess(unittest.TestCase):
 
         self.assertEqual(d, d2)
 
-    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "platform not supported")
-    @unittest.skipUnless(POSIX, "posix only")
+    @unittest.skipIf(not hasattr(psutil.Process, "environ"), "not supported")
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""

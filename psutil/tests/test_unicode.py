@@ -181,7 +181,7 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(os.path.normcase(path),
                              os.path.normcase(self.funky_name))
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
         with unix_socket_path(suffix=suffix) as name:
@@ -197,7 +197,7 @@ class _BaseFSAPIsTests(object):
                 self.assertIsInstance(conn.laddr, str)
                 self.assertEqual(conn.laddr, name)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
@@ -253,7 +253,7 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
         return True
 
 
-@unittest.skipUnless(WINDOWS, "WINDOWS only")
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestWinProcessName(unittest.TestCase):
 
     def test_name_type(self):
@@ -273,8 +273,8 @@ class TestWinProcessName(unittest.TestCase):
 class TestNonFSAPIS(unittest.TestCase):
     """Unicode tests for non fs-related APIs."""
 
-    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "environ"),
+                     "platform not supported")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths. On Python 2 subprocess module is broken as

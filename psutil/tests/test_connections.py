@@ -152,7 +152,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_tcp(self):
         with unix_socket_path() as name:
             with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
@@ -160,7 +160,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
                 assert not conn.raddr
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_udp(self):
         with unix_socket_path() as name:
             with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
@@ -218,7 +218,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
 
-    @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
         with unix_socket_path() as name:
             server, client = unix_socketpair(name)

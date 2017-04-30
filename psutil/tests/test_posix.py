@@ -55,7 +55,7 @@ def ps(cmd):
         return output
 
 
-@unittest.skipUnless(POSIX, "POSIX only")
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
@@ -238,14 +238,14 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    @unittest.skipUnless(os.path.islink("/proc/%s/cwd" % os.getpid()),
-                         "/proc fs not available")
+    @unittest.skipIf(not os.path.islink("/proc/%s/cwd" % os.getpid()),
+                     "/proc fs not available")
     def test_cwd(self):
         self.assertEqual(os.readlink("/proc/%s/cwd" % os.getpid()),
                          psutil.Process().cwd())
 
 
-@unittest.skipUnless(POSIX, "POSIX only")
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestSystemAPIs(unittest.TestCase):
     """Test some system APIs."""
 

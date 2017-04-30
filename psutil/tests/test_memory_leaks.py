@@ -23,7 +23,6 @@ import time
 
 import psutil
 import psutil._common
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import OPENBSD
 from psutil import OSX
@@ -211,12 +210,12 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_ppid(self):
         self.execute(self.proc.ppid)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_uids(self):
         self.execute(self.proc.uids)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_gids(self):
         self.execute(self.proc.gids)
@@ -232,13 +231,11 @@ class TestProcessObjectLeaks(TestMemLeak):
         niceness = thisproc.nice()
         self.execute(self.proc.nice, niceness)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, 'ionice'), "not supported")
     def test_ionice_get(self):
         self.execute(self.proc.ionice)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, 'ionice'), "not supported")
     def test_ionice_set(self):
         if WINDOWS:
             value = thisproc.ionice()
@@ -248,7 +245,8 @@ class TestProcessObjectLeaks(TestMemLeak):
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
 
-    @unittest.skipIf(OSX or SUNOS, "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "io_counters"),
+                     "not supported")
     @skip_if_linux()
     def test_io_counters(self):
         self.execute(self.proc.io_counters)
@@ -265,11 +263,11 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_num_threads(self):
         self.execute(self.proc.num_threads)
 
-    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_num_handles(self):
         self.execute(self.proc.num_handles)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
@@ -287,8 +285,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.cpu_times)
 
     @skip_if_linux()
-    @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_num"), "not supported")
     def test_cpu_num(self):
         self.execute(self.proc.cpu_num)
 
@@ -296,13 +293,11 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    # also available on Linux but it's pure python
-    @unittest.skipUnless(OSX or WINDOWS,
-                         "platform not supported")
+    @skip_if_linux()
     def test_memory_full_info(self):
         self.execute(self.proc.memory_full_info)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_terminal(self):
         self.execute(self.proc.terminal)
@@ -316,13 +311,13 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_cwd(self):
         self.execute(self.proc.cwd)
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
+                     "not supported")
     def test_cpu_affinity_get(self):
         self.execute(self.proc.cpu_affinity)
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
+                     "not supported")
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
         self.execute(self.proc.cpu_affinity, affinity)
@@ -337,18 +332,18 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "too slow on OSX")
-    @unittest.skipIf(OPENBSD, "platform not supported")
+    @unittest.skipIf(OPENBSD, "not supported")
     @skip_if_linux()
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps)
 
-    @unittest.skipUnless(LINUX, "LINUX only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not LINUX, "LINUX only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_get(self):
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE)
 
-    @unittest.skipUnless(LINUX, "LINUX only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not LINUX, "LINUX only")
+    @unittest.skipIf(not RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)
@@ -397,12 +392,11 @@ class TestProcessObjectLeaks(TestMemLeak):
             for s in socks:
                 s.close()
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil.Process, 'environ'), "not supported")
     def test_environ(self):
         self.execute(self.proc.environ)
 
-    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_proc_info(self):
         self.execute(cext.proc_info, os.getpid())
 
@@ -503,7 +497,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
         self.execute(psutil.cpu_stats)
 
     @skip_if_linux()
-    @unittest.skipUnless(hasattr(psutil, "cpu_freq"), "platform not supported")
+    @unittest.skipIf(not hasattr(psutil, "cpu_freq"), "not supported")
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
 
@@ -568,20 +562,20 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     # --- sensors
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_battery"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil, "sensors_battery"),
+                     "not supported")
     @skip_if_linux()
     def test_sensors_battery(self):
         self.execute(psutil.sensors_battery)
 
     @skip_if_linux()
-    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil, "sensors_temperatures"),
+                     "not supported")
     def test_sensors_temperatures(self):
         self.execute(psutil.sensors_temperatures)
 
-    @unittest.skipUnless(hasattr(psutil, "sensors_fans"),
-                         "platform not supported")
+    @unittest.skipIf(not hasattr(psutil, "sensors_fans"),
+                     "not supported")
     @skip_if_linux()
     def test_sensors_fans(self):
         self.execute(psutil.sensors_fans)

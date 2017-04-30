@@ -74,7 +74,7 @@ def human2bytes(s):
     return int(num * prefix[letter])
 
 
-@unittest.skipUnless(OSX, "OSX only")
+@unittest.skipIf(not OSX, "OSX only")
 class TestProcess(unittest.TestCase):
 
     @classmethod
@@ -99,7 +99,7 @@ class TestProcess(unittest.TestCase):
             time.strftime("%Y", time.localtime(start_psutil)))
 
 
-@unittest.skipUnless(OSX, "OSX only")
+@unittest.skipIf(not OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
 
     # --- disk
