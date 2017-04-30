@@ -803,11 +803,15 @@ def unix_socket_path(suffix=""):
 def bind_socket(addr, family, type):
     """Binds a generic socket."""
     sock = socket.socket(family, type)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
-    if type == socket.SOCK_STREAM:
-        sock.listen(10)
-    return sock
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(addr)
+        if type == socket.SOCK_STREAM:
+            sock.listen(10)
+        return sock
+    except Exception:
+        sock.close()
+        raise
 
 
 def bind_unix_socket(name, type=socket.SOCK_STREAM):
@@ -817,11 +821,11 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     sock = socket.socket(socket.AF_UNIX, type)
     try:
         sock.bind(name)
+        if type == socket.SOCK_STREAM:
+            sock.listen(10)
     except Exception:
         sock.close()
         raise
-    if type == socket.SOCK_STREAM:
-        sock.listen(10)
     return sock
 
 
@@ -854,12 +858,20 @@ def unix_socketpair(name):
     Return a (server, client) tuple.
     """
     assert psutil.POSIX
-    server = bind_unix_socket(name, type=socket.SOCK_STREAM)
-    server.setblocking(0)
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    client.setblocking(0)
-    client.connect(name)
-    # new = server.accept()
+    server = client = None
+    try:
+        server = bind_unix_socket(name, type=socket.SOCK_STREAM)
+        server.setblocking(0)
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        client.setblocking(0)
+        client.connect(name)
+        # new = server.accept()
+    except Exception:
+        if server is not None:
+            server.close()
+        if client is not None:
+            client.close()
+        raise
     return (server, client)
 
 
