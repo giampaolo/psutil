@@ -418,7 +418,7 @@ class Process(object):
             rawtuple[pidtaskinfo_map['cpuutime']],
             rawtuple[pidtaskinfo_map['cpustime']],
             # children user / system times are not retrievable (set to 0)
-            0, 0)
+            0.0, 0.0)
 
     @wrap_exceptions
     def create_time(self):

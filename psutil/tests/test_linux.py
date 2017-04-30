@@ -28,6 +28,7 @@ from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
@@ -1132,6 +1133,7 @@ class TestMisc(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(not HAS_BATTERY, "no battery")
 class TestSensorsBattery(unittest.TestCase):
 
     @unittest.skipIf(not which("acpi"), "acpi utility not available")
