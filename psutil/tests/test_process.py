@@ -973,7 +973,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(ntuple[0], ntuple.path)
             self.assertEqual(ntuple[1], ntuple.fd)
             # test file is gone
-            self.assertTrue(fileobj.name not in p.open_files())
+            self.assertNotIn(fileobj.name, p.open_files())
 
     @unittest.skipUnless(POSIX, 'POSIX only')
     def test_num_fds(self):

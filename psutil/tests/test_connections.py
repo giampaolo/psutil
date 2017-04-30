@@ -218,6 +218,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
 
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_unix(self):
         with unix_socket_path() as name:
             server, client = unix_socketpair(name)
