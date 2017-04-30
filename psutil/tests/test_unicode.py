@@ -49,14 +49,17 @@ circumstances.
 I'd rather have unicode support broken on Python 2 than having APIs
 returning variable str/unicode types, see:
 https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
+
+As such we also test that all APIs on Python 2 always return str and
+never unicode.
 """
 
 import os
-import socket
 from contextlib import closing
 
 from psutil import BSD
 from psutil import OSX
+from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil.tests import ASCII_FS
@@ -117,6 +120,7 @@ class _BaseFSAPIsTests(object):
         p = psutil.Process(subp.pid)
         exe = p.exe()
         self.assertIsInstance(exe, str)
+        self.assertIsInstance(exe, str)
         if self.expect_exact_path_match():
             self.assertEqual(exe, self.funky_name)
 
@@ -140,6 +144,8 @@ class _BaseFSAPIsTests(object):
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
+        for part in cmdline:
+            self.assertIsInstance(part, str)
         if self.expect_exact_path_match():
             self.assertEqual(cmdline, [self.funky_name])
 
@@ -158,15 +164,15 @@ class _BaseFSAPIsTests(object):
         with open(self.funky_name, 'wb'):
             new = set(p.open_files())
         path = (new - start).pop().path
+        self.assertIsInstance(path, str)
         if BSD and not path:
             # XXX - see https://github.com/giampaolo/psutil/issues/595
             return self.skipTest("open_files on BSD is broken")
-        self.assertIsInstance(path, str)
         if self.expect_exact_path_match():
             self.assertEqual(os.path.normcase(path),
                              os.path.normcase(self.funky_name))
 
-    @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
+    @unittest.skipUnless(POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
         with unix_socket_path(suffix=suffix) as name:
@@ -179,9 +185,10 @@ class _BaseFSAPIsTests(object):
                     raise unittest.SkipTest("not supported")
             with closing(sock):
                 conn = psutil.Process().connections('unix')[0]
+                self.assertIsInstance(conn.laddr, str)
                 self.assertEqual(conn.laddr, name)
 
-    @unittest.skipUnless(hasattr(socket, "AF_UNIX"), "AF_UNIX not supported")
+    @unittest.skipUnless(POSIX, "POSIX only")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
@@ -202,6 +209,7 @@ class _BaseFSAPIsTests(object):
             with closing(sock):
                 cons = psutil.net_connections(kind='unix')
                 conn = find_sock(cons)
+                self.assertIsInstance(conn.laddr, str)
                 self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
@@ -238,11 +246,11 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
 
 
 # ===================================================================
-# FS APIs
+# Non fs APIs
 # ===================================================================
 
 
-class TestOtherAPIS(unittest.TestCase):
+class TestNonFSAPIS(unittest.TestCase):
     """Unicode tests for non fs-related APIs."""
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
@@ -254,12 +262,125 @@ class TestOtherAPIS(unittest.TestCase):
         # we use "è", which is part of the extended ASCII table
         # (unicode point <= 255).
         env = os.environ.copy()
-        funny_str = TESTFN_UNICODE if PY3 else 'è'
-        env['FUNNY_ARG'] = funny_str
+        funky_str = TESTFN_UNICODE if PY3 else 'è'
+        env['FUNNY_ARG'] = funky_str
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
         env = p.environ()
-        self.assertEqual(env['FUNNY_ARG'], funny_str)
+        for k, v in env.items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(v, str)
+        self.assertEqual(env['FUNNY_ARG'], funky_str)
+
+
+# ===================================================================
+# Base str types
+# ===================================================================
+
+
+class TestAlwaysStrType(unittest.TestCase):
+    """Make sure all str-related APIs on Python 2 return a str type
+    and never unicode.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.proc = psutil.Process()
+
+    def tearDown(self):
+        safe_rmpath(TESTFN)
+
+    def test_proc_cmdline(self):
+        for bit in self.proc.cmdline():
+            self.assertIsInstance(bit, str)
+
+    @unittest.skipUnless(POSIX, 'POSIX only')
+    def test_proc_connections(self):
+        with unix_socket_path() as name:
+            with closing(bind_unix_socket(name)):
+                conn = self.proc.connections(kind='unix')[0]
+                self.assertIsInstance(conn.laddr, str)
+
+    def test_proc_cwd(self):
+        self.assertIsInstance(self.proc.cwd(), str)
+
+    def test_proc_environ(self):
+        for k, v in self.proc.environ().items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(v, str)
+
+    def test_proc_exe(self):
+        self.assertIsInstance(self.proc.exe(), str)
+
+    def test_proc_memory_maps(self):
+        for region in self.proc.memory_maps(grouped=False):
+            self.assertIsInstance(region.addr, str)
+            self.assertIsInstance(region.path, str)
+
+    def test_proc_name(self):
+        self.assertIsInstance(self.proc.name(), str)
+
+    def test_proc_open_files(self):
+        with open(TESTFN, 'w'):
+            self.assertIsInstance(self.proc.open_files()[0].path, str)
+
+    def test_proc_username(self):
+        self.assertIsInstance(self.proc.username(), str)
+
+    def test_io_counters(self):
+        for k in psutil.disk_io_counters(perdisk=True):
+            self.assertIsInstance(k, str)
+
+    def test_disk_partitions(self):
+        for disk in psutil.disk_partitions():
+            self.assertIsInstance(disk.device, str)
+            self.assertIsInstance(disk.mountpoint, str)
+            self.assertIsInstance(disk.fstype, str)
+            self.assertIsInstance(disk.opts, str)
+
+    @unittest.skipUnless(POSIX, 'POSIX only')
+    @skip_on_access_denied(only_if=OSX)
+    def test_net_connections(self):
+        with unix_socket_path() as name:
+            with closing(bind_unix_socket(name)):
+                cons = psutil.net_connections(kind='unix')
+                assert cons
+                for conn in cons:
+                    self.assertIsInstance(conn.laddr, str)
+
+    def test_net_if_addrs(self):
+        for ifname, addrs in psutil.net_if_addrs().items():
+            self.assertIsInstance(ifname, str)
+            for addr in addrs:
+                self.assertIsInstance(addr.address, str)
+                self.assertIsInstance(addr.netmask, (str, type(None)))
+                self.assertIsInstance(addr.broadcast, (str, type(None)))
+
+    def test_net_if_stats(self):
+        for ifname, _ in psutil.net_if_stats().items():
+            self.assertIsInstance(ifname, str)
+
+    def test_net_io_counters(self):
+        for ifname, _ in psutil.net_io_counters(pernic=True).items():
+            self.assertIsInstance(ifname, str)
+
+    def test_sensors_fans(self):
+        for name, units in psutil.sensors_fans().items():
+            self.assertIsInstance(name, str)
+            for unit in units:
+                self.assertIsInstance(unit.label, str)
+
+    def test_sensors_temperatures(self):
+        for name, units in psutil.sensors_temperatures().items():
+            self.assertIsInstance(name, str)
+            for unit in units:
+                self.assertIsInstance(unit.label, str)
+
+    def test_users(self):
+        for user in psutil.users():
+            self.assertIsInstance(user.name, str)
+            self.assertIsInstance(user.terminal, str)
+            self.assertIsInstance(user.host, (str, type(None)))
 
 
 if __name__ == '__main__':
