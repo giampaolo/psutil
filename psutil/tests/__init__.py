@@ -9,8 +9,10 @@ Test utilities.
 """
 
 from __future__ import print_function
+
 import atexit
 import contextlib
+import ctypes
 import errno
 import functools
 import os
@@ -74,6 +76,10 @@ __all__ = [
     'PYPY', 'PYTHON', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
     'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
     'VERBOSITY',
+    "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
+    "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
+    "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
+    "HAS_SENSORS_TEMPERATURES",
     # classes
     'ThreadTask'
     # test utils
@@ -92,8 +98,10 @@ __all__ = [
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
     'check_connection_ntuple', 'check_net_address',
+    'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
+    'tcp_socketpair', 'unix_socketpair',
     # others
-    'warn',
+    'warn', 'copyload_shared_lib', 'is_namedtuple',
 ]
 
 
@@ -995,3 +1003,15 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(type(n) == str for n in f)
+
+
+def copyload_shared_lib(src, dst_prefix=TESTFILE_PREFIX):
+    """Given an existing shared so / DLL library copies it in
+    another location and loads it via ctypes.
+    Return the new path.
+    """
+    newpath = tempfile.mktemp(prefix=dst_prefix,
+                              suffix=os.path.splitext(src)[1])
+    shutil.copyfile(src, newpath)
+    ctypes.CDLL(newpath)
+    return newpath

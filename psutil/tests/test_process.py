@@ -34,6 +34,7 @@ from psutil._compat import long
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
+from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import create_proc_children_pair
 from psutil.tests import enum
@@ -43,6 +44,7 @@ from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
@@ -611,7 +613,7 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(mem.pss, 0)
             self.assertGreaterEqual(mem.swap, 0)
 
-    @unittest.skipIf(OPENBSD or NETBSD, "not supported")
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -651,6 +653,14 @@ class TestProcess(unittest.TestCase):
                 else:
                     self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
+
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    def test_memory_maps_lists_lib(self):
+        p = psutil.Process()
+        path = [x.path for x in p.memory_maps() if x.path.endswith(".so")][0]
+        newpath = copyload_shared_lib(path)
+        self.addCleanup(safe_rmpath, newpath)
+        assert any([x.path for x in p.memory_maps() if x.path == newpath])
 
     def test_memory_percent(self):
         p = psutil.Process()
