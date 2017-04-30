@@ -43,6 +43,10 @@ if WINDOWS:
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
+sources = ['psutil/_psutil_common.c']
+if POSIX:
+    sources.append('psutil/_psutil_posix.c')
+
 
 def get_version():
     INIT = os.path.join(HERE, 'psutil/__init__.py')
@@ -90,8 +94,8 @@ if WINDOWS:
         return '0x0%s' % ((maj * 100) + min)
 
     if sys.getwindowsversion()[0] < 6:
-        msg = "Windows versions < Vista are no longer supported or maintained;"
-        msg = " latest supported version is psutil 3.4.2; "
+        msg = "warning: Windows versions < Vista are no longer supported or "
+        msg = "maintained; latest official supported version is psutil 3.4.2; "
         msg += "psutil may still be installed from sources if you have "
         msg += "Visual Studio and may also (kind of) work though"
         warnings.warn(msg, UserWarning)
@@ -108,7 +112,7 @@ if WINDOWS:
 
     ext = Extension(
         'psutil._psutil_windows',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_windows.c',
             'psutil/_psutil_common.c',
             'psutil/arch/windows/process_info.c',
@@ -131,9 +135,8 @@ elif OSX:
     macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
         'psutil._psutil_osx',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_osx.c',
-            'psutil/_psutil_common.c',
             'psutil/arch/osx/process_info.c',
         ],
         define_macros=macros,
@@ -146,9 +149,8 @@ elif FREEBSD:
     macros.append(("PSUTIL_FREEBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/_psutil_common.c',
             'psutil/arch/bsd/freebsd.c',
             'psutil/arch/bsd/freebsd_socks.c',
         ],
@@ -160,9 +162,8 @@ elif OPENBSD:
     macros.append(("PSUTIL_OPENBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/_psutil_common.c',
             'psutil/arch/bsd/openbsd.c',
         ],
         define_macros=macros,
@@ -173,9 +174,8 @@ elif NETBSD:
     macros.append(("PSUTIL_NETBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/_psutil_common.c',
             'psutil/arch/bsd/netbsd.c',
             'psutil/arch/bsd/netbsd_socks.c',
         ],
@@ -215,7 +215,7 @@ elif LINUX:
         macros.append(ETHTOOL_MACRO)
     ext = Extension(
         'psutil._psutil_linux',
-        sources=['psutil/_psutil_linux.c'],
+        sources=sources + ['psutil/_psutil_linux.c'],
         define_macros=macros)
 
 # Solaris
@@ -223,7 +223,7 @@ elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
     ext = Extension(
         'psutil._psutil_sunos',
-        sources=['psutil/_psutil_sunos.c'],
+        sources=sources + ['psutil/_psutil_sunos.c'],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
 
@@ -235,7 +235,7 @@ if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',
         define_macros=macros,
-        sources=['psutil/_psutil_posix.c'])
+        sources=sources)
     if SUNOS:
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
