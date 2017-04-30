@@ -65,19 +65,15 @@ def get_urls(filename):
     """
     # fname = os.path.abspath(os.path.join(HERE, filename))
     # expecting absolute path
-    fname = os.path.abspath(filename)
-    text = ''
-    with open(fname) as f:
-        text = f.read()
+    with open(filename) as fs:
+        text = fs.read()
 
     urls = re.findall(REGEX, text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
     # correct urls which are between < and/or >
-    i = 0
-    while i < len(urls):
-        urls[i] = re.sub("[\*<>\(\)\)]", '', urls[i])
-        i += 1
+    for i, url in enumerate(urls):
+        urls[i] = re.sub("[\*<>\(\)\)]", '', url)
 
     return urls
 
@@ -140,7 +136,7 @@ def main():
             all_urls.append((fname, url))
 
     fails = parallel_validator(all_urls)
-    if len(fails) == 0:
+    if not fails:
         print("all links are valid. cheers!")
     else:
         print("total :", len(fails), "fails!")
