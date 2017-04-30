@@ -619,10 +619,10 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(value, 0, msg=(name, value))
             self.assertLessEqual(value, total, msg=(name, value, total))
         if LINUX or WINDOWS or OSX:
-            mem.uss
+            self.assertGreaterEqual(mem.uss, 0)
         if LINUX:
-            mem.pss
-            self.assertGreater(mem.pss, mem.uss)
+            self.assertGreaterEqual(mem.pss, 0)
+            self.assertGreaterEqual(mem.swap, 0)
 
     @unittest.skipIf(OPENBSD or NETBSD, "platfform not supported")
     def test_memory_maps(self):
@@ -1505,8 +1505,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-            'as_dict', 'cpu_percent', 'parent', 'children', 'pid',
-            'memory_info_ex', 'oneshot',
+            'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
         ])
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.add('rlimit')
@@ -1593,9 +1592,13 @@ class TestFetchAllProcesses(unittest.TestCase):
                     # XXX may fail on OSX
                     self.assertTrue(os.access(ret, os.X_OK))
 
+    def pid(self, ret, proc):
+        self.assertIsInstance(ret, int)
+        self.assertGreaterEqual(ret, 0)
+
     def ppid(self, ret, proc):
         self.assertIsInstance(ret, int)
-        self.assertTrue(ret >= 0)
+        self.assertGreaterEqual(ret, 0)
 
     def name(self, ret, proc):
         self.assertIsInstance(ret, str)
@@ -1606,7 +1609,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         try:
             self.assertGreaterEqual(ret, 0)
         except AssertionError:
-            if OPENBSD and proc.status == psutil.STATUS_ZOMBIE:
+            # XXX
+            if OPENBSD and proc.status() == psutil.STATUS_ZOMBIE:
                 pass
             else:
                 raise
@@ -1679,10 +1683,14 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def cpu_times(self, ret, proc):
         assert is_namedtuple(ret)
-        self.assertGreaterEqual(ret.user, 0)
-        self.assertGreaterEqual(ret.system, 0)
-        for field in ret:
-            self.assertIsInstance(field, float)
+        for n in ret:
+            self.assertIsInstance(n, float)
+            self.assertGreaterEqual(n, 0)
+        # TODO: check ntuple fields
+
+    def cpu_percent(self, ret, proc):
+        self.assertIsInstance(ret, float)
+        assert 0.0 <= ret <= 100.0, ret
 
     def cpu_num(self, ret, proc):
         self.assertIsInstance(ret, int)
@@ -1771,6 +1779,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def is_running(self, ret, proc):
         self.assertIsInstance(ret, bool)
+        # XXX: racy
         self.assertTrue(ret)
 
     def cpu_affinity(self, ret, proc):
@@ -1778,6 +1787,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         assert ret != [], ret
         cpus = range(psutil.cpu_count())
         for n in ret:
+            self.assertIsInstance(n, int)
             self.assertIn(n, cpus)
 
     def terminal(self, ret, proc):
@@ -1803,7 +1813,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                     self.assertTrue(value)
                 else:
                     self.assertIsInstance(value, (int, long))
-                    assert value >= 0, value
+                    self.assertGreaterEqual(value, 0)
 
     def num_handles(self, ret, proc):
         self.assertIsInstance(ret, int)
@@ -1832,6 +1842,9 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def environ(self, ret, proc):
         self.assertIsInstance(ret, dict)
+        for k, v in ret.items():
+            self.assertIsInstance(k, str)
+            self.assertIsInstance(v, str)
 
 
 # ===================================================================
