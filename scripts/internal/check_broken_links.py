@@ -54,6 +54,8 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = r'(?:http|ftp|https)?://' \
         r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 
+REQUEST_TIMEOUT = 30
+
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
 # They need to be sent GET request
@@ -84,11 +86,11 @@ def validate_url(url):
     Uses requests module.
     """
     try:
-        res = requests.head(url)
+        res = requests.head(url, timeout=REQUEST_TIMEOUT)
         # some websites deny 503, like Microsoft
         # and some send 401, like Apple, observations
         if (not res.ok) and (res.status_code in RETRY_STATUSES):
-            res = requests.get(url)
+            res = requests.get(url, timeout=REQUEST_TIMEOUT)
         return res.ok
     except requests.exceptions.RequestException:
         return False
