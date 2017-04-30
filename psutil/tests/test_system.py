@@ -196,6 +196,9 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
+        self.assertEqual(
+            mem._fields, ('total', 'used', 'free', 'percent', 'sin', 'sout'))
+
         assert mem.total >= 0, mem
         assert mem.used >= 0, mem
         if mem.total > 0:
@@ -422,6 +425,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
+        self.assertEqual(usage._fields, ('total', 'used', 'free', 'percent'))
+
         assert usage.total > 0, usage
         assert usage.used > 0, usage
         assert usage.free > 0, usage
@@ -702,6 +707,9 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_stats(self):
         # Tested more extensively in per-platform test modules.
         infos = psutil.cpu_stats()
+        self.assertEqual(
+            infos._fields,
+            ('ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'))
         for name in infos._fields:
             value = getattr(infos, name)
             self.assertGreaterEqual(value, 0)
@@ -713,6 +721,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:
+                self.assertEqual(nt._fields, ('current', 'min', 'max'))
                 self.assertLessEqual(nt.current, nt.max)
                 for name in nt._fields:
                     value = getattr(nt, name)
