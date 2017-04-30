@@ -7,7 +7,7 @@
 """
 Script which downloads exe and wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
-Copied and readapted from the original recipe of Ibarra Corretge'
+Readapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
 http://code.saghul.net/index.php/2015/09/09/
 """
@@ -26,11 +26,13 @@ from psutil import __version__ as PSUTIL_VERSION
 
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5', '3.6']
+TIMEOUT = 30
 COLORS = True
 
 
-def exit(msg):
-    print(hilite(msg, ok=False), file=sys.stderr)
+def exit(msg=""):
+    if msg:
+        print(hilite(msg, ok=False), file=sys.stderr)
     sys.exit(1)
 
 
@@ -107,7 +109,7 @@ def download_file(url):
     local_fname = url.split('/')[-1]
     local_fname = os.path.join('dist', local_fname)
     safe_makedirs('dist')
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, timeout=TIMEOUT)
     tot_bytes = 0
     with open(local_fname, 'wb') as f:
         for chunk in r.iter_content(chunk_size=16384):
@@ -120,13 +122,14 @@ def download_file(url):
 def get_file_urls(options):
     session = requests.Session()
     data = session.get(
-        BASE_URL + '/projects/' + options.user + '/' + options.project)
+        BASE_URL + '/projects/' + options.user + '/' + options.project,
+        timeout=TIMEOUT)
     data = data.json()
 
     urls = []
     for job in (job['jobId'] for job in data['build']['jobs']):
         job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
-        data = session.get(job_url)
+        data = session.get(job_url, timeout=TIMEOUT)
         data = data.json()
         for item in data:
             file_url = job_url + '/' + item['fileName']
@@ -172,7 +175,7 @@ def main(options):
     if expected != completed:
         return exit("expected %s files, got %s" % (expected, completed))
     if exc:
-        return exit(1)
+        return exit()
     rename_27_wheels()
 
 
