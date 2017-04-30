@@ -35,12 +35,12 @@ from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
-from psutil.tests import NO_BATTERY
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
@@ -805,11 +805,10 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(temps.high, 140.0)
             self.assertEqual(temps.critical, 158.0)
 
-    @unittest.skipIf(not HAS_SENSORS_BATTERY or NO_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors_battery(self):
         ret = psutil.sensors_battery()
-        if ret is None:
-            return  # no battery
         self.assertGreaterEqual(ret.percent, 0)
         self.assertLessEqual(ret.percent, 100)
         if ret.secsleft not in (psutil.POWER_TIME_UNKNOWN,

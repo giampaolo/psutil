@@ -40,6 +40,11 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
 from psutil.tests import GLOBAL_TIMEOUT
+from psutil.tests import HAS_CPU_AFFINITY
+from psutil.tests import HAS_ENVIRON
+from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_PROC_CPU_NUM
+from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
@@ -268,7 +273,7 @@ class TestProcess(unittest.TestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
-    @unittest.skipIf(not hasattr(psutil.Process, "cpu_num"), "not supported")
+    @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
     def test_cpu_num(self):
         p = psutil.Process()
         num = p.cpu_num()
@@ -304,8 +309,7 @@ class TestProcess(unittest.TestCase):
         else:
             self.assertIsNone(terminal)
 
-    @unittest.skipIf(not hasattr(psutil.Process, "io_counters"),
-                     'not supported')
+    @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
@@ -349,7 +353,7 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(io2[i], 0)
             self.assertGreaterEqual(io2[i], 0)
 
-    @unittest.skipIf(not hasattr(psutil.Process, "ionice"), "not supported")
+    @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
     def test_ionice(self):
         if LINUX:
@@ -396,7 +400,7 @@ class TestProcess(unittest.TestCase):
             finally:
                 p.ionice(original)
 
-    @unittest.skipIf(not hasattr(psutil.Process, "ionice"), "not supported")
+    @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
     def test_ionice_errs(self):
         sproc = get_test_subprocess()
@@ -856,8 +860,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
-                     'not supported')
+    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -900,8 +903,7 @@ class TestProcess(unittest.TestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
-    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
-                     'not supported')
+    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -1416,7 +1418,7 @@ class TestProcess(unittest.TestCase):
         assert proc.stderr.closed
         assert proc.stdin.closed
 
-    @unittest.skipIf(not hasattr(psutil.Process, "environ"), "not supported")
+    @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
         self.maxDiff = None
         p = psutil.Process()
