@@ -200,6 +200,8 @@ class TestSystemVirtualMemory(unittest.TestCase):
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
+    # https://travis-ci.org/giampaolo/psutil/jobs/227242952
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @retry_before_failing()
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
