@@ -145,7 +145,7 @@ SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 # --- support
 
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
-HAS_CPU_FREQ = hasattr(psutil.Process, "cpu_affinity")
+HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")

@@ -84,12 +84,14 @@ import psutil.tests
 
 
 def can_deal_with_funky_name(name):
+    """Return True if both the fs and the subprocess module can
+    deal with a funky file name.
+    """
     if PY3:
         return True
-
-    safe_rmpath(name)
-    create_exe(name)
     try:
+        safe_rmpath(name)
+        create_exe(name)
         get_test_subprocess(cmd=[name])
     except UnicodeEncodeError:
         return False
