@@ -126,28 +126,28 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
 
     def test_tcp_v4(self):
         addr = ("127.0.0.1", get_free_port())
-        with closing(bind_socket(addr, AF_INET, SOCK_STREAM)) as sock:
+        with closing(bind_socket(AF_INET, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     def test_tcp_v6(self):
         addr = ("::1", get_free_port())
-        with closing(bind_socket(addr, AF_INET6, SOCK_STREAM)) as sock:
+        with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     def test_udp_v4(self):
         addr = ("127.0.0.1", get_free_port())
-        with closing(bind_socket(addr, AF_INET, SOCK_DGRAM)) as sock:
+        with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     def test_udp_v6(self):
         addr = ("127.0.0.1", get_free_port())
-        with closing(bind_socket(addr, AF_INET, SOCK_DGRAM)) as sock:
+        with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
