@@ -51,7 +51,7 @@ returning variable str/unicode types, see:
 https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
 
 As such we also test that all APIs on Python 2 always return str and
-never unicode.
+never unicode (in test_contracts.py).
 """
 
 import os
@@ -271,119 +271,6 @@ class TestNonFSAPIS(unittest.TestCase):
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
         self.assertEqual(env['FUNNY_ARG'], funky_str)
-
-
-# ===================================================================
-# Base str types
-# ===================================================================
-
-
-class TestAlwaysStrType(unittest.TestCase):
-    """Make sure all str-related APIs on Python 2 return a str type
-    and never unicode.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.proc = psutil.Process()
-
-    def tearDown(self):
-        safe_rmpath(TESTFN)
-
-    def test_proc_cmdline(self):
-        for bit in self.proc.cmdline():
-            self.assertIsInstance(bit, str)
-
-    @unittest.skipUnless(POSIX, 'POSIX only')
-    def test_proc_connections(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name)):
-                conn = self.proc.connections(kind='unix')[0]
-                self.assertIsInstance(conn.laddr, str)
-
-    def test_proc_cwd(self):
-        self.assertIsInstance(self.proc.cwd(), str)
-
-    def test_proc_environ(self):
-        for k, v in self.proc.environ().items():
-            self.assertIsInstance(k, str)
-            self.assertIsInstance(v, str)
-
-    def test_proc_exe(self):
-        self.assertIsInstance(self.proc.exe(), str)
-
-    def test_proc_memory_maps(self):
-        for region in self.proc.memory_maps(grouped=False):
-            self.assertIsInstance(region.addr, str)
-            self.assertIsInstance(region.path, str)
-
-    def test_proc_name(self):
-        self.assertIsInstance(self.proc.name(), str)
-
-    def test_proc_open_files(self):
-        with open(TESTFN, 'w'):
-            self.assertIsInstance(self.proc.open_files()[0].path, str)
-
-    def test_proc_username(self):
-        self.assertIsInstance(self.proc.username(), str)
-
-    def test_io_counters(self):
-        for k in psutil.disk_io_counters(perdisk=True):
-            self.assertIsInstance(k, str)
-
-    def test_disk_partitions(self):
-        for disk in psutil.disk_partitions():
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
-
-    @unittest.skipUnless(POSIX, 'POSIX only')
-    @skip_on_access_denied(only_if=OSX)
-    def test_net_connections(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name)):
-                cons = psutil.net_connections(kind='unix')
-                assert cons
-                for conn in cons:
-                    self.assertIsInstance(conn.laddr, str)
-
-    def test_net_if_addrs(self):
-        for ifname, addrs in psutil.net_if_addrs().items():
-            self.assertIsInstance(ifname, str)
-            for addr in addrs:
-                self.assertIsInstance(addr.address, str)
-                self.assertIsInstance(addr.netmask, (str, type(None)))
-                self.assertIsInstance(addr.broadcast, (str, type(None)))
-
-    def test_net_if_stats(self):
-        for ifname, _ in psutil.net_if_stats().items():
-            self.assertIsInstance(ifname, str)
-
-    def test_net_io_counters(self):
-        for ifname, _ in psutil.net_io_counters(pernic=True).items():
-            self.assertIsInstance(ifname, str)
-
-    @unittest.skipUnless(hasattr(psutil, "sensors_fans"), "not supported")
-    def test_sensors_fans(self):
-        for name, units in psutil.sensors_fans().items():
-            self.assertIsInstance(name, str)
-            for unit in units:
-                self.assertIsInstance(unit.label, str)
-
-    @unittest.skipUnless(hasattr(psutil, "sensors_temperatures"),
-                         "not supported")
-    def test_sensors_temperatures(self):
-        for name, units in psutil.sensors_temperatures().items():
-            self.assertIsInstance(name, str)
-            for unit in units:
-                self.assertIsInstance(unit.label, str)
-
-    def test_users(self):
-        for user in psutil.users():
-            self.assertIsInstance(user.name, str)
-            self.assertIsInstance(user.terminal, str)
-            self.assertIsInstance(user.host, (str, type(None)))
 
 
 if __name__ == '__main__':

@@ -139,6 +139,11 @@ test-unicode:
 	${MAKE} install
 	$(PYTHON) psutil/tests/test_unicode.py
 
+# APIs sanity tests.
+test-contracts:
+	${MAKE} install
+	$(PYTHON) psutil/tests/test_contracts.py
+
 # Test net_connections() and Process.connections().
 test-connections:
 	${MAKE} install
