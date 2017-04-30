@@ -821,7 +821,7 @@ class Process(object):
             else:
                 raise
         # Children user/system times are not retrievable (set to 0).
-        return _common.pcputimes(user, system, 0, 0)
+        return _common.pcputimes(user, system, 0.0, 0.0)
 
     @wrap_exceptions
     def suspend(self):

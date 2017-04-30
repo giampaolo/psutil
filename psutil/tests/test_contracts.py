@@ -248,7 +248,7 @@ class TestSystem(unittest.TestCase):
         # Duplicate of test_system.py. Keep it anyway.
         for user in psutil.users():
             self.assertIsInstance(user.name, str)
-            self.assertIsInstance(user.terminal, str)
+            self.assertIsInstance(user.terminal, (str, type(None)))
             self.assertIsInstance(user.host, (str, type(None)))
 
 
