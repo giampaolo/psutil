@@ -32,6 +32,8 @@ from psutil._compat import basestring
 from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -188,6 +190,8 @@ class TestSystemAPIs(unittest.TestCase):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSensorsBattery(unittest.TestCase):
 
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_percent(self):
         w = wmi.WMI()
         battery_psutil = psutil.sensors_battery()
@@ -206,6 +210,8 @@ class TestSensorsBattery(unittest.TestCase):
             self.assertEqual(
                 battery_psutil.power_plugged, battery_wmi.BatteryStatus == 1)
 
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_battery_present(self):
         if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
             self.assertIsNotNone(psutil.sensors_battery())

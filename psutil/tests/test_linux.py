@@ -1132,8 +1132,6 @@ class TestMisc(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-@unittest.skipIf(not getattr(psutil, "sensors_batterya", object)(),
-                 "no battery")
 class TestSensorsBattery(unittest.TestCase):
 
     @unittest.skipIf(not which("acpi"), "acpi utility not available")

@@ -568,8 +568,8 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     # --- sensors
 
-    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
     @skip_if_linux()
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
     def test_sensors_battery(self):
         self.execute(psutil.sensors_battery)
 
@@ -578,8 +578,8 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_sensors_temperatures(self):
         self.execute(psutil.sensors_temperatures)
 
-    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     @skip_if_linux()
+    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     def test_sensors_fans(self):
         self.execute(psutil.sensors_fans)
 
