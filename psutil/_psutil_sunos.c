@@ -42,6 +42,8 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 #ifndef EXPER_IP_AND_ALL_IRES

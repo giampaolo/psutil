@@ -26,7 +26,7 @@
 #include <libutil.h>
 
 #include "../../_psutil_common.h"
-
+#include "../../_psutil_posix.h"
 
 #define HASHSIZE 1009
 // a signaler for connections without an actual status

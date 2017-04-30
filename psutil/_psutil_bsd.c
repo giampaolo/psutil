@@ -60,6 +60,7 @@
 #include <sys/un.h>
 
 #include "_psutil_common.h"
+#include "_psutil_posix.h"
 
 #ifdef PSUTIL_FREEBSD
     #include "arch/bsd/freebsd.h"

@@ -5,6 +5,7 @@
  *
  */
 #include "process_handles.h"
+#include "../../_psutil_common.h"
 
 static _NtQuerySystemInformation __NtQuerySystemInformation = NULL;
 static _NtQueryObject __NtQueryObject = NULL;

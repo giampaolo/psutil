@@ -21,6 +21,9 @@
 #include <sys/un.h>
 #include <sys/file.h>
 
+#include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
+
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
 

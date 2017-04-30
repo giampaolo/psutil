@@ -21,7 +21,7 @@
 
 #include "process_info.h"
 #include "../../_psutil_common.h"
-
+#include "../../_psutil_posix.h"
 
 /*
  * Returns a list of all BSD processes on the system.  This routine

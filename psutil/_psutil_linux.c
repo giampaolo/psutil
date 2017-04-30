@@ -54,6 +54,8 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
     #include <sys/resource.h>
 #endif
 
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607

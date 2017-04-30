@@ -9,7 +9,7 @@
 #include <Winsvc.h>
 
 #include "services.h"
-
+#include "../../_psutil_common.h"
 
 // ==================================================================
 // utils

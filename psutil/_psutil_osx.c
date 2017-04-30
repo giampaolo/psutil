@@ -40,6 +40,7 @@
 #include <IOKit/IOBSD.h>
 
 #include "_psutil_common.h"
+#include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
 
 

@@ -35,8 +35,8 @@
 #include <arpa/inet.h> // for inet_ntoa()
 #include <err.h> // for warn() & err()
 
-
 #include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 // #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
