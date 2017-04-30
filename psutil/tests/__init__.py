@@ -961,3 +961,15 @@ def check_connection_ntuple(conn):
 def warn(msg):
     """Raise a warning msg."""
     warnings.warn(msg, UserWarning)
+
+
+def is_namedtuple(x):
+    """Check if object is an instance of namedtuple."""
+    t = type(x)
+    b = t.__bases__
+    if len(b) != 1 or b[0] != tuple:
+        return False
+    f = getattr(t, '_fields', None)
+    if not isinstance(f, tuple):
+        return False
+    return all(type(n) == str for n in f)
