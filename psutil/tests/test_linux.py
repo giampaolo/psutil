@@ -1028,39 +1028,6 @@ class TestMisc(unittest.TestCase):
 
         self.assertEqual(psutil.PROCFS_PATH, '/proc')
 
-    @unittest.skipUnless(
-        get_kernel_version() >= (2, 6, 36),
-        "prlimit() not available on this Linux kernel version")
-    def test_prlimit_availability(self):
-        # prlimit() should be available starting from kernel 2.6.36
-        p = psutil.Process(os.getpid())
-        p.rlimit(psutil.RLIMIT_NOFILE)
-        # if prlimit() is supported *at least* these constants should
-        # be available
-        assert hasattr(psutil, "RLIM_INFINITY")
-        assert hasattr(psutil, "RLIMIT_AS")
-        assert hasattr(psutil, "RLIMIT_CORE")
-        assert hasattr(psutil, "RLIMIT_CPU")
-        assert hasattr(psutil, "RLIMIT_DATA")
-        assert hasattr(psutil, "RLIMIT_FSIZE")
-        assert hasattr(psutil, "RLIMIT_LOCKS")
-        assert hasattr(psutil, "RLIMIT_MEMLOCK")
-        assert hasattr(psutil, "RLIMIT_NOFILE")
-        assert hasattr(psutil, "RLIMIT_NPROC")
-        assert hasattr(psutil, "RLIMIT_RSS")
-        assert hasattr(psutil, "RLIMIT_STACK")
-
-    @unittest.skipUnless(
-        get_kernel_version() >= (3, 0),
-        "prlimit constants not available on this Linux kernel version")
-    def test_resource_consts_kernel_v(self):
-        # more recent constants
-        assert hasattr(psutil, "RLIMIT_MSGQUEUE")
-        assert hasattr(psutil, "RLIMIT_NICE")
-        assert hasattr(psutil, "RLIMIT_RTPRIO")
-        assert hasattr(psutil, "RLIMIT_RTTIME")
-        assert hasattr(psutil, "RLIMIT_SIGPENDING")
-
     def test_boot_time_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             self.assertRaises(

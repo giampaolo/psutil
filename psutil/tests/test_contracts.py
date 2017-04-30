@@ -29,6 +29,7 @@ from psutil._compat import callable
 from psutil._compat import long
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
+from psutil.tests import get_kernel_version
 from psutil.tests import is_namedtuple
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
@@ -81,23 +82,27 @@ class TestAvailability(unittest.TestCase):
 
     def test_linux_rlimit(self):
         ae = self.assertEqual
-        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_AS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX)
+        hasit = LINUX and get_kernel_version() >= (2, 6, 36)
+        ae(hasattr(psutil.Process, "rlimit"), hasit)
+        ae(hasattr(psutil, "RLIM_INFINITY"), hasit)
+        ae(hasattr(psutil, "RLIMIT_AS"), hasit)
+        ae(hasattr(psutil, "RLIMIT_CORE"), hasit)
+        ae(hasattr(psutil, "RLIMIT_CPU"), hasit)
+        ae(hasattr(psutil, "RLIMIT_DATA"), hasit)
+        ae(hasattr(psutil, "RLIMIT_FSIZE"), hasit)
+        ae(hasattr(psutil, "RLIMIT_LOCKS"), hasit)
+        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), hasit)
+        ae(hasattr(psutil, "RLIMIT_NOFILE"), hasit)
+        ae(hasattr(psutil, "RLIMIT_NPROC"), hasit)
+        ae(hasattr(psutil, "RLIMIT_RSS"), hasit)
+        ae(hasattr(psutil, "RLIMIT_STACK"), hasit)
+
+        hasit = LINUX and get_kernel_version() >= (3, 0)
+        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), hasit)
+        ae(hasattr(psutil, "RLIMIT_NICE"), hasit)
+        ae(hasattr(psutil, "RLIMIT_RTPRIO"), hasit)
+        ae(hasattr(psutil, "RLIMIT_RTTIME"), hasit)
+        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
 
     def test_cpu_freq(self):
         self.assertEqual(hasattr(psutil, "cpu_freq"), LINUX or OSX or WINDOWS)
