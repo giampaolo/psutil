@@ -353,6 +353,13 @@ def test_unicode():
 
 
 @cmd
+def test_contracts():
+    """Run contracts tests"""
+    install()
+    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
+
+
+@cmd
 def test_by_name():
     """Run test by name"""
     try:

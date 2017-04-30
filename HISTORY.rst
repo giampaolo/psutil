@@ -29,6 +29,8 @@
   properly handle unicode paths and may raise UnicodeDecodeError.
 - 1033_: [OSX, FreeBSD] memory leak for net_connections() and
   Process.connections() when retrieving UNIX sockets (kind='unix').
+- 1039_: returned types consolidation:
+  - Windows: Process.cpu_times()'s fields #3 and #4 were int instead of float
 
 *2017-04-10*
 
