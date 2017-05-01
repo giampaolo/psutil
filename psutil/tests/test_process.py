@@ -658,7 +658,8 @@ class TestProcess(unittest.TestCase):
     def test_memory_maps_lists_lib(self):
         p = psutil.Process()
         ext = ".so" if POSIX else ".dll"
-        old = [x.path for x in p.memory_maps() if x.path.endswith(ext)][0]
+        old = [x.path for x in p.memory_maps()
+               if os.path.normcase(x.path).endswith(ext)][0]
         new = os.path.normcase(copyload_shared_lib(old))
         newpaths = [os.path.normcase(x.path) for x in p.memory_maps()]
         self.assertIn(new, newpaths)
