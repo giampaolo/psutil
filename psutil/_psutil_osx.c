@@ -337,6 +337,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     vm_size_t size = 0;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_list = PyList_New(0);
 
     if (py_list == NULL)
@@ -431,11 +432,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 }
             }
 
+            py_path = psutil_PyUnicode_DecodeFSDefault(buf);
+            if (! py_path)
+                goto error;
             py_tuple = Py_BuildValue(
-                "sssIIIIIH",
+                "ssOIIIIIH",
                 addr_str,                                 // "start-end"address
                 perms,                                    // "rwx" permissions
-                buf,                                      // path
+                py_path,                                  // path
                 info.pages_resident * pagesize,           // rss
                 info.pages_shared_now_private * pagesize, // private
                 info.pages_swapped_out * pagesize,        // swapped
@@ -448,6 +452,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             if (PyList_Append(py_list, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            Py_DECREF(py_path);
         }
 
         // increment address for the next map/file
@@ -463,6 +468,7 @@ error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_list);
     return NULL;
 }
