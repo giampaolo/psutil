@@ -43,9 +43,8 @@ from __future__ import print_function
 import os
 import re
 import sys
-import time
 
-from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 import requests
 
 
@@ -103,23 +102,19 @@ def parallel_validator(urls):
     fails = []  # list of tuples (filename, url)
     completed = 0
     total = len(urls)
-    threads = []
 
-    with ThreadPoolExecutor() as executor:
-        for url in urls:
-            fut = executor.submit(validate_url, url[1])
-            threads.append((url, fut))
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        fut_to_url = {executor.submit(validate_url, url[1]): url
+                      for url in urls}
 
-        # wait for threads to progress a little
-        time.sleep(2)
-        for thr in threads:
-            url = thr[0]
-            fut = thr[1]
+        for fut in concurrent.futures.as_completed(fut_to_url):
             if not fut.result():
-                fails.append((url[0], url[1]))
+                url = fut_to_url[fut]
+                fails.append(url)  # actually a tuple of url and filename
             completed += 1
             sys.stdout.write("\r" + str(completed)+' / '+str(total))
             sys.stdout.flush()
+
     print()
     return fails
 
@@ -141,10 +136,10 @@ def main():
     if not fails:
         print("all links are valid. cheers!")
     else:
-        print("total :", len(fails), "fails!")
         for fail in fails:
             print(fail[1] + ' : ' + fail[0] + os.linesep)
         print('-' * 20)
+        print("total :", len(fails), "fails!")
         sys.exit(1)
 
 
