@@ -50,3 +50,13 @@ psutil_PyUnicode_DecodeFSDefault(char *s) {
     return Py_BuildValue("s", s);
 #endif
 }
+
+
+PyObject*
+psutil_PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_DecodeFSDefaultAndSize(s, size);
+#else
+    return PyString_FromStringAndSize(s, size);
+#endif
+}

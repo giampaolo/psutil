@@ -9,3 +9,4 @@
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
 PyObject* psutil_PyUnicode_DecodeFSDefault(char *s);
+PyObject* psutil_PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);

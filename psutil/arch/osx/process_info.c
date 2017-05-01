@@ -289,13 +289,8 @@ psutil_get_environ(long pid) {
         arg_ptr = s + 1;
     }
 
-#if PY_MAJOR_VERSION >= 3
-    py_ret = PyUnicode_DecodeFSDefaultAndSize(
+    py_ret = psutil_PyUnicode_DecodeFSDefaultAndSize(
         procenv, arg_ptr - env_start + 1);
-#else
-    py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
-#endif
-
     if (!py_ret) {
         // XXX: don't want to free() this as per:
         // https://github.com/giampaolo/psutil/issues/926
