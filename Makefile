@@ -22,7 +22,8 @@ DEPS = \
 	setuptools \
 	sphinx \
 	twine \
-	unittest2
+	unittest2 \
+	requests
 
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
@@ -278,3 +279,7 @@ doc:
 	cd docs && make html && cd _build/html/ && zip doc.zip -r .
 	mv docs/_build/html/doc.zip .
 	@echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
+
+# check whether the links mentioned in some files are valid.
+check-broken-links:
+		git ls-files | grep \\.rst$ | xargs $(PYTHON) scripts/internal/check_broken_links.py

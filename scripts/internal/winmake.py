@@ -41,6 +41,7 @@ DEPS = [
     "unittest2",
     "wheel",
     "wmi",
+    "requests"
 ]
 _cmds = {}
 
