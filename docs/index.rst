@@ -755,7 +755,7 @@ Other system info
   - **started**: the creation time as a floating point number expressed in
     seconds since the epoch.
   - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
-    ...). On Windows this is always set to ``None``.
+    ...). On Windows and OpenBSD this is always set to ``None``.
 
   Example::
 

@@ -251,6 +251,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(user.name, str)
             self.assertIsInstance(user.terminal, (str, type(None)))
             self.assertIsInstance(user.host, (str, type(None)))
+            self.assertIsInstance(user.pid, (int, type(None)))
 
 
 # ===================================================================
