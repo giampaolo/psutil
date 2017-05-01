@@ -65,6 +65,7 @@ import os
 from contextlib import closing
 
 from psutil import BSD
+from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -207,7 +208,9 @@ class _BaseFSAPIsTests(object):
             with closing(sock):
                 conn = psutil.Process().connections('unix')[0]
                 self.assertIsInstance(conn.laddr, str)
-                self.assertEqual(conn.laddr, name)
+                # AF_UNIX addr not set on OpenBSD
+                if not OPENBSD:
+                    self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @skip_on_access_denied()
@@ -229,9 +232,11 @@ class _BaseFSAPIsTests(object):
                     raise unittest.SkipTest("not supported")
             with closing(sock):
                 cons = psutil.net_connections(kind='unix')
-                conn = find_sock(cons)
-                self.assertIsInstance(conn.laddr, str)
-                self.assertEqual(conn.laddr, name)
+                # AF_UNIX addr not set on OpenBSD
+                if not OPENBSD:
+                    conn = find_sock(cons)
+                    self.assertIsInstance(conn.laddr, str)
+                    self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         safe_mkdir(self.funky_name)
