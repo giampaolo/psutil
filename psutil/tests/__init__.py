@@ -41,6 +41,7 @@ except ImportError:
 import psutil
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil._compat import unicode
@@ -99,7 +100,7 @@ __all__ = [
     # network
     'check_connection_ntuple', 'check_net_address',
     'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
-    'tcp_socketpair', 'unix_socketpair',
+    'tcp_socketpair', 'unix_socketpair', 'create_sockets',
     # others
     'warn', 'copyload_shared_lib', 'is_namedtuple',
 ]
@@ -883,6 +884,36 @@ def unix_socketpair(name):
             client.close()
         raise
     return (server, client)
+
+
+@contextlib.contextmanager
+def create_sockets():
+    """Open as many socket families / types as possible."""
+    socks = []
+    fname1 = fname2 = None
+    try:
+        socks.append(bind_socket(socket.AF_INET, socket.SOCK_STREAM))
+        socks.append(bind_socket(socket.AF_INET, socket.SOCK_DGRAM))
+        if supports_ipv6():
+            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
+            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+        if POSIX:
+            fname1 = unix_socket_path().__enter__()
+            fname2 = unix_socket_path().__enter__()
+            s1, s2 = unix_socketpair(fname1)
+            s3 = bind_unix_socket(fname2, type=socket.SOCK_DGRAM)
+            # self.addCleanup(safe_rmpath, fname1)
+            # self.addCleanup(safe_rmpath, fname2)
+            for s in (s1, s2, s3):
+                socks.append(s)
+        yield socks
+    finally:
+        for s in socks:
+            s.close()
+        if fname1 is not None:
+            safe_rmpath(fname1)
+        if fname2 is not None:
+            safe_rmpath(fname2)
 
 
 def check_net_address(addr, family):

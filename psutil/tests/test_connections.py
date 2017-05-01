@@ -17,10 +17,13 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import FREEBSD
+from psutil import LINUX
+from psutil import NETBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import pconn
 from psutil._common import supports_ipv6
 from psutil._compat import nested
 from psutil._compat import PY3
@@ -42,55 +45,45 @@ from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
 
-def compare_procsys_connections(pid, proc_cons, kind='all'):
-    """Given a process PID and its list of connections compare
-    those against system-wide connections retrieved via
-    psutil.net_connections.
-    """
-    from psutil._common import pconn
-    try:
-        sys_cons = psutil.net_connections(kind=kind)
-    except psutil.AccessDenied:
-        # On OSX, system-wide connections are retrieved by iterating
-        # over all processes
-        if OSX:
-            return
-        else:
-            raise
-    # exclude PIDs from syscons
-    sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
-    if FREEBSD:
-        # On FreeBSD all fds are set to -1 so exclude them
-        # for comparison.
-        proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
-    proc_cons.sort()
-    sys_cons.sort()
-    assert proc_cons == sys_cons, (proc_cons, sys_cons)
+thisproc = psutil.Process()
 
 
 class Base(object):
 
     def setUp(self):
-        cons = psutil.Process().connections(kind='all')
-        assert not cons, cons
+        if not NETBSD:
+            # NetBSD opens a UNIX socket to /var/log/run.
+            cons = thisproc.connections(kind='all')
+            assert not cons, cons
 
     def tearDown(self):
         safe_rmpath(TESTFN)
         reap_children()
-        # make sure we closed all resources
-        cons = psutil.Process().connections(kind='all')
-        assert not cons, cons
+        if not NETBSD:
+            # Make sure we closed all resources.
+            # NetBSD opens a UNIX socket to /var/log/run.
+            cons = thisproc.connections(kind='all')
+            assert not cons, cons
+
+    def get_conn_from_socck(self, sock):
+        cons = thisproc.connections(kind='all')
+        smap = dict([(c.fd, c) for c in cons])
+        if NETBSD:
+            # NetBSD opens a UNIX socket to /var/log/run
+            # so there may be more connections.
+            return smap[sock.fileno()]
+        else:
+            self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
+            self.assertEqual(len(cons), 1)
+            return cons[0]
 
     def check_socket(self, sock, conn=None):
         """Given a socket, makes sure it matches the one obtained
         via psutil. It assumes this process created one connection
         only (the one supposed to be checked).
         """
-        cons = psutil.Process().connections(kind='all')
-        if not conn:
-            self.assertEqual(len(cons), 1)
-            conn = cons[0]
-
+        if conn is None:
+            conn = self.get_conn_from_socck(sock)
         check_connection_ntuple(conn)
 
         # fd, family, type
@@ -112,8 +105,33 @@ class Base(object):
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
-            compare_procsys_connections(os.getpid(), cons)
+            cons = thisproc.connections(kind='all')
+            self.compare_procsys_connections(os.getpid(), cons)
         return conn
+
+    def compare_procsys_connections(self, pid, proc_cons, kind='all'):
+        """Given a process PID and its list of connections compare
+        those against system-wide connections retrieved via
+        psutil.net_connections.
+        """
+        try:
+            sys_cons = psutil.net_connections(kind=kind)
+        except psutil.AccessDenied:
+            # On OSX, system-wide connections are retrieved by iterating
+            # over all processes
+            if OSX:
+                return
+            else:
+                raise
+        # Filter for this proc PID and exlucde PIDs from the tuple.
+        sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
+        if FREEBSD:
+            # On FreeBSD all fds are set to -1 so exclude them
+            # from comparison.
+            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
+        sys_cons.sort()
+        proc_cons.sort()
+        self.assertEqual(proc_cons, sys_cons)
 
 
 # =====================================================================
@@ -179,42 +197,19 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     each other.
     """
 
-    @staticmethod
-    def distinguish_tcp_socks(cons, server_addr):
-        """Given a list of connections return a (server, client)
-        connection ntuple.
-        """
-        if cons[0].laddr == server_addr:
-            return (cons[0], cons[1])
-        else:
-            assert cons[1].laddr == server_addr, (cons, server_addr)
-            return (cons[1], cons[0])
-
-    @staticmethod
-    def distinguish_unix_socks(cons):
-        """Given a list of connections and 2 sockets return a
-        (server, client) connection ntuple.
-        """
-        if cons[0].laddr:
-            return (cons[0], cons[1])
-        else:
-            assert cons[1].laddr, cons
-            return (cons[1], cons[0])
-
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
+        assert not thisproc.connections(kind='tcp4')
         server, client = tcp_socketpair(AF_INET, addr=addr)
         with nested(closing(server), closing(client)):
-            cons = psutil.Process().connections(kind='all')
-            server_conn, client_conn = self.distinguish_tcp_socks(cons, addr)
-            self.check_socket(server, conn=server_conn)
-            self.check_socket(client, conn=client_conn)
-            self.assertEqual(server_conn.status, psutil.CONN_ESTABLISHED)
-            self.assertEqual(client_conn.status, psutil.CONN_ESTABLISHED)
+            cons = thisproc.connections(kind='tcp4')
+            self.assertEqual(len(cons), 2)
+            self.assertEqual(cons[0].status, psutil.CONN_ESTABLISHED)
+            self.assertEqual(cons[1].status, psutil.CONN_ESTABLISHED)
             # May not be fast enough to change state so it stays
             # commenteed.
             # client.close()
-            # cons = psutil.Process().connections(kind='all')
+            # cons = thisproc.connections(kind='all')
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
 
@@ -223,17 +218,25 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         with unix_socket_path() as name:
             server, client = unix_socketpair(name)
             with nested(closing(server), closing(client)):
-                cons = psutil.Process().connections(kind='unix')
+                cons = thisproc.connections(kind='unix')
+                if NETBSD:
+                    # On NetBSD creating a UNIX socket will cause
+                    # a UNIX connection to  /var/run/log.
+                    cons = [c for c in cons if c.raddr != '/var/run/log']
                 self.assertEqual(len(cons), 2)
-                server_conn, client_conn = self.distinguish_unix_socks(cons)
-                self.check_socket(server, conn=server_conn)
-
-                self.check_socket(client, conn=client_conn)
-                self.assertEqual(server_conn.laddr, name)
-                # TODO: https://github.com/giampaolo/psutil/issues/1035
-                self.assertIn(server_conn.raddr, ("", None))
-                # TODO: https://github.com/giampaolo/psutil/issues/1035
-                self.assertIn(client_conn.laddr, ("", None))
+                if LINUX or FREEBSD:
+                    # On linux the remote path is never set. Test
+                    # that at least ONE address has our path.
+                    one = (cons[0].laddr or cons[0].raddr or
+                           cons[1].laddr or cons[1].raddr)
+                    self.assertEqual(one, name)
+                else:
+                    # On other systems either the laddr or raddr
+                    # of both peers are set.
+                    self.assertEqual(cons[0].laddr or cons[1].laddr, name)
+                    self.assertEqual(cons[0].raddr or cons[1].raddr, name)
+                assert not (cons[0].laddr and cons[0].raddr)
+                assert not (cons[1].laddr and cons[1].raddr)
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):
@@ -256,7 +259,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
             if not SUNOS:
-                compare_procsys_connections(proc.pid, [conn])
+                self.compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
             import socket, time
@@ -305,7 +308,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             tcp6_addr = None
             udp6_addr = None
 
-        for p in psutil.Process().children():
+        for p in thisproc.children():
             cons = p.connections()
             self.assertEqual(len(cons), 1)
             for conn in cons:
@@ -339,29 +342,11 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 # =====================================================================
 
 
-class TestMisc(Base, unittest.TestCase):
+class TestSystemWideConnections(unittest.TestCase):
     """Tests for net_connections()."""
 
-    def test_connection_constants(self):
-        ints = []
-        strs = []
-        for name in dir(psutil):
-            if name.startswith('CONN_'):
-                num = getattr(psutil, name)
-                str_ = str(num)
-                assert str_.isupper(), str_
-                assert str_ not in strs, str_
-                assert num not in ints, num
-                ints.append(num)
-                strs.append(str_)
-        if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
-        if WINDOWS:
-            psutil.CONN_DELETE_TCB
-
     @skip_on_access_denied()
-    def test_net_connections(self):
+    def test_it(self):
         def check(cons, families, types_):
             AF_UNIX = getattr(socket, 'AF_UNIX', object())
             for conn in cons:
@@ -380,6 +365,32 @@ class TestMisc(Base, unittest.TestCase):
             check(cons, families, types_)
 
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
+
+
+# =====================================================================
+# --- Miscellaneous tests
+# =====================================================================
+
+
+class TestMisc(unittest.TestCase):
+
+    def test_connection_constants(self):
+        ints = []
+        strs = []
+        for name in dir(psutil):
+            if name.startswith('CONN_'):
+                num = getattr(psutil, name)
+                str_ = str(num)
+                assert str_.isupper(), str_
+                self.assertNotIn(str, strs)
+                self.assertNotIn(num, ints)
+                ints.append(num)
+                strs.append(str_)
+        if SUNOS:
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
+        if WINDOWS:
+            psutil.CONN_DELETE_TCB
 
 
 if __name__ == '__main__':

@@ -17,7 +17,6 @@ import errno
 import functools
 import gc
 import os
-import socket
 import threading
 import time
 
@@ -29,13 +28,11 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import supports_ipv6
 from psutil._compat import xrange
-from psutil.tests import bind_socket
-from psutil.tests import bind_unix_socket
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import create_sockets
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_PROC_CPU_NUM
@@ -50,8 +47,6 @@ from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
-from psutil.tests import unix_socketpair
 
 
 LOOPS = 1000
@@ -180,33 +175,6 @@ class TestMemLeak(unittest.TestCase):
     @staticmethod
     def _call(fun, *args, **kwargs):
         fun(*args, **kwargs)
-
-    def create_sockets(self):
-        """Open as many socket families / types as possible.
-        This is needed to excercise as many C code sections as
-        possible for net_connections() functions.
-        The returned sockets are already scheduled for cleanup.
-        """
-        socks = []
-        try:
-            socks.append(bind_socket(socket.AF_INET, socket.SOCK_STREAM))
-            socks.append(bind_socket(socket.AF_INET, socket.SOCK_DGRAM))
-            if supports_ipv6():
-                socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
-                socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-            if POSIX and not SUNOS:  # TODO: SunOS
-                name1 = unix_socket_path().__enter__()
-                name2 = unix_socket_path().__enter__()
-                s1, s2 = unix_socketpair(name1)
-                s3 = bind_unix_socket(name2, type=socket.SOCK_DGRAM)
-                self.addCleanup(safe_rmpath, name1)
-                self.addCleanup(safe_rmpath, name2)
-                for s in (s1, s2, s3):
-                    socks.append(s)
-            return socks
-        finally:
-            for s in socks:
-                self.addCleanup(s.close)
 
 
 # ===================================================================
@@ -389,19 +357,12 @@ class TestProcessObjectLeaks(TestMemLeak):
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
     def test_connections(self):
-        socks = self.create_sockets()
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
         # be executed.
-        kind = 'inet' if SUNOS else 'all'
-        # Make sure we did a proper setup.
-        self.assertEqual(
-            len(psutil.Process().connections(kind=kind)), len(socks))
-        try:
+        with create_sockets():
+            kind = 'inet' if SUNOS else 'all'
             self.execute(self.proc.connections, kind)
-        finally:
-            for s in socks:
-                s.close()
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -560,8 +521,8 @@ class TestModuleFunctionsLeaks(TestMemLeak):
                      "worthless on Linux (pure python)")
     @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
-        self.create_sockets()
-        self.execute(psutil.net_connections)
+        with create_sockets():
+            self.execute(psutil.net_connections)
 
     def test_net_if_addrs(self):
         # Note: verified that on Windows this was a false positive.
