@@ -476,12 +476,11 @@ Network
     `SOCK_DGRAM
     <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
   - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
-    in case of AF_UNIX sockets.
+    in case of AF_UNIX sockets. For UNIX sockets see notes below.
   - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
     ``path`` in case of UNIX sockets.
     When the remote endpoint is not connected you'll get an empty tuple
-    (AF_INET*) or ``None`` (AF_UNIX).
-    On Linux AF_UNIX sockets will always have this set to ``None``.
+    (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
     is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
     (a string).
@@ -544,7 +543,7 @@ Network
     (Solaris) UNIX sockets are not supported.
 
   .. note::
-     (Linux) "raddr" field for UNIX sockets is always set to "".
+     (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
 
   .. note::
      (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
@@ -1764,12 +1763,11 @@ Process class
       `SOCK_STREAM <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
       `SOCK_DGRAM <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
     - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
-      in case of AF_UNIX sockets.
+      in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
       ``path`` in case of UNIX sockets.
       When the remote endpoint is not connected you'll get an empty tuple
-      (AF_INET) or ``None`` (AF_UNIX).
-      On Linux AF_UNIX sockets will always have this set to ``None``.
+      (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
     - **status**: represents the status of a TCP connection. The return value
       is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants.
       For UDP and UNIX sockets this is always going to be
@@ -1817,7 +1815,7 @@ Process class
        pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
 
     .. note::
-       (Linux) "raddr" field for UNIX sockets is always set to "".
+       (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
 
     .. note::
        (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to

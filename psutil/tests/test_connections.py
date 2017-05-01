@@ -19,6 +19,7 @@ import psutil
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import NETBSD
+from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
@@ -101,7 +102,11 @@ class Base(object):
             laddr = laddr.decode()
         if sock.family == AF_INET6:
             laddr = laddr[:2]
-        self.assertEqual(conn.laddr, laddr)
+        if sock.family == AF_UNIX and OPENBSD:
+            # No addresses are set for UNIX sockets on OpenBSD.
+            pass
+        else:
+            self.assertEqual(conn.laddr, laddr)
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
@@ -219,24 +224,29 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             server, client = unix_socketpair(name)
             with nested(closing(server), closing(client)):
                 cons = thisproc.connections(kind='unix')
+                assert not (cons[0].laddr and cons[0].raddr)
+                assert not (cons[1].laddr and cons[1].raddr)
                 if NETBSD:
                     # On NetBSD creating a UNIX socket will cause
                     # a UNIX connection to  /var/run/log.
                     cons = [c for c in cons if c.raddr != '/var/run/log']
                 self.assertEqual(len(cons), 2)
                 if LINUX or FREEBSD:
-                    # On linux the remote path is never set. Test
-                    # that at least ONE address has our path.
-                    one = (cons[0].laddr or cons[0].raddr or
-                           cons[1].laddr or cons[1].raddr)
-                    self.assertEqual(one, name)
+                    # remote path is never set
+                    self.assertEqual(cons[0].raddr, "")
+                    self.assertEqual(cons[1].raddr, "")
+                    # one local address should though
+                    self.assertEqual(name, cons[0].laddr or cons[1].laddr)
+                elif OPENBSD:
+                    # No addresses whatsoever here.
+                    for addr in (cons[0].laddr, cons[0].raddr,
+                                 cons[1].laddr, cons[1].raddr):
+                        self.assertEqual(addr, "")
                 else:
                     # On other systems either the laddr or raddr
                     # of both peers are set.
                     self.assertEqual(cons[0].laddr or cons[1].laddr, name)
                     self.assertEqual(cons[0].raddr or cons[1].raddr, name)
-                assert not (cons[0].laddr and cons[0].raddr)
-                assert not (cons[1].laddr and cons[1].raddr)
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):

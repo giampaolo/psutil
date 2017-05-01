@@ -484,7 +484,7 @@ psutil_inet6_addrstr(struct in6_addr *p)
  * Note: there is no net_connections() on OpenBSD. The Python
  * implementation will iterate over all processes and use this
  * function.
- * Note: path cannot be determined for UNIX sockets.
+ * Note: local and remote paths cannot be determined for UNIX sockets.
  */
 PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
@@ -615,16 +615,17 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             // UNIX socket.
-            // XXX: "unp_path" is always an empty string; also "fstat"
-            // command is not able to show UNIX socket paths.
+            // XXX: local addr is supposed to be in "unp_path" but it
+            // always empty; also "fstat" command is not able to show
+            // UNIX socket paths.
             else if (kif->so_family == AF_UNIX) {
                 py_tuple = Py_BuildValue(
-                    "(iiisOi)",
+                    "(iiissi)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,
-                    "",  // kif->unp_path
-                    Py_None,
+                    "",  // laddr (kif->unp_path is empty)
+                    "",  // raddr
                     PSUTIL_CONN_NONE);
                 if (!py_tuple)
                     goto error;
