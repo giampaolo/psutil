@@ -17,6 +17,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import FREEBSD
+from psutil import LINUX
 from psutil import NETBSD
 from psutil import OSX
 from psutil import POSIX
@@ -67,7 +68,7 @@ class Base(object):
     def get_conn_from_socck(self, sock):
         cons = thisproc.connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
-        if psutil.NETBSD:
+        if NETBSD:
             # NetBSD opens a UNIX socket to /var/log/run
             # so there may be more connections.
             return smap[sock.fileno()]
@@ -196,38 +197,15 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     each other.
     """
 
-    @staticmethod
-    def distinguish_tcp_socks(cons, server_addr):
-        """Given a list of connections return a (server, client)
-        connection ntuple.
-        """
-        if cons[0].laddr == server_addr:
-            return (cons[0], cons[1])
-        else:
-            assert cons[1].laddr == server_addr, (cons, server_addr)
-            return (cons[1], cons[0])
-
-    @staticmethod
-    def distinguish_unix_socks(cons):
-        """Given a list of connections and 2 sockets return a
-        (server, client) connection ntuple.
-        """
-        if cons[0].laddr:
-            return (cons[0], cons[1])
-        else:
-            assert cons[1].laddr, cons
-            return (cons[1], cons[0])
-
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
+        assert not thisproc.connections(kind='tcp4')
         server, client = tcp_socketpair(AF_INET, addr=addr)
         with nested(closing(server), closing(client)):
-            cons = thisproc.connections(kind='all')
-            server_conn, client_conn = self.distinguish_tcp_socks(cons, addr)
-            self.check_socket(server, conn=server_conn)
-            self.check_socket(client, conn=client_conn)
-            self.assertEqual(server_conn.status, psutil.CONN_ESTABLISHED)
-            self.assertEqual(client_conn.status, psutil.CONN_ESTABLISHED)
+            cons = thisproc.connections(kind='tcp4')
+            self.assertEqual(len(cons), 2)
+            self.assertEqual(cons[0].status, psutil.CONN_ESTABLISHED)
+            self.assertEqual(cons[1].status, psutil.CONN_ESTABLISHED)
             # May not be fast enough to change state so it stays
             # commenteed.
             # client.close()
@@ -241,16 +219,24 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             server, client = unix_socketpair(name)
             with nested(closing(server), closing(client)):
                 cons = thisproc.connections(kind='unix')
+                if NETBSD:
+                    # On NetBSD creating a UNIX socket will cause
+                    # a UNIX connection to  /var/run/log.
+                    cons = [c for c in cons if c.raddr != '/var/run/log']
                 self.assertEqual(len(cons), 2)
-                server_conn, client_conn = self.distinguish_unix_socks(cons)
-                self.check_socket(server, conn=server_conn)
-
-                self.check_socket(client, conn=client_conn)
-                self.assertEqual(server_conn.laddr, name)
-                # TODO: https://github.com/giampaolo/psutil/issues/1035
-                self.assertIn(server_conn.raddr, ("", None))
-                # TODO: https://github.com/giampaolo/psutil/issues/1035
-                self.assertIn(client_conn.laddr, ("", None))
+                if LINUX or FREEBSD:
+                    # On linux the remote path is never set. Test
+                    # that at least ONE address has our path.
+                    one = (cons[0].laddr or cons[0].raddr or
+                           cons[1].laddr or cons[1].raddr)
+                    self.assertEqual(one, name)
+                else:
+                    # On other systems either the laddr or raddr
+                    # of both peers are set.
+                    self.assertEqual(cons[0].laddr or cons[1].laddr, name)
+                    self.assertEqual(cons[0].raddr or cons[1].raddr, name)
+                assert not (cons[0].laddr and cons[0].raddr)
+                assert not (cons[1].laddr and cons[1].raddr)
 
     @skip_on_access_denied(only_if=OSX)
     def test_combos(self):
@@ -367,8 +353,8 @@ class TestMisc(Base, unittest.TestCase):
                 num = getattr(psutil, name)
                 str_ = str(num)
                 assert str_.isupper(), str_
-                assert str_ not in strs, str_
-                assert num not in ints, num
+                self.assertNotIn(str, strs)
+                self.assertNotIn(num, ints)
                 ints.append(num)
                 strs.append(str_)
         if SUNOS:
