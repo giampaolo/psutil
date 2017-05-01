@@ -37,26 +37,19 @@ AccessDenied(void) {
 
 
 /*
- * Alias for PyUnicode_DecodeFSDefault which is not available
- * on Python 2. On Python 2 we just return a plain byte string
+ * Backport of unicode FS APIs from Python 3.
+ * On Python 2 we just return a plain byte string
  * which is never supposed to raise decoding errors.
  * See: https://github.com/giampaolo/psutil/issues/1040
  */
+#if PY_MAJOR_VERSION < 3
 PyObject *
-psutil_PyUnicode_DecodeFSDefault(char *s) {
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefault(s);
-#else
-    return Py_BuildValue("s", s);
-#endif
+PyUnicode_DecodeFSDefault(char *s) {
+    return PyString_FromString(s);
 }
 
-
-PyObject*
-psutil_PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefaultAndSize(s, size);
-#else
+PyObject *
+PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
     return PyString_FromStringAndSize(s, size);
-#endif
 }
+#endif

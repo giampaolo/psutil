@@ -138,7 +138,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    py_name = psutil_PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -220,7 +220,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    return psutil_PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+    return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
 }
 
 
@@ -241,7 +241,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
     
-    return psutil_PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
+    return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
 }
 
 
@@ -265,7 +265,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
-    return psutil_PyUnicode_DecodeFSDefault(buf);
+    return PyUnicode_DecodeFSDefault(buf);
 }
 
 
@@ -416,7 +416,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 }
             }
 
-            py_path = psutil_PyUnicode_DecodeFSDefault(buf);
+            py_path = PyUnicode_DecodeFSDefault(buf);
             if (! py_path)
                 goto error;
             py_tuple = Py_BuildValue(
@@ -1141,7 +1141,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             // --- /errors checking
 
             // --- construct python list
-            py_path = psutil_PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
+            py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
             if (! py_path)
                 goto error;
             py_tuple = Py_BuildValue(
@@ -1337,11 +1337,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             else if (family == AF_UNIX) {
-                py_laddr = psutil_PyUnicode_DecodeFSDefault(
+                py_laddr = PyUnicode_DecodeFSDefault(
                     si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
                 if (!py_laddr)
                     goto error;
-                py_raddr = psutil_PyUnicode_DecodeFSDefault(
+                py_raddr = PyUnicode_DecodeFSDefault(
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
                 if (!py_raddr)
                     goto error;

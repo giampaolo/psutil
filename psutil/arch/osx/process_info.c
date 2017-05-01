@@ -177,7 +177,7 @@ psutil_get_cmdline(long pid) {
         goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-            py_arg = psutil_PyUnicode_DecodeFSDefault(curr_arg);
+            py_arg = PyUnicode_DecodeFSDefault(curr_arg);
             if (! py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
@@ -289,7 +289,7 @@ psutil_get_environ(long pid) {
         arg_ptr = s + 1;
     }
 
-    py_ret = psutil_PyUnicode_DecodeFSDefaultAndSize(
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(
         procenv, arg_ptr - env_start + 1);
     if (!py_ret) {
         // XXX: don't want to free() this as per:

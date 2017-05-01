@@ -383,7 +383,7 @@ psutil_get_cmdline(pid_t pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-            py_arg = psutil_PyUnicode_DecodeFSDefault(&argstr[pos]);
+            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))

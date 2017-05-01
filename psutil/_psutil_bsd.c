@@ -215,7 +215,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-    py_name = psutil_PyUnicode_DecodeFSDefault(str);
+    py_name = PyUnicode_DecodeFSDefault(str);
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -368,7 +368,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-    return psutil_PyUnicode_DecodeFSDefault(str);
+    return PyUnicode_DecodeFSDefault(str);
 }
 
 
@@ -499,7 +499,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         // XXX - it appears path is not exposed in the kinfo_file struct.
         path = "";
 #endif
-        py_path = psutil_PyUnicode_DecodeFSDefault(path);
+        py_path = PyUnicode_DecodeFSDefault(path);
         if (! py_path)
             goto error;
         if (regular == 1) {
@@ -656,10 +656,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_NODEVMTIME)
             strlcat(opts, ",nodevmtime", sizeof(opts));
 #endif
-        py_dev = psutil_PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
         if (! py_dev)
             goto error;
-        py_mountp = psutil_PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
         if (! py_mountp)
             goto error;
         py_tuple = Py_BuildValue("(OOss)",
@@ -812,13 +812,13 @@ psutil_users(PyObject *self, PyObject *args) {
     while (fread(&ut, sizeof(ut), 1, fp) == 1) {
         if (*ut.ut_name == '\0')
             continue;
-        py_username = psutil_PyUnicode_DecodeFSDefault(ut.ut_name);
+        py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
         if (! py_username)
             goto error;
-        py_tty = psutil_PyUnicode_DecodeFSDefault(ut.ut_line);
+        py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
         if (! py_tty)
             goto error;
-        py_hostname = psutil_PyUnicode_DecodeFSDefault(ut.ut_host);
+        py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
@@ -850,13 +850,13 @@ psutil_users(PyObject *self, PyObject *args) {
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
-        py_username = psutil_PyUnicode_DecodeFSDefault(utx->ut_user);
+        py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
         if (! py_username)
             goto error;
-        py_tty = psutil_PyUnicode_DecodeFSDefault(utx->ut_line);
+        py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
         if (! py_tty)
             goto error;
-        py_hostname = psutil_PyUnicode_DecodeFSDefault(utx->ut_host);
+        py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(

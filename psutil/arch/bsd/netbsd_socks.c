@@ -406,10 +406,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 strcpy(laddr, sun_src->sun_path);
                 strcpy(raddr, sun_dst->sun_path);
                 status = PSUTIL_CONN_NONE;
-                py_laddr = psutil_PyUnicode_DecodeFSDefault(laddr);
+                py_laddr = PyUnicode_DecodeFSDefault(laddr);
                 if (! py_laddr)
                     goto error;
-                py_raddr = psutil_PyUnicode_DecodeFSDefault(raddr);
+                py_raddr = PyUnicode_DecodeFSDefault(raddr);
                 if (! py_raddr)
                     goto error;
             }

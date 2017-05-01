@@ -238,7 +238,7 @@ psutil_get_cmdline(long pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-            py_arg = psutil_PyUnicode_DecodeFSDefault(&argstr[pos]);
+            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
@@ -288,7 +288,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (error == -1) {
         // see: https://github.com/giampaolo/psutil/issues/907
         if (errno == ENOENT)
-            return psutil_PyUnicode_DecodeFSDefault("");
+            return PyUnicode_DecodeFSDefault("");
         else
             return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -302,7 +302,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             strcpy(pathname, "");
     }
 
-    return psutil_PyUnicode_DecodeFSDefault(pathname);
+    return PyUnicode_DecodeFSDefault(pathname);
 }
 
 
@@ -555,7 +555,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
         if (kif->kf_fd == KF_FD_TYPE_CWD) {
-            py_path = psutil_PyUnicode_DecodeFSDefault(kif->kf_path);
+            py_path = PyUnicode_DecodeFSDefault(kif->kf_path);
             if (!py_path)
                 goto error;
             break;
@@ -567,7 +567,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
      * as root we return an empty string instead of AccessDenied.
      */
     if (py_path == NULL)
-        py_path = psutil_PyUnicode_DecodeFSDefault("");
+        py_path = PyUnicode_DecodeFSDefault("");
     free(freep);
     return py_path;
 
@@ -821,7 +821,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             path = kve->kve_path;
         }
 
-        py_path = psutil_PyUnicode_DecodeFSDefault(path);
+        py_path = PyUnicode_DecodeFSDefault(path);
         if (! py_path)
             goto error;
         py_tuple = Py_BuildValue("ssOiiii",

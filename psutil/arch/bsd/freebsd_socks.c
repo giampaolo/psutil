@@ -417,7 +417,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         snprintf(path, sizeof(path), "%.*s",
                  (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                  sun->sun_path);
-        py_lpath = psutil_PyUnicode_DecodeFSDefault(path);
+        py_lpath = PyUnicode_DecodeFSDefault(path);
         if (! py_lpath)
             goto error;
 
@@ -604,7 +604,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                     sun->sun_path);
 
-                py_laddr = psutil_PyUnicode_DecodeFSDefault(path);
+                py_laddr = PyUnicode_DecodeFSDefault(path);
                 if (! py_laddr)
                     goto error;
 
