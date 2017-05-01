@@ -22,7 +22,6 @@ import stat
 import sys
 
 from psutil import LINUX
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import memoize
@@ -36,7 +35,11 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_SENSORS_BATTERY
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import reap_children
@@ -459,7 +462,7 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipIf(not OSX or WINDOWS or LINUX, "platform not supported")
+    @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 
@@ -486,30 +489,20 @@ class TestScripts(unittest.TestCase):
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
+    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
-        if hasattr(psutil, "sensors_temperatures") and \
-                psutil.sensors_temperatures():
-            self.assert_stdout('temperatures.py')
-        else:
-            self.assert_syntax('temperatures.py')
+        self.assert_stdout('temperatures.py')
 
+    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
-        if hasattr(psutil, "sensors_fans") and psutil.sensors_fans():
-            self.assert_stdout('fans.py')
-        else:
-            self.assert_syntax('fans.py')
+        self.assert_stdout('fans.py')
 
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
     def test_battery(self):
-        if hasattr(psutil, "sensors_battery") and \
-                psutil.sensors_battery() is not None:
-            self.assert_stdout('battery.py')
-        else:
-            self.assert_syntax('battery.py')
+        self.assert_stdout('battery.py')
 
-    @unittest.skipIf(APPVEYOR or TRAVIS, "unreliable on CI")
-    @unittest.skipIf(OSX, "platform not supported")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 

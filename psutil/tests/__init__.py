@@ -41,6 +41,8 @@ except ImportError:
 import psutil
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil import LINUX
+from psutil import OSX
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil._compat import u
@@ -80,7 +82,7 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES",
+    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # classes
     'ThreadTask'
     # test utils
@@ -158,6 +160,7 @@ HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
+HAS_MEMORY_FULL_INFO = LINUX or OSX or WINDOWS
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")

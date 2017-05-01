@@ -23,7 +23,8 @@ def main():
         return sys.exit("platform not supported")
     fans = psutil.sensors_fans()
     if not fans:
-        return sys.exit("no fans detected")
+        print("no fans detected")
+        return
     for name, entries in fans.items():
         print(name)
         for entry in entries:
