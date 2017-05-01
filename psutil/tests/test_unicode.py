@@ -239,19 +239,21 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps(self):
+        normcase = os.path.normcase
+        realpath = os.path.realpath
         p = psutil.Process()
         ext = ".so" if POSIX else ".dll"
-        old = [x.path for x in p.memory_maps()
-               if os.path.normcase(x.path).endswith(ext)][0]
+        old = [realpath(x.path) for x in p.memory_maps()
+               if normcase(x.path).endswith(ext)][0]
         try:
-            new = os.path.normcase(
-                copyload_shared_lib(old, dst_prefix=self.funky_name))
+            new = realpath(normcase(
+                copyload_shared_lib(old, dst_prefix=self.funky_name)))
         except UnicodeEncodeError:
             if PY3:
                 raise
             else:
                 raise unittest.SkipTest("ctypes can't handle unicode")
-        newpaths = [os.path.normcase(x.path) for x in p.memory_maps()]
+        newpaths = [realpath(normcase(x.path)) for x in p.memory_maps()]
         self.assertIn(new, newpaths)
 
 
