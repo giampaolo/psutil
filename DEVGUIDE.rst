@@ -132,7 +132,7 @@ Documentation
 - it uses `RsT syntax <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_
   and it's built with `sphinx <http://sphinx-doc.org/>`_.
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
-- public doc is hosted on http://pythonhosted.org/psutil/.
+- public doc is hosted on http://pythonhosted.org/psutil/
 
 =======================
 Releasing a new version

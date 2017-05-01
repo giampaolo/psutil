@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 
-# Author : Himanshu Shekhar < https://github.com/himanshub16 > (2017)
-
-# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright (c) 2009, Giampaolo Rodola', Himanshu Shekhar.
+# All rights reserved. Use of this source code is governed by a
+# BSD-style license that can be found in the LICENSE file.
 
 """
-Checks for broken links in file names specified as command line parameters.
+Checks for broken links in file names specified as command line
+parameters.
 
-There are a ton of a solutions available for validating URLs in string using
-regex, but less for searching, of which very few are accurate.
-This snippet is intended to just do the required work, and avoid complexities.
-Django Validator has pretty good regex for validation, but we have to find
-urls instead of validating them. (REFERENCES [7])
+There are a ton of a solutions available for validating URLs in string
+using regex, but less for searching, of which very few are accurate.
+This snippet is intended to just do the required work, and avoid
+complexities. Django Validator has pretty good regex for validation,
+but we have to find urls instead of validating them (REFERENCES [7]).
 There's always room for improvement.
 
 Method:
 * Match URLs using regex (REFERENCES [1]])
-* Some URLs need to be fixed, as they have < (or) > due to inefficient regex.
+* Some URLs need to be fixed, as they have < (or) > due to inefficient
+  regex.
 * Remove duplicates (because regex is not 100% efficient as of now).
 * Check validity of URL, using HEAD request. (HEAD to save bandwidth)
   Uses requests module for others are painful to use. REFERENCES[9]
@@ -36,6 +36,7 @@ Using [1] with some modificatons for including ftp
 [8] https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD
 [9] http://docs.python-requests.org/
 
+Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 """
 
 from __future__ import print_function
@@ -43,18 +44,16 @@ from __future__ import print_function
 import os
 import re
 import sys
-
+import traceback
 import concurrent.futures
+
 import requests
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-
 REGEX = r'(?:http|ftp|https)?://' \
         r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-
 REQUEST_TIMEOUT = 30
-
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
 # They need to be sent GET request
@@ -62,27 +61,21 @@ RETRY_STATUSES = [503, 401, 403]
 
 
 def get_urls(filename):
-    """Extracts all URLs available in specified filename
-    """
-    # fname = os.path.abspath(os.path.join(HERE, filename))
-    # expecting absolute path
+    """Extracts all URLs available in specified filename."""
     with open(filename) as fs:
         text = fs.read()
-
     urls = re.findall(REGEX, text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
     # correct urls which are between < and/or >
     for i, url in enumerate(urls):
         urls[i] = re.sub("[\*<>\(\)\)]", '', url)
-
     return urls
 
 
 def validate_url(url):
     """Validate the URL by attempting an HTTP connection.
     Makes an HTTP-HEAD request for each URL.
-    Uses requests module.
     """
     try:
         res = requests.head(url, timeout=REQUEST_TIMEOUT)
@@ -100,32 +93,36 @@ def parallel_validator(urls):
     urls: tuple(filename, url)
     """
     fails = []  # list of tuples (filename, url)
-    completed = 0
+    current = 0
     total = len(urls)
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
         fut_to_url = {executor.submit(validate_url, url[1]): url
                       for url in urls}
-
         for fut in concurrent.futures.as_completed(fut_to_url):
-            if not fut.result():
-                url = fut_to_url[fut]
-                fails.append(url)  # actually a tuple of url and filename
-            completed += 1
-            sys.stdout.write("\r" + str(completed)+' / '+str(total))
+            current += 1
+            sys.stdout.write("\r%s / %s" % (current, total))
             sys.stdout.flush()
-
-    print()
+            fname, url = fut_to_url[fut]
+            try:
+                ok = fut.result()
+            except Exception:
+                fails.append((fname, url))
+                print()
+                print("warn: error while validating %s" % url, file=sys.stderr)
+                traceback.print_exc()
+            else:
+                if not ok:
+                    fails.append((fname, url))
+    if fails:
+        print()
     return fails
 
 
 def main():
-    """Main function
-    """
     files = sys.argv[1:]
-
     if not files:
         return sys.exit("usage: %s <FILES...>" % __name__)
+
     all_urls = []
     for fname in files:
         urls = get_urls(fname)
@@ -134,12 +131,13 @@ def main():
 
     fails = parallel_validator(all_urls)
     if not fails:
-        print("all links are valid. cheers!")
+        print("all links are valid; cheers!")
     else:
         for fail in fails:
-            print(fail[1] + ' : ' + fail[0] + os.linesep)
+            fname, url = fail
+            print("%s : %s " % (url, fname))
         print('-' * 20)
-        print("total :", len(fails), "fails!")
+        print("total: %s fails!" % len(fails))
         sys.exit(1)
 
 
