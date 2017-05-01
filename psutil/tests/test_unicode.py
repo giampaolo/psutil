@@ -17,7 +17,7 @@ In psutil these are the APIs returning or dealing with a string
 - Process.cwd()
 - Process.environ()
 - Process.exe()
-- Process.memory_maps()          (not tested)
+- Process.memory_maps()
 - Process.name()
 - Process.open_files()
 - Process.username()             (not tested)
@@ -72,9 +72,11 @@ from psutil._compat import PY3
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
+from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_ENVIRON
+from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
@@ -234,6 +236,17 @@ class _BaseFSAPIsTests(object):
     def test_disk_usage(self):
         safe_mkdir(self.funky_name)
         psutil.disk_usage(self.funky_name)
+
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    def test_memory_maps(self):
+        p = psutil.Process()
+        ext = ".so" if POSIX else ".dll"
+        old = [x.path for x in p.memory_maps()
+               if os.path.normcase(x.path).endswith(ext)][0]
+        new = os.path.normcase(
+            copyload_shared_lib(old, dst_prefix=self.funky_name))
+        newpaths = [os.path.normcase(x.path) for x in p.memory_maps()]
+        self.assertIn(new, newpaths)
 
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
