@@ -43,6 +43,9 @@ from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
 
+thisproc = psutil.Process()
+
+
 def compare_procsys_connections(pid, proc_cons, kind='all'):
     """Given a process PID and its list of connections compare
     those against system-wide connections retrieved via
@@ -74,7 +77,7 @@ class Base(object):
     def setUp(self):
         if not NETBSD:
             # NetBSD opens a UNIX socket to /var/log/run.
-            cons = psutil.Process().connections(kind='all')
+            cons = thisproc.connections(kind='all')
             assert not cons, cons
 
     def tearDown(self):
@@ -83,11 +86,11 @@ class Base(object):
         if not NETBSD:
             # Make sure we closed all resources.
             # NetBSD opens a UNIX socket to /var/log/run.
-            cons = psutil.Process().connections(kind='all')
+            cons = thisproc.connections(kind='all')
             assert not cons, cons
 
     def get_conn_from_socck(self, sock):
-        cons = psutil.Process().connections(kind='all')
+        cons = thisproc.connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
         if psutil.NETBSD:
             # NetBSD opens a UNIX socket to /var/log/run
@@ -126,7 +129,7 @@ class Base(object):
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
-            cons = psutil.Process().connections(kind='all')
+            cons = thisproc.connections(kind='all')
             compare_procsys_connections(os.getpid(), cons)
         return conn
 
@@ -220,7 +223,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         addr = ("127.0.0.1", get_free_port())
         server, client = tcp_socketpair(AF_INET, addr=addr)
         with nested(closing(server), closing(client)):
-            cons = psutil.Process().connections(kind='all')
+            cons = thisproc.connections(kind='all')
             server_conn, client_conn = self.distinguish_tcp_socks(cons, addr)
             self.check_socket(server, conn=server_conn)
             self.check_socket(client, conn=client_conn)
@@ -229,7 +232,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # May not be fast enough to change state so it stays
             # commenteed.
             # client.close()
-            # cons = psutil.Process().connections(kind='all')
+            # cons = thisproc.connections(kind='all')
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
 
@@ -238,7 +241,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         with unix_socket_path() as name:
             server, client = unix_socketpair(name)
             with nested(closing(server), closing(client)):
-                cons = psutil.Process().connections(kind='unix')
+                cons = thisproc.connections(kind='unix')
                 self.assertEqual(len(cons), 2)
                 server_conn, client_conn = self.distinguish_unix_socks(cons)
                 self.check_socket(server, conn=server_conn)
@@ -320,7 +323,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             tcp6_addr = None
             udp6_addr = None
 
-        for p in psutil.Process().children():
+        for p in thisproc.children():
             cons = p.connections()
             self.assertEqual(len(cons), 1)
             for conn in cons:
