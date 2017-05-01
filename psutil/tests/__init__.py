@@ -80,7 +80,7 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES",
+    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # classes
     'ThreadTask'
     # test utils
@@ -158,6 +158,7 @@ HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
+HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
@@ -608,24 +609,6 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-# In Python 3 paths are unicode objects by default.  Surrogate escapes
-# are used to handle non-character data.
-def encode_path(path):
-    if PY3:
-        return path.encode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
-
-
-def decode_path(path):
-    if PY3:
-        return path.decode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
-
-
 # ===================================================================
 # --- testing
 # ===================================================================
@@ -1006,7 +989,7 @@ def check_connection_ntuple(conn):
             assert 0 <= port <= 65535, port
             check_net_address(ip, conn.family)
         elif conn.family == AF_UNIX:
-            assert isinstance(addr, (str, type(None))), addr
+            assert isinstance(addr, str), addr
 
     # check status
     assert isinstance(conn.status, str), conn

@@ -435,6 +435,9 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
+        if pid == -1:
+            assert OPENBSD
+            pid = None
         if tty == '~':
             continue  # reboot or shutdown
         nt = _common.suser(user, tty or None, hostname, tstamp, pid)

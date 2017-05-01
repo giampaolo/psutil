@@ -30,7 +30,6 @@ Battery:
 """
 
 from __future__ import print_function
-import sys
 
 import psutil
 
@@ -56,7 +55,8 @@ def main():
         battery = None
 
     if not any((temps, fans, battery)):
-        return sys.exit("can't read any temperature, fans or battery info")
+        print("can't read any temperature, fans or battery info")
+        return
 
     names = set(list(temps.keys()) + list(fans.keys()))
     for name in names:

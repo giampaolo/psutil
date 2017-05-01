@@ -136,8 +136,9 @@ class BSDSpecificTestCase(unittest.TestCase):
                 pass
             else:
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
-                self.assertEqual(stats.mtu,
-                                 int(re.findall('mtu (\d+)', out)[0]))
+                if "mtu" in out:
+                    self.assertEqual(stats.mtu,
+                                     int(re.findall('mtu (\d+)', out)[0]))
 
 
 # =====================================================================

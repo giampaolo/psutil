@@ -30,7 +30,11 @@
 - 1033_: [OSX, FreeBSD] memory leak for net_connections() and
   Process.connections() when retrieving UNIX sockets (kind='unix').
 - 1039_: returned types consolidation:
-  - Windows: Process.cpu_times()'s fields #3 and #4 were int instead of float
+  - Windows / Process.cpu_times(): fields #3 and #4 were int instead of float
+  - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
+    None
+  - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
+    None
 
 *2017-04-10*
 

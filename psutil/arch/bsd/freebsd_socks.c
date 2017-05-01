@@ -594,7 +594,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
             }
-            // UNIX socket
+            // UNIX socket.
+            // Note: remote path cannot be determined.
             else if (kif->kf_sock_domain == AF_UNIX) {
                 struct sockaddr_un *sun;
 
@@ -609,12 +610,12 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
 
                 py_tuple = Py_BuildValue(
-                    "(iiiOOi)",
+                    "(iiiOsi)",
                     kif->kf_fd,
                     kif->kf_sock_domain,
                     kif->kf_sock_type,
                     py_laddr,
-                    Py_None,
+                    "",  // raddr can't be determined
                     PSUTIL_CONN_NONE
                 );
                 if (!py_tuple)
@@ -623,7 +624,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
                 Py_DECREF(py_laddr);
-                Py_INCREF(Py_None);
             }
         }
     }

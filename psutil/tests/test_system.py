@@ -704,10 +704,10 @@ class TestSystemAPIs(unittest.TestCase):
             user.host
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
-            if POSIX:
-                psutil.Process(user.pid)
-            else:
+            if WINDOWS or OPENBSD:
                 self.assertIsNone(user.pid)
+            else:
+                psutil.Process(user.pid)
 
     def test_cpu_stats(self):
         # Tested more extensively in per-platform test modules.

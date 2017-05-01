@@ -56,7 +56,7 @@ class TestAvailability(unittest.TestCase):
     """
 
     def test_cpu_affinity(self):
-        hasit = LINUX or WINDOWS or BSD
+        hasit = LINUX or WINDOWS or FREEBSD
         self.assertEqual(hasattr(psutil.Process, "cpu_affinity"), hasit)
 
     def test_win_service(self):
@@ -251,6 +251,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(user.name, str)
             self.assertIsInstance(user.terminal, (str, type(None)))
             self.assertIsInstance(user.host, (str, type(None)))
+            self.assertIsInstance(user.pid, (int, type(None)))
 
 
 # ===================================================================

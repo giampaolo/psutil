@@ -17,6 +17,7 @@ import time
 import psutil
 from psutil import BSD
 from psutil import LINUX
+from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
@@ -273,8 +274,8 @@ class TestSystemAPIs(unittest.TestCase):
         pids_ps.sort()
         pids_psutil.sort()
 
-        # on OSX ps doesn't show pid 0
-        if OSX and 0 not in pids_ps:
+        # on OSX and OPENBSD ps doesn't show pid 0
+        if OSX or OPENBSD and 0 not in pids_ps:
             pids_ps.insert(0, 0)
 
         if pids_ps != pids_psutil:
@@ -365,8 +366,10 @@ class TestSystemAPIs(unittest.TestCase):
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
                 # https://travis-ci.org/giampaolo/psutil/jobs/138343361
-                if "no such file or directory" in str(err).lower() or \
-                        "raw devices not supported" in str(err).lower():
+                err = str(err).lower()
+                if "no such file or directory" in err or \
+                        "raw devices not supported" in err or \
+                        "permission denied" in err:
                     continue
                 else:
                     raise
