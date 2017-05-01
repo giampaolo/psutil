@@ -10,6 +10,7 @@ Miscellaneous tests.
 """
 
 import ast
+import collections
 import contextlib
 import errno
 import imp
@@ -32,6 +33,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
+from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_MEMORY_MAPS
@@ -728,6 +730,21 @@ class TestNetUtils(unittest.TestCase):
             finally:
                 client.close()
                 server.close()
+
+    def test_create_sockets(self):
+        with create_sockets() as socks:
+            fams = collections.defaultdict(int)
+            types = collections.defaultdict(int)
+            for s in socks:
+                fams[s.family] += 1
+                # work around http://bugs.python.org/issue30204
+                types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
+            self.assertGreaterEqual(fams[socket.AF_INET], 2)
+            self.assertGreaterEqual(fams[socket.AF_INET6], 2)
+            if POSIX:
+                self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
+            self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
+            self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
 if __name__ == '__main__':
