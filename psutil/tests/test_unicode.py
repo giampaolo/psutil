@@ -243,8 +243,14 @@ class _BaseFSAPIsTests(object):
         ext = ".so" if POSIX else ".dll"
         old = [x.path for x in p.memory_maps()
                if os.path.normcase(x.path).endswith(ext)][0]
-        new = os.path.normcase(
-            copyload_shared_lib(old, dst_prefix=self.funky_name))
+        try:
+            new = os.path.normcase(
+                copyload_shared_lib(old, dst_prefix=self.funky_name))
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("ctypes can't handle unicode")
         newpaths = [os.path.normcase(x.path) for x in p.memory_maps()]
         self.assertIn(new, newpaths)
 
