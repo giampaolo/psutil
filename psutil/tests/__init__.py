@@ -41,8 +41,6 @@ except ImportError:
 import psutil
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil import LINUX
-from psutil import OSX
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil._compat import u
@@ -160,7 +158,7 @@ HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
-HAS_MEMORY_FULL_INFO = LINUX or OSX or WINDOWS
+HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
@@ -609,24 +607,6 @@ def create_exe(outpath, c_code=None):
         if POSIX:
             st = os.stat(outpath)
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
-
-
-# In Python 3 paths are unicode objects by default.  Surrogate escapes
-# are used to handle non-character data.
-def encode_path(path):
-    if PY3:
-        return path.encode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
-
-
-def decode_path(path):
-    if PY3:
-        return path.decode(sys.getfilesystemencoding(),
-                           errors="surrogateescape")
-    else:
-        return path
 
 
 # ===================================================================

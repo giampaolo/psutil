@@ -29,7 +29,9 @@ from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
+from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
+from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
@@ -41,6 +43,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import importlib
+from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry
@@ -612,6 +615,10 @@ class TestSyncTestUtils(unittest.TestCase):
         wait_for_file(TESTFN, delete=False)
         assert os.path.exists(TESTFN)
 
+    def test_call_until(self):
+        ret = call_until(lambda: 1, "ret == 1")
+        self.assertEqual(ret, 1)
+
 
 class TestFSTestUtils(unittest.TestCase):
 
@@ -679,6 +686,11 @@ class TestProcessUtils(unittest.TestCase):
 
 class TestNetUtils(unittest.TestCase):
 
+    def bind_socket(self):
+        port = get_free_port()
+        with contextlib.closing(bind_socket(addr=('', port))) as s:
+            self.assertEqual(s.getsockname()[1], port)
+
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
         with unix_socket_path() as name:
@@ -738,6 +750,13 @@ class TestNetUtils(unittest.TestCase):
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
+
+
+class TestOtherUtils(unittest.TestCase):
+
+    def test_is_namedtuple(self):
+        assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
+        assert not is_namedtuple(tuple())
 
 
 if __name__ == '__main__':
