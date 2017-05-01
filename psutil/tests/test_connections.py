@@ -22,6 +22,7 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import pconn
 from psutil._common import supports_ipv6
 from psutil._compat import nested
 from psutil._compat import PY3
@@ -44,32 +45,6 @@ from psutil.tests import wait_for_file
 
 
 thisproc = psutil.Process()
-
-
-def compare_procsys_connections(pid, proc_cons, kind='all'):
-    """Given a process PID and its list of connections compare
-    those against system-wide connections retrieved via
-    psutil.net_connections.
-    """
-    from psutil._common import pconn
-    try:
-        sys_cons = psutil.net_connections(kind=kind)
-    except psutil.AccessDenied:
-        # On OSX, system-wide connections are retrieved by iterating
-        # over all processes
-        if OSX:
-            return
-        else:
-            raise
-    # exclude PIDs from syscons
-    sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
-    if FREEBSD:
-        # On FreeBSD all fds are set to -1 so exclude them
-        # for comparison.
-        proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
-    proc_cons.sort()
-    sys_cons.sort()
-    assert proc_cons == sys_cons, (proc_cons, sys_cons)
 
 
 class Base(object):
@@ -130,8 +105,30 @@ class Base(object):
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
             cons = thisproc.connections(kind='all')
-            compare_procsys_connections(os.getpid(), cons)
+            self.compare_procsys_connections(os.getpid(), cons)
         return conn
+
+    def compare_procsys_connections(self, pid, proc_cons, kind='all'):
+        """Given a process PID and its list of connections compare
+        those against system-wide connections retrieved via
+        psutil.net_connections.
+        """
+        try:
+            sys_cons = psutil.net_connections(kind=kind)
+        except psutil.AccessDenied:
+            # On OSX, system-wide connections are retrieved by iterating
+            # over all processes
+            if OSX:
+                return
+            else:
+                raise
+        # exclude PIDs from syscons
+        sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
+        if FREEBSD:
+            # On FreeBSD all fds are set to -1 so exclude them
+            # for comparison.
+            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
+        self.assertEqual(sorted(proc_cons), sorted(sys_cons))
 
 
 # =====================================================================
@@ -274,7 +271,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
             if not SUNOS:
-                compare_procsys_connections(proc.pid, [conn])
+                self.compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
             import socket, time
