@@ -342,29 +342,11 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 # =====================================================================
 
 
-class TestMisc(Base, unittest.TestCase):
+class TestSystemWideConnections(unittest.TestCase):
     """Tests for net_connections()."""
 
-    def test_connection_constants(self):
-        ints = []
-        strs = []
-        for name in dir(psutil):
-            if name.startswith('CONN_'):
-                num = getattr(psutil, name)
-                str_ = str(num)
-                assert str_.isupper(), str_
-                self.assertNotIn(str, strs)
-                self.assertNotIn(num, ints)
-                ints.append(num)
-                strs.append(str_)
-        if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
-        if WINDOWS:
-            psutil.CONN_DELETE_TCB
-
     @skip_on_access_denied()
-    def test_net_connections(self):
+    def test_it(self):
         def check(cons, families, types_):
             AF_UNIX = getattr(socket, 'AF_UNIX', object())
             for conn in cons:
@@ -383,6 +365,32 @@ class TestMisc(Base, unittest.TestCase):
             check(cons, families, types_)
 
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
+
+
+# =====================================================================
+# --- Miscellaneous tests
+# =====================================================================
+
+
+class TestMisc(unittest.TestCase):
+
+    def test_connection_constants(self):
+        ints = []
+        strs = []
+        for name in dir(psutil):
+            if name.startswith('CONN_'):
+                num = getattr(psutil, name)
+                str_ = str(num)
+                assert str_.isupper(), str_
+                self.assertNotIn(str, strs)
+                self.assertNotIn(num, ints)
+                ints.append(num)
+                strs.append(str_)
+        if SUNOS:
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
+        if WINDOWS:
+            psutil.CONN_DELETE_TCB
 
 
 if __name__ == '__main__':
