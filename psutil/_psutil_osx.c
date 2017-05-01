@@ -138,11 +138,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
-    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    py_name = Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
+    py_name = psutil_PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -224,11 +220,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    return Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
+    return psutil_PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
 }
 
 
@@ -248,12 +240,8 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     {
         return NULL;
     }
-
-#if PY_MAJOR_VERSION >= 3
+    
     return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
-#else
-    return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
-#endif
 }
 
 
@@ -277,11 +265,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
-    return PyUnicode_DecodeFSDefault(buf);
-#else
-    return Py_BuildValue("s", buf);
-#endif
+    return psutil_PyUnicode_DecodeFSDefault(buf);
 }
 
 
@@ -1157,11 +1141,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             // --- /errors checking
 
             // --- construct python list
-#if PY_MAJOR_VERSION >= 3
-            py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
-#else
-            py_path = Py_BuildValue("s", vi.pvip.vip_path);
-#endif
+            py_path = psutil_PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
             if (! py_path)
                 goto error;
             py_tuple = Py_BuildValue(
@@ -1357,28 +1337,14 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             else if (family == AF_UNIX) {
-                // decode laddr
-#if PY_MAJOR_VERSION >= 3
-                    py_laddr = PyUnicode_DecodeFSDefault(
-#else
-                    py_laddr = Py_BuildValue("s",
-#endif
-                        si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path
-                    );
-                    if (!py_laddr)
-                        goto error;
-
-                // decode raddr
-#if PY_MAJOR_VERSION >= 3
-                    py_raddr = PyUnicode_DecodeFSDefault(
-#else
-                    py_raddr = Py_BuildValue("s",
-#endif
-                        si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path
-                    );
-                    if (!py_raddr)
-                        goto error;
-
+                py_laddr = psutil_PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
+                if (!py_laddr)
+                    goto error;
+                py_raddr = psutil_PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
+                if (!py_raddr)
+                    goto error;
                 // construct the python list
                 py_tuple = Py_BuildValue(
                     "(iiiOOi)",
