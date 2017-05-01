@@ -543,6 +543,13 @@ Network
   .. note::
     (Solaris) UNIX sockets are not supported.
 
+  .. note::
+     (Linux) "raddr" field for UNIX sockets is always set to "".
+
+  .. note::
+     (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
+     "".
+
   .. versionadded:: 2.1.0
 
 .. function:: net_if_addrs()
@@ -1753,10 +1760,9 @@ Process class
       <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
       `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
       or `AF_UNIX <http://docs.python.org//library/socket.html#socket.AF_UNIX>`__.
-    - **type**: the address type, either `SOCK_STREAM
-      <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
-      `SOCK_DGRAM
-      <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
+    - **type**: the address type, either
+      `SOCK_STREAM <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
+      `SOCK_DGRAM <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
     - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
       in case of AF_UNIX sockets.
     - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
@@ -1809,6 +1815,13 @@ Process class
        pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
        pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
        pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+
+    .. note::
+       (Linux) "raddr" field for UNIX sockets is always set to "".
+
+    .. note::
+       (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
+       "".
 
   .. method:: is_running()
 

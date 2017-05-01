@@ -898,7 +898,10 @@ class Connections:
                         else:
                             path = ""
                         type_ = int(type_)
-                        raddr = None
+                        # XXX: determining the remote endpoint of a
+                        # UNIX socket on Linux is not possible, see:
+                        # https://serverfault.com/questions/252723/
+                        raddr = ""
                         status = _common.CONN_NONE
                         yield (fd, family, type_, path, raddr, status, pid)
 

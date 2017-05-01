@@ -989,7 +989,7 @@ def check_connection_ntuple(conn):
             assert 0 <= port <= 65535, port
             check_net_address(ip, conn.family)
         elif conn.family == AF_UNIX:
-            assert isinstance(addr, (str, type(None))), addr
+            assert isinstance(addr, str), addr
 
     # check status
     assert isinstance(conn.status, str), conn
