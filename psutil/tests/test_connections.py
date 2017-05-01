@@ -17,6 +17,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import FREEBSD
+from psutil import NETBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
@@ -71,26 +72,39 @@ def compare_procsys_connections(pid, proc_cons, kind='all'):
 class Base(object):
 
     def setUp(self):
-        cons = psutil.Process().connections(kind='all')
-        assert not cons, cons
+        if not NETBSD:
+            # NetBSD opens a UNIX socket to /var/log/run.
+            cons = psutil.Process().connections(kind='all')
+            assert not cons, cons
 
     def tearDown(self):
         safe_rmpath(TESTFN)
         reap_children()
-        # make sure we closed all resources
+        if not NETBSD:
+            # Make sure we closed all resources.
+            # NetBSD opens a UNIX socket to /var/log/run.
+            cons = psutil.Process().connections(kind='all')
+            assert not cons, cons
+
+    def get_conn_from_socck(self, sock):
         cons = psutil.Process().connections(kind='all')
-        assert not cons, cons
+        smap = dict([(c.fd, c) for c in cons])
+        if psutil.NETBSD:
+            # NetBSD opens a UNIX socket to /var/log/run
+            # so there may be more connections.
+            return smap[sock.fileno()]
+        else:
+            self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
+            self.assertEqual(len(cons), 1)
+            return cons[0]
 
     def check_socket(self, sock, conn=None):
         """Given a socket, makes sure it matches the one obtained
         via psutil. It assumes this process created one connection
         only (the one supposed to be checked).
         """
-        cons = psutil.Process().connections(kind='all')
-        if not conn:
-            self.assertEqual(len(cons), 1)
-            conn = cons[0]
-
+        if conn is None:
+            conn = self.get_conn_from_socck(sock)
         check_connection_ntuple(conn)
 
         # fd, family, type
@@ -112,6 +126,7 @@ class Base(object):
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if not (SUNOS and sock.family == AF_UNIX):
+            cons = psutil.Process().connections(kind='all')
             compare_procsys_connections(os.getpid(), cons)
         return conn
 
