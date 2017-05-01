@@ -746,12 +746,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int i, cnt;
     char addr[1000];
     char perms[4];
-    const char *path;
+    char *path;
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
     ptrwidth = 2 * sizeof(void *);
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -820,10 +821,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             path = kve->kve_path;
         }
 
-        py_tuple = Py_BuildValue("sssiiii",
+        py_path = psutil_PyUnicode_DecodeFSDefault(path);
+        if (! py_path)
+            goto error;
+        py_tuple = Py_BuildValue("ssOiiii",
             addr,                       // "start-end" address
             perms,                      // "rwx" permissions
-            path,                       // path
+            py_path,                    // path
             kve->kve_resident,          // rss
             kve->kve_private_resident,  // private
             kve->kve_ref_count,         // ref count
@@ -832,6 +836,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_path);
         Py_DECREF(py_tuple);
     }
     free(freep);
@@ -839,6 +844,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);

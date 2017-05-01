@@ -463,6 +463,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     struct kinfo_file *kif;
     kinfo_proc kipp;
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -498,12 +499,16 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         // XXX - it appears path is not exposed in the kinfo_file struct.
         path = "";
 #endif
+        py_path = psutil_PyUnicode_DecodeFSDefault(path);
+        if (! py_path)
+            goto error;
         if (regular == 1) {
-            py_tuple = Py_BuildValue("(si)", path, fd);
+            py_tuple = Py_BuildValue("(Oi)", py_path, fd);
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+            Py_DECREF(py_path);
             Py_DECREF(py_tuple);
         }
     }
