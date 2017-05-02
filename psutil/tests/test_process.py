@@ -656,15 +656,11 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps_lists_lib(self):
-        normcase = os.path.normcase
-        realpath = os.path.realpath
-        p = psutil.Process()
-        ext = ".so" if POSIX else ".dll"
-        old = [x.path for x in p.memory_maps()
-               if normcase(x.path).endswith(ext)][0]
-        new = realpath(normcase(copyload_shared_lib(old)))
-        newpaths = [realpath(normcase(x.path)) for x in p.memory_maps()]
-        self.assertIn(new, newpaths)
+        with copyload_shared_lib() as path:
+            # Make sure a newly loaded shared lib is listed.
+            libpaths = [os.path.realpath(os.path.normcase(x.path))
+                        for x in psutil.Process().memory_maps()]
+            self.assertIn(path, libpaths)
 
     def test_memory_percent(self):
         p = psutil.Process()
