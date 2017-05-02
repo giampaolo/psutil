@@ -35,6 +35,7 @@
     None
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
     None
+- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 
 *2017-04-10*
 
