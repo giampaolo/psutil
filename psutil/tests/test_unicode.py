@@ -110,16 +110,6 @@ def subprocess_supports_unicode(name):
         return True
 
 
-def ctypes_supports_unicode(name):
-    if PY3:
-        return True
-    try:
-        with copyload_shared_lib():
-            pass
-    except UnicodeEncodeError:
-        return False
-
-
 # An invalid unicode string.
 if PY3:
     INVALID_NAME = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
@@ -252,15 +242,17 @@ class _BaseFSAPIsTests(object):
         psutil.disk_usage(self.funky_name)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    @unittest.skipIf(not PY3, "ctypes opens err msg box on Python 2")
     def test_memory_maps(self):
-        if not ctypes_supports_unicode(self.funky_name):
-            raise unittest.SkipTest("ctypes can't handle unicode")
-
+        # XXX: on Python 2, using ctypes.CDLL with a unicode path
+        # opens a message box which blocks the test run.
         with copyload_shared_lib(dst_prefix=self.funky_name) as funky_path:
             def normpath(p):
                 return os.path.realpath(os.path.normcase(p))
             libpaths = [normpath(x.path)
                         for x in psutil.Process().memory_maps()]
+            # ...just to have a clearer msg in case of failure
+            libpaths = [x for x in libpaths if TESTFILE_PREFIX in x]
             self.assertIn(normpath(funky_path), libpaths)
             for path in libpaths:
                 self.assertIsInstance(path, str)

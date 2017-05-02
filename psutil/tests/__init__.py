@@ -27,7 +27,6 @@ import tempfile
 import textwrap
 import threading
 import time
-import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -146,7 +145,6 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
-_HERE = os.path.abspath(os.path.dirname(__file__))
 
 # --- support
 
@@ -175,26 +173,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles = set()
-
-
-@atexit.register
-def _cleanup_files():
-    DEVNULL.close()
-    for name in os.listdir(_HERE):
-        if name.startswith(TESTFILE_PREFIX):
-            _testfiles.add(name)
-    for name in _testfiles:
-        try:
-            safe_rmpath(name)
-        except Exception:
-            traceback.print_exc()
-
-
-# this is executed first
-@atexit.register
-def _cleanup_procs():
-    reap_children(recursive=True)
+_testfiles_created = set()
 
 
 # ===================================================================
@@ -244,18 +223,18 @@ class ThreadTask(threading.Thread):
 
 
 def get_test_subprocess(cmd=None, **kwds):
-    """Create a python subprocess which does nothing for 60 secs and
+    """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
-
     If "cmd" is specified that is used instead of python.
-    By default sdtin and stdout are redirected to /dev/null.
+    By default stdout and stderr are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
     initialized state.
-
-    The caller is supposed to clean this up with reap_children().
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
+    if WINDOWS:
+        # avoid creating error boxes
+        kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
     if cmd is None:
         safe_rmpath(_TESTFN)
         pyline = "from time import sleep;"
@@ -281,11 +260,8 @@ def create_proc_children_pair():
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
     The 2 processes are fully initialized and will live for 60 secs.
-
-    The caller is supposed to clean them up with reap_children().
     """
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
-    _testfiles.add(_TESTFN2)
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         PYTHON = os.path.realpath(sys.executable)
@@ -308,19 +284,16 @@ def create_proc_children_pair():
         return (child1, child2)
     except Exception:
         reap_children()
-        safe_rmpath(_TESTFN2)
         raise
 
 
 def pyrun(src):
-    """Run python 'src' code (a string) in a separate interpreter
-    and return it as a subprocess.Popen instance.
-
-    The caller is supposed to clean this up with reap_children().
+    """Run python 'src' code in a separate interpreter.
+    Returns a subprocess.Popen instance.
     """
     with tempfile.NamedTemporaryFile(
             prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
-        _testfiles.add(f.name)
+        _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
@@ -329,37 +302,32 @@ def pyrun(src):
         return subp
 
 
-def sh(cmd, **kwargs):
-    """run cmd as subprocess.Popen and return its output.
+def sh(cmd):
+    """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    kwargs.setdefault("stdout", subprocess.PIPE)
-    kwargs.setdefault("stderr", subprocess.PIPE)
-    kwargs.setdefault(
-        "shell", True if isinstance(cmd, (str, unicode)) else False)
-    kwargs.setdefault("universal_newlines", True)
-    p = subprocess.Popen(cmd, **kwargs)
-    _subprocesses_started.add(p)
-    try:
-        stdout, stderr = p.communicate()
-        if p.returncode != 0:
-            raise RuntimeError(stderr)
-        if stderr:
-            warn(stderr)
-        if stdout.endswith('\n'):
-            stdout = stdout[:-1]
-        return stdout
-    except Exception:
-        reap_children()
-        raise
+    shell = True if isinstance(cmd, (str, unicode)) else False
+    # avoid creating error boxes on windows
+    creationflags = 0x8000000 if WINDOWS else 0
+    p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, universal_newlines=True,
+                         creationflags=creationflags)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        raise RuntimeError(stderr)
+    if stderr:
+        warn(stderr)
+    if stdout.endswith('\n'):
+        stdout = stdout[:-1]
+    return stdout
 
 
 def reap_children(recursive=False):
-    """Terminate and wait() ANY subprocess which was started by this
-    test suite and ensure that no zombies stick around to hog resources
-    and create problems when looking for refleaks.
+    """Terminate and wait() any subprocess started by this test suite
+    and ensure that no zombies stick around to hog resources and
+    create problems  when looking for refleaks.
 
-    If "esursive" is True it also tries hard to terminate and wait()
+    If resursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
     # Get the children here, before terminating the children sub
@@ -611,13 +579,13 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
-def create_exe(outpath, use_gcc=False, c_code=""):
+def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
-    if use_gcc or c_code:
+    if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
-        if not c_code:
+        if c_code is None:
             c_code = textwrap.dedent(
                 """
                 #include <unistd.h>
@@ -642,9 +610,8 @@ def create_exe(outpath, use_gcc=False, c_code=""):
 
 
 def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
-    ret = tempfile.mktemp(prefix=prefix, suffix=suffix)
-    _testfiles.add(ret)
-    return ret
+    return tempfile.mktemp(prefix=prefix, suffix=suffix)
+
 
 # ===================================================================
 # --- testing
@@ -722,6 +689,21 @@ def skip_on_not_implemented(only_if=None):
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator
+
+
+def cleanup():
+    for name in os.listdir('.'):
+        if name.startswith(TESTFILE_PREFIX):
+            try:
+                safe_rmpath(name)
+            except UnicodeEncodeError as exc:
+                warn(exc)
+    for path in _testfiles_created:
+        safe_rmpath(path)
+
+
+atexit.register(cleanup)
+atexit.register(lambda: DEVNULL.close())
 
 
 # ===================================================================
@@ -991,6 +973,8 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
     libs = [x.path for x in psutil.Process().memory_maps()
             if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
+    if WINDOWS:
+        libs = [x for x in libs if 'wow64' not in x.lower()]
     src = random.choice(libs)
     cfile = None
     try:
