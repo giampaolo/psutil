@@ -145,6 +145,7 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
+_HERE = os.path.abspath(os.path.dirname(__file__))
 
 # --- support
 
@@ -174,6 +175,19 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 _subprocesses_started = set()
 _pids_started = set()
 _testfiles_created = set()
+
+
+@atexit.register
+def _cleanup():
+    DEVNULL.close()
+    for name in os.listdir(_HERE):
+        if name.startswith(TESTFILE_PREFIX):
+            _testfiles_created.add(name)
+    for name in _testfiles_created:
+        try:
+            safe_rmpath(name)
+        except UnicodeEncodeError as exc:
+            warn(exc)
 
 
 # ===================================================================
@@ -226,7 +240,7 @@ def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
-    By default stdout and stderr are redirected to /dev/null.
+    By default sdting and stderr are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
     initialized state.
     """
@@ -683,21 +697,6 @@ def skip_on_not_implemented(only_if=None):
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator
-
-
-def cleanup():
-    for name in os.listdir('.'):
-        if name.startswith(TESTFILE_PREFIX):
-            try:
-                safe_rmpath(name)
-            except UnicodeEncodeError as exc:
-                warn(exc)
-    for path in _testfiles_created:
-        safe_rmpath(path)
-
-
-atexit.register(cleanup)
-atexit.register(lambda: DEVNULL.close())
 
 
 # ===================================================================
