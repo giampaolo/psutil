@@ -232,9 +232,6 @@ def get_test_subprocess(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
-    if WINDOWS:
-        # avoid creating error boxes
-        kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
     if cmd is None:
         safe_rmpath(_TESTFN)
         pyline = "from time import sleep;"
@@ -307,11 +304,8 @@ def sh(cmd):
     raises RuntimeError on error.
     """
     shell = True if isinstance(cmd, (str, unicode)) else False
-    # avoid creating error boxes on windows
-    creationflags = 0x8000000 if WINDOWS else 0
     p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True,
-                         creationflags=creationflags)
+                         stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
