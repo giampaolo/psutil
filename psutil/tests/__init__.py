@@ -27,6 +27,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -174,7 +175,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles_created = set()
+_testfiles = set()
 
 
 @atexit.register
@@ -182,12 +183,12 @@ def _cleanup_files():
     DEVNULL.close()
     for name in os.listdir(_HERE):
         if name.startswith(TESTFILE_PREFIX):
-            _testfiles_created.add(name)
-    for name in _testfiles_created:
+            _testfiles.add(name)
+    for name in _testfiles:
         try:
             safe_rmpath(name)
-        except UnicodeEncodeError as exc:
-            warn(exc)
+        except Exception:
+            traceback.print_exc()
 
 
 # this is executed first
@@ -284,6 +285,7 @@ def create_proc_children_pair():
     The caller is supposed to clean them up with reap_children().
     """
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
+    _testfiles.add(_TESTFN2)
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         PYTHON = os.path.realpath(sys.executable)
@@ -306,6 +308,7 @@ def create_proc_children_pair():
         return (child1, child2)
     except Exception:
         reap_children()
+        safe_rmpath(_TESTFN2)
         raise
 
 
@@ -317,7 +320,7 @@ def pyrun(src):
     """
     with tempfile.NamedTemporaryFile(
             prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
-        _testfiles_created.add(f.name)
+        _testfiles.add(f.name)
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
@@ -639,8 +642,9 @@ def create_exe(outpath, c_code=None):
 
 
 def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
-    return tempfile.mktemp(prefix=prefix, suffix=suffix)
-
+    ret = tempfile.mktemp(prefix=prefix, suffix=suffix)
+    _testfiles.add(ret)
+    return ret
 
 # ===================================================================
 # --- testing
