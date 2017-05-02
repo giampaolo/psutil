@@ -178,7 +178,7 @@ _testfiles_created = set()
 
 
 @atexit.register
-def _cleanup():
+def _cleanup_files():
     DEVNULL.close()
     for name in os.listdir(_HERE):
         if name.startswith(TESTFILE_PREFIX):
@@ -188,6 +188,12 @@ def _cleanup():
             safe_rmpath(name)
         except UnicodeEncodeError as exc:
             warn(exc)
+
+
+# this is executed first
+@atexit.register
+def _cleanup_procs():
+    reap_children(recursive=True)
 
 
 # ===================================================================
@@ -237,12 +243,15 @@ class ThreadTask(threading.Thread):
 
 
 def get_test_subprocess(cmd=None, **kwds):
-    """Creates a python subprocess which does nothing for 60 secs and
+    """Create a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
+
     If "cmd" is specified that is used instead of python.
-    By default sdting and stderr are redirected to /dev/null.
+    By default sdtin and stdout are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
     initialized state.
+
+    The caller is supposed to clean this up with reap_children().
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
@@ -271,6 +280,8 @@ def create_proc_children_pair():
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
     The 2 processes are fully initialized and will live for 60 secs.
+
+    The caller is supposed to clean them up with reap_children().
     """
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
@@ -299,8 +310,10 @@ def create_proc_children_pair():
 
 
 def pyrun(src):
-    """Run python 'src' code in a separate interpreter.
-    Returns a subprocess.Popen instance.
+    """Run python 'src' code (a string) in a separate interpreter
+    and return it as a subprocess.Popen instance.
+
+    The caller is supposed to clean this up with reap_children().
     """
     with tempfile.NamedTemporaryFile(
             prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
@@ -313,29 +326,37 @@ def pyrun(src):
         return subp
 
 
-def sh(cmd):
-    """run cmd in a subprocess and return its output.
+def sh(cmd, **kwargs):
+    """run cmd as subprocess.Popen and return its output.
     raises RuntimeError on error.
     """
-    shell = True if isinstance(cmd, (str, unicode)) else False
-    p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        raise RuntimeError(stderr)
-    if stderr:
-        warn(stderr)
-    if stdout.endswith('\n'):
-        stdout = stdout[:-1]
-    return stdout
+    kwargs.setdefault("stdout", subprocess.PIPE)
+    kwargs.setdefault("stderr", subprocess.PIPE)
+    kwargs.setdefault(
+        "shell", True if isinstance(cmd, (str, unicode)) else False)
+    kwargs.setdefault("universal_newlines", True)
+    p = subprocess.Popen(cmd, **kwargs)
+    _subprocesses_started.add(p)
+    try:
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            raise RuntimeError(stderr)
+        if stderr:
+            warn(stderr)
+        if stdout.endswith('\n'):
+            stdout = stdout[:-1]
+        return stdout
+    except Exception:
+        reap_children()
+        raise
 
 
 def reap_children(recursive=False):
-    """Terminate and wait() any subprocess started by this test suite
-    and ensure that no zombies stick around to hog resources and
-    create problems  when looking for refleaks.
+    """Terminate and wait() ANY subprocess which was started by this
+    test suite and ensure that no zombies stick around to hog resources
+    and create problems when looking for refleaks.
 
-    If resursive is True it also tries to terminate and wait()
+    If "esursive" is True it also tries hard to terminate and wait()
     all grandchildren started by this process.
     """
     # Get the children here, before terminating the children sub
