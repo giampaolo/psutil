@@ -130,17 +130,19 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
+    // TODO: probably have to Py_INCREF here.
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
-        return NULL;
+        goto error;
     py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
     if (!py_args)
-        return NULL;
+        goto error;
     return Py_BuildValue("OO", py_name, py_args);
-#else
-    return Py_BuildValue("ss", info.pr_fname, info.pr_psargs);
-#endif
+
+error:
+    Py_XDECREF(py_name);
+    Py_XDECREF(py_args);
+    return NULL;
 }
 
 
