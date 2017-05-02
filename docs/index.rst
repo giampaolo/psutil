@@ -1245,7 +1245,8 @@ Process class
       >>>
 
     On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low).
+    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
+    named tuple.
 
     Availability: Linux and Windows > Vista
 
