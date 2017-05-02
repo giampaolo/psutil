@@ -195,8 +195,10 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -215,15 +217,23 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_RuntimeError, "getmntent() syscall failed");
             goto error;
         }
-        py_tuple = Py_BuildValue("(ssss)",
-                                 entry->mnt_fsname,  // device
-                                 entry->mnt_dir,     // mount point
+        py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(entry->mnt_dir);
+        if (! py_mountp)
+            goto error;
+        py_tuple = Py_BuildValue("(OOss)",
+                                 py_dev,             // device
+                                 py_mountp,          // mount point
                                  entry->mnt_type,    // fs type
                                  entry->mnt_opts);   // options
         if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
     endmntent(file);
@@ -232,6 +242,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     if (file != NULL)
         endmntent(file);
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
@@ -439,6 +451,9 @@ psutil_users(PyObject *self, PyObject *args) {
     struct utmp *ut;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
 
     if (py_retlist == NULL)
@@ -451,11 +466,20 @@ psutil_users(PyObject *self, PyObject *args) {
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfOi)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
+            "(OOOfOi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_username,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
@@ -464,14 +488,19 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
     endutent();
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_user_proc);
     Py_DECREF(py_retlist);
     endutent();
     return NULL;
