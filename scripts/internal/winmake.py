@@ -380,6 +380,18 @@ def test_by_name():
 
 
 @cmd
+def test_script():
+    """Quick way to test a script"""
+    try:
+        print(sys.argv)
+        name = sys.argv[2]
+    except IndexError:
+        sys.exit('second arg missing')
+    install()
+    sh("%s %s" % (PYTHON, name))
+
+
+@cmd
 def test_memleaks():
     """Run memory leaks tests"""
     install()
