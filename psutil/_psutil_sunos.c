@@ -123,6 +123,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     const char *procfs_path;
     PyObject *py_name;
     PyObject *py_args;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -130,18 +131,23 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-    // TODO: probably have to Py_INCREF here.
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
         goto error;
     py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
     if (!py_args)
         goto error;
-    return Py_BuildValue("OO", py_name, py_args);
+    py_retlist = Py_BuildValue("OO", py_name, py_args);
+    if (!py_retlist)
+        goto error;
+    Py_DECREF(py_name);
+    Py_DECREF(py_args);
+    return py_retlist;
 
 error:
     Py_XDECREF(py_name);
     Py_XDECREF(py_args);
+    Py_XDECREF(py_retlist);
     return NULL;
 }
 
