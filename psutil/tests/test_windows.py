@@ -190,10 +190,10 @@ class TestSystemAPIs(unittest.TestCase):
 class TestSensorsBattery(unittest.TestCase):
 
     def test_has_battery(self):
-        if psutil.sensors_battery() is None:
-            w = wmi.WMI()
-            with self.assertRaises(IndexError):
-                w.query('select * from Win32_Battery')[0]
+        if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
+            self.assertIsNotNone(psutil.sensors_battery())
+        else:
+            self.assertIsNone(psutil.sensors_battery())
 
     @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_percent(self):
@@ -213,12 +213,6 @@ class TestSensorsBattery(unittest.TestCase):
         # https://msdn.microsoft.com/en-us/library/aa394074(v=vs.85).aspx
         self.assertEqual(battery_psutil.power_plugged,
                          battery_wmi.BatteryStatus == 2)
-
-    def test_battery_present(self):
-        if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
-            self.assertIsNotNone(psutil.sensors_battery())
-        else:
-            self.assertIsNone(psutil.sensors_battery())
 
     def test_emulate_no_battery(self):
         with mock.patch("psutil._pswindows.cext.sensors_battery",
