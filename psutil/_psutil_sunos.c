@@ -452,12 +452,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -699,6 +699,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     const char *procfs_path;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -777,12 +778,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             }
         }
 
+        py_path = PyUnicode_DecodeFSDefault(name);
+        if (! py_path)
+            goto error;
         py_tuple = Py_BuildValue(
-            "iisslll",
+            "iisOlll",
             p->pr_vaddr,
             pr_addr_sz,
             perms,
-            name,
+            py_path,
             (long)p->pr_rss * p->pr_pagesize,
             (long)p->pr_anon * p->pr_pagesize,
             (long)p->pr_locked * p->pr_pagesize);
@@ -790,6 +794,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_path);
         Py_DECREF(py_tuple);
 
         // increment pointer
@@ -804,6 +809,7 @@ error:
     if (fd != -1)
         close(fd);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
         free(xmap);
