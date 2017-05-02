@@ -19,7 +19,6 @@ import sys
 import os
 import psutil
 
-
 def bytes2human(n):
     # http://code.activestate.com/recipes/578019
     # >>> bytes2human(10000)
@@ -35,7 +34,6 @@ def bytes2human(n):
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
     return "%sB" % n
-
 
 def main():
     templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
