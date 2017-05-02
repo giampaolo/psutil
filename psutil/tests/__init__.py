@@ -16,10 +16,10 @@ import ctypes
 import errno
 import functools
 import os
+import random
 import re
 import shutil
 import socket
-import ssl
 import stat
 import subprocess
 import sys
@@ -32,11 +32,6 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
-
-try:
-    from urllib.request import urlopen  # py3
-except ImportError:
-    from urllib2 import urlopen
 
 import psutil
 from psutil import POSIX
@@ -81,7 +76,10 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
-    # classes
+    # subprocesses
+    'pyrun', 'reap_children', 'get_test_subprocess',
+    'create_proc_children_pair',
+    # threads
     'ThreadTask'
     # test utils
     'unittest', 'cleanup', 'skip_on_access_denied', 'skip_on_not_implemented',
@@ -90,9 +88,7 @@ __all__ = [
     'install_pip', 'install_test_deps',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
-    # subprocesses
-    'pyrun', 'reap_children', 'get_test_subprocess',
-    'create_proc_children_pair',
+    'unique_filename',
     # os
     'get_winver', 'get_kernel_version',
     # sync primitives
@@ -147,7 +143,6 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
 
-HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
@@ -173,25 +168,16 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 AF_UNIX = getattr(socket, "AF_UNIX", object())
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
-TEST_DEPS = []
-if sys.version_info[:2] == (2, 6):
-    TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
-elif sys.version_info[:2] == (2, 7) or sys.version_info[:2] <= (3, 2):
-    TEST_DEPS.extend(["ipaddress", "mock"])
-elif sys.version_info[:2] == (3, 3):
-    TEST_DEPS.extend(["ipaddress"])
-
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles = set()
+_testfiles_created = set()
 
 
 # ===================================================================
-# --- classes
+# --- threads
 # ===================================================================
 
 
@@ -254,7 +240,11 @@ def get_test_subprocess(cmd=None, **kwds):
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
-        wait_for_file(_TESTFN, delete=True, empty=True)
+        try:
+            wait_for_file(_TESTFN, delete=True, empty=True)
+        except Exception:
+            reap_children()
+            raise
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -268,6 +258,7 @@ def create_proc_children_pair():
     Return a (child, grandchild) tuple.
     The 2 processes are fully initialized and will live for 60 secs.
     """
+    _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         PYTHON = os.path.realpath(sys.executable)
@@ -278,25 +269,28 @@ def create_proc_children_pair():
         s += "time.sleep(60);"
         subprocess.Popen([PYTHON, '-c', s])
         time.sleep(60)
-        """ % _TESTFN)
-    child1 = psutil.Process(pyrun(s).pid)
-    data = wait_for_file(_TESTFN, delete=False, empty=False)
-    os.remove(_TESTFN)
-    child2_pid = int(data)
-    _pids_started.add(child2_pid)
-    child2 = psutil.Process(child2_pid)
-    return (child1, child2)
+        """ % _TESTFN2)
+    subp = pyrun(s)
+    try:
+        child1 = psutil.Process(subp.pid)
+        data = wait_for_file(_TESTFN2, delete=False, empty=False)
+        os.remove(_TESTFN2)
+        child2_pid = int(data)
+        _pids_started.add(child2_pid)
+        child2 = psutil.Process(child2_pid)
+        return (child1, child2)
+    except Exception:
+        reap_children()
+        raise
 
 
 def pyrun(src):
     """Run python 'src' code in a separate interpreter.
     Returns a subprocess.Popen instance.
     """
-    if PY3:
-        src = bytes(src, 'ascii')
     with tempfile.NamedTemporaryFile(
-            prefix=TESTFILE_PREFIX, delete=False) as f:
-        _testfiles.add(f.name)
+            prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
+        _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
@@ -609,6 +603,10 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
+def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
+    return tempfile.mktemp(prefix=prefix, suffix=suffix)
+
+
 # ===================================================================
 # --- testing
 # ===================================================================
@@ -631,25 +629,6 @@ class TestCase(unittest.TestCase):
 
 # override default unittest.TestCase
 unittest.TestCase = TestCase
-
-
-def get_suite():
-    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                   if x.endswith('.py') and x.startswith('test_') and not
-                   x.startswith('test_memory_leaks')]
-    suite = unittest.TestSuite()
-    for tm in testmodules:
-        # ...so that the full test paths are printed on screen
-        tm = "psutil.tests.%s" % tm
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
-    return suite
-
-
-def run_suite():
-    """Run unit tests."""
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
 
 
 def run_test_module_by_name(name):
@@ -713,54 +692,12 @@ def cleanup():
                 safe_rmpath(name)
             except UnicodeEncodeError as exc:
                 warn(exc)
-    for path in _testfiles:
+    for path in _testfiles_created:
         safe_rmpath(path)
 
 
 atexit.register(cleanup)
 atexit.register(lambda: DEVNULL.close())
-
-
-# ===================================================================
-# --- install
-# ===================================================================
-
-
-def install_pip():
-    """Install pip. Returns the exit code of the subprocess."""
-    try:
-        import pip  # NOQA
-    except ImportError:
-        f = tempfile.NamedTemporaryFile(suffix='.py')
-        with contextlib.closing(f):
-            print("downloading %s to %s" % (GET_PIP_URL, f.name))
-            if hasattr(ssl, '_create_unverified_context'):
-                ctx = ssl._create_unverified_context()
-            else:
-                ctx = None
-            kwargs = dict(context=ctx) if ctx else {}
-            req = urlopen(GET_PIP_URL, **kwargs)
-            data = req.read()
-            f.write(data)
-            f.flush()
-
-            print("installing pip")
-            code = os.system('%s %s --user' % (sys.executable, f.name))
-            return code
-
-
-def install_test_deps(deps=None):
-    """Install test dependencies via pip."""
-    if deps is None:
-        deps = TEST_DEPS
-    deps = set(deps)
-    if deps:
-        is_venv = hasattr(sys, 'real_prefix')
-        opts = "--user" if not is_venv else ""
-        install_pip()
-        code = os.system('%s -m pip install %s --upgrade %s' % (
-            sys.executable, opts, " ".join(deps)))
-        return code
 
 
 # ===================================================================
@@ -782,7 +719,7 @@ def unix_socket_path(suffix=""):
     and tries to delete it on exit.
     """
     assert psutil.POSIX
-    path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
+    path = unique_filename(suffix=suffix)
     try:
         yield path
     finally:
@@ -1019,13 +956,24 @@ def is_namedtuple(x):
     return all(type(n) == str for n in f)
 
 
-def copyload_shared_lib(src, dst_prefix=TESTFILE_PREFIX):
-    """Given an existing shared so / DLL library copies it in
-    another location and loads it via ctypes.
-    Return the new path.
+@contextlib.contextmanager
+def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    """Ctx manager which picks up a random shared so/dll lib used
+    by this process, copies it in another location and loads it
+    in memory via ctypes.
+    Return the new absolutized, normcased path.
     """
-    newpath = tempfile.mktemp(prefix=dst_prefix,
-                              suffix=os.path.splitext(src)[1])
-    shutil.copyfile(src, newpath)
-    ctypes.CDLL(newpath)
-    return newpath
+    ext = ".so" if POSIX else ".dll"
+    dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+    libs = [x.path for x in psutil.Process().memory_maps()
+            if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
+    src = random.choice(libs)
+    cfile = None
+    try:
+        shutil.copyfile(src, dst)
+        cfile = ctypes.CDLL(dst)
+        yield dst
+    finally:
+        if WINDOWS and cfile is not None:
+            ctypes.windll.kernel32.FreeLibrary(cfile._handle)
+        safe_rmpath(dst)

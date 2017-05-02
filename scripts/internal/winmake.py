@@ -11,6 +11,7 @@ This was originally written as a bat file but they suck so much
 that they should be deemed illegal!
 """
 
+from __future__ import print_function
 import errno
 import fnmatch
 import functools
@@ -44,15 +45,36 @@ DEPS = [
     "requests"
 ]
 _cmds = {}
-
+if PY3:
+    basestring = str
 
 # ===================================================================
 # utils
 # ===================================================================
 
 
+def safe_print(text, file=sys.stdout, flush=False):
+    """Prints a (unicode) string to the console, encoded depending on
+    the stdout/file encoding (eg. cp437 on Windows). This is to avoid
+    encoding errors in case of funky path names.
+    Works with Python 2 and 3.
+    """
+    if not isinstance(text, basestring):
+        return print(text, file=file)
+    try:
+        file.write(text)
+    except UnicodeEncodeError:
+        bytes_string = text.encode(file.encoding, 'backslashreplace')
+        if hasattr(file, 'buffer'):
+            file.buffer.write(bytes_string)
+        else:
+            text = bytes_string.decode(file.encoding, 'strict')
+            file.write(text)
+    file.write("\n")
+
+
 def sh(cmd):
-    print("cmd: " + cmd)
+    safe_print("cmd: " + cmd)
     code = os.system(cmd)
     if code:
         raise SystemExit
@@ -76,7 +98,7 @@ def rm(pattern, directory=False):
             if err.errno != errno.ENOENT:
                 raise
         else:
-            print("rm %s" % path)
+            safe_print("rm %s" % path)
 
     def safe_rmtree(path):
         def onerror(fun, path, excinfo):
@@ -87,7 +109,7 @@ def rm(pattern, directory=False):
         existed = os.path.isdir(path)
         shutil.rmtree(path, onerror=onerror)
         if existed:
-            print("rmdir -f %s" % path)
+            safe_print("rmdir -f %s" % path)
 
     if "*" not in pattern:
         if directory:
@@ -104,10 +126,10 @@ def rm(pattern, directory=False):
         for name in found:
             path = os.path.join(root, name)
             if directory:
-                print("rmdir -f %s" % path)
+                safe_print("rmdir -f %s" % path)
                 safe_rmtree(path)
             else:
-                print("rm %s" % path)
+                safe_print("rm %s" % path)
                 safe_remove(path)
 
 
@@ -118,7 +140,7 @@ def safe_remove(path):
         if err.errno != errno.ENOENT:
             raise
     else:
-        print("rm %s" % path)
+        safe_print("rm %s" % path)
 
 
 def safe_rmtree(path):
@@ -130,7 +152,7 @@ def safe_rmtree(path):
     existed = os.path.isdir(path)
     shutil.rmtree(path, onerror=onerror)
     if existed:
-        print("rmdir -f %s" % path)
+        safe_print("rmdir -f %s" % path)
 
 
 def recursive_rm(*patterns):
@@ -157,9 +179,10 @@ def recursive_rm(*patterns):
 @cmd
 def help():
     """Print this help"""
-    print('Run "make <target>" where <target> is one of:')
+    safe_print('Run "make <target>" where <target> is one of:')
     for name in sorted(_cmds):
-        print("    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
+        safe_print(
+            "    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
 
 
 @cmd
@@ -202,7 +225,7 @@ def install_pip():
         else:
             ctx = None
         kw = dict(context=ctx) if ctx else {}
-        print("downloading %s" % GET_PIP_URL)
+        safe_print("downloading %s" % GET_PIP_URL)
         req = urlopen(GET_PIP_URL, **kw)
         data = req.read()
 
@@ -371,12 +394,24 @@ def test_contracts():
 def test_by_name():
     """Run test by name"""
     try:
-        print(sys.argv)
+        safe_print(sys.argv)
         name = sys.argv[2]
     except IndexError:
         sys.exit('second arg missing')
     install()
     sh("%s -m unittest -v %s" % (PYTHON, name))
+
+
+@cmd
+def test_script():
+    """Quick way to test a script"""
+    try:
+        safe_print(sys.argv)
+        name = sys.argv[2]
+    except IndexError:
+        sys.exit('second arg missing')
+    install()
+    sh("%s %s" % (PYTHON, name))
 
 
 @cmd

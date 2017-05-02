@@ -93,9 +93,9 @@ import psutil
 import psutil.tests
 
 
-def can_deal_with_funky_name(name):
+def subprocess_supports_unicode(name):
     """Return True if both the fs and the subprocess module can
-    deal with a funky file name.
+    deal with a unicode file name.
     """
     if PY3:
         return True
@@ -110,13 +110,22 @@ def can_deal_with_funky_name(name):
         return True
 
 
+def ctypes_supports_unicode(name):
+    if PY3:
+        return True
+    try:
+        with copyload_shared_lib():
+            pass
+    except UnicodeEncodeError:
+        return False
+
+
+# An invalid unicode string.
 if PY3:
     INVALID_NAME = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
         'utf8', 'surrogateescape')
 else:
     INVALID_NAME = TESTFN + "f\xc0\x80"
-UNICODE_OK = can_deal_with_funky_name(TESTFN_UNICODE)
-INVALID_UNICODE_OK = can_deal_with_funky_name(INVALID_NAME)
 
 
 # ===================================================================
@@ -244,27 +253,25 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps(self):
-        normcase = os.path.normcase
-        realpath = os.path.realpath
-        p = psutil.Process()
-        ext = ".so" if POSIX else ".dll"
-        old = [realpath(x.path) for x in p.memory_maps()
-               if normcase(x.path).endswith(ext)][0]
-        try:
-            new = realpath(normcase(
-                copyload_shared_lib(old, dst_prefix=self.funky_name)))
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise unittest.SkipTest("ctypes can't handle unicode")
-        newpaths = [realpath(normcase(x.path)) for x in p.memory_maps()]
-        self.assertIn(new, newpaths)
+        if not ctypes_supports_unicode(self.funky_name):
+            raise unittest.SkipTest("ctypes can't handle unicode")
+
+        with copyload_shared_lib(dst_prefix=self.funky_name) as funky_path:
+            def normpath(p):
+                return os.path.realpath(os.path.normcase(p))
+            libpaths = [normpath(x.path)
+                        for x in psutil.Process().memory_maps()]
+            # ...just to have a clearer msg in case of failure
+            libpaths = [x for x in libpaths if TESTFILE_PREFIX in x]
+            self.assertIn(normpath(funky_path), libpaths)
+            for path in libpaths:
+                self.assertIsInstance(path, str)
 
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(not UNICODE_OK, "subprocess can't deal with unicode")
+@unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
+                 "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_name = TESTFN_UNICODE
@@ -277,7 +284,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
-@unittest.skipIf(not INVALID_UNICODE_OK,
+@unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
