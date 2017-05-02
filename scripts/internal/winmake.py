@@ -354,6 +354,13 @@ def test_unicode():
 
 
 @cmd
+def test_connections():
+    """Run connections tests"""
+    install()
+    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+
+
+@cmd
 def test_contracts():
     """Run contracts tests"""
     install()
