@@ -16,6 +16,7 @@ import ctypes
 import errno
 import functools
 import os
+import random
 import re
 import shutil
 import socket
@@ -1019,13 +1020,21 @@ def is_namedtuple(x):
     return all(type(n) == str for n in f)
 
 
-def copyload_shared_lib(src, dst_prefix=TESTFILE_PREFIX):
-    """Given an existing shared so / DLL library copies it in
-    another location and loads it via ctypes.
-    Return the new path.
+@contextlib.contextmanager
+def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    """Ctx manager which picks up a random shared so/dll lib used
+    by this process, copies it in another location and loads it
+    in memory via ctypes.
+    Return the new absolutized path.
     """
-    newpath = tempfile.mktemp(prefix=dst_prefix,
-                              suffix=os.path.splitext(src)[1])
-    shutil.copyfile(src, newpath)
-    ctypes.CDLL(newpath)
-    return newpath
+    ext = ".so" if POSIX else ".dll"
+    dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+    libs = [x.path for x in psutil.Process().memory_maps()
+            if os.path.normcase(x.path).endswith(ext)]
+    src = random.choice(libs)
+    try:
+        shutil.copyfile(src, dst)
+        ctypes.CDLL(dst)
+        yield os.path.realpath(dst)
+    finally:
+        safe_rmpath(dst)
