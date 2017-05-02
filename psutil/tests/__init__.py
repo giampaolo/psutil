@@ -611,13 +611,13 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
-def create_exe(outpath, c_code=None):
+def create_exe(outpath, use_gcc=False, c_code=""):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
-    if c_code:
+    if use_gcc or c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
-        if c_code is None:
+        if not c_code:
             c_code = textwrap.dedent(
                 """
                 #include <unistd.h>
