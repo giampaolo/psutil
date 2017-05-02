@@ -33,7 +33,6 @@ from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -190,33 +189,30 @@ class TestSystemAPIs(unittest.TestCase):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSensorsBattery(unittest.TestCase):
 
-    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
-    def test_percent(self):
-        w = wmi.WMI()
-        battery_psutil = psutil.sensors_battery()
-        if battery_psutil is None:
-            with self.assertRaises(IndexError):
-                w.query('select * from Win32_Battery')[0]
-        else:
-            battery_wmi = w.query('select * from Win32_Battery')[0]
-            if battery_psutil is None:
-                self.assertNot(battery_wmi.EstimatedChargeRemaining)
-                return
-
-            self.assertAlmostEqual(
-                battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,
-                delta=1)
-            self.assertEqual(
-                battery_psutil.power_plugged, battery_wmi.BatteryStatus == 1)
-
-    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
-    def test_battery_present(self):
+    def test_has_battery(self):
         if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
             self.assertIsNotNone(psutil.sensors_battery())
         else:
             self.assertIsNone(psutil.sensors_battery())
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_percent(self):
+        w = wmi.WMI()
+        battery_wmi = w.query('select * from Win32_Battery')[0]
+        battery_psutil = psutil.sensors_battery()
+        self.assertAlmostEqual(
+            battery_psutil.percent, battery_wmi.EstimatedChargeRemaining,
+            delta=1)
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_power_plugged(self):
+        w = wmi.WMI()
+        battery_wmi = w.query('select * from Win32_Battery')[0]
+        battery_psutil = psutil.sensors_battery()
+        # Status codes:
+        # https://msdn.microsoft.com/en-us/library/aa394074(v=vs.85).aspx
+        self.assertEqual(battery_psutil.power_plugged,
+                         battery_wmi.BatteryStatus == 2)
 
     def test_emulate_no_battery(self):
         with mock.patch("psutil._pswindows.cext.sensors_battery",

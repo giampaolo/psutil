@@ -354,6 +354,13 @@ def test_unicode():
 
 
 @cmd
+def test_connections():
+    """Run connections tests"""
+    install()
+    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+
+
+@cmd
 def test_contracts():
     """Run contracts tests"""
     install()
@@ -370,6 +377,18 @@ def test_by_name():
         sys.exit('second arg missing')
     install()
     sh("%s -m unittest -v %s" % (PYTHON, name))
+
+
+@cmd
+def test_script():
+    """Quick way to test a script"""
+    try:
+        print(sys.argv)
+        name = sys.argv[2]
+    except IndexError:
+        sys.exit('second arg missing')
+    install()
+    sh("%s %s" % (PYTHON, name))
 
 
 @cmd
