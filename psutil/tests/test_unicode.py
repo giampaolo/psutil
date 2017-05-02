@@ -257,9 +257,11 @@ class _BaseFSAPIsTests(object):
             raise unittest.SkipTest("ctypes can't handle unicode")
 
         with copyload_shared_lib(dst_prefix=self.funky_name) as funky_path:
-            libpaths = [os.path.realpath(os.path.normcase(x.path))
+            def normpath(p):
+                return os.path.realpath(os.path.normcase(p))
+            libpaths = [normpath(x.path)
                         for x in psutil.Process().memory_maps()]
-            self.assertIn(funky_path, libpaths)
+            self.assertIn(normpath(funky_path), libpaths)
             for path in libpaths:
                 self.assertIsInstance(path, str)
 

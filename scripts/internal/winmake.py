@@ -60,7 +60,7 @@ def safe_print(text, file=sys.stdout, flush=False):
     Works with Python 2 and 3.
     """
     if not isinstance(text, basestring):
-        return print(text, file=file, flush=flush)
+        return print(text, file=file)
     try:
         file.write(text)
     except UnicodeEncodeError:

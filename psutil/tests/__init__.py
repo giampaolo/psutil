@@ -1025,16 +1025,19 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     """Ctx manager which picks up a random shared so/dll lib used
     by this process, copies it in another location and loads it
     in memory via ctypes.
-    Return the new absolutized path.
+    Return the new absolutized, normcased path.
     """
     ext = ".so" if POSIX else ".dll"
     dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
     libs = [x.path for x in psutil.Process().memory_maps()
-            if os.path.normcase(x.path).endswith(ext)]
+            if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
     src = random.choice(libs)
+    cfile = None
     try:
         shutil.copyfile(src, dst)
-        ctypes.CDLL(dst)
-        yield os.path.realpath(dst)
+        cfile = ctypes.CDLL(dst)
+        yield dst
     finally:
+        if WINDOWS and cfile is not None:
+            ctypes.windll.kernel32.FreeLibrary(cfile._handle)
         safe_rmpath(dst)
