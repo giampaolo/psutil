@@ -853,8 +853,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     uint64_t flags;
     char opts[400];
     struct statfs *fs = NULL;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -939,15 +941,24 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_CMDFLAGS)
             strlcat(opts, ",cmdflags", sizeof(opts));
 
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)", fs[i].f_mntfromname,  // device
-            fs[i].f_mntonname,    // mount point
+            "(OOss)",
+            py_dev,               // device
+            py_mountp,            // mount point
             fs[i].f_fstypename,   // fs type
             opts);                // options
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
 
@@ -955,6 +966,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
