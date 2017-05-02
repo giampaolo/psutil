@@ -74,8 +74,9 @@ class Base(object):
             # so there may be more connections.
             return smap[sock.fileno()]
         else:
-            self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
             self.assertEqual(len(cons), 1)
+            if cons[0].fd != -1:
+                self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
             return cons[0]
 
     def check_socket(self, sock, conn=None):

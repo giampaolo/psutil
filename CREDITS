@@ -20,6 +20,25 @@ C: Italy
 E: g.rodola@gmail.com
 W: http://grodola.blogspot.com/
 
+Experts
+=======
+
+Github usernames of people to CC on github when in need of help.
+
+- NetBSD:
+    - 0-wiz-0, Thomas Klausner
+    - ryoqun, Ryo Onodera
+- OpenBSD:
+    - landryb, Landry Breuil
+- OSX:
+    - whitlockjc, Jeremy Whitlock
+- Windows:
+    - mrjefftang, Jeff Tang
+    - wj32, Wen Jia Liu
+    - fbenkstein, Frank Benkstein
+- SunOS:
+    - wiggin15, Arnon Yaari
+
 Contributors
 ============
 
