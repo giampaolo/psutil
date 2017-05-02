@@ -261,6 +261,8 @@ class _BaseFSAPIsTests(object):
                 return os.path.realpath(os.path.normcase(p))
             libpaths = [normpath(x.path)
                         for x in psutil.Process().memory_maps()]
+            # ...just to have a clearer msg in case of failure
+            libpaths = [x for x in libpaths if TESTFILE_PREFIX in x]
             self.assertIn(normpath(funky_path), libpaths)
             for path in libpaths:
                 self.assertIsInstance(path, str)
