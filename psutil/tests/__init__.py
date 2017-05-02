@@ -189,7 +189,7 @@ elif sys.version_info[:2] == (3, 3):
 
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles = set()
+_testfiles_created = set()
 
 
 # ===================================================================
@@ -256,7 +256,11 @@ def get_test_subprocess(cmd=None, **kwds):
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
-        wait_for_file(_TESTFN, delete=True, empty=True)
+        try:
+            wait_for_file(_TESTFN, delete=True, empty=True)
+        except Exception:
+            reap_children()
+            raise
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -282,24 +286,27 @@ def create_proc_children_pair():
         subprocess.Popen([PYTHON, '-c', s])
         time.sleep(60)
         """ % _TESTFN2)
-    child1 = psutil.Process(pyrun(s).pid)
-    data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    os.remove(_TESTFN2)
-    child2_pid = int(data)
-    _pids_started.add(child2_pid)
-    child2 = psutil.Process(child2_pid)
-    return (child1, child2)
+    subp = pyrun(s)
+    try:
+        child1 = psutil.Process(subp.pid)
+        data = wait_for_file(_TESTFN2, delete=False, empty=False)
+        os.remove(_TESTFN2)
+        child2_pid = int(data)
+        _pids_started.add(child2_pid)
+        child2 = psutil.Process(child2_pid)
+        return (child1, child2)
+    except Exception:
+        reap_children()
+        raise
 
 
 def pyrun(src):
     """Run python 'src' code in a separate interpreter.
     Returns a subprocess.Popen instance.
     """
-    if PY3:
-        src = bytes(src, 'ascii')
     with tempfile.NamedTemporaryFile(
-            prefix=TESTFILE_PREFIX, delete=False) as f:
-        _testfiles.add(f.name)
+            prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
+        _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
@@ -720,7 +727,7 @@ def cleanup():
                 safe_rmpath(name)
             except UnicodeEncodeError as exc:
                 warn(exc)
-    for path in _testfiles:
+    for path in _testfiles_created:
         safe_rmpath(path)
 
 
