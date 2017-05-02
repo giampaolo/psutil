@@ -91,6 +91,7 @@ __all__ = [
     'install_pip', 'install_test_deps',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
+    'unique_filename',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
     'create_proc_children_pair',
@@ -269,6 +270,7 @@ def create_proc_children_pair():
     Return a (child, grandchild) tuple.
     The 2 processes are fully initialized and will live for 60 secs.
     """
+    _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         PYTHON = os.path.realpath(sys.executable)
@@ -279,10 +281,10 @@ def create_proc_children_pair():
         s += "time.sleep(60);"
         subprocess.Popen([PYTHON, '-c', s])
         time.sleep(60)
-        """ % _TESTFN)
+        """ % _TESTFN2)
     child1 = psutil.Process(pyrun(s).pid)
-    data = wait_for_file(_TESTFN, delete=False, empty=False)
-    os.remove(_TESTFN)
+    data = wait_for_file(_TESTFN2, delete=False, empty=False)
+    os.remove(_TESTFN2)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
@@ -610,6 +612,10 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
+def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
+    return tempfile.mktemp(prefix=prefix, suffix=suffix)
+
+
 # ===================================================================
 # --- testing
 # ===================================================================
@@ -783,7 +789,7 @@ def unix_socket_path(suffix=""):
     and tries to delete it on exit.
     """
     assert psutil.POSIX
-    path = tempfile.mktemp(prefix=TESTFILE_PREFIX, suffix=suffix)
+    path = unique_filename(suffix=suffix)
     try:
         yield path
     finally:
