@@ -2855,7 +2855,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     HANDLE hProcess = NULL;
     PVOID baseAddress;
     PVOID previousAllocationBase;
-    CHAR mappedFileName[MAX_PATH];
+    LPWSTR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
     PyObject *py_retlist = PyList_New(0);
@@ -2881,20 +2881,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         if (baseAddress > maxAddr)
             break;
-        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
+        if (GetMappedFileNameW(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
-
-#if PY_MAJOR_VERSION >= 3
-            py_str = PyUnicode_Decode(
-                mappedFileName, _tcslen(mappedFileName),
-                Py_FileSystemDefaultEncoding, "surrogateescape");
-#else
-            py_str = Py_BuildValue("s", mappedFileName);
-#endif
+            py_str = PyUnicode_FromWideChar(mappedFileName,
+                                            wcslen(mappedFileName));
             if (py_str == NULL)
                 goto error;
-
 #ifdef _WIN64
            py_tuple = Py_BuildValue(
               "(KsOI)",

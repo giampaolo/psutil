@@ -503,6 +503,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('fans.py')
 
     @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(TRAVIS, "not battery on TRAVIS")
     def test_battery(self):
         self.assert_stdout('battery.py')
 

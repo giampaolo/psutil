@@ -36,11 +36,12 @@ from ._common import isfile_strict
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
-from ._common import usage_percent
 from ._common import memoize_when_activated
+from ._common import usage_percent
 from ._compat import long
 from ._compat import lru_cache
 from ._compat import PY3
+from ._compat import unicode
 from ._compat import xrange
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
@@ -754,6 +755,11 @@ class Process(object):
             raise
         else:
             for addr, perm, path, rss in raw:
+                # TODO: refactor
+                assert isinstance(path, unicode), path
+                if not PY3:
+                    path = path.encode(
+                        sys.getfilesystemencoding(), errors='replace')
                 path = convert_dos_path(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
