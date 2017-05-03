@@ -1331,20 +1331,11 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(processHandle);
+    processHandle = NULL;
 
     // Get the user SID.
-
     bufferSize = 0x100;
-    user = malloc(bufferSize);
-    if (user == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
-                             &bufferSize))
-    {
-        free(user);
+    while (1) {
         user = malloc(bufferSize);
         if (user == NULL) {
             PyErr_NoMemory();
@@ -1353,34 +1344,25 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
                                  &bufferSize))
         {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                free(user);
+                continue;
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
         }
+        break;
     }
 
     CloseHandle(tokenHandle);
+    tokenHandle = NULL;
 
     // resolve the SID to a name
     nameSize = 0x100;
     domainNameSize = 0x100;
-
-    name = malloc(nameSize * sizeof(TCHAR));
-    if (name == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    domainName = malloc(domainNameSize * sizeof(TCHAR));
-    if (domainName == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
-                          &domainNameSize, &nameUse))
-    {
-        free(name);
-        free(domainName);
+    while (1) {
         name = malloc(nameSize * sizeof(TCHAR));
         if (name == NULL) {
             PyErr_NoMemory();
@@ -1394,15 +1376,22 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize,
                               domainName, &domainNameSize, &nameUse))
         {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                free(name);
+                free(domainName);
+                continue;
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
         }
+        break;
     }
 
+    // build the "domain\\username" username string
     nameSize = _tcslen(name);
     domainNameSize = _tcslen(domainName);
-
-    // build the full username string
     fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
     if (fullName == NULL) {
         PyErr_NoMemory();
