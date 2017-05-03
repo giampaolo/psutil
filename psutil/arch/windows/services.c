@@ -21,7 +21,7 @@ psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
-    SERVICE_DESCRIPTION *scd = NULL;
+    SERVICE_DESCRIPTIONW *scd = NULL;
 
     sc = OpenSCManager(NULL, NULL, scm_access);
     if (sc == NULL) {
@@ -366,7 +366,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
     SC_HANDLE hService = NULL;
-    SERVICE_DESCRIPTION *scd = NULL;
+    SERVICE_DESCRIPTIONW *scd = NULL;
     char *service_name;
     PyObject *py_retstr = NULL;
 
@@ -380,22 +380,22 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     // This first call to QueryServiceConfig2() is necessary in order
     // to get the right size.
     bytesNeeded = 0;
-    QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
-                        &bytesNeeded);
+    QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
+                         &bytesNeeded);
     if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
         // Also services.msc fails in the same manner, so we return an
         // empty string.
         CloseServiceHandle(hService);
-        return Py_BuildValue("s", "");
+        return Py_BuildValue("u", "");
     }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
-    scd = (SERVICE_DESCRIPTION *)malloc(bytesNeeded);
-    ok = QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION,
-                             (LPBYTE)scd, bytesNeeded, &bytesNeeded);
+    scd = (SERVICE_DESCRIPTIONW *)malloc(bytesNeeded);
+    ok = QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION,
+                              (LPBYTE)scd, bytesNeeded, &bytesNeeded);
     if (ok == 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
@@ -405,11 +405,8 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         py_retstr = Py_BuildValue("s", "");
     }
     else {
-        py_retstr = PyUnicode_Decode(
-            scd->lpDescription,
-            _tcslen(scd->lpDescription),
-            Py_FileSystemDefaultEncoding,
-            "replace");
+        py_retstr = PyUnicode_FromWideChar(
+            scd->lpDescription,  wcslen(scd->lpDescription));
     }
     if (!py_retstr)
         goto error;
