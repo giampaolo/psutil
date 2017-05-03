@@ -195,7 +195,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     DWORD bytesNeeded = 0;
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
-    QUERY_SERVICE_CONFIG *qsc = NULL;
+    QUERY_SERVICE_CONFIGW *qsc = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_unicode_display_name = NULL;
     PyObject *py_unicode_binpath = NULL;
@@ -208,45 +208,36 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     if (hService == NULL)
         goto error;
 
-    // First call to QueryServiceConfig() is necessary to get the
+    // First call to QueryServiceConfigW() is necessary to get the
     // right size.
     bytesNeeded = 0;
-    QueryServiceConfig(hService, NULL, 0, &bytesNeeded);
+    QueryServiceConfigW(hService, NULL, 0, &bytesNeeded);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
     qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
-    ok = QueryServiceConfig(hService, qsc, bytesNeeded, &bytesNeeded);
+    ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
     if (ok == 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     // Get unicode display name.
-    py_unicode_display_name = PyUnicode_Decode(
-        qsc->lpDisplayName,
-        _tcslen(qsc->lpDisplayName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_display_name = PyUnicode_FromWideChar(
+        qsc->lpDisplayName, wcslen(qsc->lpDisplayName));
     if (py_unicode_display_name == NULL)
         goto error;
 
     // Get unicode bin path.
-    py_unicode_binpath = PyUnicode_Decode(
-        qsc->lpBinaryPathName,
-        _tcslen(qsc->lpBinaryPathName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_binpath = PyUnicode_FromWideChar(
+        qsc->lpBinaryPathName, wcslen(qsc->lpBinaryPathName));
     if (py_unicode_binpath == NULL)
         goto error;
 
     // Get unicode username.
-    py_unicode_username = PyUnicode_Decode(
-        qsc->lpServiceStartName,
-        _tcslen(qsc->lpServiceStartName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_username = PyUnicode_FromWideChar(
+        qsc->lpServiceStartName, wcslen(qsc->lpServiceStartName));
     if (py_unicode_username == NULL)
         goto error;
 
@@ -378,7 +369,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     if (hService == NULL)
         goto error;
 
-    // This first call to QueryServiceConfig2() is necessary in order
+    // This first call to QueryServiceConfig2W() is necessary in order
     // to get the right size.
     bytesNeeded = 0;
     QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
