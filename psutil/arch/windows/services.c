@@ -18,10 +18,9 @@
 SC_HANDLE
 psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
 {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
-    SERVICE_DESCRIPTIONW *scd = NULL;
 
     sc = OpenSCManager(NULL, NULL, scm_access);
     if (sc == NULL) {
@@ -96,7 +95,7 @@ get_state_string(DWORD state) {
  */
 PyObject *
 psutil_winservice_enumerate(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     SC_HANDLE sc = NULL;
     DWORD bytesNeeded = 0;
@@ -106,7 +105,8 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     DWORD i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
-    PyObject *py_unicode_display_name = NULL;
+    PyObject *py_name = NULL;
+    PyObject *py_display_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -118,7 +118,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (;;) {
-        ok = EnumServicesStatusEx(
+        ok = EnumServicesStatusExW(
             sc,
             SC_ENUM_PROCESS_INFO,
             SERVICE_WIN32,  // XXX - extend this to include drivers etc.?
@@ -134,31 +134,31 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
         if (lpService)
             free(lpService);
         dwBytes = bytesNeeded;
-        lpService = (ENUM_SERVICE_STATUS_PROCESS*)malloc(dwBytes);
+        lpService = (ENUM_SERVICE_STATUS_PROCESSW*)malloc(dwBytes);
     }
 
     for (i = 0; i < srvCount; i++) {
-        // Get unicode display name.
-        py_unicode_display_name = NULL;
-        py_unicode_display_name = PyUnicode_Decode(
-            lpService[i].lpDisplayName,
-            _tcslen(lpService[i].lpDisplayName),
-            Py_FileSystemDefaultEncoding,
-            "replace");
-        if (py_unicode_display_name == NULL)
+        // Get unicode name / display name.
+        py_name = NULL;
+        py_name = PyUnicode_FromWideChar(
+            lpService[i].lpServiceName, wcslen(lpService[i].lpServiceName));
+        if (py_name == NULL)
+            goto error;
+
+        py_display_name = NULL;
+        py_display_name = PyUnicode_FromWideChar(
+            lpService[i].lpDisplayName, wcslen(lpService[i].lpDisplayName));
+        if (py_display_name == NULL)
             goto error;
 
         // Construct the result.
-        py_tuple = Py_BuildValue(
-            "(sO)",
-            lpService[i].lpServiceName,  // name
-            py_unicode_display_name  // display_name
-        );
+        py_tuple = Py_BuildValue("(OO)", py_name, py_display_name);
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_unicode_display_name);
+        Py_DECREF(py_display_name);
+        Py_DECREF(py_name);
         Py_DECREF(py_tuple);
     }
 
@@ -168,7 +168,8 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_unicode_display_name);
+    Py_DECREF(py_name);
+    Py_XDECREF(py_display_name);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (sc != NULL)
@@ -360,7 +361,7 @@ error:
  */
 PyObject *
 psutil_winservice_query_descr(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
     DWORD resumeHandle = 0;
@@ -386,7 +387,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         // Also services.msc fails in the same manner, so we return an
         // empty string.
         CloseServiceHandle(hService);
-        return Py_BuildValue("u", "");
+        return Py_BuildValue("s", "");
     }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
