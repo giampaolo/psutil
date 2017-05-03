@@ -3035,11 +3035,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             }
             *--ptr = '\0';
 
-#if PY_MAJOR_VERSION >= 3
-            py_mac_address = PyUnicode_FromString(buff);
-#else
-            py_mac_address = PyString_FromString(buff);
-#endif
+            py_mac_address = Py_BuildValue("s", buff);
             if (py_mac_address == NULL)
                 goto error;
 
