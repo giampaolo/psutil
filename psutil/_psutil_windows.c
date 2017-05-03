@@ -2447,6 +2447,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     int all;
     int type;
     int ret;
+    unsigned int old_mode = 0;
     char opts[20];
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
@@ -2460,7 +2461,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // avoid to visualize a message box in case something goes wrong
     // see https://github.com/giampaolo/psutil/issues/264
-    SetErrorMode(SEM_FAILCRITICALERRORS);
+    old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
     if (! PyArg_ParseTuple(args, "O", &py_all))
         goto error;
@@ -2541,11 +2542,11 @@ next:
         drive_letter = strchr(drive_letter, 0) + 1;
     }
 
-    SetErrorMode(0);
+    SetErrorMode(old_mode);
     return py_retlist;
 
 error:
-    SetErrorMode(0);
+    SetErrorMode(old_mode);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;

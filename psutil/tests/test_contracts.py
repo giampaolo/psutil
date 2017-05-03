@@ -430,9 +430,10 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertGreaterEqual(field, 0)
 
     def ionice(self, ret, proc):
-        assert is_namedtuple(ret)
-        for field in ret:
-            self.assertIsInstance(field, int)
+        if POSIX:
+            assert is_namedtuple(ret)
+            for field in ret:
+                self.assertIsInstance(field, int)
         if LINUX:
             self.assertGreaterEqual(ret.ioclass, 0)
             self.assertGreaterEqual(ret.value, 0)
