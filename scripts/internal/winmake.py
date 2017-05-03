@@ -73,8 +73,9 @@ def safe_print(text, file=sys.stdout, flush=False):
     file.write("\n")
 
 
-def sh(cmd):
-    safe_print("cmd: " + cmd)
+def sh(cmd, nolog=False):
+    if not nolog:
+        safe_print("cmd: " + cmd)
     code = os.system(cmd)
     if code:
         raise SystemExit
@@ -320,7 +321,7 @@ def flake8():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files))
+    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
 @cmd

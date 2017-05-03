@@ -92,6 +92,15 @@ class TestProcess(unittest.TestCase):
         username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
 
+    def test_username_no_resolution(self):
+        # Emulate a case where the system can't resolve the uid to
+        # a username in which case psutil is supposed to return
+        # the stringified uid.
+        p = psutil.Process()
+        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
+            self.assertEqual(p.username(), str(p.uids().real))
+            assert fun.called
+
     @skip_on_access_denied()
     @retry_before_failing()
     def test_rss_memory(self):

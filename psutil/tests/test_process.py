@@ -9,6 +9,7 @@
 import collections
 import contextlib
 import errno
+import getpass
 import os
 import select
 import signal
@@ -836,22 +837,14 @@ class TestProcess(unittest.TestCase):
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        if POSIX:
-            import pwd
-            self.assertEqual(p.username(), pwd.getpwuid(os.getuid()).pw_name)
-            with mock.patch("psutil.pwd.getpwuid",
-                            side_effect=KeyError) as fun:
-                self.assertEqual(p.username(), str(p.uids().real))
-                assert fun.called
-
-        elif WINDOWS and 'USERNAME' in os.environ:
-            expected_username = os.environ['USERNAME']
-            expected_domain = os.environ['USERDOMAIN']
-            domain, username = p.username().split('\\')
-            self.assertEqual(domain, expected_domain)
-            self.assertEqual(username, expected_username)
+        username = p.username()
+        if WINDOWS:
+            domain, username = username.split('\\')
+            self.assertEqual(username, getpass.getuser())
+            if 'USERDOMAIN' in os.environ:
+                self.assertEqual(domain, os.environ['USERDOMAIN'])
         else:
-            p.username()
+            self.assertEqual(username, getpass.getuser())
 
     def test_cwd(self):
         sproc = get_test_subprocess()

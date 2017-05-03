@@ -37,6 +37,7 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -503,7 +504,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('fans.py')
 
     @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
-    @unittest.skipIf(TRAVIS, "not battery on TRAVIS")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_battery(self):
         self.assert_stdout('battery.py')
 
