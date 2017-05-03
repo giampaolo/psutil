@@ -427,9 +427,9 @@ def users():
 
 
 def win_service_iter():
-    """Return a list of WindowsService instances."""
+    """Yields a list of WindowsService instances."""
     for name, display_name in cext.winservice_enumerate():
-        yield WindowsService(name, display_name)
+        yield WindowsService(py2_strencode(name), py2_strencode(display_name))
 
 
 def win_service_get(name):
@@ -470,10 +470,10 @@ class WindowsService(object):
                 cext.winservice_query_config(self._name)
         # XXX - update _self.display_name?
         return dict(
-            display_name=display_name,
-            binpath=binpath,
-            username=username,
-            start_type=start_type)
+            display_name=py2_strencode(display_name),
+            binpath=py2_strencode(binpath),
+            username=py2_strencode(username),
+            start_type=py2_strencode(start_type))
 
     def _query_status(self):
         with self._wrap_exceptions():
@@ -550,7 +550,7 @@ class WindowsService(object):
 
     def description(self):
         """Service long description."""
-        return cext.winservice_query_descr(self.name())
+        return py2_strencode(cext.winservice_query_descr(self.name()))
 
     # utils
 
