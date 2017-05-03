@@ -669,7 +669,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return PyErr_SetFromWindowsErr(0);
     }
     CloseHandle(hProcess);
-    return Py_BuildValue("u", exe);
+    return PyUnicode_FromWideChar(exe, wcslen(exe));
 }
 
 
