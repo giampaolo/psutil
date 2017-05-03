@@ -47,23 +47,9 @@ etc.) and make sure that:
 * psutil never crashes with UnicodeDecodeError
 * the returned path matches
 
-Notes about unicode handling in psutil:
-
-* all strings are encoded by using the default filesystem encoding which
-  varies depending on the platform (e.g. UTF-8 on Linux, mbcs on Win)
-* no API is supposed to crash with UnicodeDecodeError
-* in case of badly encoded data returned by the OS the following error
-  handlers are used to replace the bad chars in the string:
-  * Python 2: "replace"
-  * Python 3 on POSIX: "surrogateescape"
-  * Python 3 on Windows: "surrogatepass" (3.6+) or "replace" (<= 3.5)
-* on Python 2 all APIs return bytes (str type), never unicode
-* on Python 2 you can go back to unicode by doing:
-  >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
-  ...and make proper comparisons.
-* there is no API on Python 2 to tell psutil to return unicode
-
-See: https://github.com/giampaolo/psutil/issues/1040
+For a detailed explanation of how psutil handles unicode see:
+- https://github.com/giampaolo/psutil/issues/1040
+- https://pythonhosted.org/psutil/#unicode
 """
 
 import os
