@@ -1334,18 +1334,8 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     processHandle = NULL;
 
     // Get the user SID.
-
     bufferSize = 0x100;
-    user = malloc(bufferSize);
-    if (user == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
-                             &bufferSize))
-    {
-        free(user);
+    while (1) {
         user = malloc(bufferSize);
         if (user == NULL) {
             PyErr_NoMemory();
@@ -1354,9 +1344,16 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
                                  &bufferSize))
         {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                free(user);
+                continue;
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
         }
+        break;
     }
 
     CloseHandle(tokenHandle);
