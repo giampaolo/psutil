@@ -2576,7 +2576,7 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    LPTSTR buffer_user = NULL;
+    WCHAR *buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
@@ -2595,7 +2595,7 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
-    PyObject *py_buffer_user_encoded = NULL;
+    PyObject *py_username = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2623,12 +2623,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
-                                       &buffer_user, &bytes) == 0) {
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
+                                        &buffer_user, &bytes) == 0) {
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
-        if (bytes == 1)
+        if (bytes <= 2)
             continue;
 
         // address
@@ -2672,24 +2672,18 @@ psutil_users(PyObject *self, PyObject *args) {
             station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-        py_buffer_user_encoded = PyUnicode_DecodeLocaleAndSize(
-            buffer_user, _tcslen(buffer_user), "surrogateescape");
-#else
-        py_buffer_user_encoded = PyUnicode_Decode(
-            buffer_user, _tcslen(buffer_user), Py_FileSystemDefaultEncoding,
-            "replace");
-#endif
-
-        if (py_buffer_user_encoded == NULL)
+        py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
+        if (py_username == NULL)
             goto error;
-        py_tuple = Py_BuildValue("OOd", py_buffer_user_encoded, py_address,
+        py_tuple = Py_BuildValue("OOd",
+                                 py_username,
+                                 py_address,
                                  (double)unix_time);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_XDECREF(py_buffer_user_encoded);
+        Py_XDECREF(py_username);
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2701,7 +2695,7 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_buffer_user_encoded);
+    Py_XDECREF(py_username);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);

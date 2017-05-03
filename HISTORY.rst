@@ -37,6 +37,7 @@
     None
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1048_: [Windows] users()'s host field report an invalid IP address.
 
 *2017-04-10*
 
