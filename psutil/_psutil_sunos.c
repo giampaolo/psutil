@@ -123,6 +123,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     const char *procfs_path;
     PyObject *py_name;
     PyObject *py_args;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -130,17 +131,24 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
-        return NULL;
+        goto error;
     py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
     if (!py_args)
-        return NULL;
-    return Py_BuildValue("OO", py_name, py_args);
-#else
-    return Py_BuildValue("ss", info.pr_fname, info.pr_psargs);
-#endif
+        goto error;
+    py_retlist = Py_BuildValue("OO", py_name, py_args);
+    if (!py_retlist)
+        goto error;
+    Py_DECREF(py_name);
+    Py_DECREF(py_args);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_name);
+    Py_XDECREF(py_args);
+    Py_XDECREF(py_retlist);
+    return NULL;
 }
 
 
@@ -450,9 +458,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -462,11 +473,20 @@ psutil_users(PyObject *self, PyObject *args) {
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfOi)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
+            "(OOOfOi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
@@ -475,6 +495,9 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
     endutent();
@@ -482,6 +505,9 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (ut != NULL)
@@ -498,8 +524,10 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file;
     struct mnttab mt;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -511,23 +539,32 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     while (getmntent(file, &mt) == 0) {
+        py_dev = PyUnicode_DecodeFSDefault(mt.mnt_special);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(mt.mnt_mountp);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)",
-            mt.mnt_special,   // device
-            mt.mnt_mountp,    // mount point
+            "(OOss)",
+            py_dev,           // device
+            py_mountp,        // mount point
             mt.mnt_fstype,    // fs type
             mt.mnt_mntopts);  // options
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
-
     }
     fclose(file);
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (file != NULL)
@@ -668,6 +705,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     const char *procfs_path;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -746,12 +784,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             }
         }
 
+        py_path = PyUnicode_DecodeFSDefault(name);
+        if (! py_path)
+            goto error;
         py_tuple = Py_BuildValue(
-            "iisslll",
+            "iisOlll",
             p->pr_vaddr,
             pr_addr_sz,
             perms,
-            name,
+            py_path,
             (long)p->pr_rss * p->pr_pagesize,
             (long)p->pr_anon * p->pr_pagesize,
             (long)p->pr_locked * p->pr_pagesize);
@@ -759,6 +800,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_path);
         Py_DECREF(py_tuple);
 
         // increment pointer
@@ -773,6 +815,7 @@ error:
     if (fd != -1)
         close(fd);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
         free(xmap);

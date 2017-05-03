@@ -28,7 +28,6 @@ except ImportError:
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import basestring
 from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
@@ -753,19 +752,19 @@ class TestServices(unittest.TestCase):
         ])
         for serv in psutil.win_service_iter():
             data = serv.as_dict()
-            self.assertIsInstance(data['name'], basestring)
+            self.assertIsInstance(data['name'], str)
             self.assertNotEqual(data['name'].strip(), "")
-            self.assertIsInstance(data['display_name'], basestring)
-            self.assertIsInstance(data['username'], basestring)
+            self.assertIsInstance(data['display_name'], str)
+            self.assertIsInstance(data['username'], str)
             self.assertIn(data['status'], valid_statuses)
             if data['pid'] is not None:
                 psutil.Process(data['pid'])
-            self.assertIsInstance(data['binpath'], basestring)
-            self.assertIsInstance(data['username'], basestring)
-            self.assertIsInstance(data['start_type'], basestring)
+            self.assertIsInstance(data['binpath'], str)
+            self.assertIsInstance(data['username'], str)
+            self.assertIsInstance(data['start_type'], str)
             self.assertIn(data['start_type'], valid_start_types)
             self.assertIn(data['status'], valid_statuses)
-            self.assertIsInstance(data['description'], basestring)
+            self.assertIsInstance(data['description'], str)
             pid = serv.pid()
             if pid is not None:
                 p = psutil.Process(pid)

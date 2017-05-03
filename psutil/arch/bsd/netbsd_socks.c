@@ -406,19 +406,17 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 strcpy(laddr, sun_src->sun_path);
                 strcpy(raddr, sun_dst->sun_path);
                 status = PSUTIL_CONN_NONE;
-                // TODO: handle unicode
-                py_laddr = Py_BuildValue("s", laddr);
+                py_laddr = PyUnicode_DecodeFSDefault(laddr);
                 if (! py_laddr)
                     goto error;
-                // TODO: handle unicode
-                py_raddr = Py_BuildValue("s", raddr);
+                py_raddr = PyUnicode_DecodeFSDefault(raddr);
                 if (! py_raddr)
                     goto error;
             }
 
             // append tuple to list
             py_tuple = Py_BuildValue(
-                "(iiiNNii)",
+                "(iiiOOii)",
                 k->kif->ki_fd,
                 kp->kpcb->ki_family,
                 kp->kpcb->ki_type,
@@ -430,6 +428,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+            Py_DECREF(py_laddr);
+            Py_DECREF(py_raddr);
             Py_DECREF(py_tuple);
         }
     }

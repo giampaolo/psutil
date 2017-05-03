@@ -215,11 +215,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(str);
-#else
-    py_name = Py_BuildValue("s", str);
-#endif
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -372,12 +368,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(str);
-#else
-    return Py_BuildValue("s", str);
-#endif
 }
 
 
@@ -472,6 +463,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     struct kinfo_file *kif;
     kinfo_proc kipp;
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -507,12 +499,16 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         // XXX - it appears path is not exposed in the kinfo_file struct.
         path = "";
 #endif
+        py_path = PyUnicode_DecodeFSDefault(path);
+        if (! py_path)
+            goto error;
         if (regular == 1) {
-            py_tuple = Py_BuildValue("(si)", path, fd);
+            py_tuple = Py_BuildValue("(Oi)", py_path, fd);
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+            Py_DECREF(py_path);
             Py_DECREF(py_tuple);
         }
     }
@@ -546,6 +542,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     struct statfs *fs = NULL;
 #endif
     PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
@@ -658,15 +656,23 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_NODEVMTIME)
             strlcat(opts, ",nodevmtime", sizeof(opts));
 #endif
-        py_tuple = Py_BuildValue("(ssss)",
-                                 fs[i].f_mntfromname,  // device
-                                 fs[i].f_mntonname,    // mount point
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        if (! py_mountp)
+            goto error;
+        py_tuple = Py_BuildValue("(OOss)",
+                                 py_dev,               // device
+                                 py_mountp,            // mount point
                                  fs[i].f_fstypename,   // fs type
                                  opts);                // options
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
 
@@ -674,6 +680,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
@@ -783,6 +791,9 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
@@ -801,12 +812,21 @@ psutil_users(PyObject *self, PyObject *args) {
     while (fread(&ut, sizeof(ut), 1, fp) == 1) {
         if (*ut.ut_name == '\0')
             continue;
+        py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfi)",
-            ut.ut_name,         // username
-            ut.ut_line,         // tty
-            ut.ut_host,         // hostname
-           (float)ut.ut_time,   // start time
+            "(OOOfi)",
+            py_username,        // username
+            py_tty,             // tty
+            py_hostname,        // hostname
+            (float)ut.ut_time,  // start time
 #ifdef PSUTIL_OPENBSD
             -1                  // process id (set to None later)
 #else
@@ -821,22 +841,33 @@ psutil_users(PyObject *self, PyObject *args) {
             fclose(fp);
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
     fclose(fp);
 #else
     struct utmpx *utx;
-
     setutxent();
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
+        py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfi)",
-            utx->ut_user,  // username
-            utx->ut_line,  // tty
-            utx->ut_host,  // hostname
+            "(OOOfi)",
+            py_username,   // username
+            py_tty,        // tty
+            py_hostname,   // hostname
             (float)utx->ut_tv.tv_sec,  // start time
 #ifdef PSUTIL_OPENBSD
             -1             // process id (set to None later)
@@ -853,6 +884,9 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
@@ -861,6 +895,9 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;

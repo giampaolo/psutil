@@ -119,6 +119,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
 // https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
 // Current implementation uses /proc instead.
 // Left here just in case.
+/*
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
 #if __NetBSD_Version__ >= 799000000
@@ -163,16 +164,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             strcpy(pathname, "");
     }
 
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", pathname);
-#endif
-
 #else
     return Py_BuildValue("s", "");
 #endif
 }
+*/
 
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
@@ -386,11 +383,7 @@ psutil_get_cmdline(pid_t pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
-#else
-            py_arg = Py_BuildValue("s", &argstr[pos]);
-#endif
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))

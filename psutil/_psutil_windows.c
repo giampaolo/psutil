@@ -669,7 +669,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return PyErr_SetFromWindowsErr(0);
     }
     CloseHandle(hProcess);
-    return Py_BuildValue("u", exe);
+    return PyUnicode_FromWideChar(exe, wcslen(exe));
 }
 
 
@@ -1309,13 +1309,14 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     HANDLE tokenHandle = NULL;
     PTOKEN_USER user = NULL;
     ULONG bufferSize;
-    PTSTR name = NULL;
+    WCHAR *name = NULL;
+    WCHAR *domainName = NULL;
     ULONG nameSize;
-    PTSTR domainName = NULL;
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
-    PTSTR fullName = NULL;
-    PyObject *py_unicode;
+    PyObject *py_username;
+    PyObject *py_domain;
+    PyObject *py_tuple;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1363,18 +1364,18 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     nameSize = 0x100;
     domainNameSize = 0x100;
     while (1) {
-        name = malloc(nameSize * sizeof(TCHAR));
+        name = malloc(nameSize * sizeof(WCHAR));
         if (name == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        domainName = malloc(domainNameSize * sizeof(TCHAR));
+        domainName = malloc(domainNameSize * sizeof(WCHAR));
         if (domainName == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize,
-                              domainName, &domainNameSize, &nameUse))
+        if (!LookupAccountSidW(NULL, user->User.Sid, name, &nameSize,
+                               domainName, &domainNameSize, &nameUse))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(name);
@@ -1389,45 +1390,38 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         break;
     }
 
-    // build the "domain\\username" username string
-    nameSize = _tcslen(name);
-    domainNameSize = _tcslen(domainName);
-    fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
-    if (fullName == NULL) {
-        PyErr_NoMemory();
+    py_domain = PyUnicode_FromWideChar(domainName, wcslen(domainName));
+    if (! py_domain)
         goto error;
-    }
-    memcpy(fullName, domainName, domainNameSize);
-    fullName[domainNameSize] = '\\';
-    memcpy(&fullName[domainNameSize + 1], name, nameSize);
-    fullName[domainNameSize + 1 + nameSize] = '\0';
+    py_username = PyUnicode_FromWideChar(name, wcslen(name));
+    if (! py_username)
+        goto error;
+    py_tuple = Py_BuildValue("OO", py_domain, py_username);
+    if (! py_tuple)
+        goto error;
+    Py_DECREF(py_domain);
+    Py_DECREF(py_username);
 
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-    py_unicode = PyUnicode_DecodeLocaleAndSize(
-        fullName, _tcslen(fullName), "surrogateescape");
-#else
-    py_unicode = PyUnicode_Decode(
-        fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
-#endif
-    free(fullName);
     free(name);
     free(domainName);
     free(user);
-    return py_unicode;
+
+    return py_tuple;
 
 error:
     if (processHandle != NULL)
         CloseHandle(processHandle);
     if (tokenHandle != NULL)
         CloseHandle(tokenHandle);
-    if (fullName != NULL)
-        free(fullName);
     if (name != NULL)
         free(name);
     if (domainName != NULL)
         free(domainName);
     if (user != NULL)
         free(user);
+    Py_XDECREF(py_domain);
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tuple);
     return NULL;
 }
 
@@ -2565,7 +2559,7 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    LPTSTR buffer_user = NULL;
+    WCHAR *buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
@@ -2584,7 +2578,7 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
-    PyObject *py_buffer_user_encoded = NULL;
+    PyObject *py_username = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2612,12 +2606,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
-                                       &buffer_user, &bytes) == 0) {
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
+                                        &buffer_user, &bytes) == 0) {
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
-        if (bytes == 1)
+        if (bytes <= 2)
             continue;
 
         // address
@@ -2661,24 +2655,18 @@ psutil_users(PyObject *self, PyObject *args) {
             station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-        py_buffer_user_encoded = PyUnicode_DecodeLocaleAndSize(
-            buffer_user, _tcslen(buffer_user), "surrogateescape");
-#else
-        py_buffer_user_encoded = PyUnicode_Decode(
-            buffer_user, _tcslen(buffer_user), Py_FileSystemDefaultEncoding,
-            "replace");
-#endif
-
-        if (py_buffer_user_encoded == NULL)
+        py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
+        if (py_username == NULL)
             goto error;
-        py_tuple = Py_BuildValue("OOd", py_buffer_user_encoded, py_address,
+        py_tuple = Py_BuildValue("OOd",
+                                 py_username,
+                                 py_address,
                                  (double)unix_time);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_XDECREF(py_buffer_user_encoded);
+        Py_XDECREF(py_username);
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2690,7 +2678,7 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_buffer_user_encoded);
+    Py_XDECREF(py_username);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
@@ -2862,7 +2850,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     HANDLE hProcess = NULL;
     PVOID baseAddress;
     PVOID previousAllocationBase;
-    CHAR mappedFileName[MAX_PATH];
+    LPWSTR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
     PyObject *py_retlist = PyList_New(0);
@@ -2888,20 +2876,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         if (baseAddress > maxAddr)
             break;
-        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
+        if (GetMappedFileNameW(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
-
-#if PY_MAJOR_VERSION >= 3
-            py_str = PyUnicode_Decode(
-                mappedFileName, _tcslen(mappedFileName),
-                Py_FileSystemDefaultEncoding, "surrogateescape");
-#else
-            py_str = Py_BuildValue("s", mappedFileName);
-#endif
+            py_str = PyUnicode_FromWideChar(mappedFileName,
+                                            wcslen(mappedFileName));
             if (py_str == NULL)
                 goto error;
-
 #ifdef _WIN64
            py_tuple = Py_BuildValue(
               "(KsOI)",
@@ -3055,11 +3036,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             }
             *--ptr = '\0';
 
-#if PY_MAJOR_VERSION >= 3
-            py_mac_address = PyUnicode_FromString(buff);
-#else
-            py_mac_address = PyString_FromString(buff);
-#endif
+            py_mac_address = Py_BuildValue("s", buff);
             if (py_mac_address == NULL)
                 goto error;
 

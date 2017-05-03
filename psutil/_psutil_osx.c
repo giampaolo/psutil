@@ -138,11 +138,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    py_name = Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -224,11 +220,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    return Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
 }
 
 
@@ -249,11 +241,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
-#else
-    return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
-#endif
 }
 
 
@@ -277,11 +265,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(buf);
-#else
-    return Py_BuildValue("s", buf);
-#endif
 }
 
 
@@ -337,6 +321,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     vm_size_t size = 0;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_list = PyList_New(0);
 
     if (py_list == NULL)
@@ -431,11 +416,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 }
             }
 
+            py_path = PyUnicode_DecodeFSDefault(buf);
+            if (! py_path)
+                goto error;
             py_tuple = Py_BuildValue(
-                "sssIIIIIH",
+                "ssOIIIIIH",
                 addr_str,                                 // "start-end"address
                 perms,                                    // "rwx" permissions
-                buf,                                      // path
+                py_path,                                  // path
                 info.pages_resident * pagesize,           // rss
                 info.pages_shared_now_private * pagesize, // private
                 info.pages_swapped_out * pagesize,        // swapped
@@ -448,6 +436,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             if (PyList_Append(py_list, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            Py_DECREF(py_path);
         }
 
         // increment address for the next map/file
@@ -463,6 +452,7 @@ error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_list);
     return NULL;
 }
@@ -863,8 +853,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     uint64_t flags;
     char opts[400];
     struct statfs *fs = NULL;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -949,15 +941,24 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_CMDFLAGS)
             strlcat(opts, ",cmdflags", sizeof(opts));
 
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)", fs[i].f_mntfromname,  // device
-            fs[i].f_mntonname,    // mount point
+            "(OOss)",
+            py_dev,               // device
+            py_mountp,            // mount point
             fs[i].f_fstypename,   // fs type
             opts);                // options
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
 
@@ -965,6 +966,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
@@ -1151,11 +1154,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             // --- /errors checking
 
             // --- construct python list
-#if PY_MAJOR_VERSION >= 3
             py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
-#else
-            py_path = Py_BuildValue("s", vi.pvip.vip_path);
-#endif
             if (! py_path)
                 goto error;
             py_tuple = Py_BuildValue(
@@ -1351,28 +1350,14 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             else if (family == AF_UNIX) {
-                // decode laddr
-#if PY_MAJOR_VERSION >= 3
-                    py_laddr = PyUnicode_DecodeFSDefault(
-#else
-                    py_laddr = Py_BuildValue("s",
-#endif
-                        si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path
-                    );
-                    if (!py_laddr)
-                        goto error;
-
-                // decode raddr
-#if PY_MAJOR_VERSION >= 3
-                    py_raddr = PyUnicode_DecodeFSDefault(
-#else
-                    py_raddr = Py_BuildValue("s",
-#endif
-                        si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path
-                    );
-                    if (!py_raddr)
-                        goto error;
-
+                py_laddr = PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
+                if (!py_laddr)
+                    goto error;
+                py_raddr = PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
+                if (!py_raddr)
+                    goto error;
                 // construct the python list
                 py_tuple = Py_BuildValue(
                     "(iiiOOi)",
@@ -1705,19 +1690,31 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *utx;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
+        py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfi)",
-            utx->ut_user,             // username
-            utx->ut_line,             // tty
-            utx->ut_host,             // hostname
+            "(OOOfi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
             (float)utx->ut_tv.tv_sec, // start time
             utx->ut_pid               // process id
         );
@@ -1729,6 +1726,9 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
@@ -1736,6 +1736,9 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;

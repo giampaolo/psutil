@@ -203,11 +203,7 @@ psutil_get_cmdline(long pid) {
         goto error;
 
     for (p = argv; *p != NULL; p++) {
-#if PY_MAJOR_VERSION >= 3
         py_arg = PyUnicode_DecodeFSDefault(*p);
-#else
-        py_arg = Py_BuildValue("s", *p);
-#endif
         if (!py_arg)
             goto error;
         if (PyList_Append(py_retlist, py_arg))
@@ -435,11 +431,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(path);
-#else
-    return Py_BuildValue("s", path);
-#endif
 }
 
 

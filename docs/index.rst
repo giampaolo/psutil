@@ -2239,6 +2239,44 @@ Constants
       >>> if psutil.version_info >= (4, 5):
       ...    pass
 
+----
+
+Unicode
+=======
+
+Starting from version 5.3.0 psutil
+`fully supports unicode <https://github.com/giampaolo/psutil/issues/1040>`__.
+The notes below apply to *any* method returning a string such as
+:meth:`Process.exe` or :meth:`Process.cwd`, including non-filesystem related
+methods such as :meth:`Process.username`:
+
+* all strings are encoded by using the OS filesystem encoding which varies
+  depending on the platform you're on (e.g. UTF-8 on Linux, mbcs on Win)
+* no API call is supposed to crash with ``UnicodeDecodeError``
+* instead, in case of badly encoded data returned by the OS, the following error handlers are used to replace the bad characters in the string:
+    * Python 2: ``"replace"``
+    * Python 3: ``"surrogatescape"`` on POSIX and ``"replace"`` on Windows
+* on Python 2 all APIs return bytes (``str`` type), never ``unicode``
+* on Python 2 you can go back to unicode by doing:
+
+.. code-block:: python
+
+    >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
+
+Example which filters processes with a funky name working with Python 2 and 3::
+
+    # -*- coding: utf-8 -*-
+    import psutil, sys
+
+    PY3 = sys.version_info[0] == 2
+    LOOKFOR = u"ƒőő"
+    for proc in psutil.process_iter(attrs=['name']):
+        name = proc.info['name']
+        if not PY3:
+            name = unicode(name, sys.getdefaultencoding(), errors="replace")
+        if LOOKFOR == name:
+             print("process %s found" % p)
+
 Recipes
 =======
 

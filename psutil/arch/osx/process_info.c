@@ -177,12 +177,8 @@ psutil_get_cmdline(long pid) {
         goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(curr_arg);
-#else
-            py_arg = Py_BuildValue("s", curr_arg);
-#endif
-            if (!py_arg)
+            if (! py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
@@ -293,13 +289,8 @@ psutil_get_environ(long pid) {
         arg_ptr = s + 1;
     }
 
-#if PY_MAJOR_VERSION >= 3
     py_ret = PyUnicode_DecodeFSDefaultAndSize(
         procenv, arg_ptr - env_start + 1);
-#else
-    py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
-#endif
-
     if (!py_ret) {
         // XXX: don't want to free() this as per:
         // https://github.com/giampaolo/psutil/issues/926
