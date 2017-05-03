@@ -1305,16 +1305,16 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_username(PyObject *self, PyObject *args) {
     long pid;
-    HANDLE processHandle;
-    HANDLE tokenHandle;
-    PTOKEN_USER user;
+    HANDLE processHandle = NULL;
+    HANDLE tokenHandle = NULL;
+    PTOKEN_USER user = NULL;
     ULONG bufferSize;
-    PTSTR name;
+    PTSTR name = NULL;
     ULONG nameSize;
-    PTSTR domainName;
+    PTSTR domainName = NULL;
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
-    PTSTR fullName;
+    PTSTR fullName = NULL;
     PyObject *py_unicode;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -1326,8 +1326,8 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         return NULL;
 
     if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
-        CloseHandle(processHandle);
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        goto error;
     }
 
     CloseHandle(processHandle);
@@ -1336,8 +1336,10 @@ psutil_proc_username(PyObject *self, PyObject *args) {
 
     bufferSize = 0x100;
     user = malloc(bufferSize);
-    if (user == NULL)
-        return PyErr_NoMemory();
+    if (user == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
                              &bufferSize))
@@ -1345,15 +1347,14 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         free(user);
         user = malloc(bufferSize);
         if (user == NULL) {
-            CloseHandle(tokenHandle);
-            return PyErr_NoMemory();
+            PyErr_NoMemory();
+            goto error;
         }
         if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
                                  &bufferSize))
         {
-            free(user);
-            CloseHandle(tokenHandle);
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
+            goto error;
         }
     }
 
@@ -1364,11 +1365,16 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     domainNameSize = 0x100;
 
     name = malloc(nameSize * sizeof(TCHAR));
-    if (name == NULL)
-        return PyErr_NoMemory();
+    if (name == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     domainName = malloc(domainNameSize * sizeof(TCHAR));
-    if (domainName == NULL)
-        return PyErr_NoMemory();
+    if (domainName == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
                           &domainNameSize, &nameUse))
@@ -1376,19 +1382,20 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         free(name);
         free(domainName);
         name = malloc(nameSize * sizeof(TCHAR));
-        if (name == NULL)
-            return PyErr_NoMemory();
+        if (name == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
         domainName = malloc(domainNameSize * sizeof(TCHAR));
-        if (domainName == NULL)
-            return PyErr_NoMemory();
+        if (domainName == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
         if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize,
                               domainName, &domainNameSize, &nameUse))
         {
-            free(name);
-            free(domainName);
-            free(user);
-
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
+            goto error;
         }
     }
 
@@ -1398,10 +1405,8 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     // build the full username string
     fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
     if (fullName == NULL) {
-        free(name);
-        free(domainName);
-        free(user);
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        goto error;
     }
     memcpy(fullName, domainName, domainNameSize);
     fullName[domainNameSize] = '\\';
@@ -1415,13 +1420,26 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     py_unicode = PyUnicode_Decode(
         fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
 #endif
-
     free(fullName);
     free(name);
     free(domainName);
     free(user);
-
     return py_unicode;
+
+error:
+    if (processHandle != NULL)
+        CloseHandle(processHandle);
+    if (tokenHandle != NULL)
+        CloseHandle(tokenHandle);
+    if (fullName != NULL)
+        free(fullName);
+    if (name != NULL)
+        free(name);
+    if (domainName != NULL)
+        free(domainName);
+    if (user != NULL)
+        free(user);
+    return NULL;
 }
 
 
