@@ -15,6 +15,7 @@
   Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
+- 1040_: implemented full unicode support.
 
 **Bug fixes**
 
@@ -29,15 +30,27 @@
   properly handle unicode paths and may raise UnicodeDecodeError.
 - 1033_: [OSX, FreeBSD] memory leak for net_connections() and
   Process.connections() when retrieving UNIX sockets (kind='unix').
+- 1040_: fixed many unicode related issues such as UnicodeDecodeError on
+  Python 3 + UNIX and invalid encoded data on Windows.
+- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
+- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1048_: [Windows] users()'s host field report an invalid IP address.
+
+**Porting notes**
+
 - 1039_: returned types consolidation:
   - Windows / Process.cpu_times(): fields #3 and #4 were int instead of float
   - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
     None
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
     None
-- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
-- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
-- 1048_: [Windows] users()'s host field report an invalid IP address.
+- 1040_: the following Windows APIs returned unicode and now they return str:
+  - Process.memory_maps().path
+  - WindosService.bin_path()
+  - WindosService.description()
+  - WindosService.display_name()
+  - WindosService.username()
+- 1040_: all strings are encoded by using OS fs encoding.
 
 *2017-04-10*
 
