@@ -183,18 +183,14 @@ def convert_dos_path(s):
     into:
         "C:\Windows\systemew\file.txt"
     """
-    if PY3 and not isinstance(s, str):
-        # TODO: probably getting here means there's something wrong;
-        # probably needs to be removed.
-        s = s.decode(FS_ENCODING, errors=PY2_ENCODING_ERRS)
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.win32_QueryDosDevice(rawdrive)
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
 def py2_strencode(s):
-    """Encode a string in the given encoding. Falls back on returning
-    the string as is if it can't be encoded.
+    """Encode a unicode string to a byte string by using the default fs
+    encoding + "replace" error handler.
     """
     if PY3:
         return s

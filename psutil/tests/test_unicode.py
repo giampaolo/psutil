@@ -12,53 +12,58 @@ Notes about unicode handling in psutil
 In psutil these are the APIs returning or dealing with a string
 ('not tested' means they are not tested to deal with non-ASCII strings):
 
-- Process.cmdline()
-- Process.connections('unix')
-- Process.cwd()
-- Process.environ()
-- Process.exe()
-- Process.memory_maps()
-- Process.name()
-- Process.open_files()
-- Process.username()             (not tested)
+* Process.cmdline()
+* Process.connections('unix')
+* Process.cwd()
+* Process.environ()
+* Process.exe()
+* Process.memory_maps()
+* Process.name()
+* Process.open_files()
+* Process.username()             (not tested)
 
-- disk_io_counters()             (not tested)
-- disk_partitions()              (not tested)
-- disk_usage(str)
-- net_connections('unix')
-- net_if_addrs()                 (not tested)
-- net_if_stats()                 (not tested)
-- net_io_counters()              (not tested)
-- sensors_fans()                 (not tested)
-- sensors_temperatures()         (not tested)
-- users()                        (not tested)
+* disk_io_counters()             (not tested)
+* disk_partitions()              (not tested)
+* disk_usage(str)
+* net_connections('unix')
+* net_if_addrs()                 (not tested)
+* net_if_stats()                 (not tested)
+* net_io_counters()              (not tested)
+* sensors_fans()                 (not tested)
+* sensors_temperatures()         (not tested)
+* users()                        (not tested)
 
-- WindowsService.binpath()       (not tested)
-- WindowsService.description()   (not tested)
-- WindowsService.display_name()  (not tested)
-- WindowsService.name()          (not tested)
-- WindowsService.status()        (not tested)
-- WindowsService.username()      (not tested)
+* WindowsService.binpath()       (not tested)
+* WindowsService.description()   (not tested)
+* WindowsService.display_name()  (not tested)
+* WindowsService.name()          (not tested)
+* WindowsService.status()        (not tested)
+* WindowsService.username()      (not tested)
 
 In here we create a unicode path with a funky non-ASCII name and (where
-possible) make psutil return it back (e.g. on name(), exe(),
-open_files(), etc.) and make sure psutil never crashes with
-UnicodeDecodeError.
+possible) make psutil return it back (e.g. on name(), exe(), open_files(),
+etc.) and make sure that:
 
-On Python 3 the returned path is supposed to match 100% (and this
-is tested).
-Not on Python 2 though, where we assume correct unicode path handling
-is broken. In fact it is broken for most os.* functions, see:
-http://bugs.python.org/issue18695
-There really is no way for psutil to handle unicode correctly on
-Python 2 unless we make such APIs return a unicode type in certain
-circumstances.
-I'd rather have unicode support broken on Python 2 than having APIs
-returning variable str/unicode types, see:
-https://github.com/giampaolo/psutil/issues/655#issuecomment-136131180
+* psutil never crashes with UnicodeDecodeError
+* the returned path matches
 
-As such we also test that all APIs on Python 2 always return str and
-never unicode (in test_contracts.py).
+Notes about unicode handling in psutil:
+
+* all strings are encoded by using the default filesystem encoding which
+  varies depending on the platform (e.g. UTF-8 on Linux, mbcs on Win)
+* no API is supposed to crash with UnicodeDecodeError
+* in case of badly encoded data returned by the OS the following error
+  handlers are used to replace the bad chars in the string:
+  * Python 2: "replace"
+  * Python 3 on POSIX: "surrogateescape"
+  * Python 3 on Windows: "surrogatepass" (3.6+) or "replace" (<= 3.5)
+* on Python 2 all APIs return bytes (str type), never unicode
+* on Python 2 you can go back to unicode by doing:
+  >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
+  ...and make proper comparisons.
+* there is no API on Python 2 to tell psutil to return unicode
+
+See: https://github.com/giampaolo/psutil/issues/1040
 """
 
 import os
