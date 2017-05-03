@@ -793,7 +793,11 @@ class Process(object):
     def username(self):
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
-        return cext.proc_username(self.pid)
+        domain, user = cext.proc_username(self.pid)
+        if not PY3:
+            domain = py2_strencode(domain)
+            user = py2_strencode(user)
+        return domain + '\\' + user
 
     @wrap_exceptions
     def create_time(self):

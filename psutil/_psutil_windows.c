@@ -1309,13 +1309,14 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     HANDLE tokenHandle = NULL;
     PTOKEN_USER user = NULL;
     ULONG bufferSize;
-    PTSTR name = NULL;
+    WCHAR *name = NULL;
+    WCHAR *domainName = NULL;
     ULONG nameSize;
-    PTSTR domainName = NULL;
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
-    PTSTR fullName = NULL;
-    PyObject *py_unicode;
+    PyObject *py_username;
+    PyObject *py_domain;
+    PyObject *py_tuple;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1363,18 +1364,18 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     nameSize = 0x100;
     domainNameSize = 0x100;
     while (1) {
-        name = malloc(nameSize * sizeof(TCHAR));
+        name = malloc(nameSize * sizeof(WCHAR));
         if (name == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        domainName = malloc(domainNameSize * sizeof(TCHAR));
+        domainName = malloc(domainNameSize * sizeof(WCHAR));
         if (domainName == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize,
-                              domainName, &domainNameSize, &nameUse))
+        if (!LookupAccountSidW(NULL, user->User.Sid, name, &nameSize,
+                               domainName, &domainNameSize, &nameUse))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(name);
@@ -1389,45 +1390,38 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         break;
     }
 
-    // build the "domain\\username" username string
-    nameSize = _tcslen(name);
-    domainNameSize = _tcslen(domainName);
-    fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
-    if (fullName == NULL) {
-        PyErr_NoMemory();
+    py_domain = PyUnicode_FromWideChar(domainName, wcslen(domainName));
+    if (! py_domain)
         goto error;
-    }
-    memcpy(fullName, domainName, domainNameSize);
-    fullName[domainNameSize] = '\\';
-    memcpy(&fullName[domainNameSize + 1], name, nameSize);
-    fullName[domainNameSize + 1 + nameSize] = '\0';
+    py_username = PyUnicode_FromWideChar(name, wcslen(name));
+    if (! py_username)
+        goto error;
+    py_tuple = Py_BuildValue("OO", py_domain, py_username);
+    if (! py_tuple)
+        goto error;
+    Py_DECREF(py_domain);
+    Py_DECREF(py_username);
 
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-    py_unicode = PyUnicode_DecodeLocaleAndSize(
-        fullName, _tcslen(fullName), "surrogateescape");
-#else
-    py_unicode = PyUnicode_Decode(
-        fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
-#endif
-    free(fullName);
     free(name);
     free(domainName);
     free(user);
-    return py_unicode;
+
+    return py_tuple;
 
 error:
     if (processHandle != NULL)
         CloseHandle(processHandle);
     if (tokenHandle != NULL)
         CloseHandle(tokenHandle);
-    if (fullName != NULL)
-        free(fullName);
     if (name != NULL)
         free(name);
     if (domainName != NULL)
         free(domainName);
     if (user != NULL)
         free(user);
+    Py_XDECREF(py_domain);
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tuple);
     return NULL;
 }
 
