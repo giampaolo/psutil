@@ -184,7 +184,9 @@ def convert_dos_path(s):
         "C:\Windows\systemew\file.txt"
     """
     if PY3 and not isinstance(s, str):
-        s = s.decode('utf8')
+        # TODO: probably getting here means there's something wrong;
+        # probably needs to be removed.
+        s = s.decode(FS_ENCODING, errors=PY2_ENCODING_ERRS)
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.win32_QueryDosDevice(rawdrive)
     return os.path.join(driveletter, s[len(rawdrive):])
@@ -761,9 +763,9 @@ class Process(object):
         else:
             for addr, perm, path, rss in raw:
                 assert isinstance(path, unicode), path
+                path = convert_dos_path(path)
                 if not PY3:
                     path = py2_strencode(path)
-                path = convert_dos_path(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
 
