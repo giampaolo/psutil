@@ -342,8 +342,8 @@ def net_if_stats():
     ret = {}
     rawdict = cext.net_if_stats()
     for name, items in rawdict.items():
-        assert isinstance(name, unicode), name
         if not PY3:
+            assert isinstance(name, unicode), type(name)
             name = py2_strencode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
@@ -697,8 +697,8 @@ class Process(object):
     @wrap_exceptions
     def environ(self):
         ustr = cext.proc_environ(self.pid)
-        if ustr:
-            assert isinstance(ustr, unicode), ustr
+        if ustr and not PY3:
+            assert isinstance(ustr, unicode), type(ustr)
         return parse_environ_block(py2_strencode(ustr))
 
     def ppid(self):
@@ -758,9 +758,9 @@ class Process(object):
             raise
         else:
             for addr, perm, path, rss in raw:
-                assert isinstance(path, unicode), path
                 path = convert_dos_path(path)
                 if not PY3:
+                    assert isinstance(path, unicode), type(path)
                     path = py2_strencode(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
@@ -790,10 +790,7 @@ class Process(object):
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
         domain, user = cext.proc_username(self.pid)
-        if not PY3:
-            domain = py2_strencode(domain)
-            user = py2_strencode(user)
-        return domain + '\\' + user
+        return py2_strencode(domain) + '\\' + py2_strencode(user)
 
     @wrap_exceptions
     def create_time(self):
