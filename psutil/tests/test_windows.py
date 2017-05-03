@@ -368,9 +368,8 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(a, b)
 
     def test_username(self):
-        sys_value = win32api.GetUserName()
-        psutil_value = psutil.Process().username()
-        self.assertEqual(sys_value, psutil_value.split('\\')[1])
+        self.assertEqual(psutil.Process().username(),
+                         win32api.GetUserNameEx(win32con.NameSamCompatible))
 
     def test_cmdline(self):
         sys_value = re.sub(' +', ' ', win32api.GetCommandLine()).strip()

@@ -44,13 +44,17 @@
     None
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
     None
+- 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs returned unicode and now they return str:
   - Process.memory_maps().path
   - WindosService.bin_path()
   - WindosService.description()
   - WindosService.display_name()
   - WindosService.username()
-- 1040_: all strings are encoded by using OS fs encoding.
+- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
+- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1050_: [Windows] Process.memory_maps memory() leaks memory.
+>>>>>>> master
 
 *2017-04-10*
 

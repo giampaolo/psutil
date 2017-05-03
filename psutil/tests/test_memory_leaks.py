@@ -568,6 +568,9 @@ class TestModuleFunctionsLeaks(TestMemLeak):
         def test_win_service_iter(self):
             self.execute(cext.winservice_enumerate)
 
+        def test_win_service_get(self):
+            pass
+
         def test_win_service_get_config(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(cext.winservice_query_config, name)
