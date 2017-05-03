@@ -71,7 +71,8 @@ __extra__all__ = [
 # --- globals
 # =====================================================================
 
-
+FS_ENCODING = sys.getfilesystemencoding()
+PY2_ENCODING_ERRS = "replace"
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
@@ -189,19 +190,17 @@ def convert_dos_path(s):
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
-def py2_strencode(s, encoding=sys.getfilesystemencoding()):
+def py2_strencode(s):
     """Encode a string in the given encoding. Falls back on returning
     the string as is if it can't be encoded.
     """
-    if PY3 or isinstance(s, str):
+    if PY3:
         return s
     else:
-        try:
-            return s.encode(encoding)
-        except UnicodeEncodeError:
-            # Filesystem codec failed, return the plain unicode
-            # string (this should never happen).
+        if isinstance(s, str):
             return s
+        else:
+            return s.encode(FS_ENCODING, errors=PY2_ENCODING_ERRS)
 
 
 # =====================================================================
@@ -342,9 +341,12 @@ def net_connections(kind, _pid=-1):
 
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    ret = cext.net_if_stats()
-    for name, items in ret.items():
-        name = py2_strencode(name)
+    ret = {}
+    rawdict = cext.net_if_stats()
+    for name, items in rawdict.items():
+        assert isinstance(name, unicode), name
+        if not PY3:
+            name = py2_strencode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
@@ -696,7 +698,10 @@ class Process(object):
 
     @wrap_exceptions
     def environ(self):
-        return parse_environ_block(cext.proc_environ(self.pid))
+        ustr = cext.proc_environ(self.pid)
+        if ustr:
+            assert isinstance(ustr, unicode), ustr
+        return parse_environ_block(py2_strencode(ustr))
 
     def ppid(self):
         try:
@@ -755,11 +760,9 @@ class Process(object):
             raise
         else:
             for addr, perm, path, rss in raw:
-                # TODO: refactor
                 assert isinstance(path, unicode), path
                 if not PY3:
-                    path = path.encode(
-                        sys.getfilesystemencoding(), errors='replace')
+                    path = py2_strencode(path)
                 path = convert_dos_path(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
