@@ -15,6 +15,7 @@
   Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
+- 1051_: disk_usage() on Python 3 is now able to accept bytes.
 
 **Bug fixes**
 

@@ -463,11 +463,9 @@ class TestSystemAPIs(unittest.TestCase):
         if ASCII_FS:
             with self.assertRaises(UnicodeEncodeError):
                 psutil.disk_usage(TESTFN_UNICODE)
-        else:
-            safe_rmpath(TESTFN_UNICODE)
-            self.addCleanup(safe_rmpath, TESTFN_UNICODE)
-            os.mkdir(TESTFN_UNICODE)
-            psutil.disk_usage(TESTFN_UNICODE)
+
+    def test_disk_usage_bytes(self):
+        psutil.disk_usage(b'.')
 
     def test_disk_partitions(self):
         # all = False
