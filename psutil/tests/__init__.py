@@ -967,13 +967,19 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
     libs = [x.path for x in psutil.Process().memory_maps()
             if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
-    if WINDOWS:
-        libs = [x for x in libs if 'python' in os.path.basename(x).lower()]
-    src = random.choice(libs)
     cfile = None
     try:
-        shutil.copyfile(src, dst)
-        cfile = ctypes.CDLL(dst)
+        for x in range(10):
+            # ...because sometimes either copyfile() or ctypes fail
+            # for no apparent reason.
+            # https://travis-ci.org/giampaolo/psutil/jobs/228599944
+            try:
+                src = random.choice(libs)
+                shutil.copyfile(src, dst)
+                cfile = ctypes.CDLL(dst)
+                break
+            except Exception as exc:
+                print("%s - retry" % exc)
         yield dst
     finally:
         if WINDOWS and cfile is not None:
