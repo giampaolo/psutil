@@ -968,7 +968,7 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     libs = [x.path for x in psutil.Process().memory_maps()
             if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
     if WINDOWS:
-        libs = [x for x in libs if 'wow64' not in x.lower()]
+        libs = [x for x in libs if 'python' in os.path.basename(x).lower()]
     src = random.choice(libs)
     cfile = None
     try:
