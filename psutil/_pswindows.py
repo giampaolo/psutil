@@ -239,13 +239,9 @@ disk_io_counters = cext.disk_io_counters
 
 def disk_usage(path):
     """Return disk usage associated with path."""
-    try:
-        total, free = cext.disk_usage(path)
-    except WindowsError:
-        if not os.path.exists(path):
-            msg = "No such file or directory: '%s'" % path
-            raise OSError(errno.ENOENT, msg)
-        raise
+    if PY3 and isinstance(path, bytes):
+        path = path.decode(FS_ENCODING)
+    total, free = cext.disk_usage(path)
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return _common.sdiskusage(total, used, free, percent)
