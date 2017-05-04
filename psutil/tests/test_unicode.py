@@ -233,6 +233,7 @@ class _BaseFSAPIsTests(object):
         psutil.disk_usage(self.funky_name)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
