@@ -2250,11 +2250,13 @@ The notes below apply to *any* API returning a string such as
 :meth:`Process.exe` or :meth:`Process.cwd`, including non-filesystem related
 methods such as :meth:`Process.username` or :meth:`WindowsService.description`:
 
-* all strings are encoded by using the OS filesystem encoding which varies
-  depending on the platform (e.g. UTF-8 on Linux, mbcs on Win)
+* all strings are encoded by using the OS filesystem encoding
+  (``sys.getfilesystemencoding()``) which varies depending on the platform
+  (e.g. "UTF-8" on OSX, "mbcs" on Win)
 * no API call is supposed to crash with ``UnicodeDecodeError``
 * instead, in case of badly encoded data returned by the OS, the following error handlers are used to replace the corrupted characters in the string:
-    * Python 3: ``"surrogatescape"`` on POSIX and ``"replace"`` on Windows
+    * Python 3: ``sys.getfilesystemencodeerrors()`` (PY 3.6+) or
+      ``"surrogatescape"`` on POSIX and ``"replace"`` on Windows
     * Python 2: ``"replace"``
 * on Python 2 all APIs return bytes (``str`` type), never ``unicode``
 * on Python 2, you can go back to ``unicode`` by doing:

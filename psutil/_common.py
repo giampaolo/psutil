@@ -27,6 +27,8 @@ try:
 except ImportError:
     AF_UNIX = None
 
+from psutil._compat import PY3
+
 if sys.version_info >= (3, 4):
     import enum
 else:
@@ -131,6 +133,17 @@ else:
         POWER_TIME_UNLIMITED = -2
 
     globals().update(BatteryTime.__members__)
+
+# --- others
+
+ENCODING = sys.getfilesystemencoding()
+if not PY3:
+    ENCODING_ERRS = "replace"
+else:
+    try:
+        ENCODING_ERRS = sys.getfilesystemencodeerrors()  # py 3.6
+    except AttributeError:
+        ENCODING_ERRS = "surrogateescape" if POSIX else "replace"
 
 
 # ===================================================================

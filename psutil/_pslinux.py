@@ -25,13 +25,15 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
+from ._common import ENCODING
+from ._common import ENCODING_ERRS
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
-from ._common import parse_environ_block
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
@@ -84,9 +86,6 @@ BOOT_TIME = None  # set later
 BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 SECTOR_SIZE_FALLBACK = 512
-if PY3:
-    FS_ENCODING = sys.getfilesystemencoding()
-    ENCODING_ERRORS_HANDLER = 'surrogateescape'
 if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
@@ -200,14 +199,14 @@ def open_text(fname, **kwargs):
         # See:
         # https://github.com/giampaolo/psutil/issues/675
         # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', FS_ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRORS_HANDLER)
+        kwargs.setdefault('encoding', ENCODING)
+        kwargs.setdefault('errors', ENCODING_ERRS)
     return open(fname, "rt", **kwargs)
 
 
 if PY3:
     def decode(s):
-        return s.decode(encoding=FS_ENCODING, errors=ENCODING_ERRORS_HANDLER)
+        return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
 else:
     def decode(s):
         return s

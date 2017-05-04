@@ -32,11 +32,13 @@ except ImportError as err:
         raise
 
 from ._common import conn_tmap
+from ._common import ENCODING
+from ._common import ENCODING_ERRS
 from ._common import isfile_strict
+from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
-from ._common import memoize_when_activated
 from ._common import usage_percent
 from ._compat import long
 from ._compat import lru_cache
@@ -71,8 +73,6 @@ __extra__all__ = [
 # --- globals
 # =====================================================================
 
-FS_ENCODING = sys.getfilesystemencoding()
-PY2_ENCODING_ERRS = "replace"
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
@@ -198,7 +198,7 @@ def py2_strencode(s):
         if isinstance(s, str):
             return s
         else:
-            return s.encode(FS_ENCODING, errors=PY2_ENCODING_ERRS)
+            return s.encode(ENCODING, errors=ENCODING_ERRS)
 
 
 # =====================================================================
@@ -240,7 +240,9 @@ disk_io_counters = cext.disk_io_counters
 def disk_usage(path):
     """Return disk usage associated with path."""
     if PY3 and isinstance(path, bytes):
-        path = path.decode(FS_ENCODING)
+        # XXX: do we want to use "strict"? Probably yes, in order
+        # to fail immediately. After all we are accepting input here...
+        path = path.decode(ENCODING, errors="strict")
     total, free = cext.disk_usage(path)
     used = total - free
     percent = usage_percent(used, total, _round=1)
