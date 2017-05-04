@@ -16,6 +16,7 @@
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
 - 1040_: implemented full unicode support.
+- 1051_: disk_usage() on Python 3 is now able to accept bytes.
 
 **Bug fixes**
 
@@ -54,7 +55,6 @@
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
->>>>>>> master
 
 *2017-04-10*
 
