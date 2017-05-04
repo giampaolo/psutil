@@ -226,9 +226,10 @@ def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
-    By default stdout and stderr are redirected to /dev/null.
+    By default stdin and stdout are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
     initialized state.
+    The process is registered for cleanup on reap_children().
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
@@ -256,7 +257,8 @@ def create_proc_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
-    The 2 processes are fully initialized and will live for 60 secs.
+    The 2 processes are fully initialized and will live for 60 secs
+    and are registered for cleanup on reap_children().
     """
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
@@ -285,7 +287,7 @@ def create_proc_children_pair():
 
 
 def pyrun(src):
-    """Run python 'src' code in a separate interpreter.
+    """Run python 'src' code string in a separate interpreter.
     Returns a subprocess.Popen instance.
     """
     with tempfile.NamedTemporaryFile(
@@ -296,7 +298,7 @@ def pyrun(src):
         subp = get_test_subprocess([PYTHON, f.name], stdout=None,
                                    stderr=None)
         wait_for_pid(subp.pid)
-        return subp
+    return subp
 
 
 def sh(cmd):
@@ -969,17 +971,9 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
             if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
     cfile = None
     try:
-        for x in range(10):
-            # ...because sometimes either copyfile() or ctypes fail
-            # for no apparent reason.
-            # https://travis-ci.org/giampaolo/psutil/jobs/228599944
-            try:
-                src = random.choice(libs)
-                shutil.copyfile(src, dst)
-                cfile = ctypes.CDLL(dst)
-                break
-            except Exception as exc:
-                print("%s - retry" % exc)
+        src = random.choice(libs)
+        shutil.copyfile(src, dst)
+        cfile = ctypes.CDLL(dst)
         yield dst
     finally:
         if WINDOWS and cfile is not None:

@@ -127,21 +127,23 @@ def disk_usage(path):
     total and used disk space whereas "free" and "percent" represent
     the "free" and "used percent" user disk space.
     """
-    try:
+    if PY3:
         st = os.statvfs(path)
-    except UnicodeEncodeError:
-        if not PY3 and isinstance(path, unicode):
-            # this is a bug with os.statvfs() and unicode on
-            # Python 2, see:
-            # - https://github.com/giampaolo/psutil/issues/416
-            # - http://bugs.python.org/issue18695
-            try:
-                path = path.encode(sys.getfilesystemencoding())
-            except UnicodeEncodeError:
-                pass
+    else:
+        # os.statvfs() does not support unicode on Python 2:
+        # - https://github.com/giampaolo/psutil/issues/416
+        # - http://bugs.python.org/issue18695
+        try:
             st = os.statvfs(path)
-        else:
-            raise
+        except UnicodeEncodeError:
+            if isinstance(path, unicode):
+                try:
+                    path = path.encode(sys.getfilesystemencoding())
+                except UnicodeEncodeError:
+                    pass
+                st = os.statvfs(path)
+            else:
+                raise
 
     # Total space which is only available to root (unless changed
     # at system level).
