@@ -17,6 +17,7 @@ import fnmatch
 import functools
 import os
 import shutil
+import site
 import ssl
 import subprocess
 import sys
@@ -252,19 +253,13 @@ def install():
 @cmd
 def uninstall():
     """Uninstall psutil"""
-    try:
-        import psutil
-    except ImportError:
-        clean()
-        return
+    # Uninstalling psutil on Windows seems to be tricky.
+    # On "import psutil" tests may import a psutil version living in
+    # C:\PythonXY\Lib\site-packages which is not what we want, so
+    # we try both "pip uninstall psutil" and manually remove stuff
+    # from site-packages.
     clean()
     install_pip()
-    sh("%s -m pip uninstall -y psutil" % PYTHON)
-
-    # Uninstalling psutil on Windows seems to be tricky as we may have
-    # different versions os psutil installed. Also we don't want to be
-    # in the main psutil source dir as "import psutil" will always
-    # succeed so this really removes files from site-packages dir.
     here = os.getcwd()
     try:
         os.chdir('C:\\')
@@ -272,11 +267,16 @@ def uninstall():
             try:
                 import psutil  # NOQA
             except ImportError:
-                clean()
-                return
-            sh("%s -m pip uninstall -y psutil" % PYTHON)
+                break
+            else:
+                sh("%s -m pip uninstall -y psutil" % PYTHON)
     finally:
         os.chdir(here)
+
+    for dir in site.getsitepackages():
+        for name in os.listdir(dir):
+            if name.startswith('psutil'):
+                rm(os.path.join(dir, name))
 
 
 @cmd
