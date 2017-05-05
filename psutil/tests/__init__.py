@@ -981,7 +981,7 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
         yield dst
     finally:
         if WINDOWS and cfile is not None:
-            # See:
+            # Work around ctypes issue introduced in Python 3.4:
             # - https://ci.appveyor.com/project/giampaolo/psutil/build/1207/
             #       job/o53330pbnri9bcw7
             # - http://bugs.python.org/issue30286
