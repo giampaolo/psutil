@@ -75,8 +75,11 @@ __extra__all__ = [
 
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
-ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
-                               cext.ERROR_ACCESS_DENIED])
+ACCESS_DENIED_ERRSET = frozenset([errno.EPERM, errno.EACCES,
+                                  cext.ERROR_ACCESS_DENIED])
+NO_SUCH_SERVICE_ERRSET = frozenset(cext.ERROR_INVALID_NAME,
+                                   cext.ERROR_SERVICE_DOES_NOT_EXIST)
+
 
 if enum is None:
     AF_LINK = -1
@@ -484,15 +487,13 @@ class WindowsService(object):
         try:
             yield
         except WindowsError as err:
-            NO_SUCH_SERVICE_SET = (cext.ERROR_INVALID_NAME,
-                                   cext.ERROR_SERVICE_DOES_NOT_EXIST)
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 raise AccessDenied(
                     pid=None, name=self._name,
                     msg="service %r is not querable (not enough privileges)" %
                         self._name)
-            elif err.errno in NO_SUCH_SERVICE_SET or \
-                    err.winerror in NO_SUCH_SERVICE_SET:
+            elif err.errno in NO_SUCH_SERVICE_ERRSET or \
+                    err.winerror in NO_SUCH_SERVICE_ERRSET:
                 raise NoSuchProcess(
                     pid=None, name=self._name,
                     msg="service %r does not exist)" % self._name)
@@ -618,7 +619,7 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
@@ -709,7 +710,7 @@ class Process(object):
         try:
             return cext.proc_memory_info(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
                 info = self.oneshot_info()
@@ -749,7 +750,7 @@ class Process(object):
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
@@ -798,7 +799,7 @@ class Process(object):
         try:
             return cext.proc_create_time(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 return self.oneshot_info()[pinfo_map['create_time']]
             raise
 
@@ -820,7 +821,7 @@ class Process(object):
         try:
             user, system = cext.proc_cpu_times(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 info = self.oneshot_info()
                 user = info[pinfo_map['user_time']]
                 system = info[pinfo_map['kernel_time']]
@@ -901,7 +902,7 @@ class Process(object):
         try:
             ret = cext.proc_io_counters(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 info = self.oneshot_info()
                 ret = (
                     info[pinfo_map['io_rcount']],
@@ -960,7 +961,7 @@ class Process(object):
         try:
             return cext.proc_num_handles(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in ACCESS_DENIED_ERRSET:
                 return self.oneshot_info()[pinfo_map['num_handles']]
             raise
 
