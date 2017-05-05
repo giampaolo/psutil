@@ -450,13 +450,9 @@ class TestSystemAPIs(unittest.TestCase):
         # if path does not exist OSError ENOENT is expected across
         # all platforms
         fname = tempfile.mktemp()
-        try:
+        with self.assertRaises(OSError) as exc:
             psutil.disk_usage(fname)
-        except OSError as err:
-            if err.errno != errno.ENOENT:
-                raise
-        else:
-            self.fail("OSError not raised")
+        self.assertEqual(exc.exception.errno, errno.ENOENT)
 
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
