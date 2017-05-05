@@ -22,6 +22,8 @@ except ImportError:
     from distutils.core import setup, Extension
 
 HERE = os.path.abspath(os.path.dirname(__file__))
+
+# ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
 from _common import BSD  # NOQA
@@ -61,6 +63,10 @@ def get_version():
         raise ValueError("couldn't find version string")
 
 
+VERSION = get_version()
+macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
+
+
 def get_description():
     README = os.path.join(HERE, 'README.rst')
     with open(README, 'r') as f:
@@ -84,10 +90,6 @@ def silenced_output(stream_name):
         setattr(sys, stream_name, orig)
 
 
-VERSION = get_version()
-macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
-
-# Windows
 if WINDOWS:
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
@@ -130,7 +132,6 @@ if WINDOWS:
         # extra_link_args=["/DEBUG"]
     )
 
-# OS X
 elif OSX:
     macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
@@ -144,7 +145,6 @@ elif OSX:
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
         ])
 
-# FreeBSD
 elif FREEBSD:
     macros.append(("PSUTIL_FREEBSD", 1))
     ext = Extension(
@@ -157,7 +157,6 @@ elif FREEBSD:
         define_macros=macros,
         libraries=["devstat"])
 
-# OpenBSD
 elif OPENBSD:
     macros.append(("PSUTIL_OPENBSD", 1))
     ext = Extension(
@@ -169,7 +168,6 @@ elif OPENBSD:
         define_macros=macros,
         libraries=["kvm"])
 
-# NetBSD
 elif NETBSD:
     macros.append(("PSUTIL_NETBSD", 1))
     ext = Extension(
@@ -182,7 +180,6 @@ elif NETBSD:
         define_macros=macros,
         libraries=["kvm"])
 
-# Linux
 elif LINUX:
     def get_ethtool_macro():
         # see: https://github.com/giampaolo/psutil/issues/659
@@ -218,7 +215,6 @@ elif LINUX:
         sources=sources + ['psutil/_psutil_linux.c'],
         define_macros=macros)
 
-# Solaris
 elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
     ext = Extension(
@@ -230,7 +226,6 @@ elif SUNOS:
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
-# POSIX
 if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',

@@ -180,10 +180,11 @@ def recursive_rm(*patterns):
 @cmd
 def help():
     """Print this help"""
-    safe_print('Run "make <target>" where <target> is one of:')
+    safe_print('Run "make [-p <PYTHON>] <target>" where <target> is one of:')
     for name in sorted(_cmds):
         safe_print(
             "    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
+    sys.exit(1)
 
 
 @cmd
@@ -440,12 +441,42 @@ def bench_oneshot_2():
     sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
+def set_python(s):
+    global PYTHON
+    if os.path.isabs(s):
+        PYTHON = s
+    else:
+        # try to look for a python installation
+        orig = s
+        s = s.replace('.', '')
+        for v in ('26', '27', '33', '34', '35', '36', '37'):
+            if s == v:
+                path = 'C:\\python%s\python.exe' % s
+                if os.path.isfile(path):
+                    print(path)
+                    PYTHON = path
+                    return
+        return sys.exit(
+            "can't find any python installation matching %r" % orig)
+
+
+def parse_cmdline():
+    if '-p' in sys.argv:
+        try:
+            pos = sys.argv.index('-p')
+            sys.argv.pop(pos)
+            py = sys.argv.pop(pos)
+        except IndexError:
+            return help()
+        set_python(py)
+
+
 def main():
+    parse_cmdline()
     try:
         cmd = sys.argv[1].replace('-', '_')
     except IndexError:
         return help()
-
     if cmd in _cmds:
         fun = getattr(sys.modules[__name__], cmd)
         fun()

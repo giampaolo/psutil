@@ -29,4 +29,4 @@ if "%TSCRIPT%" == "" (
 rem Needed to locate the .pypirc file and upload exes on PYPI.
 set HOME=%USERPROFILE%
 
-%PYTHON% scripts\internal\winmake.py %1 %2
+%PYTHON% scripts\internal\winmake.py %1 %2 %3 %4 %5 %6

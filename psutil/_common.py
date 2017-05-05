@@ -4,6 +4,9 @@
 
 """Common objects shared by __init__.py and _ps*.py modules."""
 
+# Note: this module is imported by setup.py so it should not import
+# psutil or third-party modules.
+
 from __future__ import division
 
 import contextlib
@@ -27,12 +30,13 @@ try:
 except ImportError:
     AF_UNIX = None
 
-from psutil._compat import PY3
-
 if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
+
+# can't take it from _common.py as this script is imported by setup.py
+PY3 = sys.version_info[0] == 3
 
 __all__ = [
     # OS constants

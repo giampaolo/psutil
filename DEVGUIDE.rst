@@ -46,6 +46,28 @@ Some useful make commands::
   $ make coverage       # run test coverage
   $ make flake8         # run PEP8 linter
 
+There are some differences between ``make`` on UNIX and Windows.
+For instance, to run a specific Python version. On UNIX::
+
+    make test PYTHON=python3.5
+
+On Windows:
+
+    set PYTHON=C:\python35\python.exe && make test
+
+    # ...or
+
+    make -p 35 test
+
+If you want to modify psutil and run a script on the fly which uses it do
+(on UNIX)::
+
+    make test TSCRIPT=foo.py
+
+On Windows:
+
+    set TSCRIPT=foo.py && make test
+
 ====================
 Adding a new feature
 ====================
