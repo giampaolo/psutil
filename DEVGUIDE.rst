@@ -51,11 +51,11 @@ For instance, to run a specific Python version. On UNIX::
 
     make test PYTHON=python3.5
 
-On Windows:
+On Windows::
 
     set PYTHON=C:\python35\python.exe && make test
 
-    # ...or
+    # ...or:
 
     make -p 35 test
 
@@ -64,7 +64,7 @@ If you want to modify psutil and run a script on the fly which uses it do
 
     make test TSCRIPT=foo.py
 
-On Windows:
+On Windows::
 
     set TSCRIPT=foo.py && make test
 

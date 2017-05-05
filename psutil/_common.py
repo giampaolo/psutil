@@ -39,9 +39,10 @@ else:
 PY3 = sys.version_info[0] == 3
 
 __all__ = [
-    # OS constants
+    # constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
     'WINDOWS',
+    'ENCODING', 'ENCODING_ERRS',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',

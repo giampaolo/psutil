@@ -553,7 +553,6 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def is_running(self, ret, proc):
         self.assertIsInstance(ret, bool)
-        assert ret  # XXX: racy
 
     def cpu_affinity(self, ret, proc):
         self.assertIsInstance(ret, list)

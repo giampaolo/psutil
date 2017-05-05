@@ -453,7 +453,7 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             psutil.disk_usage(fname)
         except OSError as err:
-            if err.args[0] != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 raise
         else:
             self.fail("OSError not raised")
