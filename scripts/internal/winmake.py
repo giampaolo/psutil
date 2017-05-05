@@ -24,8 +24,8 @@ import sys
 import tempfile
 
 
-PYTHON = sys.executable
-TSCRIPT = os.environ['TSCRIPT']
+PYTHON = os.getenv('PYTHON', sys.executable)
+TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 DEPS = [
@@ -77,9 +77,7 @@ def safe_print(text, file=sys.stdout, flush=False):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    code = os.system(cmd)
-    if code:
-        raise SystemExit
+    subprocess.check_call(cmd, shell=True, env=os.environ, cwd=os.getcwd())
 
 
 def cmd(fun):
@@ -457,6 +455,7 @@ def set_python(s):
                 if os.path.isfile(path):
                     print(path)
                     PYTHON = path
+                    os.putenv('PYTHON', path)
                     return
         return sys.exit(
             "can't find any python installation matching %r" % orig)
