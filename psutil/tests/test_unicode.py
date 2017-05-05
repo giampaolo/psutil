@@ -69,6 +69,7 @@ from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
@@ -143,8 +144,10 @@ class _BaseFSAPIsTests(object):
             # On Windows name() is determined from exe() first, because
             # it's faster; we want to overcome the internal optimization
             # and test name() instead of exe().
-            from psutil._pswindows import py2_strencode
-            name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
+            with mock.patch("psutil._psplatform.cext.proc_exe",
+                            side_effect=psutil.AccessDenied(os.getpid())) as m:
+                name = psutil.Process(subp.pid).name()
+                assert m.called
         else:
             name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
@@ -284,9 +287,10 @@ class TestWinProcessName(unittest.TestCase):
         # On Windows name() is determined from exe() first, because
         # it's faster; we want to overcome the internal optimization
         # and test name() instead of exe().
-        from psutil._pswindows import py2_strencode
-        name = py2_strencode(psutil._psplatform.cext.proc_name(os.getpid()))
-        self.assertIsInstance(name, str)
+        with mock.patch("psutil._psplatform.cext.proc_exe",
+                        side_effect=psutil.AccessDenied(os.getpid())) as m:
+            self.assertIsInstance(psutil.Process().name(), str)
+            assert m.called
 
 
 # ===================================================================
