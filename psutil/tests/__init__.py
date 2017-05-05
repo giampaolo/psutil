@@ -688,8 +688,8 @@ def skip_on_not_implemented(only_if=None):
 
 
 def cleanup():
-    for name in os.listdir('.'):
-        if name.startswith(TESTFILE_PREFIX):
+    for name in os.listdir(u('.')):
+        if name.startswith(u(TESTFILE_PREFIX)):
             try:
                 safe_rmpath(name)
             except UnicodeEncodeError as exc:
