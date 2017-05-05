@@ -969,6 +969,10 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
     libs = [x.path for x in psutil.Process().memory_maps()
             if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
+    if WINDOWS:
+        libs = [x for x in libs
+                if 'python' in x.lower() and 'wow64' not in x.lower()]
+        assert libs
     cfile = None
     try:
         src = random.choice(libs)
