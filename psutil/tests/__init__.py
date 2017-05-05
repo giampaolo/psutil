@@ -12,7 +12,6 @@ from __future__ import print_function
 
 import atexit
 import contextlib
-import ctypes
 import errno
 import functools
 import os
@@ -965,6 +964,7 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
     in memory via ctypes.
     Return the new absolutized, normcased path.
     """
+    import ctypes
     ext = ".so" if POSIX else ".dll"
     dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
     libs = [x.path for x in psutil.Process().memory_maps()
@@ -981,5 +981,12 @@ def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
         yield dst
     finally:
         if WINDOWS and cfile is not None:
+            # See:
+            # - https://ci.appveyor.com/project/giampaolo/psutil/build/1207/
+            #       job/o53330pbnri9bcw7
+            # - http://bugs.python.org/issue30286
+            # - http://stackoverflow.com/questions/23522055
+            from ctypes import wintypes
+            ctypes.windll.kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
             ctypes.windll.kernel32.FreeLibrary(cfile._handle)
         safe_rmpath(dst)
