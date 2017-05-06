@@ -1556,25 +1556,26 @@ class TestProcess(unittest.TestCase):
         with mock.patch(patch_point, side_effect=open_mock):
             self.assertRaises(psutil.AccessDenied, psutil.Process().threads)
 
-    # not sure why (doesn't fail locally)
-    # https://travis-ci.org/giampaolo/psutil/jobs/108629915
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_exe_mocked(self):
         with mock.patch('psutil._pslinux.readlink',
-                        side_effect=OSError(errno.ENOENT, "")) as m:
-            # No such file error; might be raised also if /proc/pid/exe
-            # path actually exists for system processes with low pids
-            # (about 0-20). In this case psutil is supposed to return
-            # an empty string.
-            ret = psutil.Process().exe()
-            assert m.called
-            self.assertEqual(ret, "")
+                        side_effect=OSError(errno.ENOENT, "")) as m1:
+            with mock.patch('psutil.Process.cmdline',
+                            side_effect=psutil.AccessDenied(0, "")) as m2:
+                # No such file error; might be raised also if /proc/pid/exe
+                # path actually exists for system processes with low pids
+                # (about 0-20). In this case psutil is supposed to return
+                # an empty string.
+                ret = psutil.Process().exe()
+                assert m1.called
+                assert m2.called
+                self.assertEqual(ret, "")
 
-            # ...but if /proc/pid no longer exist we're supposed to treat
-            # it as an alias for zombie process
-            with mock.patch('psutil._pslinux.os.path.lexists',
-                            return_value=False):
-                self.assertRaises(psutil.ZombieProcess, psutil.Process().exe)
+                # ...but if /proc/pid no longer exist we're supposed to treat
+                # it as an alias for zombie process
+                with mock.patch('psutil._pslinux.os.path.lexists',
+                                return_value=False):
+                    self.assertRaises(
+                        psutil.ZombieProcess, psutil.Process().exe)
 
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case
