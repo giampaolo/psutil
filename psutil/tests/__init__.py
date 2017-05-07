@@ -985,13 +985,12 @@ else:
         Return the new absolutized, normcased path.
         """
         from ctypes import wintypes
+        from ctypes import WinError
         ext = ".dll"
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps()
-                if os.path.splitext(x.path)[1].lower() == ext]
-        libs = [x for x in libs
-                if 'python' in x.lower() and 'wow64' not in x.lower()]
-        assert libs
+                if os.path.splitext(x.path)[1].lower() == ext and
+                'python' in x.lower() and 'wow64' not in x.lower()]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
         cfile = None
@@ -999,13 +998,15 @@ else:
             cfile = ctypes.WinDLL(dst)
             yield dst
         finally:
-            # Work around ctypes issue introduced in Python 3.4:
+            # Work around OverflowError:
             # - https://ci.appveyor.com/project/giampaolo/psutil/build/1207/
             #       job/o53330pbnri9bcw7
             # - http://bugs.python.org/issue30286
             # - http://stackoverflow.com/questions/23522055
             if cfile is not None:
-                ctypes.windll.kernel32.FreeLibrary.argtypes = \
-                    [wintypes.HMODULE]
-                ctypes.windll.kernel32.FreeLibrary(cfile._handle)
+                FreeLibrary = ctypes.windll.kernel32.FreeLibrary
+                FreeLibrary.argtypes = [wintypes.HMODULE]
+                ret = FreeLibrary(cfile._handle)
+                if ret == 0:
+                    WinError()
             safe_rmpath(dst)
