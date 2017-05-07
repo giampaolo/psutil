@@ -11,7 +11,7 @@ import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "callable", "lru_cache", "which"]
+           "callable", "lru_cache", "which", "nested"]
 
 PY3 = sys.version_info[0] == 3
 
@@ -268,7 +268,6 @@ if nested is None:
                 with B as Y:
                     with C as Z:
                         <body>
-
         """
         exits = []
         vars = []
