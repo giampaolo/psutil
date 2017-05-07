@@ -988,8 +988,7 @@ if POSIX:
         ext = ".so"
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps()
-                if os.path.splitext(x.path)[1] == ext and
-                'python' in os.path.basename(x.path)]
+                if os.path.splitext(x.path)[1] == ext and 'python' in x.path]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
         try:
