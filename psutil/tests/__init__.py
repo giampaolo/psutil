@@ -991,7 +991,7 @@ else:
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps()
                 if os.path.splitext(x.path)[1].lower() == ext and
-                'python' in os.path.basebaname(x.path).lower() and
+                'python' in os.path.basename(x.path).lower() and
                 'wow64' not in x.path.lower()]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
