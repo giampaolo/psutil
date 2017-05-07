@@ -238,9 +238,9 @@ def get_test_subprocess(cmd=None, **kwds):
         kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
     if cmd is None:
         safe_rmpath(_TESTFN)
-        pyline = "from time import sleep;"
-        pyline += "open(r'%s', 'w').close();" % _TESTFN
-        pyline += "sleep(60);"
+        pyline = "from time import sleep;" \
+                 "open(r'%s', 'w').close();" \
+                 "sleep(60);" % _TESTFN
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
