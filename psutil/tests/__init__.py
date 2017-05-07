@@ -27,6 +27,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -82,7 +83,7 @@ __all__ = [
     # threads
     'ThreadTask'
     # test utils
-    'unittest', 'cleanup', 'skip_on_access_denied', 'skip_on_not_implemented',
+    'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_before_failing', 'run_test_module_by_name',
     # install utils
     'install_pip', 'install_test_deps',
@@ -174,6 +175,28 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 _subprocesses_started = set()
 _pids_started = set()
 _testfiles_created = set()
+
+
+@atexit.register
+def _cleanup_files():
+    DEVNULL.close()
+    for name in os.listdir(u('.')):
+        if name.startswith(u(TESTFILE_PREFIX)):
+            try:
+                safe_rmpath(name)
+            except Exception:
+                traceback.print_exc()
+    for path in _testfiles_created:
+        try:
+            safe_rmpath(path)
+        except Exception:
+            traceback.print_exc()
+
+
+# this is executed first
+@atexit.register
+def _cleanup_procs():
+    reap_children(recursive=True)
 
 
 # ===================================================================
@@ -705,21 +728,6 @@ def skip_on_not_implemented(only_if=None):
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator
-
-
-def cleanup():
-    for name in os.listdir(u('.')):
-        if name.startswith(u(TESTFILE_PREFIX)):
-            try:
-                safe_rmpath(name)
-            except UnicodeEncodeError as exc:
-                warn(exc)
-    for path in _testfiles_created:
-        safe_rmpath(path)
-
-
-atexit.register(cleanup)
-atexit.register(lambda: DEVNULL.close())
 
 
 # ===================================================================

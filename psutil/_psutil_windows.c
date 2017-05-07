@@ -397,8 +397,6 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
         return Py_BuildValue("l", WAIT_TIMEOUT);
     }
 
-    // get the exit code; note: subprocess module (erroneously?) uses
-    // what returned by WaitForSingleObject
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
