@@ -205,7 +205,7 @@ def _cleanup_procs():
 
 
 class ThreadTask(threading.Thread):
-    """A thread object used for running process thread tests."""
+    """A thread task which does nothing expect staying alive."""
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -216,6 +216,13 @@ class ThreadTask(threading.Thread):
     def __repr__(self):
         name = self.__class__.__name__
         return '<%s running=%s at %#x>' % (name, self._running, id(self))
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.stop()
 
     def start(self):
         """Start thread and keep it running until an explicit

@@ -513,13 +513,9 @@ class TestProcess(unittest.TestCase):
         else:
             step1 = p.num_threads()
 
-        thread = ThreadTask()
-        thread.start()
-        try:
+        with ThreadTask():
             step2 = p.num_threads()
             self.assertEqual(step2, step1 + 1)
-        finally:
-            thread.stop()
 
     @unittest.skipIf(not WINDOWS, 'WINDOWS only')
     def test_num_handles(self):
@@ -537,9 +533,7 @@ class TestProcess(unittest.TestCase):
         else:
             step1 = p.threads()
 
-        thread = ThreadTask()
-        thread.start()
-        try:
+        with ThreadTask():
             step2 = p.threads()
             self.assertEqual(len(step2), len(step1) + 1)
             # on Linux, first thread id is supposed to be this process
@@ -550,8 +544,6 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.id, athread[0])
             self.assertEqual(athread.user_time, athread[1])
             self.assertEqual(athread.system_time, athread[2])
-        finally:
-            thread.stop()
 
     @retry_before_failing()
     @skip_on_access_denied(only_if=OSX)
