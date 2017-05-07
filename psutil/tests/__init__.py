@@ -379,9 +379,8 @@ def reap_children(recursive=False):
 
     # Terminate subprocess.Popen instances "cleanly" by closing their
     # fds and wiat()ing for them in order to avoid zombies.
-    subprocs = _subprocesses_started.copy()
-    _subprocesses_started.clear()
-    for subp in subprocs:
+    while _subprocesses_started:
+        subp = _subprocesses_started.pop()
         try:
             subp.terminate()
         except OSError as err:
@@ -404,16 +403,16 @@ def reap_children(recursive=False):
                     raise
 
     # Terminate started pids.
-    for pid in _pids_started:
+    while _pids_started:
+        pid = _pids_started.pop()
         try:
             p = psutil.Process(pid)
         except psutil.NoSuchProcess:
             pass
         else:
             children.add(p)
-    _pids_started.clear()
 
-    # Terminate grandchildren.
+    # Terminate children.
     if children:
         for p in children:
             try:
