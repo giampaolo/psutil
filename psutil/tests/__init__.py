@@ -233,6 +233,9 @@ def get_test_subprocess(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
+    if WINDOWS:
+        # Prevents the subprocess to open error dialogs.
+        kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
     if cmd is None:
         safe_rmpath(_TESTFN)
         pyline = "from time import sleep;"
@@ -272,7 +275,13 @@ def create_proc_children_pair():
         subprocess.Popen([PYTHON, '-c', s])
         time.sleep(60)
         """ % _TESTFN2)
-    subp = pyrun(s)
+    # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
+    # set (which is the default) a "conhost.exe" extra process will be
+    # spawned as a child. We don't want that.
+    if WINDOWS:
+        subp = pyrun(s, creationflags=0)
+    else:
+        subp = pyrun(s)
     try:
         child1 = psutil.Process(subp.pid)
         data = wait_for_file(_TESTFN2, delete=False, empty=False)
@@ -286,17 +295,18 @@ def create_proc_children_pair():
         raise
 
 
-def pyrun(src):
+def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
     Returns a subprocess.Popen instance.
     """
+    kwds.setdefault("stdout", None)
+    kwds.setdefault("stderr", None)
     with tempfile.NamedTemporaryFile(
             prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
         _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
-        subp = get_test_subprocess([PYTHON, f.name], stdout=None,
-                                   stderr=None)
+        subp = get_test_subprocess([PYTHON, f.name], **kwds)
         wait_for_pid(subp.pid)
     return subp
 
@@ -306,8 +316,11 @@ def sh(cmd):
     raises RuntimeError on error.
     """
     shell = True if isinstance(cmd, (str, unicode)) else False
+    # Prevents subprocess to open error dialogs in case of error.
+    flags = 0x8000000 if WINDOWS and shell else 0
     p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
+                         stderr=subprocess.PIPE, universal_newlines=True,
+                         creationflags=flags)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)

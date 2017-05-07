@@ -1037,7 +1037,10 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
-        sproc = get_test_subprocess()
+        # On Windows we set the flag to 0 in order to cancel out the
+        # CREATE_NO_WINDOW flag (enabled by default) which creates
+        # an extra "conhost.exe" child.
+        sproc = get_test_subprocess(creationflags=0)
         children1 = p.children()
         children2 = p.children(recursive=True)
         for children in (children1, children2):
