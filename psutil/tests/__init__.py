@@ -12,6 +12,7 @@ from __future__ import print_function
 
 import atexit
 import contextlib
+import ctypes
 import errno
 import functools
 import os
@@ -957,36 +958,54 @@ def is_namedtuple(x):
     return all(type(n) == str for n in f)
 
 
-@contextlib.contextmanager
-def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
-    """Ctx manager which picks up a random shared so/dll lib used
-    by this process, copies it in another location and loads it
-    in memory via ctypes.
-    Return the new absolutized, normcased path.
-    """
-    import ctypes
-    ext = ".so" if POSIX else ".dll"
-    dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
-    libs = [x.path for x in psutil.Process().memory_maps()
-            if os.path.normcase(os.path.splitext(x.path)[1]) == ext]
-    if WINDOWS:
+if POSIX:
+    @contextlib.contextmanager
+    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+        """Ctx manager which picks up a random shared CO lib used
+        by this process, copies it in another location and loads it
+        in memory via ctypes. Return the new absolutized path.
+        """
+        ext = ".so"
+        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        libs = [x.path for x in psutil.Process().memory_maps()
+                if os.path.splitext(x.path)[1] == ext]
+        src = random.choice(libs)
+        shutil.copyfile(src, dst)
+        try:
+            ctypes.CDLL(dst)
+            yield dst
+        finally:
+            safe_rmpath(dst)
+else:
+    @contextlib.contextmanager
+    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+        """Ctx manager which picks up a random shared DLL lib used
+        by this process, copies it in another location and loads it
+        in memory via ctypes.
+        Return the new absolutized, normcased path.
+        """
+        from ctypes import wintypes
+        ext = ".dll"
+        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        libs = [x.path for x in psutil.Process().memory_maps()
+                if os.path.splitext(x.path)[1].lower() == ext]
         libs = [x for x in libs
                 if 'python' in x.lower() and 'wow64' not in x.lower()]
         assert libs
-    cfile = None
-    try:
         src = random.choice(libs)
         shutil.copyfile(src, dst)
-        cfile = ctypes.CDLL(dst)
-        yield dst
-    finally:
-        if WINDOWS and cfile is not None:
+        cfile = None
+        try:
+            cfile = ctypes.CDLL(dst)
+            yield dst
+        finally:
             # Work around ctypes issue introduced in Python 3.4:
             # - https://ci.appveyor.com/project/giampaolo/psutil/build/1207/
             #       job/o53330pbnri9bcw7
             # - http://bugs.python.org/issue30286
             # - http://stackoverflow.com/questions/23522055
-            from ctypes import wintypes
-            ctypes.windll.kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
-            ctypes.windll.kernel32.FreeLibrary(cfile._handle)
-        safe_rmpath(dst)
+            if cfile is not None:
+                ctypes.windll.kernel32.FreeLibrary.argtypes = \
+                    [wintypes.HMODULE]
+                ctypes.windll.kernel32.FreeLibrary(cfile._handle)
+            safe_rmpath(dst)
