@@ -222,6 +222,18 @@ class ThreadTask(threading.Thread):
 # ===================================================================
 
 
+def _cleanup_on_err(fun):
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except Exception:
+            reap_children()
+            raise
+    return wrapper
+
+
+@_cleanup_on_err
 def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
@@ -244,11 +256,7 @@ def get_test_subprocess(cmd=None, **kwds):
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
-        try:
-            wait_for_file(_TESTFN, delete=True, empty=True)
-        except Exception:
-            reap_children()
-            raise
+        wait_for_file(_TESTFN, delete=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -256,6 +264,7 @@ def get_test_subprocess(cmd=None, **kwds):
     return sproc
 
 
+@_cleanup_on_err
 def create_proc_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
@@ -282,19 +291,16 @@ def create_proc_children_pair():
         subp = pyrun(s, creationflags=0)
     else:
         subp = pyrun(s)
-    try:
-        child1 = psutil.Process(subp.pid)
-        data = wait_for_file(_TESTFN2, delete=False, empty=False)
-        os.remove(_TESTFN2)
-        child2_pid = int(data)
-        _pids_started.add(child2_pid)
-        child2 = psutil.Process(child2_pid)
-        return (child1, child2)
-    except Exception:
-        reap_children()
-        raise
+    child1 = psutil.Process(subp.pid)
+    data = wait_for_file(_TESTFN2, delete=False, empty=False)
+    os.remove(_TESTFN2)
+    child2_pid = int(data)
+    _pids_started.add(child2_pid)
+    child2 = psutil.Process(child2_pid)
+    return (child1, child2)
 
 
+@_cleanup_on_err
 def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
     Returns a subprocess.Popen instance.
@@ -311,6 +317,7 @@ def pyrun(src, **kwds):
     return subp
 
 
+@_cleanup_on_err
 def sh(cmd):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
