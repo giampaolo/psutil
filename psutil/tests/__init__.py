@@ -996,7 +996,7 @@ else:
         shutil.copyfile(src, dst)
         cfile = None
         try:
-            cfile = ctypes.CDLL(dst)
+            cfile = ctypes.WinDLL(dst)
             yield dst
         finally:
             # Work around ctypes issue introduced in Python 3.4:
