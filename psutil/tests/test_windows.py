@@ -190,6 +190,16 @@ class TestSystemAPIs(unittest.TestCase):
         # Wmic time is 2 secs lower for some reason; that's OK.
         self.assertLessEqual(diff, 2)
 
+    def test_boot_time_fluctuation(self):
+        with mock('psutil._pswindows.cext.boot_time', return_value=5):
+            self.assertEqual(psutil.boot_time(), 5)
+        with mock('psutil._pswindows.cext.boot_time', return_value=4):
+            self.assertEqual(psutil.boot_time(), 5)
+        with mock('psutil._pswindows.cext.boot_time', return_value=6):
+            self.assertEqual(psutil.boot_time(), 5)
+        with mock('psutil._pswindows.cext.boot_time', return_value=333):
+            self.assertEqual(psutil.boot_time(), 333)
+
 
 # ===================================================================
 # sensors_battery()
