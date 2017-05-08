@@ -536,18 +536,19 @@ Network
      ...]
 
   .. note::
-    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root
-    (lsof does the same).
+    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root.
+    This is a limitation of the OS and ``lsof`` does the same.
 
   .. note::
     (Solaris) UNIX sockets are not supported.
 
   .. note::
      (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
+     This is a limitation of the OS.
 
   .. note::
      (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
-     "".
+     "". This is a limitation of the OS.
 
   .. versionadded:: 2.1.0
 
@@ -1822,10 +1823,11 @@ Process class
 
     .. note::
        (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
+       This is a limitation of the OS.
 
     .. note::
        (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
-       "".
+       "". This is a limitation of the OS.
 
   .. method:: is_running()
 
