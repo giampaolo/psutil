@@ -481,8 +481,19 @@ def wrap_numbers(input_dict, name):
             _wrapn_cache[name] = input_dict
             return input_dict
 
-        new_dict = {}
+        # In case the number of keys changed between calls (e.g. a
+        # disk disappears) this removes the entry from _wrapn_reminders.
+        # TODO: this is messy; change the algorithm.
         old_dict = _wrapn_cache[name]
+        gone_keys = set(old_dict.keys()) - set(input_dict.keys())
+        if gone_keys:
+            for gone_key in gone_keys:
+                for k in _wrapn_reminders.keys():
+                    nam, key, i = k
+                    if nam == name and key == gone_key:
+                        del _wrapn_reminders[k]
+
+        new_dict = {}
         for key in input_dict.keys():
             input_nt = input_dict[key]
             try:
