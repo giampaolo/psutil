@@ -495,8 +495,8 @@ def wrap_numbers(input_dict, name):
 
             bits = []
             for i in range(len(input_nt)):
-                old_value = old_nt[i]
                 input_value = input_nt[i]
+                old_value = old_nt[i]
                 remkey = (name, key, i)
                 if input_value < old_value:
                     _wrapn_reminders[remkey] += old_value

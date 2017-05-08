@@ -452,11 +452,22 @@ class TestWrapNumbers(unittest.TestCase):
         # disk 2 disappears
         input = {'disk1': nt(50, 50, 50)}
         self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+
         # then it appears again; the old wrap is supposed to be
         # gone.
         input = {'disk1': nt(50, 50, 50),
                  'disk2': nt(100, 100, 100)}
         self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        # remains the same
+        input = {'disk1': nt(50, 50, 50),
+                 'disk2': nt(100, 100, 100)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        # and then wraps again
+        input = {'disk1': nt(50, 50, 50),
+                 'disk2': nt(100, 100, 10)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'),
+                         {'disk1': nt(50, 50, 50),
+                          'disk2': nt(100, 100, 110)})
 
 
 # ===================================================================
