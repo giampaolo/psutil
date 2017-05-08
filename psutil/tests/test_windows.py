@@ -7,6 +7,7 @@
 
 """Windows specific tests."""
 
+import datetime
 import errno
 import glob
 import os
@@ -178,6 +179,16 @@ class TestSystemAPIs(unittest.TestCase):
             wmi_names.add(wmi_adapter.NetConnectionID)
         self.assertTrue(ps_names & wmi_names,
                         "no common entries in %s, %s" % (ps_names, wmi_names))
+
+    def test_boot_time(self):
+        wmi_os = wmi.WMI().Win32_OperatingSystem()
+        wmi_btime_str = wmi_os[0].LastBootUpTime.split('.')[0]
+        wmi_btime_dt = datetime.datetime.strptime(
+            wmi_btime_str, "%Y%m%d%H%M%S")
+        psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
+        diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
+        # Wmic time is 2 secs lower for some reason; that's OK.
+        self.assertLessEqual(diff, 2)
 
 
 # ===================================================================
