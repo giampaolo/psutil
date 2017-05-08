@@ -191,6 +191,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertLessEqual(diff, 2)
 
     def test_boot_time_fluctuation(self):
+        # https://github.com/giampaolo/psutil/issues/1007
         with mock('psutil._pswindows.cext.boot_time', return_value=5):
             self.assertEqual(psutil.boot_time(), 5)
         with mock('psutil._pswindows.cext.boot_time', return_value=4):
