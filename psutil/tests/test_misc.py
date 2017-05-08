@@ -426,6 +426,18 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'disk1': nt(100, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'disk_io'),
                          {'disk1': nt(100, 100, 210)})
+        # now wrap another num
+        input = {'disk1': nt(50, 100, 20)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'),
+                         {'disk1': nt(150, 100, 210)})
+        # and again
+        input = {'disk1': nt(40, 100, 20)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'),
+                         {'disk1': nt(190, 100, 210)})
+        # keep it the same
+        input = {'disk1': nt(40, 100, 20)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'),
+                         {'disk1': nt(190, 100, 210)})
 
     def test_changing_keys(self):
         # Emulate a case where the second call to disk_io()

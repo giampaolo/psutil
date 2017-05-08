@@ -472,6 +472,7 @@ def deprecated_method(replacement):
 _wrapn_lock = threading.Lock()
 _wrapn_cache = {}
 _wrapn_reminders = defaultdict(int)
+_wrapn_rmap = defaultdict(list)
 
 
 def wrap_numbers(input_dict, name):
@@ -483,15 +484,12 @@ def wrap_numbers(input_dict, name):
 
         # In case the number of keys changed between calls (e.g. a
         # disk disappears) this removes the entry from _wrapn_reminders.
-        # TODO: this is messy; change the algorithm.
         old_dict = _wrapn_cache[name]
         gone_keys = set(old_dict.keys()) - set(input_dict.keys())
-        if gone_keys:
-            for gone_key in gone_keys:
-                for k in _wrapn_reminders.keys():
-                    nam, key, i = k
-                    if nam == name and key == gone_key:
-                        del _wrapn_reminders[k]
+        for gone_key in gone_keys:
+            for remkey in _wrapn_rmap[name + "-" + gone_key]:
+                del _wrapn_reminders[remkey]
+            del _wrapn_rmap[name + "-" + gone_key]
 
         new_dict = {}
         for key in input_dict.keys():
@@ -512,6 +510,8 @@ def wrap_numbers(input_dict, name):
                 if input_value < old_value:
                     _wrapn_reminders[remkey] += old_value
                 bits.append(input_value + _wrapn_reminders[remkey])
+                _wrapn_rmap[name + "-" + key].append(remkey)
+
             new_dict[key] = input_nt._make(bits)
 
         _wrapn_cache[name] = input_dict
@@ -523,9 +523,15 @@ def _wrapn_cache_clear(name=None):
         if name is None:
             _wrapn_cache.clear()
             _wrapn_reminders.clear()
+            _wrapn_rmap.clear()
         else:
             _wrapn_cache.pop(name)
-            # TODO
+            _wrapn_rmap.pop(name)
+
+
+def _wrapn_cache_info(name=None):
+    return (_wrapn_cache, _wrapn_reminders, _wrapn_rmap)
 
 
 wrap_numbers.cache_clear = _wrapn_cache_clear
+wrap_numbers.cache_info = _wrapn_cache_info
