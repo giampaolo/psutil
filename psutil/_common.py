@@ -16,6 +16,7 @@ import os
 import socket
 import stat
 import sys
+import threading
 import warnings
 from collections import namedtuple
 from socket import AF_INET
@@ -465,3 +466,67 @@ def deprecated_method(replacement):
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
+
+
+_wrapn_lock = threading.Lock()
+_wrapn_cache = {}
+
+
+def wrap_numbers(new_dict, name):
+    def did_nums_wrap(new_nt, old_nt):
+        # Return True if one of the numbers of the new ntuple is smaller
+        # than the number of the old ntuple in the same position.
+        for i in range(len(new_nt)):
+            new_value = new_nt[i]
+            old_value = old_nt[i]
+            if new_value < old_value:
+                return True
+        return False
+
+    def replace_ntuple(new_nt, old_nt):
+        # Return a new ntuple with the "adjusted" numbers.
+        bits = []
+        for i in range(len(new_nt)):
+            new_value = new_nt[i]
+            old_value = old_nt[i]
+            if new_value < old_value:
+                # they wrapped!
+                num = old_value + new_value
+            else:
+                num = new_value
+            bits.append(num)
+        return new_nt._make(bits)
+
+    with _wrapn_lock:
+        if name not in _wrapn_cache:
+            # This was the first call.
+            _wrapn_cache[name] = new_dict
+            return new_dict
+
+        old_dict = _wrapn_cache[name]
+        for key, new_nt in new_dict.items():
+            try:
+                old_nt = old_dict[key]
+            except KeyError:
+                # We may get here if net_io_counters() returned a new NIC
+                # or disk_io_counters() returned a new disk.
+                continue
+            else:
+                assert new_nt._fields == old_nt._fields, (new_nt, old_nt)
+                if did_nums_wrap(new_nt, old_nt):
+                    # we wrapped!
+                    new_dict[key] = replace_ntuple(new_nt, old_nt)
+
+        _wrapn_cache[name] = new_dict
+        return new_dict
+
+
+def _wrapn_cache_clear(name=None):
+    with _wrapn_lock:
+        if name is None:
+            _wrapn_cache.clear()
+        else:
+            _wrapn_cache.pop(name)
+
+
+wrap_numbers.cache_clear = _wrapn_cache_clear

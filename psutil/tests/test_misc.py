@@ -20,6 +20,7 @@ import pickle
 import socket
 import stat
 import sys
+from collections import namedtuple
 
 from psutil import LINUX
 from psutil import POSIX
@@ -27,6 +28,7 @@ from psutil import WINDOWS
 from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
+from psutil._common import wrap_numbers
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import bind_socket
@@ -375,6 +377,49 @@ class TestMisc(unittest.TestCase):
             with self.assertRaises(ImportError) as cm:
                 importlib.reload(psutil)
             self.assertIn("version conflict", str(cm.exception).lower())
+
+
+nt = namedtuple('foo', 'a b c')
+
+
+class TestWrapNumbers(unittest.TestCase):
+
+    def tearDown(self):
+        wrap_numbers.cache_clear()
+
+    def test_first_call(self):
+        input = {'foo': nt(5, 5, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+
+    def test_input_hasnt_changed(self):
+        input = {'foo': nt(5, 5, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+
+    def test_increase_but_no_wrap(self):
+        input = {'foo': nt(5, 5, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        input = {'foo': nt(10, 15, 20)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+
+    def test_wrap_once(self):
+        input = {'foo': nt(5, 5, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        input = {'foo': nt(5, 5, 3)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(5, 5, 8)})
+
+    def test_keep_wrapping(self):
+        input = {'foo': nt(100, 100, 100)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        # wrap from 5, expect 105
+        input = {'foo': nt(100, 100, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 105)})
+        # next go to 10, expect 115
+        input = {'foo': nt(100, 100, 10)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 115)})
 
 
 # ===================================================================
