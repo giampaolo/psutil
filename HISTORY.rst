@@ -20,6 +20,9 @@
 
 **Bug fixes**
 
+- 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
+  value of the first call is now cached so that boot_time() always returns the
+  same value if fluctuation is <= 1 second.
 - 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
   NoSuchProcess.
 - 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
