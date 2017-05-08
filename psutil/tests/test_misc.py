@@ -418,14 +418,14 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'foo': nt(100, 100, 10)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 110)})
-        # then it goes up (90, expect 200)
+        # then it goes up
         input = {'foo': nt(100, 100, 90)}
         self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 100, 200)})
-        # then wrap again (expect 220)
+                         {'foo': nt(100, 100, 190)})
+        # then it wraps again
         input = {'foo': nt(100, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 100, 220)})
+                         {'foo': nt(100, 100, 210)})
 
 
 # ===================================================================
