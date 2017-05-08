@@ -403,13 +403,6 @@ class TestWrapNumbers(unittest.TestCase):
         self.assertEqual(wrap_numbers(input, 'funname'), input)
 
     def test_wrap_once(self):
-        input = {'foo': nt(5, 5, 5)}
-        self.assertEqual(wrap_numbers(input, 'funname'), input)
-        input = {'foo': nt(5, 5, 3)}
-        self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(5, 5, 8)})
-
-    def test_keep_wrapping(self):
         input = {'foo': nt(100, 100, 100)}
         self.assertEqual(wrap_numbers(input, 'funname'), input)
         # wrap from 5, expect 105
@@ -420,6 +413,27 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'foo': nt(100, 100, 10)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 115)})
+
+    def test_wrap_twice(self):
+        # let's say 100 is the threshold
+        input = {'foo': nt(100, 100, 100)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        # first wrap restart from 10
+        input = {'foo': nt(100, 100, 10)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 110)})
+        # then it goes on (90)
+        input = {'foo': nt(100, 100, 90)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 200)})
+        # then it wraps again (5)
+        input = {'foo': nt(100, 100, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 205)})
+        # then another number wraps
+        input = {'foo': nt(100, 20, 205)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 120, 205)})
 
 
 # ===================================================================
