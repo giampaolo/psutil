@@ -484,8 +484,14 @@ def wrap_numbers(input_dict, name):
         new_dict = {}
         old_dict = _wrapn_cache[name]
         for key in input_dict.keys():
-            old_nt = old_dict[key]
             input_nt = input_dict[key]
+            try:
+                old_nt = old_dict[key]
+            except KeyError:
+                # The input dict has a new key (e.g. a new disk or NIC)
+                # which didn't exist in the previous call.
+                new_dict[key] = input_nt
+                continue
 
             bits = []
             for i in range(len(input_nt)):

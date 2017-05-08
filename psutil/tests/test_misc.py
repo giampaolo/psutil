@@ -410,7 +410,7 @@ class TestWrapNumbers(unittest.TestCase):
         # let's say 100 is the threshold
         input = {'foo': nt(100, 100, 100)}
         self.assertEqual(wrap_numbers(input, 'funname'), input)
-        # first wrap restart from 10
+        # first wrap restarts from 10
         input = {'foo': nt(100, 100, 10)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 110)})
@@ -426,6 +426,14 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'foo': nt(100, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 210)})
+
+    def test_dict_keys_mismatch(self):
+        # Emulate a case where the second call to disk_io_counters()
+        # (or whatever) provides a new disk.
+        input = {'disk1': nt(5, 5, 5)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
+        input = {'disk1': nt(5, 5, 5), 'disk2': nt(7, 7, 7)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
 
 
 # ===================================================================
