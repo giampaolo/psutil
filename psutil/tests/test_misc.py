@@ -401,20 +401,12 @@ class TestWrapNumbers(unittest.TestCase):
         self.assertEqual(wrap_numbers(input, 'funname'), input)
         input = {'foo': nt(10, 15, 20)}
         self.assertEqual(wrap_numbers(input, 'funname'), input)
-
-    def test_wrap_once(self):
-        input = {'foo': nt(100, 100, 100)}
+        input = {'foo': nt(20, 25, 30)}
         self.assertEqual(wrap_numbers(input, 'funname'), input)
-        # wrap from 5, expect 105
-        input = {'foo': nt(100, 100, 5)}
-        self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 100, 105)})
-        # next go to 10, expect 115
-        input = {'foo': nt(100, 100, 10)}
-        self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 100, 115)})
+        input = {'foo': nt(20, 25, 30)}
+        self.assertEqual(wrap_numbers(input, 'funname'), input)
 
-    def test_wrap_twice(self):
+    def test_wrap(self):
         # let's say 100 is the threshold
         input = {'foo': nt(100, 100, 100)}
         self.assertEqual(wrap_numbers(input, 'funname'), input)
@@ -422,18 +414,18 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'foo': nt(100, 100, 10)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 110)})
-        # then it goes on (90)
+        # then it remains the same
+        input = {'foo': nt(100, 100, 10)}
+        self.assertEqual(wrap_numbers(input, 'funname'),
+                         {'foo': nt(100, 100, 110)})
+        # then it goes up (90, expect 200)
         input = {'foo': nt(100, 100, 90)}
         self.assertEqual(wrap_numbers(input, 'funname'),
                          {'foo': nt(100, 100, 200)})
-        # then it wraps again (5)
-        input = {'foo': nt(100, 100, 5)}
+        # then wrap again (expect 220)
+        input = {'foo': nt(100, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 100, 205)})
-        # then another number wraps
-        input = {'foo': nt(100, 20, 205)}
-        self.assertEqual(wrap_numbers(input, 'funname'),
-                         {'foo': nt(100, 120, 205)})
+                         {'foo': nt(100, 100, 220)})
 
 
 # ===================================================================
