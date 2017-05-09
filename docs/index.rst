@@ -397,8 +397,10 @@ Disks
   On some systems such as Linux, on a very busy or long-lived system, the
   numbers returned by the kernel may wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
-  function calls and add "old value" to "new value" so that the numbers will
-  always be increasing or remain the same, but never decrease.
+  function calls and add "old value" to "new value" so that the returned
+  numbers will always be increasing or remain the same, but never decrease.
+  ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
+  cache.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
@@ -448,8 +450,10 @@ Network
   On some systems such as Linux, on a very busy or long-lived system, the
   numbers returned by the kernel may wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
-  function calls and add "old value" to "new value" so that the numbers will
-  always be increasing or remain the same, but never decrease.
+  function calls and add "old value" to "new value" so that the returned
+  numbers will always be increasing or remain the same, but never decrease.
+  ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
+  cache.
 
     >>> import psutil
     >>> psutil.net_io_counters()

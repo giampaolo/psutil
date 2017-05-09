@@ -2064,6 +2064,11 @@ def disk_io_counters(perdisk=False, nowrap=True):
         return nt(*[sum(x) for x in zip(*rawdict.values())])
 
 
+disk_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.disk_io_counters')
+disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
+
+
 # =====================================================================
 # --- network related functions
 # =====================================================================
@@ -2097,6 +2102,11 @@ def net_io_counters(pernic=False, nowrap=True):
         return rawdict
     else:
         return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
+
+
+net_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.net_io_counters')
+net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 
 def net_connections(kind='inet'):

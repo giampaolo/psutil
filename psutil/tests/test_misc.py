@@ -588,6 +588,24 @@ class TestWrapNumbers(unittest.TestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
+    def test_cache_clear_public_apis(self):
+        psutil.disk_io_counters()
+        psutil.net_io_counters()
+        caches = wrap_numbers.cache_info()
+        for cache in caches:
+            self.assertIn('psutil.disk_io_counters', cache)
+            self.assertIn('psutil.net_io_counters', cache)
+
+        psutil.disk_io_counters.cache_clear()
+        caches = wrap_numbers.cache_info()
+        for cache in caches:
+            self.assertIn('psutil.net_io_counters', cache)
+            self.assertNotIn('psutil.disk_io_counters', cache)
+
+        psutil.net_io_counters.cache_clear()
+        caches = wrap_numbers.cache_info()
+        self.assertEqual(caches, ({}, {}, {}))
+
     # ---
 
     def test_real_data(self):
