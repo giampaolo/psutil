@@ -588,6 +588,23 @@ class TestWrapNumbers(unittest.TestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
+    # ---
+
+    def test_real_data(self):
+        d = {'nvme0n1': (300, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
+        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
+        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
+        # decrease this   ↓
+        d = {'nvme0n1': (100, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
+        out = wrap_numbers(d, 'disk_io')
+        self.assertEqual(out['nvme0n1'][0], 400)
+
 
 # ===================================================================
 # --- Example script tests
