@@ -112,9 +112,12 @@ class TestMemLeak(unittest.TestCase):
         loops = kwargs.pop('loops_', None) or self.loops
         retry_for = kwargs.pop('retry_for_', None) or self.retry_for
 
-        self._call(fun, *args, **kwargs)
+        # warm up
+        for x in range(10):
+            self._call(fun, *args, **kwargs)
         self.assertEqual(gc.garbage, [])
         self.assertEqual(threading.active_count(), 1)
+        self.assertEqual(thisproc.children(), [])
 
         # Get 2 distinct memory samples, before and after having
         # called fun repeadetly.
