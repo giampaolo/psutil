@@ -475,15 +475,15 @@ class _WrapNumbers:
         self.lock = threading.Lock()
         self.cache = {}
         self.reminders = {}
-        self.rmap = {}
+        self.reminder_keys = {}
 
     def _add_dict(self, input_dict, name):
         assert name not in self.cache
         assert name not in self.reminders
-        assert name not in self.rmap
+        assert name not in self.reminder_keys
         self.cache[name] = input_dict
         self.reminders[name] = defaultdict(int)
-        self.rmap[name] = defaultdict(list)
+        self.reminder_keys[name] = defaultdict(list)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
@@ -492,9 +492,9 @@ class _WrapNumbers:
         old_dict = self.cache[name]
         gone_keys = set(old_dict.keys()) - set(input_dict.keys())
         for gone_key in gone_keys:
-            for remkey in self.rmap[name][gone_key]:
+            for remkey in self.reminder_keys[name][gone_key]:
                 del self.reminders[name][remkey]
-            del self.rmap[name][gone_key]
+            del self.reminder_keys[name][gone_key]
 
     def run(self, input_dict, name):
         if name not in self.cache:
@@ -503,6 +503,7 @@ class _WrapNumbers:
             return input_dict
 
         self._remove_dead_reminders(input_dict, name)
+
         old_dict = self.cache[name]
         new_dict = {}
         for key in input_dict.keys():
@@ -523,7 +524,7 @@ class _WrapNumbers:
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
                 bits.append(input_value + self.reminders[name][remkey])
-                self.rmap[name][key].append(remkey)
+                self.reminder_keys[name][key].append(remkey)
 
             new_dict[key] = input_nt._make(bits)
 
@@ -535,11 +536,11 @@ class _WrapNumbers:
             if name is None:
                 self.cache.clear()
                 self.reminders.clear()
-                self.rmap.clear()
+                self.reminder_keys.clear()
             else:
                 self.cache.pop(name)
                 self.reminders.pop(name)
-                self.rmap.pop(name)
+                self.reminder_keys.pop(name)
 
 
 def wrap_numbers(input_dict, name):
