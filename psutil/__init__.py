@@ -2041,13 +2041,26 @@ def disk_io_counters(perdisk=False, nowrap=True):
      - write_count: number of writes
      - read_bytes:  number of bytes read
      - write_bytes: number of bytes written
-     - read_time:   time spent reading from disk (in milliseconds)
-     - write_time:  time spent writing to disk (in milliseconds)
+     - read_time:   time spent reading from disk (in ms)
+     - write_time:  time spent writing to disk (in ms)
 
-    If perdisk is True return the same information for every
+    Platform specific:
+
+     - busy_time: (Linux, FreeBSD) time spent doing actual I/Os (in ms)
+     - read_merged_count (Linux): number of merged reads
+     - write_merged_count (Linux): number of merged writes
+
+    If *perdisk* is True return the same information for every
     physical disk installed on the system as a dictionary
     with partition names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
 
     On recent Windows versions 'diskperf -y' command may need to be
     executed first otherwise this function won't find any disk.
@@ -2088,10 +2101,17 @@ def net_io_counters(pernic=False, nowrap=True):
      - dropout:      total number of outgoing packets which were dropped
                      (always 0 on OSX and BSD)
 
-    If pernic is True return the same information for every
+    If *pernic* is True return the same information for every
     network interface installed on the system as a dictionary
     with network interface names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
     """
     rawdict = _psplatform.net_io_counters()
     if nowrap:
