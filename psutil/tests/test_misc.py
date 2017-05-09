@@ -557,6 +557,19 @@ class TestWrapNumbers(unittest.TestCase):
             {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}})
         self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
 
+    def test_cache_changing_keys(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        input = {'disk1': nt(5, 5, 5),
+                 'disk2': nt(7, 7, 7)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        self.assertEqual(
+            cache[1],
+            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}})
+        self.assertEqual(cache[2], {'disk_io': {}})
+
 
 # ===================================================================
 # --- Example script tests
