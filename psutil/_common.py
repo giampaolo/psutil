@@ -538,9 +538,9 @@ class _WrapNumbers:
                 self.reminders.clear()
                 self.reminder_keys.clear()
             else:
-                self.cache.pop(name)
-                self.reminders.pop(name)
-                self.reminder_keys.pop(name)
+                self.cache.pop(name, None)
+                self.reminders.pop(name, None)
+                self.reminder_keys.pop(name, None)
 
     def cache_info(self):
         with self.lock:

@@ -68,8 +68,12 @@ import psutil
 import psutil.tests
 
 
+# ===================================================================
+# --- Misc / generic tests.
+# ===================================================================
+
+
 class TestMisc(unittest.TestCase):
-    """Misc / generic tests."""
 
     def test_process__repr__(self, func=repr):
         p = psutil.Process()
@@ -379,6 +383,11 @@ class TestMisc(unittest.TestCase):
             self.assertIn("version conflict", str(cm.exception).lower())
 
 
+# ===================================================================
+# --- Tests for wrap_numbers() function.
+# ===================================================================
+
+
 nt = namedtuple('foo', 'a b c')
 
 
@@ -569,6 +578,15 @@ class TestWrapNumbers(unittest.TestCase):
             cache[1],
             {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}})
         self.assertEqual(cache[2], {'disk_io': {}})
+
+    def test_cache_clear(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        wrap_numbers(input, 'disk_io')
+        wrap_numbers.cache_clear('disk_io')
+        self.assertEqual(wrap_numbers.cache_info(), ({}, {}, {}))
+        wrap_numbers.cache_clear('disk_io')
+        wrap_numbers.cache_clear('?!?')
 
 
 # ===================================================================
