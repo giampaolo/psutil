@@ -483,7 +483,7 @@ class _WrapNumbers:
         assert name not in self.reminder_keys
         self.cache[name] = input_dict
         self.reminders[name] = defaultdict(int)
-        self.reminder_keys[name] = defaultdict(list)
+        self.reminder_keys[name] = defaultdict(set)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
@@ -523,7 +523,7 @@ class _WrapNumbers:
                 remkey = (key, i)
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
-                    self.reminder_keys[name][key].append(remkey)
+                    self.reminder_keys[name][key].add(remkey)
                 bits.append(input_value + self.reminders[name][remkey])
 
             new_dict[key] = input_nt._make(bits)

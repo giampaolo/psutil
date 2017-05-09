@@ -428,6 +428,10 @@ class TestWrapNumbers(unittest.TestCase):
         input = {'disk1': nt(100, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'disk_io'),
                          {'disk1': nt(100, 100, 210)})
+        # and remains the same
+        input = {'disk1': nt(100, 100, 20)}
+        self.assertEqual(wrap_numbers(input, 'disk_io'),
+                         {'disk1': nt(100, 100, 210)})
         # now wrap another num
         input = {'disk1': nt(50, 100, 20)}
         self.assertEqual(wrap_numbers(input, 'disk_io'),
@@ -482,6 +486,76 @@ class TestWrapNumbers(unittest.TestCase):
         self.assertEqual(wrap_numbers(input, 'disk_io'),
                          {'disk1': nt(50, 50, 50),
                           'disk2': nt(100, 100, 110)})
+
+    # --- cache tests
+
+    def test_cache_first_call(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        self.assertEqual(cache[1], {'disk_io': {}})
+        self.assertEqual(cache[2], {'disk_io': {}})
+
+    def test_cache_call_twice(self):
+        input = {'disk1': nt(5, 5, 5)}
+        wrap_numbers(input, 'disk_io')
+        input = {'disk1': nt(10, 10, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        self.assertEqual(
+            cache[1],
+            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}})
+        self.assertEqual(cache[2], {'disk_io': {}})
+
+    def test_cache_wrap(self):
+        # let's say 100 is the threshold
+        input = {'disk1': nt(100, 100, 100)}
+        wrap_numbers(input, 'disk_io')
+
+        # first wrap restarts from 10
+        input = {'disk1': nt(100, 100, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        self.assertEqual(
+            cache[1],
+            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}})
+        self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
+
+        def assert_():
+            cache = wrap_numbers.cache_info()
+            self.assertEqual(
+                cache[1],
+                {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0,
+                             ('disk1', 2): 100}})
+            self.assertEqual(cache[2],
+                             {'disk_io': {'disk1': set([('disk1', 2)])}})
+
+        # then it remains the same
+        input = {'disk1': nt(100, 100, 10)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        assert_()
+
+        # then it goes up
+        input = {'disk1': nt(100, 100, 90)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        assert_()
+
+        # then it wraps again
+        input = {'disk1': nt(100, 100, 20)}
+        wrap_numbers(input, 'disk_io')
+        cache = wrap_numbers.cache_info()
+        self.assertEqual(cache[0], {'disk_io': input})
+        self.assertEqual(
+            cache[1],
+            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}})
+        self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
 
 
 # ===================================================================
