@@ -101,6 +101,16 @@ Typical process occurring when adding a new functionality (API):
 - update ``README.rst`` (if necessary).
 - make a pull request.
 
+===================
+Make a pull request
+===================
+
+- fork psutil
+- create your feature branch (``git checkout -b my-new-feature``)
+- commit your changes (``git commit -am 'add some feature'``)
+- push to the branch (``git push origin my-new-feature``)
+- create a new pull request
+
 ======================
 Continuous integration
 ======================

@@ -7,6 +7,8 @@
 
 **Enhancements**
 
+- 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
+  (restart from 0). Introduced a new "nowrap" argument.
 - 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.

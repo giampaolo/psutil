@@ -366,7 +366,7 @@ Disks
   .. versionchanged::
     4.3.0 *percent* value takes root reserved space into account.
 
-.. function:: disk_io_counters(perdisk=False)
+.. function:: disk_io_counters(perdisk=False, nowrap=True)
 
   Return system-wide disk I/O statistics as a named tuple including the
   following fields:
@@ -394,6 +394,13 @@ Disks
   the named tuple described above as the values.
   See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
+  On some systems such as Linux, on a very busy or long-lived system, the
+  numbers returned by the kernel may overflow and wrap (restart from zero).
+  If *nowrap* is ``True`` psutil will detect and adjust those numbers across
+  function calls and add "old value" to "new value" so that the returned
+  numbers will always be increasing or remain the same, but never decrease.
+  ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
+  cache.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
@@ -404,11 +411,13 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. warning::
-    on some systems such as Linux, on a very busy or long-lived system these
-    numbers may wrap (restart from zero), see
-    `issue #802 <https://github.com/giampaolo/psutil/issues/802>`__.
-    Applications should be prepared to deal with that.
+  .. note::
+    on Windows ``"diskperf -y"`` command may need to be executed first
+    otherwise this function won't find any disk.
+
+  .. versionchanged::
+    5.3.0 numbers no longer wrap (restart from zero) across calls thanks to new
+    *nowrap* argument.
 
   .. versionchanged::
     4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
@@ -438,6 +447,13 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the named tuple described above as the values.
+  On some systems such as Linux, on a very busy or long-lived system, the
+  numbers returned by the kernel may overflow and wrap (restart from zero).
+  If *nowrap* is ``True`` psutil will detect and adjust those numbers across
+  function calls and add "old value" to "new value" so that the returned
+  numbers will always be increasing or remain the same, but never decrease.
+  ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
+  cache.
 
     >>> import psutil
     >>> psutil.net_io_counters()
@@ -451,11 +467,9 @@ Network
   and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
-  .. warning::
-    on some systems such as Linux, on a very busy or long-lived system these
-    numbers may wrap (restart from zero), see
-    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
-    Applications should be prepared to deal with that.
+  .. versionchanged::
+    5.3.0 numbers no longer wrap (restart from zero) across calls thanks to new
+    *nowrap* argument.
 
 .. function:: net_connections(kind='inet')
 

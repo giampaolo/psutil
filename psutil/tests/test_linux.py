@@ -728,7 +728,8 @@ class TestSystemNetwork(unittest.TestCase):
             ret['bytes_sent'] = int(re.findall('TX bytes:(\d+)', out)[0])
             return ret
 
-        for name, stats in psutil.net_io_counters(pernic=True).items():
+        nio = psutil.net_io_counters(pernic=True, nowrap=False)
+        for name, stats in nio.items():
             try:
                 ifconfig_ret = ifconfig(name)
             except RuntimeError:
@@ -873,7 +874,7 @@ class TestSystemDisks(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters()
+            ret = psutil.disk_io_counters(nowrap=False)
             assert m.called
             self.assertEqual(ret.read_count, 1)
             self.assertEqual(ret.read_merged_count, 2)
@@ -905,7 +906,7 @@ class TestSystemDisks(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters()
+            ret = psutil.disk_io_counters(nowrap=False)
             assert m.called
             self.assertEqual(ret.read_count, 1)
             self.assertEqual(ret.read_merged_count, 2)
@@ -939,7 +940,7 @@ class TestSystemDisks(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters()
+            ret = psutil.disk_io_counters(nowrap=False)
             assert m.called
             self.assertEqual(ret.read_count, 1)
             self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
