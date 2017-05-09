@@ -475,7 +475,15 @@ class _WrapNumbers:
         self.lock = threading.Lock()
         self.cache = {}
         self.reminders = {}
-        self.rmap = defaultdict(list)
+        self.rmap = {}
+
+    def _add_dict(self, input_dict, name):
+        assert name not in self.cache
+        assert name not in self.reminders
+        assert name not in self.rmap
+        self.cache[name] = input_dict
+        self.reminders[name] = defaultdict(int)
+        self.rmap[name] = defaultdict(list)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
@@ -484,15 +492,14 @@ class _WrapNumbers:
         old_dict = self.cache[name]
         gone_keys = set(old_dict.keys()) - set(input_dict.keys())
         for gone_key in gone_keys:
-            for remkey in self.rmap[name + "-" + gone_key]:
+            for remkey in self.rmap[name][gone_key]:
                 del self.reminders[name][remkey]
-            del self.rmap[name + "-" + gone_key]
+            del self.rmap[name][gone_key]
 
     def run(self, input_dict, name):
         if name not in self.cache:
             # This was the first call.
-            self.cache[name] = input_dict
-            self.reminders[name] = defaultdict(int)
+            self._add_dict(input_dict, name)
             return input_dict
 
         self._remove_dead_reminders(input_dict, name)
@@ -516,7 +523,7 @@ class _WrapNumbers:
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
                 bits.append(input_value + self.reminders[name][remkey])
-                self.rmap[name + "-" + key].append(remkey)
+                self.rmap[name][key].append(remkey)
 
             new_dict[key] = input_nt._make(bits)
 
@@ -531,7 +538,7 @@ class _WrapNumbers:
                 self.rmap.clear()
             else:
                 self.cache.pop(name)
-                self.reminders[name].clear()
+                self.reminders.pop(name)
                 self.rmap.pop(name)
 
 
