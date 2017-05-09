@@ -395,7 +395,7 @@ Disks
   See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
   On some systems such as Linux, on a very busy or long-lived system, the
-  numbers returned by the kernel may wrap (restart from zero).
+  numbers returned by the kernel may overflow and wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
   function calls and add "old value" to "new value" so that the returned
   numbers will always be increasing or remain the same, but never decrease.
@@ -448,7 +448,7 @@ Network
   interface installed on the system as a dictionary with network interface
   names as the keys and the named tuple described above as the values.
   On some systems such as Linux, on a very busy or long-lived system, the
-  numbers returned by the kernel may wrap (restart from zero).
+  numbers returned by the kernel may overflow and wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
   function calls and add "old value" to "new value" so that the returned
   numbers will always be increasing or remain the same, but never decrease.
