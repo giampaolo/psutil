@@ -506,7 +506,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
                      '/proc/diskstats not available on this Linux version')
     @skip_if_linux()
     def test_disk_io_counters(self):
-        self.execute(psutil.disk_io_counters)
+        self.execute(psutil.disk_io_counters, nowrap=False)
 
     # --- proc
 
@@ -518,7 +518,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     @skip_if_linux()
     def test_net_io_counters(self):
-        self.execute(psutil.net_io_counters)
+        self.execute(psutil.net_io_counters, nowrap=False)
 
     @unittest.skipIf(LINUX,
                      "worthless on Linux (pure python)")

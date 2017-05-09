@@ -30,6 +30,7 @@ from . import _common
 from ._common import deprecated_method
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import wrap_numbers as _wrap_numbers
 from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
@@ -2032,7 +2033,7 @@ def disk_partitions(all=False):
     return _psplatform.disk_partitions(all)
 
 
-def disk_io_counters(perdisk=False):
+def disk_io_counters(perdisk=False, nowrap=True):
     """Return system disk I/O statistics as a namedtuple including
     the following fields:
 
@@ -2040,18 +2041,33 @@ def disk_io_counters(perdisk=False):
      - write_count: number of writes
      - read_bytes:  number of bytes read
      - write_bytes: number of bytes written
-     - read_time:   time spent reading from disk (in milliseconds)
-     - write_time:  time spent writing to disk (in milliseconds)
+     - read_time:   time spent reading from disk (in ms)
+     - write_time:  time spent writing to disk (in ms)
 
-    If perdisk is True return the same information for every
+    Platform specific:
+
+     - busy_time: (Linux, FreeBSD) time spent doing actual I/Os (in ms)
+     - read_merged_count (Linux): number of merged reads
+     - write_merged_count (Linux): number of merged writes
+
+    If *perdisk* is True return the same information for every
     physical disk installed on the system as a dictionary
     with partition names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
 
     On recent Windows versions 'diskperf -y' command may need to be
     executed first otherwise this function won't find any disk.
     """
     rawdict = _psplatform.disk_io_counters()
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
     nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
@@ -2061,12 +2077,17 @@ def disk_io_counters(perdisk=False):
         return nt(*[sum(x) for x in zip(*rawdict.values())])
 
 
+disk_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.disk_io_counters')
+disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
+
+
 # =====================================================================
 # --- network related functions
 # =====================================================================
 
 
-def net_io_counters(pernic=False):
+def net_io_counters(pernic=False, nowrap=True):
     """Return network I/O statistics as a namedtuple including
     the following fields:
 
@@ -2080,18 +2101,32 @@ def net_io_counters(pernic=False):
      - dropout:      total number of outgoing packets which were dropped
                      (always 0 on OSX and BSD)
 
-    If pernic is True return the same information for every
+    If *pernic* is True return the same information for every
     network interface installed on the system as a dictionary
     with network interface names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
     """
     rawdict = _psplatform.net_io_counters()
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
         for nic, fields in rawdict.items():
             rawdict[nic] = _common.snetio(*fields)
         return rawdict
     else:
         return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
+
+
+net_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.net_io_counters')
+net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 
 def net_connections(kind='inet'):
