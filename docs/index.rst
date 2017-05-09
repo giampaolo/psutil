@@ -410,6 +410,10 @@ Disks
     `issue #802 <https://github.com/giampaolo/psutil/issues/802>`__.
     Applications should be prepared to deal with that.
 
+  .. note::
+    on Windows ``"diskperf -y"`` command may need to be executed first
+    otherwise this function won't find any disk.
+
   .. versionchanged::
     4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
     *write_merged_count* (Linux) fields.
