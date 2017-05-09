@@ -507,26 +507,26 @@ class _WrapNumbers:
         old_dict = self.cache[name]
         new_dict = {}
         for key in input_dict.keys():
-            input_nt = input_dict[key]
+            input_tuple = input_dict[key]
             try:
-                old_nt = old_dict[key]
+                old_tuple = old_dict[key]
             except KeyError:
                 # The input dict has a new key (e.g. a new disk or NIC)
                 # which didn't exist in the previous call.
-                new_dict[key] = input_nt
+                new_dict[key] = input_tuple
                 continue
 
             bits = []
-            for i in range(len(input_nt)):
-                input_value = input_nt[i]
-                old_value = old_nt[i]
+            for i in range(len(input_tuple)):
+                input_value = input_tuple[i]
+                old_value = old_tuple[i]
                 remkey = (key, i)
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
                     self.reminder_keys[name][key].add(remkey)
                 bits.append(input_value + self.reminders[name][remkey])
 
-            new_dict[key] = input_nt._make(bits)
+            new_dict[key] = tuple(bits)
 
         self.cache[name] = input_dict
         return new_dict
