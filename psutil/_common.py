@@ -469,7 +469,7 @@ def deprecated_method(replacement):
     return outer
 
 
-class WrapNumbers:
+class _WrapNumbers:
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -477,14 +477,10 @@ class WrapNumbers:
         self.reminders = defaultdict(int)
         self.rmap = defaultdict(list)
 
-    def run(self, input_dict, name):
-        if name not in self.cache:
-            # This was the first call.
-            self.cache[name] = input_dict
-            return input_dict
-
-        # In case the number of keys changed between calls (e.g. a
-        # disk disappears) this removes the entry from self.reminders.
+    def _remove_dead_reminders(self, input_dict, name):
+        """In case the number of keys changed between calls (e.g. a
+        disk disappears) this removes the entry from self.reminders.
+        """
         old_dict = self.cache[name]
         gone_keys = set(old_dict.keys()) - set(input_dict.keys())
         for gone_key in gone_keys:
@@ -492,6 +488,14 @@ class WrapNumbers:
                 del self.reminders[remkey]
             del self.rmap[name + "-" + gone_key]
 
+    def run(self, input_dict, name):
+        if name not in self.cache:
+            # This was the first call.
+            self.cache[name] = input_dict
+            return input_dict
+
+        self._remove_dead_reminders(input_dict, name)
+        old_dict = self.cache[name]
         new_dict = {}
         for key in input_dict.keys():
             input_nt = input_dict[key]
@@ -529,12 +533,12 @@ class WrapNumbers:
                 self.rmap.pop(name)
 
 
-wn = WrapNumbers()
+_wn = _WrapNumbers()
 
 
 def wrap_numbers(input_dict, name):
-    with wn.lock:
-        return wn.run(input_dict, name)
+    with _wn.lock:
+        return _wn.run(input_dict, name)
 
 
-wrap_numbers.cache_clear = wn.cache_clear
+wrap_numbers.cache_clear = _wn.cache_clear
