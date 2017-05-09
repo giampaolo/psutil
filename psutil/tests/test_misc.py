@@ -20,7 +20,6 @@ import pickle
 import socket
 import stat
 import sys
-from collections import namedtuple
 
 from psutil import LINUX
 from psutil import POSIX
@@ -388,7 +387,7 @@ class TestMisc(unittest.TestCase):
 # ===================================================================
 
 
-nt = namedtuple('foo', 'a b c')
+nt = collections.namedtuple('foo', 'a b c')
 
 
 class TestWrapNumbers(unittest.TestCase):
@@ -495,6 +494,21 @@ class TestWrapNumbers(unittest.TestCase):
         self.assertEqual(wrap_numbers(input, 'disk_io'),
                          {'disk1': nt(50, 50, 50),
                           'disk2': nt(100, 100, 110)})
+
+    def test_real_data(self):
+        d = {'nvme0n1': (300, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
+        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
+        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
+        # decrease this   ↓
+        d = {'nvme0n1': (100, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
+             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
+             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
+             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
+        out = wrap_numbers(d, 'disk_io')
+        self.assertEqual(out['nvme0n1'][0], 400)
 
     # --- cache tests
 
@@ -605,23 +619,6 @@ class TestWrapNumbers(unittest.TestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         self.assertEqual(caches, ({}, {}, {}))
-
-    # ---
-
-    def test_real_data(self):
-        d = {'nvme0n1': (300, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
-             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
-             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
-             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
-        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
-        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
-        # decrease this   ↓
-        d = {'nvme0n1': (100, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
-             'nvme0n1p1': (1171, 2, 5600256, 1024, 516, 0, 0, 0, 8),
-             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
-             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348)}
-        out = wrap_numbers(d, 'disk_io')
-        self.assertEqual(out['nvme0n1'][0], 400)
 
 
 # ===================================================================

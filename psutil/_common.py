@@ -470,6 +470,7 @@ def deprecated_method(replacement):
 
 
 class _WrapNumbers:
+    """Watches numbers so that they don't overlap."""
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -554,7 +555,6 @@ def wrap_numbers(input_dict, name):
     """Given an `input_dict` and a function `name`, adjust the numbers
     which "wrap" (restart from zero) across different calls by adding
     "old value" to "new value".
-
     """
     with _wn.lock:
         return _wn.run(input_dict, name)
