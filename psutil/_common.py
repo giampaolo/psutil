@@ -469,27 +469,28 @@ def deprecated_method(replacement):
     return outer
 
 
-_wrapn_lock = threading.Lock()
-_wrapn_cache = {}
-_wrapn_reminders = defaultdict(int)
-_wrapn_rmap = defaultdict(list)
+class WrapNumbers:
 
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.cache = {}
+        self.reminders = defaultdict(int)
+        self.rmap = defaultdict(list)
 
-def wrap_numbers(input_dict, name):
-    with _wrapn_lock:
-        if name not in _wrapn_cache:
+    def run(self, input_dict, name):
+        if name not in self.cache:
             # This was the first call.
-            _wrapn_cache[name] = input_dict
+            self.cache[name] = input_dict
             return input_dict
 
         # In case the number of keys changed between calls (e.g. a
-        # disk disappears) this removes the entry from _wrapn_reminders.
-        old_dict = _wrapn_cache[name]
+        # disk disappears) this removes the entry from self.reminders.
+        old_dict = self.cache[name]
         gone_keys = set(old_dict.keys()) - set(input_dict.keys())
         for gone_key in gone_keys:
-            for remkey in _wrapn_rmap[name + "-" + gone_key]:
-                del _wrapn_reminders[remkey]
-            del _wrapn_rmap[name + "-" + gone_key]
+            for remkey in self.rmap[name + "-" + gone_key]:
+                del self.reminders[remkey]
+            del self.rmap[name + "-" + gone_key]
 
         new_dict = {}
         for key in input_dict.keys():
@@ -508,30 +509,32 @@ def wrap_numbers(input_dict, name):
                 old_value = old_nt[i]
                 remkey = (name, key, i)
                 if input_value < old_value:
-                    _wrapn_reminders[remkey] += old_value
-                bits.append(input_value + _wrapn_reminders[remkey])
-                _wrapn_rmap[name + "-" + key].append(remkey)
+                    self.reminders[remkey] += old_value
+                bits.append(input_value + self.reminders[remkey])
+                self.rmap[name + "-" + key].append(remkey)
 
             new_dict[key] = input_nt._make(bits)
 
-        _wrapn_cache[name] = input_dict
+        self.cache[name] = input_dict
         return new_dict
 
-
-def _wrapn_cache_clear(name=None):
-    with _wrapn_lock:
-        if name is None:
-            _wrapn_cache.clear()
-            _wrapn_reminders.clear()
-            _wrapn_rmap.clear()
-        else:
-            _wrapn_cache.pop(name)
-            _wrapn_rmap.pop(name)
-
-
-def _wrapn_cache_info(name=None):
-    return (_wrapn_cache, _wrapn_reminders, _wrapn_rmap)
+    def cache_clear(self, name=None):
+        with self.lock:
+            if name is None:
+                self.cache.clear()
+                self.reminders.clear()
+                self.rmap.clear()
+            else:
+                self.cache.pop(name)
+                self.rmap.pop(name)
 
 
-wrap_numbers.cache_clear = _wrapn_cache_clear
-wrap_numbers.cache_info = _wrapn_cache_info
+wn = WrapNumbers()
+
+
+def wrap_numbers(input_dict, name):
+    with wn.lock:
+        return wn.run(input_dict, name)
+
+
+wrap_numbers.cache_clear = wn.cache_clear
