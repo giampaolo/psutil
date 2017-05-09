@@ -520,7 +520,7 @@ class _WrapNumbers:
             for i in range(len(input_nt)):
                 input_value = input_nt[i]
                 old_value = old_nt[i]
-                remkey = (name, key, i)
+                remkey = (key, i)
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
                 bits.append(input_value + self.reminders[name][remkey])
