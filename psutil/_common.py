@@ -542,6 +542,10 @@ class _WrapNumbers:
                 self.reminders.pop(name)
                 self.reminder_keys.pop(name)
 
+    def cache_info(self):
+        with self.lock:
+            return (self.cache, self.reminders, self.reminder_keys)
+
 
 def wrap_numbers(input_dict, name):
     with _wn.lock:
@@ -550,3 +554,4 @@ def wrap_numbers(input_dict, name):
 
 _wn = _WrapNumbers()
 wrap_numbers.cache_clear = _wn.cache_clear
+wrap_numbers.cache_info = _wn.cache_info

@@ -384,8 +384,10 @@ nt = namedtuple('foo', 'a b c')
 
 class TestWrapNumbers(unittest.TestCase):
 
-    def tearDown(self):
+    def setUp(self):
         wrap_numbers.cache_clear()
+
+    tearDown = setUp
 
     def test_first_call(self):
         input = {'disk1': nt(5, 5, 5)}
