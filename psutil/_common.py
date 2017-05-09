@@ -523,8 +523,8 @@ class _WrapNumbers:
                 remkey = (key, i)
                 if input_value < old_value:
                     self.reminders[name][remkey] += old_value
+                    self.reminder_keys[name][key].append(remkey)
                 bits.append(input_value + self.reminders[name][remkey])
-                self.reminder_keys[name][key].append(remkey)
 
             new_dict[key] = input_nt._make(bits)
 
