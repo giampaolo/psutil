@@ -44,7 +44,7 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return int(re.search('\d+', line).group(0)) * PAGESIZE
+    return int(re.search(r'\d+', line).group(0)) * PAGESIZE
 
 
 # http://code.activestate.com/recipes/578019/
@@ -221,7 +221,7 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
-                                 int(re.findall('mtu (\d+)', out)[0]))
+                                 int(re.findall(r'mtu (\d+)', out)[0]))
 
 
 if __name__ == '__main__':

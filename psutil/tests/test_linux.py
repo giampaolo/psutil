@@ -506,7 +506,7 @@ class TestSystemCPU(unittest.TestCase):
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_cpu_times(self):
         fields = psutil.cpu_times()._fields
-        kernel_ver = re.findall('\d+\.\d+\.\d+', os.uname()[2])[0]
+        kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
         kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
         if kernel_ver_info >= (2, 6, 11):
             self.assertIn('steal', fields)
@@ -534,7 +534,7 @@ class TestSystemCPU(unittest.TestCase):
                      "/sys/devices/system/cpu does not exist")
     def test_cpu_count_logical_w_sysdev_cpu_num(self):
         ls = os.listdir("/sys/devices/system/cpu")
-        count = len([x for x in ls if re.search("cpu\d+$", x) is not None])
+        count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
         self.assertEqual(psutil.cpu_count(), count)
 
     @unittest.skipIf(not which("nproc"), "nproc utility not available")
@@ -711,21 +711,21 @@ class TestSystemNetwork(unittest.TestCase):
                 # Not always reliable.
                 # self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
-                                 int(re.findall('MTU:(\d+)', out)[0]))
+                                 int(re.findall(r'MTU:(\d+)', out)[0]))
 
     @retry_before_failing()
     def test_net_io_counters(self):
         def ifconfig(nic):
             ret = {}
             out = sh("ifconfig %s" % name)
-            ret['packets_recv'] = int(re.findall('RX packets:(\d+)', out)[0])
-            ret['packets_sent'] = int(re.findall('TX packets:(\d+)', out)[0])
-            ret['errin'] = int(re.findall('errors:(\d+)', out)[0])
-            ret['errout'] = int(re.findall('errors:(\d+)', out)[1])
-            ret['dropin'] = int(re.findall('dropped:(\d+)', out)[0])
-            ret['dropout'] = int(re.findall('dropped:(\d+)', out)[1])
-            ret['bytes_recv'] = int(re.findall('RX bytes:(\d+)', out)[0])
-            ret['bytes_sent'] = int(re.findall('TX bytes:(\d+)', out)[0])
+            ret['packets_recv'] = int(re.findall(r'RX packets:(\d+)', out)[0])
+            ret['packets_sent'] = int(re.findall(r'TX packets:(\d+)', out)[0])
+            ret['errin'] = int(re.findall(r'errors:(\d+)', out)[0])
+            ret['errout'] = int(re.findall(r'errors:(\d+)', out)[1])
+            ret['dropin'] = int(re.findall(r'dropped:(\d+)', out)[0])
+            ret['dropout'] = int(re.findall(r'dropped:(\d+)', out)[1])
+            ret['bytes_recv'] = int(re.findall(r'RX bytes:(\d+)', out)[0])
+            ret['bytes_sent'] = int(re.findall(r'TX bytes:(\d+)', out)[0])
             return ret
 
         for name, stats in psutil.net_io_counters(pernic=True).items():
@@ -758,7 +758,7 @@ class TestSystemNetwork(unittest.TestCase):
         found = 0
         for line in out.split('\n'):
             line = line.strip()
-            if re.search("^\d+:", line):
+            if re.search(r"^\d+:", line):
                 found += 1
                 name = line.split(':')[1].strip()
                 self.assertIn(name, nics)
