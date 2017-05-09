@@ -63,7 +63,7 @@ __all__ = [
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
-    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum',
+    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
 ]
 
 
@@ -470,7 +470,9 @@ def deprecated_method(replacement):
 
 
 class _WrapNumbers:
-    """Watches numbers so that they don't overlap."""
+    """Watches numbers so that they don't overflow and wrap
+    (reset to zero).
+    """
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -498,6 +500,9 @@ class _WrapNumbers:
             del self.reminder_keys[name][gone_key]
 
     def run(self, input_dict, name):
+        """Cache dict and sum numbers which overflow and wrap.
+        Return an updated copy of `input_dict`
+        """
         if name not in self.cache:
             # This was the first call.
             self._add_dict(input_dict, name)
@@ -554,7 +559,7 @@ class _WrapNumbers:
 def wrap_numbers(input_dict, name):
     """Given an `input_dict` and a function `name`, adjust the numbers
     which "wrap" (restart from zero) across different calls by adding
-    "old value" to "new value".
+    "old value" to "new value" and return an updated dict.
     """
     with _wn.lock:
         return _wn.run(input_dict, name)
