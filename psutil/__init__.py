@@ -30,6 +30,7 @@ from . import _common
 from ._common import deprecated_method
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import wrap_numbers as _wrap_numbers
 from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
@@ -2032,7 +2033,7 @@ def disk_partitions(all=False):
     return _psplatform.disk_partitions(all)
 
 
-def disk_io_counters(perdisk=False):
+def disk_io_counters(perdisk=False, nowrap=True):
     """Return system disk I/O statistics as a namedtuple including
     the following fields:
 
@@ -2052,6 +2053,8 @@ def disk_io_counters(perdisk=False):
     executed first otherwise this function won't find any disk.
     """
     rawdict = _psplatform.disk_io_counters()
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
     nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
@@ -2066,7 +2069,7 @@ def disk_io_counters(perdisk=False):
 # =====================================================================
 
 
-def net_io_counters(pernic=False):
+def net_io_counters(pernic=False, nowrap=True):
     """Return network I/O statistics as a namedtuple including
     the following fields:
 
@@ -2086,6 +2089,8 @@ def net_io_counters(pernic=False):
     described above as the values.
     """
     rawdict = _psplatform.net_io_counters()
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
         for nic, fields in rawdict.items():
             rawdict[nic] = _common.snetio(*fields)

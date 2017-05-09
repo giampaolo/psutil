@@ -522,6 +522,7 @@ class _WrapNumbers:
                 old_value = old_tuple[i]
                 remkey = (key, i)
                 if input_value < old_value:
+                    # it wrapped!
                     self.reminders[name][remkey] += old_value
                     self.reminder_keys[name][key].add(remkey)
                 bits.append(input_value + self.reminders[name][remkey])
@@ -532,6 +533,7 @@ class _WrapNumbers:
         return new_dict
 
     def cache_clear(self, name=None):
+        """Clear the internal cache, optionally only for function 'name'."""
         with self.lock:
             if name is None:
                 self.cache.clear()
@@ -543,11 +545,17 @@ class _WrapNumbers:
                 self.reminder_keys.pop(name, None)
 
     def cache_info(self):
+        """Return internal cache dicts as a tuple of 3 elements."""
         with self.lock:
             return (self.cache, self.reminders, self.reminder_keys)
 
 
 def wrap_numbers(input_dict, name):
+    """Given an `input_dict` and a function `name`, adjust the numbers
+    which "wrap" (restart from zero) across different calls by adding
+    "old value" to "new value".
+
+    """
     with _wn.lock:
         return _wn.run(input_dict, name)
 
