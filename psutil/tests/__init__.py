@@ -90,6 +90,8 @@ __all__ = [
     'check_connection_ntuple', 'check_net_address',
     'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
     'tcp_socketpair', 'unix_socketpair', 'create_sockets',
+    # compat
+    'reload_module', 'import_module_by_path',
     # others
     'warn', 'copyload_shared_lib', 'is_namedtuple',
 ]
@@ -963,6 +965,40 @@ def check_connection_ntuple(conn):
 
 
 # ===================================================================
+# --- compatibility
+# ===================================================================
+
+
+def reload_module(module):
+    """Backport of importlib.reload of Python 3.3+."""
+    try:
+        import importlib
+        if not hasattr(importlib, 'reload'):  # python <=3.3
+            raise ImportError
+    except ImportError:
+        import imp
+        return imp.reload(module)
+    else:
+        return importlib.reload(module)
+
+
+def import_module_by_path(path):
+    name = os.path.splitext(os.path.basename(path))[0]
+    if sys.version_info[0] == 2:
+        import imp
+        return imp.load_source(name, path)
+    elif sys.version_info[:2] <= (3, 4):
+        from importlib.machinery import SourceFileLoader
+        return SourceFileLoader(name, path).load_module()
+    else:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+
+# ===================================================================
 # --- others
 # ===================================================================
 
@@ -982,19 +1018,6 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(type(n) == str for n in f)
-
-
-def reload_module(module):
-    """Backport of importlib.reload of Python 3.3+."""
-    try:
-        import importlib
-        if not hasattr(importlib, 'reload'):  # python <=3.3
-            raise ImportError
-    except ImportError:
-        import imp
-        return imp.reload(module)
-    else:
-        return importlib.reload(module)
 
 
 if POSIX:

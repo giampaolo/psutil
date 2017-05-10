@@ -13,7 +13,6 @@ import ast
 import collections
 import contextlib
 import errno
-import imp
 import json
 import os
 import pickle
@@ -44,6 +43,7 @@ from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import import_module_by_path
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import reap_children
@@ -352,7 +352,7 @@ class TestMisc(unittest.TestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        module = imp.load_source('setup', setup_py)
+        module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)
         self.assertEqual(module.get_version(), psutil.__version__)
 
