@@ -53,6 +53,7 @@ For a detailed explanation of how psutil handles unicode see:
 """
 
 import os
+import warnings
 from contextlib import closing
 
 from psutil import BSD
@@ -61,6 +62,7 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
+from psutil._compat import u
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
@@ -264,7 +266,13 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     def expect_exact_path_match(cls):
         # Do not expect psutil to correctly handle unicode paths on
         # Python 2 if os.listdir() is not able either.
-        return PY3 or cls.funky_name in os.listdir('.')
+        if PY3:
+            return True
+        else:
+            here = '.' if isinstance(cls.funky_name, str) else u('.')
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                return cls.funky_name in os.listdir(here)
 
 
 @unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
