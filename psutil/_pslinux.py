@@ -1677,7 +1677,8 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def num_ctx_switches(self, _ctxsw_re=re.compile(br'ctxt_switches:\t(\d+)')):
+    def num_ctx_switches(self,
+                         _ctxsw_re=re.compile(br'ctxt_switches:\t(\d+)')):
         data = self._read_status_file()
         ctxsw = _ctxsw_re.findall(data)
         if not ctxsw:
@@ -1690,7 +1691,7 @@ class Process(object):
             return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
-    def num_threads(self, _num_threads_re=re.compile(br'hreads:\t(\d+)')):
+    def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):
         # Note: on Python 3 using a re is faster than iterating over file
         # line by line. On Python 2 is the exact opposite, and iterating
         # over a file on Python 3 is slower than on Python 2.
