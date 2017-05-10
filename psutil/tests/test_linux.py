@@ -324,9 +324,13 @@ class TestSystemVirtualMemory(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            ret = psutil.virtual_memory()
+            with warnings.catch_warnings(record=True) as ws:
+                ret = psutil.virtual_memory()
             assert m.called
             self.assertEqual(ret.available, 6574984 * 1024)
+            w = ws[0]
+            self.assertIn(
+                "inactive memory stats couldn't be determined", str(w.message))
 
     def test_avail_old_missing_fields(self):
         # Remove Active(file), Inactive(file) and SReclaimable
@@ -351,9 +355,13 @@ class TestSystemVirtualMemory(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            ret = psutil.virtual_memory()
+            with warnings.catch_warnings(record=True) as ws:
+                ret = psutil.virtual_memory()
             assert m.called
             self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
+            w = ws[0]
+            self.assertIn(
+                "inactive memory stats couldn't be determined", str(w.message))
 
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
@@ -382,9 +390,13 @@ class TestSystemVirtualMemory(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            ret = psutil.virtual_memory()
+            with warnings.catch_warnings(record=True) as ws:
+                ret = psutil.virtual_memory()
             assert m.called
             self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
+            w = ws[0]
+            self.assertIn(
+                "inactive memory stats couldn't be determined", str(w.message))
 
 
 # =====================================================================
