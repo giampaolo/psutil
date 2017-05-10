@@ -596,7 +596,7 @@ def cpu_count_logical():
         # https://github.com/giampaolo/psutil/issues/200
         # try to parse /proc/stat as a last resort
         if num == 0:
-            search = re.compile('cpu\d')
+            search = re.compile(r'cpu\d')
             with open_text('%s/stat' % get_procfs_path()) as f:
                 for line in f:
                     line = line.split(' ')[0]
@@ -1562,9 +1562,9 @@ class Process(object):
         @wrap_exceptions
         def memory_full_info(
                 self,
-                _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
-                _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
+                _private_re=re.compile(br"Private.*:\s+(\d+)"),
+                _pss_re=re.compile(br"Pss.*:\s+(\d+)"),
+                _swap_re=re.compile(br"Swap.*:\s+(\d+)")):
             basic_mem = self.memory_info()
             # Note: using 3 regexes is faster than reading the file
             # line by line.
@@ -1677,7 +1677,8 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def num_ctx_switches(self, _ctxsw_re=re.compile(b'ctxt_switches:\t(\d+)')):
+    def num_ctx_switches(self,
+                         _ctxsw_re=re.compile(br'ctxt_switches:\t(\d+)')):
         data = self._read_status_file()
         ctxsw = _ctxsw_re.findall(data)
         if not ctxsw:
@@ -1690,7 +1691,7 @@ class Process(object):
             return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
-    def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):
+    def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):
         # Note: on Python 3 using a re is faster than iterating over file
         # line by line. On Python 2 is the exact opposite, and iterating
         # over a file on Python 3 is slower than on Python 2.
@@ -1746,7 +1747,7 @@ class Process(object):
         return cext.proc_cpu_affinity_get(self.pid)
 
     def _get_eligible_cpus(
-            self, _re=re.compile(b"Cpus_allowed_list:\t(\d+)-(\d+)")):
+            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
         # See: https://github.com/giampaolo/psutil/issues/956
         data = self._read_status_file()
         match = _re.findall(data)
@@ -1919,13 +1920,13 @@ class Process(object):
         return int(self._parse_stat_file()[2])
 
     @wrap_exceptions
-    def uids(self, _uids_re=re.compile(b'Uid:\t(\d+)\t(\d+)\t(\d+)')):
+    def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _uids_re.findall(data)[0]
         return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
-    def gids(self, _gids_re=re.compile(b'Gid:\t(\d+)\t(\d+)\t(\d+)')):
+    def gids(self, _gids_re=re.compile(br'Gid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _gids_re.findall(data)[0]
         return _common.pgids(int(real), int(effective), int(saved))
