@@ -484,7 +484,7 @@ else:
         if hasattr(wv, 'service_pack_major'):  # python >= 2.7
             sp = wv.service_pack_major or 0
         else:
-            r = re.search("\s\d$", wv[4])
+            r = re.search(r"\s\d$", wv[4])
             if r:
                 sp = int(r.group(0))
             else:
@@ -898,7 +898,7 @@ def check_net_address(addr, family):
             addr = unicode(addr)
         ipaddress.IPv6Address(addr)
     elif family == psutil.AF_LINK:
-        assert re.match('([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
+        assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
 
