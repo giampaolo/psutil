@@ -103,6 +103,11 @@ __all__ = [
 ]
 
 
+# Enable all warnings by default.
+if 'PYTHONWARNINGS' not in os.environ:
+    warnings.simplefilter('always')
+
+
 # ===================================================================
 # --- constants
 # ===================================================================
