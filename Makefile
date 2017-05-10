@@ -257,6 +257,10 @@ release:
 print-announce:
 	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_announce.py
 
+# Print releases' timeline.
+print-timeline:
+	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_timeline.py
+
 # ===================================================================
 # Misc
 # ===================================================================

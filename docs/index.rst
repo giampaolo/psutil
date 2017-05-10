@@ -2552,60 +2552,227 @@ take a look at the
 Timeline
 ========
 
-- 2017-04-17: `5.2.2 <https://pypi.python.org/pypi?name=psutil&version=5.2.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#522>`__
-- 2017-03-24: `5.2.1 <https://pypi.python.org/pypi?name=psutil&version=5.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#521>`__
-- 2017-03-05: `5.2.0 <https://pypi.python.org/pypi?name=psutil&version=5.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#520>`__
-- 2017-02-07: `5.1.3 <https://pypi.python.org/pypi?name=psutil&version=5.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#513>`__
-- 2017-02-03: `5.1.2 <https://pypi.python.org/pypi?name=psutil&version=5.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#512>`__
-- 2017-02-03: `5.1.1 <https://pypi.python.org/pypi?name=psutil&version=5.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#511>`__
-- 2017-02-01: `5.1.0 <https://pypi.python.org/pypi?name=psutil&version=5.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#510>`__
-- 2016-12-21: `5.0.1 <https://pypi.python.org/pypi?name=psutil&version=5.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#501>`__
-- 2016-11-06: `5.0.0 <https://pypi.python.org/pypi?name=psutil&version=5.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#500>`__
-- 2016-10-26: `4.4.2 <https://pypi.python.org/pypi?name=psutil&version=4.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#442>`__
-- 2016-10-25: `4.4.1 <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
-- 2016-10-23: `4.4.0 <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__
-- 2016-09-01: `4.3.1 <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#431>`__
-- 2016-06-18: `4.3.0 <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#430>`__
-- 2016-05-15: `4.2.0 <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#420>`__
-- 2016-03-12: `4.1.0 <https://pypi.python.org/pypi?name=psutil&version=4.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#410>`__
-- 2016-02-17: `4.0.0 <https://pypi.python.org/pypi?name=psutil&version=4.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#400>`__
-- 2016-01-20: `3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#342>`__
-- 2016-01-15: `3.4.1 <https://pypi.python.org/pypi?name=psutil&version=3.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#341>`__
-- 2015-11-25: `3.3.0 <https://pypi.python.org/pypi?name=psutil&version=3.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#330>`__
-- 2015-10-04: `3.2.2 <https://pypi.python.org/pypi?name=psutil&version=3.2.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#322>`__
-- 2015-09-03: `3.2.1 <https://pypi.python.org/pypi?name=psutil&version=3.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#321>`__
-- 2015-09-02: `3.2.0 <https://pypi.python.org/pypi?name=psutil&version=3.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#320>`__
-- 2015-07-15: `3.1.1 <https://pypi.python.org/pypi?name=psutil&version=3.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#311>`__
-- 2015-07-15: `3.1.0 <https://pypi.python.org/pypi?name=psutil&version=3.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#310>`__
-- 2015-06-18: `3.0.1 <https://pypi.python.org/pypi?name=psutil&version=3.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#301>`__
-- 2015-06-13: `3.0.0 <https://pypi.python.org/pypi?name=psutil&version=3.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#300>`__
-- 2015-02-02: `2.2.1 <https://pypi.python.org/pypi?name=psutil&version=2.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#221>`__
-- 2015-01-06: `2.2.0 <https://pypi.python.org/pypi?name=psutil&version=2.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#220>`__
-- 2014-09-26: `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#213>`__
-- 2014-09-21: `2.1.2 <https://pypi.python.org/pypi?name=psutil&version=2.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#212>`__
-- 2014-04-30: `2.1.1 <https://pypi.python.org/pypi?name=psutil&version=2.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#211>`__
-- 2014-04-08: `2.1.0 <https://pypi.python.org/pypi?name=psutil&version=2.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#210>`__
-- 2014-03-10: `2.0.0 <https://pypi.python.org/pypi?name=psutil&version=2.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#200>`__
-- 2013-11-25: `1.2.1 <https://pypi.python.org/pypi?name=psutil&version=1.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#121>`__
-- 2013-11-20: `1.2.0 <https://pypi.python.org/pypi?name=psutil&version=1.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#120>`__
-- 2013-11-07: `1.1.3 <https://pypi.python.org/pypi?name=psutil&version=1.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#113>`__
-- 2013-10-22: `1.1.2 <https://pypi.python.org/pypi?name=psutil&version=1.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#112>`__
-- 2013-10-08: `1.1.1 <https://pypi.python.org/pypi?name=psutil&version=1.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#111>`__
-- 2013-09-28: `1.1.0 <https://pypi.python.org/pypi?name=psutil&version=1.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#110>`__
-- 2013-07-12: `1.0.1 <https://pypi.python.org/pypi?name=psutil&version=1.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#101>`__
-- 2013-07-10: `1.0.0 <https://pypi.python.org/pypi?name=psutil&version=1.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#100>`__
-- 2013-05-03: `0.7.1 <https://pypi.python.org/pypi?name=psutil&version=0.7.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#071>`__
-- 2013-04-12: `0.7.0 <https://pypi.python.org/pypi?name=psutil&version=0.7.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#070>`__
-- 2012-08-16: `0.6.1 <https://pypi.python.org/pypi?name=psutil&version=0.6.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#061>`__
-- 2012-08-13: `0.6.0 <https://pypi.python.org/pypi?name=psutil&version=0.6.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#060>`__
-- 2012-06-29: `0.5.1 <https://pypi.python.org/pypi?name=psutil&version=0.5.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#051>`__
-- 2012-06-27: `0.5.0 <https://pypi.python.org/pypi?name=psutil&version=0.5.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#050>`__
-- 2011-12-14: `0.4.1 <https://pypi.python.org/pypi?name=psutil&version=0.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#041>`__
-- 2011-10-29: `0.4.0 <https://pypi.python.org/pypi?name=psutil&version=0.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#040>`__
-- 2011-07-08: `0.3.0 <https://pypi.python.org/pypi?name=psutil&version=0.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#030>`__
-- 2011-03-20: `0.2.1 <https://pypi.python.org/pypi?name=psutil&version=0.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#021>`__
-- 2010-11-13: `0.2.0 <https://pypi.python.org/pypi?name=psutil&version=0.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#020>`__
-- 2010-03-02: `0.1.3 <https://pypi.python.org/pypi?name=psutil&version=0.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#013>`__
-- 2009-05-06: `0.1.2 <https://pypi.python.org/pypi?name=psutil&version=0.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#012>`__
-- 2009-03-06: `0.1.1 <https://pypi.python.org/pypi?name=psutil&version=0.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#011>`__
-- 2009-01-27: `0.1.0 <https://pypi.python.org/pypi?name=psutil&version=0.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#010>`__
+- 2017-04-10:
+  `5.2.2 <https://pypi.python.org/pypi?name=psutil&version=5.2.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#522>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.2.1...release-5.2.2#files_bucket>`__
+- 2017-03-24:
+  `5.2.1 <https://pypi.python.org/pypi?name=psutil&version=5.2.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#521>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.2.0...release-5.2.1#files_bucket>`__
+- 2017-03-05:
+  `5.2.0 <https://pypi.python.org/pypi?name=psutil&version=5.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#520>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.1.3...release-5.2.0#files_bucket>`__
+- 2017-02-07:
+  `5.1.3 <https://pypi.python.org/pypi?name=psutil&version=5.1.3&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#513>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.1.2...release-5.1.3#files_bucket>`__
+- 2017-02-03:
+  `5.1.2 <https://pypi.python.org/pypi?name=psutil&version=5.1.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#512>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.1.1...release-5.1.2#files_bucket>`__
+- 2017-02-03:
+  `5.1.1 <https://pypi.python.org/pypi?name=psutil&version=5.1.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#511>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.1.0...release-5.1.1#files_bucket>`__
+- 2017-02-01:
+  `5.1.0 <https://pypi.python.org/pypi?name=psutil&version=5.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#510>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.0.1...release-5.1.0#files_bucket>`__
+- 2016-12-21:
+  `5.0.1 <https://pypi.python.org/pypi?name=psutil&version=5.0.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#501>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.0.0...release-5.0.1#files_bucket>`__
+- 2016-11-06:
+  `5.0.0 <https://pypi.python.org/pypi?name=psutil&version=5.0.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#500>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.4.2...release-5.0.0#files_bucket>`__
+- 2016-10-05:
+  `4.4.2 <https://pypi.python.org/pypi?name=psutil&version=4.4.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#442>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.4.1...release-4.4.2#files_bucket>`__
+- 2016-10-25:
+  `4.4.1 <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.4.0...release-4.4.1#files_bucket>`__
+- 2016-10-23:
+  `4.4.0 <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.3.1...release-4.4.0#files_bucket>`__
+- 2016-09-01:
+  `4.3.1 <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#431>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.3.0...release-4.3.1#files_bucket>`__
+- 2016-06-18:
+  `4.3.0 <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#430>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.2.0...release-4.3.0#files_bucket>`__
+- 2016-05-14:
+  `4.2.0 <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#420>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.1.0...release-4.2.0#files_bucket>`__
+- 2016-03-12:
+  `4.1.0 <https://pypi.python.org/pypi?name=psutil&version=4.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#410>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-4.0.0...release-4.1.0#files_bucket>`__
+- 2016-02-17:
+  `4.0.0 <https://pypi.python.org/pypi?name=psutil&version=4.0.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#400>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.4.2...release-4.0.0#files_bucket>`__
+- 2016-01-20:
+  `3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#342>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.4.1...release-3.4.2#files_bucket>`__
+- 2016-01-15:
+  `3.4.1 <https://pypi.python.org/pypi?name=psutil&version=3.4.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#341>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.3.0...release-3.4.1#files_bucket>`__
+- 2015-11-25:
+  `3.3.0 <https://pypi.python.org/pypi?name=psutil&version=3.3.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#330>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.2.2...release-3.3.0#files_bucket>`__
+- 2015-10-04:
+  `3.2.2 <https://pypi.python.org/pypi?name=psutil&version=3.2.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#322>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.2.1...release-3.2.2#files_bucket>`__
+- 2015-09-03:
+  `3.2.1 <https://pypi.python.org/pypi?name=psutil&version=3.2.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#321>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.2.0...release-3.2.1#files_bucket>`__
+- 2015-09-02:
+  `3.2.0 <https://pypi.python.org/pypi?name=psutil&version=3.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#320>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.1.1...release-3.2.0#files_bucket>`__
+- 2015-07-15:
+  `3.1.1 <https://pypi.python.org/pypi?name=psutil&version=3.1.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#311>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.1.0...release-3.1.1#files_bucket>`__
+- 2015-07-15:
+  `3.1.0 <https://pypi.python.org/pypi?name=psutil&version=3.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#310>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.0.1...release-3.1.0#files_bucket>`__
+- 2015-06-18:
+  `3.0.1 <https://pypi.python.org/pypi?name=psutil&version=3.0.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#301>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-3.0.0...release-3.0.1#files_bucket>`__
+- 2015-06-13:
+  `3.0.0 <https://pypi.python.org/pypi?name=psutil&version=3.0.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#300>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.2.1...release-3.0.0#files_bucket>`__
+- 2015-02-02:
+  `2.2.1 <https://pypi.python.org/pypi?name=psutil&version=2.2.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#221>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.2.0...release-2.2.1#files_bucket>`__
+- 2015-01-06:
+  `2.2.0 <https://pypi.python.org/pypi?name=psutil&version=2.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#220>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.1.3...release-2.2.0#files_bucket>`__
+- 2014-09-26:
+  `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#213>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.1.2...release-2.1.3#files_bucket>`__
+- 2014-09-21:
+  `2.1.2 <https://pypi.python.org/pypi?name=psutil&version=2.1.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#212>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.1.1...release-2.1.2#files_bucket>`__
+- 2014-04-30:
+  `2.1.1 <https://pypi.python.org/pypi?name=psutil&version=2.1.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#211>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.1.0...release-2.1.1#files_bucket>`__
+- 2014-04-08:
+  `2.1.0 <https://pypi.python.org/pypi?name=psutil&version=2.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#210>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-2.0.0...release-2.1.0#files_bucket>`__
+- 2014-03-10:
+  `2.0.0 <https://pypi.python.org/pypi?name=psutil&version=2.0.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#200>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.2.1...release-2.0.0#files_bucket>`__
+- 2013-11-25:
+  `1.2.1 <https://pypi.python.org/pypi?name=psutil&version=1.2.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#121>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.2.0...release-1.2.1#files_bucket>`__
+- 2013-11-20:
+  `1.2.0 <https://pypi.python.org/pypi?name=psutil&version=1.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#120>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.1.2...release-1.2.0#files_bucket>`__
+- 2013-10-22:
+  `1.1.2 <https://pypi.python.org/pypi?name=psutil&version=1.1.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#112>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.1.1...release-1.1.2#files_bucket>`__
+- 2013-10-08:
+  `1.1.1 <https://pypi.python.org/pypi?name=psutil&version=1.1.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#111>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.1.0...release-1.1.1#files_bucket>`__
+- 2013-09-28:
+  `1.1.0 <https://pypi.python.org/pypi?name=psutil&version=1.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#110>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.0.1...release-1.1.0#files_bucket>`__
+- 2013-07-12:
+  `1.0.1 <https://pypi.python.org/pypi?name=psutil&version=1.0.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#101>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-1.0.0...release-1.0.1#files_bucket>`__
+- 2013-07-10:
+  `1.0.0 <https://pypi.python.org/pypi?name=psutil&version=1.0.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#100>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.7.1...release-1.0.0#files_bucket>`__
+- 2013-05-03:
+  `0.7.1 <https://pypi.python.org/pypi?name=psutil&version=0.7.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#071>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.7.0...release-0.7.1#files_bucket>`__
+- 2013-04-12:
+  `0.7.0 <https://pypi.python.org/pypi?name=psutil&version=0.7.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#070>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.6.1...release-0.7.0#files_bucket>`__
+- 2012-08-16:
+  `0.6.1 <https://pypi.python.org/pypi?name=psutil&version=0.6.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#061>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.6.0...release-0.6.1#files_bucket>`__
+- 2012-08-13:
+  `0.6.0 <https://pypi.python.org/pypi?name=psutil&version=0.6.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#060>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.5.1...release-0.6.0#files_bucket>`__
+- 2012-06-29:
+  `0.5.1 <https://pypi.python.org/pypi?name=psutil&version=0.5.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#051>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.5.0...release-0.5.1#files_bucket>`__
+- 2012-06-27:
+  `0.5.0 <https://pypi.python.org/pypi?name=psutil&version=0.5.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#050>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.4.1...release-0.5.0#files_bucket>`__
+- 2011-12-14:
+  `0.4.1 <https://pypi.python.org/pypi?name=psutil&version=0.4.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#041>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.4.0...release-0.4.1#files_bucket>`__
+- 2011-10-29:
+  `0.4.0 <https://pypi.python.org/pypi?name=psutil&version=0.4.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#040>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.3.0...release-0.4.0#files_bucket>`__
+- 2011-07-08:
+  `0.3.0 <https://pypi.python.org/pypi?name=psutil&version=0.3.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#030>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.2.1...release-0.3.0#files_bucket>`__
+- 2011-03-20:
+  `0.2.1 <https://pypi.python.org/pypi?name=psutil&version=0.2.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#021>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.2.0...release-0.2.1#files_bucket>`__
+- 2010-11-13:
+  `0.2.0 <https://pypi.python.org/pypi?name=psutil&version=0.2.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#020>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.1.3...release-0.2.0#files_bucket>`__
+- 2010-03-02:
+  `0.1.3 <https://pypi.python.org/pypi?name=psutil&version=0.1.3&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#013>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.1.2...release-0.1.3#files_bucket>`__
+- 2009-05-06:
+  `0.1.2 <https://pypi.python.org/pypi?name=psutil&version=0.1.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#012>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.1.1...release-0.1.2#files_bucket>`__
+- 2009-03-06:
+  `0.1.1 <https://pypi.python.org/pypi?name=psutil&version=0.1.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#011>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-0.1.0...release-0.1.1#files_bucket>`__
+- 2009-01-27:
+  `0.1.0 <https://pypi.python.org/pypi?name=psutil&version=0.1.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#010>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/d84cc9a783d977368a64016cdb3568d2c9bceacc...release-0.1.0#files_bucket>`__
