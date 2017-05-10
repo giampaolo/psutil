@@ -5,8 +5,18 @@
 # found in the LICENSE file.
 
 """psutil is a cross-platform library for retrieving information on
-running processes and system utilization (CPU, memory, disks, network)
-in Python.
+running processes and system utilization (CPU, memory, disks, network,
+sensors) in Python. Supported platforms:
+
+ - Linux
+ - Windows
+ - OSX
+ - Sun Solaris
+ - FreeBSD
+ - OpenBSD
+ - NetBSD
+
+Works with Python versions from 2.6 to 3.X.
 """
 
 from __future__ import division
@@ -372,10 +382,10 @@ class Process(object):
      - kill()
 
     To prevent this problem for all other methods you can:
-      - use is_running() before querying the process
-      - if you're continuously iterating over a set of Process
-        instances use process_iter() which pre-emptively checks
-        process identity for every yielded instance
+     - use is_running() before querying the process
+     - if you're continuously iterating over a set of Process
+       instances use process_iter() which pre-emptively checks
+     process identity for every yielded instance
     """
 
     def __init__(self, pid=None):
@@ -533,11 +543,11 @@ class Process(object):
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
-        If 'attrs' is specified it must be a list of strings
+        If *attrs* is specified it must be a list of strings
         reflecting available Process class' attribute names
         (e.g. ['cpu_times', 'name']) else all public (read
         only) attributes are assumed.
-        'ad_value' is the value which gets assigned in case
+        *ad_value* is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
@@ -793,11 +803,11 @@ class Process(object):
         def ionice(self, ioclass=None, value=None):
             """Get or set process I/O niceness (priority).
 
-            On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
-            'value' is a number which goes from 0 to 7. The higher the
+            On Linux *ioclass* is one of the IOPRIO_CLASS_* constants.
+            *value* is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
 
-            On Windows only 'ioclass' is used and it can be set to 2
+            On Windows only *ioclass* is used and it can be set to 2
             (normal), 1 (low) or 0 (very low).
 
             Available on Linux and Windows > Vista only.
@@ -816,8 +826,8 @@ class Process(object):
             """Get or set process resource limits as a (soft, hard)
             tuple.
 
-            'resource' is one of the RLIMIT_* constants.
-            'limits' is supposed to be a (soft, hard)  tuple.
+            *resource* is one of the RLIMIT_* constants.
+            *limits* is supposed to be a (soft, hard)  tuple.
 
             See "man prlimit" for further info.
             Available on Linux only.
@@ -832,7 +842,7 @@ class Process(object):
 
         def cpu_affinity(self, cpus=None):
             """Get or set process CPU affinity.
-            If specified 'cpus' must be a list of CPUs for which you
+            If specified, *cpus* must be a list of CPUs for which you
             want to set the affinity (e.g. [0, 1]).
             If an empty list is passed, all egible CPUs are assumed
             (and set).
@@ -902,7 +912,7 @@ class Process(object):
     def children(self, recursive=False):
         """Return the children of this process as a list of Process
         instances, pre-emptively checking whether PID has been reused.
-        If recursive is True return all the parent descendants.
+        If *recursive* is True return all the parent descendants.
 
         Example (A == this process):
 
@@ -998,12 +1008,12 @@ class Process(object):
         """Return a float representing the current process CPU
         utilization as a percentage.
 
-        When interval is 0.0 or None (default) compares process times
+        When *interval* is 0.0 or None (default) compares process times
         to system CPU times elapsed since last call, returning
         immediately (non-blocking). That means that the first time
         this is called it will return a meaningful 0.0 value.
 
-        When interval is > 0.0 compares process times to system CPU
+        When *interval* is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
 
         In this case is recommended for accuracy that this function
@@ -1012,7 +1022,7 @@ class Process(object):
         A value > 100.0 can be returned in case of processes running
         multiple threads on different CPU cores.
 
-        The returned value is explicitly *not* split evenly between
+        The returned value is explicitly NOT split evenly between
         all available logical CPUs. This means that a busy loop process
         running on a system with 2 logical CPUs will be reported as
         having 100% CPU utilization instead of 50%.
@@ -1131,7 +1141,7 @@ class Process(object):
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
-        'memtype' argument is a string that dictates what type of
+        *memtype* argument is a string that dictates what type of
         process memory you want to compare against (defaults to "rss").
         The list of available strings can be obtained like this:
 
@@ -1166,10 +1176,10 @@ class Process(object):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.
 
-            If 'grouped' is True the mapped regions with the same 'path'
+            If *grouped* is True the mapped regions with the same 'path'
             are grouped together and the different memory fields are summed.
 
-            If 'grouped' is False every mapped region is shown as a single
+            If *grouped* is False every mapped region is shown as a single
             entity and the namedtuple will also include the mapped region's
             address space ('addr') and permission set ('perms').
             """
@@ -1197,23 +1207,26 @@ class Process(object):
         return self._proc.open_files()
 
     def connections(self, kind='inet'):
-        """Return connections opened by process as a list of
+        """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
-        The 'kind' parameter filters for connections that match the
+        The *kind* parameter filters for connections that match the
         following criteria:
 
-        Kind Value      Connections using
-        inet            IPv4 and IPv6
-        inet4           IPv4
-        inet6           IPv6
-        tcp             TCP
-        tcp4            TCP over IPv4
-        tcp6            TCP over IPv6
-        udp             UDP
-        udp4            UDP over IPv4
-        udp6            UDP over IPv6
-        unix            UNIX socket (both UDP and TCP protocols)
-        all             the sum of all the possible families and protocols
+        +------------+----------------------------------------------------+
+        | Kind Value | Connections using                                  |
+        +------------+----------------------------------------------------+
+        | inet       | IPv4 and IPv6                                      |
+        | inet4      | IPv4                                               |
+        | inet6      | IPv6                                               |
+        | tcp        | TCP                                                |
+        | tcp4       | TCP over IPv4                                      |
+        | tcp6       | TCP over IPv6                                      |
+        | udp        | UDP                                                |
+        | udp4       | UDP over IPv4                                      |
+        | udp6       | UDP over IPv6                                      |
+        | unix       | UNIX socket (both UDP and TCP protocols)           |
+        | all        | the sum of all the possible families and protocols |
+        +------------+----------------------------------------------------+
         """
         return self._proc.connections(kind)
 
@@ -1245,8 +1258,8 @@ class Process(object):
 
     @_assert_pid_not_reused
     def send_signal(self, sig):
-        """Send a signal to process pre-emptively checking whether
-        PID has been reused (see signal module constants) .
+        """Send a signal *sig* to process pre-emptively checking
+        whether PID has been reused (see signal module constants) .
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
@@ -1314,8 +1327,8 @@ class Process(object):
         If the process is already terminated immediately return None
         instead of raising NoSuchProcess.
 
-        If timeout (in seconds) is specified and process is still alive
-        raise TimeoutExpired.
+        If *timeout* (in seconds) is specified and process is still
+        alive raise TimeoutExpired.
 
         To wait for multiple Process(es) use psutil.wait_procs().
         """
@@ -1466,11 +1479,11 @@ def process_iter(attrs=None, ad_value=None):
     The sorting order in which processes are yielded is based on
     their PIDs.
 
-    "attrs" and "ad_value" have the same meaning as in
-    Process.as_dict(). If "attrs" is specified as_dict() is called
+    *attrs* and *ad_value* have the same meaning as in
+    Process.as_dict(). If *attrs* is specified as_dict() is called
     and the resulting dict is stored as a 'info' attribute attached
     to returned Process instance.
-    If "attrs" is an empty list it will retrieve all process info
+    If *attrs* is an empty list it will retrieve all process info
     (slow).
     """
     def add(pid):
@@ -1529,14 +1542,16 @@ def wait_procs(procs, timeout=None, callback=None):
     Return a (gone, alive) tuple indicating which processes
     are gone and which ones are still alive.
 
-    The gone ones will have a new 'returncode' attribute indicating
+    The gone ones will have a new *returncode* attribute indicating
     process exit status (may be None).
 
-    'callback' is a function which gets called every time a process
+    *callback* is a function which gets called every time a process
     terminates (a Process instance is passed as callback argument).
 
     Function will return as soon as all processes terminate or when
-    timeout occurs.
+    *timeout* occurs.
+    Differently from Process.wait() it will not raise TimeoutExpired if
+    *timeout* occurs.
 
     Typical use case is:
 
@@ -1618,7 +1633,7 @@ def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
 
-    If logical is False return the number of physical cores only
+    If *logical* is False return the number of physical cores only
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
@@ -1636,8 +1651,10 @@ def cpu_count(logical=True):
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple.
-    Every CPU time represents the seconds the CPU has spent in the given mode.
-    The namedtuple's fields availability varies depending on the platform:
+    Every CPU time represents the seconds the CPU has spent in the
+    given mode. The namedtuple's fields availability varies depending on the
+    platform:
+
      - user
      - system
      - idle
@@ -1649,7 +1666,7 @@ def cpu_times(percpu=False):
      - guest (Linux >= 2.6.24)
      - guest_nice (Linux >= 3.2.0)
 
-    When percpu is True return a list of namedtuples for each CPU.
+    When *percpu* is True return a list of namedtuples for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
@@ -1714,17 +1731,17 @@ def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
 
-    When interval is > 0.0 compares system CPU times elapsed before
+    When *interval* is > 0.0 compares system CPU times elapsed before
     and after the interval (blocking).
 
-    When interval is 0.0 or None compares system CPU times elapsed
+    When *interval* is 0.0 or None compares system CPU times elapsed
     since last call or module import, returning immediately (non
     blocking). That means the first time this is called it will
     return a meaningless 0.0 value which you should ignore.
     In this case is recommended for accuracy that this function be
     called with at least 0.1 seconds between calls.
 
-    When percpu is True returns a list of floats representing the
+    When *percpu* is True returns a list of floats representing the
     utilization as a percentage for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
@@ -1821,7 +1838,7 @@ def cpu_times_percent(interval=None, percpu=False):
                  irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
-    interval and percpu arguments have the same meaning as in
+    *interval* and *percpu* arguments have the same meaning as in
     cpu_percent().
     """
     global _last_cpu_times_2
@@ -1901,7 +1918,7 @@ if hasattr(_psplatform, "cpu_freq"):
         """Return CPU frequency as a nameduple including current,
         min and max frequency expressed in Mhz.
 
-        If percpu is True and the system supports per-cpu frequency
+        If *percpu* is True and the system supports per-cpu frequency
         retrieval (Linux only) a list of frequencies is returned for
         each CPU. If not a list with one element is returned.
         """
@@ -1951,8 +1968,8 @@ def virtual_memory():
        the percentage usage calculated as (total - available) / total * 100
 
      - used:
-       memory used, calculated differently depending on the platform and
-       designed for informational purposes only:
+        memory used, calculated differently depending on the platform and
+        designed for informational purposes only:
         OSX: active + inactive + wired
         BSD: active + wired + cached
         LINUX: total - free
@@ -2014,9 +2031,9 @@ def swap_memory():
 
 
 def disk_usage(path):
-    """Return disk usage statistics about the given path as a namedtuple
-    including total, used and free space expressed in bytes plus the
-    percentage usage.
+    """Return disk usage statistics about the given *path* as a
+    namedtuple including total, used and free space expressed in bytes
+    plus the percentage usage.
     """
     return _psplatform.disk_usage(path)
 
@@ -2027,7 +2044,7 @@ def disk_partitions(all=False):
     'opts' field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
-    If "all" parameter is False return physical devices only and ignore
+    If *all* parameter is False return physical devices only and ignore
     all others.
     """
     return _psplatform.disk_partitions(all)
@@ -2130,25 +2147,28 @@ net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 
 def net_connections(kind='inet'):
-    """Return system-wide connections as a list of
+    """Return system-wide socket connections as a list of
     (fd, family, type, laddr, raddr, status, pid) namedtuples.
     In case of limited privileges 'fd' and 'pid' may be set to -1
     and None respectively.
-    The 'kind' parameter filters for connections that fit the
+    The *kind* parameter filters for connections that fit the
     following criteria:
 
-    Kind Value      Connections using
-    inet            IPv4 and IPv6
-    inet4           IPv4
-    inet6           IPv6
-    tcp             TCP
-    tcp4            TCP over IPv4
-    tcp6            TCP over IPv6
-    udp             UDP
-    udp4            UDP over IPv4
-    udp6            UDP over IPv6
-    unix            UNIX socket (both UDP and TCP protocols)
-    all             the sum of all the possible families and protocols
+    +------------+----------------------------------------------------+
+    | Kind Value | Connections using                                  |
+    +------------+----------------------------------------------------+
+    | inet       | IPv4 and IPv6                                      |
+    | inet4      | IPv4                                               |
+    | inet6      | IPv6                                               |
+    | tcp        | TCP                                                |
+    | tcp4       | TCP over IPv4                                      |
+    | tcp6       | TCP over IPv6                                      |
+    | udp        | UDP                                                |
+    | udp4       | UDP over IPv4                                      |
+    | udp6       | UDP over IPv6                                      |
+    | unix       | UNIX socket (both UDP and TCP protocols)           |
+    | all        | the sum of all the possible families and protocols |
+    +------------+----------------------------------------------------+
 
     On OSX this function requires root privileges.
     """
@@ -2161,19 +2181,14 @@ def net_if_addrs():
     NIC names and value is a list of namedtuples for each address
     assigned to the NIC. Each namedtuple includes 5 fields:
 
-     - family
-     - address
-     - netmask
-     - broadcast
-     - ptp
-
-    'family' can be either socket.AF_INET, socket.AF_INET6 or
-    psutil.AF_LINK, which refers to a MAC address.
-    'address' is the primary address and it is always set.
-    'netmask' and 'broadcast' and 'ptp' may be None.
-    'ptp' stands for "point to point" and references the destination
-    address on a point to point interface (typically a VPN).
-    'broadcast' and 'ptp' are mutually exclusive.
+     - family: can be either socket.AF_INET, socket.AF_INET6 or
+               psutil.AF_LINK, which refers to a MAC address.
+     - address: is the primary address and it is always set.
+     - netmask: and 'broadcast' and 'ptp' may be None.
+     - ptp: stands for "point to point" and references the
+            destination address on a point to point interface
+            (typically a VPN).
+     - broadcast: and *ptp* are mutually exclusive.
 
     Note: you can have more than one address of the same family
     associated with each interface.
@@ -2286,11 +2301,11 @@ if hasattr(_psplatform, "sensors_battery"):
         """Return battery information. If no battery is installed
         returns None.
 
-        - percent: battery power left as a percentage.
-        - secsleft: a rough approximation of how many seconds are left
-                    before the battery runs out of power.
-                    May be POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
-        - power_plugged: True if the AC power cable is connected.
+         - percent: battery power left as a percentage.
+         - secsleft: a rough approximation of how many seconds are left
+                     before the battery runs out of power. May be
+                     POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
+         - power_plugged: True if the AC power cable is connected.
         """
         return _psplatform.sensors_battery()
 
@@ -2336,7 +2351,7 @@ if WINDOWS:
         return _psplatform.win_service_iter()
 
     def win_service_get(name):
-        """Get a Windows service by name.
+        """Get a Windows service by *name*.
         Raise NoSuchProcess if no service with such name exists.
         """
         return _psplatform.win_service_get(name)
