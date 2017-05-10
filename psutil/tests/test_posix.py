@@ -224,7 +224,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(os.getpid())
         failures = []
         ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'children', 'as_dict']
+                         'send_signal', 'wait', 'children', 'as_dict',
+                         'memory_info_ex']
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
         if LINUX and get_kernel_version() < (2, 6, 23):

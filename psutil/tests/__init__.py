@@ -342,16 +342,19 @@ def pyrun(src, **kwds):
 
 
 @_cleanup_on_err
-def sh(cmd):
+def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
     shell = True if isinstance(cmd, (str, unicode)) else False
     # Prevents subprocess to open error dialogs in case of error.
     flags = 0x8000000 if WINDOWS and shell else 0
-    p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True,
-                         creationflags=flags)
+    kwds.setdefault("shell", shell)
+    kwds.setdefault("stdout", subprocess.PIPE)
+    kwds.setdefault("stderr", subprocess.PIPE)
+    kwds.setdefault("universal_newlines", True)
+    kwds.setdefault("creationflags", flags)
+    p = subprocess.Popen(cmd, **kwds)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)

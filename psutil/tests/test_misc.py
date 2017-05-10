@@ -35,6 +35,7 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
+from psutil.tests import DEVNULL
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
@@ -631,12 +632,12 @@ class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod
-    def assert_stdout(exe, args=None):
+    def assert_stdout(exe, args=None, **kwds):
         exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
         try:
-            out = sh(sys.executable + ' ' + exe).strip()
+            out = sh(sys.executable + ' ' + exe, **kwds).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
@@ -712,7 +713,7 @@ class TestScripts(unittest.TestCase):
 
     @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
-        self.assert_stdout('procsmem.py')
+        self.assert_stdout('procsmem.py', stderr=DEVNULL)
 
     def test_killall(self):
         self.assert_syntax('killall.py')
