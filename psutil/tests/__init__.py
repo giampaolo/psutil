@@ -58,14 +58,6 @@ if sys.version_info >= (3, 4):
 else:
     enum = None
 
-if PY3:
-    import importlib
-    # python <=3.3
-    if not hasattr(importlib, 'reload'):
-        import imp as importlib
-else:
-    import imp as importlib
-
 
 __all__ = [
     # constants
@@ -98,14 +90,11 @@ __all__ = [
     'check_connection_ntuple', 'check_net_address',
     'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
     'tcp_socketpair', 'unix_socketpair', 'create_sockets',
+    # compat
+    'reload_module', 'import_module_by_path',
     # others
     'warn', 'copyload_shared_lib', 'is_namedtuple',
 ]
-
-
-# Enable all warnings by default.
-if 'PYTHONWARNINGS' not in os.environ:
-    warnings.simplefilter('always')
 
 
 # ===================================================================
@@ -353,16 +342,19 @@ def pyrun(src, **kwds):
 
 
 @_cleanup_on_err
-def sh(cmd):
+def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
     shell = True if isinstance(cmd, (str, unicode)) else False
     # Prevents subprocess to open error dialogs in case of error.
     flags = 0x8000000 if WINDOWS and shell else 0
-    p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True,
-                         creationflags=flags)
+    kwds.setdefault("shell", shell)
+    kwds.setdefault("stdout", subprocess.PIPE)
+    kwds.setdefault("stderr", subprocess.PIPE)
+    kwds.setdefault("universal_newlines", True)
+    kwds.setdefault("creationflags", flags)
+    p = subprocess.Popen(cmd, **kwds)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -973,6 +965,40 @@ def check_connection_ntuple(conn):
     assert isinstance(conn.status, str), conn
     valids = [getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')]
     assert conn.status in valids, conn
+
+
+# ===================================================================
+# --- compatibility
+# ===================================================================
+
+
+def reload_module(module):
+    """Backport of importlib.reload of Python 3.3+."""
+    try:
+        import importlib
+        if not hasattr(importlib, 'reload'):  # python <=3.3
+            raise ImportError
+    except ImportError:
+        import imp
+        return imp.reload(module)
+    else:
+        return importlib.reload(module)
+
+
+def import_module_by_path(path):
+    name = os.path.splitext(os.path.basename(path))[0]
+    if sys.version_info[0] == 2:
+        import imp
+        return imp.load_source(name, path)
+    elif sys.version_info[:2] <= (3, 4):
+        from importlib.machinery import SourceFileLoader
+        return SourceFileLoader(name, path).load_module()
+    else:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
 
 
 # ===================================================================

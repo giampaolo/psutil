@@ -13,7 +13,6 @@ import ast
 import collections
 import contextlib
 import errno
-import imp
 import json
 import os
 import pickle
@@ -36,6 +35,7 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
+from psutil.tests import DEVNULL
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
@@ -44,10 +44,11 @@ from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import importlib
+from psutil.tests import import_module_by_path
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import reap_children
+from psutil.tests import reload_module
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
@@ -352,7 +353,7 @@ class TestMisc(unittest.TestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        module = imp.load_source('setup', setup_py)
+        module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)
         self.assertEqual(module.get_version(), psutil.__version__)
 
@@ -378,7 +379,7 @@ class TestMisc(unittest.TestCase):
         with mock.patch(
                 "psutil._psplatform.cext.version", return_value="0.0.0"):
             with self.assertRaises(ImportError) as cm:
-                importlib.reload(psutil)
+                reload_module(psutil)
             self.assertIn("version conflict", str(cm.exception).lower())
 
 
@@ -631,12 +632,12 @@ class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod
-    def assert_stdout(exe, args=None):
+    def assert_stdout(exe, args=None, **kwds):
         exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
         try:
-            out = sh(sys.executable + ' ' + exe).strip()
+            out = sh(sys.executable + ' ' + exe, **kwds).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
@@ -712,7 +713,7 @@ class TestScripts(unittest.TestCase):
 
     @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
-        self.assert_stdout('procsmem.py')
+        self.assert_stdout('procsmem.py', stderr=DEVNULL)
 
     def test_killall(self):
         self.assert_syntax('killall.py')

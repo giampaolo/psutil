@@ -19,6 +19,7 @@
   comprehensions.
 - 1040_: implemented full unicode support.
 - 1051_: disk_usage() on Python 3 is now able to accept bytes.
+- 1058_: test suite now enables all warnings by default.
 
 **Bug fixes**
 
@@ -41,6 +42,7 @@
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
+- 1058_: fixed Python warnings.
 
 **Porting notes**
 
