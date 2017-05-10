@@ -30,12 +30,12 @@ from psutil._compat import u
 from psutil.tests import call_until
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_RLIMIT
-from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
+from psutil.tests import reload_module
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
@@ -998,7 +998,7 @@ class TestMisc(unittest.TestCase):
 
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(patch_point, side_effect=open_mock):
-                importlib.reload(psutil)
+                reload_module(psutil)
                 assert tb.called
 
                 self.assertRaises(IOError, psutil.cpu_times)
@@ -1037,7 +1037,7 @@ class TestMisc(unittest.TestCase):
                     sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0)
         finally:
             shutil.rmtree(my_procfs)
-            importlib.reload(psutil)
+            reload_module(psutil)
 
         self.assertEqual(psutil.PROCFS_PATH, '/proc')
 

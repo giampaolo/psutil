@@ -58,14 +58,6 @@ if sys.version_info >= (3, 4):
 else:
     enum = None
 
-if PY3:
-    import importlib
-    # python <=3.3
-    if not hasattr(importlib, 'reload'):
-        import imp as importlib
-else:
-    import imp as importlib
-
 
 __all__ = [
     # constants
@@ -990,6 +982,19 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(type(n) == str for n in f)
+
+
+def reload_module(module):
+    """Backport of importlib.reload of Python 3.3+."""
+    try:
+        import importlib
+        if not hasattr(importlib, 'reload'):  # python <=3.3
+            raise ImportError
+    except ImportError:
+        import imp
+        return imp.reload(module)
+    else:
+        return importlib.reload(module)
 
 
 if POSIX:

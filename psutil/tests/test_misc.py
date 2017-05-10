@@ -44,10 +44,10 @@ from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import importlib
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import reap_children
+from psutil.tests import reload_module
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
@@ -378,7 +378,7 @@ class TestMisc(unittest.TestCase):
         with mock.patch(
                 "psutil._psplatform.cext.version", return_value="0.0.0"):
             with self.assertRaises(ImportError) as cm:
-                importlib.reload(psutil)
+                reload_module(psutil)
             self.assertIn("version conflict", str(cm.exception).lower())
 
 
