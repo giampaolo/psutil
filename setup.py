@@ -16,10 +16,13 @@ import platform
 import sys
 import tempfile
 import warnings
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        from setuptools import setup, Extension
+    except ImportError:
+        from distutils.core import setup, Extension
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
