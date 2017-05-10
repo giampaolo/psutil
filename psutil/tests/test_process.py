@@ -1397,7 +1397,9 @@ class TestProcess(unittest.TestCase):
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
         finally:
-            proc.kill()
+            proc.terminate()
+            proc.stdout.close()
+            proc.stderr.close()
             proc.wait()
 
     def test_Popen_ctx_manager(self):
