@@ -1,15 +1,14 @@
 include *.bat
 include *.rst
-include .coveragerc
 include CREDITS*
 include IDEAS
 include INSTALL*
 include LICENSE*
 include HISTORY*
 include Makefile
-include tox.ini
 
 recursive-include psutil *.py *.c *.h *.rst
+recursive-exclude psutil/tests *
 recursive-include scripts *.py
 recursive-include README*
 
