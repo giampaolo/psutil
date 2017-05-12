@@ -41,11 +41,11 @@ Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 
 from __future__ import print_function
 
+import concurrent.futures
 import os
 import re
 import sys
 import traceback
-import concurrent.futures
 
 import requests
 
@@ -60,10 +60,10 @@ REQUEST_TIMEOUT = 30
 RETRY_STATUSES = [503, 401, 403]
 
 
-def get_urls_rst(filename):
+def get_urls_rst(filename, _regex=re.compile(REGEX)):
     with open(filename) as f:
         text = f.read()
-    urls = re.findall(REGEX, text)
+    urls = _regex.findall(text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
     # correct urls which are between < and/or >
