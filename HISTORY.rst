@@ -43,6 +43,8 @@
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
 - 1058_: fixed Python warnings.
+- 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
+  or NICs are installed on the system.
 
 **Porting notes**
 

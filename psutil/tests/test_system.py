@@ -553,6 +553,15 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIsInstance(key, str)
             check_ntuple(ret[key])
 
+    def test_net_io_counters_no_nics(self):
+        # Emulate a case where no NICs are installed, see:
+        # https://github.com/giampaolo/psutil/issues/1062
+        with mock.patch('psutil._psplatform.net_io_counters',
+                        return_value={}) as m:
+            self.assertIsNone(psutil.net_io_counters(pernic=False))
+            self.assertEqual(psutil.net_io_counters(pernic=True), {})
+            assert m.called
+
     def test_net_if_addrs(self):
         nics = psutil.net_if_addrs()
         assert nics, nics
@@ -681,6 +690,15 @@ class TestSystemAPIs(unittest.TestCase):
                 while key[-1].isdigit():
                     key = key[:-1]
                 self.assertNotIn(key, ret.keys())
+
+    def test_disk_io_counters_no_disks(self):
+        # Emulate a case where no disks are installed, see:
+        # https://github.com/giampaolo/psutil/issues/1062
+        with mock.patch('psutil._psplatform.disk_io_counters',
+                        return_value={}) as m:
+            self.assertIsNone(psutil.disk_io_counters(perdisk=False))
+            self.assertEqual(psutil.disk_io_counters(perdisk=True), {})
+            assert m.called
 
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
