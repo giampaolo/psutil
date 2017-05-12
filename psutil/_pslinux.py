@@ -122,7 +122,7 @@ PROC_STATUSES = {
     "W": _common.STATUS_WAKING
 }
 
-# http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+# https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
 TCP_STATUSES = {
     "01": _common.CONN_ESTABLISHED,
     "02": _common.CONN_SYN_SENT,

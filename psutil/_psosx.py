@@ -33,7 +33,6 @@ __extra__all__ = []
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
 
-# http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
     cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
