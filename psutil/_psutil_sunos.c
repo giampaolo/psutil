@@ -306,7 +306,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
  * - 'pr_ioch' is a sum of chars read and written, with no distinction
  * - 'pr_inblk' and 'pr_oublk', which should be the number of bytes
  *    read and written, hardly increase and according to:
- *    http://www.brendangregg.com/Perf/paper_diskubyp1.pdf
+ *    http://www.brendangregg.com/Solaris/paper_diskubyp1.pdf
  *    ...they should be meaningless anyway.
  *
 static PyObject*
@@ -326,7 +326,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
     // *and* written.
     // 'pr_inblk' and 'pr_oublk' should be expressed in blocks of
     // 8KB according to:
-    // http://www.brendangregg.com/Perf/paper_diskubyp1.pdf  (pag. 8)
+    // http://www.brendangregg.com/Solaris/paper_diskubyp1.pdf (pag. 8)
     return Py_BuildValue("kkkk",
                          info.pr_ioch,
                          info.pr_ioch,

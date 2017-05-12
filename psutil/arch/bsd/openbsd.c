@@ -415,7 +415,8 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     // Reference:
-    // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n179
+    // https://github.com/openbsd/src/blob/
+    //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
     long pid;
     struct kinfo_proc kp;
     char path[MAXPATHLEN];

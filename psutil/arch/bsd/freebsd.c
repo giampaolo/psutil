@@ -324,8 +324,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // Retrieves all threads used by process returning a list of tuples
     // including thread id, user time and system time.
     // Thanks to Robert N. M. Watson:
-    // http://fxr.googlebit.com/source/usr.bin/procstat/
-    //     procstat_threads.c?v=8-CURRENT
+    // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/
+    //     procstat_threads.c
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;

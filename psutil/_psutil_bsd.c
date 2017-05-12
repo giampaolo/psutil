@@ -7,7 +7,7 @@
  * Platform-specific module methods for FreeBSD and OpenBSD.
 
  * OpenBSD references:
- * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
+ * - OpenBSD source code: https://github.com/openbsd/src
  *
  * OpenBSD / NetBSD: missing APIs compared to FreeBSD implementation:
  * - psutil.net_connections()
@@ -234,13 +234,13 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     rss = (long)kp.p_vm_rssize * pagesize;
     #ifdef PSUTIL_OPENBSD
         // VMS, this is how ps determines it on OpenBSD:
-        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        // vms
+        // https://github.com/openbsd/src/blob/
+        //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L505
         vms = (long)(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize;
     #elif PSUTIL_NETBSD
         // VMS, this is how top determines it on NetBSD:
-        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
-        //     top/dist/machine/m_netbsd.c
+        // https://github.com/IIJ-NetBSD/netbsd-src/blob/master/external/
+        //     bsd/top/dist/machine/m_netbsd.c
         vms = (long)kp.p_vm_msize * pagesize;
     #endif
         memtext = (long)kp.p_vm_tsize * pagesize;

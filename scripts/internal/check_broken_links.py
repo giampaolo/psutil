@@ -55,7 +55,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(
     r'(?:http|ftp|https)?://'
     r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT = 15
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
 # They need to be sent GET request
@@ -87,27 +87,26 @@ def find_urls(s):
     return list(set([sanitize_url(x) for x in matches]))
 
 
-def parse_rst(filename):
+def parse_rst(fname):
     """Look for links in a .rst file."""
-    with open(filename) as f:
+    with open(fname) as f:
         text = f.read()
     urls = find_urls(text)
     # HISTORY file has a lot of dead links.
-    if filename == 'HISTORY.rst' and urls:
+    if fname == 'HISTORY.rst' and urls:
         urls = [
             x for x in urls if
             not x.startswith('https://github.com/giampaolo/psutil/issues')]
     return urls
 
 
-def parse_py(filename):
+def parse_py(fname):
     """Look for links in a .py file."""
-    with open(filename) as f:
+    with open(fname) as f:
         lines = f.readlines()
     urls = set()
     for i, line in enumerate(lines):
         for url in find_urls(line):
-            url = urls[0]
             # comment block
             if line.lstrip().startswith('# '):
                 subidx = i + 1
@@ -122,12 +121,45 @@ def parse_py(filename):
     return list(urls)
 
 
+def parse_c(fname):
+    """Look for links in a .py file."""
+    with open(fname) as f:
+        lines = f.readlines()
+    urls = set()
+    for i, line in enumerate(lines):
+        for url in find_urls(line):
+            # comment block //
+            if line.lstrip().startswith('// '):
+                subidx = i + 1
+                while True:
+                    nextline = lines[subidx].strip()
+                    if re.match('^//     .+', nextline):
+                        url += nextline[2:].strip()
+                    else:
+                        break
+                    subidx += 1
+            # comment block /*
+            elif line.lstrip().startswith('* '):
+                subidx = i + 1
+                while True:
+                    nextline = lines[subidx].strip()
+                    if re.match('^\*     .+', nextline):
+                        url += nextline[1:].strip()
+                    else:
+                        break
+                    subidx += 1
+            urls.add(url)
+    return list(urls)
+
+
 def get_urls(fname):
     """Extracts all URLs available in specified fname."""
     if fname.endswith('.rst'):
         return parse_rst(fname)
     elif fname.endswith('.py'):
         return parse_py(fname)
+    elif fname.endswith('.c') or fname.endswith('.h'):
+        return parse_c(fname)
     else:
         return []
 

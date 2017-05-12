@@ -202,8 +202,7 @@ psutil_get_pid_from_sock(int sock_hash) {
 
 
 // Reference:
-// https://gitorious.org/freebsd/freebsd/source/
-//     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
+// https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 int psutil_gather_inet(int proto, PyObject *py_retlist) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
