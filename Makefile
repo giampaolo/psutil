@@ -214,9 +214,15 @@ install-git-hooks:
 # Distribution
 # ===================================================================
 
+# Generate tar.gz source distribution.
+sdist:
+	${MAKE} clean
+	${MAKE} generate-manifest
+	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src:
-	${MAKE} clean
+	${MAKE} sdist
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist upload
 
 # Download exes/wheels hosted on appveyor.
@@ -230,18 +236,17 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
-	${MAKE} clean
-	${MAKE} install  # to import psutil from download_exes.py
-	PYTHONWARNINGS=all $(PYTHON) -c \
+	${MAKE} sdist
+	# Make sure MANIFEST.in has no uncommitted changes.
+	PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff MANIFEST.in', shell=True).strip(); sys.exit('MANIFEST.in has uncommitted changes') if out else sys.exit(0);"
+	${MAKE} install
+	@PYTHONWARNINGS=all $(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history; \
-		"
-	${MAKE} generate-manifest
-	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 	${MAKE} win-download-exes
 
 # Create a release: creates tar.gz and exes/wheels, uploads them,
