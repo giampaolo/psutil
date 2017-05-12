@@ -209,6 +209,7 @@ AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
 POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
+_NUM_CPUS = None
 _timer = getattr(time, 'monotonic', time.time)
 
 
@@ -1042,7 +1043,7 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             raise ValueError("interval is not positive (got %r)" % interval)
-        num_cpus = cpu_count() or 1
+        num_cpus = _NUM_CPUS or cpu_count()
 
         def timer():
             return _timer() * num_cpus
@@ -1628,7 +1629,6 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 
-@memoize
 def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
@@ -1643,8 +1643,10 @@ def cpu_count(logical=True):
 
     >>> psutil.cpu_count.cache_clear()
     """
+    global _NUM_CPUS
     if logical:
-        return _psplatform.cpu_count_logical()
+        _NUM_CPUS = _psplatform.cpu_count_logical()
+        return _NUM_CPUS
     else:
         return _psplatform.cpu_count_physical()
 
