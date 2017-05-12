@@ -916,23 +916,19 @@ PsutilMethods[] = {
      "Return multiple info about a process"},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
-#if !defined(PSUTIL_NETBSD)
-    {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Return connections opened by process"},
-#endif
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
+    {"proc_connections", psutil_proc_connections, METH_VARARGS,
+     "Return connections opened by process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
 #endif
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
-#endif
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
 #endif
