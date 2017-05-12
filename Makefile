@@ -236,7 +236,7 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
-	git diff-index --quiet HEAD -- || echo "err: there are uncommitted changes"; exit 1
+	git diff --quiet --exit-code || echo "err: there are uncommitted changes"; exit 1
 	${MAKE} sdist
 	${MAKE} install
 	@PYTHONWARNINGS=all $(PYTHON) -c \
