@@ -109,10 +109,16 @@ def get_urls_py(filename):
         if urls:
             assert len(urls) == 1, urls
             url = urls[0]
-            if line.startswith('# '):
-                nextline = lines[i + 1].strip()
-                if re.match('^#     .+', nextline):
-                    url += nextline[1:].strip()
+            # comment block
+            if line.lstrip().startswith('# '):
+                subidx = i + 1
+                while 1:
+                    nextline = lines[subidx].strip()
+                    if re.match('^#     .+', nextline):
+                        url += nextline[1:].strip()
+                    else:
+                        break
+                    subidx += 1
             ret.add(url)
     return list(ret)
 
