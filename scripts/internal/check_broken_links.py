@@ -83,12 +83,12 @@ def sanitize_url(url):
 
 
 def find_urls(s):
-    matches = REGEX.findall(s)
-    if matches:
-        return list(set([sanitize_url(x) for x in matches]))
+    matches = REGEX.findall(s) or []
+    return list(set([sanitize_url(x) for x in matches]))
 
 
-def get_urls_rst(filename):
+def parse_rst(filename):
+    """Look for links in a .rst file."""
     with open(filename) as f:
         text = f.read()
     urls = find_urls(text)
@@ -100,35 +100,34 @@ def get_urls_rst(filename):
     return urls
 
 
-def get_urls_py(filename):
+def parse_py(filename):
+    """Look for links in a .py file."""
     with open(filename) as f:
         lines = f.readlines()
-    ret = set()
+    urls = set()
     for i, line in enumerate(lines):
-        urls = find_urls(line)
-        if urls:
-            assert len(urls) == 1, urls
+        for url in find_urls(line):
             url = urls[0]
             # comment block
             if line.lstrip().startswith('# '):
                 subidx = i + 1
-                while 1:
+                while True:
                     nextline = lines[subidx].strip()
                     if re.match('^#     .+', nextline):
                         url += nextline[1:].strip()
                     else:
                         break
                     subidx += 1
-            ret.add(url)
-    return list(ret)
+            urls.add(url)
+    return list(urls)
 
 
-def get_urls(filename):
-    """Extracts all URLs available in specified filename."""
-    if filename.endswith('.rst'):
-        return get_urls_rst(filename)
-    elif filename.endswith('.py'):
-        return get_urls_py(filename)
+def get_urls(fname):
+    """Extracts all URLs available in specified fname."""
+    if fname.endswith('.rst'):
+        return parse_rst(fname)
+    elif fname.endswith('.py'):
+        return parse_py(fname)
     else:
         return []
 

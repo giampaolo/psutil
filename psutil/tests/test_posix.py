@@ -70,8 +70,6 @@ class TestProcess(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
-    # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
-
     def test_ppid(self):
         ppid_ps = ps("ps --no-headers -o ppid -p %s" % self.pid)
         ppid_psutil = psutil.Process(self.pid).ppid()
