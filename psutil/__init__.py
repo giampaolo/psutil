@@ -2083,6 +2083,8 @@ def disk_io_counters(perdisk=False, nowrap=True):
     executed first otherwise this function won't find any disk.
     """
     rawdict = _psplatform.disk_io_counters()
+    if not rawdict:
+        return {} if perdisk else None
     if nowrap:
         rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
     nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
@@ -2131,6 +2133,8 @@ def net_io_counters(pernic=False, nowrap=True):
     cache.
     """
     rawdict = _psplatform.net_io_counters()
+    if not rawdict:
+        return {} if pernic else None
     if nowrap:
         rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
