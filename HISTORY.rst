@@ -20,6 +20,8 @@
 - 1040_: implemented full unicode support.
 - 1051_: disk_usage() on Python 3 is now able to accept bytes.
 - 1058_: test suite now enables all warnings by default.
+- 1060_: source distribution is dynamically generated so that it only includes
+  relevant files.
 
 **Bug fixes**
 

@@ -196,9 +196,6 @@ pyflakes:
 flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
-check-manifest:
-	PYTHONWARNINGS=all $(PYTHON) -m check_manifest -v $(ARGS)
-
 # ===================================================================
 # GIT
 # ===================================================================
@@ -243,8 +240,9 @@ pre-release:
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history; \
 		"
-	${MAKE} win-download-exes
+	${MAKE} generate-manifest
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+	${MAKE} win-download-exes
 
 # Create a release: creates tar.gz and exes/wheels, uploads them,
 # upload doc, git tag release.
@@ -260,6 +258,14 @@ print-announce:
 # Print releases' timeline.
 print-timeline:
 	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_timeline.py
+
+# Inspect MANIFEST.in file.
+check-manifest:
+	PYTHONWARNINGS=all $(PYTHON) -m check_manifest -v $(ARGS)
+
+# Generates MANIFEST.in file.
+generate-manifest:
+	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
 
 # ===================================================================
 # Misc
