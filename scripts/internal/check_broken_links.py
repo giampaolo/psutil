@@ -53,7 +53,7 @@ import requests
 HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = r'(?:http|ftp|https)?://' \
         r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 10
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
 # They need to be sent GET request
@@ -66,9 +66,32 @@ def get_urls_rst(filename, _regex=re.compile(REGEX)):
     urls = _regex.findall(text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
+    # HISTORY file has a lot of dead links.
+    if filename == 'HISTORY.rst':
+        urls = [
+            x for x in urls if
+            not x.startswith('https://github.com/giampaolo/psutil/issues/')]
     # correct urls which are between < and/or >
     for i, url in enumerate(urls):
         urls[i] = re.sub("[\*<>\(\)\)]", '', url)
+    return urls
+
+
+def get_urls_py(filename, _regex=re.compile(REGEX)):
+    with open(filename) as f:
+        lines = f.readlines()
+    urls = set()
+    for i, line in enumerate(lines):
+        line = line.strip()
+        match = _regex.findall(line)
+        if match:
+            url = match[0]
+            if line.startswith('# '):
+                nextline = lines[i + 1].strip()
+                if re.match('^#     .+', nextline):
+                    url += nextline[1:].strip()
+            url = re.sub("[\*<>\(\)\)]", '', url)
+            urls.add(url)
     return urls
 
 
@@ -76,6 +99,8 @@ def get_urls(filename):
     """Extracts all URLs available in specified filename."""
     if filename.endswith('.rst'):
         return get_urls_rst(filename)
+    elif filename.endswith('.py'):
+        return get_urls_py(filename)
     else:
         return []
 
@@ -145,7 +170,7 @@ def main():
     else:
         for fail in fails:
             fname, url = fail
-            print("%s : %s " % (url, fname))
+            print("%-30s: %s " % (fname, url))
         print('-' * 20)
         print("total: %s fails!" % len(fails))
         sys.exit(1)

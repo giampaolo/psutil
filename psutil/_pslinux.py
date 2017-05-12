@@ -319,7 +319,8 @@ except Exception:
 
 def calculate_avail_vmem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
-    "MemAvailable:" column (see: https://blog.famzah.net/2014/09/24/).
+    "MemAvailable:" column, see:
+    https://blog.famzah.net/2014/09/24/
     This code reimplements the algorithm outlined here:
     https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
         commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773

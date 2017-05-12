@@ -296,4 +296,4 @@ doc:
 
 # check whether the links mentioned in some files are valid.
 check-broken-links:
-		git ls-files | grep \\.rst$ | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
+		git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
