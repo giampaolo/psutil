@@ -60,10 +60,9 @@ REQUEST_TIMEOUT = 30
 RETRY_STATUSES = [503, 401, 403]
 
 
-def get_urls(filename):
-    """Extracts all URLs available in specified filename."""
-    with open(filename) as fs:
-        text = fs.read()
+def get_urls_rst(filename):
+    with open(filename) as f:
+        text = f.read()
     urls = re.findall(REGEX, text)
     # remove duplicates, list for sets are not iterable
     urls = list(set(urls))
@@ -71,6 +70,14 @@ def get_urls(filename):
     for i, url in enumerate(urls):
         urls[i] = re.sub("[\*<>\(\)\)]", '', url)
     return urls
+
+
+def get_urls(filename):
+    """Extracts all URLs available in specified filename."""
+    if filename.endswith('.rst'):
+        return get_urls_rst(filename)
+    else:
+        return []
 
 
 def validate_url(url):
@@ -113,21 +120,24 @@ def parallel_validator(urls):
             else:
                 if not ok:
                     fails.append((fname, url))
-    if fails:
-        print()
+
+    print()
     return fails
 
 
 def main():
     files = sys.argv[1:]
     if not files:
-        return sys.exit("usage: %s <FILES...>" % __name__)
+        print("usage: %s <FILES...>" % sys.argv[0], file=sys.stderr)
+        return sys.exit(1)
 
     all_urls = []
     for fname in files:
         urls = get_urls(fname)
-        for url in urls:
-            all_urls.append((fname, url))
+        if urls:
+            print("%4s %s" % (len(urls), fname))
+            for url in urls:
+                all_urls.append((fname, url))
 
     fails = parallel_validator(all_urls)
     if not fails:
@@ -142,4 +152,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, SystemExit):
+        os._exit(0)
