@@ -19,16 +19,16 @@ python setup.py develop
 
 # run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
-    coverage run psutil/tests/__main__.py
+    python -Wa -m coverage run psutil/tests/__main__.py
 else
-    python psutil/tests/__main__.py
+    python -Wa psutil/tests/__main__.py
 fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
     # run mem leaks test
-    python psutil/tests/test_memory_leaks.py
+    python -Wa psutil/tests/test_memory_leaks.py
     # run linter (on Linux only)
     if [[ "$(uname -s)" != 'Darwin' ]]; then
-        python -m flake8
+        python -Wa -m flake8
     fi
 fi

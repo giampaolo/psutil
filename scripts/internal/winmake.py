@@ -320,14 +320,14 @@ def flake8():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
+    sh("%s -Wa -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
 @cmd
 def test():
     """Run tests"""
     install()
-    sh("%s %s" % (PYTHON, TSCRIPT))
+    sh("%s -Wa %s" % (PYTHON, TSCRIPT))
 
 
 @cmd
@@ -335,7 +335,7 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     install()
-    sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
+    sh("%s -Wa -m coverage run %s" % (PYTHON, TSCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -345,49 +345,49 @@ def coverage():
 def test_process():
     """Run process tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_process" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_process" % PYTHON)
 
 
 @cmd
 def test_system():
     """Run system tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_system" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_system" % PYTHON)
 
 
 @cmd
 def test_platform():
     """Run windows only tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_windows" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_windows" % PYTHON)
 
 
 @cmd
 def test_misc():
     """Run misc tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_misc" % PYTHON)
 
 
 @cmd
 def test_unicode():
     """Run unicode tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_unicode" % PYTHON)
 
 
 @cmd
 def test_connections():
     """Run connections tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_connections" % PYTHON)
 
 
 @cmd
 def test_contracts():
     """Run contracts tests"""
     install()
-    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
+    sh("%s -Wa -m unittest -v psutil.tests.test_contracts" % PYTHON)
 
 
 @cmd
@@ -399,7 +399,7 @@ def test_by_name():
     except IndexError:
         sys.exit('second arg missing')
     install()
-    sh("%s -m unittest -v %s" % (PYTHON, name))
+    sh("%s -Wa -m unittest -v %s" % (PYTHON, name))
 
 
 @cmd
@@ -411,14 +411,14 @@ def test_script():
     except IndexError:
         sys.exit('second arg missing')
     install()
-    sh("%s %s" % (PYTHON, name))
+    sh("%s -Wa %s" % (PYTHON, name))
 
 
 @cmd
 def test_memleaks():
     """Run memory leaks tests"""
     install()
-    sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
+    sh("%s -Wa psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
 @cmd
@@ -430,13 +430,13 @@ def install_git_hooks():
 @cmd
 def bench_oneshot():
     install()
-    sh("%s scripts\\internal\\bench_oneshot.py" % PYTHON)
+    sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
     install()
-    sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+    sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
 def set_python(s):
