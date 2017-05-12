@@ -74,7 +74,7 @@ Projects using psutil
 =====================
 
 At the time of writing there are over
-`5000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`5200 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 

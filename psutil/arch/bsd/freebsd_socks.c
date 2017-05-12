@@ -420,21 +420,20 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (! py_lpath)
             goto error;
 
-        py_tuple = Py_BuildValue("(iiiOOii)",
-            -1,
-            AF_UNIX,
-            proto,
-            py_lpath,
-            Py_None,
-            PSUTIL_CONN_NONE,
-            pid);
+        py_tuple = Py_BuildValue("(iiiOsii)",
+            -1,                // fd
+            AF_UNIX,           // family
+            proto,             // type
+            py_lpath,          // lpath
+            "",                // rath
+            PSUTIL_CONN_NONE,  // status
+            pid);              // pid
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_DECREF(py_lpath);
         Py_DECREF(py_tuple);
-        Py_INCREF(Py_None);
     }
 
     free(buf);
