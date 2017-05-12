@@ -236,9 +236,8 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
+	git diff-index --quiet HEAD -- || echo "err: there are uncommitted changes"; exit 1
 	${MAKE} sdist
-	# Make sure MANIFEST.in has no uncommitted changes.
-	PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff MANIFEST.in', shell=True).strip(); sys.exit('MANIFEST.in has uncommitted changes') if out else sys.exit(0);"
 	${MAKE} install
 	@PYTHONWARNINGS=all $(PYTHON) -c \
 		"from psutil import __version__ as ver; \
