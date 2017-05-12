@@ -938,11 +938,12 @@ PsutilMethods[] = {
 #endif
 
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
-    {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return process pathname executable"},
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
+#endif
 #if defined(PSUTIL_FREEBSD)
+    {"proc_exe", psutil_proc_exe, METH_VARARGS,
+     "Return process pathname executable"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
@@ -951,7 +952,6 @@ PsutilMethods[] = {
      "Set process CPU affinity."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
-#endif
 #endif
 
     // --- system-related functions
