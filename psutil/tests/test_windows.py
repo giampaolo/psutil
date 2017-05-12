@@ -187,8 +187,8 @@ class TestSystemAPIs(unittest.TestCase):
             wmi_btime_str, "%Y%m%d%H%M%S")
         psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        # Wmic time is 2 secs lower for some reason; that's OK.
-        self.assertLessEqual(diff, 2)
+        # Wmic time is 2-3 secs lower for some reason; that's OK.
+        self.assertLessEqual(diff, 3)
 
     def test_boot_time_fluctuation(self):
         # https://github.com/giampaolo/psutil/issues/1007

@@ -52,7 +52,9 @@ For a detailed explanation of how psutil handles unicode see:
 - https://pythonhosted.org/psutil/#unicode
 """
 
+import errno
 import os
+import traceback
 import warnings
 from contextlib import closing
 
@@ -126,6 +128,20 @@ class _BaseFSAPIsTests(object):
     def tearDown(self):
         reap_children()
         safe_rmpath(self.funky_name)
+
+    def safe_rmpath(self, name):
+        if POSIX:
+            safe_rmpath(name)
+        else:
+            # https://ci.appveyor.com/project/giampaolo/psutil/build/
+            #     1225/job/1yec67sr6e9rl217
+            try:
+                safe_rmpath(name)
+            except OSError as err:
+                if err.errno in (errno.EACCES, errno.EPERM):
+                    traceback.print_exc()
+                else:
+                    raise
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
