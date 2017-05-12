@@ -499,10 +499,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         // XXX - it appears path is not exposed in the kinfo_file struct.
         path = "";
 #endif
-        py_path = PyUnicode_DecodeFSDefault(path);
-        if (! py_path)
-            goto error;
         if (regular == 1) {
+            py_path = PyUnicode_DecodeFSDefault(path);
+            if (! py_path)
+                goto error;
             py_tuple = Py_BuildValue("(Oi)", py_path, fd);
             if (py_tuple == NULL)
                 goto error;
