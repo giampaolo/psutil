@@ -78,8 +78,15 @@ def memoize(fun):
 
 
 def sanitize_url(url):
-    return \
-        url.strip('(').strip(')').strip('[').strip(']').strip('<').strip('>')
+    url = url.rstrip(',')
+    url = url.rstrip('.')
+    url = url.lstrip('(')
+    url = url.rstrip(')')
+    url = url.lstrip('[')
+    url = url.rstrip(']')
+    url = url.lstrip('<')
+    url = url.rstrip('>')
+    return url
 
 
 def find_urls(s):
@@ -152,8 +159,14 @@ def parse_c(fname):
     return list(urls)
 
 
+def parse_generic(fname):
+    with open(fname) as f:
+        text = f.read()
+    return find_urls(text)
+
+
 def get_urls(fname):
-    """Extracts all URLs available in specified fname."""
+    """Extracts all URLs in fname and return them as a list."""
     if fname.endswith('.rst'):
         return parse_rst(fname)
     elif fname.endswith('.py'):
@@ -161,7 +174,10 @@ def get_urls(fname):
     elif fname.endswith('.c') or fname.endswith('.h'):
         return parse_c(fname)
     else:
-        return []
+        with open(fname) as f:
+            if f.readline().strip().startswith('#!/usr/bin/env python'):
+                return parse_py(fname)
+        return parse_generic(fname)
 
 
 @memoize
