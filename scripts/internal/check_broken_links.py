@@ -42,6 +42,7 @@ Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 from __future__ import print_function
 
 import concurrent.futures
+import functools
 import os
 import re
 import sys
@@ -58,6 +59,21 @@ REQUEST_TIMEOUT = 10
 # Like 503 by Microsoft, and 401 by Apple
 # They need to be sent GET request
 RETRY_STATUSES = [503, 401, 403]
+
+
+def memoize(fun):
+    """A memoize decorator."""
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        key = (args, frozenset(sorted(kwargs.items())))
+        try:
+            return cache[key]
+        except KeyError:
+            ret = cache[key] = fun(*args, **kwargs)
+            return ret
+
+    cache = {}
+    return wrapper
 
 
 def get_urls_rst(filename, _regex=re.compile(REGEX)):
@@ -105,6 +121,7 @@ def get_urls(filename):
         return []
 
 
+@memoize
 def validate_url(url):
     """Validate the URL by attempting an HTTP connection.
     Makes an HTTP-HEAD request for each URL.
