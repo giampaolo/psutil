@@ -52,8 +52,9 @@ import requests
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-REGEX = r'(?:http|ftp|https)?://' \
-        r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+REGEX = re.compile(
+    r'(?:http|ftp|https)?://'
+    r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 REQUEST_TIMEOUT = 10
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
@@ -76,39 +77,44 @@ def memoize(fun):
     return wrapper
 
 
-def get_urls_rst(filename, _regex=re.compile(REGEX)):
+def sanitize_url(url):
+    return \
+        url.strip('(').strip(')').strip('[').strip(']').strip('<').strip('>')
+
+
+def find_urls(s):
+    matches = REGEX.findall(s)
+    if matches:
+        return list(set([sanitize_url(x) for x in matches]))
+
+
+def get_urls_rst(filename):
     with open(filename) as f:
         text = f.read()
-    urls = _regex.findall(text)
-    # remove duplicates, list for sets are not iterable
-    urls = list(set(urls))
+    urls = find_urls(text)
     # HISTORY file has a lot of dead links.
-    if filename == 'HISTORY.rst':
+    if filename == 'HISTORY.rst' and urls:
         urls = [
             x for x in urls if
-            not x.startswith('https://github.com/giampaolo/psutil/issues/')]
-    # correct urls which are between < and/or >
-    for i, url in enumerate(urls):
-        urls[i] = re.sub("[\*<>\(\)\)]", '', url)
+            not x.startswith('https://github.com/giampaolo/psutil/issues')]
     return urls
 
 
-def get_urls_py(filename, _regex=re.compile(REGEX)):
+def get_urls_py(filename):
     with open(filename) as f:
         lines = f.readlines()
-    urls = set()
+    ret = set()
     for i, line in enumerate(lines):
-        line = line.strip()
-        match = _regex.findall(line)
-        if match:
-            url = match[0]
+        urls = find_urls(line)
+        if urls:
+            assert len(urls) == 1, urls
+            url = urls[0]
             if line.startswith('# '):
                 nextline = lines[i + 1].strip()
                 if re.match('^#     .+', nextline):
                     url += nextline[1:].strip()
-            url = re.sub("[\*<>\(\)\)]", '', url)
-            urls.add(url)
-    return urls
+            ret.add(url)
+    return list(ret)
 
 
 def get_urls(filename):

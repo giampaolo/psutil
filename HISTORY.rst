@@ -555,8 +555,7 @@
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
   https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
-- 651_: continuous code quality test integration with
-  https://scrutinizer-ci.com/g/giampaolo/psutil/
+- 651_: continuous code quality test integration with scrutinizer-ci.com
 
 **Bug fixes**
 
