@@ -603,6 +603,9 @@ class TestWrapNumbers(unittest.TestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
+    @unittest.skipIf(
+        not psutil.disk_io_counters() or not psutil.net_io_counters(),
+        "no disks or NICs available")
     def test_cache_clear_public_apis(self):
         psutil.disk_io_counters()
         psutil.net_io_counters()

@@ -338,7 +338,7 @@ class TestProcess(unittest.TestCase):
             if name.startswith('_') \
                     or name in ('terminate', 'kill', 'suspend', 'resume',
                                 'nice', 'send_signal', 'wait', 'children',
-                                'as_dict'):
+                                'as_dict', 'memory_info_ex'):
                 continue
             else:
                 try:

@@ -80,6 +80,7 @@ install:
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
+  - make clean
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
