@@ -413,6 +413,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 if (! py_raddr)
                     goto error;
             }
+            else {
+                continue;
+            }
 
             // append tuple to list
             py_tuple = Py_BuildValue(
