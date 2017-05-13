@@ -709,7 +709,7 @@ PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i, dk_ndrive, mib[3];
     size_t len;
-    struct diskstats *stats;
+    struct diskstats *stats = NULL;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
