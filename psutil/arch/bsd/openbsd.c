@@ -102,6 +102,7 @@ kinfo_getfile(long pid, int* cnt) {
     }
     mib[5] = (int)(len / sizeof(struct kinfo_file));
     if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
+        free(kf);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
