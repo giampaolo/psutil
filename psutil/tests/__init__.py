@@ -708,9 +708,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                msg = "%r was skipped because it raised AccessDenied" \
-                      % fun.__name__
-                raise unittest.SkipTest(msg)
+                raise unittest.SkipTest("raises AccessDenied")
         return wrapper
     return decorator
 

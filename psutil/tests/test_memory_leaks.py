@@ -44,6 +44,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
+from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -268,6 +269,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.create_time)
 
     @skip_if_linux()
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_num_threads(self):
         self.execute(self.proc.num_threads)
 
@@ -285,6 +287,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.num_ctx_switches)
 
     @skip_if_linux()
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
         self.execute(self.proc.threads)
 
