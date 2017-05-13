@@ -117,6 +117,8 @@ psutil_get_files(void) {
     int mib[6];
     char *buf;
     off_t offset;
+    struct kinfo_file *ki = NULL;
+    struct kif *kif = NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE2;
@@ -145,10 +147,10 @@ psutil_get_files(void) {
     }
 
     len /= sizeof(struct kinfo_file);
-    struct kinfo_file *ki = (struct kinfo_file *)(buf + offset);
+    ki = (struct kinfo_file *)(buf + offset);
 
     for (j = 0; j < len; j++) {
-        struct kif *kif = malloc(sizeof(struct kif));
+        kif = malloc(sizeof(struct kif));
         kif->kif = &ki[j];
         SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
@@ -347,6 +349,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     psutil_kpcblist_init();
     if (psutil_get_files() != 0)
         goto error;
+
     if (psutil_get_info(ALL) != 0)
         goto error;
 
