@@ -13,10 +13,12 @@ Note that this may produce false positives (especially on Windows
 for some reason).
 """
 
+from __future__ import print_function
 import errno
 import functools
 import gc
 import os
+import sys
 import threading
 import time
 
@@ -152,12 +154,14 @@ class TestMemLeak(unittest.TestCase):
 
             if mem3 > mem2:
                 # failure
-                self.fail("+%s after %s calls, +%s after another %s calls" % (
-                    bytes2human(diff1),
-                    loops,
-                    bytes2human(diff2),
-                    ncalls
-                ))
+                extra_proc_mem = bytes2human(diff1 + diff2)
+                print("exta proc mem: %s" % extra_proc_mem, file=sys.stderr)
+                msg = "+%s after %s calls, +%s after another %s calls, "
+                msg += "+%s extra proc mem"
+                msg = msg % (
+                    bytes2human(diff1), loops, bytes2human(diff2), ncalls,
+                    extra_proc_mem)
+                self.fail(msg)
 
     def execute_w_exc(self, exc, fun, *args, **kwargs):
         """Convenience function which tests a callable raising
