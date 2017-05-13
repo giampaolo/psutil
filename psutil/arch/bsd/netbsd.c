@@ -269,13 +269,9 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     // On success, the function returns 0.
     // On error, the function returns a BSD errno value.
     kinfo_proc *result;
-    int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
-    size_t length;
     char errbuf[_POSIX2_LINE_MAX];
-    kinfo_proc *x;
     int cnt;
     kvm_t *kd;
 
@@ -519,7 +515,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // XXX: why static?
-    static int maxcpus;
     int mib[3];
     int ncpu;
     size_t len;
@@ -579,7 +574,7 @@ PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i, dk_ndrive, mib[3];
     size_t len;
-    struct io_sysctl *stats;
+    struct io_sysctl *stats = NULL;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 

@@ -169,7 +169,7 @@ static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
-    int ret, j;
+    int j;
     struct kinfo_pcb *pcb;
     size_t len;
 
