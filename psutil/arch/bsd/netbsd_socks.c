@@ -112,10 +112,10 @@ psutil_kpcblist_clear(void) {
 static int
 psutil_get_files(void) {
     size_t len;
+    size_t j;
     int mib[6];
     char *buf;
     off_t offset;
-    int j;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE2;
@@ -169,9 +169,9 @@ static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
-    int j;
     struct kinfo_pcb *pcb;
     size_t len;
+    size_t j;
 
     memset(mib, 0, sizeof(mib));
 
@@ -339,7 +339,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
         struct kpcb *kp;
-        if ((pid != -1) && (k->kif->ki_pid != pid))
+        if ((pid != -1) && (k->kif->ki_pid != (unsigned int)pid))
             continue;
         SLIST_FOREACH(kp, &kpcbhead, kpcbs) {
             if (k->kif->ki_fdata != kp->kpcb->ki_sockaddr)

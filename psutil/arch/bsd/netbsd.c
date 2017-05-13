@@ -360,7 +360,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 PyObject *
 psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;
-    int pos = 0;
+    size_t pos = 0;
     size_t argsize = 0;
     PyObject *py_arg = NULL;
     PyObject *py_retlist = PyList_New(0);
