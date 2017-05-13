@@ -83,6 +83,7 @@ class BSDSpecificTestCase(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
+    @unittest.skipIf(NETBSD, "-o lstart doesn't work on NETBSD")
     def test_process_create_time(self):
         output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()

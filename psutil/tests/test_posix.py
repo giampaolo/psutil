@@ -36,6 +36,7 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
+from psutil.tests import which
 
 
 def ps(cmd):
@@ -295,6 +296,7 @@ class TestSystemAPIs(unittest.TestCase):
     # returned by psutil
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
+    @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True).keys():

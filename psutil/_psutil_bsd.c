@@ -932,7 +932,6 @@ PsutilMethods[] = {
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
 #endif
-
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
