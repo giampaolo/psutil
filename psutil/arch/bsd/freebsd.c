@@ -222,7 +222,7 @@ static char
 PyObject *
 psutil_get_cmdline(long pid) {
     char *argstr = NULL;
-    int pos = 0;
+    size_t pos = 0;
     size_t argsize = 0;
     PyObject *py_retlist = Py_BuildValue("[]");
     PyObject *py_arg = NULL;
