@@ -68,6 +68,7 @@
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
+- 1064_: [NetBSD] swap_memory() may segfault in case of error.
 
 *2017-04-10*
 

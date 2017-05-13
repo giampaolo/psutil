@@ -487,6 +487,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
 error:
     free(swdev);
+    return NULL;
 }
 
 
