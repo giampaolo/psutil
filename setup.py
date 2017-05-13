@@ -20,8 +20,10 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
+        import setuptools
         from setuptools import setup, Extension
     except ImportError:
+        setuptools = None
         from distutils.core import setup, Extension
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -51,6 +53,18 @@ if BSD:
 sources = ['psutil/_psutil_common.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
+
+tests_require = []
+if sys.version_info[:2] <= (2, 6):
+    tests_require.append('unittest2')
+if sys.version_info[:2] <= (2, 7):
+    tests_require.append('mock')
+if sys.version_info[:2] <= (3, 2):
+    tests_require.append('ipaddress')
+
+extras_require = {}
+if sys.version_info[:2] <= (3, 3):
+    extras_require.update(dict(enum='enum34'))
 
 
 def get_version():
@@ -193,8 +207,8 @@ elif LINUX:
                 suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
 
-        compiler = UnixCCompiler()
         try:
+            compiler = UnixCCompiler()
             with silenced_output('stderr'):
                 with silenced_output('stdout'):
                     compiler.compile([f.name])
@@ -208,9 +222,8 @@ elif LINUX:
             except OSError:
                 pass
 
-    ETHTOOL_MACRO = get_ethtool_macro()
-
     macros.append(("PSUTIL_LINUX", 1))
+    ETHTOOL_MACRO = get_ethtool_macro()
     if ETHTOOL_MACRO is not None:
         macros.append(ETHTOOL_MACRO)
     ext = Extension(
@@ -246,7 +259,7 @@ else:
 
 
 def main():
-    setup(
+    kwargs = dict(
         name='psutil',
         version=VERSION,
         description=__doc__ .replace('\n', '').strip() if __doc__ else '',
@@ -264,9 +277,6 @@ def main():
         license='BSD',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
-        test_suite="psutil.tests.get_suite",
-        tests_require=['ipaddress', 'mock', 'unittest2'],
-        zip_safe=False,   # http://stackoverflow.com/questions/19548957
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',
@@ -314,6 +324,14 @@ def main():
             'Topic :: Utilities',
         ],
     )
+    if setuptools is not None:
+        kwargs.update(
+            test_suite="psutil.tests.get_suite",
+            tests_require=tests_require,
+            extras_require=extras_require,
+            zip_safe=False,
+        )
+    setup(**kwargs)
 
 
 if __name__ == '__main__':
