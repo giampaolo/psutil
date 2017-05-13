@@ -66,7 +66,7 @@ static void psutil_kiflist_clear(void);
 static void psutil_kpcblist_init(void);
 static void psutil_kpcblist_clear(void);
 static int psutil_get_files(void);
-static int psutil_get_sockets(const char *name);
+static int psutil_get_sockets(const char *name, struct kinfo_pcb *pcb);
 static int psutil_get_info(int aff);
 
 
@@ -166,10 +166,9 @@ psutil_get_files(void) {
 
 // Get open sockets.
 static int
-psutil_get_sockets(const char *name) {
+psutil_get_sockets(const char *name, struct kinfo_pcb *pcb) {
     size_t namelen;
     int mib[8];
-    struct kinfo_pcb *pcb;
     size_t len;
     size_t j;
 
@@ -226,84 +225,92 @@ psutil_get_sockets(const char *name) {
 // Collect open file and connections.
 static int
 psutil_get_info(int aff) {
+    struct kinfo_pcb *pcb = NULL;
+
     switch (aff) {
         case INET:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.tcp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet.udp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case INET4:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.tcp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet.udp.pcblist", pcb) != 0)
+                goto error;
             break;
         case INET6:
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case TCP:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.tcp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case TCP4:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.tcp.pcblist", pcb) != 0)
+                goto error;
             break;
         case TCP6:
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case UDP:
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.udp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case UDP4:
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.udp.pcblist", pcb) != 0)
+                goto error;
             break;
         case UDP6:
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist", pcb) != 0)
+                goto error;
             break;
         case UNIX:
-            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.local.stream.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.local.seqpacket.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.local.dgram.pcblist", pcb) != 0)
+                goto error;
             break;
         case ALL:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
-                return -1;
+            if (psutil_get_sockets("net.inet.tcp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet.udp.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.local.stream.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.local.seqpacket.pcblist", pcb) != 0)
+                goto error;
+            if (psutil_get_sockets("net.local.dgram.pcblist", pcb) != 0)
+                goto error;
             break;
     }
 
+    free(pcb);
     return 0;
+
+error:
+    if (pcb != NULL)
+        free(pcb);
+    return -1;
 }
 
 
