@@ -343,6 +343,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 
     st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
     if (st == -1) {
+        free(procargs);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }

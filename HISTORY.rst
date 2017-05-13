@@ -52,6 +52,7 @@
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
 - 1064_: [NetBSD] swap_memory() may segfault in case of error.
 - 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
+- 1067_: [NetBSD] Process.cmdline() memory leak.
 
 **Porting notes**
 
