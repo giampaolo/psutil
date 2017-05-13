@@ -242,6 +242,7 @@ elif SUNOS:
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
+
 if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',

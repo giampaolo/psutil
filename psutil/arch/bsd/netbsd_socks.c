@@ -312,11 +312,16 @@ psutil_get_info(int aff) {
  */
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
-    PyObject *py_retlist = PyList_New(0);
+    char laddr[PATH_MAX];
+    char raddr[PATH_MAX];
+    int32_t lport;
+    int32_t rport;
+    int32_t status;
+    pid_t pid;
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
-    pid_t pid;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -339,11 +344,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         SLIST_FOREACH(kp, &kpcbhead, kpcbs) {
             if (k->kif->ki_fdata != kp->kpcb->ki_sockaddr)
                 continue;
-            char laddr[PATH_MAX];
-            char raddr[PATH_MAX];
-            int32_t lport;
-            int32_t rport;
-            int32_t status;
 
             // IPv4 or IPv6
             if ((kp->kpcb->ki_family == AF_INET) ||
