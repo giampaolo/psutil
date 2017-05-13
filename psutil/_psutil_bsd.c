@@ -382,12 +382,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-
     py_retlist = psutil_get_cmdline(pid);
-    // psutil_get_cmdline() returns NULL only if psutil_cmd_args
-    // failed with ESRCH (no process with that PID)
-    if (NULL == py_retlist)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (py_retlist == NULL)
+        return NULL;
     return Py_BuildValue("N", py_retlist);
 }
 

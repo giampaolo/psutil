@@ -43,11 +43,15 @@
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1050_: [Windows] Process.memory_maps memory() leaks memory.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
 - 1055_: cpu_count() is no longer cached.
 - 1058_: fixed Python warnings.
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.
+- 1063_: [NetBSD] net_connections() may list incorrect sockets.
+- 1064_: [NetBSD] swap_memory() may segfault in case of error.
+- 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
 
 **Porting notes**
 
@@ -64,11 +68,6 @@
   - WindosService.description()
   - WindosService.display_name()
   - WindosService.username()
-- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
-- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
-- 1050_: [Windows] Process.memory_maps memory() leaks memory.
-- 1063_: [NetBSD] net_connections() may list incorrect sockets.
-- 1064_: [NetBSD] swap_memory() may segfault in case of error.
 
 *2017-04-10*
 

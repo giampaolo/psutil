@@ -179,7 +179,8 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  */
 static char
 *psutil_get_cmd_args(long pid, size_t *argsize) {
-    int mib[4], argmax;
+    int mib[4];
+    int argmax;
     size_t size = sizeof(argmax);
     char *procargs = NULL;
 
@@ -198,9 +199,7 @@ static char
         return NULL;
     }
 
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
+    // Make a sysctl() call to get the raw argument space of the process.
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ARGS;
@@ -209,7 +208,8 @@ static char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        return NULL;       // Insufficient privileges
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
     }
 
     // return string and set the length of arguments

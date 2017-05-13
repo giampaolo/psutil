@@ -326,7 +326,6 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     size = sizeof(argmax);
     st = sysctl(mib, 2, &argmax, &size, NULL, 0);
     if (st == -1) {
-        warn("failed to get kern.argmax");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -344,7 +343,6 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 
     st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
     if (st == -1) {
-        warn("failed to get kern.procargs");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -352,6 +350,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     *argsize = argmax;
     return procargs;
 }
+
 
 // Return the command line as a python list object.
 // XXX - most of the times sysctl() returns a truncated string.

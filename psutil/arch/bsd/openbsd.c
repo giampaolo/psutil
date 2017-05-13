@@ -170,18 +170,21 @@ _psutil_get_argv(long pid) {
     static char **argv;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
     size_t argv_size = 128;
-    /* Loop and reallocate until we have enough space to fit argv. */
+    // Loop and reallocate until we have enough space to fit argv.
     for (;; argv_size *= 2) {
-        if ((argv = realloc(argv, argv_size)) == NULL)
-            err(1, NULL);
-        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
-            return argv;
-        if (errno == ESRCH) {
-            PyErr_SetFromErrno(PyExc_OSError);
+        if (argv_size >= 8192) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "can't allocate enough space for KERN_PROC_ARGV");
             return NULL;
         }
-        if (errno != ENOMEM)
-            err(1, NULL);
+        if ((argv = realloc(argv, argv_size)) == NULL)
+            continue;
+        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
+            return argv;
+        if (errno == ENOMEM)
+            continue;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
     }
 }
 
