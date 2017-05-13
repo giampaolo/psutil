@@ -29,12 +29,13 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import xrange
+from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import create_sockets
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
@@ -341,7 +342,7 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "too slow on OSX")
-    @unittest.skipIf(OPENBSD, "not supported")
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @skip_if_linux()
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps)
