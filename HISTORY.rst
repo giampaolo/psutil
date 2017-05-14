@@ -54,6 +54,8 @@
 - 1064_: [NetBSD] swap_memory() may segfault in case of error.
 - 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
 - 1067_: [NetBSD] Process.cmdline() leaks memory if proces has terminated.
+- 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
+  processes.
 
 **Porting notes**
 

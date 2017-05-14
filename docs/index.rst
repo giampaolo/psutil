@@ -1472,6 +1472,7 @@ Process class
 
     Return what CPU this process is currently running on.
     The returned number should be ``<=`` :func:`psutil.cpu_count()`.
+    On FreeBSD certain kernel process may return ``-1``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
     `cpu_distribution.py <https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py>`__ example script.

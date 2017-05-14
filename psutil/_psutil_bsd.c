@@ -197,7 +197,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
-    unsigned char oncpu;
+    int oncpu;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
@@ -252,6 +252,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     // what CPU we're on; top was used as an example:
     // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
     //     view=markup&pathrev=273835
+    // XXX - note: for "intr" PID this is -1.
     if (kp.ki_stat == SRUN && kp.ki_oncpu != NOCPU)
         oncpu = kp.ki_oncpu;
     else
@@ -300,7 +301,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
         // others
-        oncpu,                            // (unsigned char) the CPU we are on
+        oncpu,                            // (int) the CPU we are on
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
         //
         (long)kp.p_ppid,                 // (long) ppid
@@ -336,7 +337,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
         // others
-        oncpu,                            // (unsigned char) the CPU we are on
+        oncpu,                            // (int) the CPU we are on
 #endif
         py_name                           // (pystr) name
     );

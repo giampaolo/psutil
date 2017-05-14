@@ -468,10 +468,12 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def cpu_num(self, ret, proc):
         self.assertIsInstance(ret, int)
+        if FREEBSD and ret == -1:
+            return
         self.assertGreaterEqual(ret, 0)
         if psutil.cpu_count() == 1:
             self.assertEqual(ret, 0)
-        self.assertIn(ret, range(psutil.cpu_count()))
+        self.assertIn(ret, list(range(psutil.cpu_count())))
 
     def memory_info(self, ret, proc):
         assert is_namedtuple(ret)
