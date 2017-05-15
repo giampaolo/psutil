@@ -408,6 +408,13 @@ class TestSystemWideConnections(unittest.TestCase):
 
             self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
+    @skip_on_access_denied()
+    def test_multi_socks(self):
+        with create_sockets() as socks:
+            cons = [x for x in psutil.net_connections(kind='all')
+                    if x.pid == os.getpid()]
+            self.assertEqual(len(socks), len(cons))
+
 
 # =====================================================================
 # --- Miscellaneous tests
