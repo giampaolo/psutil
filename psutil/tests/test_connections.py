@@ -31,6 +31,7 @@ from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
+from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import pyrun
 from psutil.tests import reap_children
@@ -352,6 +353,30 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         # err
         self.assertRaises(ValueError, p.connections, kind='???')
 
+    def test_multi_sockets(self):
+        with create_sockets() as socks:
+            cons = thisproc.connections(kind='all')
+            self.assertEqual(len(socks), len(cons))
+            cons = thisproc.connections(kind='tcp')
+            self.assertEqual(len(cons), 2)
+            cons = thisproc.connections(kind='tcp4')
+            self.assertEqual(len(cons), 1)
+            cons = thisproc.connections(kind='tcp6')
+            self.assertEqual(len(cons), 1)
+            cons = thisproc.connections(kind='udp')
+            self.assertEqual(len(cons), 2)
+            cons = thisproc.connections(kind='udp4')
+            self.assertEqual(len(cons), 1)
+            cons = thisproc.connections(kind='udp6')
+            self.assertEqual(len(cons), 1)
+            cons = thisproc.connections(kind='inet')
+            self.assertEqual(len(cons), 4)
+            cons = thisproc.connections(kind='inet6')
+            self.assertEqual(len(cons), 2)
+            if POSIX and not SUNOS:
+                cons = thisproc.connections(kind='unix')
+                self.assertEqual(len(cons), 3)
+
 
 # =====================================================================
 # --- Miscellaneous tests
@@ -371,16 +396,17 @@ class TestSystemWideConnections(unittest.TestCase):
                     self.assertIn(conn.type, types_, msg=conn)
                 check_connection_ntuple(conn)
 
-        from psutil._common import conn_tmap
-        for kind, groups in conn_tmap.items():
-            if SUNOS and kind == 'unix':
-                continue
-            families, types_ = groups
-            cons = psutil.net_connections(kind)
-            self.assertEqual(len(cons), len(set(cons)))
-            check(cons, families, types_)
+        with create_sockets():
+            from psutil._common import conn_tmap
+            for kind, groups in conn_tmap.items():
+                if SUNOS and kind == 'unix':
+                    continue
+                families, types_ = groups
+                cons = psutil.net_connections(kind)
+                self.assertEqual(len(cons), len(set(cons)))
+                check(cons, families, types_)
 
-        self.assertRaises(ValueError, psutil.net_connections, kind='???')
+            self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
 # =====================================================================

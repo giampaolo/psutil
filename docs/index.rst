@@ -1837,6 +1837,9 @@ Process class
        pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
 
     .. note::
+      (Solaris) UNIX sockets are not supported.
+
+    .. note::
        (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
        This is a limitation of the OS.
 
