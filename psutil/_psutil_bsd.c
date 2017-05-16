@@ -75,7 +75,7 @@
         #include <utmpx.h>
     #endif
 #elif PSUTIL_OPENBSD
-    #include "arch/bsd/openbsd.h"
+    #include "arch/openbsd/specific.h"
 
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
