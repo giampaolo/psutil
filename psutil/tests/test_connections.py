@@ -415,6 +415,36 @@ class TestSystemWideConnections(unittest.TestCase):
                     if x.pid == os.getpid()]
             self.assertEqual(len(socks), len(cons))
 
+    def test_multi_sockets_procs(self):
+        # Creates multiple sub processes, each creating different
+        # sockets. For each process check that proc.connections()
+        # and net_connections() return the same results.
+        # This is done mainly to check whether net_connections()'s
+        # pid is properly set, see:
+        # https://github.com/giampaolo/psutil/issues/1013
+        with create_sockets() as socks:
+            expected = len(socks)
+        pids = []
+        src = textwrap.dedent("""\
+            import time
+            from psutil.tests import create_sockets
+            with create_sockets():
+                open('%s', 'w').close()
+                time.sleep(60)
+            """ % TESTFN)
+        for x in range(10):
+            sproc = pyrun(src)
+            wait_for_file(TESTFN, empty=True)
+            pids.append(sproc.pid)
+
+        syscons = [x for x in psutil.net_connections(kind='all') if x.pid
+                   in pids]
+        for pid in pids:
+            p = psutil.Process(pid)
+            self.assertEqual(len(p.connections('all')), expected)
+            self.assertEqual(len([x for x in syscons if x.pid == pid]),
+                             expected)
+
 
 # =====================================================================
 # --- Miscellaneous tests
