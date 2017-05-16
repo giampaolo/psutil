@@ -343,8 +343,15 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
-        py_tuple = Py_BuildValue("(iiiNNii)", -1, family, type, py_laddr,
-                                 py_raddr, status, pid);
+        py_tuple = Py_BuildValue(
+            "(iiiNNii)",
+            -1,        // fd
+            family,    // family
+            type,      // type
+            py_laddr,  // laddr
+            py_raddr,  // raddr
+            status,    // status
+            pid);      // pid
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
