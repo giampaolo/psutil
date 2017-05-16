@@ -216,7 +216,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
-    qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
+    qsc = (QUERY_SERVICE_CONFIGW *)malloc(bytesNeeded);
     ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
     if (ok == 0) {
         PyErr_SetFromWindowsErr(0);
