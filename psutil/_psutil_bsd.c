@@ -63,8 +63,8 @@
 #include "_psutil_posix.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/bsd/freebsd.h"
-    #include "arch/bsd/freebsd_socks.h"
+    #include "arch/freebsd/process_info.h"
+    #include "arch/freebsd/socks.h"
 
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
