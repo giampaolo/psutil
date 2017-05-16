@@ -395,6 +395,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             sysctl("hw.acpi.battery.life")
             sysctl("hw.acpi.battery.time")
             sysctl("hw.acpi.acline")
+        self.assertIsNone(psutil.sensors_battery())
 
 
 # =====================================================================
