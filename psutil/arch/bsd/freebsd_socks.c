@@ -28,7 +28,6 @@
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
-#define HASHSIZE 1009
 // a signaler for connections without an actual status
 static int PSUTIL_CONN_NONE = 128;
 static struct xfile *psutil_xfiles;
@@ -201,14 +200,12 @@ psutil_populate_xfiles() {
 
 
 int
-psutil_get_pid_from_sock(int sock_hash) {
+psutil_get_pid_from_sock(void *sock) {
     struct xfile *xf;
-    int hash, n;
+    int n;
+
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
-        if (xf->xf_data == NULL)
-            continue;
-        hash = (int)((uintptr_t)xf->xf_data % HASHSIZE);
-        if (sock_hash == hash)
+        if (xf->xf_data == sock)
             return xf->xf_pid;
     }
     return -1;
@@ -230,7 +227,6 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     const char *varname = NULL;
     size_t len, bufsize;
     void *buf;
-    int hash;
     int retry;
     int type;
 
@@ -320,8 +316,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
 
         char lip[200], rip[200];
 
-        hash = (int)((uintptr_t)so->xso_so % HASHSIZE);
-        pid = psutil_get_pid_from_sock(hash);
+        pid = psutil_get_pid_from_sock(so->xso_so);
         if (pid < 0)
             continue;
         lport = ntohs(inp->inp_lport);
@@ -377,7 +372,6 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     size_t len;
     size_t bufsize;
     void *buf;
-    int hash;
     int retry;
     int pid;
     struct sockaddr_un *sun;
@@ -434,8 +428,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        hash = (int)((uintptr_t) xup->xu_socket.xso_so % HASHSIZE);
-        pid = psutil_get_pid_from_sock(hash);
+        pid = psutil_get_pid_from_sock(xup->xu_socket.xso_so);
         if (pid < 0)
             continue;
 
