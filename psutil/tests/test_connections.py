@@ -359,7 +359,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             self.assertEqual(len(socks), len(cons))
             # tcp
             cons = thisproc.connections(kind='tcp')
-            self.assertEqual(len(cons), 2)
+            self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertEqual(conn.type, SOCK_STREAM)
@@ -369,13 +369,14 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             self.assertEqual(cons[0].family, AF_INET)
             self.assertEqual(cons[0].type, SOCK_STREAM)
             # tcp6
-            cons = thisproc.connections(kind='tcp6')
-            self.assertEqual(len(cons), 1)
-            self.assertEqual(cons[0].family, AF_INET6)
-            self.assertEqual(cons[0].type, SOCK_STREAM)
+            if supports_ipv6():
+                cons = thisproc.connections(kind='tcp6')
+                self.assertEqual(len(cons), 1)
+                self.assertEqual(cons[0].family, AF_INET6)
+                self.assertEqual(cons[0].type, SOCK_STREAM)
             # udp
             cons = thisproc.connections(kind='udp')
-            self.assertEqual(len(cons), 2)
+            self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertEqual(conn.type, SOCK_DGRAM)
@@ -385,22 +386,24 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             self.assertEqual(cons[0].family, AF_INET)
             self.assertEqual(cons[0].type, SOCK_DGRAM)
             # udp6
-            cons = thisproc.connections(kind='udp6')
-            self.assertEqual(len(cons), 1)
-            self.assertEqual(cons[0].family, AF_INET6)
-            self.assertEqual(cons[0].type, SOCK_DGRAM)
+            if supports_ipv6():
+                cons = thisproc.connections(kind='udp6')
+                self.assertEqual(len(cons), 1)
+                self.assertEqual(cons[0].family, AF_INET6)
+                self.assertEqual(cons[0].type, SOCK_DGRAM)
             # inet
             cons = thisproc.connections(kind='inet')
-            self.assertEqual(len(cons), 4)
+            self.assertEqual(len(cons), 4 if supports_ipv6() else 2)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # inet6
-            cons = thisproc.connections(kind='inet6')
-            self.assertEqual(len(cons), 2)
-            for conn in cons:
-                self.assertEqual(conn.family, AF_INET6)
-                self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
+            if supports_ipv6():
+                cons = thisproc.connections(kind='inet6')
+                self.assertEqual(len(cons), 2)
+                for conn in cons:
+                    self.assertEqual(conn.family, AF_INET6)
+                    self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # unix
             if POSIX and not SUNOS:
                 cons = thisproc.connections(kind='unix')
