@@ -2974,10 +2974,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PCTSTR intRet;
     PCTSTR netmaskIntRet;
     char *ptr;
-    char buff[100];
-    DWORD bufflen = 100;
-    char netmask_buff[100];
-    DWORD netmask_bufflen = 100;
+    char buff[1024];
+    char netmask_buff[1024];
     DWORD dwRetVal = 0;
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
     ULONG converted_netmask;
@@ -3063,7 +3061,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     struct sockaddr_in *sa_in = (struct sockaddr_in *)
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
-                                       bufflen);
+                                       sizeof(buff));
                     if (!intRet)
                         goto error;
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
@@ -3072,7 +3070,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     if (dwRetVal == NO_ERROR) {
                         in_netmask.s_addr = converted_netmask;
                         netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
-                                                  netmask_bufflen);
+                                                  sizeof(netmask_buff));
                         if (!netmaskIntRet)
                             goto error;
                     }
@@ -3082,7 +3080,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET6, &(sa_in6->sin6_addr),
-                                       buff, bufflen);
+                                       buff, sizeof(buff));
                     if (!intRet)
                         goto error;
                 }
