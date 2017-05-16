@@ -171,7 +171,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     def test_udp_v6(self):
-        addr = ("127.0.0.1", get_free_port())
+        addr = ("::1", get_free_port())
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
