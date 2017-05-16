@@ -36,6 +36,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import POSIX
+from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
@@ -145,6 +146,7 @@ SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
+HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
