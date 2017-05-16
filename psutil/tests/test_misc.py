@@ -291,22 +291,26 @@ class TestMisc(unittest.TestCase):
 
     def test_supports_ipv6(self):
         self.addCleanup(supports_ipv6.cache_clear)
-        supports_ipv6.cache_clear()
         if supports_ipv6():
             with mock.patch('psutil._common.socket') as s:
                 s.has_ipv6 = False
-                assert not supports_ipv6()
                 supports_ipv6.cache_clear()
+                assert not supports_ipv6()
+
+            supports_ipv6.cache_clear()
             with mock.patch('psutil._common.socket.socket',
                             side_effect=socket.error) as s:
                 assert not supports_ipv6()
-                supports_ipv6.cache_clear()
                 assert s.called
+
+            supports_ipv6.cache_clear()
             with mock.patch('psutil._common.socket.socket',
                             side_effect=socket.gaierror) as s:
                 assert not supports_ipv6()
                 supports_ipv6.cache_clear()
                 assert s.called
+
+            supports_ipv6.cache_clear()
             with mock.patch('psutil._common.socket.socket.bind',
                             side_effect=socket.gaierror) as s:
                 assert not supports_ipv6()
