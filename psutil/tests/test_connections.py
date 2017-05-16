@@ -447,6 +447,7 @@ class TestSystemWideConnections(unittest.TestCase):
                     if x.pid == os.getpid()]
             self.assertEqual(len(cons), len(socks))
 
+    @skip_on_access_denied()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
         # sockets. For each process check that proc.connections()
@@ -472,10 +473,10 @@ class TestSystemWideConnections(unittest.TestCase):
         syscons = [x for x in psutil.net_connections(kind='all') if x.pid
                    in pids]
         for pid in pids:
-            p = psutil.Process(pid)
-            self.assertEqual(len(p.connections('all')), expected)
             self.assertEqual(len([x for x in syscons if x.pid == pid]),
                              expected)
+            p = psutil.Process(pid)
+            self.assertEqual(len(p.connections('all')), expected)
 
 
 # =====================================================================
