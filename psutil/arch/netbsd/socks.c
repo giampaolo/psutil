@@ -24,8 +24,6 @@
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
-// a signaler for connections without an actual status
-int PSUTIL_CONN_NONE = 128;
 
 // address family filter
 enum af_filter {

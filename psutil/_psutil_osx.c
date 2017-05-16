@@ -1184,9 +1184,6 @@ error:
 }
 
 
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
-
 /*
  * Return process TCP and UDP connections as a list of tuples.
  * References:

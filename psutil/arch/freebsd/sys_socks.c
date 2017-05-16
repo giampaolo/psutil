@@ -25,8 +25,6 @@
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
 static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 

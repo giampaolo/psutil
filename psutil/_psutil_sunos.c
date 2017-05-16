@@ -49,8 +49,6 @@
 #ifndef EXPER_IP_AND_ALL_IRES
 #define EXPER_IP_AND_ALL_IRES (1024+4)
 #endif
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
 
 
 /*

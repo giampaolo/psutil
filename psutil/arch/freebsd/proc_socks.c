@@ -22,10 +22,6 @@
 #include "../../_psutil_posix.h"
 
 
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
-
-
 // The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
 psutil_fetch_tcplist(void) {

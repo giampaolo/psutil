@@ -6,6 +6,9 @@
 
 #include <Python.h>
 
+// a signaler for connections without an actual status
+static const int PSUTIL_CONN_NONE = 128;
+
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
 #if PY_MAJOR_VERSION < 3

@@ -48,9 +48,6 @@
  * ============================================================================
  */
 
- // a flag for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
-
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 #define LO_T ((float)1e-7)
