@@ -181,7 +181,7 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 
 @lru_cache(maxsize=512)
 def convert_dos_path(s):
-    """Convert paths using native DOS format like:
+    r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     into:
         "C:\Windows\systemew\file.txt"

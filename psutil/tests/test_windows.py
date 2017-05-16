@@ -17,15 +17,7 @@ import signal
 import subprocess
 import sys
 import time
-
-try:
-    import win32api  # requires "pip install pypiwin32" / "make setup-dev-env"
-    import win32con
-    import win32process
-    import wmi  # requires "pip install wmi" / "make setup-dev-env"
-except ImportError:
-    if os.name == 'nt':
-        raise
+import warnings
 
 import psutil
 from psutil import WINDOWS
@@ -39,6 +31,17 @@ from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import unittest
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import win32api  # requires "pip install pypiwin32"
+        import win32con
+        import win32process
+        import wmi  # requires "pip install wmi" / "make setup-dev-env"
+    except ImportError:
+        if os.name == 'nt':
+            raise
 
 
 cext = psutil._psplatform.cext
