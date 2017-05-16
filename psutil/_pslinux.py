@@ -1070,9 +1070,9 @@ def disk_io_counters():
             raise ValueError("not sure how to interpret line %r" % line)
 
         if name in partitions:
-            sector_size = get_sector_size(name)
-            rbytes = rbytes * sector_size
-            wbytes = wbytes * sector_size
+            ssize = get_sector_size(name)
+            rbytes *= ssize
+            wbytes *= ssize
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
                              reads_merged, writes_merged, busy_time)
     return retdict
