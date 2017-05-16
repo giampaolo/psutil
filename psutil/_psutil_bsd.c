@@ -64,7 +64,8 @@
 
 #ifdef PSUTIL_FREEBSD
     #include "arch/freebsd/specific.h"
-    #include "arch/freebsd/socks.h"
+    #include "arch/freebsd/sys_socks.h"
+    #include "arch/freebsd/proc_socks.h"
 
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
