@@ -63,8 +63,8 @@
 #include "_psutil_posix.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/bsd/freebsd.h"
-    #include "arch/bsd/freebsd_socks.h"
+    #include "arch/freebsd/specific.h"
+    #include "arch/freebsd/socks.h"
 
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
@@ -75,7 +75,7 @@
         #include <utmpx.h>
     #endif
 #elif PSUTIL_OPENBSD
-    #include "arch/bsd/openbsd.h"
+    #include "arch/openbsd/specific.h"
 
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
@@ -84,8 +84,8 @@
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
 #elif PSUTIL_NETBSD
-    #include "arch/bsd/netbsd.h"
-    #include "arch/bsd/netbsd_socks.h"
+    #include "arch/netbsd/specific.h"
+    #include "arch/netbsd/socks.h"
 
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG

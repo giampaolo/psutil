@@ -168,8 +168,8 @@ elif FREEBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/freebsd.c',
-            'psutil/arch/bsd/freebsd_socks.c',
+            'psutil/arch/freebsd/specific.c',
+            'psutil/arch/freebsd/socks.c',
         ],
         define_macros=macros,
         libraries=["devstat"])
@@ -180,7 +180,7 @@ elif OPENBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/openbsd.c',
+            'psutil/arch/openbsd/specific.c',
         ],
         define_macros=macros,
         libraries=["kvm"])
@@ -191,8 +191,8 @@ elif NETBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/netbsd.c',
-            'psutil/arch/bsd/netbsd_socks.c',
+            'psutil/arch/netbsd/specific.c',
+            'psutil/arch/netbsd/socks.c',
         ],
         define_macros=macros,
         libraries=["kvm"])
