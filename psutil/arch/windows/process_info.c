@@ -116,7 +116,7 @@ int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
-    DWORD WINAPI err;
+    DWORD err;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
