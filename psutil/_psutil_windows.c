@@ -2974,8 +2974,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PCTSTR intRet;
     PCTSTR netmaskIntRet;
     char *ptr;
-    char buff[1024];
-    char netmask_buff[1024];
+    char buff_addr[1024];
+    char buff_macaddr[1024];
+    char buff_netmask[1024];
     DWORD dwRetVal = 0;
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
     ULONG converted_netmask;
@@ -3014,22 +3015,22 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
-            ptr = buff;
+            ptr = buff_macaddr;
             *ptr = '\0';
             for (i = 0; i < (int) pCurrAddresses->PhysicalAddressLength; i++) {
                 if (i == (pCurrAddresses->PhysicalAddressLength - 1)) {
-                    sprintf_s(ptr, _countof(buff), "%.2X\n",
+                    sprintf_s(ptr, _countof(buff_macaddr), "%.2X\n",
                             (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 else {
-                    sprintf_s(ptr, _countof(buff), "%.2X-",
+                    sprintf_s(ptr, _countof(buff_macaddr), "%.2X-",
                             (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 ptr += 3;
             }
             *--ptr = '\0';
 
-            py_mac_address = Py_BuildValue("s", buff);
+            py_mac_address = Py_BuildValue("s", buff_macaddr);
             if (py_mac_address == NULL)
                 goto error;
 
@@ -3060,8 +3061,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 if (family == AF_INET) {
                     struct sockaddr_in *sa_in = (struct sockaddr_in *)
                         pUnicast->Address.lpSockaddr;
-                    intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
-                                       sizeof(buff));
+                    intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff_addr,
+                                       sizeof(buff_addr));
                     if (!intRet)
                         goto error;
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
@@ -3069,8 +3070,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
                     if (dwRetVal == NO_ERROR) {
                         in_netmask.s_addr = converted_netmask;
-                        netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
-                                                  sizeof(netmask_buff));
+                        netmaskIntRet = inet_ntop(
+                            AF_INET, &in_netmask, buff_netmask,
+                            sizeof(buff_netmask));
                         if (!netmaskIntRet)
                             goto error;
                     }
@@ -3080,7 +3082,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET6, &(sa_in6->sin6_addr),
-                                       buff, sizeof(buff));
+                                       buff_addr, sizeof(buff_addr));
                     if (!intRet)
                         goto error;
                 }
@@ -3091,18 +3093,18 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 }
 
 #if PY_MAJOR_VERSION >= 3
-                py_address = PyUnicode_FromString(buff);
+                py_address = PyUnicode_FromString(buff_addr);
 #else
-                py_address = PyString_FromString(buff);
+                py_address = PyString_FromString(buff_addr);
 #endif
                 if (py_address == NULL)
                     goto error;
 
                 if (netmaskIntRet != NULL) {
 #if PY_MAJOR_VERSION >= 3
-                    py_netmask = PyUnicode_FromString(netmask_buff);
+                    py_netmask = PyUnicode_FromString(buff_netmask);
 #else
-                    py_netmask = PyString_FromString(netmask_buff);
+                    py_netmask = PyString_FromString(buff_netmask);
 #endif
                 } else {
                     Py_INCREF(Py_None);
