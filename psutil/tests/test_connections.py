@@ -458,17 +458,25 @@ class TestSystemWideConnections(unittest.TestCase):
         with create_sockets() as socks:
             expected = len(socks)
         pids = []
-        src = textwrap.dedent("""\
-            import time
-            from psutil.tests import create_sockets
-            with create_sockets():
-                open('%s', 'w').close()
-                time.sleep(60)
-            """ % TESTFN)
-        for x in range(10):
+        times = 10
+        for i in range(times):
+            fname = TESTFN + str(i)
+            src = textwrap.dedent("""\
+                import time, os
+                from psutil.tests import create_sockets
+                with create_sockets():
+                    with open('%s', 'w') as f:
+                        f.write(str(os.getpid()))
+                    time.sleep(60)
+                """ % fname)
             sproc = pyrun(src)
-            wait_for_file(TESTFN, empty=True)
             pids.append(sproc.pid)
+            self.addCleanup(safe_rmpath, fname)
+
+        # sync
+        for i in range(times):
+            fname = TESTFN + str(i)
+            wait_for_file(fname)
 
         syscons = [x for x in psutil.net_connections(kind='all') if x.pid
                    in pids]
