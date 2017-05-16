@@ -33,6 +33,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
+from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
@@ -110,7 +111,7 @@ class Base(object):
             self.assertEqual(conn.laddr, laddr)
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
-        if not (SUNOS and sock.family == AF_UNIX):
+        if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
             cons = thisproc.connections(kind='all')
             self.compare_procsys_connections(os.getpid(), cons)
         return conn
@@ -275,7 +276,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             # compare against system-wide connections
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
-            if not SUNOS:
+            if HAS_CONNECTIONS_UNIX:
                 self.compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
@@ -405,7 +406,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                     self.assertEqual(conn.family, AF_INET6)
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # unix
-            if POSIX and not SUNOS:
+            if HAS_CONNECTIONS_UNIX:
                 cons = thisproc.connections(kind='unix')
                 self.assertEqual(len(cons), 3)
                 for conn in cons:
@@ -434,7 +435,8 @@ class TestSystemWideConnections(unittest.TestCase):
         with create_sockets():
             from psutil._common import conn_tmap
             for kind, groups in conn_tmap.items():
-                if SUNOS and kind == 'unix':
+                # XXX: SunOS does not retrieve UNIX sockets.
+                if kind == 'unix' and not HAS_CONNECTIONS_UNIX:
                     continue
                 families, types_ = groups
                 cons = psutil.net_connections(kind)
