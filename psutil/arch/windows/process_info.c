@@ -93,7 +93,8 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
         }
         if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
             free(procArray);
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
         }
     } while (enumReturnSz == procArraySz * sizeof(DWORD));
 
@@ -137,7 +138,8 @@ psutil_pid_is_running(DWORD pid) {
         // Be strict and raise an exception; the caller is supposed
         // to take -1 into account.
         else {
-            return PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromWindowsErr(err);
+            return -1;
         }
     }
 
@@ -154,8 +156,11 @@ psutil_pid_is_running(DWORD pid) {
         // a process to deny access to.
         if (err == ERROR_ACCESS_DENIED)
             return 1;
-        else
-            return PyErr_SetFromWindowsErr(err);
+        else {
+            PyErr_SetFromWindowsErr(err);
+            return -1;
+        }
+
     }
 }
 
