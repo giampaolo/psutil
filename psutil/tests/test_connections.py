@@ -445,7 +445,7 @@ class TestSystemWideConnections(unittest.TestCase):
         with create_sockets() as socks:
             cons = [x for x in psutil.net_connections(kind='all')
                     if x.pid == os.getpid()]
-            self.assertEqual(len(socks), len(cons))
+            self.assertEqual(len(cons), len(socks))
 
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
