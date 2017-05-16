@@ -437,6 +437,13 @@ def reap_children(recursive=False):
             for p in alive:
                 warn("process %r survived kill()" % p)
 
+        # TODO: this is temporary and here only to investigate:
+        # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
+        #     jiq2cgd6stsbtn60
+        for p in children:
+            assert not psutil.pid_exists(p.pid), p
+            assert p.pid not in psutil.pids()
+
 
 # ===================================================================
 # --- OS
