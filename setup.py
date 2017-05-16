@@ -168,7 +168,7 @@ elif FREEBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/freebsd/process_info.c',
+            'psutil/arch/freebsd/specific.c',
             'psutil/arch/freebsd/socks.c',
         ],
         define_macros=macros,

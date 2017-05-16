@@ -63,7 +63,7 @@
 #include "_psutil_posix.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/freebsd/process_info.h"
+    #include "arch/freebsd/specific.h"
     #include "arch/freebsd/socks.h"
 
     #include <net/if_media.h>
