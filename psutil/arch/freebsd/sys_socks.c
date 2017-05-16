@@ -15,19 +15,12 @@
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
-#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <netinet/in.h>   // for xinpcb struct
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/tcp.h>
-#include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>   // for struct xtcpcb
-#include <netinet/tcp_fsm.h>   // for TCP connection states
 #include <arpa/inet.h>         // for inet_ntop()
-#include <net/if_media.h>
-#include <libutil.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
