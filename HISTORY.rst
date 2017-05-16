@@ -59,6 +59,7 @@
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
+- 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
 
 **Porting notes**
 

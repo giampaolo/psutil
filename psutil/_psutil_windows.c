@@ -3064,6 +3064,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
                                        bufflen);
+                    if (!intRet)
+                        goto error;
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
                     netmask_bits = pUnicast->OnLinkPrefixLength;
                     dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
@@ -3071,6 +3073,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         in_netmask.s_addr = converted_netmask;
                         netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
                                                   netmask_bufflen);
+                        if (!netmaskIntRet)
+                            goto error;
                     }
 #endif
                 }
@@ -3079,6 +3083,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET6, &(sa_in6->sin6_addr),
                                        buff, bufflen);
+                    if (!intRet)
+                        goto error;
                 }
                 else {
                     // we should never get here
@@ -3086,10 +3092,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     continue;
                 }
 
-                if (intRet == NULL) {
-                    PyErr_SetFromWindowsErr(GetLastError());
-                    goto error;
-                }
 #if PY_MAJOR_VERSION >= 3
                 py_address = PyUnicode_FromString(buff);
 #else
