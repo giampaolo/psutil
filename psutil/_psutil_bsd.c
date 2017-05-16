@@ -84,8 +84,8 @@
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
 #elif PSUTIL_NETBSD
-    #include "arch/bsd/netbsd.h"
-    #include "arch/bsd/netbsd_socks.h"
+    #include "arch/netbsd/specific.h"
+    #include "arch/netbsd/socks.h"
 
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG

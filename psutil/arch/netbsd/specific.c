@@ -38,9 +38,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
-#include "netbsd_socks.h"
-#include "netbsd.h"
+#include "specific.h"
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 

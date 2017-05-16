@@ -191,8 +191,8 @@ elif NETBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/netbsd.c',
-            'psutil/arch/bsd/netbsd_socks.c',
+            'psutil/arch/netbsd/specific.c',
+            'psutil/arch/netbsd/socks.c',
         ],
         define_macros=macros,
         libraries=["kvm"])
