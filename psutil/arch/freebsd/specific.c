@@ -1000,5 +1000,10 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     return Py_BuildValue("iii", percent, minsleft, power_plugged);
 
 error:
-    return PyErr_SetFromErrno(PyExc_OSError);
+    // see: https://github.com/giampaolo/psutil/issues/1074
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "no battery");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
 }

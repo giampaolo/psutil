@@ -21,6 +21,7 @@ from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -354,6 +355,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- sensors_battery
 
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
             m, s = divmod(secs, 60)
@@ -372,6 +374,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         else:
             self.assertEqual(secs2hours(metrics.secsleft), remaining_time)
 
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors_battery_against_sysctl(self):
         self.assertEqual(psutil.sensors_battery().percent,
                          sysctl("hw.acpi.battery.life"))
@@ -382,6 +385,16 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             self.assertEqual(sysctl("hw.acpi.battery.time"), -1)
         else:
             self.assertEqual(secsleft, sysctl("hw.acpi.battery.time") * 60)
+
+    @unittest.skipIf(HAS_BATTERY, "has battery")
+    def test_sensors_battery_no_battery(self):
+        # If no battery is present one of these calls is supposed
+        # to fail, see:
+        # https://github.com/giampaolo/psutil/issues/1074
+        with self.assertRaises(RuntimeError):
+            sysctl("hw.acpi.battery.life")
+            sysctl("hw.acpi.battery.time")
+            sysctl("hw.acpi.acline")
 
 
 # =====================================================================

@@ -408,7 +408,11 @@ if FREEBSD:
 
     def sensors_battery():
         """Return battery info."""
-        percent, minsleft, power_plugged = cext.sensors_battery()
+        try:
+            percent, minsleft, power_plugged = cext.sensors_battery()
+        except NotImplementedError:
+            # see: https://github.com/giampaolo/psutil/issues/1074
+            return None
         power_plugged = power_plugged == 1
         if power_plugged:
             secsleft = _common.POWER_TIME_UNLIMITED
