@@ -109,6 +109,7 @@ skip_commits:
 # run build only if one of the following files is modified on commit
 only_commits:
   files:
+    *win*
     .ci/appveyor/*
     appveyor.yml
     psutil/__init__.py

@@ -105,7 +105,6 @@ def safe_rmpath(path):
         try:
             return _safe_rmpath(path)
         except WindowsError:
-            #
             traceback.print_exc()
     else:
         return _safe_rmpath(path)
