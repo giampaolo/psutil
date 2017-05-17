@@ -465,7 +465,7 @@ class TestSystemWideConnections(unittest.TestCase):
         pids = []
         times = 10
         for i in range(times):
-            fname = TESTFN + str(i)
+            fname = os.path.realpath(TESTFN) + str(i)
             src = textwrap.dedent("""\
                 import time, os
                 from psutil.tests import create_sockets

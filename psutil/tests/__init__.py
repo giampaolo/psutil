@@ -271,6 +271,8 @@ def get_test_subprocess(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
+    kwds.setdefault("cwd", os.getcwd())
+    kwds.setdefault("env", os.environ)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs.
         kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
