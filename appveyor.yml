@@ -103,9 +103,6 @@ artifacts:
 # on_success:
 #   - might want to upload the content of dist/*.whl to a public wheelhouse
 
-skip_commits:
-  message: skip-ci
-
 # run build only if one of the following files is modified on commit
 only_commits:
   files:
@@ -119,12 +116,14 @@ only_commits:
     psutil/_psutil_windows.*
     psutil/_pswindows.py
     psutil/arch/windows/*
-    psutil/tests/__init__.py
-    psutil/tests/__main__.py
-    psutil/tests/test_memory_leaks.py
-    psutil/tests/test_misc.py
-    psutil/tests/test_process.py
-    psutil/tests/test_system.py
-    psutil/tests/test_windows.py
+    psutil/tests/*.py
     scripts/*
     setup.py
+
+skip_commits:
+  files:
+    psutil/tests/test_bsd.py
+    psutil/tests/test_linux.py
+    psutil/tests/test_osx.py
+    psutil/tests/test_posix.py
+    psutil/tests/test_sunos.py
