@@ -65,6 +65,7 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import u
+from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
@@ -77,7 +78,7 @@ from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath
+from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
@@ -87,6 +88,28 @@ from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 import psutil
 import psutil.tests
+
+
+def safe_rmpath(path):
+    # XXX
+    return _safe_rmpath(path)
+    if APPVEYOR:
+        # TODO - this is quite random and I'm not sure why it happens,
+        # nor I can reproduce it locally:
+        # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
+        #     jiq2cgd6stsbtn60
+        # safe_rmpath() happens after reap_children() so this is weird
+        # Perhaps wait_procs() on Windows is broken? Maybe because
+        # of STILL_ACTIVE?
+        # https://github.com/giampaolo/psutil/blob/
+        #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
+        #     windows/process_info.c#L146
+        try:
+            return _safe_rmpath(path)
+        except WindowsError:
+            traceback.print_exc()
+    else:
+        return _safe_rmpath(path)
 
 
 def subprocess_supports_unicode(name):
