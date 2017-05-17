@@ -91,6 +91,8 @@ import psutil.tests
 
 
 def safe_rmpath(path):
+    # XXX
+    return _safe_rmpath(path)
     if APPVEYOR:
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:

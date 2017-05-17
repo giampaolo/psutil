@@ -359,6 +359,7 @@ def sh(cmd, **kwds):
     kwds.setdefault("universal_newlines", True)
     kwds.setdefault("creationflags", flags)
     p = subprocess.Popen(cmd, **kwds)
+    _subprocesses_started.add(p)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -452,47 +453,43 @@ def reap_children(recursive=False):
 # ===================================================================
 
 
-if not POSIX:
-    def get_kernel_version():
-        return ()
-else:
-    def get_kernel_version():
-        """Return a tuple such as (2, 6, 36)."""
-        s = ""
-        uname = os.uname()[2]
-        for c in uname:
-            if c.isdigit() or c == '.':
-                s += c
-            else:
-                break
-        if not s:
-            raise ValueError("can't parse %r" % uname)
-        minor = 0
-        micro = 0
-        nums = s.split('.')
-        major = int(nums[0])
-        if len(nums) >= 2:
-            minor = int(nums[1])
-        if len(nums) >= 3:
-            micro = int(nums[2])
-        return (major, minor, micro)
-
-
-if not WINDOWS:
-    def get_winver():
-        raise NotImplementedError("not a Windows OS")
-else:
-    def get_winver():
-        wv = sys.getwindowsversion()
-        if hasattr(wv, 'service_pack_major'):  # python >= 2.7
-            sp = wv.service_pack_major or 0
+def get_kernel_version():
+    """Return a tuple such as (2, 6, 36)."""
+    if not POSIX:
+        raise NotImplementedError("not POSIX")
+    s = ""
+    uname = os.uname()[2]
+    for c in uname:
+        if c.isdigit() or c == '.':
+            s += c
         else:
-            r = re.search(r"\s\d$", wv[4])
-            if r:
-                sp = int(r.group(0))
-            else:
-                sp = 0
-        return (wv[0], wv[1], sp)
+            break
+    if not s:
+        raise ValueError("can't parse %r" % uname)
+    minor = 0
+    micro = 0
+    nums = s.split('.')
+    major = int(nums[0])
+    if len(nums) >= 2:
+        minor = int(nums[1])
+    if len(nums) >= 3:
+        micro = int(nums[2])
+    return (major, minor, micro)
+
+
+def get_winver():
+    if not WINDOWS:
+        raise NotImplementedError("not WINDOWS")
+    wv = sys.getwindowsversion()
+    if hasattr(wv, 'service_pack_major'):  # python >= 2.7
+        sp = wv.service_pack_major or 0
+    else:
+        r = re.search(r"\s\d$", wv[4])
+        if r:
+            sp = int(r.group(0))
+        else:
+            sp = 0
+    return (wv[0], wv[1], sp)
 
 
 # ===================================================================
