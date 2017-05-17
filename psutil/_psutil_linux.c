@@ -574,7 +574,6 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
@@ -607,6 +606,9 @@ PsutilMethods[] = {
      "Get or set process resource limits."},
 #endif
 
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
 
     {NULL, NULL, 0, NULL}
 };

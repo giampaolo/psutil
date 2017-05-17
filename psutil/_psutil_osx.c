@@ -1779,7 +1779,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
@@ -1840,6 +1839,10 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
 
     {NULL, NULL, 0, NULL}
 };

@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#include <stdio.h>
 
 /*
  * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
@@ -33,6 +34,30 @@ AccessDenied(void) {
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
+}
+
+
+/*
+ * Return 1 if PSUTIL_TESTING env var is set else 0.
+ */
+int
+psutil_testing(void) {
+    if (getenv("PSUTIL_TESTING") != NULL)
+        return 1;
+    else
+        return 0;
+}
+
+
+/*
+ * Return True if PSUTIL_TESTING env var is set else False.
+ */
+PyObject *
+py_psutil_testing(PyObject *self, PyObject *args) {
+    PyObject *res;
+    res = psutil_testing() ? Py_True : Py_False;
+    Py_INCREF(res);
+    return res;
 }
 
 

@@ -118,65 +118,65 @@ setup-dev-env:
 # Run all tests.
 test:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) $(TSCRIPT)
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) $(TSCRIPT)
 
 # Run process-related API tests.
 test-process:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_process
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_process
 
 # Run system-related API tests.
 test-system:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_system
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_system
 
 # Run miscellaneous tests.
 test-misc:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_misc.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_misc.py
 
 # Test APIs dealing with strings.
 test-unicode:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_unicode.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_unicode.py
 
 # APIs sanity tests.
 test-contracts:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_contracts.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_contracts.py
 
 # Test net_connections() and Process.connections().
 test-connections:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_connections.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_connections.py
 
 # POSIX specific tests.
 test-posix:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_posix.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_posix.py
 
 # Run specific platform tests only.
 test-platform:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Memory leak tests.
 test-memleaks:
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_memory_leaks.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_memory_leaks.py
 
 # Run a specific test by name, e.g.
 # make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
 test-by-name:
 	${MAKE} install
-	@PYTHONWARNINGS=all $(PYTHON) -m unittest -v $(ARGS)
+	@PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v $(ARGS)
 
 # Run test coverage.
 coverage:
 	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	PYTHONWARNINGS=all $(PYTHON) -m coverage run $(TSCRIPT)
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m coverage run $(TSCRIPT)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
