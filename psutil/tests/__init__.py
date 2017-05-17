@@ -386,7 +386,8 @@ def reap_children(recursive=False):
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids(), pid
         try:
-            psutil.Process(pid)
+            p = psutil.Process(pid)
+            assert not p.is_running(), pid
         except psutil.NoSuchProcess:
             pass
         else:
@@ -404,6 +405,7 @@ def reap_children(recursive=False):
     # fds and wiat()ing for them in order to avoid zombies.
     while _subprocesses_started:
         subp = _subprocesses_started.pop()
+        _pids_started.add(subp.pid)
         try:
             subp.terminate()
         except OSError as err:
@@ -424,7 +426,6 @@ def reap_children(recursive=False):
             except OSError as err:
                 if err.errno != errno.ECHILD:
                     raise
-            assert_gone(subp.pid)
 
     # Terminate started pids.
     while _pids_started:
@@ -432,7 +433,7 @@ def reap_children(recursive=False):
         try:
             p = psutil.Process(pid)
         except psutil.NoSuchProcess:
-            pass
+            assert_gone(pid)
         else:
             children.add(p)
 
