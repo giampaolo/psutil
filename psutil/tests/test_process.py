@@ -1383,35 +1383,6 @@ class TestProcess(unittest.TestCase):
             self.assertIn(0, psutil.pids())
             self.assertTrue(psutil.pid_exists(0))
 
-    def test_Popen(self):
-        # XXX this test causes a ResourceWarning on Python 3 because
-        # psutil.__subproc instance doesn't get propertly freed.
-        # Not sure what to do though.
-        cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
-        proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-        try:
-            proc.name()
-            proc.cpu_times()
-            proc.stdin
-            self.assertTrue(dir(proc))
-            self.assertRaises(AttributeError, getattr, proc, 'foo')
-        finally:
-            proc.terminate()
-            proc.stdout.close()
-            proc.stderr.close()
-            proc.wait()
-
-    def test_Popen_ctx_manager(self):
-        with psutil.Popen([PYTHON, "-V"],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          stdin=subprocess.PIPE) as proc:
-            pass
-        assert proc.stdout.closed
-        assert proc.stderr.closed
-        assert proc.stdin.closed
-
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
         self.maxDiff = None
@@ -1520,6 +1491,47 @@ if POSIX and os.getuid() == 0:
         def test_zombie_process(self):
             # causes problems if test test suite is run as root
             pass
+
+
+# ===================================================================
+# --- psutil.Popen tests
+# ===================================================================
+
+
+class TestPopen(unittest.TestCase):
+    """Tests for psutil.Popen class."""
+
+    def tearDown(self):
+        reap_children()
+
+    def test_it(self):
+        # XXX this test causes a ResourceWarning on Python 3 because
+        # psutil.__subproc instance doesn't get propertly freed.
+        # Not sure what to do though.
+        cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
+        proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+        try:
+            proc.name()
+            proc.cpu_times()
+            proc.stdin
+            self.assertTrue(dir(proc))
+            self.assertRaises(AttributeError, getattr, proc, 'foo')
+        finally:
+            proc.terminate()
+            proc.stdout.close()
+            proc.stderr.close()
+            proc.wait()
+
+    def test_ctx_manager(self):
+        with psutil.Popen([PYTHON, "-V"],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          stdin=subprocess.PIPE) as proc:
+            pass
+        assert proc.stdout.closed
+        assert proc.stderr.closed
+        assert proc.stdin.closed
 
 
 if __name__ == '__main__':
