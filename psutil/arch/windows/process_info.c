@@ -147,7 +147,10 @@ psutil_pid_is_running(DWORD pid) {
         CloseHandle(hProcess);
         // XXX - maybe STILL_ACTIVE is not fully reliable as per:
         // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        return (exitCode == STILL_ACTIVE);
+        if (exitCode == STILL_ACTIVE)
+            return 1;
+        else
+            return 0;
     }
     else {
         err = GetLastError();
