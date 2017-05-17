@@ -378,6 +378,20 @@ def reap_children(recursive=False):
     If resursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
+    # This is here to make sure wait_procs() behaves properly and
+    # investigate:
+    # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
+    #     jiq2cgd6stsbtn60
+    def assert_gone(pid):
+        assert not psutil.pid_exists(pid), pid
+        assert pid not in psutil.pids(), pid
+        try:
+            psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            assert 0, "pid %s is not gone" % pid
+
     # Get the children here, before terminating the children sub
     # processes as we don't want to lose the intermediate reference
     # in case of grandchildren.
@@ -410,6 +424,7 @@ def reap_children(recursive=False):
             except OSError as err:
                 if err.errno != errno.ECHILD:
                     raise
+            assert_gone(subp.pid)
 
     # Terminate started pids.
     while _pids_started:
@@ -440,12 +455,8 @@ def reap_children(recursive=False):
             for p in alive:
                 warn("process %r survived kill()" % p)
 
-        # TODO: this is temporary and here only to investigate:
-        # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
-        #     jiq2cgd6stsbtn60
         for p in children:
-            assert not psutil.pid_exists(p.pid), p
-            assert p.pid not in psutil.pids()
+            assert_gone(p.pid)
 
 
 # ===================================================================
