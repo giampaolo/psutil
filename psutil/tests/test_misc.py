@@ -39,6 +39,7 @@ from psutil.tests import DEVNULL
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -1006,7 +1007,7 @@ class TestNetUtils(unittest.TestCase):
                 types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
             self.assertGreaterEqual(fams[socket.AF_INET6], 2)
-            if POSIX:
+            if POSIX and HAS_CONNECTIONS_UNIX:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)

@@ -202,6 +202,11 @@ class TestProcess(unittest.TestCase):
             psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
+    # incorrect value (20); the real deal is getpriority(2) which
+    # returns 0; psutil relies on it, see:
+    # https://github.com/giampaolo/psutil/issues/1082
+    @unittest.skipIf(SUNOS, "not reliable on SUNOS")
     def test_nice(self):
         ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
         psutil_nice = psutil.Process().nice()
@@ -247,12 +252,6 @@ class TestProcess(unittest.TestCase):
                         failures.append(fail)
         if failures:
             self.fail('\n' + '\n'.join(failures))
-
-    @unittest.skipIf(not os.path.islink("/proc/%s/cwd" % os.getpid()),
-                     "/proc fs not available")
-    def test_cwd(self):
-        self.assertEqual(os.readlink("/proc/%s/cwd" % os.getpid()),
-                         psutil.Process().cwd())
 
 
 @unittest.skipIf(not POSIX, "POSIX only")

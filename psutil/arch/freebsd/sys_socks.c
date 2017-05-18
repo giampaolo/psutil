@@ -57,16 +57,16 @@ psutil_populate_xfiles() {
 }
 
 
-int
-psutil_get_pid_from_sock(void *sock) {
+struct xfile *
+psutil_get_file_from_sock(void *sock) {
     struct xfile *xf;
     int n;
 
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
         if (xf->xf_data == sock)
-            return xf->xf_pid;
+            return xf;
     }
-    return -1;
+    return NULL;
 }
 
 
@@ -129,7 +129,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     } while (xig->xig_gen != exig->xig_gen && retry--);
 
     for (;;) {
-        int lport, rport, pid, status, family;
+	struct xfile *xf;
+        int lport, rport, status, family;
 
         xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
         if (xig >= exig)
@@ -174,8 +175,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
 
         char lip[200], rip[200];
 
-        pid = psutil_get_pid_from_sock(so->xso_so);
-        if (pid < 0)
+        xf = psutil_get_file_from_sock(so->xso_so);
+        if (xf == NULL)
             continue;
         lport = ntohs(inp->inp_lport);
         rport = ntohs(inp->inp_fport);
@@ -203,13 +204,13 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
             goto error;
         py_tuple = Py_BuildValue(
             "(iiiNNii)",
-            -1,        // fd
+            xf->xf_fd, // fd
             family,    // family
             type,      // type
             py_laddr,  // laddr
             py_raddr,  // raddr
             status,    // status
-            pid);      // pid
+            xf->xf_pid); // pid
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -238,7 +239,6 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     size_t bufsize;
     void *buf;
     int retry;
-    int pid;
     struct sockaddr_un *sun;
     char path[PATH_MAX];
 
@@ -286,6 +286,8 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     } while (xug->xug_gen != exug->xug_gen && retry--);
 
     for (;;) {
+	struct xfile *xf;
+
         xug = (struct xunpgen *)(void *)((char *)xug + xug->xug_len);
         if (xug >= exug)
             break;
@@ -293,8 +295,8 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        pid = psutil_get_pid_from_sock(xup->xu_socket.xso_so);
-        if (pid < 0)
+        xf = psutil_get_file_from_sock(xup->xu_socket.xso_so);
+        if (xf == NULL)
             continue;
 
         sun = (struct sockaddr_un *)&xup->xu_addr;
@@ -306,13 +308,13 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
             goto error;
 
         py_tuple = Py_BuildValue("(iiiOsii)",
-            -1,                // fd
+            xf->xf_fd,         // fd
             AF_UNIX,           // family
             proto,             // type
             py_lpath,          // lpath
             "",                // rath
             PSUTIL_CONN_NONE,  // status
-            pid);              // pid
+            xf->xf_pid);       // pid
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

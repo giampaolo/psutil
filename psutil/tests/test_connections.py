@@ -24,7 +24,6 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import pconn
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import AF_UNIX
@@ -67,7 +66,7 @@ class Base(object):
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
-    def get_conn_from_socck(self, sock):
+    def get_conn_from_sock(self, sock):
         cons = thisproc.connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
         if NETBSD:
@@ -86,7 +85,7 @@ class Base(object):
         only (the one supposed to be checked).
         """
         if conn is None:
-            conn = self.get_conn_from_socck(sock)
+            conn = self.get_conn_from_sock(sock)
         check_connection_ntuple(conn)
 
         # fd, family, type
@@ -132,10 +131,6 @@ class Base(object):
                 raise
         # Filter for this proc PID and exlucde PIDs from the tuple.
         sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
-        if FREEBSD:
-            # On FreeBSD all fds are set to -1 so exclude them
-            # from comparison.
-            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         sys_cons.sort()
         proc_cons.sort()
         self.assertEqual(proc_cons, sys_cons)
@@ -204,6 +199,9 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     each other.
     """
 
+    # On SunOS, even after we close() it, the server socket stays around
+    # in TIME_WAIT state.
+    @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
         assert not thisproc.connections(kind='tcp4')
@@ -236,7 +234,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                     # a UNIX connection to  /var/run/log.
                     cons = [c for c in cons if c.raddr != '/var/run/log']
                 self.assertEqual(len(cons), 2)
-                if LINUX or FREEBSD:
+                if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
                     self.assertEqual(cons[0].raddr, "")
                     self.assertEqual(cons[1].raddr, "")
@@ -357,7 +355,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     def test_multi_sockets_filtering(self):
         with create_sockets() as socks:
             cons = thisproc.connections(kind='all')
-            self.assertEqual(len(socks), len(cons))
+            self.assertEqual(len(cons), len(socks))
             # tcp
             cons = thisproc.connections(kind='tcp')
             self.assertEqual(len(cons), 2 if supports_ipv6() else 1)

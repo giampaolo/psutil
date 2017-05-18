@@ -900,7 +900,7 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX:
+        if POSIX and HAS_CONNECTIONS_UNIX:
             fname1 = unix_socket_path().__enter__()
             fname2 = unix_socket_path().__enter__()
             s1, s2 = unix_socketpair(fname1)
@@ -962,7 +962,7 @@ def check_connection_ntuple(conn):
 
     # check fd
     if has_fd:
-        assert conn.fd > 0, conn
+        assert conn.fd >= 0, conn
         if hasattr(socket, 'fromfd') and not WINDOWS:
             try:
                 dupsock = socket.fromfd(conn.fd, conn.family, conn.type)

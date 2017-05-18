@@ -72,6 +72,7 @@ from psutil.tests import chdir
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import mock
@@ -247,6 +248,7 @@ class _BaseFSAPIsTests(object):
                     self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):

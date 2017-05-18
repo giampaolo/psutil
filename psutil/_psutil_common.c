@@ -73,6 +73,7 @@ PyUnicode_DecodeFSDefault(char *s) {
     return PyString_FromString(s);
 }
 
+
 PyObject *
 PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
     return PyString_FromStringAndSize(s, size);

@@ -21,10 +21,10 @@
 
 
 static struct sockaddr *
-sa_dup (struct sockaddr *sa1)
+sa_dup (struct sockaddr_storage *sa1)
 {
     struct sockaddr *sa2;
-    size_t sz = sizeof(sa1);
+    size_t sz = sizeof(struct sockaddr_storage);
     sa2 = (struct sockaddr *) calloc(1,sz);
     memcpy(sa2,sa1,sz);
     return(sa2);
@@ -91,11 +91,11 @@ int getifaddrs (struct ifaddrs **ifap)
 
         if (ioctl(sd, SIOCGLIFADDR, ifr, IFREQSZ) < 0)
             goto error;
-        cifa->ifa_addr = sa_dup((struct sockaddr*)&ifr->lifr_addr);
+        cifa->ifa_addr = sa_dup(&ifr->lifr_addr);
 
         if (ioctl(sd, SIOCGLIFNETMASK, ifr, IFREQSZ) < 0)
             goto error;
-        cifa->ifa_netmask = sa_dup((struct sockaddr*)&ifr->lifr_addr);
+        cifa->ifa_netmask = sa_dup(&ifr->lifr_addr);
 
         cifa->ifa_flags = 0;
         cifa->ifa_dstaddr = NULL;
@@ -105,9 +105,9 @@ int getifaddrs (struct ifaddrs **ifap)
 
         if (ioctl(sd, SIOCGLIFDSTADDR, ifr, IFREQSZ) < 0) {
             if (0 == ioctl(sd, SIOCGLIFBRDADDR, ifr, IFREQSZ))
-                cifa->ifa_dstaddr = sa_dup((struct sockaddr*)&ifr->lifr_addr);
+                cifa->ifa_dstaddr = sa_dup(&ifr->lifr_addr);
         }
-        else cifa->ifa_dstaddr = sa_dup((struct sockaddr*)&ifr->lifr_addr);
+        else cifa->ifa_dstaddr = sa_dup(&ifr->lifr_addr);
 
         pifa = cifa;
         ccp += IFREQSZ;
