@@ -66,6 +66,16 @@ TCP_STATUSES = {
     cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
+proc_info_map = dict(
+    ppid=0,
+    rss=1,
+    vms=2,
+    create_time=3,
+    nice=4,
+    num_threads=5,
+    status=6,
+    ttynr=7)
+
 # these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
@@ -374,7 +384,9 @@ class Process(object):
 
     @memoize_when_activated
     def _proc_basic_info(self):
-        return cext.proc_basic_info(self.pid, self._procfs_path)
+        ret = cext.proc_basic_info(self.pid, self._procfs_path)
+        assert len(ret) == len(proc_info_map)
+        return ret
 
     @memoize_when_activated
     def _proc_cred(self):
@@ -404,11 +416,11 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        return self._proc_basic_info()[3]
+        return self._proc_basic_info()[proc_info_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_basic_info()[5]
+        return self._proc_basic_info()[proc_info_map['num_threads']]
 
     @wrap_exceptions
     def nice_get(self):
@@ -441,7 +453,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = self._proc_basic_info()[0]
+        self._ppid = self._proc_basic_info()[proc_info_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
@@ -481,7 +493,7 @@ class Process(object):
         procfs_path = self._procfs_path
         hit_enoent = False
         tty = wrap_exceptions(
-            self._proc_basic_info()[0])
+            self._proc_basic_info()[proc_info_map['ttynr']])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -514,14 +526,15 @@ class Process(object):
     @wrap_exceptions
     def memory_info(self):
         ret = self._proc_basic_info()
-        rss, vms = ret[1] * 1024, ret[2] * 1024
+        rss = ret[proc_info_map['rss']] * 1024
+        vms = ret[proc_info_map['vms']] * 1024
         return pmem(rss, vms)
 
     memory_full_info = memory_info
 
     @wrap_exceptions
     def status(self):
-        code = self._proc_basic_info()[6]
+        code = self._proc_basic_info()[proc_info_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
