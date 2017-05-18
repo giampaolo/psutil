@@ -1078,7 +1078,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp->tcpConnCreationProcess;
 #else
-		processed_pid = 0;
+                processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
@@ -1123,7 +1123,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6->tcp6ConnCreationProcess;
 #else
-		processed_pid = 0;
+        		processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
@@ -1165,7 +1165,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude->udpCreationProcess;
 #else
-		processed_pid = 0;
+                processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
@@ -1205,7 +1205,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude6->udp6CreationProcess;
 #else
-		processed_pid = 0;
+                processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;

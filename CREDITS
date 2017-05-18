@@ -40,6 +40,7 @@ Github usernames of people to CC on github when in need of help.
     - fbenkstein, Frank Benkstein
 - SunOS:
     - wiggin15, Arnon Yaari
+    - alxchk, Oleksii Shevchuk
 
 Contributors
 ============
@@ -478,3 +479,7 @@ I: 1057
 N: Gleb Smirnoff
 W: https://github.com/glebius
 I: 1042, 1079
+
+N: Oleksii Shevchuk
+W: https://github.com/alxchk
+I: 1077
