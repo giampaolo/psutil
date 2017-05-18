@@ -48,8 +48,8 @@
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
-- 1050_: [Windows] Process.memory_maps memory() leaks memory.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
+- 1050_: [Windows] Process.memory_maps memory() leaks memory.
 - 1055_: cpu_count() is no longer cached.
 - 1058_: fixed Python warnings.
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
