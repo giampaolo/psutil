@@ -480,7 +480,7 @@ Network
     process this may be passed to
     `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
     to obtain a usable socket object.
-    On Windows, FreeBSD and SunOS this is always set to ``-1``.
+    On Windows and SunOS this is always set to ``-1``.
   - **family**: the address family, either `AF_INET
     <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
     `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
@@ -565,6 +565,9 @@ Network
      "". This is a limitation of the OS.
 
   .. versionadded:: 2.1.0
+
+  .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
+     ``-1``.
 
 .. function:: net_if_addrs()
 

@@ -22,6 +22,8 @@
 - 1058_: test suite now enables all warnings by default.
 - 1060_: source distribution is dynamically generated so that it only includes
   relevant files.
+- 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
+  (instead of -1).  (patch by Gleb Smirnoff)
 
 **Bug fixes**
 
@@ -60,6 +62,8 @@
   processes.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
 - 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
+- 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
+  (patch by Gleb Smirnoff)
 
 **Porting notes**
 
