@@ -903,7 +903,6 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
 
     # TODO: #595
-    @unittest.skipIf(BSD, "broken on BSD")
     # can't find any process file on Appveyor
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
@@ -942,7 +941,6 @@ class TestProcess(unittest.TestCase):
             assert os.path.isfile(file), file
 
     # TODO: #595
-    @unittest.skipIf(BSD, "broken on BSD")
     # can't find any process file on Appveyor
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files_2(self):
