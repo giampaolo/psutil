@@ -62,6 +62,10 @@
   processes.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
 - 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
+- 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
+  (patch by Oleksii Shevchuk)
+- 1077_: [SunOS] net_connections() does not work on SunOS 5.10. (patch by
+  Oleksii Shevchuk)
 - 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
 

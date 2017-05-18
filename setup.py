@@ -235,7 +235,10 @@ elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
     ext = Extension(
         'psutil._psutil_sunos',
-        sources=sources + ['psutil/_psutil_sunos.c'],
+        sources=sources + [
+            'psutil/_psutil_sunos.c',
+            'psutil/arch/solaris/v10/ifaddrs.c',
+        ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
 
