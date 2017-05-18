@@ -233,6 +233,7 @@ elif LINUX:
 
 elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
+    sources.append('psutil/arch/solaris/v10/ifaddrs.c')
     ext = Extension(
         'psutil._psutil_sunos',
         sources=sources + ['psutil/_psutil_sunos.c'],

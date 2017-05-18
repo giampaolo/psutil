@@ -9,18 +9,23 @@
  * this in Cython which I later on translated in C.
  */
 
+// fix compilation issue on SunOS 5.10, see:
+// https://github.com/giampaolo/psutil/issues/421
+// https://github.com/giampaolo/psutil/issues/1077
+// http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
+//
+// Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
+//
+
+#define NEW_MIB_COMPLIANT 1
+#define _STRUCTURED_PROC 1
 
 #include <Python.h>
 
-// fix for "Cannot use procfs in the large file compilation environment"
-// error, see:
-// http://sourceware.org/ml/gdb-patches/2010-11/msg00336.html
-#undef _FILE_OFFSET_BITS
-#define _STRUCTURED_PROC 1
-
-// fix compilation issue on SunOS 5.10, see:
-// https://github.com/giampaolo/psutil/issues/421
-#define NEW_MIB_COMPLIANT
+#if !defined(_LP64) && _FILE_OFFSET_BITS == 64
+#  undef _FILE_OFFSET_BITS
+#  undef _LARGEFILE64_SOURCE
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,9 +51,6 @@
 #include "_psutil_posix.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-#ifndef EXPER_IP_AND_ALL_IRES
-#define EXPER_IP_AND_ALL_IRES (1024+4)
-#endif
 
 
 /*
@@ -960,7 +962,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #endif
     char buf[512];
     int i, flags, getcode, num_ent, state;
-    char lip[200], rip[200];
+    char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
     int lport, rport;
     int processed_pid;
     int databuf_init = 0;
@@ -986,9 +988,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    /*
-    XXX - These 2 are used in ifconfig.c but they seem unnecessary
-    ret = ioctl(sd, I_PUSH, "tcp");
+    int ret = ioctl(sd, I_PUSH, "tcp");
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -998,8 +998,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-    */
-
+    //
     // OK, this mess is basically copied and pasted from nxsensor project
     // which copied and pasted it from netstat source code, mibget()
     // function.  Also see:
@@ -1009,9 +1008,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     tor->OPT_length = sizeof (struct opthdr);
     tor->MGMT_flags = T_CURRENT;
     mibhdr = (struct opthdr *)&tor[1];
-    mibhdr->level = EXPER_IP_AND_ALL_IRES;
+    mibhdr->level = MIB2_IP;
     mibhdr->name  = 0;
+
+#ifdef NEW_MIB_COMPLIANT
+    mibhdr->len   = 1;
+#else
     mibhdr->len   = 0;
+#endif
 
     ctlbuf.buf = buf;
     ctlbuf.len = tor->OPT_offset + tor->OPT_length;
@@ -1024,7 +1028,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     mibhdr = (struct opthdr *)&toa[1];
     ctlbuf.maxlen = sizeof (buf);
-
     for (;;) {
         flags = 0;
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
@@ -1072,7 +1075,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             tp = (mib2_tcpConnEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_tcpConnEntry_t);
             for (i = 0; i < num_ent; i++, tp++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp->tcpConnCreationProcess;
+#else
+		processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -1113,7 +1120,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
 
             for (i = 0; i < num_ent; i++, tp6++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6->tcp6ConnCreationProcess;
+#else
+		processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -1149,8 +1160,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
             ude = (mib2_udpEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
+	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr->len);
             for (i = 0; i < num_ent; i++, ude++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude->udpCreationProcess;
+#else
+		processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // XXX Very ugly hack! It seems we get here only the first
@@ -1186,7 +1202,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             ude6 = (mib2_udp6Entry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++, ude6++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude6->udp6CreationProcess;
+#else
+		processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 inet_ntop(AF_INET6, &ude6->udp6LocalAddress, lip, sizeof(lip));
