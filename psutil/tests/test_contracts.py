@@ -30,6 +30,7 @@ from psutil._compat import long
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_kernel_version
+from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
@@ -201,6 +202,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(disk.opts, str)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
     @skip_on_access_denied(only_if=OSX)
     def test_net_connections(self):
         with unix_socket_path() as name:
