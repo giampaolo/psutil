@@ -930,7 +930,7 @@ def check_connection_ntuple(conn):
 
     # check fd
     if has_fd:
-        assert conn.fd > 0, conn
+        assert conn.fd >= 0, conn
         if hasattr(socket, 'fromfd') and not WINDOWS:
             try:
                 dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
