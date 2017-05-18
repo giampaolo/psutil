@@ -868,7 +868,7 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX:
+        if POSIX and HAS_CONNECTIONS_UNIX:
             fname1 = unix_socket_path().__enter__()
             fname2 = unix_socket_path().__enter__()
             s1, s2 = unix_socketpair(fname1)

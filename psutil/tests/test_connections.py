@@ -66,7 +66,7 @@ class Base(object):
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
-    def get_conn_from_socck(self, sock):
+    def get_conn_from_sock(self, sock):
         cons = thisproc.connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
         if NETBSD:
@@ -85,7 +85,7 @@ class Base(object):
         only (the one supposed to be checked).
         """
         if conn is None:
-            conn = self.get_conn_from_socck(sock)
+            conn = self.get_conn_from_sock(sock)
         check_connection_ntuple(conn)
 
         # fd, family, type
@@ -231,7 +231,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                     # a UNIX connection to  /var/run/log.
                     cons = [c for c in cons if c.raddr != '/var/run/log']
                 self.assertEqual(len(cons), 2)
-                if LINUX or FREEBSD:
+                if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
                     self.assertEqual(cons[0].raddr, "")
                     self.assertEqual(cons[1].raddr, "")
