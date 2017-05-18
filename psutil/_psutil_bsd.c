@@ -908,7 +908,6 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS,
@@ -983,6 +982,11 @@ PsutilMethods[] = {
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
 #endif
+
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
+
     {NULL, NULL, 0, NULL}
 };
 

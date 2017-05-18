@@ -21,8 +21,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-from psutil.tests import unittest
-from psutil.tests import VERBOSITY
+from psutil.tests import run_suite
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -71,24 +70,6 @@ def install_test_deps(deps=None):
         code = os.system('%s -m pip install %s --upgrade %s' % (
             sys.executable, opts, " ".join(deps)))
         return code
-
-
-def get_suite():
-    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                   if x.endswith('.py') and x.startswith('test_') and not
-                   x.startswith('test_memory_leaks')]
-    suite = unittest.TestSuite()
-    for tm in testmodules:
-        # ...so that the full test paths are printed on screen
-        tm = "psutil.tests.%s" % tm
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
-    return suite
-
-
-def run_suite():
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
 
 
 def main():

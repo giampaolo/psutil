@@ -3479,7 +3479,6 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
@@ -3601,6 +3600,10 @@ PsutilMethods[] = {
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
+
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
 
     {NULL, NULL, 0, NULL}
 };

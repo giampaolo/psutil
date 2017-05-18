@@ -203,6 +203,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    psutil_testing();
+
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
@@ -574,7 +576,6 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
@@ -607,6 +608,9 @@ PsutilMethods[] = {
      "Get or set process resource limits."},
 #endif
 
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
 
     {NULL, NULL, 0, NULL}
 };

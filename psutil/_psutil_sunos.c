@@ -1470,7 +1470,6 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- process-related functions
     {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
@@ -1512,6 +1511,10 @@ PsutilMethods[] = {
      "Return NIC stats (isup, duplex, speed, mtu)"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
 
     {NULL, NULL, 0, NULL}
 };

@@ -77,7 +77,8 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_before_failing', 'run_test_module_by_name',
+    'retry_before_failing', 'run_test_module_by_name', 'get_suite',
+    'run_suite',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -141,6 +142,7 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 # --- support
 
@@ -383,6 +385,9 @@ def reap_children(recursive=False):
     # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
     #     jiq2cgd6stsbtn60
     def assert_gone(pid):
+        # XXX
+        if WINDOWS:
+            return
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids(), pid
         try:
@@ -699,9 +704,34 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
+def _setup_tests():
+    assert 'PSUTIL_TESTING' in os.environ
+    assert psutil._psplatform.cext.py_psutil_testing()
+
+
+def get_suite():
+    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
+                   if x.endswith('.py') and x.startswith('test_') and not
+                   x.startswith('test_memory_leaks')]
+    suite = unittest.TestSuite()
+    for tm in testmodules:
+        # ...so that the full test paths are printed on screen
+        tm = "psutil.tests.%s" % tm
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
+    return suite
+
+
+def run_suite():
+    _setup_tests()
+    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
+    success = result.wasSuccessful()
+    sys.exit(0 if success else 1)
+
+
 def run_test_module_by_name(name):
     # testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
     #                if x.endswith('.py') and x.startswith('test_')]
+    _setup_tests()
     name = os.path.splitext(os.path.basename(name))[0]
     suite = unittest.TestSuite()
     suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))

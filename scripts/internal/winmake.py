@@ -77,7 +77,10 @@ def safe_print(text, file=sys.stdout, flush=False):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    subprocess.check_call(cmd, shell=True, env=os.environ, cwd=os.getcwd())
+    p = subprocess.Popen(cmd, shell=True, env=os.environ, cwd=os.getcwd())
+    p.communicate()
+    if p.returncode != 0:
+        sys.exit(p.returncode)
 
 
 def cmd(fun):
@@ -327,6 +330,7 @@ def flake8():
 def test():
     """Run tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa %s" % (PYTHON, TSCRIPT))
 
 
@@ -335,6 +339,7 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m coverage run %s" % (PYTHON, TSCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
@@ -345,6 +350,7 @@ def coverage():
 def test_process():
     """Run process tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_process" % PYTHON)
 
 
@@ -352,6 +358,7 @@ def test_process():
 def test_system():
     """Run system tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_system" % PYTHON)
 
 
@@ -359,6 +366,7 @@ def test_system():
 def test_platform():
     """Run windows only tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_windows" % PYTHON)
 
 
@@ -366,6 +374,7 @@ def test_platform():
 def test_misc():
     """Run misc tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_misc" % PYTHON)
 
 
@@ -373,6 +382,7 @@ def test_misc():
 def test_unicode():
     """Run unicode tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_unicode" % PYTHON)
 
 
@@ -380,6 +390,7 @@ def test_unicode():
 def test_connections():
     """Run connections tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_connections" % PYTHON)
 
 
@@ -387,6 +398,7 @@ def test_connections():
 def test_contracts():
     """Run contracts tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v psutil.tests.test_contracts" % PYTHON)
 
 
@@ -399,6 +411,7 @@ def test_by_name():
     except IndexError:
         sys.exit('second arg missing')
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa -m unittest -v %s" % (PYTHON, name))
 
 
@@ -411,6 +424,7 @@ def test_script():
     except IndexError:
         sys.exit('second arg missing')
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa %s" % (PYTHON, name))
 
 
@@ -418,6 +432,7 @@ def test_script():
 def test_memleaks():
     """Run memory leaks tests"""
     install()
+    os.environ['PSUTIL_TESTING'] = '1'
     sh("%s -Wa psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 

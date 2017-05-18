@@ -1391,6 +1391,8 @@ class TestProcess(unittest.TestCase):
         d2 = os.environ.copy()
 
         removes = []
+        if 'PSUTIL_TESTING' in os.environ:
+            removes.append('PSUTIL_TESTING')
         if OSX:
             removes.extend([
                 "__CF_USER_TEXT_ENCODING",
