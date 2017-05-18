@@ -707,8 +707,6 @@ def _setup_tests():
         assert c_testing()
     else:
         assert not c_testing()
-        os.environ['PSUTIL_TESTING'] = '1'
-        assert c_testing()
 
 
 def get_suite():

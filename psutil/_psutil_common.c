@@ -37,15 +37,21 @@ AccessDenied(void) {
 }
 
 
+static int _psutil_testing = -1;
+
+
 /*
  * Return 1 if PSUTIL_TESTING env var is set else 0.
  */
 int
 psutil_testing(void) {
-    if (getenv("PSUTIL_TESTING") != NULL)
-        return 1;
-    else
-        return 0;
+    if (_psutil_testing == -1) {
+        if (getenv("PSUTIL_TESTING") != NULL)
+            _psutil_testing = 1;
+        else
+            _psutil_testing = 0;
+    }
+    return _psutil_testing;
 }
 
 
