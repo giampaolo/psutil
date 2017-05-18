@@ -132,10 +132,6 @@ class Base(object):
                 raise
         # Filter for this proc PID and exlucde PIDs from the tuple.
         sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
-        if FREEBSD:
-            # On FreeBSD all fds are set to -1 so exclude them
-            # from comparison.
-            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         sys_cons.sort()
         proc_cons.sort()
         self.assertEqual(proc_cons, sys_cons)
