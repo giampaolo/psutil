@@ -248,12 +248,6 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    @unittest.skipIf(not os.path.islink("/proc/%s/cwd" % os.getpid()),
-                     "/proc fs not available")
-    def test_cwd(self):
-        self.assertEqual(os.readlink("/proc/%s/cwd" % os.getpid()),
-                         psutil.Process().cwd())
-
 
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestSystemAPIs(unittest.TestCase):
