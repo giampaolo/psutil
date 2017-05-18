@@ -199,6 +199,9 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     each other.
     """
 
+    # On SunOS, even after we close() it, the server socket stays around
+    # in TIME_WAIT state.
+    @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
         assert not thisproc.connections(kind='tcp4')
@@ -352,7 +355,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
     def test_multi_sockets_filtering(self):
         with create_sockets() as socks:
             cons = thisproc.connections(kind='all')
-            self.assertEqual(len(socks), len(cons))
+            self.assertEqual(len(cons), len(socks))
             # tcp
             cons = thisproc.connections(kind='tcp')
             self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
