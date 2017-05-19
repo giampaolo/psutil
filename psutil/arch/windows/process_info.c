@@ -18,6 +18,148 @@
 #include "../../_psutil_common.h"
 
 
+// Helper structures to access the memory correctly.  Some of these might also
+// be defined in the winternl.h header file but unfortunately not in a usable
+// way.
+
+// see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
+#ifndef NT_SUCCESS
+#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
+#endif
+
+// http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
+typedef struct {
+    BYTE Reserved1[16];
+    PVOID Reserved2[5];
+    UNICODE_STRING CurrentDirectoryPath;
+    PVOID CurrentDirectoryHandle;
+    UNICODE_STRING DllPath;
+    UNICODE_STRING ImagePathName;
+    UNICODE_STRING CommandLine;
+    LPCWSTR env;
+} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
+
+// https://msdn.microsoft.com/en-us/library/aa813706(v=vs.85).aspx
+#ifdef _WIN64
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[21];
+    PVOID LoaderData;
+    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    /* More fields ...  */
+} PEB_;
+#else
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[1];
+    PVOID Reserved3[2];
+    PVOID Ldr;
+    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    /* More fields ...  */
+} PEB_;
+#endif
+
+#ifdef _WIN64
+/* When we are a 64 bit process accessing a 32 bit (WoW64) process we need to
+   use the 32 bit structure layout. */
+typedef struct {
+    USHORT Length;
+    USHORT MaxLength;
+    DWORD Buffer;
+} UNICODE_STRING32;
+
+typedef struct {
+    BYTE Reserved1[16];
+    DWORD Reserved2[5];
+    UNICODE_STRING32 CurrentDirectoryPath;
+    DWORD CurrentDirectoryHandle;
+    UNICODE_STRING32 DllPath;
+    UNICODE_STRING32 ImagePathName;
+    UNICODE_STRING32 CommandLine;
+    DWORD env;
+} RTL_USER_PROCESS_PARAMETERS32;
+
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[1];
+    DWORD Reserved3[2];
+    DWORD Ldr;
+    DWORD ProcessParameters;
+    /* More fields ...  */
+} PEB32;
+#else
+/* When we are a 32 bit (WoW64) process accessing a 64 bit process we need to
+   use the 64 bit structure layout and a special function to read its memory.
+   */
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+        IN HANDLE ProcessHandle,
+        IN PVOID64 BaseAddress,
+        OUT PVOID Buffer,
+        IN ULONG64 Size,
+        OUT PULONG64 NumberOfBytesRead);
+
+typedef enum {
+    MemoryInformationBasic
+} MEMORY_INFORMATION_CLASS;
+
+typedef NTSTATUS (NTAPI *_NtWow64QueryVirtualMemory64)(
+    IN HANDLE ProcessHandle,
+    IN PVOID64 BaseAddress,
+    IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
+    OUT PMEMORY_BASIC_INFORMATION64 MemoryInformation,
+    IN ULONG64 Size,
+    OUT PULONG64 ReturnLength OPTIONAL);
+
+typedef struct {
+    PVOID Reserved1[2];
+    PVOID64 PebBaseAddress;
+    PVOID Reserved2[4];
+    PVOID UniqueProcessId[2];
+    PVOID Reserved3[2];
+} PROCESS_BASIC_INFORMATION64;
+
+typedef struct {
+    USHORT Length;
+    USHORT MaxLength;
+    PVOID64 Buffer;
+} UNICODE_STRING64;
+
+typedef struct {
+    BYTE Reserved1[16];
+    PVOID64 Reserved2[5];
+    UNICODE_STRING64 CurrentDirectoryPath;
+    PVOID64 CurrentDirectoryHandle;
+    UNICODE_STRING64 DllPath;
+    UNICODE_STRING64 ImagePathName;
+    UNICODE_STRING64 CommandLine;
+    PVOID64 env;
+} RTL_USER_PROCESS_PARAMETERS64;
+
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[21];
+    PVOID64 LoaderData;
+    PVOID64 ProcessParameters;
+    /* More fields ...  */
+} PEB64;
+#endif
+
+
+#define PSUTIL_FIRST_PROCESS(Processes) ( \
+    (PSYSTEM_PROCESS_INFORMATION)(Processes))
+#define PSUTIL_NEXT_PROCESS(Process) ( \
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
+
+const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
+const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
+
+
 /*
  * A wrapper around OpenProcess setting NSP exception if process
  * no longer exists.
@@ -226,137 +368,6 @@ psutil_pid_is_running(DWORD pid) {
     return ret;
 }
 
-
-
-// Helper structures to access the memory correctly.  Some of these might also
-// be defined in the winternl.h header file but unfortunately not in a usable
-// way.
-
-// see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
-#ifndef NT_SUCCESS
-#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
-#endif
-
-// http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
-typedef struct {
-    BYTE Reserved1[16];
-    PVOID Reserved2[5];
-    UNICODE_STRING CurrentDirectoryPath;
-    PVOID CurrentDirectoryHandle;
-    UNICODE_STRING DllPath;
-    UNICODE_STRING ImagePathName;
-    UNICODE_STRING CommandLine;
-    LPCWSTR env;
-} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
-
-// https://msdn.microsoft.com/en-us/library/aa813706(v=vs.85).aspx
-#ifdef _WIN64
-typedef struct {
-    BYTE Reserved1[2];
-    BYTE BeingDebugged;
-    BYTE Reserved2[21];
-    PVOID LoaderData;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
-    /* More fields ...  */
-} PEB_;
-#else
-typedef struct {
-    BYTE Reserved1[2];
-    BYTE BeingDebugged;
-    BYTE Reserved2[1];
-    PVOID Reserved3[2];
-    PVOID Ldr;
-    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
-    /* More fields ...  */
-} PEB_;
-#endif
-
-#ifdef _WIN64
-/* When we are a 64 bit process accessing a 32 bit (WoW64) process we need to
-   use the 32 bit structure layout. */
-typedef struct {
-    USHORT Length;
-    USHORT MaxLength;
-    DWORD Buffer;
-} UNICODE_STRING32;
-
-typedef struct {
-    BYTE Reserved1[16];
-    DWORD Reserved2[5];
-    UNICODE_STRING32 CurrentDirectoryPath;
-    DWORD CurrentDirectoryHandle;
-    UNICODE_STRING32 DllPath;
-    UNICODE_STRING32 ImagePathName;
-    UNICODE_STRING32 CommandLine;
-    DWORD env;
-} RTL_USER_PROCESS_PARAMETERS32;
-
-typedef struct {
-    BYTE Reserved1[2];
-    BYTE BeingDebugged;
-    BYTE Reserved2[1];
-    DWORD Reserved3[2];
-    DWORD Ldr;
-    DWORD ProcessParameters;
-    /* More fields ...  */
-} PEB32;
-#else
-/* When we are a 32 bit (WoW64) process accessing a 64 bit process we need to
-   use the 64 bit structure layout and a special function to read its memory.
-   */
-typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
-        IN HANDLE ProcessHandle,
-        IN PVOID64 BaseAddress,
-        OUT PVOID Buffer,
-        IN ULONG64 Size,
-        OUT PULONG64 NumberOfBytesRead);
-
-typedef enum {
-    MemoryInformationBasic
-} MEMORY_INFORMATION_CLASS;
-
-typedef NTSTATUS (NTAPI *_NtWow64QueryVirtualMemory64)(
-    IN HANDLE ProcessHandle,
-    IN PVOID64 BaseAddress,
-    IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
-    OUT PMEMORY_BASIC_INFORMATION64 MemoryInformation,
-    IN ULONG64 Size,
-    OUT PULONG64 ReturnLength OPTIONAL);
-
-typedef struct {
-    PVOID Reserved1[2];
-    PVOID64 PebBaseAddress;
-    PVOID Reserved2[4];
-    PVOID UniqueProcessId[2];
-    PVOID Reserved3[2];
-} PROCESS_BASIC_INFORMATION64;
-
-typedef struct {
-    USHORT Length;
-    USHORT MaxLength;
-    PVOID64 Buffer;
-} UNICODE_STRING64;
-
-typedef struct {
-    BYTE Reserved1[16];
-    PVOID64 Reserved2[5];
-    UNICODE_STRING64 CurrentDirectoryPath;
-    PVOID64 CurrentDirectoryHandle;
-    UNICODE_STRING64 DllPath;
-    UNICODE_STRING64 ImagePathName;
-    UNICODE_STRING64 CommandLine;
-    PVOID64 env;
-} RTL_USER_PROCESS_PARAMETERS64;
-
-typedef struct {
-    BYTE Reserved1[2];
-    BYTE BeingDebugged;
-    BYTE Reserved2[21];
-    PVOID64 LoaderData;
-    PVOID64 ProcessParameters;
-    /* More fields ...  */
-} PEB64;
-#endif
 
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */
@@ -806,15 +817,6 @@ out:
     return ret;
 }
 
-#define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PH_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : \
-   NULL)
-
-const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
-const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 /*
  * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
@@ -876,14 +878,14 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     if (bufferSize <= 0x20000)
         initialBufferSize = bufferSize;
 
-    process = PH_FIRST_PROCESS(buffer);
+    process = PSUTIL_FIRST_PROCESS(buffer);
     do {
         if (process->UniqueProcessId == (HANDLE)pid) {
             *retProcess = process;
             *retBuffer = buffer;
             return 1;
         }
-    } while ( (process = PH_NEXT_PROCESS(process)) );
+    } while ( (process = PSUTIL_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
     goto error;
