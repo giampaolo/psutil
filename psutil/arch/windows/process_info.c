@@ -105,6 +105,48 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
+
+int
+_psutil_pid_in_pids(DWORD pid) {
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    if (proclist == NULL)
+        return -1;
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (proclist[i] == pid)
+            return 1;
+    }
+    return 0;
+}
+
+
+int
+psutil_assert_pid_exists(DWORD pid) {
+    if (psutil_testing()) {
+        if (_psutil_pid_in_pids(pid) == 0) {
+            PyErr_SetString(PyExc_AssertionError, "pid should exist");
+            return 0;
+        }
+        return 1;
+    }
+}
+
+
+int
+psutil_assert_pid_not_exists(DWORD pid) {
+    if (psutil_testing()) {
+        if (_psutil_pid_in_pids(pid) == 1) {
+            PyErr_SetString(PyExc_AssertionError, "pid should not exist");
+            return 0;
+        }
+        return 1;
+    }
+}
+
+
 /*
 /* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
 /* Returns:
@@ -113,7 +155,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
  * -1: error
  */
 int
-psutil_pid_is_running(DWORD pid) {
+_psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
     DWORD err;
@@ -163,9 +205,27 @@ psutil_pid_is_running(DWORD pid) {
             PyErr_SetFromWindowsErr(err);
             return -1;
         }
-
     }
 }
+
+
+int
+psutil_pid_is_running(DWORD pid) {
+    int ret;
+    ret = _psutil_pid_is_running(pid);
+    if (ret == -1)
+        return -1;
+    else if (ret == 1) {
+        if (! psutil_assert_pid_exists(pid))
+            return -1;
+    }
+    else if (ret == 0) {
+        if (! psutil_assert_pid_not_exists(pid))
+            return -1;
+    }
+    return ret;
+}
+
 
 
 // Helper structures to access the memory correctly.  Some of these might also
