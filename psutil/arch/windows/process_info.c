@@ -179,8 +179,14 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER)
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            if (! psutil_assert_pid_not_exists(
+                    pid, "psutil_handle_from_pid_waccess() -> OpenProcess "
+                         "incorrectly assumed process is gone")) {
+                return NULL;
+            }
             NoSuchProcess();
+        }
         else
             PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -272,8 +278,8 @@ psutil_assert_pid_exists(DWORD pid, char *err) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
-        return 1;
     }
+    return 1;
 }
 
 
@@ -284,8 +290,8 @@ psutil_assert_pid_not_exists(DWORD pid, char *err) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
-        return 1;
     }
+    return 1;
 }
 
 
