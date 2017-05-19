@@ -50,7 +50,9 @@
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
-- 1055_: cpu_count() is no longer cached.
+- 1055_: cpu_count() is no longer cached; this is useful on systems such as
+  Linux where CPUs can be disabled at runtime. This also reflects on
+  Process.cpu_percent() which no longer uses the cache.
 - 1058_: fixed Python warnings.
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.

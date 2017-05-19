@@ -209,7 +209,6 @@ AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
 POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
-_NUM_CPUS = None
 _timer = getattr(time, 'monotonic', time.time)
 
 
@@ -1043,9 +1042,7 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             raise ValueError("interval is not positive (got %r)" % interval)
-        # TODO: rarely cpu_count() may return None, meaning this will
-        # break. It's probably wise to fall back to 1.
-        num_cpus = _NUM_CPUS or cpu_count()
+        num_cpus = cpu_count() or 1
 
         def timer():
             return _timer() * num_cpus
@@ -1645,10 +1642,8 @@ def cpu_count(logical=True):
 
     >>> psutil.cpu_count.cache_clear()
     """
-    global _NUM_CPUS
     if logical:
         ret = _psplatform.cpu_count_logical()
-        _NUM_CPUS = ret
     else:
         ret = _psplatform.cpu_count_physical()
     return ret if ret >= 1 else None

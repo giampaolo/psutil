@@ -246,6 +246,12 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.cpu_percent(interval=-1)
 
+    def test_cpu_percent_numcpus_none(self):
+        # See: https://github.com/giampaolo/psutil/issues/1087
+        with mock.patch('psutil.cpu_count', return_value=None) as m:
+            psutil.Process().cpu_percent()
+            assert m.called
+
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
         assert (times.user > 0.0) or (times.system > 0.0), times
