@@ -266,10 +266,10 @@ _psutil_pid_in_pids(DWORD pid) {
 
 
 int
-psutil_assert_pid_exists(DWORD pid) {
+psutil_assert_pid_exists(DWORD pid, char *err) {
     if (psutil_testing()) {
         if (_psutil_pid_in_pids(pid) == 0) {
-            PyErr_SetString(PyExc_AssertionError, "pid should exist");
+            PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
         return 1;
@@ -278,10 +278,10 @@ psutil_assert_pid_exists(DWORD pid) {
 
 
 int
-psutil_assert_pid_not_exists(DWORD pid) {
+psutil_assert_pid_not_exists(DWORD pid, char *err) {
     if (psutil_testing()) {
         if (_psutil_pid_in_pids(pid) == 1) {
-            PyErr_SetString(PyExc_AssertionError, "pid should not exist");
+            PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
         return 1;
@@ -358,12 +358,16 @@ psutil_pid_is_running(DWORD pid) {
     if (ret == -1)
         return -1;
     else if (ret == 1) {
-        if (! psutil_assert_pid_exists(pid))
+        if (! psutil_assert_pid_exists(
+                pid, "psutil_pid_is_running() incorrectly returned 1")) {
             return -1;
+        }
     }
     else if (ret == 0) {
-        if (! psutil_assert_pid_not_exists(pid))
+        if (! psutil_assert_pid_not_exists(
+                pid, "psutil_pid_is_running() incorrectly returned 0")) {
             return -1;
+        }
     }
     return ret;
 }
