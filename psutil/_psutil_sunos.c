@@ -114,6 +114,238 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         );
 }
 
+static int
+open_address_space(pid_t pid, const char *procfs_path) {
+    int fd;
+    char proc_path[PATH_MAX];
+
+    sprintf(proc_path, "%s/%i/as", procfs_path, pid);
+    fd = open(proc_path, O_RDONLY);
+    if (fd < 0)
+        PyErr_SetFromErrno(PyExc_OSError);
+
+    return fd;
+}
+
+static int
+read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
+    size_t to_read = buf_size;
+    size_t stored  = 0;
+
+    while (to_read) {
+        int r = pread(fd, buf + stored, to_read, offset + stored);
+        if (r < 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return -errno;
+        }
+
+        to_read -= r;
+        stored += r;
+    }
+
+    return stored;
+}
+
+#define STRING_SEARCH_BUF_SIZE 512
+
+static char *
+read_cstring_offt(int fd, off_t offset) {
+    int r;
+    int i;
+    off_t end;
+    size_t len;
+    char buf[STRING_SEARCH_BUF_SIZE];
+    char *result = NULL;
+
+    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    // Search end of string
+    end = offset;
+    for (;; end += STRING_SEARCH_BUF_SIZE) {
+        r = read(fd, buf, sizeof(buf));
+
+        if (r == -1) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
+        else if (r == 0) {
+            break;
+        }
+        else {
+            for (i=0; i<r; i++) {
+                if (! buf[i]) {
+                    end += i;
+                    goto lbEnd;
+                }
+            }
+        }
+    }
+
+  lbEnd:
+    len = end - offset;
+
+    result = malloc(len+1);
+    if (! result)
+        return (char *) PyErr_NoMemory();
+
+    if (len) {
+        if (read_offt(fd, offset, result, len) < 0) {
+            free(result);
+            return NULL;
+        }
+    }
+
+    result[len] = '\00';
+    return result;
+}
+
+static char **
+read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
+    char **result = NULL;
+    char *pblock;
+    size_t pblock_size;
+    int i;
+
+    assert(ptr_size == 4 || ptr_size == 8);
+
+    if (!count)
+        goto lbExit;
+
+    pblock_size = ptr_size * count;
+
+    pblock = malloc(pblock_size);
+    if (! pblock)
+        return (char **) PyErr_NoMemory();
+
+    if (read_offt(fd, offset, pblock, pblock_size) != pblock_size) {
+        goto lbPBlockError;
+    }
+
+    result = (char **) calloc(count, sizeof(char *));
+    if (! result) {
+        PyErr_NoMemory();
+        goto lbPBlockError;
+    }
+
+    for (i=0; i<count; i++)
+        result[i] = read_cstring_offt(
+            fd, (ptr_size == 4?
+                ((uint32_t *) pblock)[i]:
+                ((uint64_t *) pblock)[i]));
+
+  lbPBlockError:
+    free(pblock);
+
+  lbExit:
+    return result;
+}
+
+static inline int
+is_ptr_dereference_possible(psinfo_t info) {
+#if !defined(_LP64)
+    return info.pr_dmodel == PR_MODEL_ILP32;
+#else
+    return 1;
+#endif
+}
+
+static inline int
+ptr_size_by_psinfo(psinfo_t info) {
+    return info.pr_dmodel == PR_MODEL_ILP32? 4 : 8;
+}
+
+static char **
+read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
+    int as;
+    char **result;
+
+    if (! is_ptr_dereference_possible(info)) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "Dereferencing procfs pointers of "
+            "64bit process is not possible");
+
+        return NULL;
+    }
+
+    as = open_address_space(info.pr_pid, procfs_path);
+    if (as < 0)
+        return NULL;
+
+    result = read_cstrings_block(
+        as, info.pr_argv, ptr_size_by_psinfo(info), info.pr_argc
+    );
+
+    if (count)
+        *count = info.pr_argc;
+
+    close(as);
+
+    return result;
+}
+
+static char*
+cstrings_array_to_string(const char ** array, size_t count, const char *dm) {
+    int i;
+    size_t total_length = 0;
+    size_t dm_length;
+    char *result = NULL;
+
+    if (! array)
+        return NULL;
+
+    if (! dm)
+        dm = " ";
+
+    dm_length = strlen(dm);
+
+    for (i=0; i<count; i++) {
+        if (! array[i])
+            continue;
+
+        total_length += strlen(array[i]);
+        total_length += dm_length;
+    }
+
+    if (! total_length) {
+        return strdup("");
+    }
+
+    result = malloc(total_length);
+    if (! result)
+        return PyErr_NoMemory();
+
+    result[0] = '\0';
+
+    for (i=0; i<count; i++) {
+        if (! array[i])
+            continue;
+
+        strncat(result, array[i], total_length);
+        strncat(result, dm, total_length);
+    }
+
+    result[total_length - dm_length] = '\0';
+
+    return result;
+}
+
+static void
+free_cstrings_array(char **array, size_t count) {
+    int i;
+
+    if (!array)
+        return;
+
+    for (i=0; i<count; i++)
+        if (array[i])
+            free(array[i]);
+
+    free(array);
+}
+
 
 /*
  * Return process name and args as a Python tuple.
@@ -121,39 +353,60 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
-    char path[1000];
+    char path[PATH_MAX];
     psinfo_t info;
     const char *procfs_path;
     PyObject *py_name;
-    PyObject *py_args;
     PyObject *py_retlist;
+    PyObject *py_args = NULL;
+    size_t argc;
+    char **argv;
+    char *argv_plain;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
-    if (!py_name)
+    if (! py_name)
         goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
-    if (!py_args)
-        goto error;
+
+    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
+        argv = read_raw_args(info, procfs_path, &argc);
+        if (argv) {
+            argv_plain = cstrings_array_to_string(argv, argc, " ");
+            if (argv_plain) {
+                py_args = PyUnicode_DecodeFSDefault(argv_plain);
+                free(argv_plain);
+            }
+            free_cstrings_array(argv, argc);
+        }
+    }
+
+    if (! py_args) {
+       py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+       if (! py_args)
+           goto error;
+    }
+
     py_retlist = Py_BuildValue("OO", py_name, py_args);
-    if (!py_retlist)
+    if (! py_retlist)
         goto error;
+
+
     Py_DECREF(py_name);
     Py_DECREF(py_args);
     return py_retlist;
 
-error:
+ error:
     Py_XDECREF(py_name);
     Py_XDECREF(py_args);
     Py_XDECREF(py_retlist);
     return NULL;
 }
-
 
 /*
  * Return process user and system CPU times as a Python tuple.
@@ -179,7 +432,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
          PSUTIL_TV2DOUBLE(info.pr_cstime)
     );
 }
-
 
 /*
  * Return what CPU the process is running on.
@@ -1126,7 +1378,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6->tcp6ConnCreationProcess;
 #else
-        		processed_pid = 0;
+                processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
@@ -1163,7 +1415,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
             ude = (mib2_udpEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
-	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr->len);
+        assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr->len);
             for (i = 0; i < num_ent; i++, ude++) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude->udpCreationProcess;
