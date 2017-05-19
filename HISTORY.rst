@@ -71,6 +71,8 @@
 - 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
 - 1085_: cpu_count() return value is now checked and forced to None if <= 1.
+- 1087_: Process.cpu_percent() guard against cpu_count() returning None and
+  assumes 1 instead.
 
 **Porting notes**
 
