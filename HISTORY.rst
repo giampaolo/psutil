@@ -68,6 +68,7 @@
   Oleksii Shevchuk)
 - 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
+- 1085_: cpu_count() return value is now checked and forced to None if <= 1.
 
 **Porting notes**
 

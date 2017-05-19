@@ -1043,6 +1043,8 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             raise ValueError("interval is not positive (got %r)" % interval)
+        # TODO: rarely cpu_count() may return None, meaning this will
+        # break. It's probably wise to fall back to 1.
         num_cpus = _NUM_CPUS or cpu_count()
 
         def timer():
@@ -1645,10 +1647,11 @@ def cpu_count(logical=True):
     """
     global _NUM_CPUS
     if logical:
-        _NUM_CPUS = _psplatform.cpu_count_logical()
-        return _NUM_CPUS
+        ret = _psplatform.cpu_count_logical()
+        _NUM_CPUS = ret
     else:
-        return _psplatform.cpu_count_physical()
+        ret = _psplatform.cpu_count_physical()
+    return ret if ret >= 1 else None
 
 
 def cpu_times(percpu=False):
