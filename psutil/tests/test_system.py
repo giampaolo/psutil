@@ -270,6 +270,18 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreaterEqual(physical, 1)
         self.assertGreaterEqual(logical, physical)
 
+    def test_cpu_count_none(self):
+        # https://github.com/giampaolo/psutil/issues/1085
+        for val in (-1, 0, None):
+            with mock.patch('psutil._psplatform.cpu_count_logical',
+                            return_value=val) as m:
+                self.assertIsNone(psutil.cpu_count())
+                assert m.called
+            with mock.patch('psutil._psplatform.cpu_count_physical',
+                            return_value=val) as m:
+                self.assertIsNone(psutil.cpu_count(logical=False))
+                assert m.called
+
     def test_cpu_times(self):
         # Check type, value >= 0, str().
         total = 0
