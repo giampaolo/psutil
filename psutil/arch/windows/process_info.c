@@ -196,14 +196,37 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
         return NULL;
     }
 
-    // make sure the process is running
-    GetExitCodeProcess(hProcess, &processExitCode);
-    if (processExitCode == 0) {
-        NoSuchProcess();
-        CloseHandle(hProcess);
+    if (GetExitCodeProcess(hProcess, &processExitCode)) {
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
+        if (processExitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "GetExitCodeProcess() -> STILL_ACTIVE but PID does "
+                         "not exists")) {
+                return NULL;
+            }
+            return hProcess;
+        }
+        else {
+            // We can't be sure so we look into pids.
+            if (_psutil_pid_in_pids(pid) == 1) {
+                return hProcess;
+            }
+            else {
+                CloseHandle(hProcess);
+                NoSuchProcess();
+                return NULL;
+            }
+        }
+    }
+
+    CloseHandle(hProcess);
+    if (! psutil_assert_pid_not_exists(
+            pid, "GetExitCodeProcess() failed and PID exists")) {
         return NULL;
     }
-    return hProcess;
+    PyErr_SetFromWindowsErr(0);
+    return NULL;
 }
 
 
