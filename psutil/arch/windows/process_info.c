@@ -168,12 +168,35 @@ const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
 /*
- * Given a process HANDLE checks whether it's actually running and if
- * it does return it, else return NULL with the proper Python exception
- * set.
+ * Return 1 if PID exists, 0 if not, -1 on error.
  */
-HANDLE
-psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+int
+psutil_pid_in_pids(DWORD pid) {
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    if (proclist == NULL)
+        return -1;
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (proclist[i] == pid)
+            return 1;
+    }
+    return 0;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running.
+ * Returns:
+ * - 1: running
+ * - 0: not running
+ * - -1: WindowsError
+ * - -2: AssertionError
+ */
+int
+psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
     DWORD processExitCode = 0;
 
     if (hProcess == NULL) {
@@ -183,15 +206,13 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
             if (! psutil_assert_pid_not_exists(
                     pid, "OpenProcess() -> ERROR_INVALID_PARAMETER is "
                          "converted to NoSuchProcess but PID still exists")) {
-                return NULL;
+                return -2;
             }
             else {
-                NoSuchProcess();
-                return NULL;
+                return 0;
             }
         }
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
+        return -1;
     }
 
     if (GetExitCodeProcess(hProcess, &processExitCode)) {
@@ -201,19 +222,18 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
             if (! psutil_assert_pid_exists(
                     pid, "GetExitCodeProcess() -> STILL_ACTIVE but PID does "
                          "not exists")) {
-                return NULL;
+                return -2;
             }
-            return hProcess;
+            return 1;
         }
         else {
             // We can't be sure so we look into pids.
-            if (_psutil_pid_in_pids(pid) == 1) {
-                return hProcess;
+            if (psutil_pid_in_pids(pid) == 1) {
+                return 1;
             }
             else {
                 CloseHandle(hProcess);
-                NoSuchProcess();
-                return NULL;
+                return 0;
             }
         }
     }
@@ -221,10 +241,28 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     CloseHandle(hProcess);
     if (! psutil_assert_pid_not_exists(
             pid, "GetExitCodeProcess() failed and PID exists")) {
-        return NULL;
+        return -2;
     }
-    PyErr_SetFromWindowsErr(0);
-    return NULL;
+    return -1;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running and if
+ * it does return it, else return NULL with the proper Python exception
+ * set.
+ */
+HANDLE
+psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+    int ret = psutil_is_phandle_running(hProcess, pid);
+    if (ret == 1)
+        return hProcess;
+    else if (ret == 0)
+        return NoSuchProcess();
+    else if (ret == -1)
+        return PyErr_SetFromWindowsErr(0);
+    else if (ret == -2)
+        return NULL;
 }
 
 
@@ -299,28 +337,10 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
-
-int
-_psutil_pid_in_pids(DWORD pid) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
-
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
-        return -1;
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (proclist[i] == pid)
-            return 1;
-    }
-    return 0;
-}
-
-
 int
 psutil_assert_pid_exists(DWORD pid, char *err) {
     if (psutil_testing()) {
-        if (_psutil_pid_in_pids(pid) == 0) {
+        if (psutil_pid_in_pids(pid) == 0) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
@@ -332,7 +352,7 @@ psutil_assert_pid_exists(DWORD pid, char *err) {
 int
 psutil_assert_pid_not_exists(DWORD pid, char *err) {
     if (psutil_testing()) {
-        if (_psutil_pid_in_pids(pid) == 1) {
+        if (psutil_pid_in_pids(pid) == 1) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
         }
