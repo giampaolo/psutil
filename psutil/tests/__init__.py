@@ -385,9 +385,6 @@ def reap_children(recursive=False):
     # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
     #     jiq2cgd6stsbtn60
     def assert_gone(pid):
-        # XXX
-        if WINDOWS:
-            return
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids(), pid
         try:
