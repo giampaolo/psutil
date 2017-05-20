@@ -180,9 +180,12 @@ psutil_pid_in_pids(DWORD pid) {
     if (proclist == NULL)
         return -1;
     for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (proclist[i] == pid)
+        if (proclist[i] == pid) {
+            free(proclist);
             return 1;
+        }
     }
+    free(proclist);
     return 0;
 }
 
