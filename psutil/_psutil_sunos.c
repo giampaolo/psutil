@@ -791,14 +791,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         if (! py_path)
             goto error;
         py_tuple = Py_BuildValue(
-            "iisOlll",
-            p->pr_vaddr,
-            pr_addr_sz,
+            "kksOkkk",
+            (unsigned long)p->pr_vaddr,
+            (unsigned long)pr_addr_sz,
             perms,
             py_path,
-            (long)p->pr_rss * p->pr_pagesize,
-            (long)p->pr_anon * p->pr_pagesize,
-            (long)p->pr_locked * p->pr_pagesize);
+            (unsigned long)p->pr_rss * p->pr_pagesize,
+            (unsigned long)p->pr_anon * p->pr_pagesize,
+            (unsigned long)p->pr_locked * p->pr_pagesize);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
