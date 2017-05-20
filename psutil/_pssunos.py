@@ -370,17 +370,23 @@ class Process(object):
 
     def oneshot_enter(self):
         self._proc_name_and_args.cache_activate()
+        self._proc_environ.cache_activate()
         self._proc_basic_info.cache_activate()
         self._proc_cred.cache_activate()
 
     def oneshot_exit(self):
         self._proc_name_and_args.cache_deactivate()
+        self._proc_environ.cache_deactivate()
         self._proc_basic_info.cache_deactivate()
         self._proc_cred.cache_deactivate()
 
     @memoize_when_activated
     def _proc_name_and_args(self):
         return cext.proc_name_and_args(self.pid, self._procfs_path)
+
+    @memoize_when_activated
+    def _proc_environ(self):
+        return cext.proc_environ(self.pid, self._procfs_path)
 
     @memoize_when_activated
     def _proc_basic_info(self):
@@ -413,6 +419,10 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         return self._proc_name_and_args()[1].split(' ')
+
+    @wrap_exceptions
+    def environ(self):
+        return self._proc_environ()
 
     @wrap_exceptions
     def create_time(self):

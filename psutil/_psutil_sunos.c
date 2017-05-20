@@ -286,6 +286,82 @@ read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
     return result;
 }
 
+static int
+search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
+    int count = 0;
+    int r;
+    char buf[8];
+    static const char zeros[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    assert(ptr_size == 4 || ptr_size == 8);
+
+    if (lseek(fd, offt, SEEK_SET) == (off_t)-1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+
+    for (;; count ++) {
+        r = read(fd, buf, ptr_size);
+
+        if (r < 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return -1;
+        }
+
+        if (r != ptr_size) {
+            PyErr_SetString(
+				PyExc_ValueError, "Pointer block is truncated");
+
+            return -1;
+        }
+
+        if (! memcmp(buf, zeros, ptr_size))
+            return count;
+    }
+
+    return count;
+}
+
+static char **
+read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
+	int as;
+	int env_count;
+    int ptr_size;
+    char **result = NULL;
+
+    if (! is_ptr_dereference_possible(info)) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "Dereferencing procfs pointers of "
+            "64bit process is not possible");
+
+        return NULL;
+    }
+
+    as = open_address_space(info.pr_pid, procfs_path);
+    if (as < 0)
+        return NULL;
+
+    ptr_size = ptr_size_by_psinfo(info);
+
+    env_count = search_pointers_vector_size_offt(
+        as, info.pr_envp, ptr_size);
+
+	if (env_count >= 0 && count)
+		*count = env_count;
+
+    if (env_count < 1)
+        goto lbExit;
+
+    result = read_cstrings_block(
+        as, info.pr_envp, ptr_size, env_count
+    );
+
+  lbExit:
+    close(as);
+
+    return result;
+}
+
 static char*
 cstrings_array_to_string(const char ** array, size_t count, const char *dm) {
     int i;
@@ -315,7 +391,7 @@ cstrings_array_to_string(const char ** array, size_t count, const char *dm) {
 
     result = malloc(total_length);
     if (! result)
-        return PyErr_NoMemory();
+        return (char *) PyErr_NoMemory();
 
     result[0] = '\0';
 
@@ -406,6 +482,64 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     Py_XDECREF(py_args);
     Py_XDECREF(py_retlist);
     return NULL;
+}
+
+/*
+ * Return process environ block
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    psinfo_t info;
+    const char *procfs_path;
+    PyObject *py_retlist = NULL;
+	PyObject *envname;
+	PyObject *envval;
+    char **env;
+    ssize_t env_count = -1;
+	char *dm;
+	int i;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+
+    env = read_raw_env(info, procfs_path, &env_count);
+    if (! env && env_count != 0) {
+		return NULL;
+	}
+
+    py_retlist = PyDict_New();
+    if (! py_retlist)
+		return PyErr_NoMemory();
+
+    for (i=0; i<env_count; i++) {
+		if (! env[i])
+			break;
+
+		/* Environment corrupted */
+        dm = strchr(env[i], '=');
+        if (! dm)
+			break;
+
+		*dm = '\0';
+
+		envname = PyUnicode_DecodeFSDefault(env[i]);
+        envval = PyUnicode_DecodeFSDefault(dm+1);
+
+        if (envname && envval)
+            PyDict_SetItem(py_retlist, envname, envval);
+
+        Py_XDECREF(envname);
+        Py_XDECREF(envval);
+    }
+
+	free_cstrings_array(env, env_count);
+	return py_retlist;
 }
 
 /*
@@ -1727,6 +1861,8 @@ PsutilMethods[] = {
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
     {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS,
      "Return process name and args."},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+      "Return process environment."},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
