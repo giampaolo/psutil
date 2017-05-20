@@ -180,15 +180,19 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // Yeah, this is the actual error code in case of
+            // "no such process".
             if (! psutil_assert_pid_not_exists(
-                    pid, "psutil_handle_from_pid_waccess() -> OpenProcess "
-                         "incorrectly assumed process is gone")) {
+                    pid, "OpenProcess() -> ERROR_INVALID_PARAMETER is "
+                         "converted to NoSuchProcess but PID still exists")) {
                 return NULL;
             }
-            NoSuchProcess();
+            else {
+                NoSuchProcess();
+                return NULL;
+            }
         }
-        else
-            PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 
