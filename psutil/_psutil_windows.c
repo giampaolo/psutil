@@ -1510,6 +1510,7 @@ static PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
+    int pid_return;
     typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
     typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
@@ -1551,9 +1552,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     if (pid != -1) {
-        if (psutil_pid_is_running(pid) == 0) {
+        pid_return = psutil_pid_is_running(pid);
+        if (pid_return == 0) {
             _psutil_conn_decref_objs();
             return NoSuchProcess();
+        }
+        else if (pid_return == -1) {
+            _psutil_conn_decref_objs();
+            return NULL;
         }
     }
 

@@ -204,13 +204,10 @@ psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
             // Yeah, this is the actual error code in case of
             // "no such process".
             if (! psutil_assert_pid_not_exists(
-                    pid, "OpenProcess() -> ERROR_INVALID_PARAMETER is "
-                         "converted to NoSuchProcess but PID still exists")) {
+                    pid, "iphr: OpenProcess() -> ERROR_INVALID_PARAMETER")) {
                 return -2;
             }
-            else {
-                return 0;
-            }
+            return 0;
         }
         return -1;
     }
@@ -220,8 +217,7 @@ psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
         // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
         if (processExitCode == STILL_ACTIVE) {
             if (! psutil_assert_pid_exists(
-                    pid, "GetExitCodeProcess() -> STILL_ACTIVE but PID does "
-                         "not exists")) {
+                    pid, "iphr: GetExitCodeProcess() -> STILL_ACTIVE")) {
                 return -2;
             }
             return 1;
@@ -239,8 +235,7 @@ psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
     }
 
     CloseHandle(hProcess);
-    if (! psutil_assert_pid_not_exists(
-            pid, "GetExitCodeProcess() failed and PID exists")) {
+    if (! psutil_assert_pid_not_exists( pid, "iphr: exit fun")) {
         return -2;
     }
     return -1;
@@ -369,7 +364,7 @@ psutil_assert_pid_not_exists(DWORD pid, char *err) {
  * -1: error
  */
 int
-_psutil_pid_is_running(DWORD pid) {
+psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
     DWORD err;
@@ -385,10 +380,18 @@ _psutil_pid_is_running(DWORD pid) {
         err = GetLastError();
         // Yeah, this is the actual error code in case of "no such process".
         if (err == ERROR_INVALID_PARAMETER) {
+            if (! psutil_assert_pid_not_exists(
+                    pid, "pir: OpenProcess() -> INVALID_PARAMETER")) {
+                return -1;
+            }
             return 0;
         }
         // Access denied obviously means there's a process to deny access to.
         else if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: OpenProcess() ACCESS_DENIED")) {
+                return -1;
+            }
             return 1;
         }
         // Be strict and raise an exception; the caller is supposed
@@ -403,45 +406,35 @@ _psutil_pid_is_running(DWORD pid) {
         CloseHandle(hProcess);
         // XXX - maybe STILL_ACTIVE is not fully reliable as per:
         // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        if (exitCode == STILL_ACTIVE)
+        if (exitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> STILL_ACTIVE")) {
+                return -1;
+            }
             return 1;
-        else
-            return 0;
+        }
+        // We can't be sure so we look into pids.
+        else {
+            return psutil_pid_in_pids(pid);
+        }
     }
     else {
         err = GetLastError();
         CloseHandle(hProcess);
         // Same as for OpenProcess, assume access denied means there's
         // a process to deny access to.
-        if (err == ERROR_ACCESS_DENIED)
+        if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> ERROR_ACCESS_DENIED")) {
+                return -1;
+            }
             return 1;
+        }
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromWindowsErr(0);
             return -1;
         }
     }
-}
-
-
-int
-psutil_pid_is_running(DWORD pid) {
-    int ret;
-    ret = _psutil_pid_is_running(pid);
-    if (ret == -1)
-        return -1;
-    else if (ret == 1) {
-        if (! psutil_assert_pid_exists(
-                pid, "psutil_pid_is_running() incorrectly returned 1")) {
-            return -1;
-        }
-    }
-    else if (ret == 0) {
-        if (! psutil_assert_pid_not_exists(
-                pid, "psutil_pid_is_running() incorrectly returned 0")) {
-            return -1;
-        }
-    }
-    return ret;
 }
 
 
