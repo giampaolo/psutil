@@ -50,6 +50,8 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
+#include "arch/solaris/process_as_utils.h"
+
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
@@ -114,6 +116,53 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         );
 }
 
+static char*
+cstrings_array_to_string(const char ** array, size_t count, const char *dm) {
+    int i;
+    size_t total_length = 0;
+    size_t dm_length;
+    char *result = NULL;
+
+    if (! array)
+        return NULL;
+
+    if (! dm)
+        dm = " ";
+
+    dm_length = strlen(dm);
+
+    for (i=0; i<count; i++) {
+        if (! array[i])
+            continue;
+
+        total_length += strlen(array[i]);
+        total_length += dm_length;
+    }
+
+    if (! total_length) {
+        return strdup("");
+    }
+
+    result = malloc(total_length);
+    if (! result) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    result[0] = '\0';
+
+    for (i=0; i<count; i++) {
+        if (! array[i])
+            continue;
+
+        strncat(result, array[i], total_length);
+        strncat(result, dm, total_length);
+    }
+
+    result[total_length - dm_length] = '\0';
+
+    return result;
+}
 
 /*
  * Return process name and args as a Python tuple.
@@ -121,33 +170,55 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
-    char path[1000];
+    char path[PATH_MAX];
     psinfo_t info;
     const char *procfs_path;
     PyObject *py_name;
-    PyObject *py_args;
     PyObject *py_retlist;
+    PyObject *py_args = NULL;
+    size_t argc;
+    char **argv;
+    char *argv_plain;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
-    if (!py_name)
+    if (! py_name)
         goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
-    if (!py_args)
+
+    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
+        argv = psutil_read_raw_args(info, procfs_path, &argc);
+        if (argv) {
+            argv_plain = cstrings_array_to_string(argv, argc, " ");
+            if (argv_plain) {
+                py_args = PyUnicode_DecodeFSDefault(argv_plain);
+                free(argv_plain);
+            }
+            psutil_free_cstrings_array(argv, argc);
+        }
+    }
+
+    if (! py_args)
+        py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+
+    if (! py_args)
         goto error;
+
     py_retlist = Py_BuildValue("OO", py_name, py_args);
-    if (!py_retlist)
+    if (! py_retlist)
         goto error;
+
+
     Py_DECREF(py_name);
     Py_DECREF(py_args);
     return py_retlist;
 
-error:
+ error:
     Py_XDECREF(py_name);
     Py_XDECREF(py_args);
     Py_XDECREF(py_retlist);
