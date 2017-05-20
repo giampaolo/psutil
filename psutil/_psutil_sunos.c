@@ -345,8 +345,8 @@ read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
     }
 
     if (! info.pr_envp) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "Process doesn't have environment block");
+        if (count)
+            *count = 0;
 
         return NULL;
     }
