@@ -50,6 +50,8 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
+#include "arch/solaris/process_as_utils.h"
+
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
@@ -154,6 +156,78 @@ error:
     return NULL;
 }
 
+/*
+ * Return process environ block
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    psinfo_t info;
+    const char *procfs_path;
+    char **env = NULL;
+    ssize_t env_count = -1;
+    char *dm;
+    int i = 0;
+    PyObject *py_retdict = NULL;
+    PyObject *py_envname = NULL;
+    PyObject *py_envval = NULL;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        goto error;
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        goto error;
+
+    env = psutil_read_raw_env(info, procfs_path, &env_count);
+    if (! env && env_count != 0)
+        goto error;
+
+    py_retdict = PyDict_New();
+    if (! py_retdict) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    for (i=0; i<env_count; i++) {
+        if (! env[i])
+            break;
+
+        /* Environment corrupted */
+        dm = strchr(env[i], '=');
+        if (! dm)
+            break;
+
+        *dm = '\0';
+
+        py_envname = PyUnicode_DecodeFSDefault(env[i]);
+        if (! py_envname)
+            goto error;
+
+        py_envval = PyUnicode_DecodeFSDefault(dm+1);
+        if (! py_envname)
+            goto error;
+
+        if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
+            goto error;
+
+        Py_DECREF(py_envname);
+        Py_DECREF(py_envval);
+    }
+
+    psutil_free_cstrings_array(env, env_count);
+    return py_retdict;
+
+ error:
+    if (env && env_count >= 0)
+        psutil_free_cstrings_array(env, env_count);
+
+    Py_XDECREF(py_envname);
+    Py_XDECREF(py_envval);
+    Py_XDECREF(py_retdict);
+    return NULL;
+}
 
 /*
  * Return process user and system CPU times as a Python tuple.
@@ -1475,6 +1549,8 @@ PsutilMethods[] = {
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
     {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS,
      "Return process name and args."},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+      "Return process environment."},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
