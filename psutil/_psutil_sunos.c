@@ -270,6 +270,13 @@ read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
         return NULL;
     }
 
+    if (! info.pr_argv) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "Process doesn't have arguments block");
+
+        return NULL;
+    }
+
     as = open_address_space(info.pr_pid, procfs_path);
     if (as < 0)
         return NULL;
@@ -333,6 +340,13 @@ read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
         PyErr_SetString(
             PyExc_RuntimeError, "Dereferencing procfs pointers of "
             "64bit process is not possible");
+
+        return NULL;
+    }
+
+    if (! info.pr_envp) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "Process doesn't have environment block");
 
         return NULL;
     }
