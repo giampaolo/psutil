@@ -27,6 +27,7 @@
 
 **Bug fixes**
 
+- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses
 - 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
   value of the first call is now cached so that boot_time() always returns the
   same value if fluctuation is <= 1 second.
