@@ -63,20 +63,21 @@ _:
 
 # Compile without installing.
 build: _
+	# make sure setuptools is installed (needed for 'develop' / edit mode)
+	$(PYTHON) -c "import setuptools"
 	PYTHONWARNINGS=all $(PYTHON) setup.py build
 	@# copies compiled *.so files in ./psutil directory in order to allow
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i
 	rm -rf tmp
+	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 # Install this package + GIT hooks. Install is done:
 # - as the current user, in order to avoid permission issues
 # - in development / edit mode, so that source can be modified on the fly
 install:
 	${MAKE} build
-	# make sure setuptools is installed (needed for 'develop' / edit mode)
-	$(PYTHON) -c "import setuptools"
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 

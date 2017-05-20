@@ -192,11 +192,16 @@ def help():
 @cmd
 def build():
     """Build / compile"""
+    # Make sure setuptools is installed (needed for 'develop' /
+    # edit mode).
+    sh("%s -c import setuptools" % PYTHON)
     sh("%s setup.py build" % PYTHON)
-    # copies compiled *.pyd files in ./psutil directory in order to
+    # Copies compiled *.pyd files in ./psutil directory in order to
     # allow "import psutil" when using the interactive interpreter
     # from within this directory.
     sh("%s setup.py build_ext -i" % PYTHON)
+    # Make sure it actually worked.
+    sh("%s -c 'import psutil'" % PYTHON)
 
 
 @cmd

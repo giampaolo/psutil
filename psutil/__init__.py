@@ -1646,7 +1646,9 @@ def cpu_count(logical=True):
         ret = _psplatform.cpu_count_logical()
     else:
         ret = _psplatform.cpu_count_physical()
-    return ret if ret >= 1 else None
+    if ret is not None and ret < 1:
+        ret = None
+    return ret
 
 
 def cpu_times(percpu=False):
