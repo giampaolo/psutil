@@ -18,9 +18,11 @@
 #include "../../_psutil_common.h"
 
 
-// Helper structures to access the memory correctly.  Some of these might also
-// be defined in the winternl.h header file but unfortunately not in a usable
-// way.
+// ====================================================================
+// Helper structures to access the memory correctly.
+// Some of these might also be defined in the winternl.h header file
+// but unfortunately not in a usable way.
+// ====================================================================
 
 // see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
 #ifndef NT_SUCCESS
@@ -160,24 +162,20 @@ const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
+// ====================================================================
+// Process and PIDs utiilties.
+// ====================================================================
+
+
 /*
- * A wrapper around OpenProcess setting NSP exception if process
- * no longer exists.
- * "pid" is the process pid, "dwDesiredAccess" is the first argument
- * exptected by OpenProcess.
- * Return a process handle or NULL.
+ * Given a process HANDLE checks whether it's actually running and if
+ * it does return it, else return NULL with the proper Python exception
+ * set.
  */
 HANDLE
-psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
-    HANDLE hProcess;
+psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     DWORD processExitCode = 0;
 
-    if (pid == 0) {
-        // otherwise we'd get NoSuchProcess
-        return AccessDenied();
-    }
-
-    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
@@ -227,6 +225,27 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     }
     PyErr_SetFromWindowsErr(0);
     return NULL;
+}
+
+
+/*
+ * A wrapper around OpenProcess setting NSP exception if process
+ * no longer exists.
+ * "pid" is the process pid, "dwDesiredAccess" is the first argument
+ * exptected by OpenProcess.
+ * Return a process handle or NULL.
+ */
+HANDLE
+psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
+    HANDLE hProcess;
+
+    if (pid == 0) {
+        // otherwise we'd get NoSuchProcess
+        return AccessDenied();
+    }
+
+    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
+    return psutil_check_phandle(hProcess, pid);
 }
 
 
