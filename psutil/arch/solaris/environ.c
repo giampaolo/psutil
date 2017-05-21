@@ -1,26 +1,27 @@
 /*
- * Copyright (c) 2017, Oleksii Shevchuk. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
+ * Copyright (c) 2009, Giampaolo Rodola', Oleksii Shevchuk.
+ * All rights reserved. Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
  *
- * Functions specific to Sun OS Solaris platforms.
+ * Functions specific Process.environ().
  */
 
+#define NEW_MIB_COMPLIANT 1
 #define _STRUCTURED_PROC 1
+
+#include <Python.h>
 
 #if !defined(_LP64) && _FILE_OFFSET_BITS == 64
 #  undef _FILE_OFFSET_BITS
 #  undef _LARGEFILE64_SOURCE
 #endif
 
-#include <Python.h>
-
 #include <sys/types.h>
 #include <sys/procfs.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "process_as_utils.h"
+#include "environ.h"
 
 /** Function opens address space of specified process and return file
  *  descriptor.
