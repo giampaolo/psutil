@@ -238,7 +238,7 @@ elif SUNOS:
         sources=sources + [
             'psutil/_psutil_sunos.c',
             'psutil/arch/solaris/v10/ifaddrs.c',
-            'psutil/arch/solaris/process_as_utils.c'
+            'psutil/arch/solaris/environ.c'
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])

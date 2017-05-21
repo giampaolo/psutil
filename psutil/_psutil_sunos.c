@@ -50,7 +50,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
-#include "arch/solaris/process_as_utils.h"
+#include "arch/solaris/environ.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
