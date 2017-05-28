@@ -1,29 +1,34 @@
 /*
- * Copyright (c) 2017, Oleksii Shevchuk. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
+ * Copyright (c) 2009, Giampaolo Rodola', Oleksii Shevchuk.
+ * All rights reserved. Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
  *
- * Functions specific to Sun OS Solaris platforms.
+ * Functions specific for Process.environ().
  */
 
+#define NEW_MIB_COMPLIANT 1
 #define _STRUCTURED_PROC 1
+
+#include <Python.h>
 
 #if !defined(_LP64) && _FILE_OFFSET_BITS == 64
 #  undef _FILE_OFFSET_BITS
 #  undef _LARGEFILE64_SOURCE
 #endif
 
-#include <Python.h>
-
 #include <sys/types.h>
 #include <sys/procfs.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "process_as_utils.h"
+#include "environ.h"
 
-/** Function opens address space of specified process and return file
- *  descriptor.
+
+#define STRING_SEARCH_BUF_SIZE 512
+
+
+/*
+ * Open address space of specified process and return file descriptor.
  *  @param pid a pid of process.
  *  @param procfs_path a path to mounted procfs filesystem.
  *  @return file descriptor or -1 in case of error.
@@ -41,22 +46,24 @@ open_address_space(pid_t pid, const char *procfs_path) {
     return fd;
 }
 
-/** Function reads chunk of data by offset to specified
- *  buffer of the same size.
- *  @param fd a file descriptor.
- *  @param offset an required offset in file.
- *  @param buf a buffer where to store result.
- *  @param buf_size a size of buffer where data will be stored.
- *  @return amount of bytes stored to the buffer or -1 in case of
- *          error.
+
+/*
+ * Read chunk of data by offset to specified buffer of the same size.
+ * @param fd a file descriptor.
+ * @param offset an required offset in file.
+ * @param buf a buffer where to store result.
+ * @param buf_size a size of buffer where data will be stored.
+ * @return amount of bytes stored to the buffer or -1 in case of
+ *         error.
  */
 static int
 read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     size_t to_read = buf_size;
     size_t stored  = 0;
+    int r;
 
     while (to_read) {
-        int r = pread(fd, buf + stored, to_read, offset + stored);
+        r = pread(fd, buf + stored, to_read, offset + stored);
         if (r < 0)
             goto error;
         else if (r == 0)
@@ -73,13 +80,13 @@ read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     return -1;
 }
 
-#define STRING_SEARCH_BUF_SIZE 512
 
-/** Function reads null-terminated string from file descriptor starting from
- *  specified offset.
- *  @param fd a file descriptor of opened address space.
- *  @param offset an offset in specified file descriptor.
- *  @return allocated null-terminated string or NULL in case of error.
+/*
+ * Read null-terminated string from file descriptor starting from
+ * specified offset.
+ * @param fd a file descriptor of opened address space.
+ * @param offset an offset in specified file descriptor.
+ * @return allocated null-terminated string or NULL in case of error.
 */
 static char *
 read_cstring_offt(int fd, off_t offset) {
@@ -102,17 +109,19 @@ read_cstring_offt(int fd, off_t offset) {
             PyErr_SetFromErrno(PyExc_OSError);
             goto error;
         }
-        else if (r == 0)
+        else if (r == 0) {
             break;
-        else
+        }
+        else {
             for (i=0; i<r; i++)
                 if (! buf[i])
                     goto found;
+        }
 
         end += r;
     }
 
-  found:
+found:
     len = end + i - offset;
 
     result = malloc(len+1);
@@ -121,9 +130,11 @@ read_cstring_offt(int fd, off_t offset) {
         goto error;
     }
 
-    if (len)
-        if (read_offt(fd, offset, result, len) < 0)
+    if (len) {
+        if (read_offt(fd, offset, result, len) < 0) {
             goto error;
+        }
+    }
 
     result[len] = '\0';
     return result;
@@ -131,18 +142,20 @@ read_cstring_offt(int fd, off_t offset) {
  error:
     if (result)
         free(result);
-
     return NULL;
 }
 
-/** Function reads block of addresses by offset, dereference them one by one
- *  and create an array of null terminated C strings from them.
- *  @param fd a file descriptor of address space of interesting process.
- *  @param offset an offset of address block in address space.
- *  @param ptr_size a size of pointer. Only 4 or 8 are valid values.
- *  @param count amount of pointers in block.
- *  @return allocated array of strings dereferenced and read by offset. Number of
- *        elements in array are count. In case of error function returns NULL.
+
+/*
+ * Read block of addresses by offset, dereference them one by one
+ * and create an array of null terminated C strings from them.
+ * @param fd a file descriptor of address space of interesting process.
+ * @param offset an offset of address block in address space.
+ * @param ptr_size a size of pointer. Only 4 or 8 are valid values.
+ * @param count amount of pointers in block.
+ * @return allocated array of strings dereferenced and read by offset.
+ * Number of elements in array are count. In case of error function
+ * returns NULL.
  */
 static char **
 read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
@@ -194,11 +207,14 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
     return NULL;
 }
 
-/** Checks that caller process can extract proper values from psinfo_t structure.
- *  @param info a ponter to process info (psinfo_t) structure of the
- *              interesting process.
- *  @return 1 in case if caller process can extract proper values from psinfo_t
- *          structure, or 0 otherwise.
+
+/*
+ * Check that caller process can extract proper values from psinfo_t
+ * structure.
+ * @param info a pointer to process info (psinfo_t) structure of the
+ *             interesting process.
+ *  @return 1 in case if caller process can extract proper values from
+ *          psinfo_t structure, or 0 otherwise.
  */
 static inline int
 is_ptr_dereference_possible(psinfo_t info) {
@@ -209,21 +225,25 @@ is_ptr_dereference_possible(psinfo_t info) {
 #endif
 }
 
-/** Return pointer size according to psinfo_t structure
- *  @param info a ponter to process info (psinfo_t) structure of the
- *              interesting process.
- *  @return pointer size (4 or 8).
+
+/*
+ * Return pointer size according to psinfo_t structure
+ * @param info a ponter to process info (psinfo_t) structure of the
+ *             interesting process.
+ * @return pointer size (4 or 8).
  */
 static inline int
 ptr_size_by_psinfo(psinfo_t info) {
     return info.pr_dmodel == PR_MODEL_ILP32? 4 : 8;
 }
 
-/** Count amount of pointers in a block which ends with NULL.
- *  @param fd a discriptor of /proc/PID/as special file.
- *  @param offt an offset of block of pointers at the file.
- *  @param ptr_size a pointer size (allowed values: {4, 8}).
- *  @return amount of non-NULL pointers or -1 in case of error.
+
+/*
+ * Count amount of pointers in a block which ends with NULL.
+ * @param fd a discriptor of /proc/PID/as special file.
+ * @param offt an offset of block of pointers at the file.
+ * @param ptr_size a pointer size (allowed values: {4, 8}).
+ * @return amount of non-NULL pointers or -1 in case of error.
  */
 static int
 search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
@@ -248,8 +268,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
 
         if (r != ptr_size) {
             PyErr_SetString(
-                PyExc_RuntimeError, "Pointer block is truncated");
-
+                PyExc_RuntimeError, "pointer block is truncated");
             return -1;
         }
 
@@ -264,13 +283,17 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
     return -1;
 }
 
-/** Derefence and read array of strings by psinfo_t.pr_argv pointer from remote process.
- *  @param info a ponter to process info (psinfo_t) structure of the
- *              interesting process
- *  @param procfs_path a cstring with path to mounted procfs filesystem.
- *  @param count a pointer to variable where to store amount of elements in
- *         returned array. In case of error value of variable will not be changed.
- *  @return allocated array of cstrings or NULL in case of error.
+
+/*
+ * Derefence and read array of strings by psinfo_t.pr_argv pointer from
+ * remote process.
+ * @param info a ponter to process info (psinfo_t) structure of the
+ *             interesting process
+ * @param procfs_path a cstring with path to mounted procfs filesystem.
+ * @param count a pointer to variable where to store amount of elements in
+ *        returned array. In case of error value of variable will not be
+          changed.
+ * @return allocated array of cstrings or NULL in case of error.
  */
 char **
 psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
@@ -279,15 +302,14 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
 
     if (! is_ptr_dereference_possible(info)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Dereferencing procfs pointers of "
-            "64bit process is not possible");
-
+            PyExc_NotImplementedError,
+            "can't get env of a 64 bit process from a 32 bit process");
         return NULL;
     }
 
     if (! (info.pr_argv && info.pr_argc)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Process doesn't have arguments block");
+            PyExc_RuntimeError, "process doesn't have arguments block");
 
         return NULL;
     }
@@ -308,20 +330,24 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
     return result;
 }
 
-/** Dereference and read array of strings by psinfo_t.pr_envp pointer from remote process.
- *  @param info a ponter to process info (psinfo_t) structure of the
- *              interesting process.
- *  @param procfs_path a cstring with path to mounted procfs filesystem.
- *  @param count a pointer to variable where to store amount of elements in
- *         returned array. In case of error value of variable will not be
- *         changed. To detect special case (described later) variable should be
- *         initialized by -1 or other negative value.
- *  @return allocated array of cstrings or NULL in case of error.
- *          Special case: count set to 0, return NULL.
- *          Special case means there is no error acquired, but no data retrieved.
- *          Special case exists because the nature of the process. From the
- *          beginning it's not clean how many pointers in envp array. Also
- *          situation when environment is empty is common for kernel processes.
+
+/*
+ * Dereference and read array of strings by psinfo_t.pr_envp pointer
+ * from remote process.
+ * @param info a ponter to process info (psinfo_t) structure of the
+ *             interesting process.
+ * @param procfs_path a cstring with path to mounted procfs filesystem.
+ * @param count a pointer to variable where to store amount of elements in
+ *        returned array. In case of error value of variable will not be
+ *        changed. To detect special case (described later) variable should be
+ *        initialized by -1 or other negative value.
+ * @return allocated array of cstrings or NULL in case of error.
+ *         Special case: count set to 0, return NULL.
+ *         Special case means there is no error acquired, but no data
+ *         retrieved.
+ *         Special case exists because the nature of the process. From the
+ *         beginning it's not clean how many pointers in envp array. Also
+ *         situation when environment is empty is common for kernel processes.
  */
 char **
 psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
@@ -332,16 +358,8 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
 
     if (! is_ptr_dereference_possible(info)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Dereferencing procfs pointers of "
-            "64bit process is not possible");
-
-        return NULL;
-    }
-
-    if (! info.pr_envp) {
-        if (count)
-            *count = 0;
-
+            PyExc_NotImplementedError,
+            "can't get env of a 64 bit process from a 32 bit process");
         return NULL;
     }
 
@@ -359,17 +377,18 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
 
     if (env_count > 0)
         result = read_cstrings_block(
-            as, info.pr_envp, ptr_size, env_count
-       );
+            as, info.pr_envp, ptr_size, env_count);
 
     close(as);
     return result;
 }
 
-/** Free array of cstrings.
- *  @param array an array of cstrings returned by psutil_read_raw_env,
- *               psutil_read_raw_args or any other function.
- *  @param count a count of strings in the passed array
+
+/*
+ * Free array of cstrings.
+ * @param array an array of cstrings returned by psutil_read_raw_env,
+ *              psutil_read_raw_args or any other function.
+ * @param count a count of strings in the passed array
  */
 void
 psutil_free_cstrings_array(char **array, size_t count) {
@@ -377,10 +396,10 @@ psutil_free_cstrings_array(char **array, size_t count) {
 
     if (!array)
         return;
-
-    for (i=0; i<count; i++)
-        if (array[i])
+    for (i=0; i<count; i++) {
+        if (array[i]) {
             free(array[i]);
-
+        }
+    }
     free(array);
 }

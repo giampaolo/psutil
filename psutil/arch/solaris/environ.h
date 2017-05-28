@@ -1,9 +1,7 @@
 /*
- * Copyright (c) 2017, Oleksii Shevchuk. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
- *
- * Functions specific to Sun OS Solaris platforms.
+ * Copyright (c) 2009, Giampaolo Rodola', Oleksii Shevchuk.
+ * All rights reserved. Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
  */
 
 #ifndef PROCESS_AS_UTILS_H

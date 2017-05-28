@@ -50,7 +50,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
-#include "arch/solaris/process_as_utils.h"
+#include "arch/solaris/environ.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
@@ -156,8 +156,9 @@ error:
     return NULL;
 }
 
+
 /*
- * Return process environ block
+ * Return process environ block.
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
@@ -169,35 +170,36 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     ssize_t env_count = -1;
     char *dm;
     int i = 0;
-    PyObject *py_retdict = NULL;
     PyObject *py_envname = NULL;
     PyObject *py_envval = NULL;
+    PyObject *py_retdict = PyDict_New();
+
+    if (! py_retdict)
+        return PyErr_NoMemory();
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
-        goto error;
+        return NULL;
 
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         goto error;
 
+    if (! info.pr_envp) {
+        AccessDenied();
+        goto error;
+    }
+
     env = psutil_read_raw_env(info, procfs_path, &env_count);
     if (! env && env_count != 0)
         goto error;
-
-    py_retdict = PyDict_New();
-    if (! py_retdict) {
-        PyErr_NoMemory();
-        goto error;
-    }
 
     for (i=0; i<env_count; i++) {
         if (! env[i])
             break;
 
-        /* Environment corrupted */
         dm = strchr(env[i], '=');
         if (! dm)
-            break;
+            continue;
 
         *dm = '\0';
 
@@ -228,6 +230,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     Py_XDECREF(py_retdict);
     return NULL;
 }
+
 
 /*
  * Return process user and system CPU times as a Python tuple.
