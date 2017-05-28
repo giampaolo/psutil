@@ -187,12 +187,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (! env && env_count != 0)
         goto error;
 
-    py_retdict = PyDict_New();
-    if (! py_retdict) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
     for (i=0; i<env_count; i++) {
         if (! env[i])
             break;
