@@ -24,6 +24,7 @@
   relevant files.
 - 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
   (instead of -1).  (patch by Gleb Smirnoff)
+- 1091_: [SunOS] implemented Process.environ().  (patch by Oleksii Shevchuk)
 
 **Bug fixes**
 

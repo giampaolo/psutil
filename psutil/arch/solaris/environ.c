@@ -3,7 +3,7 @@
  * All rights reserved. Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  *
- * Functions specific Process.environ().
+ * Functions specific for Process.environ().
  */
 
 #define NEW_MIB_COMPLIANT 1
@@ -60,9 +60,10 @@ static int
 read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     size_t to_read = buf_size;
     size_t stored  = 0;
+    int r;
 
     while (to_read) {
-        int r = pread(fd, buf + stored, to_read, offset + stored);
+        r = pread(fd, buf + stored, to_read, offset + stored);
         if (r < 0)
             goto error;
         else if (r == 0)
