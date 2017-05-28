@@ -183,6 +183,11 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         goto error;
 
+    if (! info.pr_envp) {
+        AccessDenied();
+        goto error;
+    }
+
     env = psutil_read_raw_env(info, procfs_path, &env_count);
     if (! env && env_count != 0)
         goto error;

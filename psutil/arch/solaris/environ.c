@@ -339,13 +339,6 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
         return NULL;
     }
 
-    if (! info.pr_envp) {
-        if (count)
-            *count = 0;
-
-        return NULL;
-    }
-
     as = open_address_space(info.pr_pid, procfs_path);
     if (as < 0)
         return NULL;
