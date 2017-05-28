@@ -109,12 +109,14 @@ read_cstring_offt(int fd, off_t offset) {
             PyErr_SetFromErrno(PyExc_OSError);
             goto error;
         }
-        else if (r == 0)
+        else if (r == 0) {
             break;
-        else
+        }
+        else {
             for (i=0; i<r; i++)
                 if (! buf[i])
                     goto found;
+        }
 
         end += r;
     }
@@ -128,9 +130,11 @@ found:
         goto error;
     }
 
-    if (len)
-        if (read_offt(fd, offset, result, len) < 0)
+    if (len) {
+        if (read_offt(fd, offset, result, len) < 0) {
             goto error;
+        }
+    }
 
     result[len] = '\0';
     return result;
@@ -264,8 +268,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
 
         if (r != ptr_size) {
             PyErr_SetString(
-                PyExc_RuntimeError, "Pointer block is truncated");
-
+                PyExc_RuntimeError, "pointer block is truncated");
             return -1;
         }
 
@@ -299,15 +302,14 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
 
     if (! is_ptr_dereference_possible(info)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Dereferencing procfs pointers of "
-            "64bit process is not possible");
-
+            PyExc_NotImplementedError,
+            "can't get env of a 64 bit process from a 32 bit process");
         return NULL;
     }
 
     if (! (info.pr_argv && info.pr_argc)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Process doesn't have arguments block");
+            PyExc_RuntimeError, "process doesn't have arguments block");
 
         return NULL;
     }
@@ -356,9 +358,8 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
 
     if (! is_ptr_dereference_possible(info)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "Dereferencing procfs pointers of "
-            "64bit process is not possible");
-
+            PyExc_NotImplementedError,
+            "can't get env of a 64 bit process from a 32 bit process");
         return NULL;
     }
 
@@ -395,10 +396,10 @@ psutil_free_cstrings_array(char **array, size_t count) {
 
     if (!array)
         return;
-
-    for (i=0; i<count; i++)
-        if (array[i])
+    for (i=0; i<count; i++) {
+        if (array[i]) {
             free(array[i]);
-
+        }
+    }
     free(array);
 }
