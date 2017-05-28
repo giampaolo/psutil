@@ -196,10 +196,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         if (! env[i])
             break;
 
-        /* Environment corrupted */
         dm = strchr(env[i], '=');
         if (! dm)
-            break;
+            continue;
 
         *dm = '\0';
 
