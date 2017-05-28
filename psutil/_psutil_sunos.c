@@ -156,8 +156,9 @@ error:
     return NULL;
 }
 
+
 /*
- * Return process environ block
+ * Return process environ block.
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
@@ -229,6 +230,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     Py_XDECREF(py_retdict);
     return NULL;
 }
+
 
 /*
  * Return process user and system CPU times as a Python tuple.
