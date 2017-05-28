@@ -18,9 +18,11 @@
 #include "../../_psutil_common.h"
 
 
-// Helper structures to access the memory correctly.  Some of these might also
-// be defined in the winternl.h header file but unfortunately not in a usable
-// way.
+// ====================================================================
+// Helper structures to access the memory correctly.
+// Some of these might also be defined in the winternl.h header file
+// but unfortunately not in a usable way.
+// ====================================================================
 
 // see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
 #ifndef NT_SUCCESS
@@ -160,6 +162,108 @@ const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
+// ====================================================================
+// Process and PIDs utiilties.
+// ====================================================================
+
+
+/*
+ * Return 1 if PID exists, 0 if not, -1 on error.
+ */
+int
+psutil_pid_in_pids(DWORD pid) {
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    if (proclist == NULL)
+        return -1;
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (proclist[i] == pid) {
+            free(proclist);
+            return 1;
+        }
+    }
+    free(proclist);
+    return 0;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running.
+ * Returns:
+ * - 1: running
+ * - 0: not running
+ * - -1: WindowsError
+ * - -2: AssertionError
+ */
+int
+psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
+    DWORD processExitCode = 0;
+
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // Yeah, this is the actual error code in case of
+            // "no such process".
+            if (! psutil_assert_pid_not_exists(
+                    pid, "iphr: OpenProcess() -> ERROR_INVALID_PARAMETER")) {
+                return -2;
+            }
+            return 0;
+        }
+        return -1;
+    }
+
+    if (GetExitCodeProcess(hProcess, &processExitCode)) {
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
+        if (processExitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "iphr: GetExitCodeProcess() -> STILL_ACTIVE")) {
+                return -2;
+            }
+            return 1;
+        }
+        else {
+            // We can't be sure so we look into pids.
+            if (psutil_pid_in_pids(pid) == 1) {
+                return 1;
+            }
+            else {
+                CloseHandle(hProcess);
+                return 0;
+            }
+        }
+    }
+
+    CloseHandle(hProcess);
+    if (! psutil_assert_pid_not_exists( pid, "iphr: exit fun")) {
+        return -2;
+    }
+    return -1;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running and if
+ * it does return it, else return NULL with the proper Python exception
+ * set.
+ */
+HANDLE
+psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+    int ret = psutil_is_phandle_running(hProcess, pid);
+    if (ret == 1)
+        return hProcess;
+    else if (ret == 0)
+        return NoSuchProcess();
+    else if (ret == -1)
+        return PyErr_SetFromWindowsErr(0);
+    else if (ret == -2)
+        return NULL;
+}
+
+
 /*
  * A wrapper around OpenProcess setting NSP exception if process
  * no longer exists.
@@ -170,7 +274,6 @@ const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 HANDLE
 psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     HANDLE hProcess;
-    DWORD processExitCode = 0;
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
@@ -178,22 +281,7 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     }
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
-    if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER)
-            NoSuchProcess();
-        else
-            PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-
-    // make sure the process is running
-    GetExitCodeProcess(hProcess, &processExitCode);
-    if (processExitCode == 0) {
-        NoSuchProcess();
-        CloseHandle(hProcess);
-        return NULL;
-    }
-    return hProcess;
+    return psutil_check_phandle(hProcess, pid);
 }
 
 
@@ -247,6 +335,30 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
+int
+psutil_assert_pid_exists(DWORD pid, char *err) {
+    if (psutil_testing()) {
+        if (psutil_pid_in_pids(pid) == 0) {
+            PyErr_SetString(PyExc_AssertionError, err);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+int
+psutil_assert_pid_not_exists(DWORD pid, char *err) {
+    if (psutil_testing()) {
+        if (psutil_pid_in_pids(pid) == 1) {
+            PyErr_SetString(PyExc_AssertionError, err);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
 /*
 /* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
 /* Returns:
@@ -271,10 +383,18 @@ psutil_pid_is_running(DWORD pid) {
         err = GetLastError();
         // Yeah, this is the actual error code in case of "no such process".
         if (err == ERROR_INVALID_PARAMETER) {
+            if (! psutil_assert_pid_not_exists(
+                    pid, "pir: OpenProcess() -> INVALID_PARAMETER")) {
+                return -1;
+            }
             return 0;
         }
         // Access denied obviously means there's a process to deny access to.
         else if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: OpenProcess() ACCESS_DENIED")) {
+                return -1;
+            }
             return 1;
         }
         // Be strict and raise an exception; the caller is supposed
@@ -289,23 +409,34 @@ psutil_pid_is_running(DWORD pid) {
         CloseHandle(hProcess);
         // XXX - maybe STILL_ACTIVE is not fully reliable as per:
         // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        if (exitCode == STILL_ACTIVE)
+        if (exitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> STILL_ACTIVE")) {
+                return -1;
+            }
             return 1;
-        else
-            return 0;
+        }
+        // We can't be sure so we look into pids.
+        else {
+            return psutil_pid_in_pids(pid);
+        }
     }
     else {
         err = GetLastError();
         CloseHandle(hProcess);
         // Same as for OpenProcess, assume access denied means there's
         // a process to deny access to.
-        if (err == ERROR_ACCESS_DENIED)
+        if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> ERROR_ACCESS_DENIED")) {
+                return -1;
+            }
             return 1;
+        }
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromWindowsErr(0);
             return -1;
         }
-
     }
 }
 

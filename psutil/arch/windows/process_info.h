@@ -23,6 +23,10 @@ int psutil_pid_is_running(DWORD pid);
 int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                          PVOID *retBuffer);
 
+int psutil_assert_pid_exists(DWORD pid, char *err);
+int psutil_assert_pid_not_exists(DWORD pid, char *err);
+
+
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_get_cwd(long pid);
 PyObject* psutil_get_environ(long pid);
