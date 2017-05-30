@@ -795,8 +795,11 @@ class Process(object):
             ret = cext.proc_wait(self.pid, cext_timeout)
             if ret == WAIT_TIMEOUT:
                 raise TimeoutExpired(timeout, self.pid, self._name)
-            if timeout is None and pid_exists(self.pid):
-                continue
+            if pid_exists(self.pid):
+                if timeout is None:
+                    continue
+                else:
+                    raise TimeoutExpired(timeout, self.pid, self._name)
             return ret
 
     @wrap_exceptions
