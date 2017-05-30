@@ -321,6 +321,7 @@ error:
 static PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
+    DWORD err;
     long pid;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -342,9 +343,16 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
 
     // kill the process
     if (! TerminateProcess(hProcess, 0)) {
-        PyErr_SetFromWindowsErr(0);
+        err = GetLastError();
         CloseHandle(hProcess);
-        return NULL;
+        // See: https://github.com/giampaolo/psutil/issues/1099
+        if (psutil_pid_is_running(pid) == 0) {
+            Py_RETURN_NONE;
+        }
+        else {
+            PyErr_SetFromWindowsErr(err);
+            return NULL;
+        }
     }
 
     CloseHandle(hProcess);

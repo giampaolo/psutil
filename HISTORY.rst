@@ -79,6 +79,8 @@
   on OpenProcess Windows API now check whether the PID is actually running.
 - 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
   is still alive.
+- 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
+  process already died.
 
 **Porting notes**
 
