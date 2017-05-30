@@ -28,7 +28,6 @@
 
 **Bug fixes**
 
-- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses
 - 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
   value of the first call is now cached so that boot_time() always returns the
   same value if fluctuation is <= 1 second.
@@ -75,6 +74,9 @@
 - 1085_: cpu_count() return value is now checked and forced to None if <= 1.
 - 1087_: Process.cpu_percent() guard against cpu_count() returning None and
   assumes 1 instead.
+- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
+- 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
+  is still alive.
 
 **Porting notes**
 

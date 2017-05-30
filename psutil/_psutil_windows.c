@@ -398,7 +398,9 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
+
     CloseHandle(hProcess);
+
 #if PY_MAJOR_VERSION >= 3
     return PyLong_FromLong((long) ExitCode);
 #else
