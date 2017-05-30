@@ -40,6 +40,7 @@ from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import tcp_socketpair
 from psutil.tests import TESTFN
+from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
@@ -451,6 +452,8 @@ class TestSystemWideConnections(unittest.TestCase):
             self.assertEqual(len(cons), len(socks))
 
     @skip_on_access_denied()
+    # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
+    @unittest.skipIf(OSX and TRAVIS, "unreliable on OSX + TRAVIS")
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
         # sockets. For each process check that proc.connections()
