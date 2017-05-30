@@ -344,12 +344,9 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     // kill the process
     if (! TerminateProcess(hProcess, 0)) {
         err = GetLastError();
-        CloseHandle(hProcess);
         // See: https://github.com/giampaolo/psutil/issues/1099
-        if (psutil_pid_is_running(pid) == 0) {
-            Py_RETURN_NONE;
-        }
-        else {
+        if (err != ERROR_ACCESS_DENIED) {
+            CloseHandle(hProcess);
             PyErr_SetFromWindowsErr(err);
             return NULL;
         }
