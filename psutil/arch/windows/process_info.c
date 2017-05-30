@@ -259,7 +259,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         return NoSuchProcess();
     else if (ret == -1)
         return PyErr_SetFromWindowsErr(0);
-    else if (ret == -2)
+    else  // -2
         return NULL;
 }
 
