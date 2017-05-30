@@ -465,9 +465,7 @@ static PyObject *
 psutil_proc_create_time(PyObject *self, PyObject *args) {
     long        pid;
     long long   unix_time;
-    DWORD       exitCode;
     HANDLE      hProcess;
-    BOOL        ret;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -492,7 +490,9 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         }
     }
 
-/*
+    CloseHandle(hProcess);
+
+    /*
     // Make sure the process is not gone as OpenProcess alone seems to be
     // unreliable in doing so (it seems a previous call to p.wait() makes
     // it unreliable).
@@ -510,7 +510,8 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         if (GetLastError() != ERROR_ACCESS_DENIED)
             return PyErr_SetFromWindowsErr(0);
     }
-*/
+    */
+
     // Convert the FILETIME structure to a Unix time.
     // It's the best I could find by googling and borrowing code here
     // and there. The time returned has a precision of 1 second.
