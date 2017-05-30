@@ -75,6 +75,8 @@
 - 1087_: Process.cpu_percent() guard against cpu_count() returning None and
   assumes 1 instead.
 - 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
+- 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
+  on OpenProcess Windows API now check whether the PID is actually running.
 - 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
   is still alive.
 
