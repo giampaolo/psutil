@@ -527,4 +527,5 @@ class Process(object):
 
     @wrap_exceptions
     def memory_maps(self):
-        return cext.proc_memory_maps(self.pid)
+        with catch_zombie(self):
+            return cext.proc_memory_maps(self.pid)

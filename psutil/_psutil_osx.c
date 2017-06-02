@@ -336,10 +336,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
-        else
-            AccessDenied();
+        psutil_raise_for_pid(pid, "task_for_pid() failed");
         goto error;
     }
 

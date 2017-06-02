@@ -129,6 +129,36 @@ class TestZombieProcessAPIs(unittest.TestCase):
     def test_environ(self):
         self.assertRaises(psutil.ZombieProcess, self.p.environ)
 
+    def test_cwd(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cwd)
+
+    def test_memory_full_info(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.memory_full_info)
+
+    def test_cpu_times(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cpu_times)
+
+    def test_num_ctx_switches(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_ctx_switches)
+
+    def test_num_threads(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_threads)
+
+    def test_open_files(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.open_files)
+
+    def test_connections(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.connections)
+
+    def test_num_fds(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_fds)
+
+    def test_threads(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.threads)
+
+    def test_memory_maps(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.memory_maps)
+
 
 @unittest.skipIf(not OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
