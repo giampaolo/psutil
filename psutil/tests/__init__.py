@@ -18,6 +18,7 @@ import functools
 import os
 import random
 import re
+import select
 import shutil
 import socket
 import stat
@@ -35,6 +36,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -71,7 +73,7 @@ __all__ = [
     "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # subprocesses
-    'pyrun', 'reap_children', 'get_test_subprocess',
+    'pyrun', 'reap_children', 'get_test_subprocess', 'create_zombie_proc',
     'create_proc_children_pair',
     # threads
     'ThreadTask'
@@ -328,6 +330,42 @@ def create_proc_children_pair():
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
     return (child1, child2)
+
+
+def create_zombie_proc():
+    """Create a zombie process and return its PID."""
+    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
+    src = textwrap.dedent("""\
+        import os, sys, time, socket, contextlib
+        child_pid = os.fork()
+        if child_pid > 0:
+            time.sleep(3000)
+        else:
+            # this is the zombie process
+            s = socket.socket(socket.AF_UNIX)
+            with contextlib.closing(s):
+                s.connect('%s')
+                if sys.version_info < (3, ):
+                    pid = str(os.getpid())
+                else:
+                    pid = bytes(str(os.getpid()), 'ascii')
+                s.sendall(pid)
+        """ % unix_file)
+    with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
+        sock.settimeout(GLOBAL_TIMEOUT)
+        sock.bind(unix_file)
+        sock.listen(1)
+        pyrun(src)
+        conn, _ = sock.accept()
+        try:
+            select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
+            zpid = int(conn.recv(1024))
+            _pids_started.add(zpid)
+            zproc = psutil.Process(zpid)
+            call_until(lambda: zproc.status(), "ret == psutil.STATUS_ZOMBIE")
+            return zpid
+        finally:
+            conn.close()
 
 
 @_cleanup_on_err

@@ -7,11 +7,9 @@
 """Tests for psutil.Process class."""
 
 import collections
-import contextlib
 import errno
 import getpass
 import os
-import select
 import signal
 import socket
 import subprocess
@@ -38,10 +36,10 @@ from psutil.tests import call_until
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import create_proc_children_pair
+from psutil.tests import create_zombie_proc
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
-from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -51,7 +49,6 @@ from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import mock
 from psutil.tests import PYPY
-from psutil.tests import pyrun
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -1243,92 +1240,58 @@ class TestProcess(unittest.TestCase):
             except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
-        # Note: in this test we'll be creating two sub processes.
-        # Both of them are supposed to be freed / killed by
-        # reap_children() as they are attributable to 'us'
-        # (os.getpid()) via children(recursive=True).
-        unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
-        src = textwrap.dedent("""\
-        import os, sys, time, socket, contextlib
-        child_pid = os.fork()
-        if child_pid > 0:
-            time.sleep(3000)
-        else:
-            # this is the zombie process
-            s = socket.socket(socket.AF_UNIX)
-            with contextlib.closing(s):
-                s.connect('%s')
-                if sys.version_info < (3, ):
-                    pid = str(os.getpid())
-                else:
-                    pid = bytes(str(os.getpid()), 'ascii')
-                s.sendall(pid)
-        """ % unix_file)
-        with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
-            try:
-                sock.settimeout(GLOBAL_TIMEOUT)
-                sock.bind(unix_file)
-                sock.listen(1)
-                pyrun(src)
-                conn, _ = sock.accept()
-                self.addCleanup(conn.close)
-                select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
-                zpid = int(conn.recv(1024))
-                zproc = psutil.Process(zpid)
-                call_until(lambda: zproc.status(),
-                           "ret == psutil.STATUS_ZOMBIE")
-                # A zombie process should always be instantiable
-                zproc = psutil.Process(zpid)
-                # ...and at least its status always be querable
-                self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
-                # ...and it should be considered 'running'
-                self.assertTrue(zproc.is_running())
-                # ...and as_dict() shouldn't crash
-                zproc.as_dict()
-                # if cmdline succeeds it should be an empty list
-                ret = succeed_or_zombie_p_exc(zproc.suspend)
-                if ret is not None:
-                    self.assertEqual(ret, [])
+        zpid = create_zombie_proc()
+        self.addCleanup(reap_children, recursive=True)
+        # A zombie process should always be instantiable
+        zproc = psutil.Process(zpid)
+        # ...and at least its status always be querable
+        self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
+        # ...and it should be considered 'running'
+        self.assertTrue(zproc.is_running())
+        # ...and as_dict() shouldn't crash
+        zproc.as_dict()
+        # if cmdline succeeds it should be an empty list
+        ret = succeed_or_zombie_p_exc(zproc.suspend)
+        if ret is not None:
+            self.assertEqual(ret, [])
 
-                if hasattr(zproc, "rlimit"):
-                    succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
-                    succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
-                                            (5, 5))
-                # set methods
-                succeed_or_zombie_p_exc(zproc.parent)
-                if hasattr(zproc, 'cpu_affinity'):
-                    succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
-                succeed_or_zombie_p_exc(zproc.nice, 0)
-                if hasattr(zproc, 'ionice'):
-                    if LINUX:
-                        succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
-                    else:
-                        succeed_or_zombie_p_exc(zproc.ionice, 0)  # Windows
-                if hasattr(zproc, 'rlimit'):
-                    succeed_or_zombie_p_exc(zproc.rlimit,
-                                            psutil.RLIMIT_NOFILE, (5, 5))
-                succeed_or_zombie_p_exc(zproc.suspend)
-                succeed_or_zombie_p_exc(zproc.resume)
-                succeed_or_zombie_p_exc(zproc.terminate)
-                succeed_or_zombie_p_exc(zproc.kill)
+        if hasattr(zproc, "rlimit"):
+            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
+            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
+                                    (5, 5))
+        # set methods
+        succeed_or_zombie_p_exc(zproc.parent)
+        if hasattr(zproc, 'cpu_affinity'):
+            succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+        succeed_or_zombie_p_exc(zproc.nice, 0)
+        if hasattr(zproc, 'ionice'):
+            if LINUX:
+                succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
+            else:
+                succeed_or_zombie_p_exc(zproc.ionice, 0)  # Windows
+        if hasattr(zproc, 'rlimit'):
+            succeed_or_zombie_p_exc(zproc.rlimit,
+                                    psutil.RLIMIT_NOFILE, (5, 5))
+        succeed_or_zombie_p_exc(zproc.suspend)
+        succeed_or_zombie_p_exc(zproc.resume)
+        succeed_or_zombie_p_exc(zproc.terminate)
+        succeed_or_zombie_p_exc(zproc.kill)
 
-                # ...its parent should 'see' it
-                # edit: not true on BSD and OSX
-                # descendants = [x.pid for x in psutil.Process().children(
-                #                recursive=True)]
-                # self.assertIn(zpid, descendants)
-                # XXX should we also assume ppid be usable?  Note: this
-                # would be an important use case as the only way to get
-                # rid of a zombie is to kill its parent.
-                # self.assertEqual(zpid.ppid(), os.getpid())
-                # ...and all other APIs should be able to deal with it
-                self.assertTrue(psutil.pid_exists(zpid))
-                self.assertIn(zpid, psutil.pids())
-                self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
-                psutil._pmap = {}
-                self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
-            finally:
-                reap_children(recursive=True)
+        # ...its parent should 'see' it
+        # edit: not true on BSD and OSX
+        # descendants = [x.pid for x in psutil.Process().children(
+        #                recursive=True)]
+        # self.assertIn(zpid, descendants)
+        # XXX should we also assume ppid be usable?  Note: this
+        # would be an important use case as the only way to get
+        # rid of a zombie is to kill its parent.
+        # self.assertEqual(zpid.ppid(), os.getpid())
+        # ...and all other APIs should be able to deal with it
+        self.assertTrue(psutil.pid_exists(zpid))
+        self.assertIn(zpid, psutil.pids())
+        self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+        psutil._pmap = {}
+        self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
