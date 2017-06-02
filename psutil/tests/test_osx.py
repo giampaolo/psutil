@@ -12,6 +12,7 @@ import time
 
 import psutil
 from psutil import OSX
+from psutil.tests import create_zombie_proc
 from psutil.tests import get_test_subprocess
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
@@ -97,6 +98,33 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(
             year,
             time.strftime("%Y", time.localtime(start_psutil)))
+
+
+@unittest.skipIf(not OSX, "OSX only")
+class TestZombieProcessAPIs(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        zpid = create_zombie_proc()
+        cls.p = psutil.Process(zpid)
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children(recursive=True)
+
+    def test_pidtask_info(self):
+        self.p.ppid()
+        self.p.uids()
+        self.p.gids()
+        self.p.terminal()
+        self.p.create_time()
+        self.p.status()
+
+    def test_exe(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.exe)
+
+    def test_cmdline(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cmdline)
 
 
 @unittest.skipIf(not OSX, "OSX only")
