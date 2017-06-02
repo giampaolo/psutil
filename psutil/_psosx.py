@@ -518,7 +518,8 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
-        rawlist = cext.proc_threads(self.pid)
+        with catch_zombie(self):
+            rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = _common.pthread(thread_id, utime, stime)
