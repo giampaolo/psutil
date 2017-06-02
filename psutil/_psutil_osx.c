@@ -125,6 +125,8 @@ error:
  * using sysctl() and filling up a kinfo_proc struct.
  * It should be possible to do this for all processes without
  * incurring into permission (EPERM) errors.
+ * This will also succeed for zombie processes returning correct
+ * information.
  */
 static PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
@@ -173,8 +175,9 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
  * Return multiple process info as a Python tuple in one shot by
  * using proc_pidinfo(PROC_PIDTASKINFO) and filling a proc_taskinfo
  * struct.
- * Contrarily from proc_kinfo above this function will return EACCES
- * for PIDs owned by another user.
+ * Contrarily from proc_kinfo above this function will fail with
+ * EACCES for PIDs owned by another user and with ESRCH for zombie
+ * processes.
  */
 static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
@@ -226,6 +229,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 
 /*
  * Return process current working directory.
+ * Raises NSP in case of zombie process.
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
@@ -1186,6 +1190,7 @@ error:
 
 /*
  * Return process TCP and UDP connections as a list of tuples.
+ * Raises NSP in case of zombie process.
  * References:
  * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
  * - /usr/include/sys/proc_info.h
@@ -1389,6 +1394,7 @@ error:
 
 /*
  * Return number of file descriptors opened by process.
+ * Raises NSP in case of zombie process.
  */
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {

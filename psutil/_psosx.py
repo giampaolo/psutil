@@ -4,6 +4,7 @@
 
 """OSX platform implementation."""
 
+import contextlib
 import errno
 import functools
 import os
@@ -291,20 +292,38 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            if self.pid == 0:
-                if 0 in pids():
-                    raise AccessDenied(self.pid, self._name)
-                else:
-                    raise
             if err.errno == errno.ESRCH:
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
+
+
+@contextlib.contextmanager
+def catch_zombie(proc):
+    """There are some poor C APIs which incorrectly raise ESRCH when
+    the process is still alive or it's a zombie, or even RuntimeError
+    (those who don't set errno). This is here in order to solve:
+    https://github.com/giampaolo/psutil/issues/1044
+    """
+    try:
+        yield
+    except (OSError, RuntimeError) as err:
+        if isinstance(err, RuntimeError) or err.errno == errno.ESRCH:
+            try:
+                # status() is not supposed to lie and correctly detect
+                # zombies so if it raises ESRCH it's true.
+                status = proc.status()
+            except NoSuchProcess:
+                raise err
+            else:
+                if status == _common.STATUS_ZOMBIE:
+                    raise ZombieProcess(proc.pid, proc._name, proc._ppid)
+                else:
+                    raise AccessDenied(proc.pid, proc._name)
+        else:
+            raise
 
 
 class Process(object):
@@ -327,7 +346,8 @@ class Process(object):
     @memoize_when_activated
     def _get_pidtaskinfo(self):
         # Note: should work for PIDs owned by user only.
-        ret = cext.proc_pidtaskinfo_oneshot(self.pid)
+        with catch_zombie(self):
+            ret = cext.proc_pidtaskinfo_oneshot(self.pid)
         assert len(ret) == len(pidtaskinfo_map)
         return ret
 
@@ -346,13 +366,15 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        return cext.proc_exe(self.pid)
+        with catch_zombie(self):
+            return cext.proc_exe(self.pid)
 
     @wrap_exceptions
     def cmdline(self):
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._name)
-        return cext.proc_cmdline(self.pid)
+        with catch_zombie(self):
+            return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def environ(self):
@@ -367,7 +389,8 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
-        return cext.proc_cwd(self.pid)
+        with catch_zombie(self):
+            return cext.proc_cwd(self.pid)
 
     @wrap_exceptions
     def uids(self):
@@ -440,7 +463,8 @@ class Process(object):
         if self.pid == 0:
             return []
         files = []
-        rawlist = cext.proc_open_files(self.pid)
+        with catch_zombie(self):
+            rawlist = cext.proc_open_files(self.pid)
         for path, fd in rawlist:
             if isfile_strict(path):
                 ntuple = _common.popenfile(path, fd)
@@ -453,7 +477,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = cext.proc_connections(self.pid, families, types)
+        with catch_zombie(self):
+            rawlist = cext.proc_connections(self.pid, families, types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -468,7 +493,8 @@ class Process(object):
     def num_fds(self):
         if self.pid == 0:
             return 0
-        return cext.proc_num_fds(self.pid)
+        with catch_zombie(self):
+            return cext.proc_num_fds(self.pid)
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -479,11 +505,13 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return cext_posix.getpriority(self.pid)
+        with catch_zombie(self):
+            return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext_posix.setpriority(self.pid, value)
+        with catch_zombie(self):
+            return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):
