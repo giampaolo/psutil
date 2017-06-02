@@ -113,12 +113,12 @@ class TestZombieProcessAPIs(unittest.TestCase):
         reap_children(recursive=True)
 
     def test_pidtask_info(self):
+        self.assertEqual(self.p.status(), psutil.STATUS_ZOMBIE)
         self.p.ppid()
         self.p.uids()
         self.p.gids()
         self.p.terminal()
         self.p.create_time()
-        self.p.status()
 
     def test_exe(self):
         self.assertRaises(psutil.ZombieProcess, self.p.exe)
