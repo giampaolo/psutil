@@ -371,16 +371,13 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._name)
         with catch_zombie(self):
             return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def environ(self):
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._name)
-        return parse_environ_block(cext.proc_environ(self.pid))
+        with catch_zombie(self):
+            return parse_environ_block(cext.proc_environ(self.pid))
 
     @wrap_exceptions
     def ppid(self):

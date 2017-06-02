@@ -235,13 +235,12 @@ psutil_get_environ(long pid) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) {
-            // EINVAL == access denied OR nonexistent PID
-            if (psutil_pid_exists(pid))
-                AccessDenied();
-            else
-                NoSuchProcess();
-        }
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess();
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 

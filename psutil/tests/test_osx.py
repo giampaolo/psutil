@@ -126,6 +126,9 @@ class TestZombieProcessAPIs(unittest.TestCase):
     def test_cmdline(self):
         self.assertRaises(psutil.ZombieProcess, self.p.cmdline)
 
+    def test_environ(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.environ)
+
 
 @unittest.skipIf(not OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
