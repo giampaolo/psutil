@@ -334,6 +334,7 @@ def create_proc_children_pair():
 
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
+    assert psutil.POSIX
     unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib

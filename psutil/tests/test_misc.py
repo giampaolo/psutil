@@ -945,6 +945,7 @@ class TestProcessUtils(unittest.TestCase):
         assert not psutil.tests._pids_started
         assert not psutil.tests._subprocesses_started
 
+    @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
         zpid = create_zombie_proc()
         self.addCleanup(reap_children, recursive=True)
