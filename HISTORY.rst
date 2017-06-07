@@ -28,6 +28,7 @@
 
 **Bug fixes**
 
+- 989_: [Windows] boot_time() may return a negative value.
 - 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
   value of the first call is now cached so that boot_time() always returns the
   same value if fluctuation is <= 1 second.

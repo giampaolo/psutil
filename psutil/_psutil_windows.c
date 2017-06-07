@@ -235,8 +235,12 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     and 01-01-1601, from time_t the divide by 1e+7 to get to the same
     base granularity.
     */
-    ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) \
-        + fileTime.dwLowDateTime;
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+    ll = (((ULONGLONG)
+#else
+    ll = (((LONGLONG)
+#endif
+        (fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
     // GetTickCount64() is Windows Vista+ only. Dinamically load
@@ -249,15 +253,15 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     if (psutil_GetTickCount64 != NULL) {
         // Windows >= Vista
         uptime = psutil_GetTickCount64() / (ULONGLONG)1000.00f;
+        return Py_BuildValue("K", pt - uptime);
     }
     else {
         // Windows XP.
         // GetTickCount() time will wrap around to zero if the
         // system is run continuously for 49.7 days.
         uptime = GetTickCount() / (LONGLONG)1000.00f;
+        return Py_BuildValue("L", pt - uptime);
     }
-
-    return Py_BuildValue("d", (double)pt - (double)uptime);
 }
 
 
