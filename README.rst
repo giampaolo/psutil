@@ -66,15 +66,15 @@ Example applications
 |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
 
-Also see https://github.com/giampaolo/psutil/tree/master/scripts and
-`doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
+and `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
 
 =====================
 Projects using psutil
 =====================
 
 At the time of writing there are over
-`5200 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`5400 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
