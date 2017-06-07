@@ -154,7 +154,8 @@ class TestZombieProcessAPIs(unittest.TestCase):
         self.assertRaises(psutil.ZombieProcess, self.p.num_fds)
 
     def test_threads(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.threads)
+        self.assertRaises((psutil.ZombieProcess, psutil.AccessDenied),
+                          self.p.threads)
 
     def test_memory_maps(self):
         self.assertRaises(psutil.ZombieProcess, self.p.memory_maps)
