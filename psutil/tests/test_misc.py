@@ -35,6 +35,7 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
+from psutil.tests import create_zombie_proc
 from psutil.tests import DEVNULL
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
@@ -943,6 +944,13 @@ class TestProcessUtils(unittest.TestCase):
         assert not p2.is_running()
         assert not psutil.tests._pids_started
         assert not psutil.tests._subprocesses_started
+
+    @unittest.skipIf(not POSIX, "POSIX only")
+    def test_create_zombie_proc(self):
+        zpid = create_zombie_proc()
+        self.addCleanup(reap_children, recursive=True)
+        p = psutil.Process(zpid)
+        self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
 
 
 class TestNetUtils(unittest.TestCase):

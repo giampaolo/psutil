@@ -65,8 +65,11 @@
 typedef BOOL (WINAPI *LPFN_GLPI)
     (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
 
-// fix for mingw32, see
+// Fix for mingw32, see:
 // https://github.com/giampaolo/psutil/issues/351#c2
+// This is actually a DISK_PERFORMANCE struct:
+// https://msdn.microsoft.com/en-us/library/windows/desktop/
+//     aa363991(v=vs.85).aspx
 typedef struct _DISK_PERFORMANCE_WIN_2008 {
     LARGE_INTEGER BytesRead;
     LARGE_INTEGER BytesWritten;
