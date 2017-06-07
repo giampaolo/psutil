@@ -678,10 +678,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
             ls = glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
             ls.sort(key=lambda x: int(re.search('[0-9]+', x).group(0)))
 
+        pjoin = os.path.join
         for path in ls:
-            curr = int(cat(os.path.join(path, "scaling_cur_freq"))) / 1000
-            max_ = int(cat(os.path.join(path, "scaling_max_freq"))) / 1000
-            min_ = int(cat(os.path.join(path, "scaling_min_freq"))) / 1000
+            curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
+            if curr is None:
+                # Likely an old RedHat, see:
+                # https://github.com/giampaolo/psutil/issues/1071
+                curr = cat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
+                if curr is None:
+                    raise NotImplementedError(
+                        "can't find current frequency file")
+            curr = int(curr) / 1000
+            max_ = int(cat(pjoin(path, "scaling_max_freq"))) / 1000
+            min_ = int(cat(pjoin(path, "scaling_min_freq"))) / 1000
             ret.append(_common.scpufreq(curr, min_, max_))
         return ret
 

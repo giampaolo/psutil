@@ -65,6 +65,7 @@
 - 1067_: [NetBSD] Process.cmdline() leaks memory if proces has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
+- 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
 - 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
 - 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.

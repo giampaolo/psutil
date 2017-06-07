@@ -674,6 +674,38 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.min, 200.0)
                 self.assertEqual(freq.max, 300.0)
 
+    def test_cpu_frequ_no_scaling_cur_freq_file(self):
+        # See: https://github.com/giampaolo/psutil/issues/1071
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/scaling_cur_freq'):
+                raise IOError(errno.ENOENT, "")
+            elif name.endswith('/cpuinfo_cur_freq'):
+                return io.BytesIO(b"200000")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            ret = psutil.cpu_freq()
+            self.assertEqual(ret.current, 200)
+
+        # Also test that NotImplementedError is raised in case no
+        # current freq file is present.
+
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('/scaling_cur_freq'):
+                raise IOError(errno.ENOENT, "")
+            elif name.endswith('/cpuinfo_cur_freq'):
+                raise IOError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            self.assertRaises(NotImplementedError, psutil.cpu_freq)
+
 
 # =====================================================================
 # --- system CPU stats
