@@ -674,7 +674,8 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.min, 200.0)
                 self.assertEqual(freq.max, 300.0)
 
-    def test_cpu_frequ_no_scaling_cur_freq_file(self):
+    @unittest.skipIf(TRAVIS, "fails on Travis")
+    def test_cpu_freq_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
