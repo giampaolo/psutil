@@ -2342,20 +2342,12 @@ A bit more advanced, check string against :meth:`Process.name()`,
 
   def find_procs_by_name(name):
       "Return a list of processes matching 'name'."
-      assert name, name
       ls = []
-      for p in psutil.process_iter():
-          name_, exe, cmdline = "", "", []
-          try:
-              name_ = p.name()
-              cmdline = p.cmdline()
-              exe = p.exe()
-          except (psutil.AccessDenied, psutil.ZombieProcess):
-              pass
-          except psutil.NoSuchProcess:
-              continue
-          if name == name_ or cmdline[0] == name or os.path.basename(exe) == name:
-              ls.append(name)
+      for p in psutil.process_iter(attrs=["name", "exe", "cmdline"]):
+          if name == p.info['name'] or \
+                  p.info['exe'] and os.path.basename(p.info['exe']) == name or \
+                  p.info['cmdline'] and p.info['cmdline'][0] == name:
+              ls.append(p)
       return ls
 
 Kill process tree
@@ -2371,8 +2363,8 @@ Kill process tree
                      timeout=None, on_terminate=None):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callabck as soon as a child
-      terminates.
+      "on_terminate", if specified, is a callabck function which is
+      called as soon as a child terminates.
       """
       if pid == os.getpid():
           raise RuntimeError("I refuse to kill myself")
@@ -2417,8 +2409,6 @@ resources.
               # give up
               for p in alive:
                   print("process {} survived SIGKILL; giving up" % p)
-
-  reap_children()
 
 Filtering and sorting processes
 -------------------------------

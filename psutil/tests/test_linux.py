@@ -686,9 +686,14 @@ class TestSystemCPU(unittest.TestCase):
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        policies = ['/sys/devices/system/cpu/cpufreq/policy0',
+                    '/sys/devices/system/cpu/cpufreq/policy1',
+                    '/sys/devices/system/cpu/cpufreq/policy2']
+
         with mock.patch(patch_point, side_effect=open_mock):
-            ret = psutil.cpu_freq()
-            self.assertEqual(ret.current, 200)
+            with mock.patch('glob.glob', return_value=policies):
+                freq = psutil.cpu_freq()
+                self.assertEqual(freq.current, 200)
 
         # Also test that NotImplementedError is raised in case no
         # current freq file is present.
@@ -704,7 +709,8 @@ class TestSystemCPU(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-            self.assertRaises(NotImplementedError, psutil.cpu_freq)
+            with mock.patch('glob.glob', return_value=policies):
+                self.assertRaises(NotImplementedError, psutil.cpu_freq)
 
 
 # =====================================================================

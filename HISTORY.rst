@@ -94,7 +94,8 @@
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
     None
 - 1040_: all strings are encoded by using OS fs encoding.
-- 1040_: the following Windows APIs returned unicode and now they return str:
+- 1040_: the following Windows APIs on Python 2 now return a string instead of
+  unicode:
   - Process.memory_maps().path
   - WindosService.bin_path()
   - WindosService.description()
