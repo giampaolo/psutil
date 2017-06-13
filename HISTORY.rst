@@ -84,6 +84,7 @@
   is still alive.
 - 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
   process already died.
+- 1101_: [Linux] sensors_temperatures() may raise ENODEV.
 
 **Porting notes**
 

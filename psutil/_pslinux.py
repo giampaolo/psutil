@@ -1151,7 +1151,8 @@ def sensors_temperatures():
             current = float(cat(base + '_input')) / 1000.0
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1009
-            if err.errno == errno.EIO:
+            # https://github.com/giampaolo/psutil/issues/1101
+            if err.errno in (errno.EIO, errno.ENODEV):
                 warnings.warn("ignoring %r" % err, RuntimeWarning)
                 continue
             else:
