@@ -10,11 +10,13 @@ import socket
 import subprocess
 import sys
 from collections import namedtuple
+from socket import AF_INET
 
 from . import _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
+from ._common import AF_INET6
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
@@ -263,6 +265,9 @@ def net_connections(kind, _pid=-1):
             continue
         if type_ not in types:
             continue
+        if fam in (AF_INET, AF_INET6):
+            laddr = _common.addr(*laddr)
+            raddr = _common.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)

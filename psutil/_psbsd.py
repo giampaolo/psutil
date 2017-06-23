@@ -10,11 +10,13 @@ import functools
 import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
+from socket import AF_INET
 
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
+from ._common import AF_INET6
 from ._common import conn_tmap
 from ._common import FREEBSD
 from ._common import memoize
@@ -393,6 +395,8 @@ def net_connections(kind):
                 # can't initialize their status?
                 status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
             fam = sockfam_to_enum(fam)
+            laddr = _common.addr(*laddr)
+            raddr = _common.addr(*raddr)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
@@ -714,6 +718,9 @@ class Process(object):
                         status = TCP_STATUSES[status]
                     except KeyError:
                         status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+                    if fam in (AF_INET, AF_INET6):
+                        laddr = _common.addr(*laddr)
+                        raddr = _common.addr(*raddr)
                     fam = sockfam_to_enum(fam)
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
@@ -729,6 +736,9 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            if fam in (AF_INET, AF_INET6):
+                laddr = _common.addr(*laddr)
+                raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             status = TCP_STATUSES[status]

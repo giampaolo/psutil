@@ -8,12 +8,14 @@ import contextlib
 import errno
 import functools
 import os
+from socket import AF_INET
 from collections import namedtuple
 
 from . import _common
 from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
+from ._common import AF_INET6
 from ._common import conn_tmap
 from ._common import isfile_strict
 from ._common import memoize_when_activated
@@ -482,6 +484,9 @@ class Process(object):
             status = TCP_STATUSES[status]
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
+            if fam in (AF_INET, AF_INET6):
+                laddr = _common.addr(*laddr)
+                raddr = _common.addr(*raddr)
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret

@@ -489,10 +489,10 @@ Network
     <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
     `SOCK_DGRAM
     <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
-  - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
+  - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
     in case of AF_UNIX sockets. For UNIX sockets see notes below.
-  - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
-    ``path`` in case of UNIX sockets.
+  - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
+    absolute ``path`` in case of UNIX sockets.
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
@@ -543,10 +543,10 @@ Network
 
     >>> import psutil
     >>> psutil.net_connections()
-    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING', pid=2987),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED', pid=None),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT', pid=None)
      ...]
 
   .. note::
@@ -568,6 +568,8 @@ Network
 
   .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
      ``-1``.
+
+  .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
 
 .. function:: net_if_addrs()
 
@@ -1788,10 +1790,10 @@ Process class
     - **type**: the address type, either
       `SOCK_STREAM <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
       `SOCK_DGRAM <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
-    - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
+    - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
-    - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
-      ``path`` in case of UNIX sockets.
+    - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
+      absolute ``path`` in case of UNIX sockets.
       When the remote endpoint is not connected you'll get an empty tuple
       (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
     - **status**: represents the status of a TCP connection. The return value
@@ -1835,10 +1837,10 @@ Process class
       >>> p.name()
       'firefox'
       >>> p.connections()
-      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
-       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
-       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
-       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
+       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING'),
+       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED'),
+       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT')]
 
     .. note::
       (Solaris) UNIX sockets are not supported.
@@ -1850,6 +1852,8 @@ Process class
     .. note::
        (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
+
+    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
 
   .. method:: is_running()
 

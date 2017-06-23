@@ -221,6 +221,9 @@ pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
 pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status'])
 
+# psutil.connections() and psutil.Process.connections()
+addr = namedtuple('addr', ['ip', 'port'])
+
 
 # ===================================================================
 # --- Process.connections() 'kind' parameter mapping

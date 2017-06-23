@@ -1038,10 +1038,9 @@ def check_connection_ntuple(conn):
             assert isinstance(addr, tuple), addr
             if not addr:
                 continue
-            ip, port = addr
-            assert isinstance(port, int), port
-            assert 0 <= port <= 65535, port
-            check_net_address(ip, conn.family)
+            assert isinstance(addr.port, int), addr.port
+            assert 0 <= addr.port <= 65535, addr.port
+            check_net_address(addr.ip, conn.family)
         elif conn.family == AF_UNIX:
             assert isinstance(addr, str), addr
 

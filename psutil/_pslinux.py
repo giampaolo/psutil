@@ -834,7 +834,7 @@ class Connections:
                     raise _Ipv6UnsupportedError
                 else:
                     raise
-        return (ip, port)
+        return _common.addr(ip, port)
 
     @staticmethod
     def process_inet(file, family, type_, inodes, filter_pid=None):
