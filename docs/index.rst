@@ -918,7 +918,7 @@ Functions
     for p in procs:
         p.terminate()
     gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
-    for p in still_alive:
+    for p in alive:
         p.kill()
 
 Exceptions
