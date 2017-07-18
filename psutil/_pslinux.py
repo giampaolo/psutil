@@ -83,7 +83,7 @@ BOOT_TIME = None  # set later
 # Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
 # On Python 2, using a buffer with open() for such files may result in a
 # speedup, see: https://github.com/giampaolo/psutil/issues/708
-BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
+BIGFILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 SECTOR_SIZE_FALLBACK = 512
 if enum is None:
@@ -842,7 +842,7 @@ class Connections:
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
-        with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
+        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
             f.readline()  # skip the first line
             for lineno, line in enumerate(f, 1):
                 try:
@@ -879,7 +879,7 @@ class Connections:
     @staticmethod
     def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
+        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
@@ -1398,7 +1398,6 @@ class Process(object):
         Using "man proc" as a reference: where "man proc" refers to
         position N, always substract 2 (e.g starttime pos 22 in
         'man proc' == pos 20 in the list returned here).
-
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
@@ -1409,13 +1408,12 @@ class Process(object):
         # the first occurrence of "(" and the last occurence of ")".
         rpar = data.rfind(b')')
         name = data[data.find(b'(') + 1:rpar]
-        fields_after_name = data[rpar + 2:].split()
-        return [name] + fields_after_name
+        others = data[rpar + 2:].split()
+        return [name] + others
 
     @memoize_when_activated
     def _read_status_file(self):
         """Read /proc/{pid}/stat file and return its content.
-
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
@@ -1425,7 +1423,7 @@ class Process(object):
     @memoize_when_activated
     def _read_smaps_file(self):
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                         buffering=BIGGER_FILE_BUFFERING) as f:
+                         buffering=BIGFILE_BUFFERING) as f:
             return f.read().strip()
 
     def oneshot_enter(self):
