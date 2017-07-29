@@ -156,6 +156,9 @@ CPU
   Return the number of logical CPUs in the system (same as
   `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
   in Python 3.4).
+  This number is not equivalent to the number of CPUs the current process can
+  use. The number of usable CPUs can be obtained with
+  ``len(psutil.Process().cpu_affinity())``.
   If *logical* is ``False`` return the number of physical cores only (hyper
   thread CPUs are excluded). Return ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
@@ -1445,14 +1448,13 @@ Process class
     Get or set process current
     `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
     CPU affinity consists in telling the OS to run a process on a limited set
-    of CPUs only.
-    On Linux this is done via the ``taskset`` command.
+    of CPUs only (on Linux cmdline, ``taskset`` command is typically used).
     If no argument is passed it returns the current CPU affinity as a list
     of integers.
     If passed it must be a list of integers specifying the new CPUs affinity.
-    If an empty list is passed all eligible CPUs are assumed (and set);
-    on Linux this may not necessarily mean all available CPUs as in
-    ``list(range(psutil.cpu_count()))``).
+    If an empty list is passed all eligible CPUs are assumed (and set).
+    On some systems such as Linux this may not necessarily mean all available
+    logical CPUs as in ``list(range(psutil.cpu_count()))``).
 
       >>> import psutil
       >>> psutil.cpu_count()
