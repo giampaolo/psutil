@@ -1739,6 +1739,37 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(cpu.children_system, 5 / CLOCK_TICKS)
             self.assertEqual(p.cpu_num(), 6)
 
+    def test_status_file_parsing(self):
+        def open_mock(name, *args, **kwargs):
+            if name.startswith('/proc/%s/status' % os.getpid()):
+                return io.BytesIO(textwrap.dedent("""\
+                    Uid:\t1000\t1001\t1002\t1003
+                    Gid:\t1004\t1005\t1006\t1007
+                    Threads:\t66
+                    Cpus_allowed:\tf
+                    Cpus_allowed_list:\t0-7
+                    voluntary_ctxt_switches:\t12
+                    nonvoluntary_ctxt_switches:\t13"""))
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            p = psutil.Process()
+            self.assertEqual(p.num_ctx_switches().voluntary, 12)
+            self.assertEqual(p.num_ctx_switches().involuntary, 13)
+            self.assertEqual(p.num_threads(), 66)
+            uids = p.uids()
+            self.assertEqual(uids.real, 1000)
+            self.assertEqual(uids.effective, 1001)
+            self.assertEqual(uids.saved, 1002)
+            gids = p.gids()
+            self.assertEqual(gids.real, 1004)
+            self.assertEqual(gids.effective, 1005)
+            self.assertEqual(gids.saved, 1006)
+            self.assertEqual(p._proc._get_eligible_cpus(), list(range(0, 8)))
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestProcessAgainstStatus(unittest.TestCase):
