@@ -44,7 +44,7 @@ __all__ = [
     # constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
     'WINDOWS',
-    'ENCODING', 'ENCODING_ERRS',
+    'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
@@ -252,7 +252,7 @@ if AF_UNIX is not None:
         "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
+del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 
 
 # ===================================================================
@@ -390,10 +390,10 @@ def path_exists_strict(path):
 @memoize
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
-    if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
+    if not socket.has_ipv6 or AF_INET6 is None:
         return False
     try:
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        sock = socket.socket(AF_INET6, socket.SOCK_STREAM)
         with contextlib.closing(sock):
             sock.bind(("::1", 0))
         return True
