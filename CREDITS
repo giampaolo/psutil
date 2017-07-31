@@ -30,8 +30,10 @@ Github usernames of people to CC on github when in need of help.
     - ryoqun, Ryo Onodera
 - OpenBSD:
     - landryb, Landry Breuil
-- FreeNBSD:
+- FreeBSD:
     - glebius, Gleb Smirnoff (#1013)
+    - sunpoet, Po-Chuan Hsieh (pkg maintainer, #1105)
+    - kostikbel, Konstantin Belousov (#1105)
 - OSX:
     - whitlockjc, Jeremy Whitlock
 - Windows:
