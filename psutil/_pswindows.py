@@ -327,8 +327,10 @@ def net_connections(kind, _pid=-1):
     ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        laddr = _common.addr(*laddr)
-        raddr = _common.addr(*raddr)
+        if laddr:
+            laddr = _common.addr(*laddr)
+        if raddr:
+            raddr = _common.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type = socktype_to_enum(type)
