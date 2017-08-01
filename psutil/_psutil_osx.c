@@ -134,6 +134,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     struct kinfo_proc kp;
     PyObject *py_name;
     PyObject *py_retlist;
+    PyObject *py_is64bit;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -148,8 +149,14 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         py_name = Py_None;
     }
 
+    if (kp.kp_proc.p_flag & P_LP64)
+        py_is64bit = Py_True;
+    else
+        py_is64bit = Py_False;
+    Py_INCREF(py_is64bit);
+
     py_retlist = Py_BuildValue(
-        "lllllllidiO",
+        "lllllllidiOO",
         (long)kp.kp_eproc.e_ppid,                  // (long) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
@@ -160,12 +167,14 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         kp.kp_eproc.e_tdev,                        // (int) tty nr
         PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
         (int)kp.kp_proc.p_stat,                    // (int) status
-        py_name                                    // (pystr) name
+        py_name,                                   // (str) name
+        py_is64bit                                 // (bool) bitness
     );
 
     if (py_retlist != NULL) {
         // XXX shall we decref() also in case of Py_BuildValue() error?
         Py_DECREF(py_name);
+        Py_DECREF(py_is64bit);
     }
     return py_retlist;
 }

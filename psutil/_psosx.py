@@ -71,6 +71,7 @@ kinfo_proc_map = dict(
     ctime=8,
     status=9,
     name=10,
+    is64bit=11,
 )
 
 pidtaskinfo_map = dict(
@@ -537,3 +538,7 @@ class Process(object):
     def memory_maps(self):
         with catch_zombie(self):
             return cext.proc_memory_maps(self.pid)
+
+    @wrap_exceptions
+    def is64bit(self):
+        return self._get_kinfo_proc()[kinfo_proc_map['is64bit']]

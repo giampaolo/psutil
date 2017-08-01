@@ -1860,7 +1860,8 @@ Process class
   .. method:: is64bit()
 
     Return ``True`` if this is a 64 bit process, ``False`` if not, ``None`` if
-    it cannot be determined.
+    it cannot be determined. It can be assumed that ``False`` means 32 bit
+    unless you have a very old or exotic hardware.
 
     .. versionadded:: 5.3.0
 
