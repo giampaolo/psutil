@@ -266,8 +266,10 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         if fam in (AF_INET, AF_INET6):
-            laddr = _common.addr(*laddr)
-            raddr = _common.addr(*raddr)
+            if laddr:
+                laddr = _common.addr(*laddr)
+            if raddr:
+                raddr = _common.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)

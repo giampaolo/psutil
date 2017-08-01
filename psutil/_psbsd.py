@@ -719,8 +719,10 @@ class Process(object):
                     except KeyError:
                         status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
                     if fam in (AF_INET, AF_INET6):
-                        laddr = _common.addr(*laddr)
-                        raddr = _common.addr(*raddr)
+                        if laddr:
+                            laddr = _common.addr(*laddr)
+                        if raddr:
+                            raddr = _common.addr(*raddr)
                     fam = sockfam_to_enum(fam)
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
@@ -737,8 +739,10 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             if fam in (AF_INET, AF_INET6):
-                laddr = _common.addr(*laddr)
-                raddr = _common.addr(*raddr)
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
