@@ -1863,6 +1863,8 @@ Process class
     it cannot be determined. It can be assumed that ``False`` means 32 bit
     unless you have a very old or exotic hardware.
 
+    Availability: Linux, Windows, OSX
+
     .. versionadded:: 5.3.0
 
   .. method:: is_running()

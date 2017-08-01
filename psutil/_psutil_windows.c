@@ -3495,6 +3495,39 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return True if process is 64 bit else False.
+ */
+static PyObject *
+psutil_proc_is64bit(PyObject *self, PyObject *args) {
+    long pid;
+    SYSTEM_INFO sysinfo;
+    HANDLE hProcess;
+    BOOL isWow64;
+
+    GetNativeSystemInfo(&sysinfo);
+    if (sysinfo.wProcessorArchitecture != PROCESSOR_ARCHITECTURE_AMD64)
+        return Py_False;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL)
+        return NULL;
+
+    if (! IsWow64Process(hProcess, &isWow64)) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+    CloseHandle(hProcess);
+    if (isWow64)
+        return Py_False;
+    else
+        return Py_True;
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3556,6 +3589,8 @@ PsutilMethods[] = {
      "Return the number of handles opened by process."},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
+    {"proc_is64bit", psutil_proc_is64bit, METH_VARARGS,
+     "Return True if process is 64 bit else False."},
 
     // --- alternative pinfo interface
     {"proc_info", psutil_proc_info, METH_VARARGS,

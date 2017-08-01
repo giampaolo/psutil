@@ -990,3 +990,7 @@ class Process(object):
         ctx_switches = self.oneshot_info()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
         return _common.pctxsw(ctx_switches, 0)
+
+    @wrap_exceptions
+    def is64bit(self):
+        return cext.proc_is64bit(self.pid)
