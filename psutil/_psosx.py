@@ -485,8 +485,10 @@ class Process(object):
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             if fam in (AF_INET, AF_INET6):
-                laddr = _common.addr(*laddr)
-                raddr = _common.addr(*raddr)
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret

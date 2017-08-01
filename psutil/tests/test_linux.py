@@ -1749,7 +1749,7 @@ class TestProcess(unittest.TestCase):
                     Cpus_allowed:\tf
                     Cpus_allowed_list:\t0-7
                     voluntary_ctxt_switches:\t12
-                    nonvoluntary_ctxt_switches:\t13"""))
+                    nonvoluntary_ctxt_switches:\t13""").encode())
             else:
                 return orig_open(name, *args, **kwargs)
 
