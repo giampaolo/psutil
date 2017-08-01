@@ -1857,6 +1857,13 @@ Process class
 
     .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
 
+  .. method:: is64bit()
+
+    Return ``True`` if this is a 64 bit process, ``False`` if not, ``None`` if
+    it cannot be determined.
+
+    .. versionadded:: 5.3.0
+
   .. method:: is_running()
 
     Return whether the current process is running in the current process list.

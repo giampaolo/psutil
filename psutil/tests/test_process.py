@@ -12,6 +12,7 @@ import getpass
 import os
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import tempfile
@@ -43,6 +44,7 @@ from psutil.tests import get_winver
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_IS64BIT
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
@@ -672,6 +674,10 @@ class TestProcess(unittest.TestCase):
             ret = p.memory_percent(memtype='uss')
             assert 0 <= ret <= 100, ret
             assert 0 <= ret <= 100, ret
+
+    @unittest.skipIf(not HAS_IS64BIT, "not supported")
+    def test_is64bit(self):
+        self.assertEqual(psutil.Process().is64bit(), struct.calcsize("P") == 8)
 
     def test_is_running(self):
         sproc = get_test_subprocess()

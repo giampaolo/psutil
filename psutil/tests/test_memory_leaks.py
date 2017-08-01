@@ -37,6 +37,7 @@ from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_IS64BIT
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
@@ -382,6 +383,11 @@ class TestProcessObjectLeaks(TestMemLeak):
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_proc_info(self):
         self.execute(cext.proc_info, os.getpid())
+
+    @skip_if_linux()
+    @unittest.skipIf(not HAS_IS64BIT, "not supported")
+    def test_is64bit(self):
+        self.execute(self.proc.is64bit)
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):

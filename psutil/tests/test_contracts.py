@@ -622,6 +622,9 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
 
+    def is64bit(self, ret, proc):
+        self.assertIn(ret, (True, False, None))
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

@@ -1941,3 +1941,17 @@ class Process(object):
         data = self._read_status_file()
         real, effective, saved = _gids_re.findall(data)[0]
         return _common.pgids(int(real), int(effective), int(saved))
+
+    @wrap_exceptions
+    def is64bit(self):
+        path = self.exe()
+        if not _common.path_exists_strict(path):
+            return None
+        with open_binary(path) as f:
+            header = f.read(5)
+            if header == b'\x7fELF\x02':
+                return True
+            elif header == b'\x7fELF\x01':
+                return False
+            else:
+                return None
