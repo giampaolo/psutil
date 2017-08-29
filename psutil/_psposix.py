@@ -181,6 +181,8 @@ def get_terminal_map():
         try:
             ret[os.stat(name).st_rdev] = name
         except OSError as err:
-            if err.errno != errno.ENOENT:
+            if err.errno not in (errno.ENOENT, errno.ENXIO):
+                # Note: ENXIO can happen in some cases on Cygwin due to a
+                # bug; see: https://cygwin.com/ml/cygwin/2017-08/msg00198.html
                 raise
     return ret
