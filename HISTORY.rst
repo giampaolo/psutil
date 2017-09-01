@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-*XXXX-XX-XX*
+*2017-09-01*
 
 5.3.0
 =====
@@ -65,7 +65,7 @@
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
 - 1064_: [NetBSD] swap_memory() may segfault in case of error.
 - 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
-- 1067_: [NetBSD] Process.cmdline() leaks memory if proces has terminated.
+- 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
 - 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
