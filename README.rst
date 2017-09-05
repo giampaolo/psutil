@@ -74,7 +74,7 @@ Projects using psutil
 =====================
 
 At the time of writing there are over
-`5400 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`6000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -83,7 +83,7 @@ Here's some I find particularly interesting:
 - https://github.com/google/grr
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
-
+- https://github.com/home-assistant/home-assistant/
 
 ========
 Portings

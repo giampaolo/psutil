@@ -101,10 +101,10 @@
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
   - Process.memory_maps().path
-  - WindosService.bin_path()
-  - WindosService.description()
-  - WindosService.display_name()
-  - WindosService.username()
+  - WindowsService.bin_path()
+  - WindowsService.description()
+  - WindowsService.display_name()
+  - WindowsService.username()
 
 *2017-04-10*
 

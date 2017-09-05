@@ -4,10 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""psutil is a cross-platform library for retrieving information on
-running processes and system utilization (CPU, memory, disks, network)
-in Python.
-"""
+"""Cross-platform lib for process and system monitoring in Python."""
 
 import contextlib
 import io
@@ -267,7 +264,7 @@ def main():
     kwargs = dict(
         name='psutil',
         version=VERSION,
-        description=__doc__ .replace('\n', '').strip() if __doc__ else '',
+        description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
