@@ -28,7 +28,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Documentation <http://pythonhosted.org/psutil/>`_
+- `Documentation <http://psutil.readthedocs.io>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
@@ -67,7 +67,7 @@ Example applications
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
 
 Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
-and `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
 
 =====================
 Projects using psutil
@@ -438,7 +438,7 @@ Windows services
 Other samples
 =============
 
-See `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+See `doc recipes <http://psutil.readthedocs.io/#recipes>`__.
 
 ======
 Author

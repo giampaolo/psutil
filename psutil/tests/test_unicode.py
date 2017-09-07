@@ -49,7 +49,7 @@ etc.) and make sure that:
 
 For a detailed explanation of how psutil handles unicode see:
 - https://github.com/giampaolo/psutil/issues/1040
-- https://pythonhosted.org/psutil/#unicode
+- http://psutil.readthedocs.io/#unicode
 """
 
 import os
