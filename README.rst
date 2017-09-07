@@ -10,6 +10,10 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
+.. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
+    :target: http://psutil.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 .. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.python.org/pypi/psutil/
     :alt: Latest version
