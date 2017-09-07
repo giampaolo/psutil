@@ -242,6 +242,7 @@ elif SUNOS:
         libraries=['kstat', 'nsl', 'socket'])
 # AIX
 elif AIX:
+    macros.append(("PSUTIL_AIX", 1))
     ext = Extension(
         'psutil._psutil_aix',
         sources=[

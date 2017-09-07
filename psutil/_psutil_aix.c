@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'
+ * Copyright (c) 2017, Arnon Yaari
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * AIX platform-specific module methods for _psutil_aix
+ *
+ */
+
 // Useful resources:
 // proc filesystem: http://www-01.ibm.com/support/knowledgecenter/ssw_aix_61/com.ibm.aix.files/proc.htm
 // libperfstat:     http://www-01.ibm.com/support/knowledgecenter/ssw_aix_61/com.ibm.aix.files/libperfstat.h.htm
@@ -26,7 +37,8 @@
 
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
-#include "_psutil_aix.h"
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
@@ -134,7 +146,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     threadt = (perfstat_thread_t *)calloc(thread_count,
         sizeof(perfstat_thread_t));
     if (threadt == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
@@ -245,39 +257,41 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
-    PyObject *user_proc = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_user_proc = NULL;
 
-    if (ret_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
-            user_proc = Py_True;
+            py_user_proc = Py_True;
         else
-            user_proc = Py_False;
-        tuple = Py_BuildValue(
-            "(sssfO)",
+            py_user_proc = Py_False;
+        py_tuple = Py_BuildValue(
+            "(sssfOi)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            user_proc);               // (bool) user process
-        if (tuple == NULL)
+            py_user_proc,             // (bool) user process
+            ut->ut_pid                // process id
+        );
+        if (py_tuple == NULL)
             goto error;
-        if (PyList_Append(ret_list, tuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(tuple);
+        Py_DECREF(py_tuple);
     }
     endutxent();
 
-    return ret_list;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_DECREF(ret_list);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     if (ut != NULL)
         endutent();
     return NULL;
@@ -336,7 +350,7 @@ error:
  */
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
-    perfstat_netadapter_t *statp = NULL;
+    perfstat_netinterface_t *statp = NULL;
     int tot, i;
     perfstat_id_t first;
 
@@ -346,25 +360,25 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    /* check how many perfstat_netadapter_t structures are available */
-    tot = perfstat_netadapter(NULL, NULL, sizeof(perfstat_netadapter_t), 0);
+    /* check how many perfstat_netinterface_t structures are available */
+    tot = perfstat_netinterface(NULL, NULL, sizeof(perfstat_netinterface_t), 0);
     if (tot == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "no net adapter found");
+        PyErr_SetString(PyExc_RuntimeError, "no network interface found");
         goto error;
     }
     if (tot < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-    statp = (perfstat_netadapter_t *)
-        malloc(tot * sizeof(perfstat_netadapter_t));
+    statp = (perfstat_netinterface_t *)
+        malloc(tot * sizeof(perfstat_netinterface_t));
     if (statp == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
     strcpy(first.name, FIRST_NETINTERFACE);
-    tot = perfstat_netadapter(&first, statp,
-        sizeof(perfstat_netadapter_t), tot);
+    tot = perfstat_netinterface(&first, statp,
+        sizeof(perfstat_netinterface_t), tot);
     if (tot < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -372,14 +386,14 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     for (i = 0; i < tot; i++) {
         py_ifc_info = Py_BuildValue("(KKKKKKKK)",
-            statp[i].tx_bytes,
-            statp[i].rx_bytes,
-            statp[i].tx_packets,
-            statp[i].rx_packets,
-            statp[i].tx_errors,
-            statp[i].rx_errors,
-            statp[i].tx_packets_dropped,
-            statp[i].rx_packets_dropped
+            statp[i].obytes,       /* number of bytes sent on interface */
+            statp[i].ibytes,       /* number of bytes received on interface */
+            statp[i].opackets,     /* number of packets sent on interface */
+            statp[i].ipackets,     /* number of packets received on interface */
+            statp[i].ierrors,      /* number of input errors on interface */
+            statp[i].oerrors,      /* number of output errors on interface */
+            statp[i].if_iqdrops,   /* Dropped on input, this interface */
+            statp[i].xmitdrops     /* number of packets not transmitted */
            );
         if (!py_ifc_info)
             goto error;
@@ -450,9 +464,6 @@ error:
     return NULL;
 }
 
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
-
 
 static PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
@@ -501,7 +512,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     /* allocate enough memory to hold the ncpu structures */
     cpu = (perfstat_cpu_t *) malloc(ncpu * sizeof(perfstat_cpu_t));
     if (cpu == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         return NULL;
     }
 
@@ -562,7 +573,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     diskt = (perfstat_disk_t *)calloc(disk_count,
         sizeof(perfstat_disk_t));
     if (diskt == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
@@ -626,7 +637,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 }
 
 
-
 /*
  * Return stats about swap memory.
  */
@@ -647,6 +657,32 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         (unsigned long long) memory.pgsp_free,
         (unsigned long long) memory.pgins * pagesize,
         (unsigned long long) memory.pgouts * pagesize
+    );
+}
+
+
+/*
+ * Return CPU statistics.
+ */
+static PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    int rc;
+    perfstat_cpu_total_t cpu;
+
+    rc = perfstat_cpu_total(NULL, &cpu, sizeof(cpu), 1);
+
+    if (rc <= 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    return Py_BuildValue(
+        "IIIII",
+        cpu.pswitch,
+        cpu.syscall,
+        cpu.devintrs,
+        cpu.softintrs,
+        cpu.traps
     );
 }
 
@@ -692,6 +728,8 @@ PsutilMethods[] =
      "Return system-wide connections"},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats (isup, mtu)"},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
+     "Return CPU statistics"},
 {NULL, NULL, 0, NULL}
 };
 

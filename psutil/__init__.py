@@ -73,6 +73,7 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
+from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
@@ -82,7 +83,6 @@ from ._common import OSX
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
-from ._common import AIX
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py

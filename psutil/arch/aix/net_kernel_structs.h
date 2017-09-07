@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2017, Arnon Yaari
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 /* The kernel is always 64 bit but Python is usually compiled as a 32 bit process.
  * We're reading the kernel memory to get the network connections, so we need the

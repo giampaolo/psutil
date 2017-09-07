@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2017, Arnon Yaari
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 /*! This file was copied from https://lists.samba.org/archive/samba-technical/2009-February/063079.html !*/
 
 #include <string.h>

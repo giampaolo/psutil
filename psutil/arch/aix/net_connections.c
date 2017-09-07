@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2017, Arnon Yaari
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 /* Baded on code from lsof:
  * http://www.ibm.com/developerworks/aix/library/au-lsof.html
  * - dialects/aix/dproc.c:gather_proc_info
@@ -146,15 +153,6 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
                 state = t.t_state;
         }
 
-        /*
-         * If this is an IPv6 (AF_INET6) socket and IPv4 compatibility
-         * mode is enabled, change the family indicator from AF_INET6 to
-         * AF_INET.
-         */
-        if (fam == AF_INET6 && (inp.inp_flags & INP_COMPATV4)) {
-            fam = AF_INET;
-        }
-
         if (fam == AF_INET6) {
             laddr = (unsigned char *)&inp.inp_laddr6;
             if (!IN6_IS_ADDR_UNSPECIFIED(&inp.inp_faddr6)) {
@@ -175,12 +173,12 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
 
         if (raddr != NULL) {
             inet_ntop(fam, raddr, raddr_str, sizeof(raddr_str));
-            return Py_BuildValue("(iii(si)(si)ii)", fd, d.dom_family,
+            return Py_BuildValue("(iii(si)(si)ii)", fd, fam,
                                  s.so_type, laddr_str, lport, raddr_str,
                                  rport, state, pid);
         }
         else {
-            return Py_BuildValue("(iii(si)()ii)", fd, d.dom_family,
+            return Py_BuildValue("(iii(si)()ii)", fd, fam,
                                  s.so_type, laddr_str, lport, state,
                                  pid);
         }

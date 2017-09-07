@@ -16,6 +16,7 @@ import time
 import traceback
 from contextlib import closing
 
+from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
@@ -159,7 +160,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(hasit, False if OPENBSD or NETBSD else True)
+        self.assertEqual(hasit, False if OPENBSD or NETBSD or AIX else True)
 
 
 # ===================================================================

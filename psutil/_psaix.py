@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Copyright (c) 2009, Giampaolo Rodola'
+# Copyright (c) 2017, Arnon Yaari
+# All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -13,13 +15,19 @@ import re
 import subprocess
 import sys
 from collections import namedtuple
+from socket import AF_INET
 
 from . import _common
 from . import _psposix
-from . import _psutil_posix as cext_posix
 from . import _psutil_aix as cext
-from ._common import socktype_to_enum, sockfam_to_enum
-from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
+from . import _psutil_posix as cext_posix
+from ._common import AF_INET6
+from ._common import memoize_when_activated
+from ._common import NIC_DUPLEX_FULL
+from ._common import NIC_DUPLEX_HALF
+from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import sockfam_to_enum
+from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
 
@@ -145,6 +153,14 @@ def cpu_count_physical():
     return len(processors)
 
 
+def cpu_stats():
+    """Return various CPU stats as a named tuple."""
+    ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
+        cext.cpu_stats()
+    return _common.scpustats(
+        ctx_switches, interrupts, soft_interrupts, syscalls)
+
+
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return cext.boot_time()
@@ -156,7 +172,7 @@ def users():
     rawlist = cext.users()
     localhost = (':0.0', ':0')
     for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
+        user, tty, hostname, tstamp, user_process, pid = item
         # note: the underlying C function includes entries about
         # system boot, run level and others.  We might want
         # to use them in the future.
@@ -164,7 +180,7 @@ def users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp)
+        nt = _common.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -208,6 +224,11 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         status = TCP_STATUSES[status]
+        if fam in (AF_INET, AF_INET6):
+            if laddr:
+                laddr = _common.addr(*laddr)
+            if raddr:
+                raddr = _common.addr(*raddr)
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)
         if _pid == -1:
@@ -284,15 +305,33 @@ class Process(object):
         self._ppid = None
 
     def oneshot_enter(self):
-        pass
+        self._proc_name_and_args.cache_activate()
+        self._proc_basic_info.cache_activate()
+        self._proc_cred.cache_activate()
 
     def oneshot_exit(self):
-        pass
+        self._proc_name_and_args.cache_deactivate()
+        self._proc_basic_info.cache_deactivate()
+        self._proc_cred.cache_deactivate()
+
+    @memoize_when_activated
+    def _proc_name_and_args(self):
+        return cext.proc_name_and_args(self.pid)
+
+    @memoize_when_activated
+    def _proc_basic_info(self):
+        return cext.proc_basic_info(self.pid)
+
+    @memoize_when_activated
+    def _proc_cred(self):
+        return cext.proc_cred(self.pid)
 
     @wrap_exceptions
     def name(self):
+        if self.pid == 0:
+            return "swapper"
         # note: this is limited to 15 characters
-        return cext.proc_name_and_args(self.pid)[0].rstrip("\x00")
+        return self._proc_name_and_args()[0].rstrip("\x00")
 
     @wrap_exceptions
     def exe(self):
@@ -320,15 +359,15 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return cext.proc_name_and_args(self.pid)[1].split(' ')
+        return self._proc_name_and_args()[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_basic_info(self.pid)[3]
+        return self._proc_basic_info()[3]
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_basic_info(self.pid)[5]
+        return self._proc_basic_info()[5]
 
     @wrap_exceptions
     def threads(self):
@@ -389,16 +428,16 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return cext.proc_basic_info(self.pid)[0]
+        return self._proc_basic_info()[0]
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = cext.proc_cred(self.pid)
+        real, effective, saved, _, _, _ = self._proc_cred()
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = cext.proc_cred(self.pid)
+        _, _, _, real, effective, saved = self._proc_cred()
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
@@ -408,7 +447,7 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        psinfo = cext.proc_basic_info(self.pid)
+        psinfo = self._proc_basic_info()
         ttydev = psinfo[-1]
         # convert from 64-bit dev_t to 32-bit dev_t and then map the device
         ttydev = (((ttydev & 0x0000FFFF00000000) >> 16) | (ttydev & 0xFFFF))
@@ -430,7 +469,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        ret = cext.proc_basic_info(self.pid)
+        ret = self._proc_basic_info()
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return pmem(rss, vms)
 
@@ -438,7 +477,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_basic_info(self.pid)[6]
+        code = self._proc_basic_info()[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -466,11 +505,9 @@ class Process(object):
 
     @wrap_exceptions
     def num_fds(self):
+        if self.pid == 0:       # no /proc/0/fd
+            return 0
         return len(os.listdir("/proc/%s/fd" % self.pid))
-
-    @wrap_exceptions
-    def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def wait(self, timeout=None):

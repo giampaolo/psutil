@@ -21,6 +21,7 @@ import types
 
 import psutil
 
+from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
 from psutil import NETBSD
@@ -987,6 +988,7 @@ class TestProcess(unittest.TestCase):
 
     @skip_on_not_implemented(only_if=LINUX)
     @unittest.skipIf(OPENBSD or NETBSD, "not reliable on OPENBSD & NETBSD")
+    @unittest.skipIf(AIX, "not available on AIX")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
