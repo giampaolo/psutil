@@ -394,9 +394,12 @@ def net_connections(kind):
                 # have a very short lifetime so maybe the kernel
                 # can't initialize their status?
                 status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+            if fam in (AF_INET, AF_INET6):
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
-            laddr = _common.addr(*laddr)
-            raddr = _common.addr(*raddr)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)

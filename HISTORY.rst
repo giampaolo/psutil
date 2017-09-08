@@ -12,6 +12,7 @@ XXXX-XX-XX
 **Big fixes**
 
 - 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
+- 1125_: [BSD] net_connections() raises TypeError.
 
 **Compatibility notes**
 
