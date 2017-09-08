@@ -694,7 +694,7 @@ Sensors
 
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 .. function:: sensors_fans()
@@ -718,7 +718,7 @@ Sensors
 
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 .. function:: sensors_battery()
@@ -760,7 +760,7 @@ Sensors
 
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 Other system info
@@ -993,14 +993,13 @@ Process class
     at the same time, make sure to use either :meth:`as_dict` or
     :meth:`oneshot` context manager.
 
-  .. warning::
+  .. note::
 
-    the way this class is bound to a process is via its **PID**.
-    That means that if the :class:`Process` instance is old enough and
-    the PID has been reused in the meantime you might end up interacting
-    with another process.
+    the way this class is bound to a process is uniquely via its **PID**.
+    That means that if the process terminates and the OS reuses its PID you may
+    end up interacting with another process.
     The only exceptions for which process identity is preemptively checked
-    (via PID + creation time) and guaranteed are for
+    (via PID + creation time) is for the following methods:
     :meth:`nice` (set),
     :meth:`ionice`  (set),
     :meth:`cpu_affinity` (set),
@@ -1010,12 +1009,13 @@ Process class
     :meth:`suspend`
     :meth:`resume`,
     :meth:`send_signal`,
-    :meth:`terminate`, and
-    :meth:`kill`
-    methods.
+    :meth:`terminate`
+    :meth:`kill`.
     To prevent this problem for all other methods you can use
-    :meth:`is_running()` before querying the process or use
+    :meth:`is_running()` before querying the process or
     :func:`process_iter()` in case you're iterating over all processes.
+    It must be noted though that unless you deal with very "old" (inactive)
+    :class:`Process` instances this will hardly represent a problem.
 
   .. method:: oneshot()
 

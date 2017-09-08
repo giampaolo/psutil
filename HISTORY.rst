@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+XXXX-XX-XX
+
+5.3.1
+=====
+
+**Enhancements**
+
+- 1124_: documentation moved to http://psutil.readthedocs.io
+
 *2017-09-01*
 
 5.3.0
