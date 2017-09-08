@@ -205,13 +205,6 @@ def build():
 
 
 @cmd
-def build_exe():
-    """Create exe file."""
-    build()
-    sh("%s setup.py bdist_wininst" % PYTHON)
-
-
-@cmd
 def build_wheel():
     """Create wheel file."""
     build()

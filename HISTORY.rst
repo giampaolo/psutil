@@ -9,6 +9,11 @@ XXXX-XX-XX
 
 - 1124_: documentation moved to http://psutil.readthedocs.io
 
+**Compatibility notes**
+
+- 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
+  only wheels are provided.
+
 *2017-09-01*
 
 5.3.0

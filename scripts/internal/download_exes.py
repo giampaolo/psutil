@@ -170,8 +170,8 @@ def main(options):
                 completed += 1
                 print("downloaded %-45s %s" % (
                     local_fname, bytes2human(os.path.getsize(local_fname))))
-    # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
-    expected = len(PY_VERSIONS) * 4
+    # 2 wheels (32 and 64 bit) per supported python version
+    expected = len(PY_VERSIONS) * 2
     if expected != completed:
         return exit("expected %s files, got %s" % (expected, completed))
     if exc:

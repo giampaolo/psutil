@@ -95,7 +95,6 @@ test_script:
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wininst"
 
 artifacts:
   - path: dist\*
