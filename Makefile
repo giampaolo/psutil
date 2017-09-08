@@ -237,6 +237,7 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
+	${MAKE} generate-manifest
 	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes') if out else sys.exit(0);"
 	${MAKE} sdist
 	${MAKE} install

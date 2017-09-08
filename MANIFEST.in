@@ -13,14 +13,9 @@ include README.rst
 include docs/Makefile
 include docs/README
 include docs/_static/copybutton.js
+include docs/_static/css/custom.css
 include docs/_static/favicon.ico
 include docs/_static/sidebar.js
-include docs/_template/globaltoc.html
-include docs/_template/indexcontent.html
-include docs/_template/indexsidebar.html
-include docs/_template/page.html
-include docs/_themes/pydoctheme/static/pydoctheme.css
-include docs/_themes/pydoctheme/theme.conf
 include docs/conf.py
 include docs/index.rst
 include docs/make.bat
