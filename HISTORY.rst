@@ -9,6 +9,10 @@ XXXX-XX-XX
 
 - 1124_: documentation moved to http://psutil.readthedocs.io
 
+**Big fixes**
+
+- 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
+
 **Compatibility notes**
 
 - 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
