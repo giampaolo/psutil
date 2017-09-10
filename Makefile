@@ -237,8 +237,9 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
-	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes') if out else sys.exit(0);"
-	${MAKE} sdist
+	${MAKE} generate-manifest
+	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
+	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
 	${MAKE} install
 	@PYTHONWARNINGS=all $(PYTHON) -c \
 		"from psutil import __version__ as ver; \
@@ -248,12 +249,13 @@ pre-release:
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 	${MAKE} win-download-exes
+	${MAKE} sdist
 
 # Create a release: creates tar.gz and exes/wheels, uploads them,
 # upload doc, git tag release.
 release:
 	${MAKE} pre-release
-	PYTHONWARNINGS=all $(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
+	PYTHONWARNINGS=all $(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
 	${MAKE} git-tag-release
 
 # Print announce of new release.
