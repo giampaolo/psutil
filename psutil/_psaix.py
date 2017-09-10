@@ -33,6 +33,11 @@ from ._compat import PY3
 __extra__all__ = ["PROCFS_PATH"]
 
 
+# =====================================================================
+# --- globals
+# =====================================================================
+
+
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
 
@@ -71,6 +76,18 @@ proc_info_map = dict(
     status=6,
     ttynr=7)
 
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
+
+# =====================================================================
+# --- named tuples
+# =====================================================================
+
+
 # psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms'])
 # psutil.Process.memory_full_info()
@@ -85,23 +102,20 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
-# --- functions
-
-disk_io_counters = cext.disk_io_counters
-disk_usage = _psposix.disk_usage
-net_if_addrs = cext_posix.net_if_addrs
-net_io_counters = cext.net_io_counters
+# =====================================================================
+# --- utils
+# =====================================================================
 
 
 def get_procfs_path():
     """Return updated psutil.PROCFS_PATH constant."""
     return sys.modules['psutil'].PROCFS_PATH
+
+
+# =====================================================================
+# --- memory
+# =====================================================================
 
 
 def virtual_memory():
@@ -113,22 +127,17 @@ def virtual_memory():
     return svmem(total, avail, percent, used, free)
 
 
-def pids():
-    """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
-
-
-def pid_exists(pid):
-    """Check for the existence of a unix pid."""
-    return _psposix.pid_exists(pid)
-
-
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, free, sin, sout = cext.swap_mem()
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+# =====================================================================
+# --- CPU
+# =====================================================================
 
 
 def cpu_times():
@@ -174,28 +183,13 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-def boot_time():
-    """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+# =====================================================================
+# --- disks
+# =====================================================================
 
 
-def users():
-    """Return currently connected users as a list of namedtuples."""
-    retlist = []
-    rawlist = cext.users()
-    localhost = (':0.0', ':0')
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process, pid = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname in localhost:
-            hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp, pid)
-        retlist.append(nt)
-    return retlist
+disk_io_counters = cext.disk_io_counters
+disk_usage = _psposix.disk_usage
 
 
 def disk_partitions(all=False):
@@ -217,6 +211,15 @@ def disk_partitions(all=False):
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
+
+
+# =====================================================================
+# --- network
+# =====================================================================
+
+
+net_if_addrs = cext_posix.net_if_addrs
+net_io_counters = cext.net_io_counters
 
 
 def net_connections(kind, _pid=-1):
@@ -281,10 +284,55 @@ def net_if_stats():
     return ret
 
 
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return cext.boot_time()
+
+
+def users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = cext.users()
+    localhost = (':0.0', ':0')
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process, pid = item
+        # note: the underlying C function includes entries about
+        # system boot, run level and others.  We might want
+        # to use them in the future.
+        if not user_process:
+            continue
+        if hostname in localhost:
+            hostname = 'localhost'
+        nt = _common.suser(user, tty, hostname, tstamp, pid)
+        retlist.append(nt)
+    return retlist
+
+
+# =====================================================================
+# --- processes
+# =====================================================================
+
+
+def pids():
+    """Returns a list of PIDs currently running on the system."""
+    return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
+
+
+def pid_exists(pid):
+    """Check for the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
+
+
 def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
+
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
