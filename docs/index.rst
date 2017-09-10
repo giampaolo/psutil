@@ -2120,7 +2120,7 @@ Constants
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux and Solaris (defaults to
+  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
   ``"/proc"``).
   You may want to re-set this constant right after importing psutil in case
   your /proc filesystem is mounted elsewhere or if you want to retrieve

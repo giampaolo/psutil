@@ -162,6 +162,10 @@ elif SUNOS:
 elif AIX:
     from . import _psaix as _psplatform
 
+    # This is public API and it will be retrieved from _pslinux.py
+    # via sys.modules.
+    PROCFS_PATH = "/proc"
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 

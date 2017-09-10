@@ -30,7 +30,7 @@ from ._common import usage_percent
 from ._compat import PY3
 
 
-__extra__all__ = []
+__extra__all__ = ["PROCFS_PATH"]
 
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
@@ -99,6 +99,11 @@ net_if_addrs = cext_posix.net_if_addrs
 net_io_counters = cext.net_io_counters
 
 
+def get_procfs_path():
+    """Return updated psutil.PROCFS_PATH constant."""
+    return sys.modules['psutil'].PROCFS_PATH
+
+
 def virtual_memory():
     total, free, pinned, inuse = cext.virtual_mem()
     total = total * PAGE_SIZE
@@ -110,7 +115,7 @@ def virtual_memory():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+    return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
 
 
 def pid_exists(pid):
@@ -305,12 +310,13 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
         self._proc_name_and_args.cache_activate()
@@ -324,15 +330,15 @@ class Process(object):
 
     @memoize_when_activated
     def _proc_name_and_args(self):
-        return cext.proc_name_and_args(self.pid)
+        return cext.proc_name_and_args(self.pid, self._procfs_path)
 
     @memoize_when_activated
     def _proc_basic_info(self):
-        return cext.proc_basic_info(self.pid)
+        return cext.proc_basic_info(self.pid, self._procfs_path)
 
     @memoize_when_activated
     def _proc_cred(self):
-        return cext.proc_cred(self.pid)
+        return cext.proc_cred(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def name(self):
@@ -390,7 +396,8 @@ class Process(object):
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
         if not retlist:
-            os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
+            # will raise NSP if process is gone
+            os.stat('%s/%s' % (self._procfs_path, self.pid))
         return retlist
 
     @wrap_exceptions
@@ -402,7 +409,8 @@ class Process(object):
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
         if not ret:
-            os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
+            # will raise NSP if process is gone
+            os.stat('%s/%s' % (self._procfs_path, self.pid))
         return ret
 
     @wrap_exceptions
@@ -444,7 +452,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        cpu_times = cext.proc_cpu_times(self.pid)
+        cpu_times = cext.proc_cpu_times(self.pid, self._procfs_path)
         return _common.pcputimes(*cpu_times)
 
     @wrap_exceptions
@@ -460,11 +468,13 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
+        procfs_path = self._procfs_path
         try:
-            return os.readlink("/proc/%s/cwd" % self.pid).rstrip('/')
+            result = os.readlink("%s/%s/cwd" % (procfs_path, self.pid))
+            return result.rstrip('/')
         except OSError as err:
             if err.errno == errno.ENOENT:
-                os.stat("/proc/%s" % self.pid)
+                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
                 return None
             raise
 
@@ -509,7 +519,7 @@ class Process(object):
     def num_fds(self):
         if self.pid == 0:       # no /proc/0/fd
             return 0
-        return len(os.listdir("/proc/%s/fd" % self.pid))
+        return len(os.listdir("%s/%s/fd" % (self._procfs_path, self.pid)))
 
     @wrap_exceptions
     def wait(self, timeout=None):

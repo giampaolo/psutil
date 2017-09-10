@@ -80,10 +80,12 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/psinfo", pid);
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("KKKdiiiK",
@@ -107,10 +109,11 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/psinfo", pid);
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("s#s", info.pr_fname, PRFNSZ, info.pr_psargs);
@@ -216,10 +219,11 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     pstatus_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/status", pid);
+    sprintf(path, "%s/%i/status", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
@@ -239,10 +243,11 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     prcred_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/cred", pid);
+    sprintf(path, "%s/%i/cred", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("iiiiii",
