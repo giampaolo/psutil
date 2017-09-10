@@ -66,7 +66,7 @@ class TestAvailability(unittest.TestCase):
         self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
 
     def test_PROCFS_PATH(self):
-        self.assertEqual(hasattr(psutil, "PROCFS_PATH"), LINUX or SUNOS)
+        self.assertEqual(hasattr(psutil, "PROCFS_PATH"), LINUX or SUNOS or AIX)
 
     def test_win_priority(self):
         ae = self.assertEqual

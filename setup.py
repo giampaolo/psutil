@@ -245,9 +245,10 @@ elif AIX:
     macros.append(("PSUTIL_AIX", 1))
     ext = Extension(
         'psutil._psutil_aix',
-        sources=[
+        sources=sources + [
             'psutil/_psutil_aix.c',
-            'psutil/arch/aix/net_connections.c'],
+            'psutil/arch/aix/net_connections.c',
+            'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
         define_macros=macros)
 else:
@@ -264,7 +265,7 @@ if POSIX:
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
-    if AIX:
+    elif AIX:
         posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
 
     extensions = [ext, posix_extension]

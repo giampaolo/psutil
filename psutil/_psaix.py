@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (c) 2009, Giampaolo Rodola'
 # Copyright (c) 2017, Arnon Yaari
 # All rights reserved.
@@ -63,6 +61,16 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
+proc_info_map = dict(
+    ppid=0,
+    rss=1,
+    vms=2,
+    create_time=3,
+    nice=4,
+    num_threads=5,
+    status=6,
+    ttynr=7)
+
 # psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms'])
 # psutil.Process.memory_full_info()
@@ -77,7 +85,7 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
-# set later from __init__.py
+# these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
@@ -363,11 +371,11 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        return self._proc_basic_info()[3]
+        return self._proc_basic_info()[proc_info_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_basic_info()[5]
+        return self._proc_basic_info()[proc_info_map['num_threads']]
 
     @wrap_exceptions
     def threads(self):
@@ -418,17 +426,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice_set(self, value):
-        if self.pid in (2, 3):
-            # Special case PIDs: internally setpriority(3) return ESRCH
-            # (no such process), no matter what.
-            # The process actually exists though, as it has a name,
-            # creation time, etc.
-            raise AccessDenied(self.pid, self._name)
         return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
-        return self._proc_basic_info()[0]
+        return self._proc_basic_info()[proc_info_map['ppid']]
 
     @wrap_exceptions
     def uids(self):
@@ -447,8 +449,7 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        psinfo = self._proc_basic_info()
-        ttydev = psinfo[-1]
+        ttydev = self._proc_basic_info()[proc_info_map['ttynr']]
         # convert from 64-bit dev_t to 32-bit dev_t and then map the device
         ttydev = (((ttydev & 0x0000FFFF00000000) >> 16) | (ttydev & 0xFFFF))
         # try to match rdev of /dev/pts/* files ttydev
@@ -470,14 +471,15 @@ class Process(object):
     @wrap_exceptions
     def memory_info(self):
         ret = self._proc_basic_info()
-        rss, vms = ret[1] * 1024, ret[2] * 1024
+        rss = ret[proc_info_map['rss']] * 1024
+        vms = ret[proc_info_map['vms']] * 1024
         return pmem(rss, vms)
 
     memory_full_info = memory_info
 
     @wrap_exceptions
     def status(self):
-        code = self._proc_basic_info()[6]
+        code = self._proc_basic_info()[proc_info_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -490,7 +492,7 @@ class Process(object):
         if PY3:
             stdout, stderr = [x.decode(sys.stdout.encoding)
                               for x in (stdout, stderr)]
-        if "no such process" in stderr:
+        if "no such process" in stderr.lower():
             raise NoSuchProcess(self.pid, self._name)
         procfiles = re.findall("(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)
         retlist = []
@@ -498,7 +500,7 @@ class Process(object):
             path = path.strip()
             if path.startswith("//"):
                 path = path[1:]
-            if path == "Cannot be retrieved":
+            if path.lower() == "cannot be retrieved":
                 continue
             retlist.append(_common.popenfile(path, int(fd)))
         return retlist

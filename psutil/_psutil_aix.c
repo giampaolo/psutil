@@ -259,6 +259,9 @@ psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
 
     if (py_retlist == NULL)
@@ -270,11 +273,20 @@ psutil_users(PyObject *self, PyObject *args) {
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfOi)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
+            "(OOOfOi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
@@ -283,6 +295,9 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
     endutxent();
@@ -290,10 +305,13 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (ut != NULL)
-        endutent();
+        endutxent();
     return NULL;
 }
 
@@ -306,8 +324,10 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent * mt = NULL;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -317,19 +337,26 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-
     mt = getmntent(file);
     while (mt != NULL) {
+        py_dev = PyUnicode_DecodeFSDefault(mt->mnt_fsname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(mt->mnt_dir);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)",
-            mt->mnt_fsname,   // device
-            mt->mnt_dir,    // mount point
-            mt->mnt_type,    // fs type
+            "(OOss)",
+            py_dev,         // device
+            py_mountp,      // mount point
+            mt->mnt_type,   // fs type
             mt->mnt_opts);  // options
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
         mt = getmntent(file);
     }
@@ -337,6 +364,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (file != NULL)
@@ -478,13 +507,12 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         }
     }
     endutxent();
-    if (boot_time != 0.0) {
-        return Py_BuildValue("f", boot_time);
-    }
-    else {
+    if (boot_time == 0.0) {
+        /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
         return NULL;
     }
+    return Py_BuildValue("f", boot_time);
 }
 
 
@@ -730,7 +758,12 @@ PsutilMethods[] =
      "Return NIC stats (isup, mtu)"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-{NULL, NULL, 0, NULL}
+
+    // --- others
+    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
+     "Return True if PSUTIL_TESTING env var is set"},
+
+    {NULL, NULL, 0, NULL}
 };
 
 

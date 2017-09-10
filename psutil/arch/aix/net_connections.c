@@ -248,7 +248,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     msz = (size_t)(PROCSIZE * PROCINFO_INCR);
     processes = (struct procentry64 *)malloc(msz);
     if (!processes) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
     Np = PROCINFO_INCR;
@@ -262,7 +262,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             msz = (size_t)(PROCSIZE * (Np + PROCINFO_INCR));
             processes = (struct procentry64 *)realloc((char *)processes, msz);
             if (!processes) {
-                PyErr_SetFromErrno(PyExc_OSError);
+                PyErr_NoMemory();
                 goto error;
             }
             Np += PROCINFO_INCR;
@@ -285,7 +285,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         if (!fds) {
             fds = (struct fdsinfo64 *)malloc((size_t)FDSINFOSIZE);
             if (!fds) {
-                PyErr_SetFromErrno(PyExc_OSError);
+                PyErr_NoMemory();
                 goto error;
             }
         }
