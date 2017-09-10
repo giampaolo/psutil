@@ -945,6 +945,8 @@ PsutilMethods[] = {
      "Set process CPU affinity."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
+    {"proc_abi_vector", psutil_proc_abi_vector, METH_VARARGS,
+     "Return process ABI vector name (to check process bitness)"},
 #endif
 
     // --- system-related functions

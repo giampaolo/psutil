@@ -870,3 +870,13 @@ class Process(object):
         @wrap_exceptions
         def memory_maps(self):
             return cext.proc_memory_maps(self.pid)
+
+        @wrap_exceptions
+        def is64bit(self):
+            name = cext.proc_abi_vector(self.pid)
+            if name in ("FreeBSD ELF64", "Linux ELF64"):
+                return True
+            elif name in ("FreeBSD ELF32", "Linux ELF32"):
+                return False
+            else:
+                return None

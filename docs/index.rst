@@ -1859,13 +1859,13 @@ Process class
 
   .. method:: is64bit()
 
-    Return ``True`` if this is a 64 bit process, ``False`` if not, ``None`` if
-    it cannot be determined. It can be assumed that ``False`` means 32 bit
-    unless you have a very old or exotic hardware.
+    Return ``True`` if this is a 64-bit process, ``False`` if not, ``None`` if
+    undetermined. It can be assumed that ``False`` means 32-bit unless you have
+    a very old or exotic hardware.
 
-    Availability: Linux, Windows, OSX
+    Availability: Linux, Windows, OSX, FreeBSD
 
-    .. versionadded:: 5.3.0
+    .. versionadded:: 5.4.0
 
   .. method:: is_running()
 

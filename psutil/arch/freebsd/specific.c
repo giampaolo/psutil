@@ -1007,3 +1007,38 @@ error:
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+/*
+ * Return process ABI vector name (to check process bitness).
+ */
+PyObject *
+psutil_proc_abi_vector(PyObject *self, PyObject *args) {
+    long pid;
+    size_t len;
+    int error;
+    int mib[4];
+    char progt[32];
+    size_t i;
+    len = sizeof(progt);
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_SV_NAME;
+    mib[3] = pid;
+    error = sysctl(mib, 4, progt, &len, NULL, 0);
+
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if (len == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "size mismatch");
+        return NULL;
+    }
+
+    return Py_BuildValue("s", progt);
+}
