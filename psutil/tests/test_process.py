@@ -895,6 +895,8 @@ class TestProcess(unittest.TestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
+    # TODO: temporary, see: https://github.com/MacPython/psutil/issues/1
+    @unittest.skipIf(LINUX, "temporary")
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
         sproc = get_test_subprocess()
