@@ -898,7 +898,8 @@ class Process(object):
             """
             return self._proc.num_handles()
 
-    if not AIX:
+    if hasattr(_psplatform.Process, "num_ctx_switches"):
+
         def num_ctx_switches(self):
             """Return the number of voluntary and involuntary context
             switches performed by this process.

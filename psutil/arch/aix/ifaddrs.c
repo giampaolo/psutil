@@ -23,17 +23,19 @@
 
 
 static struct sockaddr *
-sa_dup (struct sockaddr *sa1)
+sa_dup(struct sockaddr *sa1)
 {
     struct sockaddr *sa2;
     size_t sz = sa1->sa_len;
-    sa2 = (struct sockaddr *) calloc(1,sz);
-    memcpy(sa2,sa1,sz);
-    return(sa2);
+    sa2 = (struct sockaddr *) calloc(1, sz);
+    if (sa2 == NULL)
+        return NULL;
+    memcpy(sa2, sa1, sz);
+    return sa2;
 }
 
 
-void freeifaddrs (struct ifaddrs *ifp)
+void freeifaddrs(struct ifaddrs *ifp)
 {
     if (NULL == ifp) return;
     free(ifp->ifa_name);
@@ -45,9 +47,9 @@ void freeifaddrs (struct ifaddrs *ifp)
 }
 
 
-int getifaddrs (struct ifaddrs **ifap)
+int getifaddrs(struct ifaddrs **ifap)
 {
-    int  sd, ifsize;
+    int sd, ifsize;
     char *ccp, *ecp;
     struct ifconf ifc;
     struct ifreq *ifr;
@@ -56,15 +58,19 @@ int getifaddrs (struct ifaddrs **ifap)
     const size_t IFREQSZ = sizeof(struct ifreq);
     int fam;
 
-    sd = socket(AF_INET, SOCK_DGRAM, 0);
-
     *ifap = NULL;
+
+    sd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sd == -1)
+        goto error;
 
     /* find how much memory to allocate for the SIOCGIFCONF call */
     if (ioctl(sd, SIOCGSIZIFCONF, (caddr_t)&ifsize) < 0)
         goto error;
 
     ifc.ifc_req = (struct ifreq *) calloc(1, ifsize);
+    if (ifc.ifc_req == NULL)
+        goto error;
     ifc.ifc_len = ifsize;
 
     if (ioctl(sd, SIOCGIFCONF, &ifc) < 0)
@@ -81,20 +87,29 @@ int getifaddrs (struct ifaddrs **ifap)
 
         if (fam == AF_INET || fam == AF_INET6) {
             cifa = (struct ifaddrs *) calloc(1, sizeof(struct ifaddrs));
+            if (cifa == NULL)
+                goto error;
             cifa->ifa_next = NULL;
+
+            if (pifa == NULL) *ifap = cifa; /* first one */
+            else pifa->ifa_next = cifa;
+
             cifa->ifa_name = strdup(ifr->ifr_name);
+            if (cifa->ifa_name == NULL)
+                goto error;
             cifa->ifa_flags = 0;
             cifa->ifa_dstaddr = NULL;
 
-            if (pifa == NULL) *ifap = cifa; /* first one */
-            else     pifa->ifa_next = cifa;
-
             cifa->ifa_addr = sa_dup(&ifr->ifr_addr);
+            if (cifa->ifa_addr == NULL)
+                goto error;
 
             if (fam == AF_INET) {
                 if (ioctl(sd, SIOCGIFNETMASK, ifr, IFREQSZ) < 0)
                     goto error;
                 cifa->ifa_netmask = sa_dup(&ifr->ifr_addr);
+                if (cifa->ifa_netmask == NULL)
+                    goto error;
             }
 
             if (0 == ioctl(sd, SIOCGIFFLAGS, ifr)) /* optional */
@@ -102,11 +117,17 @@ int getifaddrs (struct ifaddrs **ifap)
 
             if (fam == AF_INET) {
                 if (ioctl(sd, SIOCGIFDSTADDR, ifr, IFREQSZ) < 0) {
-                    if (0 == ioctl(sd, SIOCGIFBRDADDR, ifr, IFREQSZ))
-                         cifa->ifa_dstaddr = sa_dup(&ifr->ifr_addr);
+                    if (0 == ioctl(sd, SIOCGIFBRDADDR, ifr, IFREQSZ)) {
+                        cifa->ifa_dstaddr = sa_dup(&ifr->ifr_addr);
+                        if (cifa->ifa_dstaddr == NULL)
+                            goto error;
+                    }
                 }
-                else
+                else {
                     cifa->ifa_dstaddr = sa_dup(&ifr->ifr_addr);
+                    if (cifa->ifa_dstaddr == NULL)
+                        goto error;
+                }
             }
             pifa = cifa;
         }
@@ -121,5 +142,6 @@ error:
         free(ifc.ifc_req);
     if (sd != -1)
         close(sd);
+    freeifaddrs(*ifap);
     return (-1);
 }

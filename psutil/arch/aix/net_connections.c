@@ -47,13 +47,24 @@ psutil_kread(
     size_t len) {       /* length to read */
     int br;
 
-    if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1)
-        return(1);
+    if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return 1;
+    }
     br = read(Kd, buf, len);
-    return((br == len) ? 0 : 1);
+    if (br == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return 1;
+    }
+    if (br != len) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "size mismatch when reading kernel memory fd");
+        return 1;
+    }
+    return 0;
 }
 
-static void
+static int
 read_unp_addr(
     int Kd,
     KA_T unp_addr,
@@ -66,18 +77,18 @@ read_unp_addr(
     int uo;
 
     if (psutil_kread(Kd, unp_addr, (char *)&mb, sizeof(mb))) {
-        return;
+        return 1;
     }
 
     uo = (int)(mb.m_hdr.mh_data - unp_addr);
     if ((uo + sizeof(struct sockaddr)) <= sizeof(mb))
         ua = (struct sockaddr_un *)((char *)&mb + uo);
     else {
-        if (mb.m_hdr.mh_data
-        &&  !psutil_kread(Kd, (KA_T)mb.m_hdr.mh_data, (char *)&un, sizeof(un))
-        ) {
-        ua = &un;
+        if (psutil_kread(Kd, (KA_T)mb.m_hdr.mh_data,
+                         (char *)&un, sizeof(un))) {
+            return 1;
         }
+        ua = &un;
     }
     if (ua && ua->sun_path[0]) {
         if (mb.m_len > sizeof(struct sockaddr_un))
@@ -85,6 +96,7 @@ read_unp_addr(
         *((char *)ua + mb.m_len - 1) = '\0';
         snprintf(buf, buflen, "%s", ua->sun_path);
     }
+    return 0;
 }
 
 static PyObject *
@@ -108,7 +120,6 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
 
     /* Read file structure */
     if (psutil_kread(Kd, fp, (char *)&f, sizeof(f))) {
-        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     if (!f.f_count || f.f_type != DTYPE_SOCKET) {
@@ -116,7 +127,6 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     }
 
     if (psutil_kread(Kd, (KA_T) f.f_data, (char *) &s, sizeof(s))) {
-        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
@@ -124,24 +134,30 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
         return NO_SOCKET;
     }
 
-    if (!s.so_proto ||
-        psutil_kread(Kd, (KA_T)s.so_proto, (char *)&p, sizeof(p))) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (!s.so_proto) {
+        PyErr_SetString(PyExc_RuntimeError, "invalid socket protocol handle");
+        return NULL;
+    }
+    if (psutil_kread(Kd, (KA_T)s.so_proto, (char *)&p, sizeof(p))) {
         return NULL;
     }
 
-    if (!p.pr_domain
-    ||  psutil_kread(Kd, (KA_T)p.pr_domain, (char *)&d, sizeof(d))) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (!p.pr_domain) {
+        PyErr_SetString(PyExc_RuntimeError, "invalid socket protocol domain");
+        return NULL;
+    }
+    if (psutil_kread(Kd, (KA_T)p.pr_domain, (char *)&d, sizeof(d))) {
         return NULL;
     }
 
     fam = d.dom_family;
     if (fam == AF_INET || fam == AF_INET6) {
         /* Read protocol control block */
-        if (!s.so_pcb
-        ||  psutil_kread(Kd, (KA_T) s.so_pcb, (char *) &inp, sizeof(inp))) {
-            PyErr_SetFromErrno(PyExc_OSError);
+        if (!s.so_pcb) {
+            PyErr_SetString(PyExc_RuntimeError, "invalid socket PCB");
+            return NULL;
+        }
+        if (psutil_kread(Kd, (KA_T) s.so_pcb, (char *) &inp, sizeof(inp))) {
             return NULL;
         }
 
@@ -187,27 +203,29 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
 
     if (fam == AF_UNIX) {
         if (psutil_kread(Kd, (KA_T) s.so_pcb, (char *)&unp, sizeof(unp))) {
-            PyErr_SetFromErrno(PyExc_OSError);
             return NULL;
         }
         if ((KA_T) f.f_data != (KA_T) unp.unp_socket) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            PyErr_SetString(PyExc_RuntimeError, "unp_socket mismatch");
             return NULL;
         }
 
         if (unp.unp_addr) {
-            read_unp_addr(Kd, unp.unp_addr, unix_laddr_str,
-                sizeof(unix_laddr_str));
+            if (read_unp_addr(Kd, unp.unp_addr, unix_laddr_str,
+                              sizeof(unix_laddr_str))) {
+                return NULL;
+            }
         }
 
         if (unp.unp_conn) {
             if (psutil_kread(Kd, (KA_T) unp.unp_conn, (char *)&unp,
                 sizeof(unp))) {
-                PyErr_SetFromErrno(PyExc_OSError);
                 return NULL;
             }
-            read_unp_addr(Kd, unp.unp_addr, unix_raddr_str,
-                sizeof(unix_raddr_str));
+            if (read_unp_addr(Kd, unp.unp_addr, unix_raddr_str,
+                              sizeof(unix_raddr_str))) {
+                return NULL;
+            }
         }
 
         return Py_BuildValue("(iiissii)", fd, d.dom_family,
@@ -240,7 +258,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     Kd = open(KMEM, O_RDONLY, 0);
     if (Kd < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, KMEM);
         goto error;
     }
 

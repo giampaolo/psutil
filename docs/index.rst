@@ -2111,11 +2111,13 @@ Constants
 .. data:: OPENBSD
 .. data:: BSD
 .. data:: SUNOS
+.. data:: AIX
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
   :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
+  .. versionchanged:: 5.4.0 added AIX
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
