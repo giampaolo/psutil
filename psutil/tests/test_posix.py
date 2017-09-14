@@ -360,6 +360,8 @@ class TestSystemAPIs(unittest.TestCase):
                               psutil._psposix.wait_pid, os.getpid())
             assert m.called
 
+    # AIX can return '-' in df output instead of numbers, e.g. for /proc
+    @unittest.skipIf(AIX, "unreliable on AIX")
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()

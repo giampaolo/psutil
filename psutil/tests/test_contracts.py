@@ -284,6 +284,9 @@ class TestFetchAllProcesses(unittest.TestCase):
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
             'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
         ])
+        if AIX:
+            # "<exiting>" processes really don't have names
+            excluded_names.add('name')
         if LINUX and not HAS_RLIMIT:
             excluded_names.add('rlimit')
         attrs = []
@@ -374,7 +377,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertGreaterEqual(ret, 0)
 
     def ppid(self, ret, proc):
-        self.assertIsInstance(ret, int)
+        self.assertIsInstance(ret, (int, long))
         self.assertGreaterEqual(ret, 0)
 
     def name(self, ret, proc):
@@ -484,7 +487,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         for value in ret:
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
-        if POSIX and ret.vms != 0:
+        if POSIX and not AIX and ret.vms != 0:
             # VMS is always supposed to be the highest
             for name in ret._fields:
                 if name != 'vms':
@@ -538,8 +541,8 @@ class TestFetchAllProcesses(unittest.TestCase):
             check_connection_ntuple(conn)
 
     def cwd(self, ret, proc):
-        self.assertIsInstance(ret, str)
-        if ret is not None:  # BSD may return None
+        if ret:     # 'ret' can be None or empty
+            self.assertIsInstance(ret, str)
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)

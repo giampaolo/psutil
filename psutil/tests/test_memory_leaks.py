@@ -24,6 +24,7 @@ import time
 
 import psutil
 import psutil._common
+from psutil import AIX
 from psutil import LINUX
 from psutil import OPENBSD
 from psutil import OSX
@@ -288,6 +289,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.num_fds)
 
     @skip_if_linux()
+    @unittest.skipIf(AIX, "num_ctx_switches not available on AIX")
     def test_num_ctx_switches(self):
         self.execute(self.proc.num_ctx_switches)
 

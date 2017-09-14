@@ -318,7 +318,7 @@ class TestProcess(unittest.TestCase):
         with open(PYTHON, 'rb') as f:
             f.read()
         io2 = p.io_counters()
-        if not BSD:
+        if not BSD and not AIX:
             self.assertGreater(io2.read_count, io1.read_count)
             self.assertEqual(io2.write_count, io1.write_count)
             if LINUX:

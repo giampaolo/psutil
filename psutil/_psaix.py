@@ -44,11 +44,10 @@ AF_LINK = cext_posix.AF_LINK
 PROC_STATUSES = {
 
     cext.SIDL: _common.STATUS_IDLE,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SSLEEP: _common.STATUS_SLEEPING,
+    cext.SZOMB: _common.STATUS_ZOMBIE,
+    cext.SACTIVE: _common.STATUS_RUNNING,
     cext.SSWAP: _common.STATUS_RUNNING,      # TODO what status is this?
     cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SZOMB: _common.STATUS_ZOMBIE
 }
 
 TCP_STATUSES = {
@@ -486,7 +485,8 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return self._proc_basic_info()[proc_info_map['ppid']]
+        self._ppid = self._proc_basic_info()[proc_info_map['ppid']]
+        return self._ppid
 
     @wrap_exceptions
     def uids(self):
@@ -581,5 +581,12 @@ class Process(object):
 
     @wrap_exceptions
     def io_counters(self):
-        rc, wc, rb, wb = cext.proc_io_counters(self.pid)
+        try:
+            rc, wc, rb, wb = cext.proc_io_counters(self.pid)
+        except OSError:
+            # if process is terminated, proc_io_counters returns OSError
+            # instead of NSP
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            raise
         return _common.pio(rc, wc, rb, wb)

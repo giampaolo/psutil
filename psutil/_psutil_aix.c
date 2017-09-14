@@ -80,6 +80,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
+    pstatus_t status;
     const char *procfs_path;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
@@ -88,6 +89,23 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
+
+    if (info.pr_flag & SEXIT) {
+        // "exiting" processes don't have /proc/<pid>/status
+        if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
+            // "If the process is a zombie, the pr_nlwp and pr_lwp.pr_lwpid flags are zero."
+            status.pr_stat = SZOMB;
+        }
+        else {
+            // There are other "exiting" processes that 'ps' shows as "active"
+            status.pr_stat = SACTIVE;
+        }
+    } else {
+        sprintf(path, "%s/%i/status", procfs_path, pid);
+        if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
+            return NULL;
+    }
+
     return Py_BuildValue("KKKdiiiK",
                          (unsigned long long) info.pr_ppid,         // parent pid
                          (unsigned long long) info.pr_rssize,       // rss
@@ -95,7 +113,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
                          TV2DOUBLE(info.pr_start),                  // create time
                          (int) info.pr_lwp.pr_nice,                 // nice
                          (int) info.pr_nlwp,                        // no. of threads
-                         (int) info.pr_lwp.pr_state,                // status code
+                         (int) status.pr_stat,                      // status code
                          (unsigned long long)info.pr_ttydev         // tty nr
                         );
 }
@@ -825,12 +843,11 @@ void init_psutil_aix(void)
 #endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
-    PyModule_AddIntConstant(module, "SIDL", TSIDL);
-    PyModule_AddIntConstant(module, "SRUN", TSRUN);
-    PyModule_AddIntConstant(module, "SSLEEP", TSSLEEP);
-    PyModule_AddIntConstant(module, "SSWAP", TSSWAP);
-    PyModule_AddIntConstant(module, "SSTOP", TSSTOP);
-    PyModule_AddIntConstant(module, "SZOMB", TSZOMB);
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+    PyModule_AddIntConstant(module, "SACTIVE", SACTIVE);
+    PyModule_AddIntConstant(module, "SSWAP", SSWAP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
 
     PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
     PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);

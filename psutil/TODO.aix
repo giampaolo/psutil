@@ -9,17 +9,6 @@ Known limitations:
     psutil.cpu_stats ctx_switches and soft_interrupts are always 0
 
 The following unit tests may fail:
-    test_fetch_all              `cwd` can return None (also on Solaris)
-    test_proc_cmdline           unicode name tests don't work, name is empty (also on Solaris)
-    test_proc_exe               unicode name tests don't work, name is empty (also on Solaris)
-    test_proc_name              unicode name tests don't work, name is empty (also on Solaris)
-    test_prog_w_funky_name      funky name tests don't work, name is empty (also on Solaris)
-    test_setup_script           TBD (also on Solaris)
+    test_prog_w_funky_name      funky name tests don't work, name is truncated
     test_cmdline                long args are cut from cmdline in /proc/pid/psinfo and getargs
-    test_io_counters            io_counters read count is always 0
-    test_zombie_process         trying to create a zombie process doesn't create a zombie process on AIX
-    test_create_zombie_proc     trying to create a zombie process doesn't create a zombie process on AIX
-    test_procinfo               missing API
-    test_cpu_stats              cpu_stats always returns ctx_switches=0
-    test_disk_usage             df returns "-" for all procfs fields but API returns something real
     test_pid_exists_2           there are pids in /proc that don't really exist
