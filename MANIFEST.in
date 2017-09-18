@@ -71,6 +71,7 @@ include psutil/arch/windows/services.h
 include psutil/tests/README.rst
 include psutil/tests/__init__.py
 include psutil/tests/__main__.py
+include psutil/tests/test_aix.py
 include psutil/tests/test_bsd.py
 include psutil/tests/test_connections.py
 include psutil/tests/test_contracts.py

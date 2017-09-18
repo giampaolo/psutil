@@ -284,9 +284,6 @@ class TestFetchAllProcesses(unittest.TestCase):
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
             'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
         ])
-        if AIX:
-            # "<exiting>" processes really don't have names
-            excluded_names.add('name')
         if LINUX and not HAS_RLIMIT:
             excluded_names.add('rlimit')
         attrs = []
@@ -382,7 +379,9 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def name(self, ret, proc):
         self.assertIsInstance(ret, str)
-        assert ret
+        # on AIX, "<exiting>" processes don't have names
+        if not AIX:
+            assert ret
 
     def create_time(self, ret, proc):
         self.assertIsInstance(ret, float)

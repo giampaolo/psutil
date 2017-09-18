@@ -5,7 +5,9 @@
  * found in the LICENSE file.
  */
 
-/*! This file was copied from https://lists.samba.org/archive/samba-technical/2009-February/063079.html !*/
+/*! Based on code from
+    https://lists.samba.org/archive/samba-technical/2009-February/063079.html
+!*/
 
 #include <string.h>
 #include <stdlib.h>

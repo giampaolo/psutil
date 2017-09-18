@@ -118,12 +118,9 @@ def get_procfs_path():
 
 
 def virtual_memory():
-    total, free, pinned, inuse = cext.virtual_mem()
-    total = total * PAGE_SIZE
-    avail = free * PAGE_SIZE
-    used = inuse * PAGE_SIZE
+    total, avail, free, pinned, inuse = cext.virtual_mem()
     percent = usage_percent((total - avail), total, _round=1)
-    return svmem(total, avail, percent, used, free)
+    return svmem(total, avail, percent, inuse, free)
 
 
 def swap_memory():
@@ -171,13 +168,12 @@ def cpu_count_physical():
     if p.returncode != 0:
         raise RuntimeError("%r command error\n%s" % (cmd, stderr))
     processors = stdout.strip().splitlines()
-    return len(processors)
+    return len(processors) or None
 
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
-        cext.cpu_stats()
+    ctx_switches, interrupts, soft_interrupts, syscalls = cext.cpu_stats()
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
@@ -264,6 +260,8 @@ def net_if_stats():
         isup, mtu = cext.net_if_stats(name)
 
         # try to get speed and duplex
+        # TODO: rewrite this in C (entstat forks, so use truss -f to follow.
+        # looks like it is using an undocumented ioctl?)
         duplex = ""
         speed = 0
         p = subprocess.Popen(["/usr/bin/entstat", "-d", name],

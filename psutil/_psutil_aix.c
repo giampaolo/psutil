@@ -90,16 +90,14 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-    if (info.pr_flag & SEXIT) {
+    if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
+        // From the /proc docs: "If the process is a zombie, the pr_nlwp
+        // and pr_lwp.pr_lwpid flags are zero."
+        status.pr_stat = SZOMB;
+    } else if (info.pr_flag & SEXIT) {
         // "exiting" processes don't have /proc/<pid>/status
-        if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
-            // "If the process is a zombie, the pr_nlwp and pr_lwp.pr_lwpid flags are zero."
-            status.pr_stat = SZOMB;
-        }
-        else {
-            // There are other "exiting" processes that 'ps' shows as "active"
-            status.pr_stat = SACTIVE;
-        }
+        // There are other "exiting" processes that 'ps' shows as "active"
+        status.pr_stat = SACTIVE;
     } else {
         sprintf(path, "%s/%i/status", procfs_path, pid);
         if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
@@ -107,15 +105,15 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("KKKdiiiK",
-                         (unsigned long long) info.pr_ppid,         // parent pid
-                         (unsigned long long) info.pr_rssize,       // rss
-                         (unsigned long long) info.pr_size,         // vms
-                         TV2DOUBLE(info.pr_start),                  // create time
-                         (int) info.pr_lwp.pr_nice,                 // nice
-                         (int) info.pr_nlwp,                        // no. of threads
-                         (int) status.pr_stat,                      // status code
-                         (unsigned long long)info.pr_ttydev         // tty nr
-                        );
+        (unsigned long long) info.pr_ppid,      // parent pid
+        (unsigned long long) info.pr_rssize,    // rss
+        (unsigned long long) info.pr_size,      // vms
+        TV2DOUBLE(info.pr_start),               // create time
+        (int) info.pr_lwp.pr_nice,              // nice
+        (int) info.pr_nlwp,                     // no. of threads
+        (int) status.pr_stat,                   // status code
+        (unsigned long long)info.pr_ttydev      // tty nr
+        );
 }
 
 
@@ -128,13 +126,34 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[100];
     psinfo_t info;
     const char *procfs_path;
+    PyObject *py_name = NULL;
+    PyObject *py_args = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
-    return Py_BuildValue("s#s", info.pr_fname, PRFNSZ, info.pr_psargs);
+
+    py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
+    if (!py_name)
+        goto error;
+    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+    if (!py_args)
+        goto error;
+    py_retlist = Py_BuildValue("OO", py_name, py_args);
+    if (!py_retlist)
+        goto error;
+    Py_DECREF(py_name);
+    Py_DECREF(py_args);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_name);
+    Py_XDECREF(py_args);
+    Py_XDECREF(py_retlist);
+    return NULL;
 }
 
 
@@ -222,9 +241,9 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("(KKKK)",
-                         procinfo.inOps,
+                         procinfo.inOps,      // XXX always 0
                          procinfo.outOps,
-                         procinfo.inBytes,
+                         procinfo.inBytes,    // XXX always 0
                          procinfo.outBytes);
 }
 
@@ -413,10 +432,11 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         return NULL;
 
     /* check how many perfstat_netinterface_t structures are available */
-    tot = perfstat_netinterface(NULL, NULL, sizeof(perfstat_netinterface_t), 0);
+    tot = perfstat_netinterface(
+        NULL, NULL, sizeof(perfstat_netinterface_t), 0);
     if (tot == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "no network interface found");
-        goto error;
+        // no network interfaces - return empty dict
+        return py_retdict;
     }
     if (tot < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -438,14 +458,14 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     for (i = 0; i < tot; i++) {
         py_ifc_info = Py_BuildValue("(KKKKKKKK)",
-            statp[i].obytes,       /* number of bytes sent on interface */
-            statp[i].ibytes,       /* number of bytes received on interface */
-            statp[i].opackets,     /* number of packets sent on interface */
-            statp[i].ipackets,     /* number of packets received on interface */
-            statp[i].ierrors,      /* number of input errors on interface */
-            statp[i].oerrors,      /* number of output errors on interface */
-            statp[i].if_iqdrops,   /* Dropped on input, this interface */
-            statp[i].xmitdrops     /* number of packets not transmitted */
+            statp[i].obytes,      /* number of bytes sent on interface */
+            statp[i].ibytes,      /* number of bytes received on interface */
+            statp[i].opackets,    /* number of packets sent on interface */
+            statp[i].ipackets,    /* number of packets received on interface */
+            statp[i].ierrors,     /* number of input errors on interface */
+            statp[i].oerrors,     /* number of output errors on interface */
+            statp[i].if_iqdrops,  /* Dropped on input, this interface */
+            statp[i].xmitdrops    /* number of packets not transmitted */
            );
         if (!py_ifc_info)
             goto error;
@@ -545,7 +565,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
-    perfstat_cpu_t *cpu;
+    perfstat_cpu_t *cpu = NULL;
     perfstat_id_t id;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
@@ -557,14 +577,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
     if (ncpu <= 0){
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     /* allocate enough memory to hold the ncpu structures */
     cpu = (perfstat_cpu_t *) malloc(ncpu * sizeof(perfstat_cpu_t));
     if (cpu == NULL) {
         PyErr_NoMemory();
-        return NULL;
+        goto error;
     }
 
     strcpy(id.name, "");
@@ -572,7 +592,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (rc <= 0) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     for (i = 0; i < ncpu; i++) {
@@ -594,7 +614,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
-    free(cpu);
+    if (cpu != NULL)
+        free(cpu);
     return NULL;
 }
 
@@ -671,19 +692,22 @@ error:
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int rc;
+    int pagesize = getpagesize();
     perfstat_memory_total_t memory;
 
-    rc = perfstat_memory_total(NULL, &memory, sizeof(perfstat_memory_total_t), 1);
+    rc = perfstat_memory_total(
+        NULL, &memory, sizeof(perfstat_memory_total_t), 1);
     if (rc <= 0){
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
-    return Py_BuildValue("KKKK",
-        (unsigned long long) memory.real_total,
-        (unsigned long long) memory.real_free,
-        (unsigned long long) memory.real_pinned,
-        (unsigned long long) memory.real_inuse
+    return Py_BuildValue("KKKKK",
+        (unsigned long long) memory.real_total * pagesize,
+        (unsigned long long) memory.real_avail * pagesize,
+        (unsigned long long) memory.real_free * pagesize,
+        (unsigned long long) memory.real_pinned * pagesize,
+        (unsigned long long) memory.real_inuse * pagesize
     );
 }
 
@@ -697,15 +721,16 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int pagesize = getpagesize();
     perfstat_memory_total_t memory;
 
-    rc = perfstat_memory_total(NULL, &memory, sizeof(perfstat_memory_total_t), 1);
+    rc = perfstat_memory_total(
+        NULL, &memory, sizeof(perfstat_memory_total_t), 1);
     if (rc <= 0){
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     return Py_BuildValue("KKKK",
-        (unsigned long long) memory.pgsp_total,
-        (unsigned long long) memory.pgsp_free,
+        (unsigned long long) memory.pgsp_total * pagesize,
+        (unsigned long long) memory.pgsp_free * pagesize,
         (unsigned long long) memory.pgins * pagesize,
         (unsigned long long) memory.pgouts * pagesize
     );
@@ -717,24 +742,59 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    int rc;
-    perfstat_cpu_total_t cpu;
+    int ncpu, rc, i;
+    // perfstat_cpu_total_t doesn't have invol/vol cswitch, only pswitch
+    // which is apparently something else. We have to sum over all cpus
+    perfstat_cpu_t *cpu = NULL;
+    perfstat_id_t id;
+    u_longlong_t cswitches = 0;
+    u_longlong_t devintrs = 0;
+    u_longlong_t softintrs = 0;
+    u_longlong_t syscall = 0;
 
-    rc = perfstat_cpu_total(NULL, &cpu, sizeof(cpu), 1);
+    /* get the number of cpus in ncpu */
+    ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
+    if (ncpu <= 0){
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    /* allocate enough memory to hold the ncpu structures */
+    cpu = (perfstat_cpu_t *) malloc(ncpu * sizeof(perfstat_cpu_t));
+    if (cpu == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    strcpy(id.name, "");
+    rc = perfstat_cpu(&id, cpu, sizeof(perfstat_cpu_t), ncpu);
 
     if (rc <= 0) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
+    for (i = 0; i < ncpu; i++) {
+        cswitches += cpu[i].invol_cswitch + cpu[i].vol_cswitch;
+        devintrs += cpu[i].devintrs;
+        softintrs += cpu[i].softintrs;
+        syscall += cpu[i].syscall;
+    }
+
+    free(cpu);
+
     return Py_BuildValue(
-        "IIIII",
-        cpu.pswitch,
-        cpu.syscall,
-        cpu.devintrs,
-        cpu.softintrs,
-        cpu.traps
+        "KKKK",
+        cswitches,
+        devintrs,
+        softintrs,
+        syscall
     );
+
+error:
+    if (cpu != NULL)
+        free(cpu);
+    return NULL;
 }
 
 
