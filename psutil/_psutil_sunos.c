@@ -9,13 +9,13 @@
  * this in Cython which I later on translated in C.
  */
 
-// fix compilation issue on SunOS 5.10, see:
-// https://github.com/giampaolo/psutil/issues/421
-// https://github.com/giampaolo/psutil/issues/1077
-// http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
-//
-// Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
-//
+/* fix compilation issue on SunOS 5.10, see:
+ * https://github.com/giampaolo/psutil/issues/421
+ * https://github.com/giampaolo/psutil/issues/1077
+ * http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
+ *
+ * Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
+*/
 
 #define NEW_MIB_COMPLIANT 1
 #define _STRUCTURED_PROC 1
@@ -126,9 +126,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[1000];
     psinfo_t info;
     const char *procfs_path;
-    PyObject *py_name;
-    PyObject *py_args;
-    PyObject *py_retlist;
+    PyObject *py_name = NULL;
+    PyObject *py_args = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -328,7 +328,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", proc_num);
 
 error:
-    if (fd != NULL)
+    if (fd != -1)
         close(fd);
     if (ptr != NULL)
         free(ptr);
@@ -832,7 +832,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
         // perms
-        sprintf(perms, "%c%c%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
+        sprintf(perms, "%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
                 p->pr_mflags & MA_WRITE ? 'w' : '-',
                 p->pr_mflags & MA_EXEC ? 'x' : '-',
                 p->pr_mflags & MA_SHARED ? 's' : '-');
