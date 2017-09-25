@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+XXXX-XX-XX
+
+5.3.2
+=====
+
+*Bug fixes*
+
+- 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
+
+
 2017-09-10
 
 5.3.1
