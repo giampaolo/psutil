@@ -868,7 +868,14 @@ class TestProcess(unittest.TestCase):
         # CPUs on get):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, ... != [0]
         for n in all_cpus:
-            p.cpu_affinity([n])
+            try:
+                p.cpu_affinity([n])
+            except ValueError as err:
+                if TRAVIS and LINUX and "not eligible" in str(err):
+                    # https://travis-ci.org/giampaolo/psutil/jobs/279890461
+                    continue
+                else:
+                    raise
             self.assertEqual(p.cpu_affinity(), [n])
             if hasattr(os, "sched_getaffinity"):
                 self.assertEqual(p.cpu_affinity(),
@@ -1264,7 +1271,15 @@ class TestProcess(unittest.TestCase):
         # set methods
         succeed_or_zombie_p_exc(zproc.parent)
         if hasattr(zproc, 'cpu_affinity'):
-            succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+            try:
+                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+            except ValueError as err:
+                if TRAVIS and LINUX and "not eligible" in str(err):
+                    # https://travis-ci.org/giampaolo/psutil/jobs/279890461
+                    pass
+                else:
+                    raise
+
         succeed_or_zombie_p_exc(zproc.nice, 0)
         if hasattr(zproc, 'ionice'):
             if LINUX:
