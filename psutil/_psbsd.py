@@ -694,7 +694,8 @@ class Process(object):
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
+            # TODO: thread name
+            ntuple = _common.pthread(thread_id, utime, stime, "")
             retlist.append(ntuple)
         if OPENBSD:
             # On OpenBSD the underlying C function does not raise NSP
