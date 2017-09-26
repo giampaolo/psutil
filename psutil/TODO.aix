@@ -1,0 +1,16 @@
+AIX support is experimental at this time.
+The following functions and methods are unsupported on the AIX platform:
+
+    psutil.Process.memory_maps
+    psutil.Process.num_ctx_switches
+
+Known limitations:
+    psutil.Process.io_counters read count is always 0
+    reading basic process info may fail or return incorrect values when process is starting
+        (see IBM APAR IV58499 - fixed in newer AIX versions)
+    sockets and pipes may not be counted in num_fds (fixed in newer AIX versions)
+
+The following unit tests may fail:
+    test_prog_w_funky_name      funky name tests don't work, name is truncated
+    test_cmdline                long args are cut from cmdline in /proc/pid/psinfo and getargs
+    test_pid_exists_2           there are pids in /proc that don't really exist

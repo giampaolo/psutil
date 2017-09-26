@@ -21,6 +21,7 @@ import types
 
 import psutil
 
+from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
 from psutil import NETBSD
@@ -44,6 +45,7 @@ from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NUM_CTX_SWITCHES
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
@@ -317,7 +319,7 @@ class TestProcess(unittest.TestCase):
         with open(PYTHON, 'rb') as f:
             f.read()
         io2 = p.io_counters()
-        if not BSD:
+        if not BSD and not AIX:
             self.assertGreater(io2.read_count, io1.read_count)
             self.assertEqual(io2.write_count, io1.write_count)
             if LINUX:
@@ -994,6 +996,7 @@ class TestProcess(unittest.TestCase):
 
     @skip_on_not_implemented(only_if=LINUX)
     @unittest.skipIf(OPENBSD or NETBSD, "not reliable on OPENBSD & NETBSD")
+    @unittest.skipIf(not HAS_NUM_CTX_SWITCHES, "not supported")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())

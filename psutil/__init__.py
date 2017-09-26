@@ -73,6 +73,7 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
+from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
@@ -158,6 +159,13 @@ elif SUNOS:
     # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
+elif AIX:
+    from . import _psaix as _psplatform
+
+    # This is public API and it will be retrieved from _pslinux.py
+    # via sys.modules.
+    PROCFS_PATH = "/proc"
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -185,7 +193,7 @@ __all__ = [
     "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
-    "WINDOWS",
+    "WINDOWS", "AIX",
 
     # classes
     "Process", "Popen",
@@ -785,7 +793,7 @@ class Process(object):
             """
             return self._proc.num_fds()
 
-    # Linux, BSD and Windows only
+    # Linux, BSD, AIX and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
         def io_counters(self):
@@ -890,11 +898,13 @@ class Process(object):
             """
             return self._proc.num_handles()
 
-    def num_ctx_switches(self):
-        """Return the number of voluntary and involuntary context
-        switches performed by this process.
-        """
-        return self._proc.num_ctx_switches()
+    if hasattr(_psplatform.Process, "num_ctx_switches"):
+
+        def num_ctx_switches(self):
+            """Return the number of voluntary and involuntary context
+            switches performed by this process.
+            """
+            return self._proc.num_ctx_switches()
 
     def num_threads(self):
         """Return the number of threads used by this process."""
@@ -1171,7 +1181,6 @@ class Process(object):
 
     if hasattr(_psplatform.Process, "memory_maps"):
         # Available everywhere except OpenBSD and NetBSD.
-
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.

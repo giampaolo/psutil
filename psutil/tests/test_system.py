@@ -19,6 +19,7 @@ import tempfile
 import time
 
 import psutil
+from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
@@ -742,7 +743,8 @@ class TestSystemAPIs(unittest.TestCase):
         for name in infos._fields:
             value = getattr(infos, name)
             self.assertGreaterEqual(value, 0)
-            if name in ('ctx_switches', 'interrupts'):
+            # on AIX, ctx_switches is always 0
+            if not AIX and name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not suported")

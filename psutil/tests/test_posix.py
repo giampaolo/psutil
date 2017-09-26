@@ -15,6 +15,7 @@ import sys
 import time
 
 import psutil
+from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
 from psutil import OPENBSD
@@ -48,6 +49,8 @@ def ps(cmd):
     if SUNOS:
         cmd = cmd.replace("-o command", "-o comm")
         cmd = cmd.replace("-o start", "-o stime")
+    if AIX:
+        cmd = cmd.replace("-o rss", "-o rssize")
     output = sh(cmd)
     if not LINUX:
         output = output.split('\n')[1].strip()
@@ -206,7 +209,9 @@ class TestProcess(unittest.TestCase):
     # incorrect value (20); the real deal is getpriority(2) which
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
+    # AIX has the same issue
     @unittest.skipIf(SUNOS, "not reliable on SUNOS")
+    @unittest.skipIf(AIX, "not reliable on AIX")
     def test_nice(self):
         ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
         psutil_nice = psutil.Process().nice()
@@ -262,7 +267,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        if SUNOS:
+        if SUNOS or AIX:
             cmd = ["ps", "-A", "-o", "pid"]
         else:
             cmd = ["ps", "ax", "-o", "pid"]
@@ -355,6 +360,8 @@ class TestSystemAPIs(unittest.TestCase):
                               psutil._psposix.wait_pid, os.getpid())
             assert m.called
 
+    # AIX can return '-' in df output instead of numbers, e.g. for /proc
+    @unittest.skipIf(AIX, "unreliable on AIX")
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()
