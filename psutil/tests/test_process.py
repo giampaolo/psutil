@@ -547,6 +547,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.id, athread[0])
             self.assertEqual(athread.user_time, athread[1])
             self.assertEqual(athread.system_time, athread[2])
+            self.assertEqual(athread.name, athread[3])
 
     @retry_before_failing()
     @skip_on_access_denied(only_if=OSX)
