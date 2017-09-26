@@ -548,6 +548,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
             py_user_proc = Py_True;
@@ -580,7 +581,7 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
-    endutent();
+    endutxent();
 
     return py_retlist;
 
@@ -590,8 +591,7 @@ error:
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (ut != NULL)
-        endutent();
+    endutxent();
     return NULL;
 }
 
@@ -1332,20 +1332,20 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
             boot_time = (float)ut->ut_tv.tv_sec;
             break;
         }
     }
-    endutent();
-    if (boot_time != 0.0) {
-        return Py_BuildValue("f", boot_time);
-    }
-    else {
+    endutxent();
+    if (boot_time == 0.0) {
+        /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
         return NULL;
     }
+    return Py_BuildValue("f", boot_time);
 }
 
 
