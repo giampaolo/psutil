@@ -26,6 +26,7 @@
 
 #if defined(PSUTIL_LINUX)
     #include <netdb.h>
+    #include <linux/types.h>
     #include <linux/if_packet.h>
 #elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
