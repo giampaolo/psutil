@@ -13,4 +13,3 @@ Known limitations:
 The following unit tests may fail:
     test_prog_w_funky_name      funky name tests don't work, name is truncated
     test_cmdline                long args are cut from cmdline in /proc/pid/psinfo and getargs
-    test_pid_exists_2           there are pids in /proc that don't really exist
