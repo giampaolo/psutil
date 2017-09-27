@@ -2,12 +2,18 @@
 
 XXXX-XX-XX
 
-5.3.2
+5.4.0
 =====
+
+**Enhancements**
+
+- 1123_: [AIX] added support for AIX platform.  (patch by Arnon Yaari)
 
 *Bug fixes*
 
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
+- 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
+  (patch by Prodesire)
 
 
 2017-09-10
