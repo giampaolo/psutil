@@ -8,35 +8,27 @@
 
 """AIX specific tests."""
 
-import os
 import re
 
-import psutil
 from psutil import AIX
-from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import unittest
+import psutil
+
 
 @unittest.skipIf(not AIX, "AIX only")
 class AIXSpecificTestCase(unittest.TestCase):
 
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
-
-        # example output:
-        #     Unit: KB
-        #     --------------------------------------------------------------------------------------
-        #                    size       inuse        free         pin     virtual  available   mmode
-        #     memory      4194304     1844828     2349476     1250208     1412976    2621596     Ded
-        #     pg space     524288        8304
         re_pattern = "memory\s*"
         for field in ("size inuse free pin virtual available mmode").split():
             re_pattern += "(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
-        self.assertIsNotNone(matchobj,
-            "svmon command returned unexpected output")
+        self.assertIsNotNone(
+            matchobj, "svmon command returned unexpected output")
 
         KB = 1024
         total = int(matchobj.group("size")) * KB
@@ -51,20 +43,16 @@ class AIXSpecificTestCase(unittest.TestCase):
         # when compared to GBs.
         MEMORY_TOLERANCE = 2 * KB * KB   # 2 MB
         self.assertEqual(psutil_result.total, total)
-        self.assertAlmostEqual(psutil_result.used, used,
-            delta=MEMORY_TOLERANCE)
-        self.assertAlmostEqual(psutil_result.available, available,
-            delta=MEMORY_TOLERANCE)
-        self.assertAlmostEqual(psutil_result.free, free,
-            delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(
+            psutil_result.used, used, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(
+            psutil_result.available, available, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(
+            psutil_result.free, free, delta=MEMORY_TOLERANCE)
 
     def test_swap_memory(self):
         out = sh('/usr/sbin/lsps -a')
-
-        # example output:
-        #     Page Space      Physical Volume   Volume Group    Size %Used   Active    Auto    Type   Chksum
-        #     hd6             hdisk0            rootvg         512MB     2     yes     yes      lv       0
-        # from the man page, "The size is given in megabytes" so we assume
+        # From the man page, "The size is given in megabytes" so we assume
         # we'll always have 'MB' in the result
         # TODO maybe try to use "swap -l" to check "used" too, but its units
         # are not guaranteed to be "MB" so parsing may not be consistent
@@ -73,8 +61,8 @@ class AIXSpecificTestCase(unittest.TestCase):
                              "(?P<vg>\S+)\s+"
                              "(?P<size>\d+)MB", out)
 
-        self.assertIsNotNone(matchobj,
-            "lsps command returned unexpected output")
+        self.assertIsNotNone(
+            matchobj, "lsps command returned unexpected output")
 
         total_mb = int(matchobj.group("size"))
         MB = 1024 ** 2
@@ -93,22 +81,26 @@ class AIXSpecificTestCase(unittest.TestCase):
             re_pattern += "(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
-        self.assertIsNotNone(matchobj,
-            "mpstat command returned unexpected output")
+        self.assertIsNotNone(
+            matchobj, "mpstat command returned unexpected output")
 
         # numbers are usually in the millions so 1000 is ok for tolerance
         CPU_STATS_TOLERANCE = 1000
         psutil_result = psutil.cpu_stats()
-        self.assertAlmostEqual(psutil_result.ctx_switches,
+        self.assertAlmostEqual(
+            psutil_result.ctx_switches,
             int(matchobj.group("cs")),
             delta=CPU_STATS_TOLERANCE)
-        self.assertAlmostEqual(psutil_result.syscalls,
+        self.assertAlmostEqual(
+            psutil_result.syscalls,
             int(matchobj.group("sysc")),
             delta=CPU_STATS_TOLERANCE)
-        self.assertAlmostEqual(psutil_result.interrupts,
+        self.assertAlmostEqual(
+            psutil_result.interrupts,
             int(matchobj.group("dev")),
             delta=CPU_STATS_TOLERANCE)
-        self.assertAlmostEqual(psutil_result.soft_interrupts,
+        self.assertAlmostEqual(
+            psutil_result.soft_interrupts,
             int(matchobj.group("soft")),
             delta=CPU_STATS_TOLERANCE)
 

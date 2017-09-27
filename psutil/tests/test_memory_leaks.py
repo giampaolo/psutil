@@ -24,7 +24,6 @@ import time
 
 import psutil
 import psutil._common
-from psutil import AIX
 from psutil import LINUX
 from psutil import OPENBSD
 from psutil import OSX

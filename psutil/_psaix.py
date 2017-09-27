@@ -42,7 +42,6 @@ PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
 
 PROC_STATUSES = {
-
     cext.SIDL: _common.STATUS_IDLE,
     cext.SZOMB: _common.STATUS_ZOMBIE,
     cext.SACTIVE: _common.STATUS_RUNNING,
