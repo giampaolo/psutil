@@ -321,7 +321,7 @@ def pids():
 
 def pid_exists(pid):
     """Check for the existence of a unix pid."""
-    return _psposix.pid_exists(pid)
+    return os.path.exists(os.path.join(get_procfs_path(), str(pid), "psinfo"))
 
 
 def wrap_exceptions(fun):
