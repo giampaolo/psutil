@@ -8,13 +8,13 @@ psutil documentation
 Quick links
 -----------
 
-* `Home page <https://github.com/giampaolo/psutil>`__
-* `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-* `Blog <http://grodola.blogspot.com/search/label/psutil>`__
-* `Forum <http://groups.google.com/group/psutil/topics>`__
-* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
-* `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
-* `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
+- `Home page <https://github.com/giampaolo/psutil>`__
+- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+- `Blog <http://grodola.blogspot.com/search/label/psutil>`__
+- `Forum <http://groups.google.com/group/psutil/topics>`__
+- `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
 -----
@@ -25,11 +25,19 @@ retrieving information on running
 in **Python**.
 It is useful mainly for **system monitoring**, **profiling**, **limiting
 process resources** and the **management of running processes**.
-It implements many functionalities offered by command line tools
+It implements many functionalities offered by UNIX command line tools
 such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
-It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
-and **NetBSD**, both **32-bit** and **64-bit** architectures, with Python
+psutil currently supports the following platforms:
+
+- **Linux**
+- **Windows**
+- **OSX**,
+- **FreeBSD, OpenBSD**, **NetBSD**
+- **Sun Solaris**
+- **AIX**
+
+...both **32-bit** and **64-bit** architectures, with Python
 versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
 `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
 `PyPy <http://pypy.org/>`__ is also known to work.
@@ -560,12 +568,8 @@ Network
      ...]
 
   .. note::
-    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root.
-    This is a limitation of the OS and ``lsof`` does the same.
-
-  .. note::
-    (AIX) :class:`psutil.AccessDenied` is always raised unless running as root
-    (lsof does the same).
+    (OSX and AIX) :class:`psutil.AccessDenied` is always raised unless running
+    as root. This is a limitation of the OS and ``lsof`` does the same.
 
   .. note::
     (Solaris) UNIX sockets are not supported.
@@ -2135,10 +2139,11 @@ Constants
   It must be noted that this trick works only for APIs which rely on /proc
   filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
 
-  Availability: Linux, Solaris
+  Availability: Linux, Solaris, AIX
 
   .. versionadded:: 3.2.3
   .. versionchanged:: 3.4.2 also available on Solaris.
+  .. versionchanged:: 5.4.0 also available on AIX.
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
@@ -2551,7 +2556,7 @@ Q&A
 * Q: What about load average?
 * A: psutil does not expose any load average function as it's already available
   in python as
-  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__
+  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__.
 
 Running tests
 =============

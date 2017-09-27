@@ -11,10 +11,11 @@ sensors) in Python. Supported platforms:
  - Linux
  - Windows
  - OSX
- - Sun Solaris
  - FreeBSD
  - OpenBSD
  - NetBSD
+ - Sun Solaris
+ - AIX
 
 Works with Python versions from 2.6 to 3.X.
 """
@@ -211,7 +212,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.3.2"
+__version__ = "5.4.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
