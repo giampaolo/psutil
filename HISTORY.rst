@@ -1,33 +1,35 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-XXXX-XX-XX
-
 5.4.0
 =====
+
+*XXXX-XX-XX*
 
 **Enhancements**
 
 - 1123_: [AIX] added support for AIX platform.  (patch by Arnon Yaari)
 
-*Bug fixes*
+**Bug fixes**
 
 - 1009_: [Linux] sensors_temperatures() may crash with IOError.
-- 1129_: [Linux] sensors_fans() may crash with IOError.
+- 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
+  Saip)
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
+- 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
+  (patch by Max Bélanger)
 - 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
   (patch by Prodesire)
 
-
-2017-09-10
-
 5.3.1
 =====
+
+*2017-09-10*
 
 **Enhancements**
 
 - 1124_: documentation moved to http://psutil.readthedocs.io
 
-**Big fixes**
+**Bug fixes**
 
 - 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
 - 1125_: [BSD] net_connections() raises TypeError.
@@ -37,10 +39,10 @@ XXXX-XX-XX
 - 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
   only wheels are provided.
 
-*2017-09-01*
-
 5.3.0
 =====
+
+*2017-09-01*
 
 **Enhancements**
 
@@ -143,10 +145,10 @@ XXXX-XX-XX
   - WindowsService.display_name()
   - WindowsService.username()
 
-*2017-04-10*
-
 5.2.2
 =====
+
+*2017-04-10*
 
 **Bug fixes**
 
@@ -159,10 +161,10 @@ XXXX-XX-XX
 - 1009_: [Linux] sensors_temperatures() may raise OSError.
 - 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
 
-*2017-03-24*
-
 5.2.1
 =====
+
+*2017-03-24*
 
 **Bug fixes**
 
@@ -173,10 +175,10 @@ XXXX-XX-XX
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
 
-*2017-03-05*
-
 5.2.0
 =====
+
+*2017-03-05*
 
 **Enhancements**
 
