@@ -1191,7 +1191,11 @@ def sensors_fans():
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
         label = cat(base + '_label', fallback='', binary=False)
-        current = int(cat(base + '_input'))
+        try:
+            current = int(cat(base + '_input'))
+        except (IOError, OSError) as err:
+            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            continue
 
         ret[unit_name].append(_common.sfan(label, current))
 
