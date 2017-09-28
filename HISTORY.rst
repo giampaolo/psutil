@@ -11,7 +11,8 @@ XXXX-XX-XX
 
 *Bug fixes*
 
-- 1129_: [Linux] sensors_temperatures() may crash with IOError.
+- 1009_: [Linux] sensors_temperatures() may crash with IOError.
+- 1129_: [Linux] sensors_fans() may crash with IOError.
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
 - 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
   (patch by Prodesire)
