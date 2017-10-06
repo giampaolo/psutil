@@ -866,25 +866,10 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(len(initial), len(set(initial)))
 
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
-        # setting on travis doesn't seem to work (always return all
-        # CPUs on get):
-        # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, ... != [0]
-        # XXX
-        print("cpu_count = %s" % psutil.cpu_count())
-        print("all_cpus = %s" % all_cpus)
-        print("initial affinity = %s" % initial)
+        # Work around travis failure:
+        # https://travis-ci.org/giampaolo/psutil/builds/284173194
         for n in all_cpus if not TRAVIS else initial:
-            print(n)
-            if hasattr(os, "sched_setaffinity"):
-                os.sched_setaffinity(os.getpid(), [n])
-            try:
-                p.cpu_affinity([n])
-            except ValueError as err:
-                if TRAVIS and LINUX and "not eligible" in str(err):
-                    # https://travis-ci.org/giampaolo/psutil/jobs/279890461
-                    continue
-                else:
-                    raise
+            p.cpu_affinity([n])
             self.assertEqual(p.cpu_affinity(), [n])
             if hasattr(os, "sched_getaffinity"):
                 self.assertEqual(p.cpu_affinity(),
