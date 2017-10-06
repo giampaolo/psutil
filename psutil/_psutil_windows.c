@@ -2393,10 +2393,12 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 diskPerformance.WriteCount,
                 diskPerformance.BytesRead,
                 diskPerformance.BytesWritten,
+                // convert to ms:
+                // https://github.com/giampaolo/psutil/issues/1012
                 (unsigned long long)
-                    (diskPerformance.ReadTime.QuadPart) / 1000000,
+                    (diskPerformance.ReadTime.QuadPart) / 10000000,
                 (unsigned long long)
-                    (diskPerformance.WriteTime.QuadPart) / 1000000);
+                    (diskPerformance.WriteTime.QuadPart) / 10000000);
             if (!py_tuple)
                 goto error;
             if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
