@@ -2393,15 +2393,14 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 diskPerformance.WriteCount,
                 diskPerformance.BytesRead,
                 diskPerformance.BytesWritten,
-                (unsigned long long)(diskPerformance.ReadTime.QuadPart * 10) / 1000,
-                (unsigned long long)(diskPerformance.WriteTime.QuadPart * 10) / 1000);
+                (unsigned long long)
+                    (diskPerformance.ReadTime.QuadPart) / 1000000,
+                (unsigned long long)
+                    (diskPerformance.WriteTime.QuadPart) / 1000000);
             if (!py_tuple)
                 goto error;
-            if (PyDict_SetItemString(py_retdict, szDeviceDisplay,
-                                     py_tuple))
-            {
+            if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
                 goto error;
-            }
             Py_XDECREF(py_tuple);
         }
         else {

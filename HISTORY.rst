@@ -12,6 +12,8 @@
 **Bug fixes**
 
 - 1009_: [Linux] sensors_temperatures() may crash with IOError.
+- 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
+  in tens of micro seconds instead of milliseconds.
 - 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
   Saip)
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
