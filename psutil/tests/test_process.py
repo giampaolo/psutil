@@ -869,8 +869,11 @@ class TestProcess(unittest.TestCase):
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, ... != [0]
+        # XXX
+        print("cpu_count = %s" % psutil.cpu_count())
+        print("all_cpus = %s" % all_cpus)
         for n in all_cpus:
-            # XXX
+            print(n)
             if hasattr(os, "sched_setaffinity"):
                 os.sched_setaffinity(os.getpid(), [n])
             try:
