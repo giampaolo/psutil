@@ -870,6 +870,9 @@ class TestProcess(unittest.TestCase):
         # CPUs on get):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, ... != [0]
         for n in all_cpus:
+            # XXX
+            if hasattr(os, "sched_setaffinity"):
+                os.sched_setaffinity(os.getpid(), [n])
             try:
                 p.cpu_affinity([n])
             except ValueError as err:
