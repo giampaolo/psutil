@@ -872,7 +872,8 @@ class TestProcess(unittest.TestCase):
         # XXX
         print("cpu_count = %s" % psutil.cpu_count())
         print("all_cpus = %s" % all_cpus)
-        for n in all_cpus:
+        print("initial affinity = %s" % initial)
+        for n in all_cpus if not TRAVIS else initial:
             print(n)
             if hasattr(os, "sched_setaffinity"):
                 os.sched_setaffinity(os.getpid(), [n])
