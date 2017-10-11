@@ -1129,7 +1129,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
-        py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -1167,7 +1166,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            py_tuple = NULL;
             Py_DECREF(py_path);
+            py_path = NULL;
             // --- /construct python list
         }
     }
