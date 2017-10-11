@@ -418,7 +418,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 # =====================================================================
 
 
-class TestSystemWideConnections(unittest.TestCase):
+class TestSystemWideConnections(Base, unittest.TestCase):
     """Tests for net_connections()."""
 
     @skip_on_access_denied()
