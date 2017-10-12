@@ -2580,6 +2580,10 @@ take a look at the
 Timeline
 ========
 
+- 2017-10-12:
+  `5.4.0 <https://pypi.python.org/pypi?name=psutil&version=5.4.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#540>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.3.1...release-5.4.0#files_bucket>`__
 - 2017-09-10:
   `5.3.1 <https://pypi.python.org/pypi?name=psutil&version=5.3.1&:action=files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#530>`__ -

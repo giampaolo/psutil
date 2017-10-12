@@ -237,9 +237,6 @@ win-upload-exes:
 
 # All the necessary steps before making a release.
 pre-release:
-	${MAKE} generate-manifest
-	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
 	${MAKE} install
 	@PYTHONWARNINGS=all $(PYTHON) -c \
 		"from psutil import __version__ as ver; \
@@ -248,6 +245,9 @@ pre-release:
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
+	${MAKE} generate-manifest
+	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
+	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
 	${MAKE} win-download-exes
 	${MAKE} sdist
 
