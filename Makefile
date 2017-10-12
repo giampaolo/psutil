@@ -217,7 +217,6 @@ install-git-hooks:
 
 # Generate tar.gz source distribution.
 sdist:
-	${MAKE} clean
 	${MAKE} generate-manifest
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
 
@@ -255,7 +254,7 @@ pre-release:
 # upload doc, git tag release.
 release:
 	${MAKE} pre-release
-	PYTHONWARNINGS=all $(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
+	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
 	${MAKE} git-tag-release
 
 # Print announce of new release.
