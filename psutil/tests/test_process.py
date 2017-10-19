@@ -724,7 +724,8 @@ class TestProcess(unittest.TestCase):
             # and Open BSD returns a truncated string.
             # Also /proc/pid/cmdline behaves the same so it looks
             # like this is a kernel bug.
-            if NETBSD or OPENBSD:
+            # XXX - AIX truncates long arguments in /proc/pid/cmdline
+            if NETBSD or OPENBSD or AIX:
                 self.assertEqual(
                     psutil.Process(sproc.pid).cmdline()[0], PYTHON)
             else:
@@ -738,6 +739,7 @@ class TestProcess(unittest.TestCase):
 
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")
+    @unittest.skipIf(AIX, "broken on AIX")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:

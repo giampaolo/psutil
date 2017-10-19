@@ -690,7 +690,7 @@ def create_exe(outpath, c_code=None):
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
-        if c_code is None:
+        if isinstance(c_code, bool):        # c_code is True
             c_code = textwrap.dedent(
                 """
                 #include <unistd.h>
@@ -699,6 +699,7 @@ def create_exe(outpath, c_code=None):
                     return 1;
                 }
                 """)
+        assert isinstance(c_code, str), c_code
         with tempfile.NamedTemporaryFile(
                 suffix='.c', delete=False, mode='wt') as f:
             f.write(c_code)
