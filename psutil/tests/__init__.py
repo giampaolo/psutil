@@ -744,7 +744,7 @@ unittest.TestCase = TestCase
 
 
 def _setup_tests():
-    assert 'PSUTIL_TESTING' in os.environ
+    os.environ['PSUTIL_TESTING'] = '1'
     assert psutil._psplatform.cext.py_psutil_testing()
 
 
