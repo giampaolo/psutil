@@ -47,7 +47,6 @@ def ps(cmd):
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
     if SUNOS:
-        cmd = cmd.replace("-o command", "-o comm")
         cmd = cmd.replace("-o start", "-o stime")
     if AIX:
         cmd = cmd.replace("-o rss", "-o rssize")
@@ -59,6 +58,28 @@ def ps(cmd):
     except ValueError:
         return output
 
+# ps "-o" field names differ wildly between platforms.
+# "comm" means "only executable name" but is not available on BSD platforms.
+# "args" means "command with all its arguments", and is also not available
+# on BSD platforms.
+# "command" is like "args" on most platforms, but like "comm" on AIX,
+# and not available on SUNOS.
+# so for the executable name we can use "comm" on Solaris and split "command"
+# on other platforms.
+# to get the cmdline (with args) we have to use "args" on AIX and
+# Solaris, and can use "command" on all others.
+
+def ps_name(pid):
+    field = "command"
+    if SUNOS:
+        field = "comm"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid)).split(' ')[0]
+
+def ps_args(pid):
+    field = "command"
+    if AIX or SUNOS:
+        field = "args"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid))
 
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
@@ -124,9 +145,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_name(self):
-        # use command + arg since "comm" keyword not supported on all platforms
-        name_ps = ps("ps --no-headers -o command -p %s" % (
-            self.pid)).split(' ')[0]
+        name_ps = ps_name(self.pid)
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
@@ -182,8 +201,7 @@ class TestProcess(unittest.TestCase):
         self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
     def test_exe(self):
-        ps_pathname = ps("ps --no-headers -o command -p %s" %
-                         self.pid).split(' ')[0]
+        ps_pathname = ps_name(self.pid)
         psutil_pathname = psutil.Process(self.pid).exe()
         try:
             self.assertEqual(ps_pathname, psutil_pathname)
@@ -198,11 +216,8 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
     def test_cmdline(self):
-        ps_cmdline = ps("ps --no-headers -o command -p %s" % self.pid)
+        ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        if SUNOS:
-            # ps on Solaris only shows the first part of the cmdline
-            psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
