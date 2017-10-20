@@ -69,17 +69,20 @@ def ps(cmd):
 # to get the cmdline (with args) we have to use "args" on AIX and
 # Solaris, and can use "command" on all others.
 
+
 def ps_name(pid):
     field = "command"
     if SUNOS:
         field = "comm"
     return ps("ps --no-headers -o %s -p %s" % (field, pid)).split(' ')[0]
 
+
 def ps_args(pid):
     field = "command"
     if AIX or SUNOS:
         field = "args"
     return ps("ps --no-headers -o %s -p %s" % (field, pid))
+
 
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):

@@ -321,7 +321,7 @@ def flake8():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -Wa -m flake8 %s" % (PYTHON, py_files), nolog=True)
+    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
 @cmd
