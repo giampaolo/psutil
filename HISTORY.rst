@@ -9,6 +9,7 @@
 
 - 1150_: [Windows] when a process is terminate()d now the exit code is set to
   SIGTERM instead of 0.  (patch by Akos Kiss)
+- 1151_: python -m psutil.tests fail
 
 5.4.0
 =====
