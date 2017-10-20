@@ -1153,7 +1153,7 @@ Process class
     Availability: Linux, OSX, Windows, SunOS
 
     .. versionadded:: 4.0.0
-    .. versionchanged:: 5.3.0: added SunOS support
+    .. versionchanged:: 5.3.0 added SunOS support
 
   .. method:: create_time()
 

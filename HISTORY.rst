@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.1
+=====
+
+*XXXX-XX-XX*
+
+**Bug fixes**
+
+- 1150_: [Windows] when a process is terminate()d now the exit code is set to
+  SIGTERM instead of 0.  (patch by Akos Kiss)
+
 5.4.0
 =====
 
