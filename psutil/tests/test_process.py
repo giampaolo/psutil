@@ -151,7 +151,7 @@ class TestProcess(unittest.TestCase):
         if POSIX:
             self.assertEqual(code, -signal.SIGKILL)
         else:
-            self.assertEqual(code, 0)
+            self.assertEqual(code, signal.SIGTERM)
         self.assertFalse(p.is_running())
 
         sproc = get_test_subprocess()
@@ -161,7 +161,7 @@ class TestProcess(unittest.TestCase):
         if POSIX:
             self.assertEqual(code, -signal.SIGTERM)
         else:
-            self.assertEqual(code, 0)
+            self.assertEqual(code, signal.SIGTERM)
         self.assertFalse(p.is_running())
 
         # check sys.exit() code
@@ -207,8 +207,8 @@ class TestProcess(unittest.TestCase):
             # to get None.
             self.assertEqual(ret2, None)
         else:
-            self.assertEqual(ret1, 0)
-            self.assertEqual(ret1, 0)
+            self.assertEqual(ret1, signal.SIGTERM)
+            self.assertEqual(ret1, signal.SIGTERM)
 
     def test_wait_timeout_0(self):
         sproc = get_test_subprocess()
@@ -227,7 +227,7 @@ class TestProcess(unittest.TestCase):
         if POSIX:
             self.assertEqual(code, -signal.SIGKILL)
         else:
-            self.assertEqual(code, 0)
+            self.assertEqual(code, signal.SIGTERM)
         self.assertFalse(p.is_running())
 
     def test_cpu_percent(self):

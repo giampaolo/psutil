@@ -25,6 +25,7 @@
 #include <wtsapi32.h>
 #include <Winsvc.h>
 #include <PowrProf.h>
+#include <signal.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -349,7 +350,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     }
 
     // kill the process
-    if (! TerminateProcess(hProcess, 0)) {
+    if (! TerminateProcess(hProcess, SIGTERM)) {
         err = GetLastError();
         // See: https://github.com/giampaolo/psutil/issues/1099
         if (err != ERROR_ACCESS_DENIED) {
