@@ -142,7 +142,7 @@ Two icons in the home page (README) always show the build status:
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-OSX, BSD and Solaris are currently tested manually (sigh!).
+OSX, BSD, AIX and Solaris are currently tested manually (sigh!).
 
 Test coverage
 -------------
