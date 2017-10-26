@@ -729,11 +729,9 @@ class TestCase(unittest.TestCase):
     # Print a full path representation of the single unit tests
     # being run.
     def __str__(self):
-        mod = self.__class__.__module__
-        if mod == '__main__':
-            mod = __file__.split('.')[0]
         return "%s.%s.%s" % (
-            mod, self.__class__.__name__, self._testMethodName)
+            self.__class__.__module__, self.__class__.__name__,
+            self._testMethodName)
 
     # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
     # add support for the new name.
