@@ -1160,13 +1160,11 @@ class Process(object):
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
         valid_types = list(_psplatform.pfullmem._fields)
-        if hasattr(_psplatform, "pfullmem"):
-            valid_types.extend(list(_psplatform.pfullmem._fields))
         if memtype not in valid_types:
             raise ValueError("invalid memtype %r; valid types are %r" % (
                 memtype, tuple(valid_types)))
-        fun = self.memory_full_info if memtype in ('uss', 'pss', 'swap') else \
-            self.memory_info
+        fun = self.memory_info if memtype in _psplatform.pmem._fields else \
+            self.memory_full_info
         metrics = fun()
         value = getattr(metrics, memtype)
 
