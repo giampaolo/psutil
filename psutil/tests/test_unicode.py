@@ -352,6 +352,7 @@ class TestNonFSAPIS(unittest.TestCase):
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
         self.assertEqual(env['FUNNY_ARG'], funky_str)
+        reap_children()
 
 
 if __name__ == '__main__':
