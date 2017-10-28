@@ -762,21 +762,25 @@ class TestSystemNetwork(unittest.TestCase):
                 # Not always reliable.
                 # self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
-                                 int(re.findall(r'MTU:(\d+)', out)[0]))
+                                 int(re.findall(r'(?i)MTU[: ](\d+)', out)[0]))
 
     @retry_before_failing()
     def test_net_io_counters(self):
         def ifconfig(nic):
             ret = {}
             out = sh("ifconfig %s" % name)
-            ret['packets_recv'] = int(re.findall(r'RX packets:(\d+)', out)[0])
-            ret['packets_sent'] = int(re.findall(r'TX packets:(\d+)', out)[0])
-            ret['errin'] = int(re.findall(r'errors:(\d+)', out)[0])
-            ret['errout'] = int(re.findall(r'errors:(\d+)', out)[1])
-            ret['dropin'] = int(re.findall(r'dropped:(\d+)', out)[0])
-            ret['dropout'] = int(re.findall(r'dropped:(\d+)', out)[1])
-            ret['bytes_recv'] = int(re.findall(r'RX bytes:(\d+)', out)[0])
-            ret['bytes_sent'] = int(re.findall(r'TX bytes:(\d+)', out)[0])
+            ret['packets_recv'] = int(
+                re.findall(r'RX packets[: ](\d+)', out)[0])
+            ret['packets_sent'] = int(
+                re.findall(r'TX packets[: ](\d+)', out)[0])
+            ret['errin'] = int(re.findall(r'errors[: ](\d+)', out)[0])
+            ret['errout'] = int(re.findall(r'errors[: ](\d+)', out)[1])
+            ret['dropin'] = int(re.findall(r'dropped[: ](\d+)', out)[0])
+            ret['dropout'] = int(re.findall(r'dropped[: ](\d+)', out)[1])
+            ret['bytes_recv'] = int(
+                re.findall(r'RX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
+            ret['bytes_sent'] = int(
+                re.findall(r'TX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
             return ret
 
         nio = psutil.net_io_counters(pernic=True, nowrap=False)
