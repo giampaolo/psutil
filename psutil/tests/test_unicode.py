@@ -335,6 +335,9 @@ class TestWinProcessName(unittest.TestCase):
 class TestNonFSAPIS(unittest.TestCase):
     """Unicode tests for non fs-related APIs."""
 
+    def tearDown(self):
+        reap_children()
+
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
@@ -352,7 +355,6 @@ class TestNonFSAPIS(unittest.TestCase):
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
         self.assertEqual(env['FUNNY_ARG'], funky_str)
-        reap_children()
 
 
 if __name__ == '__main__':
