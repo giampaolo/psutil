@@ -157,6 +157,7 @@ error:
 }
 
 
+#ifdef CURR_VERSION_THREAD
 /*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
@@ -222,6 +223,7 @@ error:
         free(threadt);
     return NULL;
 }
+#endif
 
 
 static PyObject *
@@ -813,8 +815,10 @@ PsutilMethods[] =
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
      "Return process uids/gids."},
+#ifdef CURR_VERSION_THREAD
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
+#endif
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
 

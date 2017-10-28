@@ -38,6 +38,8 @@ __extra__all__ = ["PROCFS_PATH"]
 # =====================================================================
 
 
+HAS_THREADS = hasattr(cext, "proc_threads")
+
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
 
@@ -427,22 +429,23 @@ class Process(object):
     def num_threads(self):
         return self._proc_basic_info()[proc_info_map['num_threads']]
 
-    @wrap_exceptions
-    def threads(self):
-        rawlist = cext.proc_threads(self.pid)
-        retlist = []
-        for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
-            retlist.append(ntuple)
-        # The underlying C implementation retrieves all OS threads
-        # and filters them by PID.  At this point we can't tell whether
-        # an empty list means there were no connections for process or
-        # process is no longer active so we force NSP in case the PID
-        # is no longer there.
-        if not retlist:
-            # will raise NSP if process is gone
-            os.stat('%s/%s' % (self._procfs_path, self.pid))
-        return retlist
+    if HAS_THREADS:
+        @wrap_exceptions
+        def threads(self):
+            rawlist = cext.proc_threads(self.pid)
+            retlist = []
+            for thread_id, utime, stime in rawlist:
+                ntuple = _common.pthread(thread_id, utime, stime)
+                retlist.append(ntuple)
+            # The underlying C implementation retrieves all OS threads
+            # and filters them by PID.  At this point we can't tell whether
+            # an empty list means there were no connections for process or
+            # process is no longer active so we force NSP in case the PID
+            # is no longer there.
+            if not retlist:
+                # will raise NSP if process is gone
+                os.stat('%s/%s' % (self._procfs_path, self.pid))
+            return retlist
 
     @wrap_exceptions
     def connections(self, kind='inet'):

@@ -911,13 +911,15 @@ class Process(object):
         """Return the number of threads used by this process."""
         return self._proc.num_threads()
 
-    def threads(self):
-        """Return threads opened by process as a list of
-        (id, user_time, system_time) namedtuples representing
-        thread id and thread CPU times (user/system).
-        On OpenBSD this method requires root access.
-        """
-        return self._proc.threads()
+    if hasattr(_psplatform.Process, "threads"):
+
+        def threads(self):
+            """Return threads opened by process as a list of
+            (id, user_time, system_time) namedtuples representing
+            thread id and thread CPU times (user/system).
+            On OpenBSD this method requires root access.
+            """
+            return self._proc.threads()
 
     @_assert_pid_not_reused
     def children(self, recursive=False):

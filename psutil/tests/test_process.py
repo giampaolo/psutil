@@ -49,6 +49,7 @@ from psutil.tests import HAS_NUM_CTX_SWITCHES
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
+from psutil.tests import HAS_THREADS
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import PYTHON
@@ -528,6 +529,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         self.assertGreater(p.num_handles(), 0)
 
+    @unittest.skipIf(not HAS_THREADS, 'not supported')
     def test_threads(self):
         p = psutil.Process()
         if OPENBSD:
@@ -552,6 +554,7 @@ class TestProcess(unittest.TestCase):
 
     @retry_before_failing()
     @skip_on_access_denied(only_if=OSX)
+    @unittest.skipIf(not HAS_THREADS, 'not supported')
     def test_threads_2(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
