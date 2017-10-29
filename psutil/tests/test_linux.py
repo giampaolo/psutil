@@ -1326,7 +1326,9 @@ class TestSensorsBattery(unittest.TestCase):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
+            energy_full = "/sys/class/power_supply/BAT0/energy_full"
+            charge_full = "/sys/class/power_supply/BAT0/charge_full"
+            if name.startswith(energy_full) or name.startswith(charge_full):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/capacity"):
                 return io.BytesIO(b"88")
