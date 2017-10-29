@@ -4,7 +4,7 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- /*
+ */
 
 /*
  * AIX support is experimental at this time.
@@ -14,6 +14,7 @@
  *
  * Known limitations:
  * - psutil.Process.io_counters read count is always 0
+ * - psutil.Process.threads may not be available on older AIX versions
  * - reading basic process info may fail or return incorrect values when
  *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
  * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
