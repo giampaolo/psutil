@@ -4,15 +4,27 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ /*
+
+/*
+ * AIX support is experimental at this time.
+ * The following functions and methods are unsupported on the AIX platform:
+ * - psutil.Process.memory_maps
+ * - psutil.Process.num_ctx_switches
  *
- * AIX platform-specific module methods for _psutil_aix
+ * Known limitations:
+ * - psutil.Process.io_counters read count is always 0
+ * - reading basic process info may fail or return incorrect values when
+ *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
+ * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
+ *    versions)
  *
+ * Useful resources:
+ * - proc filesystem: http://www-01.ibm.com/support/knowledgecenter/
+ *       ssw_aix_61/com.ibm.aix.files/proc.htm
+ * - libperfstat: http://www-01.ibm.com/support/knowledgecenter/
+ *       ssw_aix_61/com.ibm.aix.files/libperfstat.h.htm
  */
-
-// Useful resources:
-// proc filesystem: http://www-01.ibm.com/support/knowledgecenter/ssw_aix_61/com.ibm.aix.files/proc.htm
-// libperfstat:     http://www-01.ibm.com/support/knowledgecenter/ssw_aix_61/com.ibm.aix.files/libperfstat.h.htm
-
 
 #include <Python.h>
 

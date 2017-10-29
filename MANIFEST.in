@@ -20,7 +20,7 @@ include docs/conf.py
 include docs/index.rst
 include docs/make.bat
 include make.bat
-include psutil/TODO.aix
+include psutil/DEVNOTES
 include psutil/__init__.py
 include psutil/_common.py
 include psutil/_compat.py
