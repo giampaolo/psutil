@@ -10,7 +10,6 @@
  * AIX support is experimental at this time.
  * The following functions and methods are unsupported on the AIX platform:
  * - psutil.Process.memory_maps
- * - psutil.Process.num_ctx_switches
  *
  * Known limitations:
  * - psutil.Process.io_counters read count is always 0
@@ -50,6 +49,7 @@
 
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
+#include "arch/aix/common.h"
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
@@ -305,6 +305,43 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     return Py_BuildValue("iiiiii",
                          info.pr_ruid, info.pr_euid, info.pr_suid,
                          info.pr_rgid, info.pr_egid, info.pr_sgid);
+}
+
+
+/*
+ * Return process voluntary and involuntary context switches as a Python tuple.
+ */
+static PyObject *
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
+    PyObject *py_tuple = NULL;
+    pid32_t requested_pid;
+    pid32_t pid = 0;
+    int np = 0;
+    struct procentry64 *processes = (struct procentry64 *)NULL;
+    struct procentry64 *p;
+
+    if (! PyArg_ParseTuple(args, "i", &requested_pid))
+        return NULL;
+
+    processes = psutil_read_process_table(&np);
+    if (!processes)
+        return NULL;
+
+    /* Loop through processes */
+    for (p = processes; np > 0; np--, p++) {
+        pid = p->pi_pid;
+        if (requested_pid != pid)
+            continue;
+        py_tuple = Py_BuildValue("LL",
+            (long long) p->pi_ru.ru_nvcsw,    /* voluntary context switches */
+            (long long) p->pi_ru.ru_nivcsw);  /* involuntary */
+        free(processes);
+        return py_tuple;
+    }
+
+    /* finished iteration without finding requested pid */
+    free(processes);
+    return NoSuchProcess();
 }
 
 
@@ -833,6 +870,8 @@ PsutilMethods[] =
      "Return process threads"},
 #endif
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
+     "Get process I/O counters."},
+    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Get process I/O counters."},
 
     // --- system-related functions

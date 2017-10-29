@@ -72,7 +72,6 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
-    "HAS_NUM_CTX_SWITCHES",
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess', 'create_zombie_proc',
     'create_proc_children_pair',
@@ -157,7 +156,6 @@ HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
-HAS_NUM_CTX_SWITCHES = hasattr(psutil.Process, "num_ctx_switches")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_THREADS = hasattr(psutil.Process, "threads")

@@ -1376,7 +1376,7 @@ Process class
     The number voluntary and involuntary context switches performed by
     this process (cumulative).
 
-    Availability: all platforms except AIX
+    .. versionchanged:: 5.4.1 added AIX support
 
   .. method:: num_fds()
 

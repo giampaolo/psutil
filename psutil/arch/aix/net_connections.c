@@ -13,56 +13,25 @@
  * - dialects/aix/dproc.c:get_kernel_access
 */
 
-#include "net_connections.h"
+#include <Python.h>
+#include <stdlib.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#define _KERNEL 1
+#define _KERNEL
 #include <sys/file.h>
 #undef _KERNEL
-#include <stdlib.h>
+#include <sys/types.h>
 #include <sys/core.h>
 #include <sys/domain.h>
 #include <sys/un.h>
 #include <netinet/in_pcb.h>
 #include <arpa/inet.h>
+
+#include "../../_psutil_common.h"
 #include "net_kernel_structs.h"
+#include "net_connections.h"
+#include "common.h"
 
-
-
-#define PROCINFO_INCR   (256)
-#define PROCSIZE        (sizeof(struct procentry64))
-#define FDSINFOSIZE     (sizeof(struct fdsinfo64))
-#define KMEM            "/dev/kmem"
 #define NO_SOCKET       (PyObject *)(-1)
-
-typedef u_longlong_t    KA_T;
-static int PSUTIL_CONN_NONE = 128;
-
-/* psutil_kread() - read from kernel memory */
-static int
-psutil_kread(
-    int Kd,             /* kernel memory file descriptor */
-    KA_T addr,          /* kernel memory address */
-    char *buf,          /* buffer to receive data */
-    size_t len) {       /* length to read */
-    int br;
-
-    if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 1;
-    }
-    br = read(Kd, buf, len);
-    if (br == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 1;
-    }
-    if (br != len) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "size mismatch when reading kernel memory fd");
-        return 1;
-    }
-    return 0;
-}
 
 static int
 read_unp_addr(
@@ -244,10 +213,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int i, np;
     struct procentry64 *p;
     struct fdsinfo64 *fds = (struct fdsinfo64 *)NULL;
-    size_t msz;
     pid32_t requested_pid;
     pid32_t pid;
-    int Np = 0;          /* number of processes */
     struct procentry64 *processes = (struct procentry64 *)NULL;
                     /* the process table */
 
@@ -262,34 +229,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    /* Read the process table */
-    msz = (size_t)(PROCSIZE * PROCINFO_INCR);
-    processes = (struct procentry64 *)malloc(msz);
-    if (!processes) {
-        PyErr_NoMemory();
+    processes = psutil_read_process_table(&np);
+    if (!processes)
         goto error;
-    }
-    Np = PROCINFO_INCR;
-    np = pid = 0;
-    p = processes;
-    while ((i = getprocs64(p, PROCSIZE, (struct fdsinfo64 *)NULL, 0, &pid,
-                 PROCINFO_INCR))
-    == PROCINFO_INCR) {
-        np += PROCINFO_INCR;
-        if (np >= Np) {
-            msz = (size_t)(PROCSIZE * (Np + PROCINFO_INCR));
-            processes = (struct procentry64 *)realloc((char *)processes, msz);
-            if (!processes) {
-                PyErr_NoMemory();
-                goto error;
-            }
-            Np += PROCINFO_INCR;
-        }
-        p = (struct procentry64 *)((char *)processes + (np * PROCSIZE));
-    }
-
-    if (i > 0)
-        np += i;
 
     /* Loop through processes */
     for (p = processes; np > 0; np--, p++) {
@@ -298,7 +240,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             continue;
         if (p->pi_state == 0 || p->pi_state == SZOMB)
             continue;
-
 
         if (!fds) {
             fds = (struct fdsinfo64 *)malloc((size_t)FDSINFOSIZE);

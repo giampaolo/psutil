@@ -611,7 +611,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def num_ctx_switches(self, ret, proc):
         assert is_namedtuple(ret)
         for value in ret:
-            self.assertIsInstance(value, int)
+            self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
 
     def rlimit(self, ret, proc):
