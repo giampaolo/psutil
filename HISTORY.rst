@@ -10,6 +10,7 @@
 - 1150_: [Windows] when a process is terminate()d now the exit code is set to
   SIGTERM instead of 0.  (patch by Akos Kiss)
 - 1151_: python -m psutil.tests fail
+- 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
 
 5.4.0
 =====

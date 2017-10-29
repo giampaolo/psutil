@@ -747,9 +747,19 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
+
+        def rm():
+            # Try to limit occasional failures on Appveyor:
+            # https://ci.appveyor.com/project/giampaolo/psutil/build/1350/
+            #     job/lbo3bkju55le850n
+            try:
+                safe_rmpath(funky_path)
+            except OSError:
+                pass
+
         funky_path = TESTFN + 'foo bar )'
         create_exe(funky_path)
-        self.addCleanup(safe_rmpath, funky_path)
+        self.addCleanup(rm)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]

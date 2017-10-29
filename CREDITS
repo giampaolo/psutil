@@ -44,7 +44,7 @@ Github usernames of people to CC on github when in need of help.
     - wiggin15, Arnon Yaari
     - alxchk, Oleksii Shevchuk
 - AIX:
-    - wiggin15, Arnon Yaari
+    - wiggin15, Arnon Yaari (maintainer)
 
 Contributors
 ============
@@ -54,6 +54,10 @@ C: NJ, USA
 E: jloden@gmail.com
 D: original co-author, initial design/bootstrap and occasional bug fixes
 W: http://www.jayloden.com
+
+N: Arnon Yaari (wiggin15)
+W: https://github.com/wiggin15
+I: 517, 607, 610, 1131, 1123, 1130, 1154
 
 N: Jeff Tang
 W: https://github.com/mrjefftang
@@ -364,10 +368,6 @@ I: 670
 N: maozguttman
 W: https://github.com/maozguttman
 I: 659
-
-N: Arnon Yaari (wiggin15)
-W: https://github.com/wiggin15
-I: 517, 607, 610, 1131, 1123, 1130
 
 N: dasumin
 W: https://github.com/dasumin
