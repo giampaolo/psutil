@@ -321,15 +321,14 @@ def create_proc_children_pair():
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
-        PYTHON_EXE = os.path.realpath(sys.executable)
         s = "import os, time;"
         s += "f = open('%s', 'w');"
         s += "f.write(str(os.getpid()));"
         s += "f.close();"
         s += "time.sleep(60);"
-        subprocess.Popen([PYTHON_EXE, '-c', s])
+        subprocess.Popen(['%s', '-c', s])
         time.sleep(60)
-        """ % _TESTFN2)
+        """ % (_TESTFN2, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
     # set (which is the default) a "conhost.exe" extra process will be
     # spawned as a child. We don't want that.
@@ -721,7 +720,7 @@ def create_exe(outpath, c_code=None):
             safe_rmpath(f.name)
     else:
         # copy python executable
-        shutil.copyfile(sys.executable, outpath)
+        shutil.copyfile(PYTHON_EXE, outpath)
         if POSIX:
             st = os.stat(outpath)
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
