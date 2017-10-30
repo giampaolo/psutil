@@ -65,7 +65,7 @@ else:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
-    'PYPY', 'PYTHON', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
+    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
     'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
     'VERBOSITY',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
@@ -168,7 +168,18 @@ HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 
 # --- misc
 
-PYTHON = os.path.realpath(sys.executable)
+
+def _get_py_exe():
+    exe = os.path.realpath(sys.executable)
+    if not os.path.exists(exe):
+        # It seems this only occurs on OSX.
+        exe = which("python%s.%s" % sys.version_info[:2])
+        if not exe or not os.path.exists(exe):
+            ValueError("can't find python exe real abspath")
+    return exe
+
+
+PYTHON_EXE = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
@@ -288,7 +299,7 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline = "from time import sleep;" \
                  "open(r'%s', 'w').close();" \
                  "sleep(60);" % _TESTFN
-        cmd = [PYTHON, "-c", pyline]
+        cmd = [PYTHON_EXE, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_file(_TESTFN, delete=True, empty=True)
@@ -310,13 +321,13 @@ def create_proc_children_pair():
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
-        PYTHON = os.path.realpath(sys.executable)
+        PYTHON_EXE = os.path.realpath(sys.executable)
         s = "import os, time;"
         s += "f = open('%s', 'w');"
         s += "f.write(str(os.getpid()));"
         s += "f.close();"
         s += "time.sleep(60);"
-        subprocess.Popen([PYTHON, '-c', s])
+        subprocess.Popen([PYTHON_EXE, '-c', s])
         time.sleep(60)
         """ % _TESTFN2)
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
@@ -384,7 +395,7 @@ def pyrun(src, **kwds):
         _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
-        subp = get_test_subprocess([PYTHON, f.name], **kwds)
+        subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
     return subp
 

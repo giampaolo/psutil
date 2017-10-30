@@ -28,7 +28,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
-from psutil.tests import PYTHON
+from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
@@ -90,7 +90,7 @@ class TestProcess(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess([PYTHON, "-E", "-O"],
+        cls.pid = get_test_subprocess([PYTHON_EXE, "-E", "-O"],
                                       stdin=subprocess.PIPE).pid
         wait_for_pid(cls.pid)
 
