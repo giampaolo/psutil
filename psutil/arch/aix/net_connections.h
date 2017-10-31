@@ -5,6 +5,11 @@
  * found in the LICENSE file.
  */
 
+#ifndef __NET_CONNECTIONS_H__
+#define __NET_CONNECTIONS_H__
+
 #include <Python.h>
 
 PyObject* psutil_net_connections(PyObject *self, PyObject *args);
+
+#endif  /* __NET_CONNECTIONS_H__ */

@@ -360,7 +360,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process uids/gids as a Python tuple.
+ * Return process voluntary and involuntary context switches as a Python tuple.
  */
 static PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {

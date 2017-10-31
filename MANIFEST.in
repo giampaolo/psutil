@@ -45,6 +45,8 @@ include psutil/arch/aix/ifaddrs.c
 include psutil/arch/aix/ifaddrs.h
 include psutil/arch/aix/net_connections.c
 include psutil/arch/aix/net_connections.h
+include psutil/arch/aix/common.c
+include psutil/arch/aix/common.h
 include psutil/arch/aix/net_kernel_structs.h
 include psutil/arch/freebsd/proc_socks.c
 include psutil/arch/freebsd/proc_socks.h

@@ -38,7 +38,6 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import HAS_NUM_CTX_SWITCHES
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
@@ -289,7 +288,6 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.num_fds)
 
     @skip_if_linux()
-    @unittest.skipIf(not HAS_NUM_CTX_SWITCHES, "not supported")
     def test_num_ctx_switches(self):
         self.execute(self.proc.num_ctx_switches)
 

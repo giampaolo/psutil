@@ -248,6 +248,7 @@ elif AIX:
         sources=sources + [
             'psutil/_psutil_aix.c',
             'psutil/arch/aix/net_connections.c',
+            'psutil/arch/aix/common.c',
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
         define_macros=macros)
