@@ -5,6 +5,11 @@
 
 *XXXX-XX-XX*
 
+**Enhancements**
+
+- 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
+  Yaari)
+
 **Bug fixes**
 
 - 1150_: [Windows] when a process is terminate()d now the exit code is set to
