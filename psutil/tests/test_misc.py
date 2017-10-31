@@ -18,6 +18,7 @@ import os
 import pickle
 import socket
 import stat
+import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -48,7 +49,6 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import import_module_by_path
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
-from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import reload_module
 from psutil.tests import retry
@@ -652,7 +652,7 @@ class TestScripts(unittest.TestCase):
         if args:
             exe = exe + ' ' + args
         try:
-            out = sh(PYTHON_EXE + ' ' + exe, **kwds).strip()
+            out = sh(sys.executable + ' ' + exe, **kwds).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
