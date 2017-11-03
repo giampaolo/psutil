@@ -5,7 +5,6 @@
 PYTHON = python
 TSCRIPT = psutil/tests/__main__.py
 ARGS =
-
 # List of nice-to-have dev libs.
 DEPS = \
 	argparse \
@@ -60,7 +59,6 @@ clean:
 
 _:
 
-
 # Compile without installing.
 build: _
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
@@ -87,7 +85,7 @@ uninstall:
 
 # Install PIP (only if necessary).
 install-pip:
-	PYTHONWARNINGS=all $(PYTHON) -c \
+	$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
@@ -159,7 +157,7 @@ test-posix:
 # Run specific platform tests only.
 test-platform:
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
+	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 # Memory leak tests.
 test-memleaks:
@@ -218,12 +216,12 @@ install-git-hooks:
 # Generate tar.gz source distribution.
 sdist:
 	${MAKE} generate-manifest
-	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+	$(PYTHON) setup.py sdist
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src:
 	${MAKE} sdist
-	PYTHONWARNINGS=all $(PYTHON) setup.py sdist upload
+	$(PYTHON) setup.py sdist upload
 
 # Download exes/wheels hosted on appveyor.
 win-download-exes:
@@ -231,13 +229,13 @@ win-download-exes:
 
 # Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:
-	PYTHONWARNINGS=all $(PYTHON) -m twine upload dist/*.exe
-	PYTHONWARNINGS=all $(PYTHON) -m twine upload dist/*.whl
+	$(PYTHON) -m twine upload dist/*.exe
+	$(PYTHON) -m twine upload dist/*.whl
 
 # All the necessary steps before making a release.
 pre-release:
 	${MAKE} install
-	@PYTHONWARNINGS=all $(PYTHON) -c \
+	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
@@ -246,7 +244,7 @@ pre-release:
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	@PYTHONWARNINGS=all $(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
+	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
 	${MAKE} win-download-exes
 	${MAKE} sdist
 
@@ -267,11 +265,11 @@ print-timeline:
 
 # Inspect MANIFEST.in file.
 check-manifest:
-	PYTHONWARNINGS=all $(PYTHON) -m check_manifest -v $(ARGS)
+	$(PYTHON) -m check_manifest -v $(ARGS)
 
 # Generates MANIFEST.in file.
 generate-manifest:
-	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
 
 # ===================================================================
 # Misc
@@ -289,12 +287,6 @@ bench-oneshot:
 bench-oneshot-2:
 	${MAKE} install
 	PYTHONWARNINGS=all $(PYTHON) scripts/internal/bench_oneshot_2.py
-
-# generate a doc.zip file and manually upload it to PYPI.
-doc:
-	cd docs && make html && cd _build/html/ && zip doc.zip -r .
-	mv docs/_build/html/doc.zip .
-	@echo "done; now manually upload doc.zip from here: https://pypi.python.org/pypi?:action=pkg_edit&name=psutil"
 
 # check whether the links mentioned in some files are valid.
 check-broken-links:
