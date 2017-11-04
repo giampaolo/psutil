@@ -91,8 +91,6 @@ import psutil.tests
 
 
 def safe_rmpath(path):
-    # XXX
-    return _safe_rmpath(path)
     if APPVEYOR:
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
@@ -146,18 +144,23 @@ else:
 class _BaseFSAPIsTests(object):
     funky_name = None
 
-    def setUp(self):
-        safe_rmpath(self.funky_name)
+    @classmethod
+    def setUpClass(cls):
+        safe_rmpath(cls.funky_name)
+        create_exe(cls.funky_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+        safe_rmpath(cls.funky_name)
 
     def tearDown(self):
         reap_children()
-        safe_rmpath(self.funky_name)
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
 
     def test_proc_exe(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
@@ -166,7 +169,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(exe, self.funky_name)
 
     def test_proc_name(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
             # On Windows name() is determined from exe() first, because
@@ -183,7 +185,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
