@@ -125,8 +125,9 @@ def subprocess_supports_unicode(name):
     except UnicodeEncodeError:
         return False
     else:
-        reap_children()
         return True
+    finally:
+        reap_children()
 
 
 # An invalid unicode string.
