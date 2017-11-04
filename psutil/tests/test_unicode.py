@@ -192,13 +192,15 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(cmdline, [self.funky_name])
 
     def test_proc_cwd(self):
-        safe_mkdir(self.funky_name)
-        with chdir(self.funky_name):
+        dname = self.funky_name + "2"
+        self.addCleanup(safe_rmpath, dname)
+        safe_mkdir(dname)
+        with chdir(dname):
             p = psutil.Process()
             cwd = p.cwd()
         self.assertIsInstance(p.cwd(), str)
         if self.expect_exact_path_match():
-            self.assertEqual(cwd, self.funky_name)
+            self.assertEqual(cwd, dname)
 
     def test_proc_open_files(self):
         p = psutil.Process()
@@ -260,8 +262,10 @@ class _BaseFSAPIsTests(object):
                     self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
-        safe_mkdir(self.funky_name)
-        psutil.disk_usage(self.funky_name)
+        dname = self.funky_name + "2"
+        self.addCleanup(safe_rmpath, dname)
+        safe_mkdir(dname)
+        psutil.disk_usage(dname)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
