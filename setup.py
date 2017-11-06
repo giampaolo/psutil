@@ -254,7 +254,6 @@ elif CYGWIN:
         'psutil._psutil_cygwin',
         sources=['psutil/_psutil_cygwin.c',
                  'psutil/_psutil_common.c',
-                 'psutil/arch/windows/py_error.c',
                  'psutil/arch/windows/process_info.c'],
         define_macros=macros,
         libraries=["psapi", "iphlpapi"])

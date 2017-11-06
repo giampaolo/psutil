@@ -16,7 +16,17 @@
 #define PYNUM_TO_HANDLE(obj) ((HANDLE)PyLong_AsUnsignedLong(obj))
 
 #ifdef PSUTIL_CYGWIN
-    #include "py_error.h"
+    /* Python on Cygwin does not have PyErr_SetFromWindowsError, or the
+     * WindowsError exception class.  So instead we raise a normal OSError
+     * with errno mapped from the Windows error using the cygwin_internal
+     * API to provide the mapping. */
+    #include <sys/cygwin.h>
+    #include <sys/errno.h>
+    #define PyErr_SetFromWindowsErr(ierr) ({ \
+        errno = (int) cygwin_internal(CW_GET_ERRNO_FROM_WINERROR, \
+                                      ((ierr) ? (ierr) : GetLastError())); \
+        PyErr_SetFromErrno(PyExc_OSError); \
+    })
 #endif
 
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
