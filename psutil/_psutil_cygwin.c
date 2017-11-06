@@ -116,6 +116,47 @@ psutil_winpath_to_cygpath(PyObject *self, PyObject *args) {
 }
 
 
+static PyObject*
+psutil_cygpid_to_winpid(PyObject *self, PyObject *args) {
+    pid_t pid;
+    DWORD winpid;
+
+    if (! PyArg_ParseTuple(args, "l", (long*) &pid))
+        return NULL;
+
+    if (!(winpid = (DWORD)cygwin_internal(CW_CYGWIN_PID_TO_WINPID, pid)))
+        return NoSuchProcess();
+
+#if PY_MAJOR_VERSION >= 3
+    return PyLong_FromLong((long) winpid);
+#else
+    return PyInt_FromLong((long) winpid);
+#endif
+}
+
+
+static PyObject*
+psutil_winpid_to_cygpid(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int winpid;
+
+    if (! PyArg_ParseTuple(args, "i", &winpid))
+        return NULL;
+
+    /* For some reason (perhaps historical) Cygwin provides a function
+     * specifically for this purpose, rather than using cygwin_internal
+     * as in the opposite case. */
+    if ((pid = cygwin_winpid_to_pid(winpid)) < 0)
+        return NoSuchProcess();
+
+#if PY_MAJOR_VERSION >= 3
+    return PyLong_FromLong((long) pid);
+#else
+    return PyInt_FromLong((long) pid);
+#endif
+}
+
+
 /* TODO: Copied almost verbatim (_tcscmp -> wcscmp, _stprintf_s -> snprintf,
  * _countof -> sizeof) so consider moving this into arch/windows or something
  */
@@ -1878,6 +1919,11 @@ PsutilMethods[] = {
      "Convert a Cygwin path to a Windows path"},
     {"winpath_to_cygpath", psutil_winpath_to_cygpath, METH_VARARGS,
      "Convert a Windows path to a Cygwin path"},
+    {"cygpid_to_winpid", psutil_cygpid_to_winpid, METH_VARARGS,
+     "Converts Cygwin's internal PID (the one exposed by all POSIX interfaces) "
+     "to the associated Windows PID."},
+    {"winpid_to_cygpid", psutil_winpid_to_cygpid, METH_VARARGS,
+     "Converts a Windows PID to its associated Cygwin PID."},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,

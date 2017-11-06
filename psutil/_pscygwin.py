@@ -128,47 +128,6 @@ TimeoutExpired = None
 # =====================================================================
 
 
-# TODO: Alternatively use Cygwin's API to get this, maybe?
-def cygpid_to_winpid(pid):
-    """
-    Converts Cygwin's internal PID (the one exposed by all POSIX interfaces)
-    to the associated Windows PID.
-    """
-
-    procfs_path = get_procfs_path()
-    path = '%s/%s/winpid' % (procfs_path, pid)
-    if not os.path.exists(path):
-        raise NoSuchProcess(pid)
-
-    with open_binary('%s/%s/winpid' % (procfs_path, pid)) as f:
-        return int(f.readline().strip())
-
-
-def winpid_to_cygpid(pid):
-    """
-    Converts a Windows PID to its associated Cygwin PID.
-    """
-
-    # TODO: This is quite ineffecient--Cygwin provides an API for this that we
-    # can use later
-    procfs_path = get_procfs_path()
-    for path in os.listdir(procfs_path):
-        if not path.isdigit():
-            continue
-
-        winpid_path = '%s/%s/winpid' % (procfs_path, path)
-
-        if not os.path.exists(winpid_path):
-            continue
-
-        with open_binary(winpid_path) as f:
-            winpid = int(f.readline().strip())
-            if winpid == pid:
-                return int(path)
-
-    raise NoSuchProcess(pid)
-
-
 @lru_cache(maxsize=512)
 def _win32_QueryDosDevice(s):
     return cext.win32_QueryDosDevice(s)
@@ -413,7 +372,7 @@ def net_connections(kind, _pid=-1):
 
     families, types = conn_tmap[kind]
     if _pid > 0:
-        _pid = cygpid_to_winpid(_pid)
+        _pid = cext.cygpid_to_winpid(_pid)
 
     # Note: This lists *all* net connections on the system, not just ones by
     # Cygwin processes; below we whittle it down just to Cygwin processes, but
@@ -428,9 +387,12 @@ def net_connections(kind, _pid=-1):
         type = socktype_to_enum(type)
         if _pid == -1:
             try:
-                pid = winpid_to_cygpid(pid)
-            except NoSuchProcess:
-                continue
+                pid = cext.winpid_to_cygpid(pid)
+            except OSError as exc:
+                if exc.errno == errno.ESRCH:
+                    continue
+                raise
+
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
@@ -578,12 +540,13 @@ class Process(object):
 
     __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_winpid"]
 
+    @wrap_exceptions
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
         self._procfs_path = get_procfs_path()
-        self._winpid = cygpid_to_winpid(pid)
+        self._winpid = cext.cygpid_to_winpid(pid)
 
     @memoize_when_activated
     def _parse_stat_file(self):
