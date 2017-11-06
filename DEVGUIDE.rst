@@ -23,6 +23,7 @@ If you plan on hacking on psutil this is what you're supposed to do first:
   (see `make.bat <https://github.com/giampaolo/psutil/blob/master/make.bat>`_).
 - do not use ``sudo``; ``make install`` installs psutil as a limited user in
   "edit" mode; also ``make setup-dev-env`` installs deps as a limited user.
+- use `make help` to see the list of available commands.
 
 ============
 Coding style

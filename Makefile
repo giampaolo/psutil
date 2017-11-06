@@ -33,8 +33,7 @@ all: test
 # Install
 # ===================================================================
 
-# Remove all build files.
-clean:
+clean:  ## Remove all build files.
 	rm -rf `find . -type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
@@ -59,8 +58,7 @@ clean:
 
 _:
 
-# Compile without installing.
-build: _
+build: _  ## Compile without installing.
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
 	$(PYTHON) -c "import setuptools"
 	PYTHONWARNINGS=all $(PYTHON) setup.py build
@@ -71,20 +69,15 @@ build: _
 	rm -rf tmp
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
-# Install this package + GIT hooks. Install is done:
-# - as the current user, in order to avoid permission issues
-# - in development / edit mode, so that source can be modified on the fly
-install:
+install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 
-# Uninstall this package via pip.
-uninstall:
+uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
-# Install PIP (only if necessary).
-install-pip:
+install-pip:  ## Install pip (no-op if already installed).
 	$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
@@ -103,8 +96,7 @@ install-pip:
 		f.close(); \
 		sys.exit(code);"
 
-# Install GIT hooks, pip, test deps (also upgrades them).
-setup-dev-env:
+setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade pip
@@ -114,64 +106,51 @@ setup-dev-env:
 # Tests
 # ===================================================================
 
-# Run all tests.
-test:
+test:  ## Run all tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) $(TSCRIPT)
 
-# Run process-related API tests.
-test-process:
+test-process:  ## Run process-related API tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_process
 
-# Run system-related API tests.
-test-system:
+test-system:  ## Run system-related API tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_system
 
-# Run miscellaneous tests.
-test-misc:
+test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_misc.py
 
-# Test APIs dealing with strings.
-test-unicode:
+test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_unicode.py
 
-# APIs sanity tests.
-test-contracts:
+test-contracts:  ## APIs sanity tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_contracts.py
 
-# Test net_connections() and Process.connections().
-test-connections:
+test-connections:  ## Test net_connections() and Process.connections().
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_connections.py
 
-# POSIX specific tests.
-test-posix:
+test-posix:  ## POSIX specific tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_posix.py
 
-# Run specific platform tests only.
-test-platform:
+test-platform:  ## Run specific platform tests only.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
-# Memory leak tests.
-test-memleaks:
+test-memleaks:  ## Memory leak tests.
 	${MAKE} install
 	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_memory_leaks.py
 
-# Run a specific test by name, e.g.
-# make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
-test-by-name:
+test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} install
 	@PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v $(ARGS)
 
-# Run test coverage.
-coverage:
+test-coverage:  ## Run test coverage.
 	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
@@ -185,27 +164,25 @@ coverage:
 # Linters
 # ===================================================================
 
-pep8:
+pep8:  ## PEP8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
 
-pyflakes:
+pyflakes:  ## Pyflakes linter.
 	@export PYFLAKES_NODOCTEST=1 && \
 		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
 
-flake8:
+flake8:  ## flake8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
 # ===================================================================
 # GIT
 # ===================================================================
 
-# git-tag a new release
-git-tag-release:
+git-tag-release:  ## Git-tag a new release.
 	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags
 
-# Install GIT pre-commit hook.
-install-git-hooks:
+install-git-hooks:  ## Install GIT pre-commit hook.
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
@@ -213,27 +190,21 @@ install-git-hooks:
 # Distribution
 # ===================================================================
 
-# Generate tar.gz source distribution.
-sdist:
+sdist:  ## Generate tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
-# Upload source tarball on https://pypi.python.org/pypi/psutil.
-upload-src:
+upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
-# Download exes/wheels hosted on appveyor.
-win-download-exes:
+win-download-exes:  ## Download exes/wheels hosted on appveyor.
 	PYTHONWARNINGS=all $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
-# Upload exes/wheels in dist/* directory to PYPI.
-win-upload-exes:
-	$(PYTHON) -m twine upload dist/*.exe
+win-upload-exes:  ## Upload wheels in dist/* directory on PYPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
-# All the necessary steps before making a release.
-pre-release:
+pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
@@ -248,46 +219,41 @@ pre-release:
 	${MAKE} win-download-exes
 	${MAKE} sdist
 
-# Create a release: creates tar.gz and exes/wheels, uploads them,
-# upload doc, git tag release.
-release:
+release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
+
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
 	${MAKE} git-tag-release
 
-# Print announce of new release.
-print-announce:
+print-announce:  ## Print announce of new release.
 	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_announce.py
 
-# Print releases' timeline.
-print-timeline:
+print-timeline:  ## Print releases' timeline.
 	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_timeline.py
 
-# Inspect MANIFEST.in file.
-check-manifest:
+check-manifest:  ## Inspect MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v $(ARGS)
 
-# Generates MANIFEST.in file.
-generate-manifest:
+generate-manifest:  ## Generates MANIFEST.in file.
 	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
 
 # ===================================================================
 # Misc
 # ===================================================================
 
-grep-todos:
+grep-todos:  ## Look for TODOs in the source files.
 	git grep -EIn "TODO|FIXME|XXX"
 
-# run script which benchmarks oneshot() ctx manager (see #799)
-bench-oneshot:
+bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
 	${MAKE} install
 	PYTHONWARNINGS=all $(PYTHON) scripts/internal/bench_oneshot.py
 
-# same as above but using perf module (supposed to be more precise)
-bench-oneshot-2:
+bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
 	${MAKE} install
 	PYTHONWARNINGS=all $(PYTHON) scripts/internal/bench_oneshot_2.py
 
-# check whether the links mentioned in some files are valid.
-check-broken-links:
+check-broken-links:  ## Look for broken links in source files.
 		git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
+
+help: ## Display callable targets.
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
