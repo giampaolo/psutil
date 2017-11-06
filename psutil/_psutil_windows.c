@@ -36,6 +36,7 @@
 #include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "arch/windows/utils.h"
 
 #ifdef __MINGW32__
 #include "arch/windows/glpi.h"
@@ -1277,35 +1278,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return PyErr_SetFromWindowsErr(0);
     return py_retlist;
-}
-
-
-/*
- Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
- and return the corresponding drive letter (e.g. "C:\\").
- If no match is found return an empty string.
-*/
-static PyObject *
-psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
-    LPCTSTR   lpDevicePath;
-    TCHAR d = TEXT('A');
-    TCHAR     szBuff[5];
-
-    if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
-        return NULL;
-
-    while (d <= TEXT('Z')) {
-        TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
-        TCHAR szTarget[512] = {0};
-        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
-            if (_tcscmp(lpDevicePath, szTarget) == 0) {
-                _stprintf_s(szBuff, _countof(szBuff), TEXT("%c:"), d);
-                return Py_BuildValue("s", szBuff);
-            }
-        }
-        d++;
-    }
-    return Py_BuildValue("s", "");
 }
 
 

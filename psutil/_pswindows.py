@@ -40,9 +40,9 @@ from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._common import memoize_when_activated
 from ._compat import long
-from ._compat import lru_cache
 from ._compat import PY3
 from ._compat import xrange
+from ._common import convert_dos_path
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -168,25 +168,6 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
-
-
-# =====================================================================
-# --- utils
-# =====================================================================
-
-
-@lru_cache(maxsize=512)
-def convert_dos_path(s):
-    """Convert paths using native DOS format like:
-        "\Device\HarddiskVolume1\Windows\systemew\file.txt"
-    into:
-        "C:\Windows\systemew\file.txt"
-    """
-    if PY3 and not isinstance(s, str):
-        s = s.decode('utf8')
-    rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = cext.win32_QueryDosDevice(rawdrive)
-    return os.path.join(driveletter, s[len(rawdrive):])
 
 
 # =====================================================================

@@ -1,7 +1,5 @@
 """Cygwin platform implementation."""
 
-# TODO: Large chunks of this module are copy/pasted from the Linux module;
-# seek out further opportunities for refactoring
 
 from __future__ import division
 
@@ -30,7 +28,6 @@ from ._common import usage_percent
 from ._common import wrap_exceptions
 from ._compat import PY3
 from ._compat import b
-from ._compat import lru_cache
 from ._compat import xrange
 
 if sys.version_info >= (3, 4):
@@ -121,29 +118,6 @@ NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
-
-
-# =====================================================================
-# --- utils
-# =====================================================================
-
-
-@lru_cache(maxsize=512)
-def _win32_QueryDosDevice(s):
-    return cext.win32_QueryDosDevice(s)
-
-
-# TODO: Copied almost verbatim from the windows module, except don't
-# us os.path.join since that uses posix sep
-def convert_dos_path(s):
-    # convert paths using native DOS format like:
-    # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
-    # into: "C:\Windows\systemew\file.txt"
-    if PY3 and not isinstance(s, str):
-        s = s.decode('utf8')
-    rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = _win32_QueryDosDevice(rawdrive)
-    return '%s\\%s' % (driveletter, s[len(rawdrive):])
 
 
 # =====================================================================
@@ -728,7 +702,7 @@ class Process(object):
             raise
         else:
             for addr, perm, path, rss in raw:
-                path = cext.winpath_to_cygpath(convert_dos_path(path))
+                path = cext.winpath_to_cygpath(_common.convert_dos_path(path))
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
 

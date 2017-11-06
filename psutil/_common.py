@@ -537,3 +537,30 @@ def wrap_exceptions(fun):
                 raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
+
+
+# Common utilities used on both Windows and Cygwin
+if WINDOWS or CYGWIN:
+    try:
+        if WINDOWS:
+            from . import _psutil_windows as cext
+        elif CYGWIN:
+            from . import _psutil_cygwin as cext
+
+        from ._compat import lru_cache
+    except (ValueError, ImportError):
+        # Imported during setup, so extension modules are not built yet
+        pass
+    else:
+        @lru_cache(maxsize=512)
+        def convert_dos_path(s):
+            """Convert paths using native DOS format like:
+                "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+            into:
+                "C:\Windows\systemew\file.txt"
+            """
+            if PY3 and not isinstance(s, str):
+                s = s.decode('utf8')
+            rawdrive = '\\'.join(s.split('\\')[:3])
+            driveletter = cext.win32_QueryDosDevice(rawdrive)
+            return driveletter + s[len(rawdrive):]

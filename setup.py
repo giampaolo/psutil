@@ -119,6 +119,7 @@ if WINDOWS:
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
+            'psutil/arch/windows/utils.c',
         ],
         define_macros=macros,
         libraries=[
@@ -254,7 +255,8 @@ elif CYGWIN:
         'psutil._psutil_cygwin',
         sources=['psutil/_psutil_cygwin.c',
                  'psutil/_psutil_common.c',
-                 'psutil/arch/windows/process_info.c'],
+                 'psutil/arch/windows/process_info.c',
+                 'psutil/arch/windows/utils.c'],
         define_macros=macros,
         libraries=["psapi", "iphlpapi"])
 else:

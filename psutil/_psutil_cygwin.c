@@ -29,6 +29,7 @@
 #include <utmpx.h>
 
 #include "arch/windows/process_info.h"
+#include "arch/windows/utils.h"
 #include "_psutil_common.h"
 
 
@@ -154,38 +155,6 @@ psutil_winpid_to_cygpid(PyObject *self, PyObject *args) {
 #else
     return PyInt_FromLong((long) pid);
 #endif
-}
-
-
-/* TODO: Copied almost verbatim (_tcscmp -> wcscmp, _stprintf_s -> snprintf,
- * _countof -> sizeof) so consider moving this into arch/windows or something
- */
-/*
- Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
- and return the corresponding drive letter (e.g. "C:\\").
- If no match is found return an empty string.
-*/
-static PyObject *
-psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
-    LPCTSTR   lpDevicePath;
-    TCHAR d = TEXT('A');
-    TCHAR     szBuff[5];
-
-    if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
-        return NULL;
-
-    while (d <= TEXT('Z')) {
-        TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
-        TCHAR szTarget[512] = {0};
-        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
-            if (wcscmp(lpDevicePath, szTarget) == 0) {
-                snprintf(szBuff, sizeof(szBuff), TEXT("%c:"), d);
-                return Py_BuildValue("s", szBuff);
-            }
-        }
-        d++;
-    }
-    return Py_BuildValue("s", "");
 }
 
 
