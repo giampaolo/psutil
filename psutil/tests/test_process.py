@@ -288,10 +288,18 @@ class TestProcess(unittest.TestCase):
         # Use os.times()[:2] as base values to compare our results
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
-        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+        # On cygwin there seems to be enough overhead differece between
+        # os.times() and reading /proc/stat that the tolerance should
+        # be a bit higher
+        if CYGWIN:
+            tol = 0.2
+        else:
+            tol = 0.1
+
+        if (max([user_time, utime]) - min([user_time, utime])) > tol:
             self.fail("expected: %s, found: %s" % (utime, user_time))
 
-        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > tol:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     @unittest.skipUnless(hasattr(psutil.Process, "cpu_num"),
