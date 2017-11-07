@@ -44,7 +44,7 @@ Some useful make commands::
   $ make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
   $ make test           # run unit tests
   $ make test-memleaks  # run memory leak tests
-  $ make coverage       # run test coverage
+  $ make test-coverage  # run test coverage
   $ make flake8         # run PEP8 linter
 
 There are some differences between ``make`` on UNIX and Windows.

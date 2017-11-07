@@ -2429,13 +2429,13 @@ resources.
       for p in procs:
           p.terminate()
       gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
-      if not alive:
+      if alive:
           # send SIGKILL
           for p in alive:
               print("process {} survived SIGTERM; trying SIGKILL" % p)
               p.kill()
           gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
-          if not alive:
+          if alive:
               # give up
               for p in alive:
                   print("process {} survived SIGKILL; giving up" % p)
