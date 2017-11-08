@@ -61,8 +61,7 @@ psutil currently supports the following platforms:
 - **AIX**
 
 ...both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
-`2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+versions from **2.6 to 3.6**.
 `PyPy <http://pypy.org/>`__ is also known to work.
 
 ====================

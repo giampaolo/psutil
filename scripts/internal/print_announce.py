@@ -39,10 +39,9 @@ monitoring, profiling and limiting process resources and management of \
 running processes. It implements many functionalities offered by command \
 line tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, \
 nice, ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It \
-currently supports Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and \
-NetBSD, both 32-bit and 64-bit architectures, with Python versions from 2.6 \
-to 3.5 (users of Python 2.4 and 2.5 may use 2.1.3 version). PyPy is also \
-known to work.
+currently supports Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD, NetBSD \
+and AIX, both 32-bit and 64-bit architectures, with Python versions from 2.6 \
+to 3.6. PyPy is also known to work.
 
 What's new
 ==========
