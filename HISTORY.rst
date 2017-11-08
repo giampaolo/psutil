@@ -16,6 +16,8 @@
   SIGTERM instead of 0.  (patch by Akos Kiss)
 - 1151_: python -m psutil.tests fail
 - 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
+- 1167_: [Windows] net_io_counter() packets count now include also non-unicast
+  packets.  (patch by Matthew Long)
 
 5.4.0
 =====
