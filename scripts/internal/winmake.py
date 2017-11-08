@@ -448,8 +448,8 @@ def set_python(s):
         # try to look for a python installation
         orig = s
         s = s.replace('.', '')
-        vers = ('26', '27', '33', '34', '35', '36', '37',
-                '26-64', '27-64', '33-64', '34-64', '35-64', '36-64', '37-64')
+        vers = ('26', '27', '34', '35', '36', '37',
+                '26-64', '27-64', '34-64', '35-64', '36-64', '37-64')
         for v in vers:
             if s == v:
                 path = 'C:\\python%s\python.exe' % s

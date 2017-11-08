@@ -9,6 +9,8 @@
 
 - 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
   Yaari)
+- 1053_: abandon Python 3.3 support (psutil still works but it's no longer
+  tested).
 
 **Bug fixes**
 
