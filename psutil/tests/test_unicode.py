@@ -207,7 +207,7 @@ class _BaseFSAPIsTests(object):
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
-        with open(self.funky_name, 'wb'):
+        with open(self.funky_name, 'rb'):
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
