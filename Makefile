@@ -26,6 +26,7 @@ DEPS = \
 
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
+TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1
 
 all: test
 
@@ -108,53 +109,53 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 
 test:  ## Run all tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) $(TSCRIPT)
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_process
+	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_process
 
 test-system:  ## Run system-related API tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v psutil.tests.test_system
+	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_system
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_misc.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_misc.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_unicode.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_contracts.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_contracts.py
 
 test-connections:  ## Test net_connections() and Process.connections().
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_connections.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_posix.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} install
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) psutil/tests/test_memory_leaks.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_memory_leaks.py
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} install
-	@PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m unittest -v $(ARGS)
+	@$(TEST_PREFIX) $(PYTHON) -m unittest -v $(ARGS)
 
 test-coverage:  ## Run test coverage.
 	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	PSUTIL_TESTING=1 PYTHONWARNINGS=all $(PYTHON) -m coverage run $(TSCRIPT)
+	$(TEST_PREFIX) $(PYTHON) -m coverage run $(TSCRIPT)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -199,7 +200,7 @@ upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
 	$(PYTHON) setup.py sdist upload
 
 win-download-exes:  ## Download exes/wheels hosted on appveyor.
-	PYTHONWARNINGS=all $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
+	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
 win-upload-exes:  ## Upload wheels in dist/* directory on PYPI.
 	$(PYTHON) -m twine upload dist/*.whl
@@ -225,10 +226,10 @@ release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} git-tag-release
 
 print-announce:  ## Print announce of new release.
-	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_announce.py
+	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_announce.py
 
 print-timeline:  ## Print releases' timeline.
-	@PYTHONWARNINGS=all $(PYTHON) scripts/internal/print_timeline.py
+	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_timeline.py
 
 check-manifest:  ## Inspect MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v $(ARGS)
@@ -245,11 +246,11 @@ grep-todos:  ## Look for TODOs in the source files.
 
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) scripts/internal/bench_oneshot.py
+	$(TEST_PREFIX) $(PYTHON) scripts/internal/bench_oneshot.py
 
 bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
 	${MAKE} install
-	PYTHONWARNINGS=all $(PYTHON) scripts/internal/bench_oneshot_2.py
+	$(TEST_PREFIX) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
 check-broken-links:  ## Look for broken links in source files.
 		git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
