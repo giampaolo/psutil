@@ -984,8 +984,10 @@ PsutilMethods[] = {
 #endif
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"py_psutil_is_testing", py_psutil_is_testing, METH_VARARGS,
+     "Return True if psutil is in testing mode"},
+    {"py_psutil_set_testing", py_psutil_set_testing, METH_VARARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };

@@ -755,8 +755,8 @@ unittest.TestCase = TestCase
 def _setup_tests():
     if 'PSUTIL_TESTING' not in os.environ:
         os.environ['PSUTIL_TESTING'] = '1'  # not guaranteed to work
-    if not psutil._psplatform.cext.py_psutil_testing():
-        raise AssertionError('PSUTIL_TESTING env var is not set')
+    psutil._psplatform.cext.py_psutil_set_testing()
+    assert psutil._psplatform.cext.py_psutil_is_testing()
 
 
 def get_suite():

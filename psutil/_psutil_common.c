@@ -37,7 +37,7 @@ AccessDenied(void) {
 }
 
 
-static int _psutil_testing = -1;
+static int _psutil_testing = 0;
 
 
 /*
@@ -45,12 +45,6 @@ static int _psutil_testing = -1;
  */
 int
 psutil_testing(void) {
-    if (_psutil_testing == -1) {
-        if (getenv("PSUTIL_TESTING") != NULL)
-            _psutil_testing = 1;
-        else
-            _psutil_testing = 0;
-    }
     return _psutil_testing;
 }
 
@@ -59,11 +53,19 @@ psutil_testing(void) {
  * Return True if PSUTIL_TESTING env var is set else False.
  */
 PyObject *
-py_psutil_testing(PyObject *self, PyObject *args) {
+py_psutil_is_testing(PyObject *self, PyObject *args) {
     PyObject *res;
     res = psutil_testing() ? Py_True : Py_False;
     Py_INCREF(res);
     return res;
+}
+
+
+PyObject *
+py_psutil_set_testing(PyObject *self, PyObject *args) {
+    _psutil_testing = 1;
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 
