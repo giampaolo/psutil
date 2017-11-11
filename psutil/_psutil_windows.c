@@ -2366,6 +2366,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDevice[MAX_PATH];
     char szDeviceDisplay[MAX_PATH];
     int devNum;
+    int i;
+    size_t ioctrlSize;
+    BOOL WINAPI ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
 
@@ -2380,38 +2383,46 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
-
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
-        if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
-                            &diskPerformance, sizeof(diskPerformance),
-                            &dwSize, NULL))
-        {
-            sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
-            py_tuple = Py_BuildValue(
-                "(IILLKK)",
-                diskPerformance.ReadCount,
-                diskPerformance.WriteCount,
-                diskPerformance.BytesRead,
-                diskPerformance.BytesWritten,
-                // convert to ms:
-                // https://github.com/giampaolo/psutil/issues/1012
-                (unsigned long long)
-                    (diskPerformance.ReadTime.QuadPart) / 10000000,
-                (unsigned long long)
-                    (diskPerformance.WriteTime.QuadPart) / 10000000);
-            if (!py_tuple)
-                goto error;
-            if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
-                goto error;
-            Py_XDECREF(py_tuple);
+
+        i = 0;
+        ioctrlSize = sizeof(diskPerformance);
+        while (1) {
+            i += 1;
+            ret = DeviceIoControl(
+                hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0, &diskPerformance,
+                ioctrlSize, &dwSize, NULL);
+            if (ret != 0)
+                break;  // OK!
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                if (i <= 1024) {  // prevent looping forever
+                    ioctrlSize *= 2;
+                    continue;
+                }
+            }
+            PyErr_SetFromWindowsErr(0);
+            goto error;
         }
-        else {
-            // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
-            // compiling with mingw32; not sure what to do.
-            // return PyErr_SetFromWindowsErr(0);
-            ;;
-        }
+
+        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
+        py_tuple = Py_BuildValue(
+            "(IILLKK)",
+            diskPerformance.ReadCount,
+            diskPerformance.WriteCount,
+            diskPerformance.BytesRead,
+            diskPerformance.BytesWritten,
+            // convert to ms:
+            // https://github.com/giampaolo/psutil/issues/1012
+            (unsigned long long)
+                (diskPerformance.ReadTime.QuadPart) / 10000000,
+            (unsigned long long)
+                (diskPerformance.WriteTime.QuadPart) / 10000000);
+        if (!py_tuple)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
+            goto error;
+        Py_XDECREF(py_tuple);
 
         CloseHandle(hDevice);
     }

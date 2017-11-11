@@ -7,6 +7,7 @@
 
 **Bug fixes**
 
+- 1152_: [Windows] disk_io_counters() may return an empty dict.
 - 1169_: [Linux] users() "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
