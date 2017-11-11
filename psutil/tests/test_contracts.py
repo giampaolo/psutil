@@ -110,7 +110,10 @@ class TestAvailability(unittest.TestCase):
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
 
     def test_cpu_freq(self):
-        self.assertEqual(hasattr(psutil, "cpu_freq"), LINUX or OSX or WINDOWS)
+        linux = (LINUX and
+                 (os.path.exists("/sys/devices/system/cpu/cpufreq") or
+                  os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
+        self.assertEqual(hasattr(psutil, "cpu_freq"), linux or OSX or WINDOWS)
 
     def test_sensors_temperatures(self):
         self.assertEqual(hasattr(psutil, "sensors_temperatures"), LINUX)

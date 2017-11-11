@@ -29,6 +29,7 @@ from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
 from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
@@ -607,11 +608,13 @@ class TestSystemCPU(unittest.TestCase):
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_no_result(self):
         with mock.patch("psutil._pslinux.glob.glob", return_value=[]):
             self.assertIsNone(psutil.cpu_freq())
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def glob_mock(pattern):
@@ -629,6 +632,7 @@ class TestSystemCPU(unittest.TestCase):
             assert psutil.cpu_freq()
             self.assertEqual(len(flags), 2)
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
@@ -651,6 +655,7 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.min, 600.0)
                 self.assertEqual(freq.max, 700.0)
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_emulate_multi_cpu(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
@@ -675,6 +680,7 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.max, 300.0)
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
