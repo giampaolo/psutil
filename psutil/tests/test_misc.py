@@ -1018,7 +1018,8 @@ class TestNetUtils(unittest.TestCase):
                 # work around http://bugs.python.org/issue30204
                 types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
-            self.assertGreaterEqual(fams[socket.AF_INET6], 2)
+            if supports_ipv6():
+                self.assertGreaterEqual(fams[socket.AF_INET6], 2)
             if POSIX and HAS_CONNECTIONS_UNIX:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)

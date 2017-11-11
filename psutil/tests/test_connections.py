@@ -152,6 +152,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
+    @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
     def test_tcp_v6(self):
         addr = ("::1", get_free_port())
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
@@ -166,6 +167,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
+    @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
     def test_udp_v6(self):
         addr = ("::1", get_free_port())
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
