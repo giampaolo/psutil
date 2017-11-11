@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.2
+=====
+
+*XXXX-XX-XX*
+
+**Bug fixes**
+
+- 1172_: [Windows] `make test` does not work.
+
 5.4.1
 =====
 

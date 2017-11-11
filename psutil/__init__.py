@@ -212,7 +212,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.4.1"
+__version__ = "5.4.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
