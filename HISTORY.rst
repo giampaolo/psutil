@@ -7,6 +7,8 @@
 
 **Bug fixes**
 
+- 1169_: [Linux] users() "hostname" returns username instead.  (patch by
+  janderbrain)
 - 1172_: [Windows] `make test` does not work.
 
 5.4.1

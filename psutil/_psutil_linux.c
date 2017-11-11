@@ -479,7 +479,7 @@ psutil_users(PyObject *self, PyObject *args) {
             "(OOOfOi)",
             py_username,              // username
             py_tty,                   // tty
-            py_username,              // hostname
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
