@@ -22,7 +22,7 @@ DEPS = \
 	sphinx \
 	twine \
 	unittest2 \
-	requests
+	wheel
 
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
@@ -191,22 +191,32 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Distribution
 # ===================================================================
 
-dist-source:  ## Generate tar.gz source distribution.
+# --- create
+
+dist-source:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
-dist-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
-	${MAKE} sdist
-	$(PYTHON) setup.py sdist upload
+dist-wheel:  ## Generate wheel.
+	$(PYTHON) setup.py bdist_wheel
 
-dist-download-win-wheels:  ## Download wheels hosted on appveyor.
+dist-win-download-wheels:  ## Download wheels hosted on appveyor.
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
+
+# --- upload
+
+dist-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
+	${MAKE} dist-source
+	$(PYTHON) setup.py sdist upload
 
 dist-upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
-dist-pre-release:  ## Check if we're ready to produce a new release.
+# --- others
+
+pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
+	${MAKE} dist-source
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -217,10 +227,10 @@ dist-pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
-	${MAKE} win-download-exes
+	${MAKE} dist-win-download-wheels
 	${MAKE} sdist
 
-dist-release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
+release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
 	${MAKE} git-tag-release
