@@ -191,21 +191,21 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Distribution
 # ===================================================================
 
-sdist:  ## Generate tar.gz source distribution.
+dist-source:  ## Generate tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
+dist-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
-win-download-exes:  ## Download exes/wheels hosted on appveyor.
+dist-download-win-wheels:  ## Download wheels hosted on appveyor.
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
-win-upload-exes:  ## Upload wheels in dist/* directory on PYPI.
+dist-upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
-pre-release:  ## Check if we're ready to produce a new release.
+dist-pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
@@ -220,7 +220,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} win-download-exes
 	${MAKE} sdist
 
-release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
+dist-release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
 	${MAKE} git-tag-release
