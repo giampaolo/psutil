@@ -2300,6 +2300,28 @@ Constants
 
 ----
 
+Debug mode
+==========
+
+In case you bump into nasty errors which look like being psutil's fault you may
+want to run psutil in debug mode. psutil may (or may not) print some useful
+message on stderr before crashing with an exception.
+To enable debug mode on UNIX:
+
+::
+
+    PSUTIL_DEBUG=1 python script.py
+
+On Windows:
+
+::
+
+    set PSUTIL_DEBUG=1 && C:\python36\python.exe script.py
+
+.. versionadded:: 5.4.2
+
+----
+
 Unicode
 =======
 
