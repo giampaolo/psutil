@@ -2305,16 +2305,17 @@ Debug mode
 
 In case you bump into nasty errors which look like being psutil's fault you may
 want to run psutil in debug mode. psutil may (or may not) print some useful
-message on stderr before crashing with an exception.
+message on stderr before crashing with an exception
+(see `original motivation <https://github.com/giampaolo/psutil/issues/1173>`__).
 To enable debug mode on UNIX:
 
-::
+.. code-block:: bash
 
     PSUTIL_DEBUG=1 python script.py
 
 On Windows:
 
-::
+.. code-block:: bat
 
     set PSUTIL_DEBUG=1 && C:\python36\python.exe script.py
 
