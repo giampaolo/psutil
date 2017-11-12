@@ -24,6 +24,7 @@ include psutil/DEVNOTES
 include psutil/__init__.py
 include psutil/_common.py
 include psutil/_compat.py
+include psutil/_exceptions.py
 include psutil/_psaix.py
 include psutil/_psbsd.py
 include psutil/_pslinux.py
