@@ -13,7 +13,7 @@ PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
 int psutil_testing(void);
 PyObject* py_psutil_is_testing(PyObject *self, PyObject *args);
-PyObject* py_psutil_set_testing(PyObject *self, PyObject *args);
+PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 #if PY_MAJOR_VERSION < 3
 PyObject* PyUnicode_DecodeFSDefault(char *s);
 PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);

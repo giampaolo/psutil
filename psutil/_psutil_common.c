@@ -42,7 +42,7 @@ static int _psutil_testing = -1;
 
 /*
  * Return 1 if PSUTIL_TESTING env var is set or if testing mode was
- * enabled with py_psutil_set_testing.
+ * enabled with psutil_set_testing.
  */
 int
 psutil_testing(void) {
@@ -74,7 +74,7 @@ py_psutil_is_testing(PyObject *self, PyObject *args) {
  * Windows has no effect.
  */
 PyObject *
-py_psutil_set_testing(PyObject *self, PyObject *args) {
+psutil_set_testing(PyObject *self, PyObject *args) {
     _psutil_testing = 1;
     Py_INCREF(Py_None);
     return Py_None;

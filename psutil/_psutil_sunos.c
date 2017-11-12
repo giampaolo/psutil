@@ -1592,9 +1592,7 @@ PsutilMethods[] = {
      "Return CPU statistics"},
 
     // --- others
-    {"py_psutil_is_testing", py_psutil_is_testing, METH_VARARGS,
-     "Return True if psutil is in testing mode"},
-    {"py_psutil_set_testing", py_psutil_set_testing, METH_VARARGS,
+    {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
