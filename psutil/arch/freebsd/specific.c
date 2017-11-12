@@ -548,7 +548,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
@@ -597,7 +597,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         return NULL;
     }
     free(freep);
@@ -765,7 +765,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getvmmap() failed");
+        psutil_raise_for_pid(pid, "kinfo_getvmmap()");
         goto error;
     }
     for (i = 0; i < cnt; i++) {
