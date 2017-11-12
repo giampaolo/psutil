@@ -21,4 +21,5 @@ PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
+void psutil_debug(char *msg);
 void psutil_setup(void);
