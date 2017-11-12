@@ -27,6 +27,10 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import which
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
+from ._exceptions import AccessDenied
+from ._exceptions import TimeoutExpired
 
 __extra__all__ = []
 
@@ -127,12 +131,6 @@ kinfo_proc_map = dict(
     cpunum=23,
     name=24,
 )
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

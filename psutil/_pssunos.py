@@ -24,6 +24,10 @@ from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import b
 from ._compat import PY3
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
+from ._exceptions import AccessDenied
+from ._exceptions import TimeoutExpired
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
@@ -77,12 +81,6 @@ proc_info_map = dict(
     num_threads=5,
     status=6,
     ttynr=7)
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
