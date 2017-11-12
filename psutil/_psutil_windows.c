@@ -2412,13 +2412,13 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 // Assume it means we're dealing with some exotic disk
                 // and go on.
                 psutil_debug("DeviceIoControl -> ERROR_INVALID_FUNCTION; "
-                             "ignore a disk");
+                             "ignore PhysicalDrive%i", devNum);
                 goto next;
             }
             else if (GetLastError() == ERROR_NOT_SUPPORTED) {
                 // Again, let's assume we're dealing with some exotic disk.
                 psutil_debug("DeviceIoControl -> ERROR_NOT_SUPPORTED; "
-                             "ignore a disk");
+                             "ignore PhysicalDrive%i", devNum);
                 goto next;
             }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
@@ -2433,7 +2433,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
+        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
         py_tuple = Py_BuildValue(
             "(IILLKK)",
             diskPerformance.ReadCount,

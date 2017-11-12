@@ -80,9 +80,11 @@ psutil_set_testing(PyObject *self, PyObject *args) {
  * Print a debug message on stderr. No-op if PSUTIL_DEBUG env var is not set.
  */
 void
-psutil_debug(char *msg) {
-    if (PSUTIL_DEBUG)
-        fprintf(stderr, "psutil-debug> %s\n", msg);
+psutil_debug(const char* format, ...) {
+    va_list argptr;
+    va_start(argptr, format);
+    vfprintf(stderr, format, argptr);
+    va_end(argptr);
 }
 
 
