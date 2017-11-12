@@ -83,7 +83,9 @@ void
 psutil_debug(const char* format, ...) {
     va_list argptr;
     va_start(argptr, format);
+    fprintf(stderr, "psutil-dubug> ");
     vfprintf(stderr, format, argptr);
+    fprintf(stderr, "\n");
     va_end(argptr);
 }
 
