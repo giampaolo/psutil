@@ -116,8 +116,6 @@ psutil_raise_for_pid(long pid, char *syscall_name) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
     if (errno != 0) {
         // Unlikely we get here.
-        psutil_debug("%s syscall failed and set errno to %i; raising "
-                     "OSError(errno)", syscall_name, errno);
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
     }
