@@ -38,6 +38,8 @@
 #include <IOKit/storage/IOBlockStorageDriver.h>
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
+#include <IOKit/ps/IOPowerSources.h>
+#include <IOKit/ps/IOPSKeys.h>
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
@@ -1777,6 +1779,88 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return battery information.
+ */
+static PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    PyObject *py_retlist = NULL;
+    CFTypeRef powerInfo = NULL;
+    CFArrayRef powerSourcesList = NULL;
+    CFDictionaryRef powerSourceInformation = NULL;
+    CFNumberRef capacityRef = NULL;
+    CFNumberRef timeToEmptyRef = NULL;
+    CFStringRef psStateRef = NULL;
+    uint32_t capacity;     /* units are percent */
+    int time_to_empty;     /* units are minutes */
+    int is_power_plugged;
+
+    powerInfo = IOPSCopyPowerSourcesInfo();
+
+    if (!powerInfo) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    powerSourcesList = IOPSCopyPowerSourcesList(powerInfo);
+    if (!powerSourcesList) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    /* Should only get one source. But in practice, check for > 0 sources */
+    if (!CFArrayGetCount(powerSourcesList)) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    powerSourceInformation = IOPSGetPowerSourceDescription(
+        powerInfo, CFArrayGetValueAtIndex(powerSourcesList, 0));
+
+    capacityRef = (CFNumberRef)  CFDictionaryGetValue(
+        powerSourceInformation, CFSTR(kIOPSCurrentCapacityKey));
+    if (!CFNumberGetValue(capacityRef, kCFNumberSInt32Type, &capacity)) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    psStateRef = (CFStringRef) CFDictionaryGetValue(
+        powerSourceInformation, CFSTR(kIOPSPowerSourceStateKey));
+    is_power_plugged = CFStringCompare(
+        psStateRef, CFSTR(kIOPSACPowerValue), 0)
+        == kCFCompareEqualTo;
+
+    timeToEmptyRef = (CFNumberRef) CFDictionaryGetValue(
+        powerSourceInformation, CFSTR(kIOPSTimeToEmptyKey));
+    if (!CFNumberGetValue(timeToEmptyRef, kCFNumberIntType, &time_to_empty)) {
+        /* This value is recommended for non-Apple power sources, so it's not
+         * an error if it doesn't exist. We'll return -1 for "unknown" */
+        /* A value of -1 indicates "Still Calculating the Time" also for
+         * apple power source */
+        time_to_empty = -1;
+    }
+
+    py_retlist = Py_BuildValue("Iii",
+        capacity, time_to_empty, is_power_plugged);
+    if (!py_retlist) {
+        goto error;
+    }
+
+    CFRelease(powerInfo);
+    CFRelease(powerSourcesList);
+
+    return py_retlist;
+
+error:
+    if (powerInfo)
+        CFRelease(powerInfo);
+    if (powerSourcesList)
+        CFRelease(powerSourcesList);
+    /* Caller should NOT release powerSourceInformation */
+    Py_XDECREF(py_retlist);
+    return NULL;
+}
+
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -1843,6 +1927,8 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery information."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
