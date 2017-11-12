@@ -45,7 +45,7 @@ static int _psutil_testing = -1;
  * enabled with psutil_set_testing.
  */
 int
-psutil_testing(void) {
+psutil_is_testing(void) {
     if (_psutil_testing == -1) {
         if (getenv("PSUTIL_TESTING") != NULL)
             _psutil_testing = 1;

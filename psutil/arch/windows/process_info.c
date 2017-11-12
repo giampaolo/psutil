@@ -337,7 +337,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 int
 psutil_assert_pid_exists(DWORD pid, char *err) {
-    if (psutil_testing()) {
+    if (psutil_is_testing()) {
         if (psutil_pid_in_pids(pid) == 0) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
@@ -349,7 +349,7 @@ psutil_assert_pid_exists(DWORD pid, char *err) {
 
 int
 psutil_assert_pid_not_exists(DWORD pid, char *err) {
-    if (psutil_testing()) {
+    if (psutil_is_testing()) {
         if (psutil_pid_in_pids(pid) == 1) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;

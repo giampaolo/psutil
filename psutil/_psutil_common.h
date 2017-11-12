@@ -11,8 +11,7 @@ static const int PSUTIL_CONN_NONE = 128;
 
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
-int psutil_testing(void);
-PyObject* py_psutil_is_testing(PyObject *self, PyObject *args);
+int psutil_is_testing(void);
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 #if PY_MAJOR_VERSION < 3
 PyObject* PyUnicode_DecodeFSDefault(char *s);
