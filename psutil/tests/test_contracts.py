@@ -123,7 +123,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_battery(self):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
-                         LINUX or WINDOWS or FREEBSD)
+                         LINUX or WINDOWS or FREEBSD or OSX)
 
     def test_proc_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),

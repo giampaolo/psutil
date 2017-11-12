@@ -2210,7 +2210,7 @@ if hasattr(_psplatform, "sensors_fans"):
     __all__.append("sensors_fans")
 
 
-# Linux, Windows, FreeBSD
+# Linux, Windows, FreeBSD, OSX
 if hasattr(_psplatform, "sensors_battery"):
 
     def sensors_battery():
