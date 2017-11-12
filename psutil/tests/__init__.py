@@ -193,7 +193,11 @@ _testfiles_created = set()
 def _cleanup_files():
     DEVNULL.close()
     for name in os.listdir(u('.')):
-        if name.startswith(u(TESTFILE_PREFIX)):
+        if isinstance(name, unicode):
+            prefix = u(TESTFILE_PREFIX)
+        else:
+            prefix = TESTFILE_PREFIX
+        if name.startswith(prefix):
             try:
                 safe_rmpath(name)
             except Exception:
