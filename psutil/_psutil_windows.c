@@ -2386,6 +2386,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
 
+        // DeviceIoControl() sucks!
         i = 0;
         ioctrlSize = sizeof(diskPerformance);
         while (1) {
@@ -2396,11 +2397,32 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             if (ret != 0)
                 break;  // OK!
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                if (i <= 1024) {  // prevent looping forever
+                // Retry with a bigger buffer (+ limit for retries).
+                if (i <= 1024) {
                     ioctrlSize *= 2;
                     continue;
                 }
             }
+            else if (GetLastError() == ERROR_INVALID_FUNCTION) {
+                // This happens on AppVeyor:
+                // https://ci.appveyor.com/project/giampaolo/psutil/build/
+                //      1364/job/ascpdi271b06jle3
+                // Assume it means we're dealing with some exotic disk
+                // and go on.
+                goto next;
+            }
+            else if (GetLastError() == ERROR_NOT_SUPPORTED) {
+                // Again, let's assume we're dealing with some exotic disk.
+                goto next;
+            }
+            // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
+            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/
+            //     ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/
+            //     openafs-1.4.14/src/usd/usd_nt.c
+
+            // XXX: we can also bump into ERROR_MORE_DATA in which case
+            // (quoting doc) we're supposed to retry with a bigger buffer
+            // and specify  a new "starting point", whatever it means.
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
@@ -2424,6 +2446,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         Py_XDECREF(py_tuple);
 
+next:
         CloseHandle(hDevice);
     }
 

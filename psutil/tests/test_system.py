@@ -670,7 +670,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
-    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")  # no visible disks
+    # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")  # no visible disks
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
