@@ -57,18 +57,6 @@ psutil_testing(void) {
 
 
 /*
- * Same as above but return a Python bool.
- */
-PyObject *
-py_psutil_is_testing(PyObject *self, PyObject *args) {
-    PyObject *res;
-    res = psutil_testing() ? Py_True : Py_False;
-    Py_INCREF(res);
-    return res;
-}
-
-
-/*
  * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
  * env var. The dual method exists because updating os.environ on
  * Windows has no effect.
