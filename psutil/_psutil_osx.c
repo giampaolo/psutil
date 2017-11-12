@@ -1927,6 +1927,8 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
+    psutil_setup();
+
     if (module == NULL)
         INITERROR;
 #if PY_MAJOR_VERSION >= 3

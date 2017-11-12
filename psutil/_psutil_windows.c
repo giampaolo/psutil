@@ -3805,6 +3805,7 @@ void init_psutil_windows(void)
 
     // set SeDebug for the current process
     psutil_set_se_debug();
+    psutil_setup();
 
 #if PY_MAJOR_VERSION >= 3
     return module;

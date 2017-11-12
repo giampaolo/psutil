@@ -58,7 +58,7 @@ AccessDenied(void) {
 }
 
 
-static int _psutil_testing = -1;
+static int _psutil_testing = 0;
 
 
 /*
@@ -67,12 +67,6 @@ static int _psutil_testing = -1;
  */
 int
 psutil_is_testing(void) {
-    if (_psutil_testing == -1) {
-        if (getenv("PSUTIL_TESTING") != NULL)
-            _psutil_testing = 1;
-        else
-            _psutil_testing = 0;
-    }
     return _psutil_testing;
 }
 
@@ -87,4 +81,14 @@ psutil_set_testing(PyObject *self, PyObject *args) {
     _psutil_testing = 1;
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+
+/*
+ * Called on module import on all platforms.
+ */
+void
+psutil_setup(void) {
+    if (getenv("PSUTIL_TESTING") != NULL)
+        _psutil_testing = 1;
 }

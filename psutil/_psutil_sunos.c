@@ -1679,6 +1679,8 @@ void init_psutil_sunos(void)
     PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
+    psutil_setup();
+
     if (module == NULL)
         INITERROR;
 #if PY_MAJOR_VERSION >= 3

@@ -1088,6 +1088,8 @@ void init_psutil_bsd(void)
     // PSUTIL_CONN_NONE
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128);
 
+    psutil_setup();
+
     if (module == NULL)
         INITERROR;
 #if PY_MAJOR_VERSION >= 3

@@ -713,6 +713,8 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
 
+    psutil_setup();
+
     if (module == NULL)
         INITERROR;
 #if PY_MAJOR_VERSION >= 3
