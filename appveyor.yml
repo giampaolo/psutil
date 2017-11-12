@@ -83,7 +83,7 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
+  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
