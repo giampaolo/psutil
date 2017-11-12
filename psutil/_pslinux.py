@@ -43,7 +43,6 @@ from ._compat import long
 from ._compat import PY3
 from ._exceptions import AccessDenied
 from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
 from ._exceptions import ZombieProcess
 
 if sys.version_info >= (3, 4):
@@ -1534,10 +1533,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def create_time(self):

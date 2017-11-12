@@ -29,7 +29,6 @@ from ._common import usage_percent
 from ._compat import which
 from ._exceptions import AccessDenied
 from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
 from ._exceptions import ZombieProcess
 
 __extra__all__ = []
@@ -758,10 +757,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def nice_get(self):

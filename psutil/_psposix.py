@@ -15,14 +15,10 @@ from ._common import sdiskusage
 from ._common import usage_percent
 from ._compat import PY3
 from ._compat import unicode
+from ._exceptions import TimeoutExpired
 
 
-__all__ = ['TimeoutExpired', 'pid_exists', 'wait_pid', 'disk_usage',
-           'get_terminal_map']
-
-
-class TimeoutExpired(Exception):
-    pass
+__all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
 
 
 def pid_exists(pid):
@@ -53,7 +49,7 @@ def pid_exists(pid):
         return True
 
 
-def wait_pid(pid, timeout=None):
+def wait_pid(pid, timeout=None, proc_name=None):
     """Wait for process with pid 'pid' to terminate and return its
     exit status code as an integer.
 
@@ -67,7 +63,7 @@ def wait_pid(pid, timeout=None):
     def check_timeout(delay):
         if timeout is not None:
             if timer() >= stop_at:
-                raise TimeoutExpired()
+                raise TimeoutExpired(timeout, pid=pid, name=proc_name)
         time.sleep(delay)
         return min(delay * 2, 0.04)
 

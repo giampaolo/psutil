@@ -26,7 +26,6 @@ from ._compat import b
 from ._compat import PY3
 from ._exceptions import AccessDenied
 from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
 from ._exceptions import ZombieProcess
 
 
@@ -723,7 +722,4 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
