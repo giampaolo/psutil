@@ -11,6 +11,7 @@
 
 
 // Global vars.
+int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
 
 
@@ -80,6 +81,8 @@ psutil_set_testing(PyObject *self, PyObject *args) {
  */
 void
 psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
 }

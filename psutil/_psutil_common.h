@@ -7,6 +7,7 @@
 #include <Python.h>
 
 extern int PSUTIL_TESTING;
+extern int PSUTIL_DEBUG;
 
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
