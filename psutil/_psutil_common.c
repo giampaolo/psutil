@@ -9,6 +9,27 @@
 #include <Python.h>
 #include <stdio.h>
 
+
+/*
+ * Backport of unicode FS APIs from Python 3.
+ * On Python 2 we just return a plain byte string
+ * which is never supposed to raise decoding errors.
+ * See: https://github.com/giampaolo/psutil/issues/1040
+ */
+#if PY_MAJOR_VERSION < 3
+PyObject *
+PyUnicode_DecodeFSDefault(char *s) {
+    return PyString_FromString(s);
+}
+
+
+PyObject *
+PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
+    return PyString_FromStringAndSize(s, size);
+}
+#endif
+
+
 /*
  * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
  */
@@ -67,23 +88,3 @@ psutil_set_testing(PyObject *self, PyObject *args) {
     Py_INCREF(Py_None);
     return Py_None;
 }
-
-
-/*
- * Backport of unicode FS APIs from Python 3.
- * On Python 2 we just return a plain byte string
- * which is never supposed to raise decoding errors.
- * See: https://github.com/giampaolo/psutil/issues/1040
- */
-#if PY_MAJOR_VERSION < 3
-PyObject *
-PyUnicode_DecodeFSDefault(char *s) {
-    return PyString_FromString(s);
-}
-
-
-PyObject *
-PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
-    return PyString_FromStringAndSize(s, size);
-}
-#endif
