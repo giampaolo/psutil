@@ -85,11 +85,11 @@ from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
 
+from ._exceptions import AccessDenied
 from ._exceptions import Error
 from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
-from ._exceptions import AccessDenied
 from ._exceptions import TimeoutExpired
+from ._exceptions import ZombieProcess
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py

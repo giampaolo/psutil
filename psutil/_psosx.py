@@ -23,10 +23,10 @@ from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
 from ._exceptions import TimeoutExpired
+from ._exceptions import ZombieProcess
 
 
 __extra__all__ = []

@@ -41,10 +41,10 @@ from ._compat import b
 from ._compat import basestring
 from ._compat import long
 from ._compat import PY3
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
 from ._exceptions import TimeoutExpired
+from ._exceptions import ZombieProcess
 
 if sys.version_info >= (3, 4):
     import enum
