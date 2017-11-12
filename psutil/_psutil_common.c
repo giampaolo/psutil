@@ -37,20 +37,27 @@ AccessDenied(void) {
 }
 
 
-static int _psutil_testing = 0;
+static int _psutil_testing = -1;
 
 
 /*
- * Return 1 if PSUTIL_TESTING env var is set else 0.
+ * Return 1 if PSUTIL_TESTING env var is set or if testing mode was
+ * enabled with py_psutil_set_testing.
  */
 int
 psutil_testing(void) {
+    if (_psutil_testing == -1) {
+        if (getenv("PSUTIL_TESTING") != NULL)
+            _psutil_testing = 1;
+        else
+            _psutil_testing = 0;
+    }
     return _psutil_testing;
 }
 
 
 /*
- * Return True if PSUTIL_TESTING env var is set else False.
+ * Same as above but return a Python bool.
  */
 PyObject *
 py_psutil_is_testing(PyObject *self, PyObject *args) {
@@ -61,6 +68,11 @@ py_psutil_is_testing(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
+ * env var. The dual method exists because updating os.environ on
+ * Windows has no effect.
+ */
 PyObject *
 py_psutil_set_testing(PyObject *self, PyObject *args) {
     _psutil_testing = 1;
