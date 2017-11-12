@@ -6,6 +6,8 @@
 
 #include <Python.h>
 
+extern int PSUTIL_TESTING;
+
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
 
@@ -17,6 +19,5 @@ PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 PyObject* AccessDenied(void);
 PyObject* NoSuchProcess(void);
 
-int psutil_is_testing(void);
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_setup(void);

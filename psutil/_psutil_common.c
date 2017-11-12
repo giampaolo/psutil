@@ -10,6 +10,10 @@
 #include <stdio.h>
 
 
+// Global vars.
+int PSUTIL_TESTING = 0;
+
+
 /*
  * Backport of unicode FS APIs from Python 3.
  * On Python 2 we just return a plain byte string
@@ -58,27 +62,14 @@ AccessDenied(void) {
 }
 
 
-static int _psutil_testing = 0;
-
-
-/*
- * Return 1 if PSUTIL_TESTING env var is set or if testing mode was
- * enabled with psutil_set_testing.
- */
-int
-psutil_is_testing(void) {
-    return _psutil_testing;
-}
-
-
 /*
  * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
- * env var. The dual method exists because updating os.environ on
- * Windows has no effect.
+ * env var. This dual method exists because updating os.environ on
+ * Windows has no effect. Called on unit tests setup.
  */
 PyObject *
 psutil_set_testing(PyObject *self, PyObject *args) {
-    _psutil_testing = 1;
+    PSUTIL_TESTING = 1;
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -90,5 +81,5 @@ psutil_set_testing(PyObject *self, PyObject *args) {
 void
 psutil_setup(void) {
     if (getenv("PSUTIL_TESTING") != NULL)
-        _psutil_testing = 1;
+        PSUTIL_TESTING = 1;
 }
