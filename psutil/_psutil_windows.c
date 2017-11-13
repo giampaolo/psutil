@@ -1038,7 +1038,6 @@ error:
 /*
  * Return process current working directory as a Python string.
  */
-
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
@@ -1064,6 +1063,7 @@ int
 psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
+    HANDLE hThread;
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
@@ -1089,20 +1089,17 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // Walk the thread snapshot to find all threads of the process.
     // If the thread belongs to the process, add its information
     // to the display list.
-    do
-    {
-        if (te32.th32OwnerProcessID == pid)
-        {
-            HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
-                                        te32.th32ThreadID);
+    do {
+        if (te32.th32OwnerProcessID == pid) {
+            hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
+                                 te32.th32ThreadID);
             if (hThread == NULL) {
                 PyErr_SetFromWindowsErr(0);
                 CloseHandle(hThread);
                 CloseHandle(hThreadSnap);
                 return FALSE;
             }
-            if (suspend == 1)
-            {
+            if (suspend == 1) {
                 if (SuspendThread(hThread) == (DWORD) - 1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
@@ -1110,8 +1107,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
                     return FALSE;
                 }
             }
-            else
-            {
+            else {
                 if (ResumeThread(hThread) == (DWORD) - 1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
