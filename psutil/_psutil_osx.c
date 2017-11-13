@@ -1900,6 +1900,42 @@ error:
 
 
 /*
+ * Return fan spped information.
+ */
+static PyObject *
+psutil_sensors_fans(PyObject *self, PyObject *args) {
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_fan_speed = NULL;
+    int i;
+    int fan_count;
+    float fan_speed;
+    char key[16];
+
+    if (py_retdict == NULL)
+        goto error;
+
+    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
+    for (i = 0; i < fan_count; i++) {
+        fan_speed = SMCGetFanSpeed(i);
+        py_fan_speed = Py_BuildValue("f", fan_speed);
+        if (py_fan_speed == NULL)
+            goto error;
+        sprintf(key, "Fan %d", i);
+        if (PyDict_SetItemString(py_retdict, key, py_fan_speed)) {
+            goto error;
+        }
+    }
+
+    Py_DECREF(py_fan_speed);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_fan_speed);
+    Py_XDECREF(py_retdict);
+    return NULL;
+}
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1968,6 +2004,8 @@ PsutilMethods[] = {
      "Return temperatures of hardware components."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
+    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
+     "Return fan spped information."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,

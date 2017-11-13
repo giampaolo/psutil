@@ -180,6 +180,8 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # psutil.sensors_temperatures()
 shwtemp = namedtuple(
     'shwtemp', ['label', 'current', 'high', 'critical'])
+# psutil.sensors_battery()
+sfan = namedtuple('sfan', ['label', 'current'])
 
 
 # =====================================================================
@@ -1220,7 +1222,7 @@ def sensors_fans():
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
         label = cat(base + '_label', fallback='', binary=False)
-        ret[unit_name].append(_common.sfan(label, current))
+        ret[unit_name].append(sfan(label, current))
 
     return dict(ret)
 

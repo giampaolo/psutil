@@ -112,9 +112,9 @@ pmmap_grouped = namedtuple(
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 # psutil.sensors_temperatures()
-shwtemp = namedtuple(
-    'shwtemp', ['current'])
-
+shwtemp = namedtuple('shwtemp', ['current'])
+# psutil.sensors_battery()
+sfan = namedtuple('sfan', ['current'])
 
 # =====================================================================
 # --- memory
@@ -225,7 +225,6 @@ def sensors_temperatures(fahrenheit=False):
         if fahrenheit:
             value = celsius_to_fahrenheit(value)
         ret[key] = shwtemp(value)
-
     return ret
 
 
@@ -241,6 +240,15 @@ def sensors_battery():
     else:
         secsleft = minsleft * 60
     return _common.sbattery(percent, secsleft, power_plugged)
+
+
+def sensors_fans():
+    """Return fans speed information.
+    """
+    ret = dict()
+    for key, value in cext.sensors_fans().items():
+        ret[key] = sfan(value)
+    return ret
 
 
 # =====================================================================
