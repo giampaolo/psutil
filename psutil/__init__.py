@@ -2159,7 +2159,7 @@ def net_if_stats():
 # =====================================================================
 
 
-# Linux
+# Linux, OSX
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):
@@ -2170,29 +2170,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
         All temperatures are expressed in celsius unless *fahrenheit*
         is set to True.
         """
-        def convert(n):
-            if n is not None:
-                return (float(n) * 9 / 5) + 32 if fahrenheit else n
-
-        ret = collections.defaultdict(list)
-        rawdict = _psplatform.sensors_temperatures()
-
-        for name, values in rawdict.items():
-            while values:
-                label, current, high, critical = values.pop(0)
-                current = convert(current)
-                high = convert(high)
-                critical = convert(critical)
-
-                if high and not critical:
-                    critical = high
-                elif critical and not high:
-                    high = critical
-
-                ret[name].append(
-                    _common.shwtemp(label, current, high, critical))
-
-        return dict(ret)
+        return _psplatform.sensors_temperatures(fahrenheit)
 
     __all__.append("sensors_temperatures")
 

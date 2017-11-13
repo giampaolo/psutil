@@ -824,7 +824,7 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures_fahreneit(self):
         d = {'coretemp': [('label', 50.0, 60.0, 70.0)]}
-        with mock.patch("psutil._psplatform.sensors_temperatures",
+        with mock.patch("psutil._psplatform._sensors_temperatures",
                         return_value=d) as m:
             temps = psutil.sensors_temperatures(
                 fahrenheit=True)['coretemp'][0]

@@ -16,6 +16,7 @@ from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
+from ._common import celsius_to_fahrenheit
 from ._common import conn_tmap
 from ._common import isfile_strict
 from ._common import memoize_when_activated
@@ -110,6 +111,9 @@ pmmap_grouped = namedtuple(
 # psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+# psutil.sensors_temperatures()
+shwtemp = namedtuple(
+    'shwtemp', ['current'])
 
 
 # =====================================================================
@@ -210,6 +214,19 @@ def disk_partitions(all=False):
 # =====================================================================
 # --- sensors
 # =====================================================================
+
+
+def sensors_temperatures(fahrenheit=False):
+    """Return hardware (CPU and others) temperatures as a dict
+    including hardware name and temperature.
+    """
+    ret = dict()
+    for key, value in cext.sensors_temperatures().items():
+        if fahrenheit:
+            value = celsius_to_fahrenheit(value)
+        ret[key] = shwtemp(value)
+
+    return ret
 
 
 def sensors_battery():

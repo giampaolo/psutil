@@ -44,6 +44,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
+#include "arch/osx/smc.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -1780,6 +1781,42 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return temperatures of hardware components.
+ */
+static PyObject *
+psutil_sensors_temperatures(PyObject *self, PyObject *args) {
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_battery_temp = NULL;
+    PyObject *py_cpu_temp = NULL;
+
+    if (py_retdict == NULL)
+        goto error;
+
+    py_cpu_temp = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_CPU_TEMP));
+    if (!py_cpu_temp)
+        goto error;
+    py_battery_temp = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_BATTERY_TEMP));
+    if (!py_battery_temp)
+        goto error;
+    if (PyDict_SetItemString(py_retdict, "Battery", py_battery_temp)) {
+        goto error;
+    }
+    if (PyDict_SetItemString(py_retdict, "CPU", py_cpu_temp)) {
+        goto error;
+    }
+    Py_DECREF(py_cpu_temp);
+    Py_DECREF(py_battery_temp);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_battery_temp);
+    Py_XDECREF(py_cpu_temp);
+    Py_XDECREF(py_retdict);
+    return NULL;
+}
+
+
+/*
  * Return battery information.
  */
 static PyObject *
@@ -1927,6 +1964,8 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+    {"sensors_temperatures", psutil_sensors_temperatures, METH_VARARGS,
+     "Return temperatures of hardware components."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
 

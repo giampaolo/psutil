@@ -190,9 +190,6 @@ scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
 # psutil.cpu_freq()
 scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
-# psutil.sensors_temperatures()
-shwtemp = namedtuple(
-    'shwtemp', ['label', 'current', 'high', 'critical'])
 # psutil.sensors_battery()
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 # psutil.sensors_battery()
@@ -569,6 +566,9 @@ def wrap_numbers(input_dict, name):
     with _wn.lock:
         return _wn.run(input_dict, name)
 
+
+def celsius_to_fahrenheit(celsius):
+    return (float(celsius) * 9 / 5) + 32
 
 _wn = _WrapNumbers()
 wrap_numbers.cache_clear = _wn.cache_clear

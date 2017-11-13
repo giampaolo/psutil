@@ -27,6 +27,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
+from ._common import celsius_to_fahrenheit
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
@@ -176,6 +177,9 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'read_chars', 'write_chars'])
+# psutil.sensors_temperatures()
+shwtemp = namedtuple(
+    'shwtemp', ['label', 'current', 'high', 'critical'])
 
 
 # =====================================================================
@@ -1117,7 +1121,7 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
-def sensors_temperatures():
+def _sensors_temperatures():
     """Return hardware (CPU and others) temperatures as a dict
     including hardware name, label, current, max and critical
     temperatures.
@@ -1164,6 +1168,29 @@ def sensors_temperatures():
         ret[unit_name].append((label, current, high, critical))
 
     return ret
+
+
+def sensors_temperatures(fahrenheit=False):
+    ret = collections.defaultdict(list)
+    rawdict = _sensors_temperatures()
+
+    for name, values in rawdict.items():
+        while values:
+            label, current, high, critical = values.pop(0)
+            if fahrenheit:
+                current = celsius_to_fahrenheit(current)
+                high = celsius_to_fahrenheit(high)
+                critical = celsius_to_fahrenheit(critical)
+
+            if high and not critical:
+                critical = high
+            elif critical and not high:
+                high = critical
+
+            ret[name].append(
+                shwtemp(label, current, high, critical))
+
+    return dict(ret)
 
 
 def sensors_fans():

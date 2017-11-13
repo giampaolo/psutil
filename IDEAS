@@ -18,8 +18,6 @@ PLATFORMS
 FEATURES
 ========
 
-- #371: sensors_temperatures() at least for OSX.
-
 - #669: Windows / net_if_addrs(): return broadcast addr.
 
 - #550: CPU info (frequency, architecture, threads per core, cores per socket,
