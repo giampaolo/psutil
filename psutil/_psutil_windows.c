@@ -335,13 +335,13 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://github.com/giampaolo/psutil/issues/24
-            NoSuchProcess();
+            NoSuchProcess("");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -379,7 +379,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
                            FALSE, pid);
@@ -442,7 +442,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -496,7 +496,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a
             // NoSuchProcess here
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -515,7 +515,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     CloseHandle(hProcess);
     if (ret != 0) {
         if (exitCode != STILL_ACTIVE)
-            return NoSuchProcess();
+            return NoSuchProcess("");
     }
     else {
         // Ignore access denied as it means the process is still alive.
@@ -629,7 +629,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -652,7 +652,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -717,7 +717,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hSnapShot);
-    NoSuchProcess();
+    NoSuchProcess("");
     return NULL;
 }
 
@@ -1048,7 +1048,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -1067,7 +1067,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
-        AccessDenied();
+        AccessDenied("");
         return FALSE;
     }
 
@@ -1169,13 +1169,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied();
+        AccessDenied("");
         goto error;
     }
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
     if (pid_return == -1)
@@ -1566,7 +1566,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         pid_return = psutil_pid_is_running(pid);
         if (pid_return == 0) {
             _psutil_conn_decref_objs();
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else if (pid_return == -1) {
             _psutil_conn_decref_objs();

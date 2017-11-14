@@ -67,7 +67,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -242,7 +242,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
     if (! kd) {
         if (strstr(errbuf, "Permission denied") != NULL)
-            AccessDenied();
+            AccessDenied("");
         else
             PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() syscall failed");
         goto error;
@@ -253,7 +253,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         sizeof(*kp), &nentries);
     if (! kp) {
         if (strstr(errbuf, "Permission denied") != NULL)
-            AccessDenied();
+            AccessDenied("");
         else
             PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() syscall failed");
         goto error;

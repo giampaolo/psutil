@@ -36,12 +36,13 @@ PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
 
 /*
  * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
+ * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-NoSuchProcess(void) {
+NoSuchProcess(char *msg) {
     PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
@@ -50,12 +51,13 @@ NoSuchProcess(void) {
 
 /*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
+ * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-AccessDenied(void) {
+AccessDenied(char *msg) {
     PyObject *exc;
-    char *msg = strerror(EACCES);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;

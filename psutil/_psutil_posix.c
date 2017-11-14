@@ -119,7 +119,7 @@ psutil_raise_for_pid(long pid, char *msg) {
         return 0;
     }
     if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
+        NoSuchProcess("");
     else
         PyErr_SetString(PyExc_RuntimeError, msg);
     return 0;

@@ -144,7 +144,7 @@ psutil_get_cmdline(long pid) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess();
+            NoSuchProcess("");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -238,7 +238,7 @@ psutil_get_environ(long pid) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess();
+            NoSuchProcess("");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -338,7 +338,7 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
