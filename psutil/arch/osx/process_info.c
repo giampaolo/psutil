@@ -354,7 +354,7 @@ psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
     int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
     if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
-        psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+        psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
     return ret;

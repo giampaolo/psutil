@@ -335,12 +335,14 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied("");
+        return AccessDenied();
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://github.com/giampaolo/psutil/issues/24
+            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
+                         "into NoSuchProcess");
             NoSuchProcess("");
         }
         else {
@@ -379,7 +381,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied("");
+        return AccessDenied();
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
                            FALSE, pid);
@@ -1067,7 +1069,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
-        AccessDenied("");
+        AccessDenied();
         return FALSE;
     }
 
@@ -1169,7 +1171,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("");
+        AccessDenied();
         goto error;
     }
 
@@ -2405,10 +2407,14 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 //      1364/job/ascpdi271b06jle3
                 // Assume it means we're dealing with some exotic disk
                 // and go on.
+                psutil_debug("DeviceIoControl -> ERROR_INVALID_FUNCTION; "
+                             "ignore PhysicalDrive%i", devNum);
                 goto next;
             }
             else if (GetLastError() == ERROR_NOT_SUPPORTED) {
                 // Again, let's assume we're dealing with some exotic disk.
+                psutil_debug("DeviceIoControl -> ERROR_NOT_SUPPORTED; "
+                             "ignore PhysicalDrive%i", devNum);
                 goto next;
             }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
@@ -2423,7 +2429,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
+        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
         py_tuple = Py_BuildValue(
             "(IILLKK)",
             diskPerformance.ReadCount,

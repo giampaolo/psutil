@@ -177,6 +177,7 @@ def recursive_rm(*patterns):
 def test_setup():
     os.environ['PYTHONWARNINGS'] = 'all'
     os.environ['PSUTIL_TESTING'] = '1'
+    os.environ['PSUTIL_DEBUG'] = '1'
 
 
 # ===================================================================
