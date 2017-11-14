@@ -11,6 +11,7 @@
 
 
 // Global vars.
+int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
 
 
@@ -76,10 +77,26 @@ psutil_set_testing(PyObject *self, PyObject *args) {
 
 
 /*
+ * Print a debug message on stderr. No-op if PSUTIL_DEBUG env var is not set.
+ */
+void
+psutil_debug(const char* format, ...) {
+    va_list argptr;
+    va_start(argptr, format);
+    fprintf(stderr, "psutil-dubug> ");
+    vfprintf(stderr, format, argptr);
+    fprintf(stderr, "\n");
+    va_end(argptr);
+}
+
+
+/*
  * Called on module import on all platforms.
  */
 void
 psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
 }

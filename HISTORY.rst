@@ -5,6 +5,11 @@
 
 *XXXX-XX-XX*
 
+**Enhancements**
+
+- 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
+  to print useful debug messages on stderr (useful in case of nasty errors).
+
 **Bug fixes**
 
 - 1152_: [Windows] disk_io_counters() may return an empty dict.

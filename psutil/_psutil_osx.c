@@ -266,7 +266,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (pid == 0)
             AccessDenied();
         else
-            psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
+            psutil_raise_for_pid(pid, "proc_pidpath()");
         return NULL;
     }
     return PyUnicode_DecodeFSDefault(buf);
@@ -336,7 +336,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_for_pid(pid, "task_for_pid() failed");
+        psutil_raise_for_pid(pid, "task_for_pid()");
         goto error;
     }
 
@@ -376,8 +376,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             errno = 0;
             proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
             if ((errno != 0) || ((sizeof(buf)) <= 0)) {
-                psutil_raise_for_pid(
-                    pid, "proc_regionfilename() syscall failed");
+                psutil_raise_for_pid(pid, "proc_regionfilename()");
                 goto error;
             }
 
@@ -1147,7 +1146,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDVNODEPATHINFO)");
                     goto error;
                 }
             }
@@ -1259,7 +1259,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDSOCKETINFO)");
                     goto error;
                 }
             }
