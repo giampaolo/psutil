@@ -335,7 +335,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
@@ -381,7 +381,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
                            FALSE, pid);
@@ -1069,7 +1069,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
-        AccessDenied();
+        AccessDenied("");
         return FALSE;
     }
 
@@ -1171,7 +1171,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied();
+        AccessDenied("");
         goto error;
     }
 
