@@ -336,6 +336,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
+        psutil_debug("task_for_pid() failed");  // TODO temporary
         psutil_raise_for_pid(pid, "task_for_pid()");
         goto error;
     }
@@ -347,8 +348,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
         err = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS)
+        if (err == KERN_INVALID_ADDRESS) {
+            // TODO temporary
+            psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
             break;
+        }
+        if (err != KERN_SUCCESS) {
+            psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
+        }
+
         if (info.is_submap) {
             depth++;
         }
@@ -376,6 +384,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             errno = 0;
             proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
             if ((errno != 0) || ((sizeof(buf)) <= 0)) {
+                // TODO temporary
+                psutil_debug("proc_regionfilename() failed");
                 psutil_raise_for_pid(pid, "proc_regionfilename()");
                 goto error;
             }
