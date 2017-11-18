@@ -2559,8 +2559,8 @@ FAQs
 
 * Q: What Python versions are supported?
 * A: From 2.6 to 3.6, both 32 and 64 bit versions. Last version supporting
-     Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__.
-     PyPy is also known to work.
+  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__.
+  PyPy is also known to work.
 
 ----
 
