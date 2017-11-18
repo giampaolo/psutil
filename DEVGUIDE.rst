@@ -4,7 +4,7 @@ Setup and running tests
 
 If you plan on hacking on psutil this is what you're supposed to do first:
 
-- clone the GIT repository::
+- clone the GIT repository:
 
   $ git clone git@github.com:giampaolo/psutil.git
 
