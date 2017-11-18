@@ -26,7 +26,8 @@ except ImportError as err:
         # but if we get here it means this this was a wheel (or exe).
         msg = "this Windows version is too old (< Windows Vista); "
         msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
+        msg += "2000, XP and 2003 server; it may be possible that psutil "
+        msg += "will work if compiled from sources though"
         raise RuntimeError(msg)
     else:
         raise
