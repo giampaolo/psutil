@@ -61,22 +61,6 @@ RedHat / CentOS:
 
 If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
 
-Major Linux distros also provide binary distributions of psutil so, for
-instance, on Ubuntu and Debian you can also do:
-
-.. code-block:: bash
-
-    sudo apt-get install python-psutil
-
-On RedHat and CentOS:
-
-.. code-block:: bash
-
-    sudo yum install python-psutil
-
-This is not recommended though as Linux distros usually ship older psutil
-versions.
-
 OSX
 ===
 
