@@ -14,6 +14,7 @@ import psutil
 from psutil import OSX
 from psutil.tests import create_zombie_proc
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -284,6 +285,18 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
                                  int(re.findall(r'mtu (\d+)', out)[0]))
+
+    # --- sensors_battery
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_sensors_battery(self):
+        out = sh("pmset -g batt")
+        percent = re.search("(\d+)%", out).group(1)
+        drawing_from = re.search("Now drawing from '([^']+)'", out).group(1)
+        power_plugged = drawing_from == "AC Power"
+        psutil_result = psutil.sensors_battery()
+        self.assertEqual(psutil_result.power_plugged, power_plugged)
+        self.assertEqual(psutil_result.percent, int(percent))
 
 
 if __name__ == '__main__':

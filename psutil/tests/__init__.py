@@ -70,7 +70,7 @@ __all__ = [
     'VERBOSITY',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
-    "HAS_SENSORS_BATTERY", "HAS_BATTERY""HAS_SENSORS_FANS",
+    "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess', 'create_zombie_proc',
