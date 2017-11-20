@@ -85,11 +85,10 @@ exe/wheel installers hosted on
 If you want to compile psutil from sources you'll need **Visual Studio**
 (Mingw32 is no longer supported):
 
-* Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
-* Python 3.3, 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
+* Python 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
 * Python 3.5+: `VS-2015 <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__
 
-Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires
+Compiling 64 bit versions of Python 2.7 with VS 2008 requires
 `Windows SDK and .NET Framework 3.5 SP1 <https://www.microsoft.com/en-us/download/details.aspx?id=3138>`__.
 Once installed run vcvars64.bat, then you can finally compile (see
 `here <http://stackoverflow.com/questions/11072521/>`__).

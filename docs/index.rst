@@ -38,8 +38,8 @@ psutil currently supports the following platforms:
 - **AIX**
 
 ...both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
-`2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+versions **2.7** and **3.4 to 3.6** (users of Python 2.4 and 2.5 may use
+version `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__, Python 2.6 version `5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.1&:action=files>`__, and Python 3.3 version `5.4.0 <https://pypi.python.org/pypi?name=psutil&version=5.4.0&:action=files>`__).
 `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
@@ -2558,8 +2558,8 @@ FAQs
 ----
 
 * Q: What Python versions are supported?
-* A: From 2.6 to 3.6, both 32 and 64 bit versions. Last version supporting
-  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__.
+* A: 2.7 and 3.4 to 3.6, both 32 and 64 bit versions. Last version supporting
+  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__, Python 2.6 is `psutil 5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.1&:action=files>`__, and Python 3.3 is `psutil 5.4.0 <https://pypi.python.org/pypi?name=psutil&version=5.4.0&:action=files>`__.
   PyPy is also known to work.
 
 ----

@@ -4,7 +4,6 @@ cache: pip
 matrix:
     include:
         # Linux
-        - python: 2.6
         - python: 2.7
         - python: 3.4
         - python: 3.5
