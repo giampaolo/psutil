@@ -22,7 +22,6 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
-from psutil._compat import callable
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version

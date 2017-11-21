@@ -10,7 +10,7 @@ import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "callable", "lru_cache", "which"]
+           "lru_cache", "which"]
 
 PY3 = sys.version_info[0] == 3
 
@@ -38,14 +38,6 @@ else:
         return s
 
 
-# removed in 3.0, reintroduced in 3.2
-try:
-    callable = callable
-except NameError:
-    def callable(obj):
-        return any("__call__" in klass.__dict__ for klass in type(obj).__mro__)
-
-
 # --- stdlib additions
 
 
@@ -53,8 +45,10 @@ except NameError:
 # Taken from: http://code.activestate.com/recipes/578078
 # Credit: Raymond Hettinger
 try:
+    # Python 3.2+
     from functools import lru_cache
 except ImportError:
+    # Python 2.7
     try:
         from threading import RLock
     except ImportError:
@@ -197,10 +191,11 @@ except ImportError:
         return decorating_function
 
 
-# python 3.3
 try:
+    # Python 3.3+
     from shutil import which
 except ImportError:
+    # Python 2.7
     def which(cmd, mode=os.F_OK | os.X_OK, path=None):
         """Given a command, mode, and a PATH string, return the path which
         conforms to the given mode on the PATH, or None if there is no such

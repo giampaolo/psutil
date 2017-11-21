@@ -21,7 +21,6 @@ import warnings
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
@@ -369,8 +368,6 @@ class TestProcess(unittest.TestCase):
             except psutil.NoSuchProcess:
                 pass
 
-    @unittest.skipIf(not sys.version_info >= (2, 7),
-                     "CTRL_* signals not supported")
     def test_ctrl_signals(self):
         p = psutil.Process(get_test_subprocess().pid)
         p.send_signal(signal.CTRL_C_EVENT)

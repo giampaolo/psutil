@@ -53,15 +53,9 @@ if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
 tests_require = []
-if sys.version_info[:2] <= (2, 6):
-    tests_require.append('unittest2')
-if sys.version_info[:2] <= (2, 7):
-    tests_require.append('mock')
-if sys.version_info[:2] <= (3, 2):
-    tests_require.append('ipaddress')
-
 extras_require = {}
-if sys.version_info[:2] <= (3, 3):
+if sys.version_info[:2] == (2, 7):
+    tests_require.extend(['ipaddress', 'mock'])
     extras_require.update(dict(enum='enum34'))
 
 
@@ -315,7 +309,6 @@ def main():
             'Operating System :: POSIX',
             'Programming Language :: C',
             'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.4',
