@@ -766,6 +766,8 @@ Sensors
 
   .. versionadded:: 5.1.0
 
+  .. versionchanged:: 5.4.2 added OSX support
+
   .. warning::
 
     this API is experimental. Backward incompatible changes may occur if
