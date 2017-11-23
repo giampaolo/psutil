@@ -646,8 +646,7 @@ class TestWrapNumbers(unittest.TestCase):
 
 @unittest.skipIf(TOX, "can't test on TOX")
 # See: https://travis-ci.org/giampaolo/psutil/jobs/295224806
-@unittest.skipIf(TRAVIS and not
-                 os.path.exists(os.path.join(SCRIPTS_DIR, 'free.py')),
+@unittest.skipIf(TRAVIS and not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""

@@ -764,11 +764,14 @@ def _setup_tests():
 
 
 def get_suite():
-    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                   if x.endswith('.py') and x.startswith('test_') and not
-                   x.startswith('test_memory_leaks')]
+    testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
+                if x.endswith('.py') and x.startswith('test_') and not
+                x.startswith('test_memory_leaks')]
+    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
+        testmods = [x for x in testmods if not x.endswith((
+                    "osx", "posix", "linux"))]
     suite = unittest.TestSuite()
-    for tm in testmodules:
+    for tm in testmods:
         # ...so that the full test paths are printed on screen
         tm = "psutil.tests.%s" % tm
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
