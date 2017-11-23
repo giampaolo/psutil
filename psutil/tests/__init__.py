@@ -168,13 +168,28 @@ HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 
 
 def _get_py_exe():
-    exe = os.path.realpath(sys.executable)
-    if not os.path.exists(exe):
-        # It seems this only occurs on OSX.
-        exe = which("python%s.%s" % sys.version_info[:2])
-        if not exe or not os.path.exists(exe):
-            ValueError("can't find python exe real abspath")
-    return exe
+    def attempt(exe):
+        try:
+            subprocess.check_call(
+                [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            return None
+        else:
+            return exe
+
+    if OSX:
+        exe = \
+            attempt(sys.executable) or \
+            attempt(os.path.realpath(sys.executable)) or \
+            attempt(which("python%s.%s" % sys.version_info[:2])) or \
+            attempt(psutil.Process().exe())
+        if not exe:
+            raise ValueError("can't find python exe real abspath")
+        return exe
+    else:
+        exe = os.path.realpath(sys.executable)
+        assert os.path.exists(exe), exe
+        return exe
 
 
 PYTHON_EXE = _get_py_exe()
