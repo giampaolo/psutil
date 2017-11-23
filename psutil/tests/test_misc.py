@@ -20,6 +20,7 @@ import socket
 import stat
 
 from psutil import LINUX
+from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import memoize
@@ -365,6 +366,8 @@ class TestMisc(unittest.TestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
+        if TRAVIS and not os.path.exists(setup_py):
+            return self.skipTest("can't find setup.py")
         module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)
         self.assertEqual(module.get_version(), psutil.__version__)
@@ -660,6 +663,11 @@ class TestScripts(unittest.TestCase):
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
+            else:
+                raise
+        except ImportError:
+            if OSX and TRAVIS:
+                pass
             else:
                 raise
         assert out, out
