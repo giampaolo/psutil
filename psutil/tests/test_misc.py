@@ -20,7 +20,6 @@ import socket
 import stat
 
 from psutil import LINUX
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import memoize
@@ -654,20 +653,16 @@ class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod
-    def assert_stdout(exe, args=None, **kwds):
-        exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
-        if args:
-            exe = exe + ' ' + args
+    def assert_stdout(exe, *args, **kwargs):
+        exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
+        cmd = [PYTHON_EXE, exe]
+        for arg in args:
+            cmd.append(arg)
         try:
-            out = sh(PYTHON_EXE + ' ' + exe, **kwds).strip()
+            out = sh(cmd, **kwargs).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
-            else:
-                raise
-        except ImportError:
-            if OSX and TRAVIS:
-                pass
             else:
                 raise
         assert out, out
@@ -712,7 +707,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('meminfo.py')
 
     def test_procinfo(self):
-        self.assert_stdout('procinfo.py', args=str(os.getpid()))
+        self.assert_stdout('procinfo.py', str(os.getpid()))
 
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
@@ -736,7 +731,7 @@ class TestScripts(unittest.TestCase):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_pmap(self):
-        self.assert_stdout('pmap.py', args=str(os.getpid()))
+        self.assert_stdout('pmap.py', str(os.getpid()))
 
     @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
@@ -755,7 +750,7 @@ class TestScripts(unittest.TestCase):
         self.assert_syntax('iotop.py')
 
     def test_pidof(self):
-        output = self.assert_stdout('pidof.py', args=psutil.Process().name())
+        output = self.assert_stdout('pidof.py', psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
