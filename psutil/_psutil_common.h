@@ -17,8 +17,8 @@ PyObject* PyUnicode_DecodeFSDefault(char *s);
 PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 #endif
 
-PyObject* AccessDenied(void);
-PyObject* NoSuchProcess(void);
+PyObject* AccessDenied(char *msg);
+PyObject* NoSuchProcess(char *msg);
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);

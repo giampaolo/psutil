@@ -266,7 +266,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0)
-            AccessDenied();
+            AccessDenied("");
         else
             psutil_raise_for_pid(pid, "proc_pidpath()");
         return NULL;
@@ -571,9 +571,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         return NULL;
     }
 
@@ -1018,9 +1018,9 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         goto error;
     }
 
@@ -1030,7 +1030,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied();
+            AccessDenied("");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
