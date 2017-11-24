@@ -338,8 +338,16 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_debug("task_for_pid() failed");  // TODO temporary
-        psutil_raise_for_pid(pid, "task_for_pid()");
+        if ((err == 5) && (errno == ENOENT)) {
+            // See: https://github.com/giampaolo/psutil/issues/1181
+            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
+                         "errno=%i, msg='%s'\n", err, errno,
+                         mach_error_string(err));
+            AccessDenied("");
+        }
+        else {
+            psutil_raise_for_pid(pid, "task_for_pid(MACH_PORT_NULL)");
+        }
         goto error;
     }
 
