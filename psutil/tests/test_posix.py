@@ -10,6 +10,7 @@
 import datetime
 import errno
 import os
+import re
 import subprocess
 import sys
 import time
@@ -152,6 +153,9 @@ class TestProcess(unittest.TestCase):
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
+        # ...because of how we calculate PYTHON_EXE; on OSX this may
+        # be "pythonX.Y".
+        name_psutil = re.sub(r"\d.\d", "", name_psutil)
         self.assertEqual(name_ps, name_psutil)
 
     def test_name_long(self):
