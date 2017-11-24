@@ -155,6 +155,7 @@ class TestProcess(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name().lower()
         # ...because of how we calculate PYTHON_EXE; on OSX this may
         # be "pythonX.Y".
+        name_ps = re.sub(r"\d.\d", "", name_ps)
         name_psutil = re.sub(r"\d.\d", "", name_psutil)
         self.assertEqual(name_ps, name_psutil)
 
