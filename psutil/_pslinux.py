@@ -1471,9 +1471,17 @@ class Process(object):
         if not data:
             # may happen in case of zombie process
             return []
-        if data.endswith('\x00'):
+        # 'man proc' states that args are separated by null bytes '\0'
+        # and last char is supposed to be a null byte. Nevertheless
+        # some processes may change their cmdline after being started
+        # (via setproctitle() or similar), they are usually not
+        # compliant with this rule and use spaces instead. Google
+        # Chrome process is an example. See:
+        # https://github.com/giampaolo/psutil/issues/1179
+        sep = '\x00' if data.endswith('\x00') else ' '
+        if data.endswith(sep):
             data = data[:-1]
-        return [x for x in data.split('\x00')]
+        return [x for x in data.split(sep)]
 
     @wrap_exceptions
     def environ(self):

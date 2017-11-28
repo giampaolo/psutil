@@ -17,6 +17,9 @@
 - 1169_: [Linux] users() "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
+- 1179_: [Linux] Process.cmdline() correctly splits cmdline args for
+  misbehaving processes who overwrite /proc/pid/cmdline by using spaces
+  instead of null bytes as args separator.
 - 1181_: [OSX] Process.memory_maps() may raise ENOENT.
 
 5.4.1

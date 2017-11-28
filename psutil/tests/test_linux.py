@@ -1585,6 +1585,20 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
+    def test_cmdline_spaces_mocked(self):
+        # see: https://github.com/giampaolo/psutil/issues/1179
+        p = psutil.Process()
+        fake_file = io.StringIO(u('foo bar '))
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar'])
+            assert m.called
+        fake_file = io.StringIO(u('foo bar  '))
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
+            assert m.called
+
     def test_readlink_path_deleted_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         return_value='/home/foo (deleted)'):
