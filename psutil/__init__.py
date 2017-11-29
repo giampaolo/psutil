@@ -28,7 +28,6 @@ import errno
 import functools
 import os
 import signal
-import subprocess
 import sys
 import time
 import traceback
@@ -36,6 +35,11 @@ try:
     import pwd
 except ImportError:
     pwd = None
+
+if sys.version_info[0] < 3:
+    import subprocess32 as subprocess
+else:
+    import subprocess
 
 from . import _common
 from ._common import deprecated_method
