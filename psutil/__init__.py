@@ -37,7 +37,10 @@ except ImportError:
     pwd = None
 
 if sys.version_info[0] < 3:
-    import subprocess32 as subprocess
+    try:
+        import subprocess32 as subprocess
+    except ImportError:
+        import subprocess
 else:
     import subprocess
 
