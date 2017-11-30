@@ -256,7 +256,7 @@ if (int(__version__.replace('.', '')) !=
 
 if hasattr(_psplatform, 'ppid_map'):
     # Windows only (C).
-    _ppid_map = _psplatform.ppid_map()
+    _ppid_map = _psplatform.ppid_map
 else:
     def _ppid_map():
         """Obtain a {pid: ppid, ...} dict for all running processes in
