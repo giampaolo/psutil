@@ -10,7 +10,7 @@
 - 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
-- 1183_: Process.children() is around 2.2x faster on UNIX.
+- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
 
 **Bug fixes**
 

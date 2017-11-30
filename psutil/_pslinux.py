@@ -1356,6 +1356,27 @@ def pid_exists(pid):
             return pid in pids()
 
 
+def ppid_map():
+    """Obtain a {pid: ppid, ...} dict for all running processes in
+    one shot. Used to speed up Process.children().
+    """
+    ret = {}
+    procfs_path = get_procfs_path()
+    for pid in pids():
+        try:
+            with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
+                data = f.read()
+        except EnvironmentError as err:
+            if err.errno not in (errno.ENOENT, errno.EPERM, errno.EACCES):
+                raise
+        else:
+            rpar = data.rfind(b')')
+            dset = data[rpar + 2:].split()
+            ppid = int(dset[1])
+            ret[pid] = ppid
+    return ret
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and IOError exceptions
     into NoSuchProcess and AccessDenied.

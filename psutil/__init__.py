@@ -255,11 +255,11 @@ if (int(__version__.replace('.', '')) !=
 
 
 if hasattr(_psplatform, 'ppid_map'):
-    # Windows only (C).
+    # Faster version (Windows and Linux).
     _ppid_map = _psplatform.ppid_map
 else:
     def _ppid_map():
-        """Obtain a {pid: ppid, ...} dict for all running processes in
+        """Return a {pid: ppid, ...} dict for all running processes in
         one shot. Used to speed up Process.children().
         """
         ret = {}
