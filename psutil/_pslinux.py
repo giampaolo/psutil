@@ -1356,6 +1356,24 @@ def pid_exists(pid):
             return pid in pids()
 
 
+def parse_stat_file(procfs_path, pid):
+    """Parse /proc/{pid}/stat file. Return a list of fields where
+    process name is in position 0.
+    Using "man proc" as a reference: where "man proc" refers to
+    position N, always substract 2 (e.g starttime pos 22 in
+    'man proc' == pos 20 in the list returned here).
+    """
+    with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
+        data = f.read()
+    # Process name is between parentheses. It can contain spaces and
+    # other parentheses. This is taken into account by looking for
+    # the first occurrence of "(" and the last occurence of ")".
+    rpar = data.rfind(b')')
+    name = data[data.find(b'(') + 1:rpar]
+    others = data[rpar + 2:].split()
+    return [name] + others
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and IOError exceptions
     into NoSuchProcess and AccessDenied.
@@ -1381,6 +1399,35 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def ppid_map():
+    """
+    Return a {pid:ppid, ...} dict for all running processes
+    """
+    procfs_path = get_procfs_path()
+    ppids = {}
+
+    for pid in os.listdir(procfs_path):
+        if pid.isdigit():
+            pid = int(pid)
+            try:
+                fields = parse_stat_file(procfs_path, pid)
+            except EnvironmentError as err:
+                # Ignore dead processes
+                # ESRCH (no such process) can be raised on read() if
+                # process is gone in the meantime.
+                # ENOENT (no such file or directory) can be raised on open().
+                if err.errno in (errno.ESRCH, errno.NOENT):
+                    pass
+                elif err.errno in (errno.EPERM, errno.EACCES):
+                    raise AccessDenied(pid)
+                else:
+                    raise
+            ppid = int(fields[2])
+            ppids[pid] = ppid
+
+    return ppids
+
+
 class Process(object):
     """Linux process implementation."""
 
@@ -1395,22 +1442,12 @@ class Process(object):
     @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file. Return a list of fields where
-        process name is in position 0.
-        Using "man proc" as a reference: where "man proc" refers to
-        position N, always substract 2 (e.g starttime pos 22 in
-        'man proc' == pos 20 in the list returned here).
+        process name is in position 0, as in parse_stat_file().
+
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
-        # Process name is between parentheses. It can contain spaces and
-        # other parentheses. This is taken into account by looking for
-        # the first occurrence of "(" and the last occurence of ")".
-        rpar = data.rfind(b')')
-        name = data[data.find(b'(') + 1:rpar]
-        others = data[rpar + 2:].split()
-        return [name] + others
+        return parse_stat_file(self._procfs_path, self.pid)
 
     @memoize_when_activated
     def _read_status_file(self):
