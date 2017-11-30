@@ -1716,9 +1716,8 @@ Process class
 
   .. method:: children(recursive=False)
 
-    Return the children of this process as a list of :Class:`Process` objects,
-    preemptively checking whether PID has been reused. If recursive is `True`
-    return all the parent descendants.
+    Return the children of this process as a list of :Class:`Process` objects.
+    If recursive is `True` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
     ::
 
@@ -1738,7 +1737,7 @@ Process class
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
     This concept is well summaried by this
-    `unit test <https://github.com/giampaolo/psutil/blob/fb9ae861cf3cf175c3da4a3cd4e558c6cbd6af91/psutil/tests/test_process.py#L1236-L1247>`__.
+    `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`__.
     See also how to `kill a process tree <#kill-process-tree>`__ and
     `terminate my children <#terminate-my-children>`__.
 
