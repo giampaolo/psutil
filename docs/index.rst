@@ -1716,7 +1716,8 @@ Process class
 
   .. method:: children(recursive=False)
 
-    Return the children of this process as a list of :Class:`Process` objects.
+    Return the children of this process as a list of :class:`Process`
+    instances.
     If recursive is `True` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
     ::

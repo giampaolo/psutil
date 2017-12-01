@@ -1367,6 +1367,8 @@ def ppid_map():
             with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
                 data = f.read()
         except EnvironmentError as err:
+            # Note: we should be able to access /stat for all processes
+            # so we won't bump into EPERM, which is good.
             if err.errno not in (errno.ENOENT, errno.ESRCH,
                                  errno.EPERM, errno.EACCES):
                 raise

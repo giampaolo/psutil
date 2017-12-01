@@ -268,6 +268,7 @@ else:
                 proc = _psplatform.Process(pid)
                 ppid = proc.ppid()
             except (NoSuchProcess, AccessDenied):
+                # Note: AccessDenied is unlikely to happen.
                 pass
             else:
                 ret[pid] = ppid
