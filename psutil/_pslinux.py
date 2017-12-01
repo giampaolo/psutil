@@ -1367,7 +1367,8 @@ def ppid_map():
             with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
                 data = f.read()
         except EnvironmentError as err:
-            if err.errno not in (errno.ENOENT, errno.EPERM, errno.EACCES):
+            if err.errno not in (errno.ENOENT, errno.ESRCH,
+                                 errno.EPERM, errno.EACCES):
                 raise
         else:
             rpar = data.rfind(b')')
