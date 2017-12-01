@@ -10,6 +10,7 @@
 - 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
+- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
 
 **Bug fixes**
 
@@ -17,8 +18,8 @@
 - 1169_: [Linux] users() "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
-- 1179_: [Linux] Process.cmdline() correctly splits cmdline args for
-  misbehaving processes who overwrite /proc/pid/cmdline by using spaces
+- 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
+  misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
 - 1181_: [OSX] Process.memory_maps() may raise ENOENT.
 
