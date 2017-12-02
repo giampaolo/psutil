@@ -313,11 +313,7 @@ class TestSystemAPIs(unittest.TestCase):
         # on OSX and OPENBSD ps doesn't show pid 0
         if OSX or OPENBSD and 0 not in pids_ps:
             pids_ps.insert(0, 0)
-
-        if pids_ps != pids_psutil:
-            difference = [x for x in pids_psutil if x not in pids_ps] + \
-                         [x for x in pids_ps if x not in pids_psutil]
-            self.fail("difference: " + str(difference))
+        self.assertEqual(pids_ps, pids_psutil)
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
