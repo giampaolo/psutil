@@ -24,6 +24,7 @@ from __future__ import division
 
 import collections
 import contextlib
+import datetime
 import errno
 import functools
 import os
@@ -287,6 +288,17 @@ def _assert_pid_not_reused(fun):
     return wrapper
 
 
+def _pprint_secs(secs):
+    """Format seconds in a human readable form."""
+    now = time.time()
+    secs_ago = int(now - secs)
+    if secs_ago < 60 * 60 * 24:
+        fmt = "%H:%M:%S"
+    else:
+        fmt = "%Y-%m-%d %H:%M:%S"
+    return datetime.datetime.fromtimestamp(secs).strftime(fmt)
+
+
 # =====================================================================
 # --- Process class
 # =====================================================================
@@ -377,21 +389,26 @@ class Process(object):
 
     def __str__(self):
         try:
-            pid = self.pid
-            name = repr(self.name())
+            info = collections.OrderedDict()
+        except AttributeError:
+            info = {}  # Python 2.6
+        info["pid"] = self.pid
+        try:
+            info["name"] = self.name()
+            if self._create_time:
+                info['started'] = _pprint_secs(self._create_time)
         except ZombieProcess:
-            details = "(pid=%s (zombie))" % self.pid
+            info["status"] = "zombie"
         except NoSuchProcess:
-            details = "(pid=%s (terminated))" % self.pid
+            info["status"] = "terminated"
         except AccessDenied:
-            details = "(pid=%s)" % (self.pid)
-        else:
-            details = "(pid=%s, name=%s)" % (pid, name)
-        return "%s.%s%s" % (self.__class__.__module__,
-                            self.__class__.__name__, details)
+            pass
+        return "%s.%s(%s)" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
 
-    def __repr__(self):
-        return "<%s at %s>" % (self.__str__(), id(self))
+    __repr__ = __str__
 
     def __eq__(self, other):
         # Test for equality with another Process object based
@@ -2280,8 +2297,6 @@ def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """
-    import datetime
-
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
