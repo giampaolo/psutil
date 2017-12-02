@@ -888,33 +888,33 @@ class Process(object):
                     except (NoSuchProcess, ZombieProcess):
                         pass
         else:
-            # construct a dict where 'values' are all the processes
-            # having 'key' as their parent
-            table = collections.defaultdict(list)
+            # Construct a {pid: [child pids]} dict
+            reverse_ppid_map = collections.defaultdict(list)
             for pid, ppid in ppid_map.items():
-                try:
-                    p = Process(pid)
-                    table[ppid].append(p)
-                except (NoSuchProcess, ZombieProcess):
-                    pass
-            # At this point we have a mapping table where table[self.pid]
-            # are the current process' children.
-            # Below, we look for all descendants recursively, similarly
-            # to a recursive function call.
-            checkpids = [self.pid]
-            for pid in checkpids:
-                for child in table[pid]:
+                reverse_ppid_map[ppid].append(pid)
+            # Recursively traverse that dict, starting from self.pid,
+            # such that we only call Process() on actual children
+            seen = set()
+            stack = [self.pid]
+            while stack:
+                pid = stack.pop()
+                if pid in seen:
+                    # Since pids can be reused while the ppid_map is
+                    # constructed, there may be rare instances where
+                    # there's a cycle in the recorded process "tree".
+                    continue
+                seen.add(pid)
+                for child_pid in reverse_ppid_map[pid]:
                     try:
+                        child = Process(child_pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
                         intime = self.create_time() <= child.create_time()
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-                    else:
                         if intime:
                             ret.append(child)
-                            if child.pid not in checkpids:
-                                checkpids.append(child.pid)
+                            stack.append(child_pid)
+                    except (NoSuchProcess, ZombieProcess):
+                        pass
         return ret
 
     def cpu_percent(self, interval=None):
