@@ -3,19 +3,9 @@ language: python
 cache: pip
 matrix:
     include:
-        # Linux
-        - python: 2.6
-        - python: 2.7
-        - python: 3.4
-        - python: 3.5
-        - python: 3.6
-        # OSX
         - language: generic
           os: osx
           env: PYVER=py27
-        - language: generic
-          os: osx
-          env: PYVER=py34
 install:
     - ./.ci/travis/install.sh
 script:
