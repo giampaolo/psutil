@@ -3,6 +3,9 @@ language: python
 cache: pip
 matrix:
     include:
+        # Linux
+        - python: 2.7
+        # OSX
         - language: generic
           os: osx
           env: PYVER=py27
