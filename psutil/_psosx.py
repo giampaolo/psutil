@@ -18,6 +18,7 @@ from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
 from ._common import conn_tmap
 from ._common import isfile_strict
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
@@ -301,7 +302,30 @@ def users():
 # =====================================================================
 
 
-pids = cext.pids
+@memoize
+def _add_pid_0(pids):
+    # On certain OSX versions pids() C implementation does not return
+    # PID 0 but "ps" does and the process is querable via sysctl().
+    if 0 in pids:
+        return False
+    else:
+        try:
+            Process(0).create_time()
+        except NoSuchProcess:
+            return False
+        except AccessDenied:
+            return True
+        else:
+            return True
+
+
+def pids():
+    ls = cext.pids()
+    if _add_pid_0(ls):
+        ls.append(0)
+    return ls
+
+
 pid_exists = _psposix.pid_exists
 
 

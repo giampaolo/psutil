@@ -1341,8 +1341,6 @@ class TestProcess(unittest.TestCase):
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
-        from pprint import pprint as pp
-        pp(psutil.Process(0).as_dict())
         if 0 not in psutil.pids():
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
             return

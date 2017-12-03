@@ -101,7 +101,6 @@ psutil_pids(PyObject *self, PyObject *args) {
         // save the address of proclist so we can free it later
         orig_address = proclist;
         for (idx = 0; idx < num_processes; idx++) {
-            printf("%i\n", proclist->kp_proc.p_pid);
             py_pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
             if (! py_pid)
                 goto error;
