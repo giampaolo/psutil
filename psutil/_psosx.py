@@ -301,7 +301,23 @@ def users():
 # =====================================================================
 
 
-pids = cext.pids
+def pids():
+    ls = cext.pids()
+    if 0 not in ls:
+        # On certain OSX versions pids() C doesn't return PID 0 but
+        # "ps" does and the process is querable via sysctl():
+        # https://travis-ci.org/giampaolo/psutil/jobs/309619941
+        try:
+            Process(0).create_time()
+        except NoSuchProcess:
+            return False
+        except AccessDenied:
+            ls.append(0)
+        else:
+            ls.append(0)
+    return ls
+
+
 pid_exists = _psposix.pid_exists
 
 

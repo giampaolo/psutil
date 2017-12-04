@@ -22,6 +22,7 @@
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
 - 1181_: [OSX] Process.memory_maps() may raise ENOENT.
+- 1187_: [OSX] pids() does not return PID 0 on recent OSX versions.
 
 5.4.1
 =====
