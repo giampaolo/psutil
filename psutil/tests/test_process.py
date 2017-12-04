@@ -1319,9 +1319,9 @@ class TestProcess(unittest.TestCase):
             # Maybe they upgraded OSX version?
             # https://travis-ci.org/giampaolo/psutil/jobs/310896404
             self.assertIn(zpid, psutil.pids())
-        self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
-        psutil._pmap = {}
-        self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+            self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+            psutil._pmap = {}
+            self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
