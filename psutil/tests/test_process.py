@@ -62,7 +62,6 @@ from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import ThreadTask
-from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
@@ -1384,28 +1383,23 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
+        def clean_dict(d):
+            # Most of these are problematic on Travis.
+            d.pop("PSUTIL_TESTING", None)
+            d.pop("PLAT", None)
+            d.pop("HOME", None)
+            if OSX:
+                d.pop("__CF_USER_TEXT_ENCODING")
+                d.pop("VERSIONER_PYTHON_PREFER_32_BIT")
+                d.pop("VERSIONER_PYTHON_VERSION")
+            return dict(
+                [(k.rstrip("\r\n"), v.rstrip("\r\n")) for k, v in d.items()])
+
         self.maxDiff = None
         p = psutil.Process()
-        d = p.environ()
-        d2 = os.environ.copy()
-
-        removes = []
-        if 'PSUTIL_TESTING' in os.environ:
-            removes.append('PSUTIL_TESTING')
-        if OSX:
-            removes.extend([
-                "__CF_USER_TEXT_ENCODING",
-                "VERSIONER_PYTHON_PREFER_32_BIT",
-                "VERSIONER_PYTHON_VERSION"])
-        if LINUX or OSX:
-            removes.extend(['PLAT'])
-        if TOX:
-            removes.extend(['HOME'])
-        for key in removes:
-            d.pop(key, None)
-            d2.pop(key, None)
-
-        self.assertEqual(d, d2)
+        d1 = clean_dict(p.environ())
+        d2 = clean_dict(os.environ.copy())
+        self.assertEqual(d1, d2)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(not POSIX, "POSIX only")
