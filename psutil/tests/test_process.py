@@ -1389,9 +1389,9 @@ class TestProcess(unittest.TestCase):
             d.pop("PLAT", None)
             d.pop("HOME", None)
             if OSX:
-                d.pop("__CF_USER_TEXT_ENCODING")
-                d.pop("VERSIONER_PYTHON_PREFER_32_BIT")
-                d.pop("VERSIONER_PYTHON_VERSION")
+                d.pop("__CF_USER_TEXT_ENCODING", None)
+                d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
+                d.pop("VERSIONER_PYTHON_VERSION", None)
             return dict(
                 [(k.rstrip("\r\n"), v.rstrip("\r\n")) for k, v in d.items()])
 
