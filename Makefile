@@ -193,30 +193,30 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 # --- create
 
-dist-source:  ## Create tar.gz source distribution.
+source:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
-dist-wheel:  ## Generate wheel.
+wheel:  ## Generate wheel.
 	$(PYTHON) setup.py bdist_wheel
 
-dist-win-download-wheels:  ## Download wheels hosted on appveyor.
+win-download-wheels:  ## Download wheels hosted on appveyor.
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
 # --- upload
 
-dist-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
-	${MAKE} dist-source
+upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
+	${MAKE} source
 	$(PYTHON) setup.py sdist upload
 
-dist-upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
+upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
 # --- others
 
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
-	${MAKE} dist-source
+	${MAKE} source
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -227,7 +227,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
-	${MAKE} dist-win-download-wheels
+	${MAKE} win-download-wheels
 	${MAKE} sdist
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).

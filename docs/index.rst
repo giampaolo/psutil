@@ -2302,29 +2302,6 @@ Constants
 
 ----
 
-Debug mode
-==========
-
-In case you bump into nasty errors which look like being psutil's fault you may
-want to run psutil in debug mode. psutil may (or may not) print some useful
-message on stderr before crashing with an exception
-(see `original motivation <https://github.com/giampaolo/psutil/issues/1173>`__).
-To enable debug mode on UNIX:
-
-.. code-block:: bash
-
-    PSUTIL_DEBUG=1 python script.py
-
-On Windows:
-
-.. code-block:: bat
-
-    set PSUTIL_DEBUG=1 && C:\python36\python.exe script.py
-
-.. versionadded:: 5.4.2
-
-----
-
 Unicode
 =======
 
@@ -2612,6 +2589,10 @@ take a look at the
 Timeline
 ========
 
+- 2017-12-07:
+  `5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.1...release-5.4.2#files_bucket>`__
 - 2017-11-08:
   `5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.1&:action=files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#541>`__ -

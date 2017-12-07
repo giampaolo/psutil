@@ -3,7 +3,7 @@
 5.4.2
 =====
 
-*XXXX-XX-XX*
+*2017-12-07*
 
 **Enhancements**
 
