@@ -1058,7 +1058,7 @@ class TestMisc(unittest.TestCase):
                 self.assertRaises(
                     IOError, psutil.cpu_times_percent, percpu=True)
 
-                psutil.PROCFS_PATH = my_procfs
+                psutil.set_procfs_path(my_procfs)
 
                 self.assertEqual(psutil.cpu_percent(), 0)
                 self.assertEqual(sum(psutil.cpu_times_percent()), 0)
@@ -1085,6 +1085,7 @@ class TestMisc(unittest.TestCase):
                 self.assertNotEqual(
                     sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0)
         finally:
+            psutil.set_procfs_path("/proc")
             shutil.rmtree(my_procfs)
             reload_module(psutil)
 
@@ -1120,7 +1121,7 @@ class TestMisc(unittest.TestCase):
     def test_procfs_path(self):
         tdir = tempfile.mkdtemp()
         try:
-            psutil.PROCFS_PATH = tdir
+            psutil.set_procfs_path(tdir)
             self.assertRaises(IOError, psutil.virtual_memory)
             self.assertRaises(IOError, psutil.cpu_times)
             self.assertRaises(IOError, psutil.cpu_times, percpu=True)
@@ -1133,7 +1134,7 @@ class TestMisc(unittest.TestCase):
             self.assertRaises(IOError, psutil.disk_partitions)
             self.assertRaises(psutil.NoSuchProcess, psutil.Process)
         finally:
-            psutil.PROCFS_PATH = "/proc"
+            psutil.set_procfs_path("/proc")
             os.rmdir(tdir)
 
     def test_sector_size_mock(self):
