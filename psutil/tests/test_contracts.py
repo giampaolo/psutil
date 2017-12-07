@@ -14,6 +14,7 @@ import os
 import stat
 import time
 import traceback
+import warnings
 from contextlib import closing
 
 from psutil import AIX
@@ -165,6 +166,22 @@ class TestAvailability(unittest.TestCase):
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
         self.assertEqual(hasit, False if OPENBSD or NETBSD or AIX else True)
+
+
+# ===================================================================
+# --- Test deprecations
+# ===================================================================
+
+
+class TestDeprecations(unittest.TestCase):
+
+    def test_memory_info_ex(self):
+        with warnings.catch_warnings(record=True) as ws:
+            psutil.Process().memory_info_ex()
+        w = ws[0]
+        self.assertIsInstance(w.category(), FutureWarning)
+        self.assertIn("memory_info_ex() is deprecated", str(w.message))
+        self.assertIn("use memory_info() instead", str(w.message))
 
 
 # ===================================================================
