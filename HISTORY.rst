@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.3
+=====
+
+*XXXX-XX-XX*
+
+**Bug fixes**
+
+- 1193_: pids() may return False on OSX.
+
 5.4.2
 =====
 
