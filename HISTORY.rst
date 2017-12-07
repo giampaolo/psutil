@@ -11,6 +11,8 @@
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
 - 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
+- 1188_: deprecated method Process.memory_info_ex() now warns by using
+  FutureWarning instead of DeprecationWarning.
 
 **Bug fixes**
 
