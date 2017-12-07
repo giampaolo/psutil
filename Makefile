@@ -193,7 +193,7 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 # --- create
 
-source:  ## Create tar.gz source distribution.
+sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
@@ -206,7 +206,7 @@ win-download-wheels:  ## Download wheels hosted on appveyor.
 # --- upload
 
 upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
-	${MAKE} source
+	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
 upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
@@ -215,8 +215,8 @@ upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
 # --- others
 
 pre-release:  ## Check if we're ready to produce a new release.
+	rm -rf dist
 	${MAKE} install
-	${MAKE} source
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
