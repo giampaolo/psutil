@@ -309,11 +309,10 @@ def pids():
         # https://travis-ci.org/giampaolo/psutil/jobs/309619941
         try:
             Process(0).create_time()
-        except NoSuchProcess:
-            return False
-        except AccessDenied:
             ls.append(0)
-        else:
+        except NoSuchProcess:
+            pass
+        except AccessDenied:
             ls.append(0)
     return ls
 
