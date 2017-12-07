@@ -2590,7 +2590,7 @@ Timeline
 ========
 
 - 2017-12-07:
-  `5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.2&:action=files>`__ -
+  `5.4.2 <https://pypi.python.org/pypi?name=psutil&version=5.4.2&:action=files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.4.1...release-5.4.2#files_bucket>`__
 - 2017-11-08:
