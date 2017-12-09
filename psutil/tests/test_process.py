@@ -9,6 +9,7 @@
 import collections
 import errno
 import getpass
+import itertools
 import os
 import signal
 import socket
@@ -910,8 +911,6 @@ class TestProcess(unittest.TestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
-    # TODO: temporary, see: https://github.com/MacPython/psutil/issues/1
-    @unittest.skipIf(LINUX, "temporary")
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
         sproc = get_test_subprocess()
@@ -921,6 +920,24 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
         self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
         self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
+
+    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
+    def test_cpu_affinity_all_combinations(self):
+        p = psutil.Process()
+        initial = p.cpu_affinity()
+        assert initial, initial
+        self.addCleanup(p.cpu_affinity, initial)
+
+        # All possible CPU set combinations.
+        combos = []
+        for l in range(0, len(initial) + 1):
+            for subset in itertools.combinations(initial, l):
+                if subset:
+                    combos.append(list(subset))
+
+        for combo in combos:
+            p.cpu_affinity(combo)
+            self.assertEqual(p.cpu_affinity(), combo)
 
     # TODO: #595
     @unittest.skipIf(BSD, "broken on BSD")
