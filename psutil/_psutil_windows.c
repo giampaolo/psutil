@@ -2599,7 +2599,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                             opts);
 
                         if (!py_tuple || PyList_Append(py_retlist, py_tuple) == -1) {
-                            break;
+                            FindVolumeMountPointClose(mp_h);
+                            goto error;
                         }
 
                         Py_DECREF(py_tuple);
