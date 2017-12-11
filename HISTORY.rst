@@ -5,6 +5,10 @@
 
 *XXXX-XX-XX*
 
+**Enhancements**
+
+- 775_: disk_partitions() on Windows return mount points.
+
 **Bug fixes**
 
 - 1193_: pids() may return False on OSX.

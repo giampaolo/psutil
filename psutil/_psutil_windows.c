@@ -2489,6 +2489,7 @@ static char *psutil_get_drive_type(int type) {
 #define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+
 /*
  * Return disk partitions as a list of tuples such as
  * (drive_letter, drive_letter, type, "")
@@ -2506,7 +2507,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     unsigned int old_mode = 0;
     char opts[20];
     HANDLE mp_h;
-    BOOL mp_flag;
+    BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
     PyObject *py_all;
@@ -2580,47 +2581,32 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
             // Check for mount points on this volume and add/get info
             // (checks first to know if we can even have mount points)
-            if (all == 1 && (pflags & FILE_SUPPORTS_REPARSE_POINTS)) {
+            if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
 
                 mp_h = FindFirstVolumeMountPoint(drive_letter, mp_buf, MAX_PATH);
                 if (mp_h != INVALID_HANDLE_VALUE) {
-                    strcpy_s(mp_path, MAX_PATH, drive_letter);
-                    strcat_s(mp_path, MAX_PATH, mp_buf);
-
-                    py_tuple = Py_BuildValue(
-                        "(ssss)",
-                        drive_letter,
-                        mp_path,
-                        fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-                        opts);
-                    if (!py_tuple)
-                        goto error;
-                    if (PyList_Append(py_retlist, py_tuple))
-                        goto error;
-                    Py_DECREF(py_tuple);
-
-                    // Continue looking for more mount points
-                    mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
                     while (mp_flag) {
 
-                        strcpy_s(mp_path, MAX_PATH, drive_letter);
-                        strcat_s(mp_path, MAX_PATH, mp_buf);
+                        // Append full mount path with drive letter
+                        strcpy_s(mp_path, _countof(mp_path), drive_letter);
+                        strcat_s(mp_path, _countof(mp_path), mp_buf);
 
                         py_tuple = Py_BuildValue(
                             "(ssss)",
                             drive_letter,
                             mp_path,
-                            fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+                            fs_type, // Typically NTFS
                             opts);
-                        if (!py_tuple)
-                            goto error;
-                        if (PyList_Append(py_retlist, py_tuple))
-                            goto error;
+
+                        if (!py_tuple || PyList_Append(py_retlist, py_tuple) == -1) {
+                            break;
+                        }
+
                         Py_DECREF(py_tuple);
 
+                        // Continue looking for more mount points
                         mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
                     }
-
                     FindVolumeMountPointClose(mp_h);
                 }
 
