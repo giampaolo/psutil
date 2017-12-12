@@ -2489,6 +2489,7 @@ static char *psutil_get_drive_type(int type) {
 #define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+
 /*
  * Return disk partitions as a list of tuples such as
  * (drive_letter, drive_letter, type, "")
@@ -2498,11 +2499,15 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD num_bytes;
     char drive_strings[255];
     char *drive_letter = drive_strings;
+    char mp_buf[MAX_PATH];
+    char mp_path[MAX_PATH];
     int all;
     int type;
     int ret;
     unsigned int old_mode = 0;
     char opts[20];
+    HANDLE mp_h;
+    BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
     PyObject *py_all;
@@ -2573,6 +2578,40 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 strcat_s(opts, _countof(opts), "rw");
             if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
+
+            // Check for mount points on this volume and add/get info
+            // (checks first to know if we can even have mount points)
+            if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
+
+                mp_h = FindFirstVolumeMountPoint(drive_letter, mp_buf, MAX_PATH);
+                if (mp_h != INVALID_HANDLE_VALUE) {
+                    while (mp_flag) {
+
+                        // Append full mount path with drive letter
+                        strcpy_s(mp_path, _countof(mp_path), drive_letter);
+                        strcat_s(mp_path, _countof(mp_path), mp_buf);
+
+                        py_tuple = Py_BuildValue(
+                            "(ssss)",
+                            drive_letter,
+                            mp_path,
+                            fs_type, // Typically NTFS
+                            opts);
+
+                        if (!py_tuple || PyList_Append(py_retlist, py_tuple) == -1) {
+                            FindVolumeMountPointClose(mp_h);
+                            goto error;
+                        }
+
+                        Py_DECREF(py_tuple);
+
+                        // Continue looking for more mount points
+                        mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
+                    }
+                    FindVolumeMountPointClose(mp_h);
+                }
+
+            }
         }
 
         if (strlen(opts) > 0)
