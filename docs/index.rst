@@ -917,8 +917,8 @@ Functions
   ``callback`` is a function which gets called when one of the processes being
   waited on is terminated and a :class:`Process` instance is passed as callback
   argument).
-  This tunction will return as soon as all processes terminate or when
-  *timeout* occurs, if specified.
+  This function will return as soon as all processes terminate or when
+  *timeout* (seconds) occurs.
   Differently from :meth:`Process.wait` it will not raise
   :class:`TimeoutExpired` if timeout occurs.
   A typical use case may be:
@@ -1941,14 +1941,15 @@ Process class
 
   .. method:: wait(timeout=None)
 
-    Wait for process termination and if the process is a children of the
-    current one also return the exit code, else ``None``. On Windows there's
+    Wait for process termination and if the process is a child of the current
+    one also return the exit code, else ``None``. On Windows there's
     no such limitation (exit code is always returned). If the process is
     already terminated immediately return ``None`` instead of raising
-    :class:`NoSuchProcess`. If *timeout* is specified and process is still
-    alive raise :class:`TimeoutExpired` exception. It can also be used in a
-    non-blocking fashion by specifying ``timeout=0`` in which case it will
-    either return immediately or raise :class:`TimeoutExpired`.
+    :class:`NoSuchProcess`.
+    *timeout* is expressed in seconds. If specified and the process is still
+    alive raise :class:`TimeoutExpired` exception.
+    ``timeout=0`` can be used in non-blocking apps: it will either return
+    immediately or raise :class:`TimeoutExpired`.
     To wait for multiple processes use :func:`psutil.wait_procs()`.
 
     >>> import psutil
