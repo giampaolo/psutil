@@ -228,7 +228,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
-	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
+	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0;"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
