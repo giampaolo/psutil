@@ -2590,6 +2590,10 @@ take a look at the
 Timeline
 ========
 
+- 2018-01-01:
+  `5.4.3 <https://pypi.python.org/pypi?name=psutil&version=5.4.3&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.2...release-5.4.3#files_bucket>`__
 - 2017-12-07:
   `5.4.2 <https://pypi.python.org/pypi?name=psutil&version=5.4.2&:action=files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -

@@ -217,6 +217,10 @@ upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
 pre-release:  ## Check if we're ready to produce a new release.
 	rm -rf dist
 	${MAKE} install
+	${MAKE} generate-manifest
+	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
+	${MAKE} win-download-wheels
+	${MAKE} sdist
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -224,11 +228,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
-	${MAKE} generate-manifest
-	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff-index HEAD --', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else sys.exit(0);"
-	${MAKE} win-download-wheels
-	${MAKE} sdist
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
