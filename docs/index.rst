@@ -419,6 +419,8 @@ Disks
   numbers will always be increasing or remain the same, but never decrease.
   ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
+  On Windows it may be ncessary to issue ``diskperf -y`` command from cmd.exe
+  first in order to enable IO counters.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
