@@ -10,34 +10,34 @@ A clone of 'ifconfig' on UNIX.
 $ python scripts/ifconfig.py
 lo:
     stats          : speed=0MB, duplex=?, mtu=65536, up=yes
-    incoming       : bytes=6889336, pkts=84032, errs=0, drops=0
-    outgoing       : bytes=6889336, pkts=84032, errs=0, drops=0
+    incoming       : bytes=1.95M, pkts=22158, errs=0, drops=0
+    outgoing       : bytes=1.95M, pkts=22158, errs=0, drops=0
     IPv4 address   : 127.0.0.1
          netmask   : 255.0.0.0
     IPv6 address   : ::1
          netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
     MAC  address   : 00:00:00:00:00:00
 
-vboxnet0:
-    stats          : speed=10MB, duplex=full, mtu=1500, up=yes
-    incoming       : bytes=0, pkts=0, errs=0, drops=0
-    outgoing       : bytes=1622766, pkts=9102, errs=0, drops=0
-    IPv4 address   : 192.168.33.1
-         broadcast : 192.168.33.255
-         netmask   : 255.255.255.0
-    IPv6 address   : fe80::800:27ff:fe00:0%vboxnet0
+docker0:
+    stats          : speed=0MB, duplex=?, mtu=1500, up=yes
+    incoming       : bytes=3.48M, pkts=65470, errs=0, drops=0
+    outgoing       : bytes=164.06M, pkts=112993, errs=0, drops=0
+    IPv4 address   : 172.17.0.1
+         broadcast : 172.17.0.1
+         netmask   : 255.255.0.0
+    IPv6 address   : fe80::42:27ff:fe5e:799e%docker0
          netmask   : ffff:ffff:ffff:ffff::
-    MAC  address   : 0a:00:27:00:00:00
+    MAC  address   : 02:42:27:5e:79:9e
          broadcast : ff:ff:ff:ff:ff:ff
 
-eth0:
+wlp3s0:
     stats          : speed=0MB, duplex=?, mtu=1500, up=yes
-    incoming       : bytes=18905596301, pkts=15178374, errs=0, drops=21
-    outgoing       : bytes=1913720087, pkts=9543981, errs=0, drops=0
-    IPv4 address   : 10.0.0.3
+    incoming       : bytes=7.04G, pkts=5637208, errs=0, drops=0
+    outgoing       : bytes=372.01M, pkts=3200026, errs=0, drops=0
+    IPv4 address   : 10.0.0.2
          broadcast : 10.255.255.255
          netmask   : 255.0.0.0
-    IPv6 address   : fe80::7592:1dcf:bcb7:98d6%wlp3s0
+    IPv6 address   : fe80::ecb3:1584:5d17:937%wlp3s0
          netmask   : ffff:ffff:ffff:ffff::
     MAC  address   : 48:45:20:59:a4:0c
          broadcast : ff:ff:ff:ff:ff:ff
@@ -62,6 +62,24 @@ duplex_map = {
 }
 
 
+def bytes2human(n):
+    """
+    >>> bytes2human(10000)
+    '9.8 K'
+    >>> bytes2human(100001221)
+    '95.4 M'
+    """
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
+    for s in reversed(symbols):
+        if n >= prefix[s]:
+            value = float(n) / prefix[s]
+            return '%.2f%s' % (value, s)
+    return '%.2fB' % (n)
+
+
 def main():
     stats = psutil.net_if_stats()
     io_counters = psutil.net_io_counters(pernic=True)
@@ -77,10 +95,12 @@ def main():
             io = io_counters[nic]
             print("    incoming       : ", end='')
             print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
-                io.bytes_recv, io.packets_recv, io.errin, io.dropin))
+                bytes2human(io.bytes_recv), io.packets_recv, io.errin,
+                io.dropin))
             print("    outgoing       : ", end='')
             print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
-                io.bytes_sent, io.packets_sent, io.errout, io.dropout))
+                bytes2human(io.bytes_sent), io.packets_sent, io.errout,
+                io.dropout))
         for addr in addrs:
             print("    %-4s" % af_map.get(addr.family, addr.family), end="")
             print(" address   : %s" % addr.address)

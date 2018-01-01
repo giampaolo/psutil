@@ -24,6 +24,9 @@ from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import b
 from ._compat import PY3
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
@@ -77,12 +80,6 @@ proc_info_map = dict(
     num_threads=5,
     status=6,
     ttynr=7)
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
@@ -266,8 +263,10 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         if fam in (AF_INET, AF_INET6):
-            laddr = _common.addr(*laddr)
-            raddr = _common.addr(*raddr)
+            if laddr:
+                laddr = _common.addr(*laddr)
+            if raddr:
+                raddr = _common.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)
@@ -723,7 +722,4 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)

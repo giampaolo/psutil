@@ -65,7 +65,7 @@ else:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
-    'PYPY', 'PYTHON', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
+    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
     'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
     'VERBOSITY',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
@@ -159,6 +159,7 @@ HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
+HAS_THREADS = hasattr(psutil.Process, "threads")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 HAS_BATTERY = HAS_SENSORS_BATTERY and psutil.sensors_battery()
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
@@ -166,7 +167,33 @@ HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 
 # --- misc
 
-PYTHON = os.path.realpath(sys.executable)
+
+def _get_py_exe():
+    def attempt(exe):
+        try:
+            subprocess.check_call(
+                [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception:
+            return None
+        else:
+            return exe
+
+    if OSX:
+        exe = \
+            attempt(sys.executable) or \
+            attempt(os.path.realpath(sys.executable)) or \
+            attempt(which("python%s.%s" % sys.version_info[:2])) or \
+            attempt(psutil.Process().exe())
+        if not exe:
+            raise ValueError("can't find python exe real abspath")
+        return exe
+    else:
+        exe = os.path.realpath(sys.executable)
+        assert os.path.exists(exe), exe
+        return exe
+
+
+PYTHON_EXE = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
@@ -182,7 +209,11 @@ _testfiles_created = set()
 def _cleanup_files():
     DEVNULL.close()
     for name in os.listdir(u('.')):
-        if name.startswith(u(TESTFILE_PREFIX)):
+        if isinstance(name, unicode):
+            prefix = u(TESTFILE_PREFIX)
+        else:
+            prefix = TESTFILE_PREFIX
+        if name.startswith(prefix):
             try:
                 safe_rmpath(name)
             except Exception:
@@ -286,7 +317,7 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline = "from time import sleep;" \
                  "open(r'%s', 'w').close();" \
                  "sleep(60);" % _TESTFN
-        cmd = [PYTHON, "-c", pyline]
+        cmd = [PYTHON_EXE, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_file(_TESTFN, delete=True, empty=True)
@@ -308,15 +339,14 @@ def create_proc_children_pair():
     _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
-        PYTHON = os.path.realpath(sys.executable)
         s = "import os, time;"
         s += "f = open('%s', 'w');"
         s += "f.write(str(os.getpid()));"
         s += "f.close();"
         s += "time.sleep(60);"
-        subprocess.Popen([PYTHON, '-c', s])
+        subprocess.Popen(['%s', '-c', s])
         time.sleep(60)
-        """ % _TESTFN2)
+        """ % (_TESTFN2, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
     # set (which is the default) a "conhost.exe" extra process will be
     # spawned as a child. We don't want that.
@@ -382,7 +412,7 @@ def pyrun(src, **kwds):
         _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
-        subp = get_test_subprocess([PYTHON, f.name], **kwds)
+        subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
     return subp
 
@@ -689,7 +719,7 @@ def create_exe(outpath, c_code=None):
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
-        if c_code is None:
+        if isinstance(c_code, bool):        # c_code is True
             c_code = textwrap.dedent(
                 """
                 #include <unistd.h>
@@ -698,6 +728,7 @@ def create_exe(outpath, c_code=None):
                     return 1;
                 }
                 """)
+        assert isinstance(c_code, str), c_code
         with tempfile.NamedTemporaryFile(
                 suffix='.c', delete=False, mode='wt') as f:
             f.write(c_code)
@@ -707,7 +738,7 @@ def create_exe(outpath, c_code=None):
             safe_rmpath(f.name)
     else:
         # copy python executable
-        shutil.copyfile(sys.executable, outpath)
+        shutil.copyfile(PYTHON_EXE, outpath)
         if POSIX:
             st = os.stat(outpath)
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
@@ -742,16 +773,21 @@ unittest.TestCase = TestCase
 
 
 def _setup_tests():
-    assert 'PSUTIL_TESTING' in os.environ
-    assert psutil._psplatform.cext.py_psutil_testing()
+    if 'PSUTIL_TESTING' not in os.environ:
+        # This won't work on Windows but set_testing() below will do it.
+        os.environ['PSUTIL_TESTING'] = '1'
+    psutil._psplatform.cext.set_testing()
 
 
 def get_suite():
-    testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                   if x.endswith('.py') and x.startswith('test_') and not
-                   x.startswith('test_memory_leaks')]
+    testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
+                if x.endswith('.py') and x.startswith('test_') and not
+                x.startswith('test_memory_leaks')]
+    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
+        testmods = [x for x in testmods if not x.endswith((
+                    "osx", "posix", "linux"))]
     suite = unittest.TestSuite()
-    for tm in testmodules:
+    for tm in testmods:
         # ...so that the full test paths are printed on screen
         tm = "psutil.tests.%s" % tm
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))

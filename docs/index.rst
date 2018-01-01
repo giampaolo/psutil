@@ -8,13 +8,13 @@ psutil documentation
 Quick links
 -----------
 
-* `Home page <https://github.com/giampaolo/psutil>`__
-* `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-* `Blog <http://grodola.blogspot.com/search/label/psutil>`__
-* `Forum <http://groups.google.com/group/psutil/topics>`__
-* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
-* `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
-* `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
+- `Home page <https://github.com/giampaolo/psutil>`__
+- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+- `Blog <http://grodola.blogspot.com/search/label/psutil>`__
+- `Forum <http://groups.google.com/group/psutil/topics>`__
+- `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
 -----
@@ -25,11 +25,19 @@ retrieving information on running
 in **Python**.
 It is useful mainly for **system monitoring**, **profiling**, **limiting
 process resources** and the **management of running processes**.
-It implements many functionalities offered by command line tools
+It implements many functionalities offered by UNIX command line tools
 such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
-It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
-and **NetBSD**, both **32-bit** and **64-bit** architectures, with Python
+psutil currently supports the following platforms:
+
+- **Linux**
+- **Windows**
+- **OSX**,
+- **FreeBSD, OpenBSD**, **NetBSD**
+- **Sun Solaris**
+- **AIX**
+
+...both **32-bit** and **64-bit** architectures, with Python
 versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
 `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
 `PyPy <http://pypy.org/>`__ is also known to work.
@@ -155,12 +163,14 @@ CPU
 
   Return the number of logical CPUs in the system (same as
   `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
-  in Python 3.4).
-  This number is not equivalent to the number of CPUs the current process can
-  use. The number of usable CPUs can be obtained with
+  in Python 3.4) or ``None`` if undetermined.
+  This number may not be equivalent to the number of CPUs the current process
+  can actually use in case process CPU affinity has been changed or Linux
+  cgroups are being used.
+  The number of usable CPUs can be obtained with
   ``len(psutil.Process().cpu_affinity())``.
   If *logical* is ``False`` return the number of physical cores only (hyper
-  thread CPUs are excluded). Return ``None`` if undetermined.
+  thread CPUs are excluded).
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
   ``None``. Example on a system having 2 physical hyper-thread CPU cores:
 
@@ -169,6 +179,11 @@ CPU
     4
     >>> psutil.cpu_count(logical=False)
     2
+
+  Example returning the number of CPUs usable by the current process:
+
+    >>> len(psutil.Process().cpu_affinity())
+    1
 
 .. function:: cpu_stats()
 
@@ -404,6 +419,8 @@ Disks
   numbers will always be increasing or remain the same, but never decrease.
   ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
+  On Windows it may be ncessary to issue ``diskperf -y`` command from cmd.exe
+  first in order to enable IO counters.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
@@ -538,7 +555,7 @@ Network
    | ``"all"``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
-  On OSX this function requires root privileges.
+  On OSX and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.connections`.
   Also, see
   `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py>`__.
@@ -553,8 +570,8 @@ Network
      ...]
 
   .. note::
-    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root.
-    This is a limitation of the OS and ``lsof`` does the same.
+    (OSX and AIX) :class:`psutil.AccessDenied` is always raised unless running
+    as root. This is a limitation of the OS and ``lsof`` does the same.
 
   .. note::
     (Solaris) UNIX sockets are not supported.
@@ -687,7 +704,7 @@ Sensors
 
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 .. function:: sensors_fans()
@@ -711,7 +728,7 @@ Sensors
 
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 .. function:: sensors_battery()
@@ -751,9 +768,11 @@ Sensors
 
   .. versionadded:: 5.1.0
 
+  .. versionchanged:: 5.4.2 added OSX support
+
   .. warning::
 
-    This API is experimental. Backward incompatible changes may occur if
+    this API is experimental. Backward incompatible changes may occur if
     deemed necessary.
 
 Other system info
@@ -830,9 +849,9 @@ Functions
   Sorting order in which processes are returned is
   based on their PID.
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
-  If *attrs* is specified :meth:`Process.as_dict()` is called and the resulting
-  dict is stored as a ``info`` attribute which is attached to the returned
-  :class:`Process`  instance.
+  If *attrs* is specified :meth:`Process.as_dict()` is called interanally and
+  the resulting dict is stored as a ``info`` attribute which is attached to the
+  returned :class:`Process`  instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
   Example usage::
 
@@ -900,8 +919,8 @@ Functions
   ``callback`` is a function which gets called when one of the processes being
   waited on is terminated and a :class:`Process` instance is passed as callback
   argument).
-  This tunction will return as soon as all processes terminate or when
-  *timeout* occurs, if specified.
+  This function will return as soon as all processes terminate or when
+  *timeout* (seconds) occurs.
   Differently from :meth:`Process.wait` it will not raise
   :class:`TimeoutExpired` if timeout occurs.
   A typical use case may be:
@@ -986,14 +1005,13 @@ Process class
     at the same time, make sure to use either :meth:`as_dict` or
     :meth:`oneshot` context manager.
 
-  .. warning::
+  .. note::
 
-    the way this class is bound to a process is via its **PID**.
-    That means that if the :class:`Process` instance is old enough and
-    the PID has been reused in the meantime you might end up interacting
-    with another process.
+    the way this class is bound to a process is uniquely via its **PID**.
+    That means that if the process terminates and the OS reuses its PID you may
+    end up interacting with another process.
     The only exceptions for which process identity is preemptively checked
-    (via PID + creation time) and guaranteed are for
+    (via PID + creation time) is for the following methods:
     :meth:`nice` (set),
     :meth:`ionice`  (set),
     :meth:`cpu_affinity` (set),
@@ -1003,12 +1021,13 @@ Process class
     :meth:`suspend`
     :meth:`resume`,
     :meth:`send_signal`,
-    :meth:`terminate`, and
-    :meth:`kill`
-    methods.
+    :meth:`terminate`
+    :meth:`kill`.
     To prevent this problem for all other methods you can use
-    :meth:`is_running()` before querying the process or use
+    :meth:`is_running()` before querying the process or
     :func:`process_iter()` in case you're iterating over all processes.
+    It must be noted though that unless you deal with very "old" (inactive)
+    :class:`Process` instances this will hardly represent a problem.
 
   .. method:: oneshot()
 
@@ -1046,45 +1065,45 @@ Process class
     The last column (speedup) shows an approximation of the speedup you can get
     if you call all the methods together (best case scenario).
 
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | Linux                        | Windows                       | OSX                          | BSD                          | SunOS                    |
-    +==============================+===============================+==============================+==============================+==========================+
-    | :meth:`cpu_num`              | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`cpu_num`              | :meth:`name`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_times`    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_percent` | :meth:`cmdline`          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`~Process.cpu_times`   | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`~Process.cpu_times`   | :meth:`create_time`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`ionice`                | :meth:`memory_percent`       | :meth:`create_time`          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`memory_info`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`nice`                  | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`status`               | :meth:`memory_maps`           |                              | :meth:`name`                 | :meth:`nice`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`num_ctx_switches`      | :meth:`create_time`          | :meth:`memory_info`          | :meth:`num_threads`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              | :meth:`num_handles`           | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`ppid`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`num_threads`           | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`status`           |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`username`              | :meth:`ppid`                 | :meth:`ppid`                 | :meth:`terminal`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`num_threads`          |                               | :meth:`status`               | :meth:`status`               |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`gids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`uids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              |                               | :meth:`username`             | :meth:`username`             | :meth:`username`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               |                              |                              |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | :meth:`memory_maps`          |                               |                              |                              |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    | *speedup: +2.6x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | Linux                        | Windows                       | OSX                          | BSD                          | SunOS                    | AIX                      |
+    +==============================+===============================+==============================+==============================+==========================+==========================+
+    | :meth:`cpu_num`              | :meth:`cpu_percent`           | :meth:`cpu_percent`          | :meth:`cpu_num`              | :meth:`name`             | :meth:`name`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`cpu_percent`          | :meth:`cpu_times`             | :meth:`cpu_times`            | :meth:`cpu_percent`          | :meth:`cmdline`          | :meth:`cmdline`          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`cpu_times`            | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`cpu_times`            | :meth:`create_time`      | :meth:`create_time`      |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`create_time`          | :meth:`memory_info`           | :meth:`memory_percent`       | :meth:`create_time`          |                          |                          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`name`                 | :meth:`memory_maps`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`ppid`                 | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`status`               | :meth:`num_handles`           |                              | :meth:`name`                 | :meth:`num_threads`      | :meth:`num_threads`      |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`terminal`             | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    |                              | :meth:`username`              | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`gids`                 |                               | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`num_ctx_switches`     |                               | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`num_threads`          |                               | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`username`         | :meth:`username`         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    |                              |                               | :meth:`username`             | :meth:`username`             |                          |                          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`memory_full_info`     |                               |                              |                              |                          |                          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | *speedup: +2.6x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
 
     .. versionadded:: 5.0.0
 
@@ -1138,7 +1157,7 @@ Process class
     Availability: Linux, OSX, Windows, SunOS
 
     .. versionadded:: 4.0.0
-    .. versionchanged:: 5.3.0: added SunOS support
+    .. versionchanged:: 5.3.0 added SunOS support
 
   .. method:: create_time()
 
@@ -1351,7 +1370,7 @@ Process class
     >>> p.io_counters()
     pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
 
-    Availability: all platforms except OSX and Solaris
+    Availability: Linux, BSD, Windows, AIX
 
     .. versionchanged:: 5.2.0 added *read_chars* and *write_chars* on Linux;
       added *other_count* and *other_bytes* on Windows.
@@ -1360,6 +1379,8 @@ Process class
 
     The number voluntary and involuntary context switches performed by
     this process (cumulative).
+
+    .. versionchanged:: 5.4.1 added AIX support
 
   .. method:: num_fds()
 
@@ -1496,33 +1517,33 @@ Process class
     The "portable" fields available on all plaforms are `rss` and `vms`.
     All numbers are expressed in bytes.
 
-    +---------+---------+-------+---------+------------------------------+
-    | Linux   | OSX     | BSD   | Solaris | Windows                      |
-    +=========+=========+=======+=========+==============================+
-    | rss     | rss     | rss   | rss     | rss (alias for ``wset``)     |
-    +---------+---------+-------+---------+------------------------------+
-    | vms     | vms     | vms   | vms     | vms (alias for ``pagefile``) |
-    +---------+---------+-------+---------+------------------------------+
-    | shared  | pfaults | text  |         | num_page_faults              |
-    +---------+---------+-------+---------+------------------------------+
-    | text    | pageins | data  |         | peak_wset                    |
-    +---------+---------+-------+---------+------------------------------+
-    | lib     |         | stack |         | wset                         |
-    +---------+---------+-------+---------+------------------------------+
-    | data    |         |       |         | peak_paged_pool              |
-    +---------+---------+-------+---------+------------------------------+
-    | dirty   |         |       |         | paged_pool                   |
-    +---------+---------+-------+---------+------------------------------+
-    |         |         |       |         | peak_nonpaged_pool           |
-    +---------+---------+-------+---------+------------------------------+
-    |         |         |       |         | nonpaged_pool                |
-    +---------+---------+-------+---------+------------------------------+
-    |         |         |       |         | pagefile                     |
-    +---------+---------+-------+---------+------------------------------+
-    |         |         |       |         | peak_pagefile                |
-    +---------+---------+-------+---------+------------------------------+
-    |         |         |       |         | private                      |
-    +---------+---------+-------+---------+------------------------------+
+    +---------+---------+-------+---------+-----+------------------------------+
+    | Linux   | OSX     | BSD   | Solaris | AIX | Windows                      |
+    +=========+=========+=======+=========+=====+==============================+
+    | rss     | rss     | rss   | rss     | rss | rss (alias for ``wset``)     |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | vms     | vms     | vms   | vms     | vms | vms (alias for ``pagefile``) |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | shared  | pfaults | text  |         |     | num_page_faults              |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | text    | pageins | data  |         |     | peak_wset                    |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | lib     |         | stack |         |     | wset                         |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | data    |         |       |         |     | peak_paged_pool              |
+    +---------+---------+-------+---------+-----+------------------------------+
+    | dirty   |         |       |         |     | paged_pool                   |
+    +---------+---------+-------+---------+-----+------------------------------+
+    |         |         |       |         |     | peak_nonpaged_pool           |
+    +---------+---------+-------+---------+-----+------------------------------+
+    |         |         |       |         |     | nonpaged_pool                |
+    +---------+---------+-------+---------+-----+------------------------------+
+    |         |         |       |         |     | pagefile                     |
+    +---------+---------+-------+---------+-----+------------------------------+
+    |         |         |       |         |     | peak_pagefile                |
+    +---------+---------+-------+---------+-----+------------------------------+
+    |         |         |       |         |     | private                      |
+    +---------+---------+-------+---------+-----+------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical
       memory a process has used.
@@ -1693,13 +1714,13 @@ Process class
        pmmap_ext(addr='02829000-02ccf000', perms='rw-p', path='[heap]', rss=4743168, size=4874240, pss=4743168, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=4743168, referenced=4718592, anonymous=4743168, swap=0),
        ...]
 
-    Availability: All platforms except OpenBSD and NetBSD.
+    Availability: All platforms except OpenBSD, NetBSD and AIX.
 
   .. method:: children(recursive=False)
 
-    Return the children of this process as a list of :Class:`Process` objects,
-    preemptively checking whether PID has been reused. If recursive is `True`
-    return all the parent descendants.
+    Return the children of this process as a list of :class:`Process`
+    instances.
+    If recursive is `True` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
     ::
 
@@ -1719,7 +1740,7 @@ Process class
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
     This concept is well summaried by this
-    `unit test <https://github.com/giampaolo/psutil/blob/fb9ae861cf3cf175c3da4a3cd4e558c6cbd6af91/psutil/tests/test_process.py#L1236-L1247>`__.
+    `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`__.
     See also how to `kill a process tree <#kill-process-tree>`__ and
     `terminate my children <#terminate-my-children>`__.
 
@@ -1855,6 +1876,10 @@ Process class
        (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
 
+    .. note::
+      (AIX) :class:`psutil.AccessDenied` is always raised unless running
+      as root (lsof does the same).
+
     .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
 
   .. method:: is64bit()
@@ -1928,14 +1953,15 @@ Process class
 
   .. method:: wait(timeout=None)
 
-    Wait for process termination and if the process is a children of the
-    current one also return the exit code, else ``None``. On Windows there's
+    Wait for process termination and if the process is a child of the current
+    one also return the exit code, else ``None``. On Windows there's
     no such limitation (exit code is always returned). If the process is
     already terminated immediately return ``None`` instead of raising
-    :class:`NoSuchProcess`. If *timeout* is specified and process is still
-    alive raise :class:`TimeoutExpired` exception. It can also be used in a
-    non-blocking fashion by specifying ``timeout=0`` in which case it will
-    either return immediately or raise :class:`TimeoutExpired`.
+    :class:`NoSuchProcess`.
+    *timeout* is expressed in seconds. If specified and the process is still
+    alive raise :class:`TimeoutExpired` exception.
+    ``timeout=0`` can be used in non-blocking apps: it will either return
+    immediately or raise :class:`TimeoutExpired`.
     To wait for multiple processes use :func:`psutil.wait_procs()`.
 
     >>> import psutil
@@ -2104,16 +2130,18 @@ Constants
 .. data:: OPENBSD
 .. data:: BSD
 .. data:: SUNOS
+.. data:: AIX
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
   :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
+  .. versionchanged:: 5.4.0 added AIX
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux and Solaris (defaults to
+  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
   ``"/proc"``).
   You may want to re-set this constant right after importing psutil in case
   your /proc filesystem is mounted elsewhere or if you want to retrieve
@@ -2126,10 +2154,11 @@ Constants
   It must be noted that this trick works only for APIs which rely on /proc
   filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
 
-  Availability: Linux, Solaris
+  Availability: Linux, Solaris, AIX
 
   .. versionadded:: 3.2.3
   .. versionchanged:: 3.4.2 also available on Solaris.
+  .. versionchanged:: 5.4.0 also available on AIX.
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
@@ -2415,13 +2444,13 @@ resources.
       for p in procs:
           p.terminate()
       gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
-      if not alive:
+      if alive:
           # send SIGKILL
           for p in alive:
               print("process {} survived SIGTERM; trying SIGKILL" % p)
               p.kill()
           gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
-          if not alive:
+          if alive:
               # give up
               for p in alive:
                   print("process {} survived SIGKILL; giving up" % p)
@@ -2506,8 +2535,8 @@ Top 3 processes opening more file descriptors::
    (2721, {'name': 'chrome', 'num_fds': 185}),
    (2650, {'name': 'chrome', 'num_fds': 354})]
 
-Q&A
-===
+FAQs
+====
 
 * Q: What Windows versions are supported?
 * A: From Windows **Vista** onwards, both 32 and 64 bit versions.
@@ -2517,6 +2546,13 @@ Q&A
   On such old systems psutil is no longer tested or maintained, but it can
   still be compiled from sources (you'll need `Visual Studio <(https://github.com/giampaolo/psutil/blob/master/INSTALL.rst#windows>`__)
   and it should "work" (more or less).
+
+----
+
+* Q: What Python versions are supported?
+* A: From 2.6 to 3.6, both 32 and 64 bit versions. Last version supporting
+  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__.
+  PyPy is also known to work.
 
 ----
 
@@ -2542,7 +2578,7 @@ Q&A
 * Q: What about load average?
 * A: psutil does not expose any load average function as it's already available
   in python as
-  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__
+  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__.
 
 Running tests
 =============
@@ -2566,6 +2602,30 @@ take a look at the
 Timeline
 ========
 
+- 2018-01-01:
+  `5.4.3 <https://pypi.python.org/pypi?name=psutil&version=5.4.3&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.2...release-5.4.3#files_bucket>`__
+- 2017-12-07:
+  `5.4.2 <https://pypi.python.org/pypi?name=psutil&version=5.4.2&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#542>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.1...release-5.4.2#files_bucket>`__
+- 2017-11-08:
+  `5.4.1 <https://pypi.python.org/pypi?name=psutil&version=5.4.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#541>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.0...release-5.4.1#files_bucket>`__
+- 2017-10-12:
+  `5.4.0 <https://pypi.python.org/pypi?name=psutil&version=5.4.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#540>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.3.1...release-5.4.0#files_bucket>`__
+- 2017-09-10:
+  `5.3.1 <https://pypi.python.org/pypi?name=psutil&version=5.3.1&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#530>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.3.0...release-5.3.1#files_bucket>`__
+- 2017-09-01:
+  `5.3.0 <https://pypi.python.org/pypi?name=psutil&version=5.3.0&:action=files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#530>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.2.2...release-5.3.0#files_bucket>`__
 - 2017-04-10:
   `5.2.2 <https://pypi.python.org/pypi?name=psutil&version=5.2.2&:action=files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#522>`__ -

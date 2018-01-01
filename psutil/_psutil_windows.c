@@ -25,6 +25,7 @@
 #include <wtsapi32.h>
 #include <Winsvc.h>
 #include <PowrProf.h>
+#include <signal.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -334,13 +335,15 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://github.com/giampaolo/psutil/issues/24
-            NoSuchProcess();
+            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
+                         "into NoSuchProcess");
+            NoSuchProcess("");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -349,7 +352,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     }
 
     // kill the process
-    if (! TerminateProcess(hProcess, 0)) {
+    if (! TerminateProcess(hProcess, SIGTERM)) {
         err = GetLastError();
         // See: https://github.com/giampaolo/psutil/issues/1099
         if (err != ERROR_ACCESS_DENIED) {
@@ -378,7 +381,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied();
+        return AccessDenied("");
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
                            FALSE, pid);
@@ -441,7 +444,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -495,7 +498,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a
             // NoSuchProcess here
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -514,7 +517,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     CloseHandle(hProcess);
     if (ret != 0) {
         if (exitCode != STILL_ACTIVE)
-            return NoSuchProcess();
+            return NoSuchProcess("");
     }
     else {
         // Ignore access denied as it means the process is still alive.
@@ -628,7 +631,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -651,7 +654,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -716,7 +719,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hSnapShot);
-    NoSuchProcess();
+    NoSuchProcess("");
     return NULL;
 }
 
@@ -1037,7 +1040,6 @@ error:
 /*
  * Return process current working directory as a Python string.
  */
-
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
@@ -1048,7 +1050,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
@@ -1063,10 +1065,11 @@ int
 psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
+    HANDLE hThread;
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
-        AccessDenied();
+        AccessDenied("");
         return FALSE;
     }
 
@@ -1088,20 +1091,17 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // Walk the thread snapshot to find all threads of the process.
     // If the thread belongs to the process, add its information
     // to the display list.
-    do
-    {
-        if (te32.th32OwnerProcessID == pid)
-        {
-            HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
-                                        te32.th32ThreadID);
+    do {
+        if (te32.th32OwnerProcessID == pid) {
+            hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
+                                 te32.th32ThreadID);
             if (hThread == NULL) {
                 PyErr_SetFromWindowsErr(0);
                 CloseHandle(hThread);
                 CloseHandle(hThreadSnap);
                 return FALSE;
             }
-            if (suspend == 1)
-            {
+            if (suspend == 1) {
                 if (SuspendThread(hThread) == (DWORD) - 1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
@@ -1109,8 +1109,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
                     return FALSE;
                 }
             }
-            else
-            {
+            else {
                 if (ResumeThread(hThread) == (DWORD) - 1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
@@ -1172,13 +1171,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied();
+        AccessDenied("");
         goto error;
     }
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
     if (pid_return == -1)
@@ -1569,7 +1568,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         pid_return = psutil_pid_is_running(pid);
         if (pid_return == 0) {
             _psutil_conn_decref_objs();
-            return NoSuchProcess();
+            return NoSuchProcess("");
         }
         else if (pid_return == -1) {
             _psutil_conn_decref_objs();
@@ -2303,8 +2302,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         py_nic_info = Py_BuildValue("(KKKKKKKK)",
                                     pIfRow->OutOctets,
                                     pIfRow->InOctets,
-                                    pIfRow->OutUcastPkts,
-                                    pIfRow->InUcastPkts,
+                                    (pIfRow->OutUcastPkts + pIfRow->OutNUcastPkts),
+                                    (pIfRow->InUcastPkts + pIfRow->InNUcastPkts),
                                     pIfRow->InErrors,
                                     pIfRow->OutErrors,
                                     pIfRow->InDiscards,
@@ -2313,8 +2312,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         py_nic_info = Py_BuildValue("(kkkkkkkk)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
-                                    pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts,
+                                    (pIfRow->dwOutUcastPkts + pIfRow->dwOutNUcastPkts),
+                                    (pIfRow->dwInUcastPkts + pIfRow->dwInNUcastPkts),
                                     pIfRow->dwInErrors,
                                     pIfRow->dwOutErrors,
                                     pIfRow->dwInDiscards,
@@ -2365,6 +2364,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDevice[MAX_PATH];
     char szDeviceDisplay[MAX_PATH];
     int devNum;
+    int i;
+    size_t ioctrlSize;
+    BOOL WINAPI ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
 
@@ -2379,38 +2381,74 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
-
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
-        if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
-                            &diskPerformance, sizeof(diskPerformance),
-                            &dwSize, NULL))
-        {
-            sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
-            py_tuple = Py_BuildValue(
-                "(IILLKK)",
-                diskPerformance.ReadCount,
-                diskPerformance.WriteCount,
-                diskPerformance.BytesRead,
-                diskPerformance.BytesWritten,
-                (unsigned long long)(diskPerformance.ReadTime.QuadPart * 10) / 1000,
-                (unsigned long long)(diskPerformance.WriteTime.QuadPart * 10) / 1000);
-            if (!py_tuple)
-                goto error;
-            if (PyDict_SetItemString(py_retdict, szDeviceDisplay,
-                                     py_tuple))
-            {
-                goto error;
+
+        // DeviceIoControl() sucks!
+        i = 0;
+        ioctrlSize = sizeof(diskPerformance);
+        while (1) {
+            i += 1;
+            ret = DeviceIoControl(
+                hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0, &diskPerformance,
+                ioctrlSize, &dwSize, NULL);
+            if (ret != 0)
+                break;  // OK!
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                // Retry with a bigger buffer (+ limit for retries).
+                if (i <= 1024) {
+                    ioctrlSize *= 2;
+                    continue;
+                }
             }
-            Py_XDECREF(py_tuple);
-        }
-        else {
-            // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
-            // compiling with mingw32; not sure what to do.
-            // return PyErr_SetFromWindowsErr(0);
-            ;;
+            else if (GetLastError() == ERROR_INVALID_FUNCTION) {
+                // This happens on AppVeyor:
+                // https://ci.appveyor.com/project/giampaolo/psutil/build/
+                //      1364/job/ascpdi271b06jle3
+                // Assume it means we're dealing with some exotic disk
+                // and go on.
+                psutil_debug("DeviceIoControl -> ERROR_INVALID_FUNCTION; "
+                             "ignore PhysicalDrive%i", devNum);
+                goto next;
+            }
+            else if (GetLastError() == ERROR_NOT_SUPPORTED) {
+                // Again, let's assume we're dealing with some exotic disk.
+                psutil_debug("DeviceIoControl -> ERROR_NOT_SUPPORTED; "
+                             "ignore PhysicalDrive%i", devNum);
+                goto next;
+            }
+            // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
+            // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/
+            //     ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/
+            //     openafs-1.4.14/src/usd/usd_nt.c
+
+            // XXX: we can also bump into ERROR_MORE_DATA in which case
+            // (quoting doc) we're supposed to retry with a bigger buffer
+            // and specify  a new "starting point", whatever it means.
+            PyErr_SetFromWindowsErr(0);
+            goto error;
         }
 
+        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
+        py_tuple = Py_BuildValue(
+            "(IILLKK)",
+            diskPerformance.ReadCount,
+            diskPerformance.WriteCount,
+            diskPerformance.BytesRead,
+            diskPerformance.BytesWritten,
+            // convert to ms:
+            // https://github.com/giampaolo/psutil/issues/1012
+            (unsigned long long)
+                (diskPerformance.ReadTime.QuadPart) / 10000000,
+            (unsigned long long)
+                (diskPerformance.WriteTime.QuadPart) / 10000000);
+        if (!py_tuple)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
+            goto error;
+        Py_XDECREF(py_tuple);
+
+next:
         CloseHandle(hDevice);
     }
 
@@ -2451,6 +2489,7 @@ static char *psutil_get_drive_type(int type) {
 #define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+
 /*
  * Return disk partitions as a list of tuples such as
  * (drive_letter, drive_letter, type, "")
@@ -2460,11 +2499,15 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD num_bytes;
     char drive_strings[255];
     char *drive_letter = drive_strings;
+    char mp_buf[MAX_PATH];
+    char mp_path[MAX_PATH];
     int all;
     int type;
     int ret;
     unsigned int old_mode = 0;
     char opts[20];
+    HANDLE mp_h;
+    BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
     PyObject *py_all;
@@ -2535,6 +2578,40 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 strcat_s(opts, _countof(opts), "rw");
             if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
+
+            // Check for mount points on this volume and add/get info
+            // (checks first to know if we can even have mount points)
+            if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
+
+                mp_h = FindFirstVolumeMountPoint(drive_letter, mp_buf, MAX_PATH);
+                if (mp_h != INVALID_HANDLE_VALUE) {
+                    while (mp_flag) {
+
+                        // Append full mount path with drive letter
+                        strcpy_s(mp_path, _countof(mp_path), drive_letter);
+                        strcat_s(mp_path, _countof(mp_path), mp_buf);
+
+                        py_tuple = Py_BuildValue(
+                            "(ssss)",
+                            drive_letter,
+                            mp_path,
+                            fs_type, // Typically NTFS
+                            opts);
+
+                        if (!py_tuple || PyList_Append(py_retlist, py_tuple) == -1) {
+                            FindVolumeMountPointClose(mp_h);
+                            goto error;
+                        }
+
+                        Py_DECREF(py_tuple);
+
+                        // Continue looking for more mount points
+                        mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
+                    }
+                    FindVolumeMountPointClose(mp_h);
+                }
+
+            }
         }
 
         if (strlen(opts) > 0)
@@ -3657,8 +3734,8 @@ PsutilMethods[] = {
      "QueryDosDevice binding"},
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -3804,6 +3881,7 @@ void init_psutil_windows(void)
 
     // set SeDebug for the current process
     psutil_set_se_debug();
+    psutil_setup();
 
 #if PY_MAJOR_VERSION >= 3
     return module;

@@ -9,62 +9,10 @@
 #include <Python.h>
 #include <stdio.h>
 
-/*
- * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
- */
-PyObject *
-NoSuchProcess(void) {
-    PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
 
-
-/*
- * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
- */
-PyObject *
-AccessDenied(void) {
-    PyObject *exc;
-    char *msg = strerror(EACCES);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-
-static int _psutil_testing = -1;
-
-
-/*
- * Return 1 if PSUTIL_TESTING env var is set else 0.
- */
-int
-psutil_testing(void) {
-    if (_psutil_testing == -1) {
-        if (getenv("PSUTIL_TESTING") != NULL)
-            _psutil_testing = 1;
-        else
-            _psutil_testing = 0;
-    }
-    return _psutil_testing;
-}
-
-
-/*
- * Return True if PSUTIL_TESTING env var is set else False.
- */
-PyObject *
-py_psutil_testing(PyObject *self, PyObject *args) {
-    PyObject *res;
-    res = psutil_testing() ? Py_True : Py_False;
-    Py_INCREF(res);
-    return res;
-}
+// Global vars.
+int PSUTIL_DEBUG = 0;
+int PSUTIL_TESTING = 0;
 
 
 /*
@@ -85,3 +33,72 @@ PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
     return PyString_FromStringAndSize(s, size);
 }
 #endif
+
+
+/*
+ * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
+ * If msg != "" the exception message will change in accordance.
+ */
+PyObject *
+NoSuchProcess(char *msg) {
+    PyObject *exc;
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
+/*
+ * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
+ * If msg != "" the exception message will change in accordance.
+ */
+PyObject *
+AccessDenied(char *msg) {
+    PyObject *exc;
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
+/*
+ * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
+ * env var. This dual method exists because updating os.environ on
+ * Windows has no effect. Called on unit tests setup.
+ */
+PyObject *
+psutil_set_testing(PyObject *self, PyObject *args) {
+    PSUTIL_TESTING = 1;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/*
+ * Print a debug message on stderr. No-op if PSUTIL_DEBUG env var is not set.
+ */
+void
+psutil_debug(const char* format, ...) {
+    va_list argptr;
+    va_start(argptr, format);
+    fprintf(stderr, "psutil-dubug> ");
+    vfprintf(stderr, format, argptr);
+    fprintf(stderr, "\n");
+    va_end(argptr);
+}
+
+
+/*
+ * Called on module import on all platforms.
+ */
+void
+psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
+    if (getenv("PSUTIL_TESTING") != NULL)
+        PSUTIL_TESTING = 1;
+}

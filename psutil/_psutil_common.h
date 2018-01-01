@@ -6,14 +6,20 @@
 
 #include <Python.h>
 
+extern int PSUTIL_TESTING;
+extern int PSUTIL_DEBUG;
+
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
 
-PyObject* AccessDenied(void);
-PyObject* NoSuchProcess(void);
-int psutil_testing(void);
-PyObject* py_psutil_testing(PyObject *self, PyObject *args);
 #if PY_MAJOR_VERSION < 3
 PyObject* PyUnicode_DecodeFSDefault(char *s);
 PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 #endif
+
+PyObject* AccessDenied(char *msg);
+PyObject* NoSuchProcess(char *msg);
+
+PyObject* psutil_set_testing(PyObject *self, PyObject *args);
+void psutil_debug(const char* format, ...);
+void psutil_setup(void);

@@ -14,8 +14,10 @@ import os
 import stat
 import time
 import traceback
+import warnings
 from contextlib import closing
 
+from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
@@ -65,7 +67,8 @@ class TestAvailability(unittest.TestCase):
         self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
 
     def test_PROCFS_PATH(self):
-        self.assertEqual(hasattr(psutil, "PROCFS_PATH"), LINUX or SUNOS)
+        self.assertEqual(hasattr(psutil, "PROCFS_PATH"),
+                         LINUX or SUNOS or AIX)
 
     def test_win_priority(self):
         ae = self.assertEqual
@@ -108,7 +111,10 @@ class TestAvailability(unittest.TestCase):
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
 
     def test_cpu_freq(self):
-        self.assertEqual(hasattr(psutil, "cpu_freq"), LINUX or OSX or WINDOWS)
+        linux = (LINUX and
+                 (os.path.exists("/sys/devices/system/cpu/cpufreq") or
+                  os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
+        self.assertEqual(hasattr(psutil, "cpu_freq"), linux or OSX or WINDOWS)
 
     def test_sensors_temperatures(self):
         self.assertEqual(hasattr(psutil, "sensors_temperatures"), LINUX)
@@ -118,7 +124,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_battery(self):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
-                         LINUX or WINDOWS or FREEBSD)
+                         LINUX or WINDOWS or FREEBSD or OSX)
 
     def test_proc_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
@@ -159,7 +165,23 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(hasit, False if OPENBSD or NETBSD else True)
+        self.assertEqual(hasit, False if OPENBSD or NETBSD or AIX else True)
+
+
+# ===================================================================
+# --- Test deprecations
+# ===================================================================
+
+
+class TestDeprecations(unittest.TestCase):
+
+    def test_memory_info_ex(self):
+        with warnings.catch_warnings(record=True) as ws:
+            psutil.Process().memory_info_ex()
+        w = ws[0]
+        self.assertIsInstance(w.category(), FutureWarning)
+        self.assertIn("memory_info_ex() is deprecated", str(w.message))
+        self.assertIn("use memory_info() instead", str(w.message))
 
 
 # ===================================================================
@@ -372,12 +394,14 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertGreaterEqual(ret, 0)
 
     def ppid(self, ret, proc):
-        self.assertIsInstance(ret, int)
+        self.assertIsInstance(ret, (int, long))
         self.assertGreaterEqual(ret, 0)
 
     def name(self, ret, proc):
         self.assertIsInstance(ret, str)
-        assert ret
+        # on AIX, "<exiting>" processes don't have names
+        if not AIX:
+            assert ret
 
     def create_time(self, ret, proc):
         self.assertIsInstance(ret, float)
@@ -482,7 +506,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         for value in ret:
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
-        if POSIX and ret.vms != 0:
+        if POSIX and not AIX and ret.vms != 0:
             # VMS is always supposed to be the highest
             for name in ret._fields:
                 if name != 'vms':
@@ -536,8 +560,8 @@ class TestFetchAllProcesses(unittest.TestCase):
             check_connection_ntuple(conn)
 
     def cwd(self, ret, proc):
-        self.assertIsInstance(ret, str)
-        if ret is not None:  # BSD may return None
+        if ret:     # 'ret' can be None or empty
+            self.assertIsInstance(ret, str)
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)
@@ -607,7 +631,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def num_ctx_switches(self, ret, proc):
         assert is_namedtuple(ret)
         for value in ret:
-            self.assertIsInstance(value, int)
+            self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
 
     def rlimit(self, ret, proc):

@@ -475,7 +475,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
@@ -986,8 +986,8 @@ PsutilMethods[] = {
 #endif
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1089,6 +1089,8 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     // PSUTIL_CONN_NONE
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

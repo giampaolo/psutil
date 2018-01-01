@@ -38,6 +38,8 @@
 #include <IOKit/storage/IOBlockStorageDriver.h>
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
+#include <IOKit/ps/IOPowerSources.h>
+#include <IOKit/ps/IOPSKeys.h>
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
@@ -273,9 +275,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0)
-            AccessDenied();
+            AccessDenied("");
         else
-            psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
+            psutil_raise_for_pid(pid, "proc_pidpath()");
         return NULL;
     }
     return PyUnicode_DecodeFSDefault(buf);
@@ -345,7 +347,16 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_for_pid(pid, "task_for_pid() failed");
+        if ((err == 5) && (errno == ENOENT)) {
+            // See: https://github.com/giampaolo/psutil/issues/1181
+            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
+                         "errno=%i, msg='%s'\n", err, errno,
+                         mach_error_string(err));
+            AccessDenied("");
+        }
+        else {
+            psutil_raise_for_pid(pid, "task_for_pid(MACH_PORT_NULL)");
+        }
         goto error;
     }
 
@@ -356,8 +367,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
         err = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS)
+        if (err == KERN_INVALID_ADDRESS) {
+            // TODO temporary
+            psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
             break;
+        }
+        if (err != KERN_SUCCESS) {
+            psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
+        }
+
         if (info.is_submap) {
             depth++;
         }
@@ -385,8 +403,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             errno = 0;
             proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
             if ((errno != 0) || ((sizeof(buf)) <= 0)) {
-                psutil_raise_for_pid(
-                    pid, "proc_regionfilename() syscall failed");
+                // TODO temporary
+                psutil_debug("proc_regionfilename() failed");
+                psutil_raise_for_pid(pid, "proc_regionfilename()");
                 goto error;
             }
 
@@ -569,9 +588,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         return NULL;
     }
 
@@ -1016,9 +1035,9 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         goto error;
     }
 
@@ -1028,7 +1047,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied();
+            AccessDenied("");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
@@ -1138,7 +1157,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
-        py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -1157,7 +1175,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDVNODEPATHINFO)");
                     goto error;
                 }
             }
@@ -1176,7 +1195,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            py_tuple = NULL;
             Py_DECREF(py_path);
+            py_path = NULL;
             // --- /construct python list
         }
     }
@@ -1267,7 +1288,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDSOCKETINFO)");
                     goto error;
                 }
             }
@@ -1785,6 +1807,92 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return battery information.
+ */
+static PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    PyObject *py_tuple = NULL;
+    CFTypeRef power_info = NULL;
+    CFArrayRef power_sources_list = NULL;
+    CFDictionaryRef power_sources_information = NULL;
+    CFNumberRef capacity_ref = NULL;
+    CFNumberRef time_to_empty_ref = NULL;
+    CFStringRef ps_state_ref = NULL;
+    uint32_t capacity;     /* units are percent */
+    int time_to_empty;     /* units are minutes */
+    int is_power_plugged;
+
+    power_info = IOPSCopyPowerSourcesInfo();
+
+    if (!power_info) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "IOPSCopyPowerSourcesInfo() syscall failed");
+        goto error;
+    }
+
+    power_sources_list = IOPSCopyPowerSourcesList(power_info);
+    if (!power_sources_list) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "IOPSCopyPowerSourcesList() syscall failed");
+        goto error;
+    }
+
+    /* Should only get one source. But in practice, check for > 0 sources */
+    if (!CFArrayGetCount(power_sources_list)) {
+        PyErr_SetString(PyExc_NotImplementedError, "no battery");
+        goto error;
+    }
+
+    power_sources_information = IOPSGetPowerSourceDescription(
+        power_info, CFArrayGetValueAtIndex(power_sources_list, 0));
+
+    capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
+    if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "No battery capacity infomration in power sources info");
+        goto error;
+    }
+
+    ps_state_ref = (CFStringRef) CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSPowerSourceStateKey));
+    is_power_plugged = CFStringCompare(
+        ps_state_ref, CFSTR(kIOPSACPowerValue), 0)
+        == kCFCompareEqualTo;
+
+    time_to_empty_ref = (CFNumberRef) CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSTimeToEmptyKey));
+    if (!CFNumberGetValue(time_to_empty_ref,
+                          kCFNumberIntType, &time_to_empty)) {
+        /* This value is recommended for non-Apple power sources, so it's not
+         * an error if it doesn't exist. We'll return -1 for "unknown" */
+        /* A value of -1 indicates "Still Calculating the Time" also for
+         * apple power source */
+        time_to_empty = -1;
+    }
+
+    py_tuple = Py_BuildValue("Iii",
+        capacity, time_to_empty, is_power_plugged);
+    if (!py_tuple) {
+        goto error;
+    }
+
+    CFRelease(power_info);
+    CFRelease(power_sources_list);
+    /* Caller should NOT release power_sources_information */
+
+    return py_tuple;
+
+error:
+    if (power_info)
+        CFRelease(power_info);
+    if (power_sources_list)
+        CFRelease(power_sources_list);
+    Py_XDECREF(py_tuple);
+    return NULL;
+}
+
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -1851,10 +1959,12 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery information."},
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1934,6 +2044,8 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

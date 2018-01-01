@@ -25,7 +25,7 @@ from psutil import __version__ as PSUTIL_VERSION
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5', '3.6']
+PY_VERSIONS = ['2.7', '3.4', '3.5', '3.6']
 TIMEOUT = 30
 COLORS = True
 
@@ -170,8 +170,8 @@ def main(options):
                 completed += 1
                 print("downloaded %-45s %s" % (
                     local_fname, bytes2human(os.path.getsize(local_fname))))
-    # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
-    expected = len(PY_VERSIONS) * 4
+    # 2 wheels (32 and 64 bit) per supported python version
+    expected = len(PY_VERSIONS) * 2
     if expected != completed:
         return exit("expected %s files, got %s" % (expected, completed))
     if exc:

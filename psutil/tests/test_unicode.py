@@ -49,7 +49,7 @@ etc.) and make sure that:
 
 For a detailed explanation of how psutil handles unicode see:
 - https://github.com/giampaolo/psutil/issues/1040
-- https://pythonhosted.org/psutil/#unicode
+- http://psutil.readthedocs.io/#unicode
 """
 
 import os
@@ -91,8 +91,6 @@ import psutil.tests
 
 
 def safe_rmpath(path):
-    # XXX
-    return _safe_rmpath(path)
     if APPVEYOR:
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
@@ -125,8 +123,9 @@ def subprocess_supports_unicode(name):
     except UnicodeEncodeError:
         return False
     else:
-        reap_children()
         return True
+    finally:
+        reap_children()
 
 
 # An invalid unicode string.
@@ -145,18 +144,23 @@ else:
 class _BaseFSAPIsTests(object):
     funky_name = None
 
-    def setUp(self):
-        safe_rmpath(self.funky_name)
+    @classmethod
+    def setUpClass(cls):
+        safe_rmpath(cls.funky_name)
+        create_exe(cls.funky_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+        safe_rmpath(cls.funky_name)
 
     def tearDown(self):
         reap_children()
-        safe_rmpath(self.funky_name)
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
 
     def test_proc_exe(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
@@ -165,7 +169,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(exe, self.funky_name)
 
     def test_proc_name(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
             # On Windows name() is determined from exe() first, because
@@ -182,7 +185,6 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        create_exe(self.funky_name)
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
@@ -192,18 +194,20 @@ class _BaseFSAPIsTests(object):
             self.assertEqual(cmdline, [self.funky_name])
 
     def test_proc_cwd(self):
-        safe_mkdir(self.funky_name)
-        with chdir(self.funky_name):
+        dname = self.funky_name + "2"
+        self.addCleanup(safe_rmpath, dname)
+        safe_mkdir(dname)
+        with chdir(dname):
             p = psutil.Process()
             cwd = p.cwd()
         self.assertIsInstance(p.cwd(), str)
         if self.expect_exact_path_match():
-            self.assertEqual(cwd, self.funky_name)
+            self.assertEqual(cwd, dname)
 
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
-        with open(self.funky_name, 'wb'):
+        with open(self.funky_name, 'rb'):
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
@@ -260,8 +264,10 @@ class _BaseFSAPIsTests(object):
                     self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
-        safe_mkdir(self.funky_name)
-        psutil.disk_usage(self.funky_name)
+        dname = self.funky_name + "2"
+        self.addCleanup(safe_rmpath, dname)
+        safe_mkdir(dname)
+        psutil.disk_usage(dname)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
@@ -334,6 +340,9 @@ class TestWinProcessName(unittest.TestCase):
 
 class TestNonFSAPIS(unittest.TestCase):
     """Unicode tests for non fs-related APIs."""
+
+    def tearDown(self):
+        reap_children()
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_proc_environ(self):

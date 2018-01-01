@@ -479,7 +479,7 @@ psutil_users(PyObject *self, PyObject *args) {
             "(OOOfOi)",
             py_username,              // username
             py_tty,                   // tty
-            py_username,              // hostname
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
@@ -607,8 +607,8 @@ PsutilMethods[] = {
 #endif
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -712,6 +712,8 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

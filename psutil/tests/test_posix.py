@@ -10,11 +10,13 @@
 import datetime
 import errno
 import os
+import re
 import subprocess
 import sys
 import time
 
 import psutil
+from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
 from psutil import OPENBSD
@@ -27,7 +29,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
-from psutil.tests import PYTHON
+from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
@@ -46,8 +48,9 @@ def ps(cmd):
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
     if SUNOS:
-        cmd = cmd.replace("-o command", "-o comm")
         cmd = cmd.replace("-o start", "-o stime")
+    if AIX:
+        cmd = cmd.replace("-o rss", "-o rssize")
     output = sh(cmd)
     if not LINUX:
         output = output.split('\n')[1].strip()
@@ -56,6 +59,31 @@ def ps(cmd):
     except ValueError:
         return output
 
+# ps "-o" field names differ wildly between platforms.
+# "comm" means "only executable name" but is not available on BSD platforms.
+# "args" means "command with all its arguments", and is also not available
+# on BSD platforms.
+# "command" is like "args" on most platforms, but like "comm" on AIX,
+# and not available on SUNOS.
+# so for the executable name we can use "comm" on Solaris and split "command"
+# on other platforms.
+# to get the cmdline (with args) we have to use "args" on AIX and
+# Solaris, and can use "command" on all others.
+
+
+def ps_name(pid):
+    field = "command"
+    if SUNOS:
+        field = "comm"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid)).split(' ')[0]
+
+
+def ps_args(pid):
+    field = "command"
+    if AIX or SUNOS:
+        field = "args"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid))
+
 
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
@@ -63,7 +91,7 @@ class TestProcess(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess([PYTHON, "-E", "-O"],
+        cls.pid = get_test_subprocess([PYTHON_EXE, "-E", "-O"],
                                       stdin=subprocess.PIPE).pid
         wait_for_pid(cls.pid)
 
@@ -121,12 +149,14 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_name(self):
-        # use command + arg since "comm" keyword not supported on all platforms
-        name_ps = ps("ps --no-headers -o command -p %s" % (
-            self.pid)).split(' ')[0]
+        name_ps = ps_name(self.pid)
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
+        # ...because of how we calculate PYTHON_EXE; on OSX this may
+        # be "pythonX.Y".
+        name_ps = re.sub(r"\d.\d", "", name_ps)
+        name_psutil = re.sub(r"\d.\d", "", name_psutil)
         self.assertEqual(name_ps, name_psutil)
 
     def test_name_long(self):
@@ -179,8 +209,7 @@ class TestProcess(unittest.TestCase):
         self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
     def test_exe(self):
-        ps_pathname = ps("ps --no-headers -o command -p %s" %
-                         self.pid).split(' ')[0]
+        ps_pathname = ps_name(self.pid)
         psutil_pathname = psutil.Process(self.pid).exe()
         try:
             self.assertEqual(ps_pathname, psutil_pathname)
@@ -195,18 +224,17 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
     def test_cmdline(self):
-        ps_cmdline = ps("ps --no-headers -o command -p %s" % self.pid)
+        ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        if SUNOS:
-            # ps on Solaris only shows the first part of the cmdline
-            psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
     # incorrect value (20); the real deal is getpriority(2) which
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
+    # AIX has the same issue
     @unittest.skipIf(SUNOS, "not reliable on SUNOS")
+    @unittest.skipIf(AIX, "not reliable on AIX")
     def test_nice(self):
         ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
         psutil_nice = psutil.Process().nice()
@@ -262,7 +290,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        if SUNOS:
+        if SUNOS or AIX:
             cmd = ["ps", "-A", "-o", "pid"]
         else:
             cmd = ["ps", "ax", "-o", "pid"]
@@ -285,11 +313,7 @@ class TestSystemAPIs(unittest.TestCase):
         # on OSX and OPENBSD ps doesn't show pid 0
         if OSX or OPENBSD and 0 not in pids_ps:
             pids_ps.insert(0, 0)
-
-        if pids_ps != pids_psutil:
-            difference = [x for x in pids_psutil if x not in pids_ps] + \
-                         [x for x in pids_ps if x not in pids_psutil]
-            self.fail("difference: " + str(difference))
+        self.assertEqual(pids_ps, pids_psutil)
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
@@ -355,6 +379,8 @@ class TestSystemAPIs(unittest.TestCase):
                               psutil._psposix.wait_pid, os.getpid())
             assert m.called
 
+    # AIX can return '-' in df output instead of numbers, e.g. for /proc
+    @unittest.skipIf(AIX, "unreliable on AIX")
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()

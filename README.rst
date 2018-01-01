@@ -10,6 +10,10 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
+.. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
+    :target: http://psutil.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 .. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.python.org/pypi/psutil/
     :alt: Latest version
@@ -28,7 +32,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Documentation <http://pythonhosted.org/psutil/>`_
+- `Documentation <http://psutil.readthedocs.io>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
@@ -44,14 +48,20 @@ retrieving information on **running processes** and **system utilization**
 (CPU, memory, disks, network, sensors) in Python.
 It is useful mainly for **system monitoring**, **profiling and limiting process
 resources** and **management of running processes**.
-It implements many functionalities offered by command line tools such as:
+It implements many functionalities offered by UNIX command line tools such as:
 ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
 iotop, uptime, pidof, tty, taskset, pmap.
-It currently supports **Linux**, **Windows**, **OSX**, **Sun Solaris**,
-**FreeBSD**, **OpenBSD** and **NetBSD**,
-both **32-bit** and **64-bit** architectures, with Python versions from **2.6
-to 3.6** (users of Python 2.4 and 2.5 may use
-`2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+psutil currently supports the following platforms:
+
+- **Linux**
+- **Windows**
+- **OSX**,
+- **FreeBSD, OpenBSD**, **NetBSD**
+- **Sun Solaris**
+- **AIX**
+
+...both **32-bit** and **64-bit** architectures, with Python
+versions from **2.6 to 3.6**.
 `PyPy <http://pypy.org/>`__ is also known to work.
 
 ====================
@@ -67,14 +77,16 @@ Example applications
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
 
 Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
-and `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
 
 =====================
 Projects using psutil
 =====================
 
-At the time of writing there are over
-`5400 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+At the time of writing psutil has roughly
+`2.9 milion downloads <https://github.com/giampaolo/psutil/issues/1053#issuecomment-340166262>`__
+per month and there are over
+`6000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -83,7 +95,7 @@ Here's some I find particularly interesting:
 - https://github.com/google/grr
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
-
+- https://github.com/home-assistant/home-assistant/
 
 ========
 Portings
@@ -438,7 +450,7 @@ Windows services
 Other samples
 =============
 
-See `doc recipes <https://pythonhosted.org/psutil/#recipes/>`__.
+See `doc recipes <http://psutil.readthedocs.io/#recipes>`__.
 
 ======
 Author

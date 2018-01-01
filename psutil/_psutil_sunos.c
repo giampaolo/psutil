@@ -9,13 +9,13 @@
  * this in Cython which I later on translated in C.
  */
 
-// fix compilation issue on SunOS 5.10, see:
-// https://github.com/giampaolo/psutil/issues/421
-// https://github.com/giampaolo/psutil/issues/1077
-// http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
-//
-// Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
-//
+/* fix compilation issue on SunOS 5.10, see:
+ * https://github.com/giampaolo/psutil/issues/421
+ * https://github.com/giampaolo/psutil/issues/1077
+ * http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
+ *
+ * Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
+*/
 
 #define NEW_MIB_COMPLIANT 1
 #define _STRUCTURED_PROC 1
@@ -126,9 +126,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[1000];
     psinfo_t info;
     const char *procfs_path;
-    PyObject *py_name;
-    PyObject *py_args;
-    PyObject *py_retlist;
+    PyObject *py_name = NULL;
+    PyObject *py_args = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -185,7 +185,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
 
     if (! info.pr_envp) {
-        AccessDenied();
+        AccessDenied("");
         goto error;
     }
 
@@ -328,7 +328,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", proc_num);
 
 error:
-    if (fd != NULL)
+    if (fd != -1)
         close(fd);
     if (ptr != NULL)
         free(ptr);
@@ -360,7 +360,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process uids/gids as a Python tuple.
+ * Return process voluntary and involuntary context switches as a Python tuple.
  */
 static PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
@@ -548,6 +548,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
             py_user_proc = Py_True;
@@ -580,7 +581,7 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
-    endutent();
+    endutxent();
 
     return py_retlist;
 
@@ -590,8 +591,7 @@ error:
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (ut != NULL)
-        endutent();
+    endutxent();
     return NULL;
 }
 
@@ -832,7 +832,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
         // perms
-        sprintf(perms, "%c%c%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
+        sprintf(perms, "%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
                 p->pr_mflags & MA_WRITE ? 'w' : '-',
                 p->pr_mflags & MA_EXEC ? 'x' : '-',
                 p->pr_mflags & MA_SHARED ? 's' : '-');
@@ -1332,20 +1332,20 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
             boot_time = (float)ut->ut_tv.tv_sec;
             break;
         }
     }
-    endutent();
-    if (boot_time != 0.0) {
-        return Py_BuildValue("f", boot_time);
-    }
-    else {
+    endutxent();
+    if (boot_time == 0.0) {
+        /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
         return NULL;
     }
+    return Py_BuildValue("f", boot_time);
 }
 
 
@@ -1592,8 +1592,8 @@ PsutilMethods[] = {
      "Return CPU statistics"},
 
     // --- others
-    {"py_psutil_testing", py_psutil_testing, METH_VARARGS,
-     "Return True if PSUTIL_TESTING env var is set"},
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1678,6 +1678,8 @@ void init_psutil_sunos(void)
     // sunos specific
     PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

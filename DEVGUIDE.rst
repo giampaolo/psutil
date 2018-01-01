@@ -4,17 +4,23 @@ Setup and running tests
 
 If you plan on hacking on psutil this is what you're supposed to do first:
 
-- clone the GIT repository::
+- clone the GIT repository:
+
+.. code-block:: bash
 
   $ git clone git@github.com:giampaolo/psutil.git
 
-- install test deps and GIT hooks::
+- install test deps and GIT hooks:
 
-  $ make setup-dev-env
+.. code-block:: bash
 
-- run tests::
+  make setup-dev-env
 
-  $ make test
+- run tests:
+
+.. code-block:: bash
+
+  make test
 
 - bear in mind that ``make``
   (see `Makefile <https://github.com/giampaolo/psutil/blob/master/Makefile>`_)
@@ -23,6 +29,7 @@ If you plan on hacking on psutil this is what you're supposed to do first:
   (see `make.bat <https://github.com/giampaolo/psutil/blob/master/make.bat>`_).
 - do not use ``sudo``; ``make install`` installs psutil as a limited user in
   "edit" mode; also ``make setup-dev-env`` installs deps as a limited user.
+- use `make help` to see the list of available commands.
 
 ============
 Coding style
@@ -37,34 +44,46 @@ Coding style
 Makefile
 ========
 
-Some useful make commands::
+Some useful make commands:
 
-  $ make install        # install
-  $ make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
-  $ make test           # run unit tests
-  $ make test-memleaks  # run memory leak tests
-  $ make coverage       # run test coverage
-  $ make flake8         # run PEP8 linter
+.. code-block:: bash
+
+    make install        # install
+    make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
+    make test           # run unit tests
+    make test-memleaks  # run memory leak tests
+    make test-coverage  # run test coverage
+    make flake8         # run PEP8 linter
 
 There are some differences between ``make`` on UNIX and Windows.
-For instance, to run a specific Python version. On UNIX::
+For instance, to run a specific Python version. On UNIX:
+
+.. code-block:: bash
 
     make test PYTHON=python3.5
 
-On Windows::
+On Windows:
+
+.. code-block:: bat
 
     set PYTHON=C:\python35\python.exe && make test
 
-    # ...or:
+...or:
+
+.. code-block:: bat
 
     make -p 35 test
 
 If you want to modify psutil and run a script on the fly which uses it do
-(on UNIX)::
+(on UNIX):
+
+.. code-block:: bash
 
     make test TSCRIPT=foo.py
 
-On Windows::
+On Windows:
+
+.. code-block:: bat
 
     set TSCRIPT=foo.py && make test
 
@@ -74,7 +93,7 @@ Adding a new feature
 
 Usually the files involved when adding a new functionality are:
 
-.. code-block:: plain
+.. code-block:: bash
 
     psutil/__init__.py                   # main psutil namespace
     psutil/_ps{platform}.py              # python platform wrapper
@@ -142,7 +161,7 @@ Two icons in the home page (README) always show the build status:
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-OSX, BSD and Solaris are currently tested manually (sigh!).
+OSX, BSD, AIX and Solaris are currently tested manually (sigh!).
 
 Test coverage
 -------------
@@ -164,7 +183,7 @@ Documentation
 - it uses `RsT syntax <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_
   and it's built with `sphinx <http://sphinx-doc.org/>`_.
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
-- public doc is hosted on http://pythonhosted.org/psutil/
+- public doc is hosted on http://psutil.readthedocs.io/
 
 =======================
 Releasing a new version
@@ -184,7 +203,7 @@ FreeBSD notes
 
 .. code-block:: bash
 
-  $ pkg install python python3 gcc git vim screen bash
-  $ chsh -s /usr/local/bin/bash user  # set bash as default shell
+    pkg install python python3 gcc git vim screen bash
+    chsh -s /usr/local/bin/bash user  # set bash as default shell
 
 - ``/usr/src`` contains the source codes for all installed CLI tools (grep in it).

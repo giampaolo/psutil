@@ -75,7 +75,7 @@ def sh(cmd):
 
 def main():
     out = sh("git diff --cached --name-only")
-    py_files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
+    py_files = [x for x in out.split('\n') if x.endswith('.py') and
                 os.path.exists(x)]
 
     lineno = 0

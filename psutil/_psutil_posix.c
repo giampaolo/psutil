@@ -18,12 +18,15 @@
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
+#elif PSUTIL_AIX
+    #include "arch/aix/ifaddrs.h"
 #else
     #include <ifaddrs.h>
 #endif
 
 #if defined(PSUTIL_LINUX)
     #include <netdb.h>
+    #include <linux/types.h>
     #include <linux/if_packet.h>
 #elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
@@ -35,6 +38,8 @@
 #elif defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
+#elif defined(PSUTIL_AIX)
+    #include <netdb.h>
 #endif
 
 #include "_psutil_common.h"
@@ -107,16 +112,21 @@ psutil_pid_exists(long pid) {
  * This will always set a Python exception and return NULL.
  */
 int
-psutil_raise_for_pid(long pid, char *msg) {
+psutil_raise_for_pid(long pid, char *syscall_name) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
     if (errno != 0) {
+        // Unlikely we get here.
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
     }
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        PyErr_SetString(PyExc_RuntimeError, msg);
+    else if (psutil_pid_exists(pid) == 0) {
+        psutil_debug("%s syscall failed and PID %i no longer exists; "
+                     "assume NoSuchProcess", syscall_name, pid);
+        NoSuchProcess("");
+    }
+    else {
+        PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall_name);
+    }
     return 0;
 }
 
@@ -688,7 +698,7 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) || defined(PSUTIL_AIX)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 

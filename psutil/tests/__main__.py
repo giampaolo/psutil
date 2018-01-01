@@ -21,11 +21,11 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
+from psutil.tests import PYTHON_EXE
 from psutil.tests import run_suite
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-PYTHON = os.path.basename(sys.executable)
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 TEST_DEPS = []
 if sys.version_info[:2] == (2, 6):
@@ -54,7 +54,7 @@ def install_pip():
             f.flush()
 
             print("installing pip")
-            code = os.system('%s %s --user' % (sys.executable, f.name))
+            code = os.system('%s %s --user' % (PYTHON_EXE, f.name))
             return code
 
 
@@ -68,12 +68,12 @@ def install_test_deps(deps=None):
         opts = "--user" if not is_venv else ""
         install_pip()
         code = os.system('%s -m pip install %s --upgrade %s' % (
-            sys.executable, opts, " ".join(deps)))
+            PYTHON_EXE, opts, " ".join(deps)))
         return code
 
 
 def main():
-    usage = "%s -m psutil.tests [opts]" % PYTHON
+    usage = "%s -m psutil.tests [opts]" % PYTHON_EXE
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("-i", "--install-deps",
                       action="store_true", default=False,
@@ -88,8 +88,8 @@ def main():
             try:
                 __import__(dep.split("==")[0])
             except ImportError:
-                sys.exit("%r lib is not installed; run:\n"
-                         "%s -m psutil.tests --install-deps" % (dep, PYTHON))
+                sys.exit("%r lib is not installed; run %s -m psutil.tests "
+                         "--install-deps" % (dep, PYTHON_EXE))
         run_suite()
 
 

@@ -23,6 +23,9 @@ from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
 
 
 __extra__all__ = []
@@ -84,12 +87,6 @@ pidtaskinfo_map = dict(
     numthreads=6,
     volctxsw=7,
 )
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
@@ -212,6 +209,29 @@ def disk_partitions(all=False):
 
 
 # =====================================================================
+# --- sensors
+# =====================================================================
+
+
+def sensors_battery():
+    """Return battery information.
+    """
+    try:
+        percent, minsleft, power_plugged = cext.sensors_battery()
+    except NotImplementedError:
+        # no power source - return None according to interface
+        return None
+    power_plugged = power_plugged == 1
+    if power_plugged:
+        secsleft = _common.POWER_TIME_UNLIMITED
+    elif minsleft == -1:
+        secsleft = _common.POWER_TIME_UNKNOWN
+    else:
+        secsleft = minsleft * 60
+    return _common.sbattery(percent, secsleft, power_plugged)
+
+
+# =====================================================================
 # --- network
 # =====================================================================
 
@@ -282,7 +302,22 @@ def users():
 # =====================================================================
 
 
-pids = cext.pids
+def pids():
+    ls = cext.pids()
+    if 0 not in ls:
+        # On certain OSX versions pids() C doesn't return PID 0 but
+        # "ps" does and the process is querable via sysctl():
+        # https://travis-ci.org/giampaolo/psutil/jobs/309619941
+        try:
+            Process(0).create_time()
+            ls.append(0)
+        except NoSuchProcess:
+            pass
+        except AccessDenied:
+            ls.append(0)
+    return ls
+
+
 pid_exists = _psposix.pid_exists
 
 
@@ -503,10 +538,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def nice_get(self):

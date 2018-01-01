@@ -1,8 +1,17 @@
-/* Reference: https://lists.samba.org/archive/samba-technical/2009-February/063079.html */
+/*
+ * Copyright (c) 2017, Arnon Yaari
+ * All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*! Based on code from
+    https://lists.samba.org/archive/samba-technical/2009-February/063079.html
+!*/
 
 
-#ifndef __IFADDRS_H__
-#define __IFADDRS_H__
+#ifndef GENERIC_AIX_IFADDRS_H
+#define GENERIC_AIX_IFADDRS_H
 
 #include <sys/socket.h>
 #include <net/if.h>

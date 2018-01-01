@@ -4,10 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""psutil is a cross-platform library for retrieving information on
-running processes and system utilization (CPU, memory, disks, network)
-in Python.
-"""
+"""Cross-platform lib for process and system monitoring in Python."""
 
 import contextlib
 import io
@@ -40,6 +37,7 @@ from _common import OSX  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
+from _common import AIX  # NOQA
 
 
 macros = []
@@ -242,7 +240,18 @@ elif SUNOS:
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
-
+# AIX
+elif AIX:
+    macros.append(("PSUTIL_AIX", 1))
+    ext = Extension(
+        'psutil._psutil_aix',
+        sources=sources + [
+            'psutil/_psutil_aix.c',
+            'psutil/arch/aix/net_connections.c',
+            'psutil/arch/aix/common.c',
+            'psutil/arch/aix/ifaddrs.c'],
+        libraries=['perfstat'],
+        define_macros=macros)
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
@@ -257,6 +266,8 @@ if POSIX:
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+    elif AIX:
+        posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
 
     extensions = [ext, posix_extension]
 else:
@@ -267,7 +278,7 @@ def main():
     kwargs = dict(
         name='psutil',
         version=VERSION,
-        description=__doc__ .replace('\n', '').strip() if __doc__ else '',
+        description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
@@ -307,10 +318,6 @@ def main():
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.0',
-            'Programming Language :: Python :: 3.1',
-            'Programming Language :: Python :: 3.2',
-            'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',

@@ -20,10 +20,6 @@ environment:
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python33"
-      PYTHON_VERSION: "3.3.x"
-      PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python34"
       PYTHON_VERSION: "3.4.x"
       PYTHON_ARCH: "32"
@@ -40,10 +36,6 @@ environment:
 
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python33-x64"
-      PYTHON_VERSION: "3.3.x"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python34-x64"
@@ -91,11 +83,10 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "set PSUTIL_TESTING=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
+  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wininst"
 
 artifacts:
   - path: dist\*

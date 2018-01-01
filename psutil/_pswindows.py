@@ -26,7 +26,8 @@ except ImportError as err:
         # but if we get here it means this this was a wheel (or exe).
         msg = "this Windows version is too old (< Windows Vista); "
         msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
+        msg += "2000, XP and 2003 server; it may be possible that psutil "
+        msg += "will work if compiled from sources though"
         raise RuntimeError(msg)
     else:
         raise
@@ -45,6 +46,9 @@ from ._compat import lru_cache
 from ._compat import PY3
 from ._compat import unicode
 from ._compat import xrange
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import TimeoutExpired
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -138,11 +142,6 @@ pinfo_map = dict(
     peak_pagefile=20,
     mem_private=21,
 )
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

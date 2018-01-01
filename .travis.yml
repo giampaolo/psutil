@@ -3,31 +3,19 @@ language: python
 cache: pip
 matrix:
     include:
+        # Linux
         - python: 2.6
         - python: 2.7
-        - python: 3.3
         - python: 3.4
         - python: 3.5
         - python: 3.6
-        - "pypy"
-        # XXX - commented because OSX builds are deadly slow
-        # - language: generic
-        #   os: osx
-        #   env: PYVER=py26
+        # OSX
         - language: generic
           os: osx
           env: PYVER=py27
-        # XXX - commented because OSX builds are deadly slow
-        # - language: generic
-        #   os: osx
-        #   env: PYVER=py33
         - language: generic
           os: osx
           env: PYVER=py34
-        # XXX - not supported yet
-        # - language: generic
-        #   os: osx
-        #   env: PYVER=py35
 install:
     - ./.ci/travis/install.sh
 script:

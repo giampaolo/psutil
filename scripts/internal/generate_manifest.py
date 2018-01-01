@@ -12,6 +12,10 @@ import os
 import subprocess
 
 
+IGNORED_EXTS = ('.png', '.jpg', '.jpeg')
+IGNORED_FILES = ('.travis.yml', 'appveyor.yml')
+
+
 def sh(cmd):
     return subprocess.check_output(
         cmd, shell=True, universal_newlines=True).strip()
@@ -21,8 +25,8 @@ def main():
     files = sh("git ls-files").split('\n')
     for file in files:
         if file.startswith('.ci/') or \
-                os.path.splitext(file)[1] in ('.png', '.jpg') or \
-                file in ('.travis.yml', 'appveyor.yml'):
+                os.path.splitext(file)[1].lower() in IGNORED_EXTS or \
+                file in IGNORED_FILES:
             continue
         print("include " + file)
 

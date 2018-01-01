@@ -1,9 +1,112 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-*XXXX-XX-XX*
+5.4.3
+=====
+
+*2018-01-01*
+
+**Enhancements**
+
+- 775_: disk_partitions() on Windows return mount points.
+
+**Bug fixes**
+
+- 1193_: pids() may return False on OSX.
+
+5.4.2
+=====
+
+*2017-12-07*
+
+**Enhancements**
+
+- 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
+  to print useful debug messages on stderr (useful in case of nasty errors).
+- 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
+- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
+- 1188_: deprecated method Process.memory_info_ex() now warns by using
+  FutureWarning instead of DeprecationWarning.
+
+**Bug fixes**
+
+- 1152_: [Windows] disk_io_counters() may return an empty dict.
+- 1169_: [Linux] users() "hostname" returns username instead.  (patch by
+  janderbrain)
+- 1172_: [Windows] `make test` does not work.
+- 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
+  misbehaving processes which overwrite /proc/pid/cmdline and use spaces
+  instead of null bytes as args separator.
+- 1181_: [OSX] Process.memory_maps() may raise ENOENT.
+- 1187_: [OSX] pids() does not return PID 0 on recent OSX versions.
+
+5.4.1
+=====
+
+*2017-11-08*
+
+**Enhancements**
+
+- 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
+  Yaari)
+- 1053_: abandon Python 3.3 support (psutil still works but it's no longer
+  tested).
+
+**Bug fixes**
+
+- 1150_: [Windows] when a process is terminate()d now the exit code is set to
+  SIGTERM instead of 0.  (patch by Akos Kiss)
+- 1151_: python -m psutil.tests fail
+- 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
+- 1167_: [Windows] net_io_counter() packets count now include also non-unicast
+  packets.  (patch by Matthew Long)
+
+5.4.0
+=====
+
+*2017-10-12*
+
+**Enhancements**
+
+- 1123_: [AIX] added support for AIX platform.  (patch by Arnon Yaari)
+
+**Bug fixes**
+
+- 1009_: [Linux] sensors_temperatures() may crash with IOError.
+- 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
+  in tens of micro seconds instead of milliseconds.
+- 1127_: [OSX] invalid reference counting in Process.open_files() may lead to
+  segfault.  (patch by Jakub Bacic)
+- 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
+  Saip)
+- 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
+- 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
+  (patch by Max Bélanger)
+- 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
+  (patch by Prodesire)
+
+5.3.1
+=====
+
+*2017-09-10*
+
+**Enhancements**
+
+- 1124_: documentation moved to http://psutil.readthedocs.io
+
+**Bug fixes**
+
+- 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
+- 1125_: [BSD] net_connections() raises TypeError.
+
+**Compatibility notes**
+
+- 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
+  only wheels are provided.
 
 5.3.0
 =====
+
+*2017-09-01*
 
 **Enhancements**
 
@@ -65,7 +168,7 @@
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
 - 1064_: [NetBSD] swap_memory() may segfault in case of error.
 - 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
-- 1067_: [NetBSD] Process.cmdline() leaks memory if proces has terminated.
+- 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
 - 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
@@ -101,15 +204,15 @@
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
   - Process.memory_maps().path
-  - WindosService.bin_path()
-  - WindosService.description()
-  - WindosService.display_name()
-  - WindosService.username()
-
-*2017-04-10*
+  - WindowsService.bin_path()
+  - WindowsService.description()
+  - WindowsService.display_name()
+  - WindowsService.username()
 
 5.2.2
 =====
+
+*2017-04-10*
 
 **Bug fixes**
 
@@ -122,10 +225,10 @@
 - 1009_: [Linux] sensors_temperatures() may raise OSError.
 - 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
 
-*2017-03-24*
-
 5.2.1
 =====
+
+*2017-03-24*
 
 **Bug fixes**
 
@@ -136,10 +239,10 @@
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
 
-*2017-03-05*
-
 5.2.0
 =====
+
+*2017-03-05*
 
 **Enhancements**
 

@@ -11,10 +11,11 @@ sensors) in Python. Supported platforms:
  - Linux
  - Windows
  - OSX
- - Sun Solaris
  - FreeBSD
  - OpenBSD
  - NetBSD
+ - Sun Solaris
+ - AIX
 
 Works with Python versions from 2.6 to 3.X.
 """
@@ -23,6 +24,7 @@ from __future__ import division
 
 import collections
 import contextlib
+import datetime
 import errno
 import functools
 import os
@@ -73,6 +75,7 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
+from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
@@ -82,6 +85,12 @@ from ._common import OSX
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
+
+from ._exceptions import AccessDenied
+from ._exceptions import Error
+from ._exceptions import NoSuchProcess
+from ._exceptions import TimeoutExpired
+from ._exceptions import ZombieProcess
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -158,6 +167,13 @@ elif SUNOS:
     # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
+elif AIX:
+    from . import _psaix as _psplatform
+
+    # This is public API and it will be retrieved from _pslinux.py
+    # via sys.modules.
+    PROCFS_PATH = "/proc"
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -185,7 +201,7 @@ __all__ = [
     "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
-    "WINDOWS",
+    "WINDOWS", "AIX",
 
     # classes
     "Process", "Popen",
@@ -203,7 +219,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.3.0"
+__version__ = "5.4.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
@@ -235,112 +251,29 @@ if (int(__version__.replace('.', '')) !=
 
 
 # =====================================================================
-# --- exceptions
+# --- Utils
 # =====================================================================
 
 
-class Error(Exception):
-    """Base exception class. All other psutil exceptions inherit
-    from this one.
-    """
-
-    def __init__(self, msg=""):
-        Exception.__init__(self, msg)
-        self.msg = msg
-
-    def __repr__(self):
-        ret = "%s.%s %s" % (self.__class__.__module__,
-                            self.__class__.__name__, self.msg)
-        return ret.strip()
-
-    __str__ = __repr__
-
-
-class NoSuchProcess(Error):
-    """Exception raised when a process with a certain PID doesn't
-    or no longer exists.
-    """
-
-    def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self, msg)
-        self.pid = pid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            if name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+if hasattr(_psplatform, 'ppid_map'):
+    # Faster version (Windows and Linux).
+    _ppid_map = _psplatform.ppid_map
+else:
+    def _ppid_map():
+        """Return a {pid: ppid, ...} dict for all running processes in
+        one shot. Used to speed up Process.children().
+        """
+        ret = {}
+        for pid in pids():
+            try:
+                proc = _psplatform.Process(pid)
+                ppid = proc.ppid()
+            except (NoSuchProcess, AccessDenied):
+                # Note: AccessDenied is unlikely to happen.
+                pass
             else:
-                details = "(pid=%s)" % self.pid
-            self.msg = "process no longer exists " + details
-
-
-class ZombieProcess(NoSuchProcess):
-    """Exception raised when querying a zombie process. This is
-    raised on OSX, BSD and Solaris only, and not always: depending
-    on the query the OS may be able to succeed anyway.
-    On Linux all zombie processes are querable (hence this is never
-    raised). Windows doesn't have zombie processes.
-    """
-
-    def __init__(self, pid, name=None, ppid=None, msg=None):
-        NoSuchProcess.__init__(self, msg)
-        self.pid = pid
-        self.ppid = ppid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            args = ["pid=%s" % pid]
-            if name:
-                args.append("name=%s" % repr(self.name))
-            if ppid:
-                args.append("ppid=%s" % self.ppid)
-            details = "(%s)" % ", ".join(args)
-            self.msg = "process still exists but it's a zombie " + details
-
-
-class AccessDenied(Error):
-    """Exception raised when permission to perform an action is denied."""
-
-    def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self, msg)
-        self.pid = pid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            if (pid is not None) and (name is not None):
-                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
-                self.msg = "(pid=%s)" % self.pid
-            else:
-                self.msg = ""
-
-
-class TimeoutExpired(Error):
-    """Raised on Process.wait(timeout) if timeout expires and process
-    is still alive.
-    """
-
-    def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self, "timeout after %s seconds" % seconds)
-        self.seconds = seconds
-        self.pid = pid
-        self.name = name
-        if (pid is not None) and (name is not None):
-            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
-        elif (pid is not None):
-            self.msg += " (pid=%s)" % self.pid
-
-
-# push exception classes into platform specific module namespace
-_psplatform.NoSuchProcess = NoSuchProcess
-_psplatform.ZombieProcess = ZombieProcess
-_psplatform.AccessDenied = AccessDenied
-_psplatform.TimeoutExpired = TimeoutExpired
-
-
-# =====================================================================
-# --- Process class
-# =====================================================================
+                ret[pid] = ppid
+        return ret
 
 
 def _assert_pid_not_reused(fun):
@@ -353,6 +286,22 @@ def _assert_pid_not_reused(fun):
             raise NoSuchProcess(self.pid, self._name)
         return fun(self, *args, **kwargs)
     return wrapper
+
+
+def _pprint_secs(secs):
+    """Format seconds in a human readable form."""
+    now = time.time()
+    secs_ago = int(now - secs)
+    if secs_ago < 60 * 60 * 24:
+        fmt = "%H:%M:%S"
+    else:
+        fmt = "%Y-%m-%d %H:%M:%S"
+    return datetime.datetime.fromtimestamp(secs).strftime(fmt)
+
+
+# =====================================================================
+# --- Process class
+# =====================================================================
 
 
 class Process(object):
@@ -440,21 +389,26 @@ class Process(object):
 
     def __str__(self):
         try:
-            pid = self.pid
-            name = repr(self.name())
+            info = collections.OrderedDict()
+        except AttributeError:
+            info = {}  # Python 2.6
+        info["pid"] = self.pid
+        try:
+            info["name"] = self.name()
+            if self._create_time:
+                info['started'] = _pprint_secs(self._create_time)
         except ZombieProcess:
-            details = "(pid=%s (zombie))" % self.pid
+            info["status"] = "zombie"
         except NoSuchProcess:
-            details = "(pid=%s (terminated))" % self.pid
+            info["status"] = "terminated"
         except AccessDenied:
-            details = "(pid=%s)" % (self.pid)
-        else:
-            details = "(pid=%s, name=%s)" % (pid, name)
-        return "%s.%s%s" % (self.__class__.__module__,
-                            self.__class__.__name__, details)
+            pass
+        return "%s.%s(%s)" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
 
-    def __repr__(self):
-        return "<%s at %s>" % (self.__str__(), id(self))
+    __repr__ = __str__
 
     def __eq__(self, other):
         # Test for equality with another Process object based
@@ -785,7 +739,7 @@ class Process(object):
             """
             return self._proc.num_fds()
 
-    # Linux, BSD and Windows only
+    # Linux, BSD, AIX and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
         def io_counters(self):
@@ -908,13 +862,15 @@ class Process(object):
         """Return the number of threads used by this process."""
         return self._proc.num_threads()
 
-    def threads(self):
-        """Return threads opened by process as a list of
-        (id, user_time, system_time) namedtuples representing
-        thread id and thread CPU times (user/system).
-        On OpenBSD this method requires root access.
-        """
-        return self._proc.threads()
+    if hasattr(_psplatform.Process, "threads"):
+
+        def threads(self):
+            """Return threads opened by process as a list of
+            (id, user_time, system_time) namedtuples representing
+            thread id and thread CPU times (user/system).
+            On OpenBSD this method requires root access.
+            """
+            return self._proc.threads()
 
     @_assert_pid_not_reused
     def children(self, recursive=False):
@@ -943,73 +899,47 @@ class Process(object):
         process Y won't be listed as the reference to process A
         is lost.
         """
-        if hasattr(_psplatform, 'ppid_map'):
-            # Windows only: obtain a {pid:ppid, ...} dict for all running
-            # processes in one shot (faster).
-            ppid_map = _psplatform.ppid_map()
-        else:
-            ppid_map = None
-
+        ppid_map = _ppid_map()
         ret = []
         if not recursive:
-            if ppid_map is None:
-                # 'slow' version, common to all platforms except Windows
-                for p in process_iter():
+            for pid, ppid in ppid_map.items():
+                if ppid == self.pid:
                     try:
-                        if p.ppid() == self.pid:
-                            # if child happens to be older than its parent
-                            # (self) it means child's PID has been reused
-                            if self.create_time() <= p.create_time():
-                                ret.append(p)
+                        child = Process(pid)
+                        # if child happens to be older than its parent
+                        # (self) it means child's PID has been reused
+                        if self.create_time() <= child.create_time():
+                            ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
-            else:  # pragma: no cover
-                # Windows only (faster)
-                for pid, ppid in ppid_map.items():
-                    if ppid == self.pid:
-                        try:
-                            child = Process(pid)
-                            # if child happens to be older than its parent
-                            # (self) it means child's PID has been reused
-                            if self.create_time() <= child.create_time():
-                                ret.append(child)
-                        except (NoSuchProcess, ZombieProcess):
-                            pass
         else:
-            # construct a dict where 'values' are all the processes
-            # having 'key' as their parent
-            table = collections.defaultdict(list)
-            if ppid_map is None:
-                for p in process_iter():
+            # Construct a {pid: [child pids]} dict
+            reverse_ppid_map = collections.defaultdict(list)
+            for pid, ppid in ppid_map.items():
+                reverse_ppid_map[ppid].append(pid)
+            # Recursively traverse that dict, starting from self.pid,
+            # such that we only call Process() on actual children
+            seen = set()
+            stack = [self.pid]
+            while stack:
+                pid = stack.pop()
+                if pid in seen:
+                    # Since pids can be reused while the ppid_map is
+                    # constructed, there may be rare instances where
+                    # there's a cycle in the recorded process "tree".
+                    continue
+                seen.add(pid)
+                for child_pid in reverse_ppid_map[pid]:
                     try:
-                        table[p.ppid()].append(p)
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-            else:  # pragma: no cover
-                for pid, ppid in ppid_map.items():
-                    try:
-                        p = Process(pid)
-                        table[ppid].append(p)
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-            # At this point we have a mapping table where table[self.pid]
-            # are the current process' children.
-            # Below, we look for all descendants recursively, similarly
-            # to a recursive function call.
-            checkpids = [self.pid]
-            for pid in checkpids:
-                for child in table[pid]:
-                    try:
+                        child = Process(child_pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
                         intime = self.create_time() <= child.create_time()
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-                    else:
                         if intime:
                             ret.append(child)
-                            if child.pid not in checkpids:
-                                checkpids.append(child.pid)
+                            stack.append(child_pid)
+                    except (NoSuchProcess, ZombieProcess):
+                        pass
         return ret
 
     def cpu_percent(self, interval=None):
@@ -1157,13 +1087,11 @@ class Process(object):
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
         valid_types = list(_psplatform.pfullmem._fields)
-        if hasattr(_psplatform, "pfullmem"):
-            valid_types.extend(list(_psplatform.pfullmem._fields))
         if memtype not in valid_types:
             raise ValueError("invalid memtype %r; valid types are %r" % (
                 memtype, tuple(valid_types)))
-        fun = self.memory_full_info if memtype in ('uss', 'pss', 'swap') else \
-            self.memory_info
+        fun = self.memory_info if memtype in _psplatform.pmem._fields else \
+            self.memory_full_info
         metrics = fun()
         value = getattr(metrics, memtype)
 
@@ -1179,7 +1107,6 @@ class Process(object):
 
     if hasattr(_psplatform.Process, "memory_maps"):
         # Available everywhere except OpenBSD and NetBSD.
-
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.
@@ -2308,7 +2235,7 @@ if hasattr(_psplatform, "sensors_fans"):
     __all__.append("sensors_fans")
 
 
-# Linux, Windows, FreeBSD
+# Linux, Windows, FreeBSD, OSX
 if hasattr(_psplatform, "sensors_battery"):
 
     def sensors_battery():
@@ -2378,8 +2305,6 @@ def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """
-    import datetime
-
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',

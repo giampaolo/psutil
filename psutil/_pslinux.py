@@ -41,6 +41,9 @@ from ._compat import b
 from ._compat import basestring
 from ._compat import long
 from ._compat import PY3
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
 
 if sys.version_info >= (3, 4):
     import enum
@@ -136,12 +139,6 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
@@ -1142,21 +1139,22 @@ def sensors_temperatures():
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
 
     for base in basenames:
+        try:
+            current = float(cat(base + '_input')) / 1000.0
+        except (IOError, OSError) as err:
+            # A lot of things can go wrong here, so let's just skip the
+            # whole entry.
+            # https://github.com/giampaolo/psutil/issues/1009
+            # https://github.com/giampaolo/psutil/issues/1101
+            # https://github.com/giampaolo/psutil/issues/1129
+            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            continue
+
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
         high = cat(base + '_max', fallback=None)
         critical = cat(base + '_crit', fallback=None)
         label = cat(base + '_label', fallback='', binary=False)
-        try:
-            current = float(cat(base + '_input')) / 1000.0
-        except OSError as err:
-            # https://github.com/giampaolo/psutil/issues/1009
-            # https://github.com/giampaolo/psutil/issues/1101
-            if err.errno in (errno.EIO, errno.ENODEV):
-                warnings.warn("ignoring %r" % err, RuntimeWarning)
-                continue
-            else:
-                raise
 
         if high is not None:
             high = float(high) / 1000.0
@@ -1169,8 +1167,8 @@ def sensors_temperatures():
 
 
 def sensors_fans():
-    """Return hardware (CPU and others) fans as a dict
-    including hardware label, current speed.
+    """Return hardware fans info (for CPU and other peripherals) as a
+    dict including hardware label and current speed.
 
     Implementation notes:
     - /sys/class/hwmon looks like the most recent interface to
@@ -1187,11 +1185,14 @@ def sensors_fans():
 
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
     for base in basenames:
+        try:
+            current = int(cat(base + '_input'))
+        except (IOError, OSError) as err:
+            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
         label = cat(base + '_label', fallback='', binary=False)
-        current = int(cat(base + '_input'))
-
         ret[unit_name].append(_common.sfan(label, current))
 
     return dict(ret)
@@ -1355,6 +1356,30 @@ def pid_exists(pid):
             return pid in pids()
 
 
+def ppid_map():
+    """Obtain a {pid: ppid, ...} dict for all running processes in
+    one shot. Used to speed up Process.children().
+    """
+    ret = {}
+    procfs_path = get_procfs_path()
+    for pid in pids():
+        try:
+            with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
+                data = f.read()
+        except EnvironmentError as err:
+            # Note: we should be able to access /stat for all processes
+            # so we won't bump into EPERM, which is good.
+            if err.errno not in (errno.ENOENT, errno.ESRCH,
+                                 errno.EPERM, errno.EACCES):
+                raise
+        else:
+            rpar = data.rfind(b')')
+            dset = data[rpar + 2:].split()
+            ppid = int(dset[1])
+            ret[pid] = ppid
+    return ret
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and IOError exceptions
     into NoSuchProcess and AccessDenied.
@@ -1470,9 +1495,17 @@ class Process(object):
         if not data:
             # may happen in case of zombie process
             return []
-        if data.endswith('\x00'):
+        # 'man proc' states that args are separated by null bytes '\0'
+        # and last char is supposed to be a null byte. Nevertheless
+        # some processes may change their cmdline after being started
+        # (via setproctitle() or similar), they are usually not
+        # compliant with this rule and use spaces instead. Google
+        # Chrome process is an example. See:
+        # https://github.com/giampaolo/psutil/issues/1179
+        sep = '\x00' if data.endswith('\x00') else ' '
+        if data.endswith(sep):
             data = data[:-1]
-        return [x for x in data.split('\x00')]
+        return [x for x in data.split(sep)]
 
     @wrap_exceptions
     def environ(self):
@@ -1532,10 +1565,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def create_time(self):

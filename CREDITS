@@ -43,6 +43,8 @@ Github usernames of people to CC on github when in need of help.
 - SunOS:
     - wiggin15, Arnon Yaari
     - alxchk, Oleksii Shevchuk
+- AIX:
+    - wiggin15, Arnon Yaari (maintainer)
 
 Contributors
 ============
@@ -52,6 +54,10 @@ C: NJ, USA
 E: jloden@gmail.com
 D: original co-author, initial design/bootstrap and occasional bug fixes
 W: http://www.jayloden.com
+
+N: Arnon Yaari (wiggin15)
+W: https://github.com/wiggin15
+I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177
 
 N: Jeff Tang
 W: https://github.com/mrjefftang
@@ -363,10 +369,6 @@ N: maozguttman
 W: https://github.com/maozguttman
 I: 659
 
-N: wiggin15
-W: https://github.com/wiggin15
-I: 517, 607, 610
-
 N: dasumin
 W: https://github.com/dasumin
 I: 541
@@ -412,8 +414,8 @@ E: khanzf@gmail.com
 I: 823
 
 N: Jake Omann
-E: https://github.com/jhomann
-I: 816
+E: https://github.com/jomann09
+I: 816, 775
 
 N: Jeremy Humble
 W: https://github.com/jhumble
@@ -443,7 +445,7 @@ I: 919
 
 N: Max Bélanger
 W: https://github.com/maxbelanger
-I: 936
+I: 936, 1133
 
 N: Pierre Fersing
 C: France
@@ -485,3 +487,31 @@ I: 1042, 1079
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
 I: 1077, 1093, 1091
+
+N: Prodesire
+W: https://github.com/Prodesire
+I: 1138
+
+N: Sebastian Saip
+W: https://github.com/ssaip
+I: 1141
+
+N: Jakub Bacic
+W: https://github.com/jakub-bacic
+I: 1127
+
+N: Akos Kiss
+W: https://github.com/akosthekiss
+I: 1150
+
+N: Adrian Page
+W: https://github.com/adpag
+I: 1159, 1160, 1161
+
+N: Matthew Long
+W: https://github.com/matray
+I: 1167
+
+N: janderbrain
+W: https://github.com/janderbrain
+I: 1169

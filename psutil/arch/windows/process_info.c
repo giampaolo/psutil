@@ -256,7 +256,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     if (ret == 1)
         return hProcess;
     else if (ret == 0)
-        return NoSuchProcess();
+        return NoSuchProcess("");
     else if (ret == -1)
         return PyErr_SetFromWindowsErr(0);
     else  // -2
@@ -277,7 +277,7 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
-        return AccessDenied();
+        return AccessDenied("");
     }
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
@@ -337,7 +337,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 int
 psutil_assert_pid_exists(DWORD pid, char *err) {
-    if (psutil_testing()) {
+    if (PSUTIL_TESTING) {
         if (psutil_pid_in_pids(pid) == 0) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
@@ -349,7 +349,7 @@ psutil_assert_pid_exists(DWORD pid, char *err) {
 
 int
 psutil_assert_pid_not_exists(DWORD pid, char *err) {
-    if (psutil_testing()) {
+    if (PSUTIL_TESTING) {
         if (psutil_pid_in_pids(pid) == 1) {
             PyErr_SetString(PyExc_AssertionError, err);
             return 0;
@@ -959,7 +959,7 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         }
     } while ( (process = PSUTIL_NEXT_PROCESS(process)) );
 
-    NoSuchProcess();
+    NoSuchProcess("");
     goto error;
 
 error:

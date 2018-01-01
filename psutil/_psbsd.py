@@ -27,6 +27,9 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import which
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
 
 __extra__all__ = []
 
@@ -127,12 +130,6 @@ kinfo_proc_map = dict(
     cpunum=23,
     name=24,
 )
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
@@ -394,9 +391,12 @@ def net_connections(kind):
                 # have a very short lifetime so maybe the kernel
                 # can't initialize their status?
                 status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+            if fam in (AF_INET, AF_INET6):
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
-            laddr = _common.addr(*laddr)
-            raddr = _common.addr(*raddr)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
@@ -719,8 +719,10 @@ class Process(object):
                     except KeyError:
                         status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
                     if fam in (AF_INET, AF_INET6):
-                        laddr = _common.addr(*laddr)
-                        raddr = _common.addr(*raddr)
+                        if laddr:
+                            laddr = _common.addr(*laddr)
+                        if raddr:
+                            raddr = _common.addr(*raddr)
                     fam = sockfam_to_enum(fam)
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
@@ -737,8 +739,10 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             if fam in (AF_INET, AF_INET6):
-                laddr = _common.addr(*laddr)
-                raddr = _common.addr(*raddr)
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
@@ -753,10 +757,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def nice_get(self):

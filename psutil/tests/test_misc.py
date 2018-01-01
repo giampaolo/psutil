@@ -18,7 +18,6 @@ import os
 import pickle
 import socket
 import stat
-import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -49,6 +48,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import import_module_by_path
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
+from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import reload_module
 from psutil.tests import retry
@@ -365,6 +365,8 @@ class TestMisc(unittest.TestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
+        if TRAVIS and not os.path.exists(setup_py):
+            return self.skipTest("can't find setup.py")
         module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)
         self.assertEqual(module.get_version(), psutil.__version__)
@@ -643,16 +645,20 @@ class TestWrapNumbers(unittest.TestCase):
 
 
 @unittest.skipIf(TOX, "can't test on TOX")
+# See: https://travis-ci.org/giampaolo/psutil/jobs/295224806
+@unittest.skipIf(TRAVIS and not os.path.exists(SCRIPTS_DIR),
+                 "can't locate scripts directory")
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod
-    def assert_stdout(exe, args=None, **kwds):
-        exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
-        if args:
-            exe = exe + ' ' + args
+    def assert_stdout(exe, *args, **kwargs):
+        exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
+        cmd = [PYTHON_EXE, exe]
+        for arg in args:
+            cmd.append(arg)
         try:
-            out = sh(sys.executable + ' ' + exe, **kwds).strip()
+            out = sh(cmd, **kwargs).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
@@ -700,7 +706,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('meminfo.py')
 
     def test_procinfo(self):
-        self.assert_stdout('procinfo.py', args=str(os.getpid()))
+        self.assert_stdout('procinfo.py', str(os.getpid()))
 
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
@@ -724,7 +730,7 @@ class TestScripts(unittest.TestCase):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_pmap(self):
-        self.assert_stdout('pmap.py', args=str(os.getpid()))
+        self.assert_stdout('pmap.py', str(os.getpid()))
 
     @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
@@ -743,7 +749,7 @@ class TestScripts(unittest.TestCase):
         self.assert_syntax('iotop.py')
 
     def test_pidof(self):
-        output = self.assert_stdout('pidof.py', args=psutil.Process().name())
+        output = self.assert_stdout('pidof.py', psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
@@ -1014,7 +1020,8 @@ class TestNetUtils(unittest.TestCase):
                 # work around http://bugs.python.org/issue30204
                 types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
-            self.assertGreaterEqual(fams[socket.AF_INET6], 2)
+            if supports_ipv6():
+                self.assertGreaterEqual(fams[socket.AF_INET6], 2)
             if POSIX and HAS_CONNECTIONS_UNIX:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)

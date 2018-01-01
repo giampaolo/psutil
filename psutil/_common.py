@@ -81,6 +81,7 @@ OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+AIX = sys.platform.startswith("aix")
 
 
 # ===================================================================
@@ -460,14 +461,14 @@ def deprecated_method(replacement):
     'replcement' is the method name which will be called instead.
     """
     def outer(fun):
-        msg = "%s() is deprecated; use %s() instead" % (
+        msg = "%s() is deprecated and will be removed; use %s() instead" % (
             fun.__name__, replacement)
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
         @functools.wraps(fun)
         def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer

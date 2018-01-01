@@ -29,6 +29,7 @@ from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
 from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
@@ -607,11 +608,13 @@ class TestSystemCPU(unittest.TestCase):
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_no_result(self):
         with mock.patch("psutil._pslinux.glob.glob", return_value=[]):
             self.assertIsNone(psutil.cpu_freq())
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def glob_mock(pattern):
@@ -629,6 +632,7 @@ class TestSystemCPU(unittest.TestCase):
             assert psutil.cpu_freq()
             self.assertEqual(len(flags), 2)
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
@@ -651,6 +655,7 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.min, 600.0)
                 self.assertEqual(freq.max, 700.0)
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_emulate_multi_cpu(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
@@ -675,6 +680,7 @@ class TestSystemCPU(unittest.TestCase):
                 self.assertEqual(freq.max, 300.0)
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
@@ -762,21 +768,25 @@ class TestSystemNetwork(unittest.TestCase):
                 # Not always reliable.
                 # self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
-                                 int(re.findall(r'MTU:(\d+)', out)[0]))
+                                 int(re.findall(r'(?i)MTU[: ](\d+)', out)[0]))
 
     @retry_before_failing()
     def test_net_io_counters(self):
         def ifconfig(nic):
             ret = {}
             out = sh("ifconfig %s" % name)
-            ret['packets_recv'] = int(re.findall(r'RX packets:(\d+)', out)[0])
-            ret['packets_sent'] = int(re.findall(r'TX packets:(\d+)', out)[0])
-            ret['errin'] = int(re.findall(r'errors:(\d+)', out)[0])
-            ret['errout'] = int(re.findall(r'errors:(\d+)', out)[1])
-            ret['dropin'] = int(re.findall(r'dropped:(\d+)', out)[0])
-            ret['dropout'] = int(re.findall(r'dropped:(\d+)', out)[1])
-            ret['bytes_recv'] = int(re.findall(r'RX bytes:(\d+)', out)[0])
-            ret['bytes_sent'] = int(re.findall(r'TX bytes:(\d+)', out)[0])
+            ret['packets_recv'] = int(
+                re.findall(r'RX packets[: ](\d+)', out)[0])
+            ret['packets_sent'] = int(
+                re.findall(r'TX packets[: ](\d+)', out)[0])
+            ret['errin'] = int(re.findall(r'errors[: ](\d+)', out)[0])
+            ret['errout'] = int(re.findall(r'errors[: ](\d+)', out)[1])
+            ret['dropin'] = int(re.findall(r'dropped[: ](\d+)', out)[0])
+            ret['dropout'] = int(re.findall(r'dropped[: ](\d+)', out)[1])
+            ret['bytes_recv'] = int(
+                re.findall(r'RX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
+            ret['bytes_sent'] = int(
+                re.findall(r'TX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
             return ret
 
         nio = psutil.net_io_counters(pernic=True, nowrap=False)
@@ -1322,7 +1332,9 @@ class TestSensorsBattery(unittest.TestCase):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
+            energy_full = "/sys/class/power_supply/BAT0/energy_full"
+            charge_full = "/sys/class/power_supply/BAT0/charge_full"
+            if name.startswith(energy_full) or name.startswith(charge_full):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/capacity"):
                 return io.BytesIO(b"88")
@@ -1568,6 +1580,20 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo\x00bar\x00\x00'))
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
+            assert m.called
+
+    def test_cmdline_spaces_mocked(self):
+        # see: https://github.com/giampaolo/psutil/issues/1179
+        p = psutil.Process()
+        fake_file = io.StringIO(u('foo bar '))
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar'])
+            assert m.called
+        fake_file = io.StringIO(u('foo bar  '))
         with mock.patch('psutil._pslinux.open',
                         return_value=fake_file, create=True) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])

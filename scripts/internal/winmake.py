@@ -174,6 +174,12 @@ def recursive_rm(*patterns):
                     safe_rmtree(os.path.join(root, dir))
 
 
+def test_setup():
+    os.environ['PYTHONWARNINGS'] = 'all'
+    os.environ['PSUTIL_TESTING'] = '1'
+    os.environ['PSUTIL_DEBUG'] = '1'
+
+
 # ===================================================================
 # commands
 # ===================================================================
@@ -202,13 +208,6 @@ def build():
     sh("%s setup.py build_ext -i" % PYTHON)
     # Make sure it actually worked.
     sh('%s -c "import psutil"' % PYTHON)
-
-
-@cmd
-def build_exe():
-    """Create exe file."""
-    build()
-    sh("%s setup.py bdist_wininst" % PYTHON)
 
 
 @cmd
@@ -328,15 +327,15 @@ def flake8():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -Wa -m flake8 %s" % (PYTHON, py_files), nolog=True)
+    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
 @cmd
 def test():
     """Run tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa %s" % (PYTHON, TSCRIPT))
+    test_setup()
+    sh("%s %s" % (PYTHON, TSCRIPT))
 
 
 @cmd
@@ -344,8 +343,8 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m coverage run %s" % (PYTHON, TSCRIPT))
+    test_setup()
+    sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -355,56 +354,56 @@ def coverage():
 def test_process():
     """Run process tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_process" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_process" % PYTHON)
 
 
 @cmd
 def test_system():
     """Run system tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_system" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_system" % PYTHON)
 
 
 @cmd
 def test_platform():
     """Run windows only tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_windows" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_windows" % PYTHON)
 
 
 @cmd
 def test_misc():
     """Run misc tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_misc" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
 
 
 @cmd
 def test_unicode():
     """Run unicode tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_unicode" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
 
 
 @cmd
 def test_connections():
     """Run connections tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_connections" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
 
 
 @cmd
 def test_contracts():
     """Run contracts tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v psutil.tests.test_contracts" % PYTHON)
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
 
 
 @cmd
@@ -416,8 +415,8 @@ def test_by_name():
     except IndexError:
         sys.exit('second arg missing')
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa -m unittest -v %s" % (PYTHON, name))
+    test_setup()
+    sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
 @cmd
@@ -429,16 +428,16 @@ def test_script():
     except IndexError:
         sys.exit('second arg missing')
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa %s" % (PYTHON, name))
+    test_setup()
+    sh("%s %s" % (PYTHON, name))
 
 
 @cmd
 def test_memleaks():
     """Run memory leaks tests"""
     install()
-    os.environ['PSUTIL_TESTING'] = '1'
-    sh("%s -Wa psutil\\tests\\test_memory_leaks.py" % PYTHON)
+    test_setup()
+    sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
 @cmd
@@ -467,8 +466,8 @@ def set_python(s):
         # try to look for a python installation
         orig = s
         s = s.replace('.', '')
-        vers = ('26', '27', '33', '34', '35', '36', '37',
-                '26-64', '27-64', '33-64', '34-64', '35-64', '36-64', '37-64')
+        vers = ('26', '27', '34', '35', '36', '37',
+                '26-64', '27-64', '34-64', '35-64', '36-64', '37-64')
         for v in vers:
             if s == v:
                 path = 'C:\\python%s\python.exe' % s
