@@ -1147,7 +1147,8 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1009
             # https://github.com/giampaolo/psutil/issues/1101
             # https://github.com/giampaolo/psutil/issues/1129
-            warnings.warn(("ignoring %r for file '%s'" % (err, base + '_input')), RuntimeWarning)
+            warnings.warn(("ignoring %r for file '%s'"
+                           % (err, base + '_input')), RuntimeWarning)
             continue
 
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
