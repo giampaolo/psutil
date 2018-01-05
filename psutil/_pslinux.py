@@ -1131,11 +1131,11 @@ def sensors_temperatures():
       difficult to parse
     """
     ret = collections.defaultdict(list)
-    basenames = glob.glob('/sys/class/hwmon/hwmon*/temp*_*')
+    basenames = glob.glob('/sys/class/hwmon/hwmon*/temp*_input')
     # CentOS has an intermediate /device directory:
     # https://github.com/giampaolo/psutil/issues/971
     # https://github.com/nicolargo/glances/issues/1060
-    basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*'))
+    basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_input'))
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
 
     for base in basenames:
@@ -1147,7 +1147,7 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1009
             # https://github.com/giampaolo/psutil/issues/1101
             # https://github.com/giampaolo/psutil/issues/1129
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            warnings.warn(("ignoring %r for file '%s'" % (err, base + '_input')), RuntimeWarning)
             continue
 
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
