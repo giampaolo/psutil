@@ -163,13 +163,15 @@ typedef enum _KWAIT_REASON {
 } KWAIT_REASON, *PKWAIT_REASON;
 
 
-typedef struct _CLIENT_ID {
+typedef struct _CLIENT_ID2 {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
-} CLIENT_ID, *PCLIENT_ID;
+} CLIENT_ID2, *PCLIENT_ID2;
 
+#define CLIENT_ID CLIENT_ID2
+#define PCLIENT_ID PCLIENT_ID2
 
-typedef struct _SYSTEM_THREAD_INFORMATION {
+typedef struct _SYSTEM_THREAD_INFORMATION2 {
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER CreateTime;
@@ -181,8 +183,10 @@ typedef struct _SYSTEM_THREAD_INFORMATION {
     ULONG ContextSwitches;
     ULONG ThreadState;
     KWAIT_REASON WaitReason;
-} SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
+} SYSTEM_THREAD_INFORMATION2, *PSYSTEM_THREAD_INFORMATION2;
 
+#define SYSTEM_THREAD_INFORMATION SYSTEM_THREAD_INFORMATION2
+#define PSYSTEM_THREAD_INFORMATION PSYSTEM_THREAD_INFORMATION2
 
 typedef struct _TEB *PTEB;
 
@@ -318,12 +322,8 @@ typedef enum _PROCESSINFOCLASS2 {
     /* added after XP+ */
     _ProcessImageFileName,
     ProcessLUIDDeviceMapsEnabled,
-// MSVC 2015 starts forcing C++11 standard, which does not allow duplicate
-// unscoped enumerations.  It doesn't matter that this is C code, MSVC is a C++ compiler.
-#if _MSC_VER < 1900
-    ProcessBreakOnTermination,
-#endif
-    ProcessDebugObjectHandle=ProcessLUIDDeviceMapsEnabled+2,
+    _ProcessBreakOnTermination,
+    ProcessDebugObjectHandle,
     ProcessDebugFlags,
     ProcessHandleTracing,
     ProcessIoPriority,
@@ -340,5 +340,6 @@ typedef enum _PROCESSINFOCLASS2 {
 #define ProcessWow64Information _ProcessWow64Information
 #define ProcessDebugPort _ProcessDebugPort
 #define ProcessImageFileName _ProcessImageFileName
+#define ProcessBreakOnTermination _ProcessBreakOnTermination
 
 #endif // __NTEXTAPI_H__

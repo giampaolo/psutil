@@ -14,8 +14,8 @@ $ python scripts/top.py
  CPU1  [|||                                     ]   7.8%
  CPU2  [                                        ]   2.0%
  CPU3  [|||||                                   ]  13.9%
- Mem   [|||||||||||||||||||                     ]  49.8%  4920M/9888M
- Swap  [                                        ]   0.0%     0M/0M
+ Mem   [|||||||||||||||||||                     ]  49.8%  4920M / 9888M
+ Swap  [                                        ]   0.0%     0M / 0M
  Processes: 287 (running=1, sleeping=286, zombie=1)
  Load average: 0.34 0.54 0.46  Uptime: 3 days, 10:16:37
 
@@ -48,11 +48,13 @@ import psutil
 
 
 # --- curses stuff
+
 def tear_down():
     win.keypad(0)
     curses.nocbreak()
     curses.echo()
     curses.endwin()
+
 
 win = curses.initscr()
 atexit.register(tear_down)
@@ -75,6 +77,7 @@ def print_line(line, highlight=False):
         raise
     else:
         lineno += 1
+
 # --- /curses stuff
 
 
@@ -137,11 +140,10 @@ def print_header(procs_status, num_procs):
                                               perc))
     mem = psutil.virtual_memory()
     dashes, empty_dashes = get_dashes(mem.percent)
-    used = mem.total - mem.available
-    line = " Mem   [%s%s] %5s%% %6s/%s" % (
+    line = " Mem   [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         mem.percent,
-        str(int(used / 1024 / 1024)) + "M",
+        str(int(mem.used / 1024 / 1024)) + "M",
         str(int(mem.total / 1024 / 1024)) + "M"
     )
     print_line(line)
@@ -149,7 +151,7 @@ def print_header(procs_status, num_procs):
     # swap usage
     swap = psutil.swap_memory()
     dashes, empty_dashes = get_dashes(swap.percent)
-    line = " Swap  [%s%s] %5s%% %6s/%s" % (
+    line = " Swap  [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         swap.percent,
         str(int(swap.used / 1024 / 1024)) + "M",
@@ -229,6 +231,7 @@ def main():
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass
+
 
 if __name__ == '__main__':
     main()

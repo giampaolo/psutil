@@ -64,5 +64,6 @@ def main():
     print('\nSWAP\n----')
     pprint_ntuple(psutil.swap_memory())
 
+
 if __name__ == '__main__':
     main()

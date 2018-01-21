@@ -9,7 +9,7 @@
 #include <Winsvc.h>
 
 #include "services.h"
-
+#include "../../_psutil_common.h"
 
 // ==================================================================
 // utils
@@ -18,10 +18,9 @@
 SC_HANDLE
 psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
 {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
-    SERVICE_DESCRIPTION *scd = NULL;
 
     sc = OpenSCManager(NULL, NULL, scm_access);
     if (sc == NULL) {
@@ -96,7 +95,7 @@ get_state_string(DWORD state) {
  */
 PyObject *
 psutil_winservice_enumerate(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     SC_HANDLE sc = NULL;
     DWORD bytesNeeded = 0;
@@ -106,7 +105,8 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     DWORD i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
-    PyObject *py_unicode_display_name = NULL;
+    PyObject *py_name = NULL;
+    PyObject *py_display_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -118,7 +118,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (;;) {
-        ok = EnumServicesStatusEx(
+        ok = EnumServicesStatusExW(
             sc,
             SC_ENUM_PROCESS_INFO,
             SERVICE_WIN32,  // XXX - extend this to include drivers etc.?
@@ -134,31 +134,31 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
         if (lpService)
             free(lpService);
         dwBytes = bytesNeeded;
-        lpService = (ENUM_SERVICE_STATUS_PROCESS*)malloc(dwBytes);
+        lpService = (ENUM_SERVICE_STATUS_PROCESSW*)malloc(dwBytes);
     }
 
     for (i = 0; i < srvCount; i++) {
-        // Get unicode display name.
-        py_unicode_display_name = NULL;
-        py_unicode_display_name = PyUnicode_Decode(
-            lpService[i].lpDisplayName,
-            _tcslen(lpService[i].lpDisplayName),
-            Py_FileSystemDefaultEncoding,
-            "replace");
-        if (py_unicode_display_name == NULL)
+        // Get unicode name / display name.
+        py_name = NULL;
+        py_name = PyUnicode_FromWideChar(
+            lpService[i].lpServiceName, wcslen(lpService[i].lpServiceName));
+        if (py_name == NULL)
+            goto error;
+
+        py_display_name = NULL;
+        py_display_name = PyUnicode_FromWideChar(
+            lpService[i].lpDisplayName, wcslen(lpService[i].lpDisplayName));
+        if (py_display_name == NULL)
             goto error;
 
         // Construct the result.
-        py_tuple = Py_BuildValue(
-            "(sO)",
-            lpService[i].lpServiceName,  // name
-            py_unicode_display_name  // display_name
-        );
+        py_tuple = Py_BuildValue("(OO)", py_name, py_display_name);
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_unicode_display_name);
+        Py_DECREF(py_display_name);
+        Py_DECREF(py_name);
         Py_DECREF(py_tuple);
     }
 
@@ -168,7 +168,8 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_unicode_display_name);
+    Py_DECREF(py_name);
+    Py_XDECREF(py_display_name);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (sc != NULL)
@@ -194,7 +195,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     DWORD bytesNeeded = 0;
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
-    QUERY_SERVICE_CONFIG *qsc = NULL;
+    QUERY_SERVICE_CONFIGW *qsc = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_unicode_display_name = NULL;
     PyObject *py_unicode_binpath = NULL;
@@ -207,45 +208,36 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     if (hService == NULL)
         goto error;
 
-    // First call to QueryServiceConfig() is necessary to get the
+    // First call to QueryServiceConfigW() is necessary to get the
     // right size.
     bytesNeeded = 0;
-    QueryServiceConfig(hService, NULL, 0, &bytesNeeded);
+    QueryServiceConfigW(hService, NULL, 0, &bytesNeeded);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
-    qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
-    ok = QueryServiceConfig(hService, qsc, bytesNeeded, &bytesNeeded);
+    qsc = (QUERY_SERVICE_CONFIGW *)malloc(bytesNeeded);
+    ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
     if (ok == 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     // Get unicode display name.
-    py_unicode_display_name = PyUnicode_Decode(
-        qsc->lpDisplayName,
-        _tcslen(qsc->lpDisplayName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_display_name = PyUnicode_FromWideChar(
+        qsc->lpDisplayName, wcslen(qsc->lpDisplayName));
     if (py_unicode_display_name == NULL)
         goto error;
 
     // Get unicode bin path.
-    py_unicode_binpath = PyUnicode_Decode(
-        qsc->lpBinaryPathName,
-        _tcslen(qsc->lpBinaryPathName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_binpath = PyUnicode_FromWideChar(
+        qsc->lpBinaryPathName, wcslen(qsc->lpBinaryPathName));
     if (py_unicode_binpath == NULL)
         goto error;
 
     // Get unicode username.
-    py_unicode_username = PyUnicode_Decode(
-        qsc->lpServiceStartName,
-        _tcslen(qsc->lpServiceStartName),
-        Py_FileSystemDefaultEncoding,
-        "replace");
+    py_unicode_username = PyUnicode_FromWideChar(
+        qsc->lpServiceStartName, wcslen(qsc->lpServiceStartName));
     if (py_unicode_username == NULL)
         goto error;
 
@@ -308,6 +300,12 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     // right size.
     QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, NULL, 0,
                          &bytesNeeded);
+    if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
+        // Also services.msc fails in the same manner, so we return an
+        // empty string.
+        CloseServiceHandle(hService);
+        return Py_BuildValue("s", "");
+    }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
@@ -354,13 +352,13 @@ error:
  */
 PyObject *
 psutil_winservice_query_descr(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
     SC_HANDLE hService = NULL;
-    SERVICE_DESCRIPTION *scd = NULL;
+    SERVICE_DESCRIPTIONW *scd = NULL;
     char *service_name;
     PyObject *py_retstr = NULL;
 
@@ -371,19 +369,25 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     if (hService == NULL)
         goto error;
 
-    // This first call to QueryServiceConfig2() is necessary in order
+    // This first call to QueryServiceConfig2W() is necessary in order
     // to get the right size.
     bytesNeeded = 0;
-    QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
-                        &bytesNeeded);
+    QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
+                         &bytesNeeded);
+    if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
+        // Also services.msc fails in the same manner, so we return an
+        // empty string.
+        CloseServiceHandle(hService);
+        return Py_BuildValue("s", "");
+    }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
-    scd = (SERVICE_DESCRIPTION *)malloc(bytesNeeded);
-    ok = QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION,
-                             (LPBYTE)scd, bytesNeeded, &bytesNeeded);
+    scd = (SERVICE_DESCRIPTIONW *)malloc(bytesNeeded);
+    ok = QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION,
+                              (LPBYTE)scd, bytesNeeded, &bytesNeeded);
     if (ok == 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
@@ -393,16 +397,14 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         py_retstr = Py_BuildValue("s", "");
     }
     else {
-        py_retstr = PyUnicode_Decode(
-            scd->lpDescription,
-            _tcslen(scd->lpDescription),
-            Py_FileSystemDefaultEncoding,
-            "replace");
+        py_retstr = PyUnicode_FromWideChar(
+            scd->lpDescription,  wcslen(scd->lpDescription));
     }
     if (!py_retstr)
         goto error;
 
     free(scd);
+    CloseServiceHandle(hService);
     return py_retstr;
 
 error:

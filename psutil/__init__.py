@@ -5,13 +5,26 @@
 # found in the LICENSE file.
 
 """psutil is a cross-platform library for retrieving information on
-running processes and system utilization (CPU, memory, disks, network)
-in Python.
+running processes and system utilization (CPU, memory, disks, network,
+sensors) in Python. Supported platforms:
+
+ - Linux
+ - Windows
+ - OSX
+ - FreeBSD
+ - OpenBSD
+ - NetBSD
+ - Sun Solaris
+ - AIX
+
+Works with Python versions from 2.6 to 3.X.
 """
 
 from __future__ import division
 
 import collections
+import contextlib
+import datetime
 import errno
 import functools
 import os
@@ -28,6 +41,8 @@ except ImportError:
 from . import _common
 from ._common import deprecated_method
 from ._common import memoize
+from ._common import memoize_when_activated
+from ._common import wrap_numbers as _wrap_numbers
 from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
@@ -60,6 +75,7 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
+from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
@@ -69,6 +85,12 @@ from ._common import OSX
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
+
+from ._exceptions import AccessDenied
+from ._exceptions import Error
+from ._exceptions import NoSuchProcess
+from ._exceptions import TimeoutExpired
+from ._exceptions import ZombieProcess
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -141,7 +163,14 @@ elif SUNOS:
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
-    # This is public API and it will be retrieved from _pssunos.py
+    # This is public writable API which is read from _pslinux.py and
+    # _pssunos.py via sys.modules.
+    PROCFS_PATH = "/proc"
+
+elif AIX:
+    from . import _psaix as _psplatform
+
+    # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
     PROCFS_PATH = "/proc"
 
@@ -169,8 +198,10 @@ __all__ = [
 
     "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
 
+    "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
+
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
-    "WINDOWS",
+    "WINDOWS", "AIX",
 
     # classes
     "Process", "Popen",
@@ -179,17 +210,20 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",
+    "cpu_stats",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.3.1"
+__version__ = "5.4.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
+POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
+POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
 _timer = getattr(time, 'monotonic', time.time)
 
@@ -203,116 +237,43 @@ _timer = getattr(time, 'monotonic', time.time)
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
     msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil (different than %s)" % (_psplatform.cext.__file__,
-                                                     __version__)
+          "version of psutil" % getattr(_psplatform.cext, "__file__")
+    if hasattr(_psplatform.cext, 'version'):
+        msg += " (%s instead of %s)" % (
+            '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
+    else:
+        msg += " (different than %s)" % __version__
+    msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
+        getattr(_psplatform.cext, "__file__",
+                "the existing psutil install directory"))
+    msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
 
 
 # =====================================================================
-# --- exceptions
+# --- Utils
 # =====================================================================
 
-class Error(Exception):
-    """Base exception class. All other psutil exceptions inherit
-    from this one.
-    """
 
-    def __init__(self, msg=""):
-        self.msg = msg
-
-    def __repr__(self):
-        ret = "%s.%s %s" % (self.__class__.__module__,
-                            self.__class__.__name__, self.msg)
-        return ret.strip()
-
-    __str__ = __repr__
-
-
-class NoSuchProcess(Error):
-    """Exception raised when a process with a certain PID doesn't
-    or no longer exists.
-    """
-
-    def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self, msg)
-        self.pid = pid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            if name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+if hasattr(_psplatform, 'ppid_map'):
+    # Faster version (Windows and Linux).
+    _ppid_map = _psplatform.ppid_map
+else:
+    def _ppid_map():
+        """Return a {pid: ppid, ...} dict for all running processes in
+        one shot. Used to speed up Process.children().
+        """
+        ret = {}
+        for pid in pids():
+            try:
+                proc = _psplatform.Process(pid)
+                ppid = proc.ppid()
+            except (NoSuchProcess, AccessDenied):
+                # Note: AccessDenied is unlikely to happen.
+                pass
             else:
-                details = "(pid=%s)" % self.pid
-            self.msg = "process no longer exists " + details
-
-
-class ZombieProcess(NoSuchProcess):
-    """Exception raised when querying a zombie process. This is
-    raised on OSX, BSD and Solaris only, and not always: depending
-    on the query the OS may be able to succeed anyway.
-    On Linux all zombie processes are querable (hence this is never
-    raised). Windows doesn't have zombie processes.
-    """
-
-    def __init__(self, pid, name=None, ppid=None, msg=None):
-        Error.__init__(self, msg)
-        self.pid = pid
-        self.ppid = ppid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            args = ["pid=%s" % pid]
-            if name:
-                args.append("name=%s" % repr(self.name))
-            if ppid:
-                args.append("ppid=%s" % self.ppid)
-            details = "(%s)" % ", ".join(args)
-            self.msg = "process still exists but it's a zombie " + details
-
-
-class AccessDenied(Error):
-    """Exception raised when permission to perform an action is denied."""
-
-    def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self, msg)
-        self.pid = pid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            if (pid is not None) and (name is not None):
-                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
-                self.msg = "(pid=%s)" % self.pid
-            else:
-                self.msg = ""
-
-
-class TimeoutExpired(Error):
-    """Raised on Process.wait(timeout) if timeout expires and process
-    is still alive.
-    """
-
-    def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self, "timeout after %s seconds" % seconds)
-        self.seconds = seconds
-        self.pid = pid
-        self.name = name
-        if (pid is not None) and (name is not None):
-            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
-        elif (pid is not None):
-            self.msg += " (pid=%s)" % self.pid
-
-
-# push exception classes into platform specific module namespace
-_psplatform.NoSuchProcess = NoSuchProcess
-_psplatform.ZombieProcess = ZombieProcess
-_psplatform.AccessDenied = AccessDenied
-_psplatform.TimeoutExpired = TimeoutExpired
-
-
-# =====================================================================
-# --- Process class
-# =====================================================================
+                ret[pid] = ppid
+        return ret
 
 
 def _assert_pid_not_reused(fun):
@@ -325,6 +286,22 @@ def _assert_pid_not_reused(fun):
             raise NoSuchProcess(self.pid, self._name)
         return fun(self, *args, **kwargs)
     return wrapper
+
+
+def _pprint_secs(secs):
+    """Format seconds in a human readable form."""
+    now = time.time()
+    secs_ago = int(now - secs)
+    if secs_ago < 60 * 60 * 24:
+        fmt = "%H:%M:%S"
+    else:
+        fmt = "%Y-%m-%d %H:%M:%S"
+    return datetime.datetime.fromtimestamp(secs).strftime(fmt)
+
+
+# =====================================================================
+# --- Process class
+# =====================================================================
 
 
 class Process(object):
@@ -354,10 +331,10 @@ class Process(object):
      - kill()
 
     To prevent this problem for all other methods you can:
-      - use is_running() before querying the process
-      - if you're continuously iterating over a set of Process
-        instances use process_iter() which pre-emptively checks
-        process identity for every yielded instance
+     - use is_running() before querying the process
+     - if you're continuously iterating over a set of Process
+       instances use process_iter() which pre-emptively checks
+     process identity for every yielded instance
     """
 
     def __init__(self, pid=None):
@@ -378,6 +355,7 @@ class Process(object):
         self._create_time = None
         self._gone = False
         self._hash = None
+        self._oneshot_inctx = False
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -389,14 +367,13 @@ class Process(object):
         try:
             self.create_time()
         except AccessDenied:
-            # we should never get here as AFAIK we're able to get
+            # We should never get here as AFAIK we're able to get
             # process creation time on all platforms even as a
-            # limited user
+            # limited user.
             pass
         except ZombieProcess:
-            # Let's consider a zombie process as legitimate as
-            # tehcnically it's still alive (it can be queried,
-            # although not always, and it's returned by pids()).
+            # Zombies can still be queried by this class (although
+            # not always) and pids() return them so just go on.
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
@@ -412,21 +389,26 @@ class Process(object):
 
     def __str__(self):
         try:
-            pid = self.pid
-            name = repr(self.name())
+            info = collections.OrderedDict()
+        except AttributeError:
+            info = {}  # Python 2.6
+        info["pid"] = self.pid
+        try:
+            info["name"] = self.name()
+            if self._create_time:
+                info['started'] = _pprint_secs(self._create_time)
         except ZombieProcess:
-            details = "(pid=%s (zombie))" % self.pid
+            info["status"] = "zombie"
         except NoSuchProcess:
-            details = "(pid=%s (terminated))" % self.pid
+            info["status"] = "terminated"
         except AccessDenied:
-            details = "(pid=%s)" % (self.pid)
-        else:
-            details = "(pid=%s, name=%s)" % (pid, name)
-        return "%s.%s%s" % (self.__class__.__module__,
-                            self.__class__.__name__, details)
+            pass
+        return "%s.%s(%s)" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
 
-    def __repr__(self):
-        return "<%s at %s>" % (self.__str__(), id(self))
+    __repr__ = __str__
 
     def __eq__(self, other):
         # Test for equality with another Process object based
@@ -443,18 +425,83 @@ class Process(object):
             self._hash = hash(self._ident)
         return self._hash
 
+    @property
+    def pid(self):
+        """The process PID."""
+        return self._pid
+
     # --- utility methods
+
+    @contextlib.contextmanager
+    def oneshot(self):
+        """Utility context manager which considerably speeds up the
+        retrieval of multiple process information at the same time.
+
+        Internally different process info (e.g. name, ppid, uids,
+        gids, ...) may be fetched by using the same routine, but
+        only one information is returned and the others are discarded.
+        When using this context manager the internal routine is
+        executed once (in the example below on name()) and the
+        other info are cached.
+
+        The cache is cleared when exiting the context manager block.
+        The advice is to use this every time you retrieve more than
+        one information about the process. If you're lucky, you'll
+        get a hell of a speedup.
+
+        >>> import psutil
+        >>> p = psutil.Process()
+        >>> with p.oneshot():
+        ...     p.name()  # collect multiple info
+        ...     p.cpu_times()  # return cached value
+        ...     p.cpu_percent()  # return cached value
+        ...     p.create_time()  # return cached value
+        ...
+        >>>
+        """
+        if self._oneshot_inctx:
+            # NOOP: this covers the use case where the user enters the
+            # context twice. Since as_dict() internally uses oneshot()
+            # I expect that the code below will be a pretty common
+            # "mistake" that the user will make, so let's guard
+            # against that:
+            #
+            # >>> with p.oneshot():
+            # ...    p.as_dict()
+            # ...
+            yield
+        else:
+            self._oneshot_inctx = True
+            try:
+                # cached in case cpu_percent() is used
+                self.cpu_times.cache_activate()
+                # cached in case memory_percent() is used
+                self.memory_info.cache_activate()
+                # cached in case parent() is used
+                self.ppid.cache_activate()
+                # cached in case username() is used
+                if POSIX:
+                    self.uids.cache_activate()
+                # specific implementation cache
+                self._proc.oneshot_enter()
+                yield
+            finally:
+                self.cpu_times.cache_deactivate()
+                self.memory_info.cache_deactivate()
+                self.ppid.cache_deactivate()
+                if POSIX:
+                    self.uids.cache_deactivate()
+                self._proc.oneshot_exit()
+                self._oneshot_inctx = False
 
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
-
-        If 'attrs' is specified it must be a list of strings
+        If *attrs* is specified it must be a list of strings
         reflecting available Process class' attribute names
         (e.g. ['cpu_times', 'name']) else all public (read
         only) attributes are assumed.
-
-        'ad_value' is the value which gets assigned in case
+        *ad_value* is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
@@ -471,23 +518,24 @@ class Process(object):
 
         retdict = dict()
         ls = attrs or valid_names
-        for name in ls:
-            try:
-                if name == 'pid':
-                    ret = self.pid
-                else:
-                    meth = getattr(self, name)
-                    ret = meth()
-            except (AccessDenied, ZombieProcess):
-                ret = ad_value
-            except NotImplementedError:
-                # in case of not implemented functionality (may happen
-                # on old or exotic systems) we want to crash only if
-                # the user explicitly asked for that particular attr
-                if attrs:
-                    raise
-                continue
-            retdict[name] = ret
+        with self.oneshot():
+            for name in ls:
+                try:
+                    if name == 'pid':
+                        ret = self.pid
+                    else:
+                        meth = getattr(self, name)
+                        ret = meth()
+                except (AccessDenied, ZombieProcess):
+                    ret = ad_value
+                except NotImplementedError:
+                    # in case of not implemented functionality (may happen
+                    # on old or exotic systems) we want to crash only if
+                    # the user explicitly asked for that particular attr
+                    if attrs:
+                        raise
+                    continue
+                retdict[name] = ret
         return retdict
 
     def parent(self):
@@ -530,11 +578,7 @@ class Process(object):
 
     # --- actual API
 
-    @property
-    def pid(self):
-        """The process PID."""
-        return self._pid
-
+    @memoize_when_activated
     def ppid(self):
         """The process parent PID.
         On Windows the return value is cached after first call.
@@ -548,7 +592,7 @@ class Process(object):
         # Process.parent()?
         if POSIX:
             return self._proc.ppid()
-        else:
+        else:  # pragma: no cover
             self._ppid = self._ppid or self._proc.ppid()
             return self._ppid
 
@@ -670,6 +714,7 @@ class Process(object):
 
     if POSIX:
 
+        @memoize_when_activated
         def uids(self):
             """Return process UIDs as a (real, effective, saved)
             namedtuple.
@@ -694,7 +739,7 @@ class Process(object):
             """
             return self._proc.num_fds()
 
-    # Linux, BSD and Windows only
+    # Linux, BSD, AIX and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
         def io_counters(self):
@@ -712,11 +757,11 @@ class Process(object):
         def ionice(self, ioclass=None, value=None):
             """Get or set process I/O niceness (priority).
 
-            On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
-            'value' is a number which goes from 0 to 7. The higher the
+            On Linux *ioclass* is one of the IOPRIO_CLASS_* constants.
+            *value* is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
 
-            On Windows only 'ioclass' is used and it can be set to 2
+            On Windows only *ioclass* is used and it can be set to 2
             (normal), 1 (low) or 0 (very low).
 
             Available on Linux and Windows > Vista only.
@@ -735,8 +780,8 @@ class Process(object):
             """Get or set process resource limits as a (soft, hard)
             tuple.
 
-            'resource' is one of the RLIMIT_* constants.
-            'limits' is supposed to be a (soft, hard)  tuple.
+            *resource* is one of the RLIMIT_* constants.
+            *limits* is supposed to be a (soft, hard)  tuple.
 
             See "man prlimit" for further info.
             Available on Linux only.
@@ -751,8 +796,10 @@ class Process(object):
 
         def cpu_affinity(self, cpus=None):
             """Get or set process CPU affinity.
-            If specified 'cpus' must be a list of CPUs for which you
+            If specified, *cpus* must be a list of CPUs for which you
             want to set the affinity (e.g. [0, 1]).
+            If an empty list is passed, all egible CPUs are assumed
+            (and set).
             (Windows, Linux and BSD only).
             """
             # Automatically remove duplicates both on get and
@@ -761,7 +808,25 @@ class Process(object):
             if cpus is None:
                 return list(set(self._proc.cpu_affinity_get()))
             else:
+                if not cpus:
+                    if hasattr(self._proc, "_get_eligible_cpus"):
+                        cpus = self._proc._get_eligible_cpus()
+                    else:
+                        cpus = tuple(range(len(cpu_times(percpu=True))))
                 self._proc.cpu_affinity_set(list(set(cpus)))
+
+    # Linux, FreeBSD, SunOS
+    if hasattr(_psplatform.Process, "cpu_num"):
+
+        def cpu_num(self):
+            """Return what CPU this process is currently running on.
+            The returned number should be <= psutil.cpu_count()
+            and <= len(psutil.cpu_percent(percpu=True)).
+            It may be used in conjunction with
+            psutil.cpu_percent(percpu=True) to observe the system
+            workload distributed across CPUs.
+            """
+            return self._proc.cpu_num()
 
     # Linux, OSX and Windows only
     if hasattr(_psplatform.Process, "environ"):
@@ -789,19 +854,21 @@ class Process(object):
         """Return the number of threads used by this process."""
         return self._proc.num_threads()
 
-    def threads(self):
-        """Return threads opened by process as a list of
-        (id, user_time, system_time) namedtuples representing
-        thread id and thread CPU times (user/system).
-        On OpenBSD this method requires root access.
-        """
-        return self._proc.threads()
+    if hasattr(_psplatform.Process, "threads"):
+
+        def threads(self):
+            """Return threads opened by process as a list of
+            (id, user_time, system_time) namedtuples representing
+            thread id and thread CPU times (user/system).
+            On OpenBSD this method requires root access.
+            """
+            return self._proc.threads()
 
     @_assert_pid_not_reused
     def children(self, recursive=False):
         """Return the children of this process as a list of Process
         instances, pre-emptively checking whether PID has been reused.
-        If recursive is True return all the parent descendants.
+        If *recursive* is True return all the parent descendants.
 
         Example (A == this process):
 
@@ -824,89 +891,71 @@ class Process(object):
         process Y won't be listed as the reference to process A
         is lost.
         """
-        if hasattr(_psplatform, 'ppid_map'):
-            # Windows only: obtain a {pid:ppid, ...} dict for all running
-            # processes in one shot (faster).
-            ppid_map = _psplatform.ppid_map()
-        else:
-            ppid_map = None
-
+        ppid_map = _ppid_map()
         ret = []
         if not recursive:
-            if ppid_map is None:
-                # 'slow' version, common to all platforms except Windows
-                for p in process_iter():
+            for pid, ppid in ppid_map.items():
+                if ppid == self.pid:
                     try:
-                        if p.ppid() == self.pid:
-                            # if child happens to be older than its parent
-                            # (self) it means child's PID has been reused
-                            if self.create_time() <= p.create_time():
-                                ret.append(p)
+                        child = Process(pid)
+                        # if child happens to be older than its parent
+                        # (self) it means child's PID has been reused
+                        if self.create_time() <= child.create_time():
+                            ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
-            else:  # pragma: no cover
-                # Windows only (faster)
-                for pid, ppid in ppid_map.items():
-                    if ppid == self.pid:
-                        try:
-                            child = Process(pid)
-                            # if child happens to be older than its parent
-                            # (self) it means child's PID has been reused
-                            if self.create_time() <= child.create_time():
-                                ret.append(child)
-                        except (NoSuchProcess, ZombieProcess):
-                            pass
         else:
-            # construct a dict where 'values' are all the processes
-            # having 'key' as their parent
-            table = collections.defaultdict(list)
-            if ppid_map is None:
-                for p in process_iter():
+            # Construct a {pid: [child pids]} dict
+            reverse_ppid_map = collections.defaultdict(list)
+            for pid, ppid in ppid_map.items():
+                reverse_ppid_map[ppid].append(pid)
+            # Recursively traverse that dict, starting from self.pid,
+            # such that we only call Process() on actual children
+            seen = set()
+            stack = [self.pid]
+            while stack:
+                pid = stack.pop()
+                if pid in seen:
+                    # Since pids can be reused while the ppid_map is
+                    # constructed, there may be rare instances where
+                    # there's a cycle in the recorded process "tree".
+                    continue
+                seen.add(pid)
+                for child_pid in reverse_ppid_map[pid]:
                     try:
-                        table[p.ppid()].append(p)
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-            else:  # pragma: no cover
-                for pid, ppid in ppid_map.items():
-                    try:
-                        p = Process(pid)
-                        table[ppid].append(p)
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-            # At this point we have a mapping table where table[self.pid]
-            # are the current process' children.
-            # Below, we look for all descendants recursively, similarly
-            # to a recursive function call.
-            checkpids = [self.pid]
-            for pid in checkpids:
-                for child in table[pid]:
-                    try:
+                        child = Process(child_pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
                         intime = self.create_time() <= child.create_time()
-                    except (NoSuchProcess, ZombieProcess):
-                        pass
-                    else:
                         if intime:
                             ret.append(child)
-                            if child.pid not in checkpids:
-                                checkpids.append(child.pid)
+                            stack.append(child_pid)
+                    except (NoSuchProcess, ZombieProcess):
+                        pass
         return ret
 
     def cpu_percent(self, interval=None):
         """Return a float representing the current process CPU
         utilization as a percentage.
 
-        When interval is 0.0 or None (default) compares process times
+        When *interval* is 0.0 or None (default) compares process times
         to system CPU times elapsed since last call, returning
         immediately (non-blocking). That means that the first time
         this is called it will return a meaningful 0.0 value.
 
-        When interval is > 0.0 compares process times to system CPU
+        When *interval* is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
 
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
+
+        A value > 100.0 can be returned in case of processes running
+        multiple threads on different CPU cores.
+
+        The returned value is explicitly NOT split evenly between
+        all available logical CPUs. This means that a busy loop process
+        running on a system with 2 logical CPUs will be reported as
+        having 100% CPU utilization instead of 50%.
 
         Examples:
 
@@ -921,13 +970,13 @@ class Process(object):
           >>>
         """
         blocking = interval is not None and interval > 0.0
+        if interval is not None and interval < 0:
+            raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
-        if POSIX:
-            def timer():
-                return _timer() * num_cpus
-        else:
-            def timer():
-                return sum(cpu_times())
+
+        def timer():
+            return _timer() * num_cpus
+
         if blocking:
             st1 = timer()
             pt1 = self._proc.cpu_times()
@@ -959,7 +1008,7 @@ class Process(object):
             # interval was too low
             return 0.0
         else:
-            # Note 1.
+            # Note 1:
             # in order to emulate "top" we multiply the value for the num
             # of CPU cores. This way the busy process will be reported as
             # having 100% (or more) usage.
@@ -968,7 +1017,7 @@ class Process(object):
             # taskmgr.exe on Windows differs in that it will show 50%
             # instead.
             #
-            # Note #3:
+            # Note 3:
             # a percentage > 100 is legitimate as it can result from a
             # process with multiple threads running on different CPU
             # cores (top does the same), see:
@@ -977,6 +1026,7 @@ class Process(object):
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
 
+    @memoize_when_activated
     def cpu_times(self):
         """Return a (user, system, children_user, children_system)
         namedtuple representing the accumulated process time, in
@@ -987,6 +1037,7 @@ class Process(object):
         """
         return self._proc.cpu_times()
 
+    @memoize_when_activated
     def memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
@@ -1020,7 +1071,7 @@ class Process(object):
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
-        'memtype' argument is a string that dictates what type of
+        *memtype* argument is a string that dictates what type of
         process memory you want to compare against (defaults to "rss").
         The list of available strings can be obtained like this:
 
@@ -1028,13 +1079,11 @@ class Process(object):
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
         valid_types = list(_psplatform.pfullmem._fields)
-        if hasattr(_psplatform, "pfullmem"):
-            valid_types.extend(list(_psplatform.pfullmem._fields))
         if memtype not in valid_types:
             raise ValueError("invalid memtype %r; valid types are %r" % (
                 memtype, tuple(valid_types)))
-        fun = self.memory_full_info if memtype in ('uss', 'pss', 'swap') else \
-            self.memory_info
+        fun = self.memory_info if memtype in _psplatform.pmem._fields else \
+            self.memory_full_info
         metrics = fun()
         value = getattr(metrics, memtype)
 
@@ -1050,15 +1099,14 @@ class Process(object):
 
     if hasattr(_psplatform.Process, "memory_maps"):
         # Available everywhere except OpenBSD and NetBSD.
-
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.
 
-            If 'grouped' is True the mapped regions with the same 'path'
+            If *grouped* is True the mapped regions with the same 'path'
             are grouped together and the different memory fields are summed.
 
-            If 'grouped' is False every mapped region is shown as a single
+            If *grouped* is False every mapped region is shown as a single
             entity and the namedtuple will also include the mapped region's
             address space ('addr') and permission set ('perms').
             """
@@ -1086,28 +1134,34 @@ class Process(object):
         return self._proc.open_files()
 
     def connections(self, kind='inet'):
-        """Return connections opened by process as a list of
+        """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
-        The 'kind' parameter filters for connections that match the
+        The *kind* parameter filters for connections that match the
         following criteria:
 
-        Kind Value      Connections using
-        inet            IPv4 and IPv6
-        inet4           IPv4
-        inet6           IPv6
-        tcp             TCP
-        tcp4            TCP over IPv4
-        tcp6            TCP over IPv6
-        udp             UDP
-        udp4            UDP over IPv4
-        udp6            UDP over IPv6
-        unix            UNIX socket (both UDP and TCP protocols)
-        all             the sum of all the possible families and protocols
+        +------------+----------------------------------------------------+
+        | Kind Value | Connections using                                  |
+        +------------+----------------------------------------------------+
+        | inet       | IPv4 and IPv6                                      |
+        | inet4      | IPv4                                               |
+        | inet6      | IPv6                                               |
+        | tcp        | TCP                                                |
+        | tcp4       | TCP over IPv4                                      |
+        | tcp6       | TCP over IPv6                                      |
+        | udp        | UDP                                                |
+        | udp4       | UDP over IPv4                                      |
+        | udp6       | UDP over IPv6                                      |
+        | unix       | UNIX socket (both UDP and TCP protocols)           |
+        | all        | the sum of all the possible families and protocols |
+        +------------+----------------------------------------------------+
         """
         return self._proc.connections(kind)
 
+    # --- signals
+
     if POSIX:
         def _send_signal(self, sig):
+            assert not self.pid < 0, self.pid
             if self.pid == 0:
                 # see "man 2 kill"
                 raise ValueError(
@@ -1131,8 +1185,8 @@ class Process(object):
 
     @_assert_pid_not_reused
     def send_signal(self, sig):
-        """Send a signal to process pre-emptively checking whether
-        PID has been reused (see signal module constants) .
+        """Send a signal *sig* to process pre-emptively checking
+        whether PID has been reused (see signal module constants) .
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
@@ -1200,8 +1254,8 @@ class Process(object):
         If the process is already terminated immediately return None
         instead of raising NoSuchProcess.
 
-        If timeout (in seconds) is specified and process is still alive
-        raise TimeoutExpired.
+        If *timeout* (in seconds) is specified and process is still
+        alive raise TimeoutExpired.
 
         To wait for multiple Process(es) use psutil.wait_procs().
         """
@@ -1260,6 +1314,27 @@ class Popen(Process):
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
+    def __enter__(self):
+        if hasattr(self.__subproc, '__enter__'):
+            self.__subproc.__enter__()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        if hasattr(self.__subproc, '__exit__'):
+            return self.__subproc.__exit__(*args, **kwargs)
+        else:
+            if self.stdout:
+                self.stdout.close()
+            if self.stderr:
+                self.stderr.close()
+            try:
+                # Flushing a BufferedWriter may raise an error.
+                if self.stdin:
+                    self.stdin.close()
+            finally:
+                # Wait for the process to terminate, to avoid zombies.
+                self.wait()
+
     def __getattribute__(self, name):
         try:
             return object.__getattribute__(self, name)
@@ -1283,7 +1358,7 @@ _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'children', 'rlimit',
-      'memory_info_ex']])
+      'memory_info_ex', 'oneshot']])
 
 
 # =====================================================================
@@ -1317,7 +1392,7 @@ def pid_exists(pid):
 _pmap = {}
 
 
-def process_iter():
+def process_iter(attrs=None, ad_value=None):
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -1330,9 +1405,18 @@ def process_iter():
 
     The sorting order in which processes are yielded is based on
     their PIDs.
+
+    *attrs* and *ad_value* have the same meaning as in
+    Process.as_dict(). If *attrs* is specified as_dict() is called
+    and the resulting dict is stored as a 'info' attribute attached
+    to returned Process instance.
+    If *attrs* is an empty list it will retrieve all process info
+    (slow).
     """
     def add(pid):
         proc = Process(pid)
+        if attrs is not None:
+            proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
         _pmap[proc.pid] = proc
         return proc
 
@@ -1355,6 +1439,9 @@ def process_iter():
                 # use is_running() to check whether PID has been reused by
                 # another process in which case yield a new Process instance
                 if proc.is_running():
+                    if attrs is not None:
+                        proc.info = proc.as_dict(
+                            attrs=attrs, ad_value=ad_value)
                     yield proc
                 else:
                     yield add(pid)
@@ -1382,14 +1469,16 @@ def wait_procs(procs, timeout=None, callback=None):
     Return a (gone, alive) tuple indicating which processes
     are gone and which ones are still alive.
 
-    The gone ones will have a new 'returncode' attribute indicating
+    The gone ones will have a new *returncode* attribute indicating
     process exit status (may be None).
 
-    'callback' is a function which gets called every time a process
+    *callback* is a function which gets called every time a process
     terminates (a Process instance is passed as callback argument).
 
     Function will return as soon as all processes terminate or when
-    timeout occurs.
+    *timeout* occurs.
+    Differently from Process.wait() it will not raise TimeoutExpired if
+    *timeout* occurs.
 
     Typical use case is:
 
@@ -1466,12 +1555,11 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 
-@memoize
 def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
 
-    If logical is False return the number of physical cores only
+    If *logical* is False return the number of physical cores only
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
@@ -1482,15 +1570,20 @@ def cpu_count(logical=True):
     >>> psutil.cpu_count.cache_clear()
     """
     if logical:
-        return _psplatform.cpu_count_logical()
+        ret = _psplatform.cpu_count_logical()
     else:
-        return _psplatform.cpu_count_physical()
+        ret = _psplatform.cpu_count_physical()
+    if ret is not None and ret < 1:
+        ret = None
+    return ret
 
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple.
-    Every CPU time represents the seconds the CPU has spent in the given mode.
-    The namedtuple's fields availability varies depending on the platform:
+    Every CPU time represents the seconds the CPU has spent in the
+    given mode. The namedtuple's fields availability varies depending on the
+    platform:
+
      - user
      - system
      - idle
@@ -1502,7 +1595,7 @@ def cpu_times(percpu=False):
      - guest (Linux >= 2.6.24)
      - guest_nice (Linux >= 3.2.0)
 
-    When percpu is True return a list of namedtuples for each CPU.
+    When *percpu* is True return a list of namedtuples for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
@@ -1528,21 +1621,56 @@ except Exception:
     traceback.print_exc()
 
 
+def _cpu_tot_time(times):
+    """Given a cpu_time() ntuple calculates the total CPU time
+    (including idle time).
+    """
+    tot = sum(times)
+    if LINUX:
+        # On Linux guest times are already accounted in "user" or
+        # "nice" times, so we subtract them from total.
+        # Htop does the same. References:
+        # https://github.com/giampaolo/psutil/pull/940
+        # http://unix.stackexchange.com/questions/178045
+        # https://github.com/torvalds/linux/blob/
+        #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/
+        #     cputime.c#L158
+        tot -= getattr(times, "guest", 0)  # Linux 2.6.24+
+        tot -= getattr(times, "guest_nice", 0)  # Linux 3.2.0+
+    return tot
+
+
+def _cpu_busy_time(times):
+    """Given a cpu_time() ntuple calculates the busy CPU time.
+    We do so by subtracting all idle CPU times.
+    """
+    busy = _cpu_tot_time(times)
+    busy -= times.idle
+    # Linux: "iowait" is time during which the CPU does not do anything
+    # (waits for IO to complete). On Linux IO wait is *not* accounted
+    # in "idle" time so we subtract it. Htop does the same.
+    # References:
+    # https://github.com/torvalds/linux/blob/
+    #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/cputime.c#L244
+    busy -= getattr(times, "iowait", 0)
+    return busy
+
+
 def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
 
-    When interval is > 0.0 compares system CPU times elapsed before
+    When *interval* is > 0.0 compares system CPU times elapsed before
     and after the interval (blocking).
 
-    When interval is 0.0 or None compares system CPU times elapsed
+    When *interval* is 0.0 or None compares system CPU times elapsed
     since last call or module import, returning immediately (non
     blocking). That means the first time this is called it will
     return a meaningless 0.0 value which you should ignore.
     In this case is recommended for accuracy that this function be
     called with at least 0.1 seconds between calls.
 
-    When percpu is True returns a list of floats representing the
+    When *percpu* is True returns a list of floats representing the
     utilization as a percentage for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
@@ -1566,13 +1694,15 @@ def cpu_percent(interval=None, percpu=False):
     global _last_cpu_times
     global _last_per_cpu_times
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
-        t1_all = sum(t1)
-        t1_busy = t1_all - t1.idle
+        t1_all = _cpu_tot_time(t1)
+        t1_busy = _cpu_busy_time(t1)
 
-        t2_all = sum(t2)
-        t2_busy = t2_all - t2.idle
+        t2_all = _cpu_tot_time(t2)
+        t2_busy = _cpu_busy_time(t2)
 
         # this usually indicates a float precision issue
         if t2_busy <= t1_busy:
@@ -1580,8 +1710,12 @@ def cpu_percent(interval=None, percpu=False):
 
         busy_delta = t2_busy - t1_busy
         all_delta = t2_all - t1_all
-        busy_perc = (busy_delta / all_delta) * 100
-        return round(busy_perc, 1)
+        try:
+            busy_perc = (busy_delta / all_delta) * 100
+        except ZeroDivisionError:
+            return 0.0
+        else:
+            return round(busy_perc, 1)
 
     # system-wide usage
     if not percpu:
@@ -1633,16 +1767,18 @@ def cpu_times_percent(interval=None, percpu=False):
                  irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
       >>>
 
-    interval and percpu arguments have the same meaning as in
+    *interval* and *percpu* arguments have the same meaning as in
     cpu_percent().
     """
     global _last_cpu_times_2
     global _last_per_cpu_times_2
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
         nums = []
-        all_delta = sum(t2) - sum(t1)
+        all_delta = _cpu_tot_time(t2) - _cpu_tot_time(t1)
         for field in t1._fields:
             field_delta = getattr(t2, field) - getattr(t1, field)
             try:
@@ -1705,6 +1841,39 @@ def cpu_stats():
     return _psplatform.cpu_stats()
 
 
+if hasattr(_psplatform, "cpu_freq"):
+
+    def cpu_freq(percpu=False):
+        """Return CPU frequency as a nameduple including current,
+        min and max frequency expressed in Mhz.
+
+        If *percpu* is True and the system supports per-cpu frequency
+        retrieval (Linux only) a list of frequencies is returned for
+        each CPU. If not a list with one element is returned.
+        """
+        ret = _psplatform.cpu_freq()
+        if percpu:
+            return ret
+        else:
+            num_cpus = float(len(ret))
+            if num_cpus == 0:
+                return None
+            elif num_cpus == 1:
+                return ret[0]
+            else:
+                currs, mins, maxs = 0.0, 0.0, 0.0
+                for cpu in ret:
+                    currs += cpu.current
+                    mins += cpu.min
+                    maxs += cpu.max
+                current = currs / num_cpus
+                min_ = mins / num_cpus
+                max_ = maxs / num_cpus
+                return _common.scpufreq(current, min_, max_)
+
+    __all__.append("cpu_freq")
+
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
@@ -1718,19 +1887,18 @@ def virtual_memory():
        total physical memory available.
 
      - available:
-       the actual amount of available memory that can be given
-       instantly to processes that request more memory in bytes; this
-       is calculated by summing different memory values depending on
-       the platform (e.g. free + buffers + cached on Linux) and it is
-       supposed to be used to monitor actual memory usage in a cross
-       platform fashion.
+       the memory that can be given instantly to processes without the
+       system going into swap.
+       This is calculated by summing different memory values depending
+       on the platform and it is supposed to be used to monitor actual
+       memory usage in a cross platform fashion.
 
      - percent:
        the percentage usage calculated as (total - available) / total * 100
 
      - used:
-       memory used, calculated differently depending on the platform and
-       designed for informational purposes only:
+        memory used, calculated differently depending on the platform and
+        designed for informational purposes only:
         OSX: active + inactive + wired
         BSD: active + wired + cached
         LINUX: total - free
@@ -1792,9 +1960,9 @@ def swap_memory():
 
 
 def disk_usage(path):
-    """Return disk usage statistics about the given path as a namedtuple
-    including total, used and free space expressed in bytes plus the
-    percentage usage.
+    """Return disk usage statistics about the given *path* as a
+    namedtuple including total, used and free space expressed in bytes
+    plus the percentage usage.
     """
     return _psplatform.disk_usage(path)
 
@@ -1805,13 +1973,13 @@ def disk_partitions(all=False):
     'opts' field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
-    If "all" parameter is False return physical devices only and ignore
+    If *all* parameter is False return physical devices only and ignore
     all others.
     """
     return _psplatform.disk_partitions(all)
 
 
-def disk_io_counters(perdisk=False):
+def disk_io_counters(perdisk=False, nowrap=True):
     """Return system disk I/O statistics as a namedtuple including
     the following fields:
 
@@ -1819,20 +1987,35 @@ def disk_io_counters(perdisk=False):
      - write_count: number of writes
      - read_bytes:  number of bytes read
      - write_bytes: number of bytes written
-     - read_time:   time spent reading from disk (in milliseconds)
-     - write_time:  time spent writing to disk (in milliseconds)
+     - read_time:   time spent reading from disk (in ms)
+     - write_time:  time spent writing to disk (in ms)
 
-    If perdisk is True return the same information for every
+    Platform specific:
+
+     - busy_time: (Linux, FreeBSD) time spent doing actual I/Os (in ms)
+     - read_merged_count (Linux): number of merged reads
+     - write_merged_count (Linux): number of merged writes
+
+    If *perdisk* is True return the same information for every
     physical disk installed on the system as a dictionary
     with partition names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
 
     On recent Windows versions 'diskperf -y' command may need to be
     executed first otherwise this function won't find any disk.
     """
     rawdict = _psplatform.disk_io_counters()
     if not rawdict:
-        raise RuntimeError("couldn't find any physical disk")
+        return {} if perdisk else None
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
     nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
@@ -1842,12 +2025,17 @@ def disk_io_counters(perdisk=False):
         return nt(*[sum(x) for x in zip(*rawdict.values())])
 
 
+disk_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.disk_io_counters')
+disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
+
+
 # =====================================================================
 # --- network related functions
 # =====================================================================
 
 
-def net_io_counters(pernic=False):
+def net_io_counters(pernic=False, nowrap=True):
     """Return network I/O statistics as a namedtuple including
     the following fields:
 
@@ -1861,14 +2049,23 @@ def net_io_counters(pernic=False):
      - dropout:      total number of outgoing packets which were dropped
                      (always 0 on OSX and BSD)
 
-    If pernic is True return the same information for every
+    If *pernic* is True return the same information for every
     network interface installed on the system as a dictionary
     with network interface names as the keys and the namedtuple
     described above as the values.
+
+    If *nowrap* is True it detects and adjust the numbers which overflow
+    and wrap (restart from 0) and add "old value" to "new value" so that
+    the returned numbers will always be increasing or remain the same,
+    but never decrease.
+    "disk_io_counters.cache_clear()" can be used to invalidate the
+    cache.
     """
     rawdict = _psplatform.net_io_counters()
     if not rawdict:
-        raise RuntimeError("couldn't find any network interface")
+        return {} if pernic else None
+    if nowrap:
+        rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
         for nic, fields in rawdict.items():
             rawdict[nic] = _common.snetio(*fields)
@@ -1877,26 +2074,34 @@ def net_io_counters(pernic=False):
         return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
 
 
+net_io_counters.cache_clear = functools.partial(
+    _wrap_numbers.cache_clear, 'psutil.net_io_counters')
+net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
+
+
 def net_connections(kind='inet'):
-    """Return system-wide connections as a list of
+    """Return system-wide socket connections as a list of
     (fd, family, type, laddr, raddr, status, pid) namedtuples.
     In case of limited privileges 'fd' and 'pid' may be set to -1
     and None respectively.
-    The 'kind' parameter filters for connections that fit the
+    The *kind* parameter filters for connections that fit the
     following criteria:
 
-    Kind Value      Connections using
-    inet            IPv4 and IPv6
-    inet4           IPv4
-    inet6           IPv6
-    tcp             TCP
-    tcp4            TCP over IPv4
-    tcp6            TCP over IPv6
-    udp             UDP
-    udp4            UDP over IPv4
-    udp6            UDP over IPv6
-    unix            UNIX socket (both UDP and TCP protocols)
-    all             the sum of all the possible families and protocols
+    +------------+----------------------------------------------------+
+    | Kind Value | Connections using                                  |
+    +------------+----------------------------------------------------+
+    | inet       | IPv4 and IPv6                                      |
+    | inet4      | IPv4                                               |
+    | inet6      | IPv6                                               |
+    | tcp        | TCP                                                |
+    | tcp4       | TCP over IPv4                                      |
+    | tcp6       | TCP over IPv6                                      |
+    | udp        | UDP                                                |
+    | udp4       | UDP over IPv4                                      |
+    | udp6       | UDP over IPv6                                      |
+    | unix       | UNIX socket (both UDP and TCP protocols)           |
+    | all        | the sum of all the possible families and protocols |
+    +------------+----------------------------------------------------+
 
     On OSX this function requires root privileges.
     """
@@ -1909,19 +2114,14 @@ def net_if_addrs():
     NIC names and value is a list of namedtuples for each address
     assigned to the NIC. Each namedtuple includes 5 fields:
 
-     - family
-     - address
-     - netmask
-     - broadcast
-     - ptp
-
-    'family' can be either socket.AF_INET, socket.AF_INET6 or
-    psutil.AF_LINK, which refers to a MAC address.
-    'address' is the primary address and it is always set.
-    'netmask' and 'broadcast' and 'ptp' may be None.
-    'ptp' stands for "point to point" and references the destination
-    address on a point to point interface (typically a VPN).
-    'broadcast' and 'ptp' are mutually exclusive.
+     - family: can be either socket.AF_INET, socket.AF_INET6 or
+               psutil.AF_LINK, which refers to a MAC address.
+     - address: is the primary address and it is always set.
+     - netmask: and 'broadcast' and 'ptp' may be None.
+     - ptp: stands for "point to point" and references the
+            destination address on a point to point interface
+            (typically a VPN).
+     - broadcast: and *ptp* are mutually exclusive.
 
     Note: you can have more than one address of the same family
     associated with each interface.
@@ -1972,6 +2172,80 @@ def net_if_stats():
 
 
 # =====================================================================
+# --- sensors
+# =====================================================================
+
+
+# Linux
+if hasattr(_psplatform, "sensors_temperatures"):
+
+    def sensors_temperatures(fahrenheit=False):
+        """Return hardware temperatures. Each entry is a namedtuple
+        representing a certain hardware sensor (it may be a CPU, an
+        hard disk or something else, depending on the OS and its
+        configuration).
+        All temperatures are expressed in celsius unless *fahrenheit*
+        is set to True.
+        """
+        def convert(n):
+            if n is not None:
+                return (float(n) * 9 / 5) + 32 if fahrenheit else n
+
+        ret = collections.defaultdict(list)
+        rawdict = _psplatform.sensors_temperatures()
+
+        for name, values in rawdict.items():
+            while values:
+                label, current, high, critical = values.pop(0)
+                current = convert(current)
+                high = convert(high)
+                critical = convert(critical)
+
+                if high and not critical:
+                    critical = high
+                elif critical and not high:
+                    high = critical
+
+                ret[name].append(
+                    _common.shwtemp(label, current, high, critical))
+
+        return dict(ret)
+
+    __all__.append("sensors_temperatures")
+
+
+# Linux
+if hasattr(_psplatform, "sensors_fans"):
+
+    def sensors_fans():
+        """Return fans speed. Each entry is a namedtuple
+        representing a certain hardware sensor.
+        All speed are expressed in RPM (rounds per minute).
+        """
+        return _psplatform.sensors_fans()
+
+    __all__.append("sensors_fans")
+
+
+# Linux, Windows, FreeBSD, OSX
+if hasattr(_psplatform, "sensors_battery"):
+
+    def sensors_battery():
+        """Return battery information. If no battery is installed
+        returns None.
+
+         - percent: battery power left as a percentage.
+         - secsleft: a rough approximation of how many seconds are left
+                     before the battery runs out of power. May be
+                     POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
+         - power_plugged: True if the AC power cable is connected.
+        """
+        return _psplatform.sensors_battery()
+
+    __all__.append("sensors_battery")
+
+
+# =====================================================================
 # --- other system related functions
 # =====================================================================
 
@@ -2010,7 +2284,7 @@ if WINDOWS:
         return _psplatform.win_service_iter()
 
     def win_service_get(name):
-        """Get a Windows service by name.
+        """Get a Windows service by *name*.
         Raise NoSuchProcess if no service with such name exists.
         """
         return _psplatform.win_service_get(name)
@@ -2023,59 +2297,51 @@ def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """
-    import datetime
-
     today_day = datetime.date.today()
-    templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
-             'create_time', 'memory_info']
+    templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
+    attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
+             'memory_info']
     if POSIX:
         attrs.append('uids')
         attrs.append('terminal')
-    print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
-                   "START", "TIME", "COMMAND"))
-    for p in process_iter():
-        try:
-            pinfo = p.as_dict(attrs, ad_value='')
-        except NoSuchProcess:
-            pass
-        else:
-            if pinfo['create_time']:
-                ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
-                if ctime.date() == today_day:
-                    ctime = ctime.strftime("%H:%M")
-                else:
-                    ctime = ctime.strftime("%b%d")
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
+                   "COMMAND"))
+    for p in process_iter(attrs=attrs, ad_value=''):
+        if p.info['create_time']:
+            ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
+            if ctime.date() == today_day:
+                ctime = ctime.strftime("%H:%M")
             else:
-                ctime = ''
-            cputime = time.strftime("%M:%S",
-                                    time.localtime(sum(pinfo['cpu_times'])))
-            try:
-                user = p.username()
-            except Error:
-                user = ''
-            if WINDOWS and '\\' in user:
-                user = user.split('\\')[1]
-            vms = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].vms / 1024) or '?'
-            rss = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].rss / 1024) or '?'
-            memp = pinfo['memory_percent'] and \
-                round(pinfo['memory_percent'], 1) or '?'
-            print(templ % (
-                user[:10],
-                pinfo['pid'],
-                pinfo['cpu_percent'],
-                memp,
-                vms,
-                rss,
-                pinfo.get('terminal', '') or '?',
-                ctime,
-                cputime,
-                pinfo['name'].strip() or '?'))
+                ctime = ctime.strftime("%b%d")
+        else:
+            ctime = ''
+        cputime = time.strftime("%M:%S",
+                                time.localtime(sum(p.info['cpu_times'])))
+        try:
+            user = p.username()
+        except Error:
+            user = ''
+        if WINDOWS and '\\' in user:
+            user = user.split('\\')[1]
+        vms = p.info['memory_info'] and \
+            int(p.info['memory_info'].vms / 1024) or '?'
+        rss = p.info['memory_info'] and \
+            int(p.info['memory_info'].rss / 1024) or '?'
+        memp = p.info['memory_percent'] and \
+            round(p.info['memory_percent'], 1) or '?'
+        print(templ % (
+            user[:10],
+            p.info['pid'],
+            memp,
+            vms,
+            rss,
+            p.info.get('terminal', '') or '?',
+            ctime,
+            cputime,
+            p.info['name'].strip() or '?'))
 
 
-del memoize, division, deprecated_method
+del memoize, memoize_when_activated, division, deprecated_method
 if sys.version_info[0] < 3:
     del num, x
 

@@ -32,6 +32,8 @@
     typedef __u16 u16;
     typedef __u8 u8;
 #endif
+/* Avoid redefinition of struct sysinfo with musl libc */
+#define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
 
 /* The minimum number of CPUs allocated in a cpu_set_t */
@@ -52,6 +54,8 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
     #include <sys/resource.h>
 #endif
 
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607
@@ -191,8 +195,10 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -208,18 +214,26 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
-            PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            PyErr_Format(PyExc_RuntimeError, "getmntent() syscall failed");
             goto error;
         }
-        py_tuple = Py_BuildValue("(ssss)",
-                                 entry->mnt_fsname,  // device
-                                 entry->mnt_dir,     // mount point
+        py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(entry->mnt_dir);
+        if (! py_mountp)
+            goto error;
+        py_tuple = Py_BuildValue("(OOss)",
+                                 py_dev,             // device
+                                 py_mountp,          // mount point
                                  entry->mnt_type,    // fs type
                                  entry->mnt_opts);   // options
         if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
     endmntent(file);
@@ -228,6 +242,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     if (file != NULL)
         endmntent(file);
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
@@ -402,10 +418,14 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 #else
         long value = PyInt_AsLong(item);
 #endif
-        if (value == -1 && PyErr_Occurred())
+        if ((value == -1) || PyErr_Occurred()) {
+            if (!PyErr_Occurred())
+                PyErr_SetString(PyExc_ValueError, "invalid CPU value");
             goto error;
+        }
         CPU_SET(value, &cpu_set);
     }
+
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
@@ -431,6 +451,9 @@ psutil_users(PyObject *self, PyObject *args) {
     struct utmp *ut;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
 
     if (py_retlist == NULL)
@@ -443,26 +466,41 @@ psutil_users(PyObject *self, PyObject *args) {
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfO)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
+            "(OOOfOi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc              // (bool) user process
+            py_user_proc,             // (bool) user process
+            ut->ut_pid                // process id
         );
-    if (! py_tuple)
+        if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
     endutent();
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_user_proc);
     Py_DECREF(py_retlist);
     endutent();
     return NULL;
@@ -476,16 +514,14 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args) {
+psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     char *nic_name;
     int sock = 0;
     int ret;
     int duplex;
     int speed;
-    int mtu;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
-    PyObject *py_is_up = NULL;
     PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
@@ -495,22 +531,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     if (sock == -1)
         goto error;
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-
-    // is up?
-    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
-        goto error;
-    if ((ifr.ifr_flags & IFF_UP) != 0)
-        py_is_up = Py_True;
-    else
-        py_is_up = Py_False;
-    Py_INCREF(py_is_up);
-
-    // MTU
-    ret = ioctl(sock, SIOCGIFMTU, &ifr);
-    if (ret == -1)
-        goto error;
-    mtu = ifr.ifr_mtu;
 
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
@@ -537,18 +557,15 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     }
 
     close(sock);
-    py_retlist = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
+    py_retlist = Py_BuildValue("[ii]", duplex, speed);
     if (!py_retlist)
         goto error;
-    Py_DECREF(py_is_up);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_is_up);
-    if (sock != 0)
+    if (sock != -1)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -557,7 +574,6 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
@@ -578,8 +594,8 @@ PsutilMethods[] = {
      "device, mount point and filesystem type"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NIC stats (isup, duplex, speed, mtu)"},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
+     "Return duplex and speed info about a NIC"},
 
     // --- linux specific
 
@@ -590,6 +606,9 @@ PsutilMethods[] = {
      "Get or set process resource limits."},
 #endif
 
+    // --- others
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -693,6 +712,8 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

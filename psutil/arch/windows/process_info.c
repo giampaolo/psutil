@@ -18,181 +18,11 @@
 #include "../../_psutil_common.h"
 
 
-/*
- * A wrapper around OpenProcess setting NSP exception if process
- * no longer exists.
- * "pid" is the process pid, "dwDesiredAccess" is the first argument
- * exptected by OpenProcess.
- * Return a process handle or NULL.
- */
-HANDLE
-psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
-    HANDLE hProcess;
-    DWORD processExitCode = 0;
-
-    if (pid == 0) {
-        // otherwise we'd get NoSuchProcess
-        return AccessDenied();
-    }
-
-    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
-    if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER)
-            NoSuchProcess();
-        else
-            PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-
-    // make sure the process is running
-    GetExitCodeProcess(hProcess, &processExitCode);
-    if (processExitCode == 0) {
-        NoSuchProcess();
-        CloseHandle(hProcess);
-        return NULL;
-    }
-    return hProcess;
-}
-
-
-/*
- * Same as psutil_handle_from_pid_waccess but implicitly uses
- * PROCESS_QUERY_INFORMATION | PROCESS_VM_READ as dwDesiredAccess
- * parameter for OpenProcess.
- */
-HANDLE
-psutil_handle_from_pid(DWORD pid) {
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-    return psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
-}
-
-
-DWORD *
-psutil_get_pids(DWORD *numberOfReturnedPIDs) {
-    // Win32 SDK says the only way to know if our process array
-    // wasn't large enough is to check the returned size and make
-    // sure that it doesn't match the size of the array.
-    // If it does we allocate a larger array and try again
-
-    // Stores the actual array
-    DWORD *procArray = NULL;
-    DWORD procArrayByteSz;
-    int procArraySz = 0;
-
-    // Stores the byte size of the returned array from enumprocesses
-    DWORD enumReturnSz = 0;
-
-    do {
-        procArraySz += 1024;
-        free(procArray);
-        procArrayByteSz = procArraySz * sizeof(DWORD);
-        procArray = malloc(procArrayByteSz);
-        if (procArray == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
-            free(procArray);
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
-        }
-    } while (enumReturnSz == procArraySz * sizeof(DWORD));
-
-    // The number of elements is the returned size / size of each element
-    *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
-
-    return procArray;
-}
-
-
-int
-psutil_pid_is_running(DWORD pid) {
-    HANDLE hProcess;
-    DWORD exitCode;
-
-    // Special case for PID 0 System Idle Process
-    if (pid == 0)
-        return 1;
-    if (pid < 0)
-        return 0;
-
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                           FALSE, pid);
-    if (NULL == hProcess) {
-        // invalid parameter is no such process
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            CloseHandle(hProcess);
-            return 0;
-        }
-
-        // access denied obviously means there's a process to deny access to...
-        if (GetLastError() == ERROR_ACCESS_DENIED) {
-            CloseHandle(hProcess);
-            return 1;
-        }
-
-        CloseHandle(hProcess);
-        PyErr_SetFromWindowsErr(0);
-        return -1;
-    }
-
-    if (GetExitCodeProcess(hProcess, &exitCode)) {
-        CloseHandle(hProcess);
-        return (exitCode == STILL_ACTIVE);
-    }
-
-    // access denied means there's a process there so we'll assume
-    // it's running
-    if (GetLastError() == ERROR_ACCESS_DENIED) {
-        CloseHandle(hProcess);
-        return 1;
-    }
-
-    PyErr_SetFromWindowsErr(0);
-    CloseHandle(hProcess);
-    return -1;
-}
-
-
-int
-psutil_pid_in_proclist(DWORD pid) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
-
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
-        return -1;
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (pid == proclist[i]) {
-            free(proclist);
-            return 1;
-        }
-    }
-
-    free(proclist);
-    return 0;
-}
-
-
-// Check exit code from a process handle. Return FALSE on an error also
-// XXX - not used anymore
-int
-handlep_is_running(HANDLE hProcess) {
-    DWORD dwCode;
-
-    if (NULL == hProcess)
-        return 0;
-    if (GetExitCodeProcess(hProcess, &dwCode)) {
-        if (dwCode == STILL_ACTIVE)
-            return 1;
-    }
-    return 0;
-}
-
-// Helper structures to access the memory correctly.  Some of these might also
-// be defined in the winternl.h header file but unfortunately not in a usable
-// way.
+// ====================================================================
+// Helper structures to access the memory correctly.
+// Some of these might also be defined in the winternl.h header file
+// but unfortunately not in a usable way.
+// ====================================================================
 
 // see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
 #ifndef NT_SUCCESS
@@ -319,6 +149,297 @@ typedef struct {
     /* More fields ...  */
 } PEB64;
 #endif
+
+
+#define PSUTIL_FIRST_PROCESS(Processes) ( \
+    (PSYSTEM_PROCESS_INFORMATION)(Processes))
+#define PSUTIL_NEXT_PROCESS(Process) ( \
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
+
+const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
+const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
+
+
+// ====================================================================
+// Process and PIDs utiilties.
+// ====================================================================
+
+
+/*
+ * Return 1 if PID exists, 0 if not, -1 on error.
+ */
+int
+psutil_pid_in_pids(DWORD pid) {
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    if (proclist == NULL)
+        return -1;
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (proclist[i] == pid) {
+            free(proclist);
+            return 1;
+        }
+    }
+    free(proclist);
+    return 0;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running.
+ * Returns:
+ * - 1: running
+ * - 0: not running
+ * - -1: WindowsError
+ * - -2: AssertionError
+ */
+int
+psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
+    DWORD processExitCode = 0;
+
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // Yeah, this is the actual error code in case of
+            // "no such process".
+            if (! psutil_assert_pid_not_exists(
+                    pid, "iphr: OpenProcess() -> ERROR_INVALID_PARAMETER")) {
+                return -2;
+            }
+            return 0;
+        }
+        return -1;
+    }
+
+    if (GetExitCodeProcess(hProcess, &processExitCode)) {
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
+        if (processExitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "iphr: GetExitCodeProcess() -> STILL_ACTIVE")) {
+                return -2;
+            }
+            return 1;
+        }
+        else {
+            // We can't be sure so we look into pids.
+            if (psutil_pid_in_pids(pid) == 1) {
+                return 1;
+            }
+            else {
+                CloseHandle(hProcess);
+                return 0;
+            }
+        }
+    }
+
+    CloseHandle(hProcess);
+    if (! psutil_assert_pid_not_exists( pid, "iphr: exit fun")) {
+        return -2;
+    }
+    return -1;
+}
+
+
+/*
+ * Given a process HANDLE checks whether it's actually running and if
+ * it does return it, else return NULL with the proper Python exception
+ * set.
+ */
+HANDLE
+psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+    int ret = psutil_is_phandle_running(hProcess, pid);
+    if (ret == 1)
+        return hProcess;
+    else if (ret == 0)
+        return NoSuchProcess("");
+    else if (ret == -1)
+        return PyErr_SetFromWindowsErr(0);
+    else  // -2
+        return NULL;
+}
+
+
+/*
+ * A wrapper around OpenProcess setting NSP exception if process
+ * no longer exists.
+ * "pid" is the process pid, "dwDesiredAccess" is the first argument
+ * exptected by OpenProcess.
+ * Return a process handle or NULL.
+ */
+HANDLE
+psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
+    HANDLE hProcess;
+
+    if (pid == 0) {
+        // otherwise we'd get NoSuchProcess
+        return AccessDenied("");
+    }
+
+    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
+    return psutil_check_phandle(hProcess, pid);
+}
+
+
+/*
+ * Same as psutil_handle_from_pid_waccess but implicitly uses
+ * PROCESS_QUERY_INFORMATION | PROCESS_VM_READ as dwDesiredAccess
+ * parameter for OpenProcess.
+ */
+HANDLE
+psutil_handle_from_pid(DWORD pid) {
+    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
+    return psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
+}
+
+
+DWORD *
+psutil_get_pids(DWORD *numberOfReturnedPIDs) {
+    // Win32 SDK says the only way to know if our process array
+    // wasn't large enough is to check the returned size and make
+    // sure that it doesn't match the size of the array.
+    // If it does we allocate a larger array and try again
+
+    // Stores the actual array
+    DWORD *procArray = NULL;
+    DWORD procArrayByteSz;
+    int procArraySz = 0;
+
+    // Stores the byte size of the returned array from enumprocesses
+    DWORD enumReturnSz = 0;
+
+    do {
+        procArraySz += 1024;
+        free(procArray);
+        procArrayByteSz = procArraySz * sizeof(DWORD);
+        procArray = malloc(procArrayByteSz);
+        if (procArray == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
+            free(procArray);
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    } while (enumReturnSz == procArraySz * sizeof(DWORD));
+
+    // The number of elements is the returned size / size of each element
+    *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
+
+    return procArray;
+}
+
+
+int
+psutil_assert_pid_exists(DWORD pid, char *err) {
+    if (PSUTIL_TESTING) {
+        if (psutil_pid_in_pids(pid) == 0) {
+            PyErr_SetString(PyExc_AssertionError, err);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+int
+psutil_assert_pid_not_exists(DWORD pid, char *err) {
+    if (PSUTIL_TESTING) {
+        if (psutil_pid_in_pids(pid) == 1) {
+            PyErr_SetString(PyExc_AssertionError, err);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+/*
+/* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
+/* Returns:
+ * 1: pid exists
+ * 0: it doesn't
+ * -1: error
+ */
+int
+psutil_pid_is_running(DWORD pid) {
+    HANDLE hProcess;
+    DWORD exitCode;
+    DWORD err;
+
+    // Special case for PID 0 System Idle Process
+    if (pid == 0)
+        return 1;
+    if (pid < 0)
+        return 0;
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                           FALSE, pid);
+    if (NULL == hProcess) {
+        err = GetLastError();
+        // Yeah, this is the actual error code in case of "no such process".
+        if (err == ERROR_INVALID_PARAMETER) {
+            if (! psutil_assert_pid_not_exists(
+                    pid, "pir: OpenProcess() -> INVALID_PARAMETER")) {
+                return -1;
+            }
+            return 0;
+        }
+        // Access denied obviously means there's a process to deny access to.
+        else if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: OpenProcess() ACCESS_DENIED")) {
+                return -1;
+            }
+            return 1;
+        }
+        // Be strict and raise an exception; the caller is supposed
+        // to take -1 into account.
+        else {
+            PyErr_SetFromWindowsErr(err);
+            return -1;
+        }
+    }
+
+    if (GetExitCodeProcess(hProcess, &exitCode)) {
+        CloseHandle(hProcess);
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
+        if (exitCode == STILL_ACTIVE) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> STILL_ACTIVE")) {
+                return -1;
+            }
+            return 1;
+        }
+        // We can't be sure so we look into pids.
+        else {
+            return psutil_pid_in_pids(pid);
+        }
+    }
+    else {
+        err = GetLastError();
+        CloseHandle(hProcess);
+        // Same as for OpenProcess, assume access denied means there's
+        // a process to deny access to.
+        if (err == ERROR_ACCESS_DENIED) {
+            if (! psutil_assert_pid_exists(
+                    pid, "pir: GetExitCodeProcess() -> ERROR_ACCESS_DENIED")) {
+                return -1;
+            }
+            return 1;
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return -1;
+        }
+    }
+}
+
 
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */
@@ -615,7 +736,7 @@ static int psutil_get_process_data(long pid,
                 src = procParameters.CommandLine.Buffer;
                 size = procParameters.CommandLine.Length;
                 break;
-            case KIND_CWD: 
+            case KIND_CWD:
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;
@@ -664,6 +785,8 @@ static int psutil_get_process_data(long pid,
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
+
+    CloseHandle(hProcess);
 
     *pdata = buffer;
     *psize = size;
@@ -766,15 +889,6 @@ out:
     return ret;
 }
 
-#define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PH_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : \
-   NULL)
-
-const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
-const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 /*
  * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
@@ -828,23 +942,24 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     }
 
     if (status != 0) {
-        PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
+        PyErr_Format(
+            PyExc_RuntimeError, "NtQuerySystemInformation() syscall failed");
         goto error;
     }
 
     if (bufferSize <= 0x20000)
         initialBufferSize = bufferSize;
 
-    process = PH_FIRST_PROCESS(buffer);
+    process = PSUTIL_FIRST_PROCESS(buffer);
     do {
         if (process->UniqueProcessId == (HANDLE)pid) {
             *retProcess = process;
             *retBuffer = buffer;
             return 1;
         }
-    } while ( (process = PH_NEXT_PROCESS(process)) );
+    } while ( (process = PSUTIL_NEXT_PROCESS(process)) );
 
-    NoSuchProcess();
+    NoSuchProcess("");
     goto error;
 
 error:

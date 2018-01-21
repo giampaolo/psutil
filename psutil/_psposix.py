@@ -15,14 +15,10 @@ from ._common import sdiskusage
 from ._common import usage_percent
 from ._compat import PY3
 from ._compat import unicode
+from ._exceptions import TimeoutExpired
 
 
-__all__ = ['TimeoutExpired', 'pid_exists', 'wait_pid', 'disk_usage',
-           'get_terminal_map']
-
-
-class TimeoutExpired(Exception):
-    pass
+__all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
 
 
 def pid_exists(pid):
@@ -53,7 +49,7 @@ def pid_exists(pid):
         return True
 
 
-def wait_pid(pid, timeout=None):
+def wait_pid(pid, timeout=None, proc_name=None):
     """Wait for process with pid 'pid' to terminate and return its
     exit status code as an integer.
 
@@ -67,7 +63,7 @@ def wait_pid(pid, timeout=None):
     def check_timeout(delay):
         if timeout is not None:
             if timer() >= stop_at:
-                raise TimeoutExpired()
+                raise TimeoutExpired(timeout, pid=pid, name=proc_name)
         time.sleep(delay)
         return min(delay * 2, 0.04)
 
@@ -110,7 +106,7 @@ def wait_pid(pid, timeout=None):
             # process exited due to a signal; return the integer of
             # that signal
             if os.WIFSIGNALED(status):
-                return os.WTERMSIG(status)
+                return -os.WTERMSIG(status)
             # process exited using exit(2) system call; return the
             # integer exit(2) system call has been called with
             elif os.WIFEXITED(status):
@@ -127,21 +123,23 @@ def disk_usage(path):
     total and used disk space whereas "free" and "percent" represent
     the "free" and "used percent" user disk space.
     """
-    try:
+    if PY3:
         st = os.statvfs(path)
-    except UnicodeEncodeError:
-        if not PY3 and isinstance(path, unicode):
-            # this is a bug with os.statvfs() and unicode on
-            # Python 2, see:
-            # - https://github.com/giampaolo/psutil/issues/416
-            # - http://bugs.python.org/issue18695
-            try:
-                path = path.encode(sys.getfilesystemencoding())
-            except UnicodeEncodeError:
-                pass
+    else:
+        # os.statvfs() does not support unicode on Python 2:
+        # - https://github.com/giampaolo/psutil/issues/416
+        # - http://bugs.python.org/issue18695
+        try:
             st = os.statvfs(path)
-        else:
-            raise
+        except UnicodeEncodeError:
+            if isinstance(path, unicode):
+                try:
+                    path = path.encode(sys.getfilesystemencoding())
+                except UnicodeEncodeError:
+                    pass
+                st = os.statvfs(path)
+            else:
+                raise
 
     # Total space which is only available to root (unless changed
     # at system level).
@@ -169,6 +167,9 @@ def disk_usage(path):
 
 @memoize
 def get_terminal_map():
+    """Get a map of device-id -> path as a dict.
+    Used by Process.terminal()
+    """
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
     for name in ls:

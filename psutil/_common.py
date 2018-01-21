@@ -4,6 +4,9 @@
 
 """Common objects shared by __init__.py and _ps*.py modules."""
 
+# Note: this module is imported by setup.py so it should not import
+# psutil or third-party modules.
+
 from __future__ import division
 
 import contextlib
@@ -13,7 +16,9 @@ import os
 import socket
 import stat
 import sys
+import threading
 import warnings
+from collections import defaultdict
 from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
@@ -32,10 +37,14 @@ if sys.version_info >= (3, 4):
 else:
     enum = None
 
+# can't take it from _common.py as this script is imported by setup.py
+PY3 = sys.version_info[0] == 3
+
 __all__ = [
-    # OS constants
+    # constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
     'WINDOWS',
+    'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
@@ -54,7 +63,7 @@ __all__ = [
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
-    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum',
+    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
 ]
 
 
@@ -72,6 +81,7 @@ OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+AIX = sys.platform.startswith("aix")
 
 
 # ===================================================================
@@ -121,6 +131,28 @@ else:
 
     globals().update(NicDuplex.__members__)
 
+# sensors_battery()
+if enum is None:
+    POWER_TIME_UNKNOWN = -1
+    POWER_TIME_UNLIMITED = -2
+else:
+    class BatteryTime(enum.IntEnum):
+        POWER_TIME_UNKNOWN = -1
+        POWER_TIME_UNLIMITED = -2
+
+    globals().update(BatteryTime.__members__)
+
+# --- others
+
+ENCODING = sys.getfilesystemencoding()
+if not PY3:
+    ENCODING_ERRS = "replace"
+else:
+    try:
+        ENCODING_ERRS = sys.getfilesystemencodeerrors()  # py 3.6
+    except AttributeError:
+        ENCODING_ERRS = "surrogateescape" if POSIX else "replace"
+
 
 # ===================================================================
 # --- namedtuples
@@ -145,7 +177,7 @@ snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'errin', 'errout',
                                'dropin', 'dropout'])
 # psutil.users()
-suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
+suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
 # psutil.net_connections()
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
@@ -156,6 +188,15 @@ snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
+# psutil.cpu_freq()
+scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
+# psutil.sensors_temperatures()
+shwtemp = namedtuple(
+    'shwtemp', ['label', 'current', 'high', 'critical'])
+# psutil.sensors_battery()
+sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
+# psutil.sensors_battery()
+sfan = namedtuple('sfan', ['label', 'current'])
 
 # --- for Process methods
 
@@ -180,6 +221,9 @@ pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
 # psutil.Process.connections()
 pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status'])
+
+# psutil.connections() and psutil.Process.connections()
+addr = namedtuple('addr', ['ip', 'port'])
 
 
 # ===================================================================
@@ -209,7 +253,7 @@ if AF_UNIX is not None:
         "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
+del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 
 
 # ===================================================================
@@ -261,6 +305,59 @@ def memoize(fun):
     return wrapper
 
 
+def memoize_when_activated(fun):
+    """A memoize decorator which is disabled by default. It can be
+    activated and deactivated on request.
+    For efficiency reasons it can be used only against class methods
+    accepting no arguments.
+
+    >>> class Foo:
+    ...     @memoize
+    ...     def foo()
+    ...         print(1)
+    ...
+    >>> f = Foo()
+    >>> # deactivated (default)
+    >>> foo()
+    1
+    >>> foo()
+    1
+    >>>
+    >>> # activated
+    >>> foo.cache_activate()
+    >>> foo()
+    1
+    >>> foo()
+    >>> foo()
+    >>>
+    """
+    @functools.wraps(fun)
+    def wrapper(self):
+        if not wrapper.cache_activated:
+            return fun(self)
+        else:
+            try:
+                ret = cache[fun]
+            except KeyError:
+                ret = cache[fun] = fun(self)
+            return ret
+
+    def cache_activate():
+        """Activate cache."""
+        wrapper.cache_activated = True
+
+    def cache_deactivate():
+        """Deactivate and clear cache."""
+        wrapper.cache_activated = False
+        cache.clear()
+
+    cache = {}
+    wrapper.cache_activated = False
+    wrapper.cache_activate = cache_activate
+    wrapper.cache_deactivate = cache_deactivate
+    return wrapper
+
+
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
@@ -291,12 +388,13 @@ def path_exists_strict(path):
         return True
 
 
+@memoize
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
-    if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
+    if not socket.has_ipv6 or AF_INET6 is None:
         return False
     try:
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        sock = socket.socket(AF_INET6, socket.SOCK_STREAM)
         with contextlib.closing(sock):
             sock.bind(("::1", 0))
         return True
@@ -363,14 +461,115 @@ def deprecated_method(replacement):
     'replcement' is the method name which will be called instead.
     """
     def outer(fun):
-        msg = "%s() is deprecated; use %s() instead" % (
+        msg = "%s() is deprecated and will be removed; use %s() instead" % (
             fun.__name__, replacement)
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
         @functools.wraps(fun)
         def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, category=FutureWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
+
+
+class _WrapNumbers:
+    """Watches numbers so that they don't overflow and wrap
+    (reset to zero).
+    """
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.cache = {}
+        self.reminders = {}
+        self.reminder_keys = {}
+
+    def _add_dict(self, input_dict, name):
+        assert name not in self.cache
+        assert name not in self.reminders
+        assert name not in self.reminder_keys
+        self.cache[name] = input_dict
+        self.reminders[name] = defaultdict(int)
+        self.reminder_keys[name] = defaultdict(set)
+
+    def _remove_dead_reminders(self, input_dict, name):
+        """In case the number of keys changed between calls (e.g. a
+        disk disappears) this removes the entry from self.reminders.
+        """
+        old_dict = self.cache[name]
+        gone_keys = set(old_dict.keys()) - set(input_dict.keys())
+        for gone_key in gone_keys:
+            for remkey in self.reminder_keys[name][gone_key]:
+                del self.reminders[name][remkey]
+            del self.reminder_keys[name][gone_key]
+
+    def run(self, input_dict, name):
+        """Cache dict and sum numbers which overflow and wrap.
+        Return an updated copy of `input_dict`
+        """
+        if name not in self.cache:
+            # This was the first call.
+            self._add_dict(input_dict, name)
+            return input_dict
+
+        self._remove_dead_reminders(input_dict, name)
+
+        old_dict = self.cache[name]
+        new_dict = {}
+        for key in input_dict.keys():
+            input_tuple = input_dict[key]
+            try:
+                old_tuple = old_dict[key]
+            except KeyError:
+                # The input dict has a new key (e.g. a new disk or NIC)
+                # which didn't exist in the previous call.
+                new_dict[key] = input_tuple
+                continue
+
+            bits = []
+            for i in range(len(input_tuple)):
+                input_value = input_tuple[i]
+                old_value = old_tuple[i]
+                remkey = (key, i)
+                if input_value < old_value:
+                    # it wrapped!
+                    self.reminders[name][remkey] += old_value
+                    self.reminder_keys[name][key].add(remkey)
+                bits.append(input_value + self.reminders[name][remkey])
+
+            new_dict[key] = tuple(bits)
+
+        self.cache[name] = input_dict
+        return new_dict
+
+    def cache_clear(self, name=None):
+        """Clear the internal cache, optionally only for function 'name'."""
+        with self.lock:
+            if name is None:
+                self.cache.clear()
+                self.reminders.clear()
+                self.reminder_keys.clear()
+            else:
+                self.cache.pop(name, None)
+                self.reminders.pop(name, None)
+                self.reminder_keys.pop(name, None)
+
+    def cache_info(self):
+        """Return internal cache dicts as a tuple of 3 elements."""
+        with self.lock:
+            return (self.cache, self.reminders, self.reminder_keys)
+
+
+def wrap_numbers(input_dict, name):
+    """Given an `input_dict` and a function `name`, adjust the numbers
+    which "wrap" (restart from zero) across different calls by adding
+    "old value" to "new value" and return an updated dict.
+    """
+    with _wn.lock:
+        return _wn.run(input_dict, name)
+
+
+_wn = _WrapNumbers()
+wrap_numbers.cache_clear = _wn.cache_clear
+wrap_numbers.cache_info = _wn.cache_info

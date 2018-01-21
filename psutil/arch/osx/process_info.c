@@ -21,39 +21,7 @@
 
 #include "process_info.h"
 #include "../../_psutil_common.h"
-
-
-/*
- * Return 1 if PID exists in the current process list, else 0, -1
- * on error.
- * TODO: this should live in _psutil_posix.c but for some reason if I
- * move it there I get a "include undefined symbol" error.
- */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        return 0;
-        /*
-        // This is how it is handled on other POSIX systems but it causes
-        // test_halfway_terminated test to fail with AccessDenied.
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-        */
-    }
-}
-
+#include "../../_psutil_posix.h"
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -65,12 +33,11 @@ psutil_pid_exists(long pid) {
  */
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
-    // Declaring mib as const requires use of a cast since the
-    // sysctl prototype doesn't include the const modifier.
-    static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-    size_t           size, size2;
-    void            *ptr;
-    int              err, lim = 8;  // some limit
+    int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+    size_t size, size2;
+    void *ptr;
+    int err;
+    int lim = 8;  // some limit
 
     assert( procList != NULL);
     assert(*procList == NULL);
@@ -142,7 +109,7 @@ PyObject *
 psutil_get_cmdline(long pid) {
     int mib[3];
     int nargs;
-    int len;
+    size_t len;
     char *procargs = NULL;
     char *arg_ptr;
     char *arg_end;
@@ -172,15 +139,14 @@ psutil_get_cmdline(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
+    mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) {
-            // EINVAL == access denied OR nonexistent PID
-            if (psutil_pid_exists(pid))
-                AccessDenied();
-            else
-                NoSuchProcess();
-        }
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -210,12 +176,8 @@ psutil_get_cmdline(long pid) {
         goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(curr_arg);
-#else
-            py_arg = Py_BuildValue("s", curr_arg);
-#endif
-            if (!py_arg)
+            if (! py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
@@ -271,15 +233,14 @@ psutil_get_environ(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
+    mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) {
-            // EINVAL == access denied OR nonexistent PID
-            if (psutil_pid_exists(pid))
-                AccessDenied();
-            else
-                NoSuchProcess();
-        }
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -310,7 +271,6 @@ psutil_get_environ(long pid) {
     env_start = arg_ptr;
 
     procenv = calloc(1, arg_end - arg_ptr);
-
     if (procenv == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -327,14 +287,15 @@ psutil_get_environ(long pid) {
         arg_ptr = s + 1;
     }
 
-#if PY_MAJOR_VERSION >= 3
-    py_ret = PyUnicode_FromStringAndSize(procenv, arg_ptr - env_start + 1);
-#else
-    py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
-#endif
-
-    if (!py_ret)
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(
+        procenv, arg_ptr - env_start + 1);
+    if (!py_ret) {
+        // XXX: don't want to free() this as per:
+        // https://github.com/giampaolo/psutil/issues/926
+        // It sucks but not sure what else to do.
+        procargs = NULL;
         goto error;
+    }
 
     free(procargs);
     free(procenv);
@@ -357,13 +318,13 @@ error:
 
 
 int
-psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
+psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
+    mib[3] = (pid_t)pid;
 
     // fetch the info with sysctl()
     len = sizeof(struct kinfo_proc);
@@ -377,7 +338,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -385,26 +346,16 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 
 /*
- * A thin wrapper around proc_pidinfo()
+ * A wrapper around proc_pidinfo().
+ * Returns 0 on failure (and Python exception gets already set).
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, void *pti, int size) {
-    int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
-    if (ret == 0) {
-        if (! psutil_pid_exists(pid)) {
-            NoSuchProcess();
-            return 0;
-        }
-        else {
-            AccessDenied();
-            return 0;
-        }
-    }
-    else if (ret != size) {
-        AccessDenied();
+psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
+    errno = 0;
+    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
+    if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
+        psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
-    else {
-        return 1;
-    }
+    return ret;
 }

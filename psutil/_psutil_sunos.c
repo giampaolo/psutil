@@ -9,18 +9,23 @@
  * this in Cython which I later on translated in C.
  */
 
+/* fix compilation issue on SunOS 5.10, see:
+ * https://github.com/giampaolo/psutil/issues/421
+ * https://github.com/giampaolo/psutil/issues/1077
+ * http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
+ *
+ * Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
+*/
+
+#define NEW_MIB_COMPLIANT 1
+#define _STRUCTURED_PROC 1
 
 #include <Python.h>
 
-// fix for "Cannot use procfs in the large file compilation environment"
-// error, see:
-// http://sourceware.org/ml/gdb-patches/2010-11/msg00336.html
-#undef _FILE_OFFSET_BITS
-#define _STRUCTURED_PROC 1
-
-// fix compilation issue on SunOS 5.10, see:
-// https://github.com/giampaolo/psutil/issues/421
-#define NEW_MIB_COMPLIANT
+#if !defined(_LP64) && _FILE_OFFSET_BITS == 64
+#  undef _FILE_OFFSET_BITS
+#  undef _LARGEFILE64_SOURCE
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -42,13 +47,12 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
+
+#include "arch/solaris/environ.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-#ifndef EXPER_IP_AND_ALL_IRES
-#define EXPER_IP_AND_ALL_IRES (1024+4)
-#endif
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
 
 
 /*
@@ -71,7 +75,8 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     if (nbytes != size) {
         close(fd);
-        PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
         return 0;
     }
     close(fd);
@@ -96,16 +101,19 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
-    return Py_BuildValue("ikkdiiik",
-                         info.pr_ppid,              // parent pid
-                         info.pr_rssize,            // rss
-                         info.pr_size,              // vms
-                         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-                         info.pr_lwp.pr_nice,       // nice
-                         info.pr_nlwp,              // no. of threads
-                         info.pr_lwp.pr_state,      // status code
-                         info.pr_ttydev             // tty nr
-                        );
+    return Py_BuildValue(
+        "ikkdiiik",
+        info.pr_ppid,              // parent pid
+        info.pr_rssize,            // rss
+        info.pr_size,              // vms
+        PSUTIL_TV2DOUBLE(info.pr_start),  // create time
+        // XXX - niceness is wrong (20 instead of 0), see:
+        // https://github.com/giampaolo/psutil/issues/1082
+        info.pr_lwp.pr_nice,       // nice
+        info.pr_nlwp,              // no. of threads
+        info.pr_lwp.pr_state,      // status code
+        info.pr_ttydev             // tty nr
+        );
 }
 
 
@@ -118,8 +126,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[1000];
     psinfo_t info;
     const char *procfs_path;
-    PyObject *py_name;
-    PyObject *py_args;
+    PyObject *py_name = NULL;
+    PyObject *py_args = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -127,17 +136,99 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
-        return NULL;
+        goto error;
     py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
     if (!py_args)
+        goto error;
+    py_retlist = Py_BuildValue("OO", py_name, py_args);
+    if (!py_retlist)
+        goto error;
+    Py_DECREF(py_name);
+    Py_DECREF(py_args);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_name);
+    Py_XDECREF(py_args);
+    Py_XDECREF(py_retlist);
+    return NULL;
+}
+
+
+/*
+ * Return process environ block.
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    psinfo_t info;
+    const char *procfs_path;
+    char **env = NULL;
+    ssize_t env_count = -1;
+    char *dm;
+    int i = 0;
+    PyObject *py_envname = NULL;
+    PyObject *py_envval = NULL;
+    PyObject *py_retdict = PyDict_New();
+
+    if (! py_retdict)
+        return PyErr_NoMemory();
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    return Py_BuildValue("OO", py_name, py_args);
-#else
-    return Py_BuildValue("ss", info.pr_fname, info.pr_psargs);
-#endif
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        goto error;
+
+    if (! info.pr_envp) {
+        AccessDenied("");
+        goto error;
+    }
+
+    env = psutil_read_raw_env(info, procfs_path, &env_count);
+    if (! env && env_count != 0)
+        goto error;
+
+    for (i=0; i<env_count; i++) {
+        if (! env[i])
+            break;
+
+        dm = strchr(env[i], '=');
+        if (! dm)
+            continue;
+
+        *dm = '\0';
+
+        py_envname = PyUnicode_DecodeFSDefault(env[i]);
+        if (! py_envname)
+            goto error;
+
+        py_envval = PyUnicode_DecodeFSDefault(dm+1);
+        if (! py_envname)
+            goto error;
+
+        if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
+            goto error;
+
+        Py_DECREF(py_envname);
+        Py_DECREF(py_envval);
+    }
+
+    psutil_free_cstrings_array(env, env_count);
+    return py_retdict;
+
+ error:
+    if (env && env_count >= 0)
+        psutil_free_cstrings_array(env, env_count);
+
+    Py_XDECREF(py_envname);
+    Py_XDECREF(py_envval);
+    Py_XDECREF(py_retdict);
+    return NULL;
 }
 
 
@@ -168,6 +259,86 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return what CPU the process is running on.
+ */
+static PyObject *
+psutil_proc_cpu_num(PyObject *self, PyObject *args) {
+    int fd = NULL;
+    int pid;
+    char path[1000];
+    struct prheader header;
+    struct lwpsinfo *lwp;
+    char *lpsinfo = NULL;
+    char *ptr = NULL;
+    int nent;
+    int size;
+    int proc_num;
+    size_t nbytes;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+
+    sprintf(path, "%s/%i/lpsinfo", procfs_path, pid);
+    fd = open(path, O_RDONLY);
+    if (fd == -1) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
+        return NULL;
+    }
+
+    // read header
+    nbytes = pread(fd, &header, sizeof(header), 0);
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != sizeof(header)) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // malloc
+    nent = header.pr_nent;
+    size = header.pr_entsize * nent;
+    ptr = lpsinfo = malloc(size);
+    if (lpsinfo == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    // read the rest
+    nbytes = pread(fd, lpsinfo, size, sizeof(header));
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != size) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // done
+    lwp = (lwpsinfo_t *)ptr;
+    proc_num = lwp->pr_onpro;
+    close(fd);
+    free(ptr);
+    free(lpsinfo);
+    return Py_BuildValue("i", proc_num);
+
+error:
+    if (fd != -1)
+        close(fd);
+    if (ptr != NULL)
+        free(ptr);
+    if (lpsinfo != NULL)
+        free(lpsinfo);
+    return NULL;
+}
+
+
+/*
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
@@ -189,7 +360,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process uids/gids as a Python tuple.
+ * Return process voluntary and involuntary context switches as a Python tuple.
  */
 static PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
@@ -215,7 +386,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
  * - 'pr_ioch' is a sum of chars read and written, with no distinction
  * - 'pr_inblk' and 'pr_oublk', which should be the number of bytes
  *    read and written, hardly increase and according to:
- *    http://www.brendangregg.com/Perf/paper_diskubyp1.pdf
+ *    http://www.brendangregg.com/Solaris/paper_diskubyp1.pdf
  *    ...they should be meaningless anyway.
  *
 static PyObject*
@@ -235,7 +406,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
     // *and* written.
     // 'pr_inblk' and 'pr_oublk' should be expressed in blocks of
     // 8KB according to:
-    // http://www.brendangregg.com/Perf/paper_diskubyp1.pdf  (pag. 8)
+    // http://www.brendangregg.com/Solaris/paper_diskubyp1.pdf (pag. 8)
     return Py_BuildValue("kkkk",
                          info.pr_ioch,
                          info.pr_ioch,
@@ -367,40 +538,60 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
+        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssfO)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
+            "(OOOfOi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc);            // (bool) user process
+            py_user_proc,             // (bool) user process
+            ut->ut_pid                // process id
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
-    endutent();
+    endutxent();
 
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (ut != NULL)
-        endutent();
+    endutxent();
     return NULL;
 }
 
@@ -413,8 +604,10 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file;
     struct mnttab mt;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -426,23 +619,32 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     while (getmntent(file, &mt) == 0) {
+        py_dev = PyUnicode_DecodeFSDefault(mt.mnt_special);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(mt.mnt_mountp);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)",
-            mt.mnt_special,   // device
-            mt.mnt_mountp,    // mount point
+            "(OOss)",
+            py_dev,           // device
+            py_mountp,        // mount point
             mt.mnt_fstype,    // fs type
             mt.mnt_mntopts);  // options
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
-
     }
     fclose(file);
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (file != NULL)
@@ -583,6 +785,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     const char *procfs_path;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -629,12 +832,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
         // perms
-        sprintf(perms, "%c%c%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
+        sprintf(perms, "%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
                 p->pr_mflags & MA_WRITE ? 'w' : '-',
                 p->pr_mflags & MA_EXEC ? 'x' : '-',
-                p->pr_mflags & MA_SHARED ? 's' : '-',
-                p->pr_mflags & MA_NORESERVE ? 'R' : '-',
-                p->pr_mflags & MA_RESERVED1 ? '*' : ' ');
+                p->pr_mflags & MA_SHARED ? 's' : '-');
 
         // name
         if (strlen(p->pr_mapname) > 0) {
@@ -663,19 +864,23 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             }
         }
 
+        py_path = PyUnicode_DecodeFSDefault(name);
+        if (! py_path)
+            goto error;
         py_tuple = Py_BuildValue(
-            "iisslll",
-            p->pr_vaddr,
-            pr_addr_sz,
+            "kksOkkk",
+            (unsigned long)p->pr_vaddr,
+            (unsigned long)pr_addr_sz,
             perms,
-            name,
-            (long)p->pr_rss * p->pr_pagesize,
-            (long)p->pr_anon * p->pr_pagesize,
-            (long)p->pr_locked * p->pr_pagesize);
+            py_path,
+            (unsigned long)p->pr_rss * p->pr_pagesize,
+            (unsigned long)p->pr_anon * p->pr_pagesize,
+            (unsigned long)p->pr_locked * p->pr_pagesize);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_path);
         Py_DECREF(py_tuple);
 
         // increment pointer
@@ -690,6 +895,7 @@ error:
     if (fd != -1)
         close(fd);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
         free(xmap);
@@ -836,7 +1042,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #endif
     char buf[512];
     int i, flags, getcode, num_ent, state;
-    char lip[200], rip[200];
+    char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
     int lport, rport;
     int processed_pid;
     int databuf_init = 0;
@@ -862,9 +1068,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    /*
-    XXX - These 2 are used in ifconfig.c but they seem unnecessary
-    ret = ioctl(sd, I_PUSH, "tcp");
+    int ret = ioctl(sd, I_PUSH, "tcp");
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -874,8 +1078,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-    */
-
+    //
     // OK, this mess is basically copied and pasted from nxsensor project
     // which copied and pasted it from netstat source code, mibget()
     // function.  Also see:
@@ -885,9 +1088,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     tor->OPT_length = sizeof (struct opthdr);
     tor->MGMT_flags = T_CURRENT;
     mibhdr = (struct opthdr *)&tor[1];
-    mibhdr->level = EXPER_IP_AND_ALL_IRES;
+    mibhdr->level = MIB2_IP;
     mibhdr->name  = 0;
+
+#ifdef NEW_MIB_COMPLIANT
+    mibhdr->len   = 1;
+#else
     mibhdr->len   = 0;
+#endif
 
     ctlbuf.buf = buf;
     ctlbuf.len = tor->OPT_offset + tor->OPT_length;
@@ -900,7 +1108,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     mibhdr = (struct opthdr *)&toa[1];
     ctlbuf.maxlen = sizeof (buf);
-
     for (;;) {
         flags = 0;
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
@@ -948,7 +1155,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             tp = (mib2_tcpConnEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_tcpConnEntry_t);
             for (i = 0; i < num_ent; i++, tp++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp->tcpConnCreationProcess;
+#else
+                processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -989,7 +1200,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
 
             for (i = 0; i < num_ent; i++, tp6++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6->tcp6ConnCreationProcess;
+#else
+        		processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -1025,8 +1240,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
             ude = (mib2_udpEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
+	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr->len);
             for (i = 0; i < num_ent; i++, ude++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude->udpCreationProcess;
+#else
+                processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // XXX Very ugly hack! It seems we get here only the first
@@ -1062,7 +1282,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             ude6 = (mib2_udp6Entry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++, ude6++) {
+#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude6->udp6CreationProcess;
+#else
+                processed_pid = 0;
+#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 inet_ntop(AF_INET6, &ude6->udp6LocalAddress, lip, sizeof(lip));
@@ -1108,20 +1332,20 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
+    setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
             boot_time = (float)ut->ut_tv.tv_sec;
             break;
         }
     }
-    endutent();
-    if (boot_time != 0.0) {
-        return Py_BuildValue("f", boot_time);
-    }
-    else {
+    endutxent();
+    if (boot_time == 0.0) {
+        /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
         return NULL;
     }
+    return Py_BuildValue("f", boot_time);
 }
 
 
@@ -1323,12 +1547,13 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- process-related functions
     {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
     {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS,
      "Return process name and args."},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+      "Return process environment."},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
@@ -1339,6 +1564,8 @@ PsutilMethods[] = {
      "Return process memory mappings"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
+    {"proc_cpu_num", psutil_proc_cpu_num, METH_VARARGS,
+     "Return what CPU the process is on"},
 
     // --- system-related functions
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
@@ -1363,6 +1590,10 @@ PsutilMethods[] = {
      "Return NIC stats (isup, duplex, speed, mtu)"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+
+    // --- others
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1447,6 +1678,8 @@ void init_psutil_sunos(void)
     // sunos specific
     PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

@@ -49,6 +49,7 @@ def tear_down():
     curses.echo()
     curses.endwin()
 
+
 win = curses.initscr()
 atexit.register(tear_down)
 curses.endwin()
@@ -160,6 +161,7 @@ def main():
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass
+
 
 if __name__ == '__main__':
     main()

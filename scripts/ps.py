@@ -17,6 +17,7 @@ import time
 
 import psutil
 
+
 PROC_STATUSES_RAW = {
     psutil.STATUS_RUNNING: "R",
     psutil.STATUS_SLEEPING: "S",

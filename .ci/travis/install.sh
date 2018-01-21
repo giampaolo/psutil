@@ -42,7 +42,7 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
 fi
 
 if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]] || [[ $PYVER == 'py26' ]]; then
-    pip install -U ipaddress unittest2 mock==1.0.1
+    pip install -U ipaddress unittest2 argparse mock==1.0.1
 elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
     pip install -U ipaddress mock
 elif [[ $TRAVIS_PYTHON_VERSION == '3.2' ]] || [[ $PYVER == 'py32' ]]; then
@@ -51,4 +51,4 @@ elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]] || [[ $PYVER == 'py33' ]]; then
     pip install -U ipaddress
 fi
 
-pip install coverage coveralls flake8 pep8 setuptools
+pip install -U coverage coveralls flake8 pep8 setuptools

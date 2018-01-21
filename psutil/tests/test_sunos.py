@@ -15,7 +15,7 @@ from psutil.tests import sh
 from psutil.tests import unittest
 
 
-@unittest.skipUnless(SUNOS, "not a SunOS system")
+@unittest.skipIf(not SUNOS, "SUNOS only")
 class SunOSSpecificTestCase(unittest.TestCase):
 
     def test_swap_memory(self):
@@ -35,6 +35,10 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.total, total)
         self.assertEqual(psutil_swap.used, used)
         self.assertEqual(psutil_swap.free, free)
+
+    def test_cpu_count(self):
+        out = sh("/usr/sbin/psrinfo")
+        self.assertEqual(psutil.cpu_count(), len(out.split('\n')))
 
 
 if __name__ == '__main__':

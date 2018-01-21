@@ -8,19 +8,36 @@ https://github.com/giampaolo/psutil/issues
 PLATFORMS
 =========
 
-- #355 (patch): Android
-- #605 (branch): AIX
+- #355: Android (with patch)
+- #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
+- #693: Windows Nano
 - DragonFlyBSD
 - HP-UX
 
 FEATURES
 ========
 
-- (Linux): from /proc/pid/stat we can also retrieve process and children guest
-  times (time spent running a virtual CPU for a guest OS).
+- #371: sensors_temperatures() at least for OSX.
 
-- #809: (Linux) per-process resource limits.
+- #669: Windows / net_if_addrs(): return broadcast addr.
+
+- #550: CPU info (frequency, architecture, threads per core, cores per socket,
+  sockets, ...)
+
+- #772: extended net_io_counters() metrics.
+
+- #900: wheels for OSX and Linux.
+
+- #922: extended net_io_stats() info.
+
+- #914: extended platform specific process info.
+
+- #898: wifi stats
+
+- #893: (BSD) process environ
+
+- #809: (BSD) per-process resource limits (rlimit()).
 
 - (UNIX) process root (different from cwd)
 
@@ -28,9 +45,6 @@ FEATURES
 
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
-
-- #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
-  lm-sensors lib).
 
 - #269: NIC rx/tx queue. This should probably go into net_if_stats().
   Figure out on what platforms this is supported:
@@ -54,12 +68,9 @@ FEATURES
 
 - system-wide number of open file descriptors:
   - https://jira.hyperic.com/browse/SIGAR-30
-  - http://www.netadmintools.com/part295.html
 
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
-
-- #357: what CPU a process is on.
 
 - Doc / wiki which compares similarities between UNIX cli tools and psutil.
   Example:
@@ -135,8 +146,15 @@ FEATURES
 
 - #550: number of threads per core.
 
-- Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+BUGFIXES
+========
 
+- #600: windows / open_files(): support network file handles.
+
+REJECTED
+========
+
+- #550: threads per core
 
 RESOURCES
 =========
