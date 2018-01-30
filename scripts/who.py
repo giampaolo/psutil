@@ -21,7 +21,10 @@ import psutil
 def main():
     users = psutil.users()
     for user in users:
-        proc_name = psutil.Process(user.pid).name() if user.pid else ""
+        if hasattr(user,'pid'):
+                proc_name = psutil.Process(user.pid).name()
+        else:
+                proc_name = ""
         print("%-12s %-10s %-10s %-14s %s" % (
             user.name,
             user.terminal or '-',
