@@ -35,6 +35,7 @@ Quick links
 - `Documentation <http://psutil.readthedocs.io>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
+- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
