@@ -759,7 +759,7 @@ Sensors
     >>> battery = psutil.sensors_battery()
     >>> battery
     sbattery(percent=93, secsleft=16628, power_plugged=False)
-    >>> print("charge = %s%%, time left = %s" % (batt.percent, secs2hours(batt.secsleft)))
+    >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
     charge = 93%, time left = 4:37:08
 
   See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__ for an example application.

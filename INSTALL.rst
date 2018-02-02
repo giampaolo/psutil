@@ -83,7 +83,10 @@ exe/wheel installers hosted on
     C:\Python27\python.exe -m pip install psutil
 
 If you want to compile psutil from sources you'll need **Visual Studio**
-(Mingw32 is no longer supported):
+(Mingw32 is no longer supported), which really is a mess. 
+The VS versions are the onle listed below. 
+This  `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
+provides numerous info on how to properly set up VS (good luck with that).
 
 * Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
 * Python 3.3, 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
