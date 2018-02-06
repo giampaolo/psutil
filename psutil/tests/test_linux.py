@@ -1090,6 +1090,57 @@ class TestMisc(unittest.TestCase):
 
         self.assertEqual(psutil.PROCFS_PATH, '/proc')
 
+    def test_cpu_steal_decrease(self):
+        # Test cumulative cpu stats decrease. We should ignore this.
+        # See issue #1210.
+
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/stat":
+                return io.BytesIO(textwrap.dedent("""\
+                    cpu   0 0 0 0 0 0 0 1 0 0
+                    cpu0  0 0 0 0 0 0 0 1 0 0
+                    cpu1  0 0 0 0 0 0 0 1 0 0
+                    """).encode())
+            return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            # first call to "percent" functions should read the new stat file
+            # and compare to the "real" file read at import time - so the
+            # values are meaningless
+            psutil.cpu_percent()
+            assert m.called
+            psutil.cpu_percent(percpu=True)
+            psutil.cpu_times_percent()
+            psutil.cpu_times_percent(percpu=True)
+
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/stat":
+                return io.BytesIO(textwrap.dedent("""\
+                    cpu   1 0 0 0 0 0 0 0 0 0
+                    cpu0  1 0 0 0 0 0 0 0 0 0
+                    cpu1  1 0 0 0 0 0 0 0 0 0
+                    """).encode())
+            return orig_open(name, *args, **kwargs)
+
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            # Increase "user" while steal goes "backwards" to zero.
+            cpu_percent = psutil.cpu_percent()
+            assert m.called
+            cpu_percent_percpu = psutil.cpu_percent(percpu=True)
+            cpu_times_percent = psutil.cpu_times_percent()
+            cpu_times_percent_percpu = psutil.cpu_times_percent(percpu=True)
+            self.assertNotEqual(cpu_percent, 0)
+            self.assertNotEqual(sum(cpu_percent_percpu), 0)
+            self.assertNotEqual(sum(cpu_times_percent), 0)
+            self.assertNotEqual(sum(cpu_times_percent), 100.0)
+            self.assertNotEqual(sum(map(sum, cpu_times_percent_percpu)), 0)
+            self.assertNotEqual(sum(map(sum, cpu_times_percent_percpu)), 100.0)
+            self.assertEqual(cpu_times_percent.steal, 0)
+            self.assertNotEqual(cpu_times_percent.user, 0)
+
     def test_boot_time_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             self.assertRaises(

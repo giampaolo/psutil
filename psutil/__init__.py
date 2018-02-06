@@ -1655,6 +1655,27 @@ def _cpu_busy_time(times):
     return busy
 
 
+def _cpu_times_deltas(t1, t2):
+    assert t1._fields == t2._fields, (t1, t2)
+    field_deltas = []
+    for field in _psplatform.scputimes._fields:
+        field_delta = getattr(t2, field) - getattr(t1, field)
+        # CPU times are always supposed to increase over time
+        # or at least remain the same and that's because time
+        # cannot go backwards.
+        # Surprisingly sometimes this might not be the case (at
+        # least on Windows and Linux), see:
+        # https://github.com/giampaolo/psutil/issues/392
+        # https://github.com/giampaolo/psutil/issues/645
+        # https://github.com/giampaolo/psutil/issues/1210
+        # Trim negative deltas to zero to ignore decreasing fields.
+        # top does the same. Reference:
+        # https://gitlab.com/procps-ng/procps/blob/v3.3.12/top/top.c#L5063
+        field_delta = max(0, field_delta)
+        field_deltas.append(field_delta)
+    return _psplatform.scputimes(*field_deltas)
+
+
 def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
@@ -1697,18 +1718,11 @@ def cpu_percent(interval=None, percpu=False):
         raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
-        t1_all = _cpu_tot_time(t1)
-        t1_busy = _cpu_busy_time(t1)
+        times_delta = _cpu_times_deltas(t1, t2)
 
-        t2_all = _cpu_tot_time(t2)
-        t2_busy = _cpu_busy_time(t2)
+        all_delta = _cpu_tot_time(times_delta)
+        busy_delta = _cpu_busy_time(times_delta)
 
-        # this usually indicates a float precision issue
-        if t2_busy <= t1_busy:
-            return 0.0
-
-        busy_delta = t2_busy - t1_busy
-        all_delta = t2_all - t1_all
         try:
             busy_perc = (busy_delta / all_delta) * 100
         except ZeroDivisionError:
@@ -1777,28 +1791,18 @@ def cpu_times_percent(interval=None, percpu=False):
 
     def calculate(t1, t2):
         nums = []
-        all_delta = _cpu_tot_time(t2) - _cpu_tot_time(t1)
-        for field in t1._fields:
-            field_delta = getattr(t2, field) - getattr(t1, field)
-            try:
-                field_perc = (100 * field_delta) / all_delta
-            except ZeroDivisionError:
-                field_perc = 0.0
+        times_delta = _cpu_times_deltas(t1, t2)
+        all_delta = _cpu_tot_time(times_delta)
+        # "scale" is the value to multiply each delta with to get percentages.
+        # We use "max" to avoid division by zero (if all_delta is 0, then all
+        # fields are 0 so percentages will be 0 too. all_delta cannot be a
+        # fraction because cpu times are integers)
+        scale = 100.0 / max(1, all_delta)
+        for field_delta in times_delta:
+            field_perc = field_delta * scale
             field_perc = round(field_perc, 1)
-            # CPU times are always supposed to increase over time
-            # or at least remain the same and that's because time
-            # cannot go backwards.
-            # Surprisingly sometimes this might not be the case (at
-            # least on Windows and Linux), see:
-            # https://github.com/giampaolo/psutil/issues/392
-            # https://github.com/giampaolo/psutil/issues/645
-            # I really don't know what to do about that except
-            # forcing the value to 0 or 100.
-            if field_perc > 100.0:
-                field_perc = 100.0
-            # `<=` because `-0.0 == 0.0` evaluates to True
-            elif field_perc <= 0.0:
-                field_perc = 0.0
+            # make sure we don't return negative values or values over 100%
+            field_perc = min(max(0.0, field_perc), 100.0)
             nums.append(field_perc)
         return _psplatform.scputimes(*nums)
 
