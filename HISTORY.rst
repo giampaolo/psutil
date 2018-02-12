@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.4
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
+
 5.4.3
 =====
 
