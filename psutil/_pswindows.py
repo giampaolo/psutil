@@ -200,7 +200,7 @@ def py2_strencode(s):
         if isinstance(s, str):
             return s
         else:
-            return s.encode(ENCODING, errors=ENCODING_ERRS)
+            return s.encode(ENCODING, ENCODING_ERRS)
 
 
 # =====================================================================
