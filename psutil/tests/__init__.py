@@ -283,7 +283,7 @@ class ThreadTask(threading.Thread):
 # ===================================================================
 
 
-def _cleanup_on_err(fun):
+def _reap_children_on_err(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         try:
@@ -294,7 +294,7 @@ def _cleanup_on_err(fun):
     return wrapper
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
@@ -327,7 +327,7 @@ def get_test_subprocess(cmd=None, **kwds):
     return sproc
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def create_proc_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
@@ -399,7 +399,7 @@ def create_zombie_proc():
             conn.close()
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
     Returns a subprocess.Popen instance.
@@ -416,7 +416,7 @@ def pyrun(src, **kwds):
     return subp
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
