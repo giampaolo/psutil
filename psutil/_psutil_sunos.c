@@ -116,6 +116,54 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         );
 }
 
+/*
+ * Join array of C strings to C string with delemiter dm.
+ * Omit empty records.
+ */
+static char*
+cstrings_array_to_string(char ** array, size_t count, char dm) {
+    int i;
+    size_t total_length = 0;
+    size_t item_length = 0;
+    char *result = NULL;
+    char *last = NULL;
+
+    if (!array)
+        return NULL;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]) + 1;
+        total_length += item_length;
+    }
+
+    if (!total_length) {
+        return strdup("");
+    }
+
+    result = malloc(total_length);
+    if (!result)
+        return NULL;
+
+    result[0] = '\0';
+    last = result;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]);
+        memcpy(last, array[i], item_length);
+        last[item_length] = dm;
+
+        last += item_length + 1;
+    }
+
+    result[total_length-1] = '\0';
+    return result;
+}
 
 /*
  * Return process name and args as a Python tuple.
@@ -125,6 +173,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     psinfo_t info;
+    size_t argc;
+    char **argv;
+    char *argv_plain;
     const char *procfs_path;
     PyObject *py_name = NULL;
     PyObject *py_args = NULL;
@@ -139,7 +190,21 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
         goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+
+    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
+        argv = psutil_read_raw_args(info, procfs_path, &argc);
+        if (argv) {
+            argv_plain = cstrings_array_to_string(argv, argc, ' ');
+            if (argv_plain) {
+                py_args = PyUnicode_DecodeFSDefault(argv_plain);
+                free(argv_plain);
+            }
+            psutil_free_cstrings_array(argv, argc);
+        }
+    }
+
+    if (!py_args)
+        py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
     if (!py_args)
         goto error;
     py_retlist = Py_BuildValue("OO", py_name, py_args);
