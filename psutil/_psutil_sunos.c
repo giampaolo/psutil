@@ -129,7 +129,7 @@ cstrings_array_to_string(char ** array, size_t count, char dm) {
     char *last = NULL;
 
     if (!array)
-        return NULL;
+        return strdup("");
 
     for (i=0; i<count; i++) {
         if (!array[i])
@@ -144,8 +144,10 @@ cstrings_array_to_string(char ** array, size_t count, char dm) {
     }
 
     result = malloc(total_length);
-    if (!result)
+    if (!result) {
+        PyErr_NoMemory();
         return NULL;
+    }
 
     result[0] = '\0';
     last = result;
@@ -191,6 +193,8 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (!py_name)
         goto error;
 
+    /* SunOS truncates arguments to length PRARGSZ, very likely args are truncated.
+     * The only way to retrieve full command line is to parse process memory */
     if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
         argv = psutil_read_raw_args(info, procfs_path, &argc);
         if (argv) {
@@ -198,18 +202,26 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
             if (argv_plain) {
                 py_args = PyUnicode_DecodeFSDefault(argv_plain);
                 free(argv_plain);
-            }
+            } else
+                goto error;
+
             psutil_free_cstrings_array(argv, argc);
         }
     }
 
+    /* If we can't read process memory or can't decode the result
+     * then return args from /proc. */
     if (!py_args)
         py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+
+    /* Both methods has been failed. */
     if (!py_args)
         goto error;
+
     py_retlist = Py_BuildValue("OO", py_name, py_args);
     if (!py_retlist)
         goto error;
+
     Py_DECREF(py_name);
     Py_DECREF(py_args);
     return py_retlist;
