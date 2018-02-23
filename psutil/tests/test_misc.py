@@ -54,6 +54,7 @@ from psutil.tests import reload_module
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
@@ -894,6 +895,12 @@ class TestFSTestUtils(unittest.TestCase):
         safe_rmpath(TESTFN)
 
     tearDown = setUp
+
+    def test_safe_mkdir(self):
+        safe_mkdir(TESTFN)
+        assert os.path.isdir(TESTFN)
+        safe_mkdir(TESTFN)
+        assert os.path.isdir(TESTFN)
 
     def test_safe_rmpath(self):
         # test file is removed
