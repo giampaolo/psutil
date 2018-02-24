@@ -120,16 +120,16 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
  * Join array of C strings to C string with delemiter dm.
  * Omit empty records.
  */
-static char*
-cstrings_array_to_string(char ** array, size_t count, char dm) {
+static int
+cstrings_array_to_string(char **joined, char ** array, size_t count, char dm) {
     int i;
     size_t total_length = 0;
     size_t item_length = 0;
     char *result = NULL;
     char *last = NULL;
 
-    if (!array)
-        return strdup("");
+    if (!array || !joined)
+        return 0;
 
     for (i=0; i<count; i++) {
         if (!array[i])
@@ -140,13 +140,13 @@ cstrings_array_to_string(char ** array, size_t count, char dm) {
     }
 
     if (!total_length) {
-        return strdup("");
+        return 0;
     }
 
     result = malloc(total_length);
     if (!result) {
         PyErr_NoMemory();
-        return NULL;
+        return -1;
     }
 
     result[0] = '\0';
@@ -164,7 +164,9 @@ cstrings_array_to_string(char ** array, size_t count, char dm) {
     }
 
     result[total_length-1] = '\0';
-    return result;
+    *joined = result;
+
+    return total_length;
 }
 
 /*
@@ -176,6 +178,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[1000];
     psinfo_t info;
     size_t argc;
+    int joined;
     char **argv;
     char *argv_plain;
     const char *procfs_path;
@@ -198,12 +201,13 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
         argv = psutil_read_raw_args(info, procfs_path, &argc);
         if (argv) {
-            argv_plain = cstrings_array_to_string(argv, argc, ' ');
-            if (argv_plain) {
+            joined = cstrings_array_to_string(&argv_plain, argv, argc, ' ');
+            if (joined > 0) {
                 py_args = PyUnicode_DecodeFSDefault(argv_plain);
                 free(argv_plain);
-            } else
+            } else if (joined < 0) {
                 goto error;
+            }
 
             psutil_free_cstrings_array(argv, argc);
         }
