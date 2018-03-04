@@ -21,7 +21,6 @@ import warnings
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY

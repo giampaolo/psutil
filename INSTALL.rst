@@ -89,7 +89,7 @@ This  `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions
 provides numerous info on how to properly set up VS (good luck with that).
 
 * Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
-* Python 3.3, 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
+* Python 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
 * Python 3.5+: `VS-2015 <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__
 
 Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires

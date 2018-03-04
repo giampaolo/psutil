@@ -7,8 +7,8 @@ rem psutil ("make.bat build", "make.bat install") and running tests
 rem ("make.bat test").
 rem
 rem This script is modeled after my Windows installation which uses:
-rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
-rem - Visual studio 2010 for Python 3.3+
+rem - Visual studio 2008 for Python 2.6, 2.7
+rem - Visual studio 2010 for Python 3.4+
 rem ...therefore it might not work on your Windows installation.
 rem
 rem By default C:\Python27\python.exe is used.

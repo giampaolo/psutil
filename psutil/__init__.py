@@ -43,7 +43,6 @@ from ._common import deprecated_method
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
 
