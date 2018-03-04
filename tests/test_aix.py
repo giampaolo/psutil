@@ -11,9 +11,9 @@
 import re
 
 from psutil import AIX
-from psutil.tests import run_test_module_by_name
-from psutil.tests import sh
-from psutil.tests import unittest
+from tests import run_test_module_by_name
+from tests import sh
+from tests import unittest
 import psutil
 
 
@@ -38,9 +38,9 @@ class AIXSpecificTestCase(unittest.TestCase):
 
         psutil_result = psutil.virtual_memory()
 
-        # MEMORY_TOLERANCE from psutil.tests is not enough. For some reason
-        # we're seeing differences of ~1.2 MB. 2 MB is still a good tolerance
-        # when compared to GBs.
+        # MEMORY_TOLERANCE from tests is not enough. For some reason we're
+        # seeing differences of ~1.2 MB. 2 MB is still a good tolerance when
+        # compared to GBs.
         MEMORY_TOLERANCE = 2 * KB * KB   # 2 MB
         self.assertEqual(psutil_result.total, total)
         self.assertAlmostEqual(

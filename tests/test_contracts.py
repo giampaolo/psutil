@@ -28,22 +28,22 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
-from psutil.tests import bind_unix_socket
-from psutil.tests import check_connection_ntuple
-from psutil.tests import get_kernel_version
-from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import HAS_RLIMIT
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import is_namedtuple
-from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFN
-from psutil.tests import unittest
-from psutil.tests import unix_socket_path
-from psutil.tests import VALID_PROC_STATUSES
-from psutil.tests import warn
+from tests import bind_unix_socket
+from tests import check_connection_ntuple
+from tests import get_kernel_version
+from tests import HAS_CONNECTIONS_UNIX
+from tests import HAS_RLIMIT
+from tests import HAS_SENSORS_FANS
+from tests import HAS_SENSORS_TEMPERATURES
+from tests import is_namedtuple
+from tests import run_test_module_by_name
+from tests import safe_rmpath
+from tests import skip_on_access_denied
+from tests import TESTFN
+from tests import unittest
+from tests import unix_socket_path
+from tests import VALID_PROC_STATUSES
+from tests import warn
 import psutil
 
 

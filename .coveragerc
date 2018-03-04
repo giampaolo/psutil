@@ -4,7 +4,7 @@ include =
     *psutil*
 omit =
     psutil/_compat.py
-    psutil/tests/*
+    tests/*
     setup.py
 exclude_lines =
     enum.IntEnum

@@ -83,7 +83,7 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
+  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python tests/__main__.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
@@ -112,12 +112,12 @@ only_commits:
     psutil/_psutil_windows.*
     psutil/_pswindows.py
     psutil/arch/windows/*
-    psutil/tests/__init__.py
-    psutil/tests/__main__.py
-    psutil/tests/test_memory_leaks.py
-    psutil/tests/test_misc.py
-    psutil/tests/test_process.py
-    psutil/tests/test_system.py
-    psutil/tests/test_windows.py
+    tests/__init__.py
+    tests/__main__.py
+    tests/test_memory_leaks.py
+    tests/test_misc.py
+    tests/test_process.py
+    tests/test_system.py
+    tests/test_windows.py
     scripts/*
     setup.py

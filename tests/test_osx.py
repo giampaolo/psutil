@@ -12,15 +12,15 @@ import time
 
 import psutil
 from psutil import OSX
-from psutil.tests import create_zombie_proc
-from psutil.tests import get_test_subprocess
-from psutil.tests import HAS_BATTERY
-from psutil.tests import MEMORY_TOLERANCE
-from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
-from psutil.tests import sh
-from psutil.tests import unittest
+from tests import create_zombie_proc
+from tests import get_test_subprocess
+from tests import HAS_BATTERY
+from tests import MEMORY_TOLERANCE
+from tests import reap_children
+from tests import retry_before_failing
+from tests import run_test_module_by_name
+from tests import sh
+from tests import unittest
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE") if OSX else None

@@ -3,7 +3,7 @@
 # You can set the variables below from the command line.
 
 PYTHON = python
-TSCRIPT = psutil/tests/__main__.py
+TSCRIPT = tests/__main__.py
 ARGS =
 # List of nice-to-have dev libs.
 DEPS = \
@@ -113,41 +113,41 @@ test:  ## Run all tests.
 
 test-process:  ## Run process-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_process
+	$(TEST_PREFIX) $(PYTHON) -m unittest -v tests.test_process
 
 test-system:  ## Run system-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_system
+	$(TEST_PREFIX) $(PYTHON) -m unittest -v tests.test_system
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_misc.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_misc.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_unicode.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_contracts.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_contracts.py
 
 test-connections:  ## Test net_connections() and Process.connections().
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_connections.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_posix.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_memory_leaks.py
+	$(TEST_PREFIX) $(PYTHON) tests/test_memory_leaks.py
 
-test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
+test-by-name:  ## e.g. make test-by-name ARGS=tests.test_system.TestSystemAPIs
 	${MAKE} install
 	@$(TEST_PREFIX) $(PYTHON) -m unittest -v $(ARGS)
 

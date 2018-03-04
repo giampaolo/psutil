@@ -2605,12 +2605,7 @@ FAQs
 Running tests
 =============
 
-There are two ways of running tests. If psutil is already installed use::
-
-    $ python -m psutil.tests
-
-You can use this method as a quick way to make sure psutil fully works on your
-platform. If you have a copy of the source code you can also use::
+First, obtain a copy of the source code. Then run tests using the command::
 
     $ make test
 

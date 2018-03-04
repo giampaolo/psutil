@@ -31,26 +31,26 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import xrange
-from psutil.tests import create_sockets
-from psutil.tests import get_test_subprocess
-from psutil.tests import HAS_CPU_AFFINITY
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_ENVIRON
-from psutil.tests import HAS_IONICE
-from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import HAS_PROC_CPU_NUM
-from psutil.tests import HAS_PROC_IO_COUNTERS
-from psutil.tests import HAS_RLIMIT
-from psutil.tests import HAS_SENSORS_BATTERY
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import reap_children
-from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFN
-from psutil.tests import TRAVIS
-from psutil.tests import unittest
+from tests import create_sockets
+from tests import get_test_subprocess
+from tests import HAS_CPU_AFFINITY
+from tests import HAS_CPU_FREQ
+from tests import HAS_ENVIRON
+from tests import HAS_IONICE
+from tests import HAS_MEMORY_MAPS
+from tests import HAS_PROC_CPU_NUM
+from tests import HAS_PROC_IO_COUNTERS
+from tests import HAS_RLIMIT
+from tests import HAS_SENSORS_BATTERY
+from tests import HAS_SENSORS_FANS
+from tests import HAS_SENSORS_TEMPERATURES
+from tests import reap_children
+from tests import run_test_module_by_name
+from tests import safe_rmpath
+from tests import skip_on_access_denied
+from tests import TESTFN
+from tests import TRAVIS
+from tests import unittest
 
 
 LOOPS = 1000
