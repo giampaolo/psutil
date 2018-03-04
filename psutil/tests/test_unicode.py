@@ -87,7 +87,6 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 import psutil
-import psutil.tests
 
 
 def safe_rmpath(path):
