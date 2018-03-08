@@ -849,7 +849,7 @@ Functions
   Sorting order in which processes are returned is
   based on their PID.
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
-  If *attrs* is specified :meth:`Process.as_dict()` is called interanally and
+  If *attrs* is specified :meth:`Process.as_dict()` is called internally and
   the resulting dict is stored as a ``info`` attribute which is attached to the
   returned :class:`Process`  instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
