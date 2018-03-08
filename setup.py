@@ -53,15 +53,13 @@ if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
 tests_require = []
-if sys.version_info[:2] <= (2, 6):
+if sys.version_info[:2] == (2, 6):
     tests_require.append('unittest2')
 if sys.version_info[:2] <= (2, 7):
-    tests_require.append('mock')
-if sys.version_info[:2] <= (3, 2):
-    tests_require.append('ipaddress')
+    tests_require.extend(['ipaddress', 'mock'])
 
 extras_require = {}
-if sys.version_info[:2] <= (3, 3):
+if sys.version_info[:2] <= (2, 7):
     extras_require.update(dict(enum='enum34'))
 
 
