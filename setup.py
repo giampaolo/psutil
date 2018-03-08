@@ -52,18 +52,6 @@ sources = ['psutil/_psutil_common.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
-tests_require = []
-if sys.version_info[:2] <= (2, 6):
-    tests_require.append('unittest2')
-if sys.version_info[:2] <= (2, 7):
-    tests_require.append('mock')
-if sys.version_info[:2] <= (3, 2):
-    tests_require.append('ipaddress')
-
-extras_require = {}
-if sys.version_info[:2] <= (3, 3):
-    extras_require.update(dict(enum='enum34'))
-
 
 def get_version():
     INIT = os.path.join(HERE, 'psutil/__init__.py')
@@ -340,8 +328,14 @@ def main():
         kwargs.update(
             python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
             test_suite="psutil.tests.get_suite",
-            tests_require=tests_require,
-            extras_require=extras_require,
+            tests_require=[
+                'ipaddress; python_version < "3.3"',
+                'mock; python_version < "3.3"',
+                'unittest2; python_version < "2.7"',
+            ],
+            extras_require={
+                'enum': 'enum34; python_version < "3.4"',
+            },
             zip_safe=False,
         )
     setup(**kwargs)
