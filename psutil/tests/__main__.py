@@ -30,7 +30,7 @@ GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 TEST_DEPS = []
 if sys.version_info[:2] == (2, 6):
     TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
-elif sys.version_info[:2] == (2, 7) or sys.version_info[:2] <= (3, 2):
+elif sys.version_info[:2] == (2, 7):
     TEST_DEPS.extend(["ipaddress", "mock"])
 
 
