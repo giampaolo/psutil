@@ -237,6 +237,31 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 free_value, psutil_value, delta=MEMORY_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
+    def test_slab(self):
+        # Emulate /proc/meminfo because neither vmstat nor free return slab.
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/meminfo':
+                return io.BytesIO(textwrap.dedent("""\
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemAvailable:         -1 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    SReclaimable:     346648 kB
+                    Slab:             186836 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.slab, 191320064)
+
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
@@ -280,6 +305,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertEqual(ret.shared, 0)
                 self.assertEqual(ret.buffers, 0)
                 self.assertEqual(ret.available, 0)
+                self.assertEqual(ret.slab, 0)
 
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels

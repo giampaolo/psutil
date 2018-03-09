@@ -149,7 +149,7 @@ TCP_STATUSES = {
 # psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared'])
+              'active', 'inactive', 'buffers', 'cached', 'shared', 'slab'])
 # psutil.disk_io_counters()
 sdiskio = namedtuple(
     'sdiskio', ['read_count', 'write_count',
@@ -441,6 +441,11 @@ def virtual_memory():
             inactive = 0
             missing_fields.append('inactive')
 
+    try:
+        slab = mems[b"Slab:"]
+    except KeyError:
+        slab = 0
+
     used = total - free - cached - buffers
     if used < 0:
         # May be symptomatic of running within a LCX container where such
@@ -481,7 +486,7 @@ def virtual_memory():
         warnings.warn(msg, RuntimeWarning)
 
     return svmem(total, avail, percent, used, free,
-                 active, inactive, buffers, cached, shared)
+                 active, inactive, buffers, cached, shared, slab)
 
 
 def swap_memory():
