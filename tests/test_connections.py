@@ -26,25 +26,25 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
-from psutil.tests import AF_UNIX
-from psutil.tests import bind_socket
-from psutil.tests import bind_unix_socket
-from psutil.tests import check_connection_ntuple
-from psutil.tests import create_sockets
-from psutil.tests import get_free_port
-from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import pyrun
-from psutil.tests import reap_children
-from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
-from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
-from psutil.tests import TRAVIS
-from psutil.tests import unittest
-from psutil.tests import unix_socket_path
-from psutil.tests import unix_socketpair
-from psutil.tests import wait_for_file
+from tests import AF_UNIX
+from tests import bind_socket
+from tests import bind_unix_socket
+from tests import check_connection_ntuple
+from tests import create_sockets
+from tests import get_free_port
+from tests import HAS_CONNECTIONS_UNIX
+from tests import pyrun
+from tests import reap_children
+from tests import run_test_module_by_name
+from tests import safe_rmpath
+from tests import skip_on_access_denied
+from tests import tcp_socketpair
+from tests import TESTFN
+from tests import TRAVIS
+from tests import unittest
+from tests import unix_socket_path
+from tests import unix_socketpair
+from tests import wait_for_file
 
 
 thisproc = psutil.Process()
@@ -471,7 +471,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
             fname = os.path.realpath(TESTFN) + str(i)
             src = textwrap.dedent("""\
                 import time, os
-                from psutil.tests import create_sockets
+                from tests import create_sockets
                 with create_sockets():
                     with open('%s', 'w') as f:
                         f.write(str(os.getpid()))

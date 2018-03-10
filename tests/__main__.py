@@ -5,9 +5,7 @@
 # found in the LICENSE file.
 
 """
-Run unit tests. This is invoked by:
-
-$ python -m psutil.tests
+Run unit tests.
 """
 
 import contextlib
@@ -21,8 +19,8 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-from psutil.tests import PYTHON_EXE
-from psutil.tests import run_suite
+from tests import PYTHON_EXE
+from tests import run_suite
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -71,7 +69,7 @@ def install_test_deps(deps=None):
 
 
 def main():
-    usage = "%s -m psutil.tests [opts]" % PYTHON_EXE
+    usage = "%s -m tests [opts]" % PYTHON_EXE
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("-i", "--install-deps",
                       action="store_true", default=False,
@@ -86,7 +84,7 @@ def main():
             try:
                 __import__(dep.split("==")[0])
             except ImportError:
-                sys.exit("%r lib is not installed; run %s -m psutil.tests "
+                sys.exit("%r lib is not installed; run %s -m tests "
                          "--install-deps" % (dep, PYTHON_EXE))
         run_suite()
 

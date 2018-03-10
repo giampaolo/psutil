@@ -1,14 +1,7 @@
 Instructions for running tests
 ==============================
 
-* There are two ways of running tests. As a "user", if psutil is already
-  installed and you just want to test it works::
-
-    python -m psutil.tests --install-deps  # install test deps
-    python -m psutil.tests
-
-  As a "developer", if you have a copy of the source code and you whish to hack
-  on psutil::
+* To run tests::
 
     make setup-dev-env  # install test deps (+ other things)
     make test

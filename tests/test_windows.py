@@ -21,15 +21,15 @@ import warnings
 
 import psutil
 from psutil import WINDOWS
-from psutil.tests import APPVEYOR
-from psutil.tests import get_test_subprocess
-from psutil.tests import HAS_BATTERY
-from psutil.tests import mock
-from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
-from psutil.tests import sh
-from psutil.tests import unittest
+from tests import APPVEYOR
+from tests import get_test_subprocess
+from tests import HAS_BATTERY
+from tests import mock
+from tests import reap_children
+from tests import retry_before_failing
+from tests import run_test_module_by_name
+from tests import sh
+from tests import unittest
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")

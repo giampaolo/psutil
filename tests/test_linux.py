@@ -27,26 +27,26 @@ import psutil
 from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
-from psutil.tests import call_until
-from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_RLIMIT
-from psutil.tests import MEMORY_TOLERANCE
-from psutil.tests import mock
-from psutil.tests import PYPY
-from psutil.tests import pyrun
-from psutil.tests import reap_children
-from psutil.tests import reload_module
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_rmpath
-from psutil.tests import sh
-from psutil.tests import skip_on_not_implemented
-from psutil.tests import TESTFN
-from psutil.tests import ThreadTask
-from psutil.tests import TRAVIS
-from psutil.tests import unittest
-from psutil.tests import which
+from tests import call_until
+from tests import HAS_BATTERY
+from tests import HAS_CPU_FREQ
+from tests import HAS_RLIMIT
+from tests import MEMORY_TOLERANCE
+from tests import mock
+from tests import PYPY
+from tests import pyrun
+from tests import reap_children
+from tests import reload_module
+from tests import retry_before_failing
+from tests import run_test_module_by_name
+from tests import safe_rmpath
+from tests import sh
+from tests import skip_on_not_implemented
+from tests import TESTFN
+from tests import ThreadTask
+from tests import TRAVIS
+from tests import unittest
+from tests import which
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
