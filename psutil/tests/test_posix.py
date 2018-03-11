@@ -24,20 +24,20 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil._compat import PY3
-from tests import APPVEYOR
-from tests import get_kernel_version
-from tests import get_test_subprocess
-from tests import mock
-from tests import PYTHON_EXE
-from tests import reap_children
-from tests import retry_before_failing
-from tests import run_test_module_by_name
-from tests import sh
-from tests import skip_on_access_denied
-from tests import TRAVIS
-from tests import unittest
-from tests import wait_for_pid
-from tests import which
+from psutil.tests import APPVEYOR
+from psutil.tests import get_kernel_version
+from psutil.tests import get_test_subprocess
+from psutil.tests import mock
+from psutil.tests import PYTHON_EXE
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import run_test_module_by_name
+from psutil.tests import sh
+from psutil.tests import skip_on_access_denied
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
+from psutil.tests import wait_for_pid
+from psutil.tests import which
 
 
 def ps(cmd):

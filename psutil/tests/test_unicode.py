@@ -64,28 +64,28 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import u
-from tests import APPVEYOR
-from tests import ASCII_FS
-from tests import bind_unix_socket
-from tests import chdir
-from tests import copyload_shared_lib
-from tests import create_exe
-from tests import get_test_subprocess
-from tests import HAS_CONNECTIONS_UNIX
-from tests import HAS_ENVIRON
-from tests import HAS_MEMORY_MAPS
-from tests import mock
-from tests import reap_children
-from tests import run_test_module_by_name
-from tests import safe_mkdir
-from tests import safe_rmpath as _safe_rmpath
-from tests import skip_on_access_denied
-from tests import TESTFILE_PREFIX
-from tests import TESTFN
-from tests import TESTFN_UNICODE
-from tests import TRAVIS
-from tests import unittest
-from tests import unix_socket_path
+from psutil.tests import APPVEYOR
+from psutil.tests import ASCII_FS
+from psutil.tests import bind_unix_socket
+from psutil.tests import chdir
+from psutil.tests import copyload_shared_lib
+from psutil.tests import create_exe
+from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_ENVIRON
+from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import mock
+from psutil.tests import reap_children
+from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
+from psutil.tests import safe_rmpath as _safe_rmpath
+from psutil.tests import skip_on_access_denied
+from psutil.tests import TESTFILE_PREFIX
+from psutil.tests import TESTFN
+from psutil.tests import TESTFN_UNICODE
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
+from psutil.tests import unix_socket_path
 import psutil
 
 

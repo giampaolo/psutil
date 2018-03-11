@@ -27,48 +27,48 @@ from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
 from psutil._compat import PY3
-from tests import APPVEYOR
-from tests import bind_socket
-from tests import bind_unix_socket
-from tests import call_until
-from tests import chdir
-from tests import create_proc_children_pair
-from tests import create_sockets
-from tests import create_zombie_proc
-from tests import DEVNULL
-from tests import get_free_port
-from tests import get_test_subprocess
-from tests import HAS_BATTERY
-from tests import HAS_CONNECTIONS_UNIX
-from tests import HAS_MEMORY_FULL_INFO
-from tests import HAS_MEMORY_MAPS
-from tests import HAS_SENSORS_BATTERY
-from tests import HAS_SENSORS_FANS
-from tests import HAS_SENSORS_TEMPERATURES
-from tests import import_module_by_path
-from tests import is_namedtuple
-from tests import mock
-from tests import PYTHON_EXE
-from tests import reap_children
-from tests import reload_module
-from tests import retry
-from tests import ROOT_DIR
-from tests import run_test_module_by_name
-from tests import safe_mkdir
-from tests import safe_rmpath
-from tests import SCRIPTS_DIR
-from tests import sh
-from tests import tcp_socketpair
-from tests import TESTFN
-from tests import TOX
-from tests import TRAVIS
-from tests import unittest
-from tests import unix_socket_path
-from tests import unix_socketpair
-from tests import wait_for_file
-from tests import wait_for_pid
+from psutil.tests import APPVEYOR
+from psutil.tests import bind_socket
+from psutil.tests import bind_unix_socket
+from psutil.tests import call_until
+from psutil.tests import chdir
+from psutil.tests import create_proc_children_pair
+from psutil.tests import create_sockets
+from psutil.tests import create_zombie_proc
+from psutil.tests import DEVNULL
+from psutil.tests import get_free_port
+from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_MEMORY_FULL_INFO
+from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_SENSORS_BATTERY
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import import_module_by_path
+from psutil.tests import is_namedtuple
+from psutil.tests import mock
+from psutil.tests import PYTHON_EXE
+from psutil.tests import reap_children
+from psutil.tests import reload_module
+from psutil.tests import retry
+from psutil.tests import ROOT_DIR
+from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
+from psutil.tests import safe_rmpath
+from psutil.tests import SCRIPTS_DIR
+from psutil.tests import sh
+from psutil.tests import tcp_socketpair
+from psutil.tests import TESTFN
+from psutil.tests import TOX
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
+from psutil.tests import unix_socket_path
+from psutil.tests import unix_socketpair
+from psutil.tests import wait_for_file
+from psutil.tests import wait_for_pid
 import psutil
-import tests
+import psutil.tests
 
 
 # ===================================================================
@@ -859,7 +859,7 @@ class TestSyncTestUtils(unittest.TestCase):
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
-        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
@@ -875,7 +875,7 @@ class TestSyncTestUtils(unittest.TestCase):
         assert not os.path.exists(TESTFN)
 
     def test_wait_for_file_no_file(self):
-        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
             self.assertRaises(IOError, wait_for_file, TESTFN)
 
     def test_wait_for_file_no_delete(self):
@@ -914,7 +914,7 @@ class TestFSTestUtils(unittest.TestCase):
         safe_rmpath(TESTFN)
         assert not os.path.exists(TESTFN)
         # test other exceptions are raised
-        with mock.patch('tests.os.stat',
+        with mock.patch('psutil.tests.os.stat',
                         side_effect=OSError(errno.EINVAL, "")) as m:
             with self.assertRaises(OSError):
                 safe_rmpath(TESTFN)
@@ -936,8 +936,8 @@ class TestProcessUtils(unittest.TestCase):
         assert p.is_running()
         reap_children()
         assert not p.is_running()
-        assert not tests._pids_started
-        assert not tests._subprocesses_started
+        assert not psutil.tests._pids_started
+        assert not psutil.tests._subprocesses_started
 
     def test_create_proc_children_pair(self):
         p1, p2 = create_proc_children_pair()
@@ -955,8 +955,8 @@ class TestProcessUtils(unittest.TestCase):
         reap_children()
         assert not p1.is_running()
         assert not p2.is_running()
-        assert not tests._pids_started
-        assert not tests._subprocesses_started
+        assert not psutil.tests._pids_started
+        assert not psutil.tests._subprocesses_started
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
