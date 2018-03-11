@@ -5,6 +5,12 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1120_: [SunOS] cmdline() could be truncated at the 15th character when
+  reading it from /proc. An extra effort is made by reading it from process
+  address space first.
+
 **Bug fixes**
 
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
