@@ -30,26 +30,26 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
-from tests import APPVEYOR
-from tests import ASCII_FS
-from tests import check_net_address
-from tests import DEVNULL
-from tests import enum
-from tests import get_test_subprocess
-from tests import HAS_BATTERY
-from tests import HAS_CPU_FREQ
-from tests import HAS_SENSORS_BATTERY
-from tests import HAS_SENSORS_FANS
-from tests import HAS_SENSORS_TEMPERATURES
-from tests import mock
-from tests import reap_children
-from tests import retry_before_failing
-from tests import run_test_module_by_name
-from tests import safe_rmpath
-from tests import TESTFN
-from tests import TESTFN_UNICODE
-from tests import TRAVIS
-from tests import unittest
+from psutil.tests import APPVEYOR
+from psutil.tests import ASCII_FS
+from psutil.tests import check_net_address
+from psutil.tests import DEVNULL
+from psutil.tests import enum
+from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
+from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_SENSORS_BATTERY
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import mock
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_rmpath
+from psutil.tests import TESTFN
+from psutil.tests import TESTFN_UNICODE
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
 
 
 # ===================================================================

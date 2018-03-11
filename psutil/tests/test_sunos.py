@@ -10,9 +10,9 @@ import os
 
 import psutil
 from psutil import SUNOS
-from tests import run_test_module_by_name
-from tests import sh
-from tests import unittest
+from psutil.tests import run_test_module_by_name
+from psutil.tests import sh
+from psutil.tests import unittest
 
 
 @unittest.skipIf(not SUNOS, "SUNOS only")

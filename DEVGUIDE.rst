@@ -99,8 +99,8 @@ Usually the files involved when adding a new functionality are:
     psutil/_ps{platform}.py              # python platform wrapper
     psutil/_psutil_{platform}.c          # C platform extension
     psutil/_psutil_{platform}.h          # C header file
-    tests/test_process|system.py         # main test suite
-    tests/test_{platform}.py             # platform specific test suite
+    psutil/tests/test_process|system.py  # main test suite
+    psutil/tests/test_{platform}.py      # platform specific test suite
 
 Typical process occurring when adding a new functionality (API):
 
@@ -109,11 +109,12 @@ Typical process occurring when adding a new functionality (API):
   (e.g. ``psutil/_pslinux.py``).
 - if the change requires C, write the C implementation in
   ``psutil/_psutil_{platform}.c`` (e.g. ``psutil/_psutil_linux.c``).
-- write a generic test in ``tests/test_system.py`` or
-  ``tests/test_process.py``.
-- if possible, write a platform specific test in ``tests/test_{platform}.py``
-  (e.g. ``test_linux.py``). This usually means testing the return value of the
-  new feature against a system CLI tool.
+- write a generic test in ``psutil/tests/test_system.py`` or
+  ``psutil/tests/test_process.py``.
+- if possible, write a platform specific test in
+  ``psutil/tests/test_{platform}.py`` (e.g. ``test_linux.py``).
+  This usually means testing the return value of the new feature against
+  a system CLI tool.
 - update doc in ``doc/index.py``.
 - update ``HISTORY.rst``.
 - update ``README.rst`` (if necessary).
