@@ -923,7 +923,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     // We return only busy kernel time subtracting idle time from
     // kernel time.
     system = (kernel - idle);
-    return Py_BuildValue("(fff)", user, system, idle);
+    return Py_BuildValue("(ddd)", user, system, idle);
 }
 
 
@@ -1007,7 +1007,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         // idle time from kernel time
         systemt = kernel - idle;
         py_tuple = Py_BuildValue(
-            "(ddddd)",
+            "(fffff)",
             user,
             systemt,
             idle,
