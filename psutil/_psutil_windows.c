@@ -51,8 +51,8 @@
 
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
-#define LO_T ((float)1e-7)
-#define HI_T (LO_T*4294967296.0)
+#define LO_T 1e-7
+#define HI_T 429.4967296
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #ifndef AF_INET6
 #define AF_INET6 23
@@ -899,7 +899,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
                          memInfo.ullAvailVirtual);  // avail virtual
 }
 
-
 /*
  * Retrieves system CPU timing information as a (user, system, idle)
  * tuple. On a multiprocessor system, the values returned are the
@@ -907,24 +906,24 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
-    float idle, kernel, user, system;
+    double idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
 
     if (!GetSystemTimes(&idle_time, &kernel_time, &user_time))
         return PyErr_SetFromWindowsErr(0);
 
-    idle = (float)((HI_T * idle_time.dwHighDateTime) + \
+    idle = (double)((HI_T * idle_time.dwHighDateTime) + \
                    (LO_T * idle_time.dwLowDateTime));
-    user = (float)((HI_T * user_time.dwHighDateTime) + \
+    user = (double)((HI_T * user_time.dwHighDateTime) + \
                    (LO_T * user_time.dwLowDateTime));
-    kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
+    kernel = (double)((HI_T * kernel_time.dwHighDateTime) + \
                      (LO_T * kernel_time.dwLowDateTime));
 
     // Kernel time includes idle time.
     // We return only busy kernel time subtracting idle time from
     // kernel time.
     system = (kernel - idle);
-    return Py_BuildValue("(fff)", user, system, idle);
+    return Py_BuildValue("(ddd)", user, system, idle);
 }
 
 
@@ -938,7 +937,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     NTQSI_PROC NtQuerySystemInformation;
     HINSTANCE hNtDll;
 
-    float idle, kernel, systemt, user, interrupt, dpc;
+    double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     SYSTEM_INFO si;
@@ -992,15 +991,15 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < si.dwNumberOfProcessors; i++) {
         py_tuple = NULL;
-        user = (float)((HI_T * sppi[i].UserTime.HighPart) +
+        user = (double)((HI_T * sppi[i].UserTime.HighPart) +
                        (LO_T * sppi[i].UserTime.LowPart));
-        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) +
+        idle = (double)((HI_T * sppi[i].IdleTime.HighPart) +
                        (LO_T * sppi[i].IdleTime.LowPart));
-        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) +
+        kernel = (double)((HI_T * sppi[i].KernelTime.HighPart) +
                          (LO_T * sppi[i].KernelTime.LowPart));
-        interrupt = (float)((HI_T * sppi[i].InterruptTime.HighPart) +
+        interrupt = (double)((HI_T * sppi[i].InterruptTime.HighPart) +
                             (LO_T * sppi[i].InterruptTime.LowPart));
-        dpc = (float)((HI_T * sppi[i].DpcTime.HighPart) +
+        dpc = (double)((HI_T * sppi[i].DpcTime.HighPart) +
                       (LO_T * sppi[i].DpcTime.LowPart));
 
         // kernel time includes idle time on windows
@@ -2844,10 +2843,11 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 
     for (i = 0; i < process->NumberOfThreads; i++)
         ctx_switches += process->Threads[i].ContextSwitches;
-    user_time = (double)process->UserTime.HighPart * 429.4967296 + \
-                (double)process->UserTime.LowPart * 1e-7;
-    kernel_time = (double)process->KernelTime.HighPart * 429.4967296 + \
-                  (double)process->KernelTime.LowPart * 1e-7;
+    user_time = (double)process->UserTime.HighPart * HI_T + \
+                (double)process->UserTime.LowPart * LO_T;
+    kernel_time = (double)process->KernelTime.HighPart * HI_T + \
+                    (double)process->KernelTime.LowPart * LO_T;
+    
     // Convert the LARGE_INTEGER union to a Unix time.
     // It's the best I could find by googling and borrowing code here
     // and there. The time returned has a precision of 1 second.
