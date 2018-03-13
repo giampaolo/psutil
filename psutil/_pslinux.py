@@ -1140,9 +1140,10 @@ def sensors_temperatures():
 
     for base in basenames:
         try:
-            current = float(cat(base + '_input')) / 1000.0
-            unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
-                            binary=False)
+            path = base + '_input'
+            current = float(cat(path)) / 1000.0
+            path = os.path.join(os.path.dirname(base), 'name')
+            unit_name = cat(path, binary=False)
         except (IOError, OSError) as err:
             # A lot of things can go wrong here, so let's just skip the
             # whole entry.
@@ -1150,7 +1151,8 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1101
             # https://github.com/giampaolo/psutil/issues/1129
             # https://github.com/giampaolo/psutil/issues/1245
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            warnings.warn("ignoring %r for file %r" % (err, path),
+                          RuntimeWarning)
             continue
 
         high = cat(base + '_max', fallback=None)
