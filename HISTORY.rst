@@ -14,8 +14,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
-- 1222_: [Linux] Process.memory_full_info() was summing both "swap PSS" (swap
-  proportional set size) and plain "swap". Not anymore.
+- 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
+  "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".

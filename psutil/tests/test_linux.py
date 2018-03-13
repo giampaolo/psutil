@@ -1482,6 +1482,46 @@ class TestProcess(unittest.TestCase):
         self.assertAlmostEqual(
             mem.swap, sum([x.swap for x in maps]), delta=4096)
 
+    def test_memory_full_info_mocked(self):
+        # See: https://github.com/giampaolo/psutil/issues/1222
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/%s/smaps" % os.getpid():
+                return io.BytesIO(textwrap.dedent("""\
+                    fffff0 r-xp 00000000 00:00 0                  [vsyscall]
+                    Size:                  1 kB
+                    Rss:                   2 kB
+                    Pss:                   3 kB
+                    Shared_Clean:          4 kB
+                    Shared_Dirty:          5 kB
+                    Private_Clean:         6 kB
+                    Private_Dirty:         7 kB
+                    Referenced:            8 kB
+                    Anonymous:             9 kB
+                    LazyFree:              10 kB
+                    AnonHugePages:         11 kB
+                    ShmemPmdMapped:        12 kB
+                    Shared_Hugetlb:        13 kB
+                    Private_Hugetlb:       14 kB
+                    Swap:                  15 kB
+                    SwapPss:               16 kB
+                    KernelPageSize:        17 kB
+                    MMUPageSize:           18 kB
+                    Locked:                19 kB
+                    VmFlags: rd ex
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            p = psutil.Process()
+            mem = p.memory_full_info()
+            assert m.called
+            self.assertEqual(mem.uss, (6 + 7 + 14) * 1024)
+            self.assertEqual(mem.pss, 3 * 1024)
+            self.assertEqual(mem.swap, 15 * 1024)
+
     # On PYPY file descriptors are not closed fast enough.
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_open_files_mode(self):

@@ -1606,9 +1606,10 @@ class Process(object):
         @wrap_exceptions
         def memory_full_info(
                 self,
-                _private_re=re.compile(br"Private.*:\s+(\d+)"),
-                _pss_re=re.compile(br"Pss.*:\s+(\d+)"),
-                _swap_re=re.compile(br"Swap:\s+(\d+)")):
+                # Gets Private_Clean, Private_Dirty, Private_Hugetlb.
+                _private_re=re.compile(br"\nPrivate.*:\s+(\d+)"),
+                _pss_re=re.compile(br"\nPss\:\s+(\d+)"),
+                _swap_re=re.compile(br"\nSwap\:\s+(\d+)")):
             basic_mem = self.memory_info()
             # Note: using 3 regexes is faster than reading the file
             # line by line.
