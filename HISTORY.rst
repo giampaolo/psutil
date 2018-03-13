@@ -16,6 +16,7 @@ XXXX-XX-XX
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
+- 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
 
 5.4.3
 =====
