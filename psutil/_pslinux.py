@@ -1608,7 +1608,7 @@ class Process(object):
                 self,
                 _private_re=re.compile(br"Private.*:\s+(\d+)"),
                 _pss_re=re.compile(br"Pss.*:\s+(\d+)"),
-                _swap_re=re.compile(br"Swap.*:\s+(\d+)")):
+                _swap_re=re.compile(br"Swap:\s+(\d+)")):
             basic_mem = self.memory_info()
             # Note: using 3 regexes is faster than reading the file
             # line by line.
