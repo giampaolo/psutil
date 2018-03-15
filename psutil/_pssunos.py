@@ -432,27 +432,10 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        # Note #1: for some reason getpriority(3) return ESRCH (no such
-        # process) for certain low-pid processes, no matter what (even
-        # as root).
-        # The process actually exists though, as it has a name,
-        # creation time, etc.
-        # The best thing we can do here appears to be raising AD.
-        # Note: tested on Solaris 11; on Open Solaris 5 everything is
-        # fine.
-        #
-        # Note #2: we also can get niceness from /proc/pid/psinfo
-        # but it's wrong, see:
-        # https://github.com/giampaolo/psutil/issues/1082
-        try:
-            return cext_posix.getpriority(self.pid)
-        except EnvironmentError as err:
-            # 48 is 'operation not supported' but errno does not expose
-            # it. It occurs for low system pids.
-            if err.errno in (errno.ENOENT, errno.ESRCH, 48):
-                if pid_exists(self.pid):
-                    raise AccessDenied(self.pid, self._name)
-            raise
+        # Note #1: getpriority(3) doesn't work for realtime processes.
+        # Psinfo is what ps uses, see:
+        # https://github.com/giampaolo/psutil/issues/1194
+        return self._proc_basic_info()[proc_info_map['nice']]
 
     @wrap_exceptions
     def nice_set(self, value):
