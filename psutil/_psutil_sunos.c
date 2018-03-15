@@ -102,17 +102,19 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "ikkdiiik",
+        "ikkdiiikiiii",
         info.pr_ppid,              // parent pid
         info.pr_rssize,            // rss
         info.pr_size,              // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        // XXX - niceness is wrong (20 instead of 0), see:
-        // https://github.com/giampaolo/psutil/issues/1082
         info.pr_lwp.pr_nice,       // nice
         info.pr_nlwp,              // no. of threads
         info.pr_lwp.pr_state,      // status code
-        info.pr_ttydev             // tty nr
+        info.pr_ttydev,            // tty nr
+        (int)info.pr_uid,          // real user id
+        (int)info.pr_euid,         // effective user id
+        (int)info.pr_gid,          // real group id
+        (int)info.pr_egid          // effective group id
         );
 }
 

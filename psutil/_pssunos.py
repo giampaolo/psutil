@@ -79,7 +79,11 @@ proc_info_map = dict(
     nice=4,
     num_threads=5,
     status=6,
-    ttynr=7)
+    ttynr=7,
+    uid=8,
+    euid=9,
+    gid=10,
+    egid=11)
 
 
 # =====================================================================
@@ -394,7 +398,10 @@ class Process(object):
 
     @memoize_when_activated
     def _proc_cred(self):
-        return cext.proc_cred(self.pid, self._procfs_path)
+        @wrap_exceptions
+        def proc_cred(self):
+            return cext.proc_cred(self.pid, self._procfs_path)
+        return proc_cred(self)
 
     @wrap_exceptions
     def name(self):
@@ -454,12 +461,22 @@ class Process(object):
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = self._proc_cred()
+        try:
+            real, effective, saved, _, _, _ = self._proc_cred()
+        except AccessDenied:
+            real = self._proc_basic_info()[proc_info_map['uid']]
+            effective = self._proc_basic_info()[proc_info_map['euid']]
+            saved = None
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = self._proc_cred()
+        try:
+            _, _, _, real, effective, saved = self._proc_cred()
+        except AccessDenied:
+            real = self._proc_basic_info()[proc_info_map['gid']]
+            effective = self._proc_basic_info()[proc_info_map['egid']]
+            saved = None
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
