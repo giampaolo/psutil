@@ -350,9 +350,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     struct prheader header;
-    struct lwpsinfo *lwp;
-    char *lpsinfo = NULL;
-    char *ptr = NULL;
+    struct lwpsinfo *lwp = NULL;
     int nent;
     int size;
     int proc_num;
@@ -384,14 +382,14 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     // malloc
     nent = header.pr_nent;
     size = header.pr_entsize * nent;
-    ptr = lpsinfo = malloc(size);
-    if (lpsinfo == NULL) {
+    lwp = malloc(size);
+    if (lwp == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     // read the rest
-    nbytes = pread(fd, lpsinfo, size, sizeof(header));
+    nbytes = pread(fd, lwp, size, sizeof(header));
     if (nbytes == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -403,20 +401,15 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
 
     // done
-    lwp = (lwpsinfo_t *)ptr;
     proc_num = lwp->pr_onpro;
     close(fd);
-    free(ptr);
-    free(lpsinfo);
+    free(lwp);
     return Py_BuildValue("i", proc_num);
 
 error:
     if (fd != -1)
         close(fd);
-    if (ptr != NULL)
-        free(ptr);
-    if (lpsinfo != NULL)
-        free(lpsinfo);
+    free(lwp);
     return NULL;
 }
 
