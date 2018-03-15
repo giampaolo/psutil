@@ -58,10 +58,10 @@
 /*
  * Read a file content and fills a C structure with it.
  */
-int
+static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
-    size_t nbytes;
+    ssize_t nbytes;
     fd = open(path, O_RDONLY);
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
@@ -73,7 +73,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
     }
-    if (nbytes != size) {
+    if (nbytes != (ssize_t) size) {
         close(fd);
         PyErr_SetString(
             PyExc_RuntimeError, "read() file structure size mismatch");
@@ -354,7 +354,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     int nent;
     int size;
     int proc_num;
-    size_t nbytes;
+    ssize_t nbytes;
     const char *procfs_path;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
