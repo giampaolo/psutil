@@ -1878,22 +1878,16 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):
-        def open_mock(name, *args, **kwargs):
-            if name.startswith('/proc/%s/status' % os.getpid()):
-                return io.BytesIO(textwrap.dedent("""\
-                    Uid:\t1000\t1001\t1002\t1003
-                    Gid:\t1004\t1005\t1006\t1007
-                    Threads:\t66
-                    Cpus_allowed:\tf
-                    Cpus_allowed_list:\t0-7
-                    voluntary_ctxt_switches:\t12
-                    nonvoluntary_ctxt_switches:\t13""").encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock_open_for_path(
+            '/proc/%s/status' % os.getpid(),
+            textwrap.dedent("""\
+                Uid:\t1000\t1001\t1002\t1003
+                Gid:\t1004\t1005\t1006\t1007
+                Threads:\t66
+                Cpus_allowed:\tf
+                Cpus_allowed_list:\t0-7
+                voluntary_ctxt_switches:\t12
+                nonvoluntary_ctxt_switches:\t13""").encode()):
             p = psutil.Process()
             self.assertEqual(p.num_ctx_switches().voluntary, 12)
             self.assertEqual(p.num_ctx_switches().involuntary, 13)
