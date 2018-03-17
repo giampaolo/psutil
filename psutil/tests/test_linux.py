@@ -1821,56 +1821,49 @@ class TestProcess(unittest.TestCase):
     def test_stat_file_parsing(self):
         from psutil._pslinux import CLOCK_TICKS
 
-        def open_mock(name, *args, **kwargs):
-            if name.startswith('/proc/%s/stat' % os.getpid()):
-                args = [
-                    "0",      # pid
-                    "(cat)",  # name
-                    "Z",      # status
-                    "1",      # ppid
-                    "0",      # pgrp
-                    "0",      # session
-                    "0",      # tty
-                    "0",      # tpgid
-                    "0",      # flags
-                    "0",      # minflt
-                    "0",      # cminflt
-                    "0",      # majflt
-                    "0",      # cmajflt
-                    "2",      # utime
-                    "3",      # stime
-                    "4",      # cutime
-                    "5",      # cstime
-                    "0",      # priority
-                    "0",      # nice
-                    "0",      # num_threads
-                    "0",      # itrealvalue
-                    "6",      # starttime
-                    "0",      # vsize
-                    "0",      # rss
-                    "0",      # rsslim
-                    "0",      # startcode
-                    "0",      # endcode
-                    "0",      # startstack
-                    "0",      # kstkesp
-                    "0",      # kstkeip
-                    "0",      # signal
-                    "0",      # blocked
-                    "0",      # sigignore
-                    "0",      # sigcatch
-                    "0",      # wchan
-                    "0",      # nswap
-                    "0",      # cnswap
-                    "0",      # exit_signal
-                    "6",      # processor
-                ]
-                return io.BytesIO(" ".join(args).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        args = [
+            "0",      # pid
+            "(cat)",  # name
+            "Z",      # status
+            "1",      # ppid
+            "0",      # pgrp
+            "0",      # session
+            "0",      # tty
+            "0",      # tpgid
+            "0",      # flags
+            "0",      # minflt
+            "0",      # cminflt
+            "0",      # majflt
+            "0",      # cmajflt
+            "2",      # utime
+            "3",      # stime
+            "4",      # cutime
+            "5",      # cstime
+            "0",      # priority
+            "0",      # nice
+            "0",      # num_threads
+            "0",      # itrealvalue
+            "6",      # starttime
+            "0",      # vsize
+            "0",      # rss
+            "0",      # rsslim
+            "0",      # startcode
+            "0",      # endcode
+            "0",      # startstack
+            "0",      # kstkesp
+            "0",      # kstkeip
+            "0",      # signal
+            "0",      # blocked
+            "0",      # sigignore
+            "0",      # sigcatch
+            "0",      # wchan
+            "0",      # nswap
+            "0",      # cnswap
+            "0",      # exit_signal
+            "6",      # processor
+        ]
+        content = " ".join(args).encode()
+        with mock_open_for_path('/proc/%s/stat' % os.getpid(), content):
             p = psutil.Process()
             self.assertEqual(p.name(), 'cat')
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
