@@ -237,31 +237,6 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 free_value, psutil_value, delta=MEMORY_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
-    def test_slab(self):
-        # Emulate /proc/meminfo because neither vmstat nor free return slab.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:         -1 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    SReclaimable:     346648 kB
-                    Slab:             186836 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            ret = psutil.virtual_memory()
-            assert m.called
-            self.assertEqual(ret.slab, 191320064)
-
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
@@ -424,6 +399,79 @@ class TestSystemVirtualMemory(unittest.TestCase):
             w = ws[0]
             self.assertIn(
                 "inactive memory stats couldn't be determined", str(w.message))
+
+    def test_virtual_memory_mocked(self):
+        # Emulate /proc/meminfo because neither vmstat nor free return slab.
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/meminfo':
+                return io.BytesIO(textwrap.dedent("""\
+                    MemTotal:              100 kB
+                    MemFree:               2 kB
+                    MemAvailable:          3 kB
+                    Buffers:               4 kB
+                    Cached:                5 kB
+                    SwapCached:            6 kB
+                    Active:                7 kB
+                    Inactive:              8 kB
+                    Active(anon):          9 kB
+                    Inactive(anon):        10 kB
+                    Active(file):          11 kB
+                    Inactive(file):        12 kB
+                    Unevictable:           13 kB
+                    Mlocked:               14 kB
+                    SwapTotal:             15 kB
+                    SwapFree:              16 kB
+                    Dirty:                 17 kB
+                    Writeback:             18 kB
+                    AnonPages:             19 kB
+                    Mapped:                20 kB
+                    Shmem:                 21 kB
+                    Slab:                  22 kB
+                    SReclaimable:          23 kB
+                    SUnreclaim:            24 kB
+                    KernelStack:           25 kB
+                    PageTables:            26 kB
+                    NFS_Unstable:          27 kB
+                    Bounce:                28 kB
+                    WritebackTmp:          29 kB
+                    CommitLimit:           30 kB
+                    Committed_AS:          31 kB
+                    VmallocTotal:          32 kB
+                    VmallocUsed:           33 kB
+                    VmallocChunk:          34 kB
+                    HardwareCorrupted:     35 kB
+                    AnonHugePages:         36 kB
+                    ShmemHugePages:        37 kB
+                    ShmemPmdMapped:        38 kB
+                    CmaTotal:              39 kB
+                    CmaFree:               40 kB
+                    HugePages_Total:       41 kB
+                    HugePages_Free:        42 kB
+                    HugePages_Rsvd:        43 kB
+                    HugePages_Surp:        44 kB
+                    Hugepagesize:          45 kB
+                    DirectMap46k:          46 kB
+                    DirectMap47M:          47 kB
+                    DirectMap48G:          48 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            mem = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(mem.total, 100 * 1024)
+            self.assertEqual(mem.free, 2 * 1024)
+            self.assertEqual(mem.buffers, 4 * 1024)
+            # cached mem also includes reclaimable memory
+            self.assertEqual(mem.cached, (5 + 23) * 1024)
+            self.assertEqual(mem.shared, 21 * 1024)
+            self.assertEqual(mem.active, 7 * 1024)
+            self.assertEqual(mem.inactive, 8 * 1024)
+            self.assertEqual(mem.slab, 22 * 1024)
+            self.assertEqual(mem.available, 3 * 1024)
 
 
 # =====================================================================
