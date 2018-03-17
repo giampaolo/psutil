@@ -1408,15 +1408,8 @@ class TestSensorsBattery(unittest.TestCase):
 
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
-                return io.BytesIO(b"0")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock_open_content(
+                "/sys/class/power_supply/BAT0/energy_full", b"0") as m:
             self.assertEqual(psutil.sensors_battery().percent, 0)
             assert m.called
 
