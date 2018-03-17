@@ -886,20 +886,21 @@ class TestSystemNetwork(unittest.TestCase):
             self.assertAlmostEqual(
                 stats.dropout, ifconfig_ret['dropout'], delta=10)
 
-    @unittest.skipIf(not which('ip'), "'ip' utility not available")
-    @unittest.skipIf(TRAVIS, "skipped on Travis")
-    def test_net_if_names(self):
-        out = sh("ip addr").strip()
-        nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
-        found = 0
-        for line in out.split('\n'):
-            line = line.strip()
-            if re.search(r"^\d+:", line):
-                found += 1
-                name = line.split(':')[1].strip()
-                self.assertIn(name, nics)
-        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
-            pprint.pformat(nics), out))
+    # XXX - not reliable when having virtual NICs installed by Docker.
+    # @unittest.skipIf(not which('ip'), "'ip' utility not available")
+    # @unittest.skipIf(TRAVIS, "skipped on Travis")
+    # def test_net_if_names(self):
+    #     out = sh("ip addr").strip()
+    #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
+    #     found = 0
+    #     for line in out.split('\n'):
+    #         line = line.strip()
+    #         if re.search(r"^\d+:", line):
+    #             found += 1
+    #             name = line.split(':')[1].strip()
+    #             self.assertIn(name, nics)
+    #     self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
+    #         pprint.pformat(nics), out))
 
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
