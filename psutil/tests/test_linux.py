@@ -384,9 +384,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
         # (free + cached).
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
+        with mock_open_content(
+                "/proc/meminfo",
+                textwrap.dedent("""\
                     Active:          9444728 kB
                     Active(anon):    6145416 kB
                     Active(file):    2950064 kB
@@ -399,22 +399,18 @@ class TestSystemVirtualMemory(unittest.TestCase):
                     MemTotal:       16325648 kB
                     Shmem:            577588 kB
                     SReclaimable:     346648 kB
-                    """).encode())
-            elif name == "/proc/zoneinfo":
-                raise IOError(errno.ENOENT, 'no such file or directory')
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                ret = psutil.virtual_memory()
-            assert m.called
-            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
-            w = ws[0]
-            self.assertIn(
-                "inactive memory stats couldn't be determined", str(w.message))
+                    """).encode()):
+            with mock_open_ecxeption(
+                    "/proc/zoneinfo",
+                    IOError(errno.ENOENT, 'no such file or directory')):
+                with warnings.catch_warnings(record=True) as ws:
+                    ret = psutil.virtual_memory()
+                    self.assertEqual(
+                        ret.available, 2057400 * 1024 + 4818144 * 1024)
+                    w = ws[0]
+                    self.assertIn(
+                        "inactive memory stats couldn't be determined",
+                        str(w.message))
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
