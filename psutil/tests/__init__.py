@@ -54,7 +54,9 @@ else:
 try:
     from unittest import mock  # py3
 except ImportError:
-    import mock  # NOQA - requires "pip install mock"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import mock  # NOQA - requires "pip install mock"
 
 if sys.version_info >= (3, 4):
     import enum
