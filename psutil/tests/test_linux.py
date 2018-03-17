@@ -1438,19 +1438,16 @@ class TestSensorsBattery(unittest.TestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC/online") or \
-                    name.startswith("/sys/class/power_supply/AC0/online") or \
-                    name.startswith("/sys/class/power_supply/BAT0/status"):
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertIsNone(psutil.sensors_battery().power_plugged)
-            assert m.called
+        with mock_open_exception(
+                "/sys/class/power_supply/AC/online",
+                IOError(errno.ENOENT, "")):
+            with mock_open_exception(
+                    "/sys/class/power_supply/AC0/online",
+                    IOError(errno.ENOENT, "")):
+                with mock_open_exception(
+                        "/sys/class/power_supply/BAT0/status",
+                        IOError(errno.ENOENT, "")):
+                    self.assertIsNone(psutil.sensors_battery().power_plugged)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
