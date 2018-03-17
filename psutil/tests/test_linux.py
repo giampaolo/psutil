@@ -13,7 +13,6 @@ import errno
 import glob
 import io
 import os
-import pprint
 import re
 import shutil
 import socket
@@ -145,9 +144,9 @@ def get_free_version_info():
 
 
 @contextlib.contextmanager
-def mock_open_for_path(path, content):
+def mock_open_content(for_path, content):
     def open_mock(name, *args, **kwargs):
-        if name == path:
+        if name == for_path:
             if PY3:
                 if isinstance(content, basestring):
                     return io.StringIO(content)
@@ -155,6 +154,20 @@ def mock_open_for_path(path, content):
                     return io.BytesIO(content)
             else:
                 return io.BytesIO(content)
+        else:
+            return orig_open(name, *args, **kwargs)
+
+    orig_open = open
+    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        yield m
+
+
+@contextlib.contextmanager
+def mock_open_side_effect(for_path, exc):
+    def open_mock(name, *args, **kwargs):
+        if name == for_path:
+            raise exc
         else:
             return orig_open(name, *args, **kwargs)
 
@@ -262,7 +275,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
         # raise a warning.
-        with mock_open_for_path(
+        with mock_open_content(
             '/proc/meminfo',
             textwrap.dedent("""\
                 Active(anon):    6145416 kB
@@ -318,7 +331,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        with mock_open_for_path(
+        with mock_open_content(
             '/proc/meminfo',
             textwrap.dedent("""\
                 Active:          9444728 kB
@@ -347,7 +360,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # Remove Active(file), Inactive(file) and SReclaimable
         # from /proc/meminfo and make sure the fallback is used
         # (free + cached),
-        with mock_open_for_path(
+        with mock_open_content(
             "/proc/meminfo",
             textwrap.dedent("""\
                     Active:          9444728 kB
@@ -405,7 +418,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
-        with mock_open_for_path(
+        with mock_open_content(
             '/proc/meminfo',
             textwrap.dedent("""\
                 MemTotal:              100 kB
@@ -523,15 +536,9 @@ class TestSystemSwapMemory(unittest.TestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/vmstat":
-                raise IOError(errno.ENOENT, 'no such file or directory')
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_side_effect(
+                "/proc/vmstat",
+                IOError(errno.ENOENT, 'no such file or directory')) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -566,7 +573,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         # Emulate a case where /proc/meminfo provides no swap metrics
         # in which case sysinfo() syscall is supposed to be used
         # as a fallback.
-        with mock_open_for_path("/proc/meminfo", b"") as m:
+        with mock_open_content("/proc/meminfo", b"") as m:
             psutil.swap_memory()
             assert m.called
 
@@ -653,7 +660,7 @@ class TestSystemCPU(unittest.TestCase):
 
             # Finally, let's make /proc/cpuinfo return meaningless data;
             # this way we'll fall back on relying on /proc/stat
-            with mock_open_for_path('/proc/cpuinfo', b"") as m:
+            with mock_open_content('/proc/cpuinfo', b"") as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
                 m.called
 
@@ -897,7 +904,7 @@ class TestSystemNetwork(unittest.TestCase):
         psutil.net_connections(kind='inet6')
 
     def test_net_connections_mocked(self):
-        with mock_open_for_path(
+        with mock_open_content(
             '/proc/net/unix',
             textwrap.dedent("""\
                 0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
@@ -1144,7 +1151,7 @@ class TestMisc(unittest.TestCase):
     def test_cpu_steal_decrease(self):
         # Test cumulative cpu stats decrease. We should ignore this.
         # See issue #1210.
-        with mock_open_for_path(
+        with mock_open_content(
             "/proc/stat",
             textwrap.dedent("""\
                 cpu   0 0 0 0 0 0 0 1 0 0
@@ -1160,7 +1167,7 @@ class TestMisc(unittest.TestCase):
             psutil.cpu_times_percent()
             psutil.cpu_times_percent(percpu=True)
 
-        with mock_open_for_path(
+        with mock_open_content(
             "/proc/stat",
             textwrap.dedent("""\
                 cpu   1 0 0 0 0 0 0 0 0 0
@@ -1269,7 +1276,7 @@ class TestMisc(unittest.TestCase):
         # Internally pid_exists relies on /proc/{pid}/status.
         # Emulate a case where this file is empty in which case
         # psutil is supposed to fall back on using pids().
-        with mock_open_for_path("/proc/%s/status", "") as m:
+        with mock_open_content("/proc/%s/status", "") as m:
             assert psutil.pid_exists(os.getpid())
             assert m.called
 
@@ -1569,7 +1576,7 @@ class TestProcess(unittest.TestCase):
 
     def test_memory_full_info_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
-        with mock_open_for_path(
+        with mock_open_content(
             "/proc/%s/smaps" % os.getpid(),
             textwrap.dedent("""\
                 fffff0 r-xp 00000000 00:00 0                  [vsyscall]
@@ -1863,7 +1870,7 @@ class TestProcess(unittest.TestCase):
             "6",      # processor
         ]
         content = " ".join(args).encode()
-        with mock_open_for_path('/proc/%s/stat' % os.getpid(), content):
+        with mock_open_content('/proc/%s/stat' % os.getpid(), content):
             p = psutil.Process()
             self.assertEqual(p.name(), 'cat')
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
@@ -1878,7 +1885,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):
-        with mock_open_for_path(
+        with mock_open_content(
             '/proc/%s/status' % os.getpid(),
             textwrap.dedent("""\
                 Uid:\t1000\t1001\t1002\t1003
