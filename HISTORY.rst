@@ -22,6 +22,13 @@ XXXX-XX-XX
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
+- 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
+  enough permissions for /proc/pid/cred
+- 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
+  support real-time processes
+- 1194_: [SunOS] Fix double free in psutil_proc_cpu_num()
+- 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
+  and warnings
 
 5.4.3
 =====
