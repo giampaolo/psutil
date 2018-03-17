@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1239_: [Linux] expose kernel "slab" memory for psutil.virtual_memory().
+  (patch by Maxime Mouial)
+
 **Bug fixes**
 
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when

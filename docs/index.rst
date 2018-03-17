@@ -266,11 +266,11 @@ Memory
   - **active** *(UNIX)*: memory currently in use or very recently used, and so
     it is in RAM.
   - **inactive** *(UNIX)*: memory that is marked as not used.
-  - **slab** *(Linux)*: in-kernel data structures cache.
   - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
   - **cached** *(Linux, BSD)*: cache for various things.
   - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
     multiple processes.
+  - **slab** *(Linux)*: in-kernel data structures cache.
   - **wired** *(BSD, OSX)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
 
@@ -293,11 +293,9 @@ Memory
   ...
   >>>
 
-  .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
+  .. versionchanged:: 4.2.0 added *shared* metric on Linux.
 
-  .. versionchanged:: 4.4.0 *available* and *used* values on Linux are more
-    precise and match "free" cmdline utility.
-
+  .. versionchanged:: 5.4.4 added *slab* metric on Linux.
 
 .. function:: swap_memory()
 
