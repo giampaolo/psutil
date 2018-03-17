@@ -145,6 +145,9 @@ def get_free_version_info():
 
 @contextlib.contextmanager
 def mock_open_content(for_path, content):
+    """Mock open() builtin and forces it to return a certain `content`
+    on read() if the path being opened matches `for_path`.
+    """
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             if PY3:
@@ -165,6 +168,9 @@ def mock_open_content(for_path, content):
 
 @contextlib.contextmanager
 def mock_open_exception(for_path, exc):
+    """Mock open() builtin and raises `exc` if the path being opened
+    matches `for_path`.
+    """
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             raise exc
