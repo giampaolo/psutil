@@ -25,6 +25,7 @@ import warnings
 
 import psutil
 from psutil import LINUX
+from psutil._compat import basestring
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
@@ -143,6 +144,26 @@ def get_free_version_info():
     return tuple(map(int, out.split()[-1].split('.')))
 
 
+@contextlib.contextmanager
+def mock_open_for_path(path, content):
+    def open_mock(name, *args, **kwargs):
+        if name == path:
+            if PY3:
+                if isinstance(content, basestring):
+                    return io.StringIO(content)
+                else:
+                    return io.BytesIO(content)
+            else:
+                return io.BytesIO(content)
+        else:
+            return orig_open(name, *args, **kwargs)
+
+    orig_open = open
+    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        yield m
+
+
 # =====================================================================
 # --- system virtual memory
 # =====================================================================
@@ -241,24 +262,18 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
         # raise a warning.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:         -1 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    SReclaimable:     346648 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_for_path(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:         -1 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                SReclaimable:     346648 kB
+                """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.virtual_memory()
@@ -303,29 +318,23 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
-                    Active:          9444728 kB
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Buffers:          287952 kB
-                    Cached:          4818144 kB
-                    Inactive(file):  1578132 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:    6574984 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    Shmem:            577588 kB
-                    SReclaimable:     346648 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_for_path(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                Active:          9444728 kB
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Buffers:          287952 kB
+                Cached:          4818144 kB
+                Inactive(file):  1578132 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:    6574984 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                Shmem:            577588 kB
+                SReclaimable:     346648 kB
+                """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -338,9 +347,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # Remove Active(file), Inactive(file) and SReclaimable
         # from /proc/meminfo and make sure the fallback is used
         # (free + cached),
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
+        with mock_open_for_path(
+            "/proc/meminfo",
+            textwrap.dedent("""\
                     Active:          9444728 kB
                     Active(anon):    6145416 kB
                     Buffers:          287952 kB
@@ -350,13 +359,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                     MemFree:         2057400 kB
                     MemTotal:       16325648 kB
                     Shmem:            577588 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+                    """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -402,64 +405,58 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    MemTotal:              100 kB
-                    MemFree:               2 kB
-                    MemAvailable:          3 kB
-                    Buffers:               4 kB
-                    Cached:                5 kB
-                    SwapCached:            6 kB
-                    Active:                7 kB
-                    Inactive:              8 kB
-                    Active(anon):          9 kB
-                    Inactive(anon):        10 kB
-                    Active(file):          11 kB
-                    Inactive(file):        12 kB
-                    Unevictable:           13 kB
-                    Mlocked:               14 kB
-                    SwapTotal:             15 kB
-                    SwapFree:              16 kB
-                    Dirty:                 17 kB
-                    Writeback:             18 kB
-                    AnonPages:             19 kB
-                    Mapped:                20 kB
-                    Shmem:                 21 kB
-                    Slab:                  22 kB
-                    SReclaimable:          23 kB
-                    SUnreclaim:            24 kB
-                    KernelStack:           25 kB
-                    PageTables:            26 kB
-                    NFS_Unstable:          27 kB
-                    Bounce:                28 kB
-                    WritebackTmp:          29 kB
-                    CommitLimit:           30 kB
-                    Committed_AS:          31 kB
-                    VmallocTotal:          32 kB
-                    VmallocUsed:           33 kB
-                    VmallocChunk:          34 kB
-                    HardwareCorrupted:     35 kB
-                    AnonHugePages:         36 kB
-                    ShmemHugePages:        37 kB
-                    ShmemPmdMapped:        38 kB
-                    CmaTotal:              39 kB
-                    CmaFree:               40 kB
-                    HugePages_Total:       41 kB
-                    HugePages_Free:        42 kB
-                    HugePages_Rsvd:        43 kB
-                    HugePages_Surp:        44 kB
-                    Hugepagesize:          45 kB
-                    DirectMap46k:          46 kB
-                    DirectMap47M:          47 kB
-                    DirectMap48G:          48 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_for_path(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                MemTotal:              100 kB
+                MemFree:               2 kB
+                MemAvailable:          3 kB
+                Buffers:               4 kB
+                Cached:                5 kB
+                SwapCached:            6 kB
+                Active:                7 kB
+                Inactive:              8 kB
+                Active(anon):          9 kB
+                Inactive(anon):        10 kB
+                Active(file):          11 kB
+                Inactive(file):        12 kB
+                Unevictable:           13 kB
+                Mlocked:               14 kB
+                SwapTotal:             15 kB
+                SwapFree:              16 kB
+                Dirty:                 17 kB
+                Writeback:             18 kB
+                AnonPages:             19 kB
+                Mapped:                20 kB
+                Shmem:                 21 kB
+                Slab:                  22 kB
+                SReclaimable:          23 kB
+                SUnreclaim:            24 kB
+                KernelStack:           25 kB
+                PageTables:            26 kB
+                NFS_Unstable:          27 kB
+                Bounce:                28 kB
+                WritebackTmp:          29 kB
+                CommitLimit:           30 kB
+                Committed_AS:          31 kB
+                VmallocTotal:          32 kB
+                VmallocUsed:           33 kB
+                VmallocChunk:          34 kB
+                HardwareCorrupted:     35 kB
+                AnonHugePages:         36 kB
+                ShmemHugePages:        37 kB
+                ShmemPmdMapped:        38 kB
+                CmaTotal:              39 kB
+                CmaFree:               40 kB
+                HugePages_Total:       41 kB
+                HugePages_Free:        42 kB
+                HugePages_Rsvd:        43 kB
+                HugePages_Surp:        44 kB
+                Hugepagesize:          45 kB
+                DirectMap46k:          46 kB
+                DirectMap47M:          47 kB
+                DirectMap48G:          48 kB
+                """).encode()) as m:
             mem = psutil.virtual_memory()
             assert m.called
             self.assertEqual(mem.total, 100 * 1024)
