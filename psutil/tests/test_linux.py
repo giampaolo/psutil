@@ -1025,34 +1025,27 @@ class TestSystemDisks(unittest.TestCase):
         # amount of metrics when it bumps into a partition
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/partitions':
-                return io.StringIO(textwrap.dedent(u"""\
+        with mock_open_content(
+                '/proc/partitions',
+                textwrap.dedent("""\
                     major minor  #blocks  name
 
                        8        0  488386584 hda
-                    """))
-            elif name == '/proc/diskstats':
-                return io.StringIO(
-                    u("   3    1   hda 1 2 3 4"))
-            else:
-                return orig_open(name, *args, **kwargs)
+                    """)):
+            with mock_open_content(
+                    '/proc/diskstats',
+                    "   3    1   hda 1 2 3 4"):
+                ret = psutil.disk_io_counters(nowrap=False)
+                self.assertEqual(ret.read_count, 1)
+                self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
+                self.assertEqual(ret.write_count, 3)
+                self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
 
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters(nowrap=False)
-            assert m.called
-            self.assertEqual(ret.read_count, 1)
-            self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
-            self.assertEqual(ret.write_count, 3)
-            self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
-
-            self.assertEqual(ret.read_merged_count, 0)
-            self.assertEqual(ret.read_time, 0)
-            self.assertEqual(ret.write_merged_count, 0)
-            self.assertEqual(ret.write_time, 0)
-            self.assertEqual(ret.busy_time, 0)
+                self.assertEqual(ret.read_merged_count, 0)
+                self.assertEqual(ret.read_time, 0)
+                self.assertEqual(ret.write_merged_count, 0)
+                self.assertEqual(ret.write_time, 0)
+                self.assertEqual(ret.busy_time, 0)
 
 
 # =====================================================================
