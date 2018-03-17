@@ -164,7 +164,7 @@ def mock_open_content(for_path, content):
 
 
 @contextlib.contextmanager
-def mock_open_side_effect(for_path, exc):
+def mock_open_ecxeption(for_path, exc):
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             raise exc
@@ -536,7 +536,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        with mock_open_side_effect(
+        with mock_open_ecxeption(
                 "/proc/vmstat",
                 IOError(errno.ENOENT, 'no such file or directory')) as m:
             with warnings.catch_warnings(record=True) as ws:
@@ -1416,21 +1416,15 @@ class TestSensorsBattery(unittest.TestCase):
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        def open_mock(name, *args, **kwargs):
-            energy_full = "/sys/class/power_supply/BAT0/energy_full"
-            charge_full = "/sys/class/power_supply/BAT0/charge_full"
-            if name.startswith(energy_full) or name.startswith(charge_full):
-                raise IOError(errno.ENOENT, "")
-            elif name.startswith("/sys/class/power_supply/BAT0/capacity"):
-                return io.BytesIO(b"88")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertEqual(psutil.sensors_battery().percent, 88)
-            assert m.called
+        with mock_open_ecxeption(
+                "/sys/class/power_supply/BAT0/energy_full",
+                IOError(errno.ENOENT, "")):
+            with mock_open_ecxeption(
+                    "/sys/class/power_supply/BAT0/charge_full",
+                    IOError(errno.ENOENT, "")):
+                with mock_open_content(
+                        "/sys/class/power_supply/BAT0/capacity", b"88"):
+                    self.assertEqual(psutil.sensors_battery().percent, 88)
 
     def test_emulate_no_ac0_online(self):
         # Emulate a case where /AC0/online file does not exist.
