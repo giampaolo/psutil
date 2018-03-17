@@ -1368,18 +1368,13 @@ class TestSensorsBattery(unittest.TestCase):
     def test_emulate_no_base_files(self):
         # Emulate a case where base metrics files are not present,
         # in which case we're supposed to get None.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_now") or \
-                    name.startswith("/sys/class/power_supply/BAT0/charge_now"):
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertIsNone(psutil.sensors_battery())
-            assert m.called
+        with mock_open_exception(
+                "/sys/class/power_supply/BAT0/energy_now",
+                IOError(errno.ENOENT, "")):
+            with mock_open_exception(
+                    "/sys/class/power_supply/BAT0/charge_now",
+                    IOError(errno.ENOENT, "")):
+                self.assertIsNone(psutil.sensors_battery())
 
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
