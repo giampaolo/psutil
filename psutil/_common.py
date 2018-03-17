@@ -206,7 +206,7 @@ pcputimes = namedtuple('pcputimes',
 # psutil.Process.open_files()
 popenfile = namedtuple('popenfile', ['path', 'fd'])
 # psutil.Process.threads()
-pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
+pthread = namedtuple('pthread', ['id', 'user_time', 'system_time', 'cpu_num'])
 # psutil.Process.uids()
 puids = namedtuple('puids', ['real', 'effective', 'saved'])
 # psutil.Process.gids()

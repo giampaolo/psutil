@@ -1401,7 +1401,7 @@ Process class
   .. method:: threads()
 
     Return threads opened by process as a list of named tuples including thread
-    id and thread CPU times (user/system). On OpenBSD this method requires
+    id, thread CPU times (user/system) and thread running CPU ID (Only on Linux). On OpenBSD this method requires
     root privileges.
 
   .. method:: cpu_times()
