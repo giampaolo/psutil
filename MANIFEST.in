@@ -110,6 +110,7 @@ include scripts/internal/download_exes.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_timeline.py
+include scripts/internal/purge.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

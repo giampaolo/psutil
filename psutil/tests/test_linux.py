@@ -13,7 +13,6 @@ import errno
 import glob
 import io
 import os
-import pprint
 import re
 import shutil
 import socket
@@ -25,6 +24,7 @@ import warnings
 
 import psutil
 from psutil import LINUX
+from psutil._compat import basestring
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
@@ -143,6 +143,46 @@ def get_free_version_info():
     return tuple(map(int, out.split()[-1].split('.')))
 
 
+@contextlib.contextmanager
+def mock_open_content(for_path, content):
+    """Mock open() builtin and forces it to return a certain `content`
+    on read() if the path being opened matches `for_path`.
+    """
+    def open_mock(name, *args, **kwargs):
+        if name == for_path:
+            if PY3:
+                if isinstance(content, basestring):
+                    return io.StringIO(content)
+                else:
+                    return io.BytesIO(content)
+            else:
+                return io.BytesIO(content)
+        else:
+            return orig_open(name, *args, **kwargs)
+
+    orig_open = open
+    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        yield m
+
+
+@contextlib.contextmanager
+def mock_open_exception(for_path, exc):
+    """Mock open() builtin and raises `exc` if the path being opened
+    matches `for_path`.
+    """
+    def open_mock(name, *args, **kwargs):
+        if name == for_path:
+            raise exc
+        else:
+            return orig_open(name, *args, **kwargs)
+
+    orig_open = open
+    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        yield m
+
+
 # =====================================================================
 # --- system virtual memory
 # =====================================================================
@@ -237,53 +277,22 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 free_value, psutil_value, delta=MEMORY_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
-    def test_slab(self):
-        # Emulate /proc/meminfo because neither vmstat nor free return slab.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:         -1 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    SReclaimable:     346648 kB
-                    Slab:             186836 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            ret = psutil.virtual_memory()
-            assert m.called
-            self.assertEqual(ret.slab, 191320064)
-
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
         # raise a warning.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:         -1 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    SReclaimable:     346648 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:         -1 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                SReclaimable:     346648 kB
+                """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.virtual_memory()
@@ -328,29 +337,23 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
-                    Active:          9444728 kB
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Buffers:          287952 kB
-                    Cached:          4818144 kB
-                    Inactive(file):  1578132 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemAvailable:    6574984 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    Shmem:            577588 kB
-                    SReclaimable:     346648 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                Active:          9444728 kB
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Buffers:          287952 kB
+                Cached:          4818144 kB
+                Inactive(file):  1578132 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:    6574984 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                Shmem:            577588 kB
+                SReclaimable:     346648 kB
+                """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -363,9 +366,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # Remove Active(file), Inactive(file) and SReclaimable
         # from /proc/meminfo and make sure the fallback is used
         # (free + cached),
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
+        with mock_open_content(
+            "/proc/meminfo",
+            textwrap.dedent("""\
                     Active:          9444728 kB
                     Active(anon):    6145416 kB
                     Buffers:          287952 kB
@@ -375,13 +378,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                     MemFree:         2057400 kB
                     MemTotal:       16325648 kB
                     Shmem:            577588 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+                    """).encode()) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -393,9 +390,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
         # (free + cached).
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(textwrap.dedent("""\
+        with mock_open_content(
+                "/proc/meminfo",
+                textwrap.dedent("""\
                     Active:          9444728 kB
                     Active(anon):    6145416 kB
                     Active(file):    2950064 kB
@@ -408,22 +405,85 @@ class TestSystemVirtualMemory(unittest.TestCase):
                     MemTotal:       16325648 kB
                     Shmem:            577588 kB
                     SReclaimable:     346648 kB
-                    """).encode())
-            elif name == "/proc/zoneinfo":
-                raise IOError(errno.ENOENT, 'no such file or directory')
-            else:
-                return orig_open(name, *args, **kwargs)
+                    """).encode()):
+            with mock_open_exception(
+                    "/proc/zoneinfo",
+                    IOError(errno.ENOENT, 'no such file or directory')):
+                with warnings.catch_warnings(record=True) as ws:
+                    ret = psutil.virtual_memory()
+                    self.assertEqual(
+                        ret.available, 2057400 * 1024 + 4818144 * 1024)
+                    w = ws[0]
+                    self.assertIn(
+                        "inactive memory stats couldn't be determined",
+                        str(w.message))
 
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                ret = psutil.virtual_memory()
+    def test_virtual_memory_mocked(self):
+        # Emulate /proc/meminfo because neither vmstat nor free return slab.
+        with mock_open_content(
+            '/proc/meminfo',
+            textwrap.dedent("""\
+                MemTotal:              100 kB
+                MemFree:               2 kB
+                MemAvailable:          3 kB
+                Buffers:               4 kB
+                Cached:                5 kB
+                SwapCached:            6 kB
+                Active:                7 kB
+                Inactive:              8 kB
+                Active(anon):          9 kB
+                Inactive(anon):        10 kB
+                Active(file):          11 kB
+                Inactive(file):        12 kB
+                Unevictable:           13 kB
+                Mlocked:               14 kB
+                SwapTotal:             15 kB
+                SwapFree:              16 kB
+                Dirty:                 17 kB
+                Writeback:             18 kB
+                AnonPages:             19 kB
+                Mapped:                20 kB
+                Shmem:                 21 kB
+                Slab:                  22 kB
+                SReclaimable:          23 kB
+                SUnreclaim:            24 kB
+                KernelStack:           25 kB
+                PageTables:            26 kB
+                NFS_Unstable:          27 kB
+                Bounce:                28 kB
+                WritebackTmp:          29 kB
+                CommitLimit:           30 kB
+                Committed_AS:          31 kB
+                VmallocTotal:          32 kB
+                VmallocUsed:           33 kB
+                VmallocChunk:          34 kB
+                HardwareCorrupted:     35 kB
+                AnonHugePages:         36 kB
+                ShmemHugePages:        37 kB
+                ShmemPmdMapped:        38 kB
+                CmaTotal:              39 kB
+                CmaFree:               40 kB
+                HugePages_Total:       41 kB
+                HugePages_Free:        42 kB
+                HugePages_Rsvd:        43 kB
+                HugePages_Surp:        44 kB
+                Hugepagesize:          45 kB
+                DirectMap46k:          46 kB
+                DirectMap47M:          47 kB
+                DirectMap48G:          48 kB
+                """).encode()) as m:
+            mem = psutil.virtual_memory()
             assert m.called
-            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
-            w = ws[0]
-            self.assertIn(
-                "inactive memory stats couldn't be determined", str(w.message))
+            self.assertEqual(mem.total, 100 * 1024)
+            self.assertEqual(mem.free, 2 * 1024)
+            self.assertEqual(mem.buffers, 4 * 1024)
+            # cached mem also includes reclaimable memory
+            self.assertEqual(mem.cached, (5 + 23) * 1024)
+            self.assertEqual(mem.shared, 21 * 1024)
+            self.assertEqual(mem.active, 7 * 1024)
+            self.assertEqual(mem.inactive, 8 * 1024)
+            self.assertEqual(mem.slab, 22 * 1024)
+            self.assertEqual(mem.available, 3 * 1024)
 
 
 # =====================================================================
@@ -478,15 +538,9 @@ class TestSystemSwapMemory(unittest.TestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/vmstat":
-                raise IOError(errno.ENOENT, 'no such file or directory')
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_exception(
+                "/proc/vmstat",
+                IOError(errno.ENOENT, 'no such file or directory')) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -521,15 +575,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         # Emulate a case where /proc/meminfo provides no swap metrics
         # in which case sysinfo() syscall is supposed to be used
         # as a fallback.
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/meminfo":
-                return io.BytesIO(b"")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content("/proc/meminfo", b"") as m:
             psutil.swap_memory()
             assert m.called
 
@@ -616,16 +662,9 @@ class TestSystemCPU(unittest.TestCase):
 
             # Finally, let's make /proc/cpuinfo return meaningless data;
             # this way we'll fall back on relying on /proc/stat
-            def open_mock(name, *args, **kwargs):
-                if name.startswith('/proc/cpuinfo'):
-                    return io.BytesIO(b"")
-                else:
-                    return orig_open(name, *args, **kwargs)
-
-            orig_open = open
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-            with mock.patch(patch_point, side_effect=open_mock, create=True):
+            with mock_open_content('/proc/cpuinfo', b"") as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
+                m.called
 
     def test_cpu_count_physical_mocked(self):
         # Have open() return emtpy data and make sure None is returned
@@ -838,20 +877,21 @@ class TestSystemNetwork(unittest.TestCase):
             self.assertAlmostEqual(
                 stats.dropout, ifconfig_ret['dropout'], delta=10)
 
-    @unittest.skipIf(not which('ip'), "'ip' utility not available")
-    @unittest.skipIf(TRAVIS, "skipped on Travis")
-    def test_net_if_names(self):
-        out = sh("ip addr").strip()
-        nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
-        found = 0
-        for line in out.split('\n'):
-            line = line.strip()
-            if re.search(r"^\d+:", line):
-                found += 1
-                name = line.split(':')[1].strip()
-                self.assertIn(name, nics)
-        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
-            pprint.pformat(nics), out))
+    # XXX - not reliable when having virtual NICs installed by Docker.
+    # @unittest.skipIf(not which('ip'), "'ip' utility not available")
+    # @unittest.skipIf(TRAVIS, "skipped on Travis")
+    # def test_net_if_names(self):
+    #     out = sh("ip addr").strip()
+    #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
+    #     found = 0
+    #     for line in out.split('\n'):
+    #         line = line.strip()
+    #         if re.search(r"^\d+:", line):
+    #             found += 1
+    #             name = line.split(':')[1].strip()
+    #             self.assertIn(name, nics)
+    #     self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
+    #         pprint.pformat(nics), out))
 
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
@@ -866,20 +906,14 @@ class TestSystemNetwork(unittest.TestCase):
         psutil.net_connections(kind='inet6')
 
     def test_net_connections_mocked(self):
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/net/unix':
-                return io.StringIO(textwrap.dedent(u"""\
-                    0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
-                    0: 00000003 000 000 0001 03 35010 @/tmp/dbus-tB2X8h69BQ
-                    0: 00000003 000 000 0001 03 34424 @/tmp/dbus-cHy80Y8O
-                    000000000000000000000000000000000000000000000000000000
-                    """))
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock_open_content(
+            '/proc/net/unix',
+            textwrap.dedent("""\
+                0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
+                0: 00000003 000 000 0001 03 35010 @/tmp/dbus-tB2X8h69BQ
+                0: 00000003 000 000 0001 03 34424 @/tmp/dbus-cHy80Y8O
+                000000000000000000000000000000000000000000000000000000
+                """)) as m:
             psutil.net_connections(kind='unix')
             assert m.called
 
@@ -945,65 +979,51 @@ class TestSystemDisks(unittest.TestCase):
     def test_disk_io_counters_kernel_2_4_mocked(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/partitions':
-                return io.StringIO(textwrap.dedent(u"""\
+        with mock_open_content(
+                '/proc/partitions',
+                textwrap.dedent("""\
                     major minor  #blocks  name
 
                        8        0  488386584 hda
-                    """))
-            elif name == '/proc/diskstats':
-                return io.StringIO(
-                    u("   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"))
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters(nowrap=False)
-            assert m.called
-            self.assertEqual(ret.read_count, 1)
-            self.assertEqual(ret.read_merged_count, 2)
-            self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
-            self.assertEqual(ret.read_time, 4)
-            self.assertEqual(ret.write_count, 5)
-            self.assertEqual(ret.write_merged_count, 6)
-            self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
-            self.assertEqual(ret.write_time, 8)
-            self.assertEqual(ret.busy_time, 10)
+                    """)):
+            with mock_open_content(
+                    '/proc/diskstats',
+                    "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"):
+                ret = psutil.disk_io_counters(nowrap=False)
+                self.assertEqual(ret.read_count, 1)
+                self.assertEqual(ret.read_merged_count, 2)
+                self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
+                self.assertEqual(ret.read_time, 4)
+                self.assertEqual(ret.write_count, 5)
+                self.assertEqual(ret.write_merged_count, 6)
+                self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
+                self.assertEqual(ret.write_time, 8)
+                self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_full_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
         # lines reporting all metrics:
         # https://github.com/giampaolo/psutil/issues/767
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/partitions':
-                return io.StringIO(textwrap.dedent(u"""\
+        with mock_open_content(
+                '/proc/partitions',
+                textwrap.dedent("""\
                     major minor  #blocks  name
 
                        8        0  488386584 hda
-                    """))
-            elif name == '/proc/diskstats':
-                return io.StringIO(
-                    u("   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"))
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters(nowrap=False)
-            assert m.called
-            self.assertEqual(ret.read_count, 1)
-            self.assertEqual(ret.read_merged_count, 2)
-            self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
-            self.assertEqual(ret.read_time, 4)
-            self.assertEqual(ret.write_count, 5)
-            self.assertEqual(ret.write_merged_count, 6)
-            self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
-            self.assertEqual(ret.write_time, 8)
-            self.assertEqual(ret.busy_time, 10)
+                    """)):
+            with mock_open_content(
+                    '/proc/diskstats',
+                    "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"):
+                ret = psutil.disk_io_counters(nowrap=False)
+                self.assertEqual(ret.read_count, 1)
+                self.assertEqual(ret.read_merged_count, 2)
+                self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
+                self.assertEqual(ret.read_time, 4)
+                self.assertEqual(ret.write_count, 5)
+                self.assertEqual(ret.write_merged_count, 6)
+                self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
+                self.assertEqual(ret.write_time, 8)
+                self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_limited_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -1011,34 +1031,27 @@ class TestSystemDisks(unittest.TestCase):
         # amount of metrics when it bumps into a partition
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/partitions':
-                return io.StringIO(textwrap.dedent(u"""\
+        with mock_open_content(
+                '/proc/partitions',
+                textwrap.dedent("""\
                     major minor  #blocks  name
 
                        8        0  488386584 hda
-                    """))
-            elif name == '/proc/diskstats':
-                return io.StringIO(
-                    u("   3    1   hda 1 2 3 4"))
-            else:
-                return orig_open(name, *args, **kwargs)
+                    """)):
+            with mock_open_content(
+                    '/proc/diskstats',
+                    "   3    1   hda 1 2 3 4"):
+                ret = psutil.disk_io_counters(nowrap=False)
+                self.assertEqual(ret.read_count, 1)
+                self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
+                self.assertEqual(ret.write_count, 3)
+                self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
 
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            ret = psutil.disk_io_counters(nowrap=False)
-            assert m.called
-            self.assertEqual(ret.read_count, 1)
-            self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
-            self.assertEqual(ret.write_count, 3)
-            self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
-
-            self.assertEqual(ret.read_merged_count, 0)
-            self.assertEqual(ret.read_time, 0)
-            self.assertEqual(ret.write_merged_count, 0)
-            self.assertEqual(ret.write_time, 0)
-            self.assertEqual(ret.busy_time, 0)
+                self.assertEqual(ret.read_merged_count, 0)
+                self.assertEqual(ret.read_time, 0)
+                self.assertEqual(ret.write_merged_count, 0)
+                self.assertEqual(ret.write_time, 0)
+                self.assertEqual(ret.busy_time, 0)
 
 
 # =====================================================================
@@ -1119,20 +1132,13 @@ class TestMisc(unittest.TestCase):
     def test_cpu_steal_decrease(self):
         # Test cumulative cpu stats decrease. We should ignore this.
         # See issue #1210.
-
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/stat":
-                return io.BytesIO(textwrap.dedent("""\
-                    cpu   0 0 0 0 0 0 0 1 0 0
-                    cpu0  0 0 0 0 0 0 0 1 0 0
-                    cpu1  0 0 0 0 0 0 0 1 0 0
-                    """).encode())
-            return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content(
+            "/proc/stat",
+            textwrap.dedent("""\
+                cpu   0 0 0 0 0 0 0 1 0 0
+                cpu0  0 0 0 0 0 0 0 1 0 0
+                cpu1  0 0 0 0 0 0 0 1 0 0
+                """).encode()) as m:
             # first call to "percent" functions should read the new stat file
             # and compare to the "real" file read at import time - so the
             # values are meaningless
@@ -1142,16 +1148,13 @@ class TestMisc(unittest.TestCase):
             psutil.cpu_times_percent()
             psutil.cpu_times_percent(percpu=True)
 
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/stat":
-                return io.BytesIO(textwrap.dedent("""\
-                    cpu   1 0 0 0 0 0 0 0 0 0
-                    cpu0  1 0 0 0 0 0 0 0 0 0
-                    cpu1  1 0 0 0 0 0 0 0 0 0
-                    """).encode())
-            return orig_open(name, *args, **kwargs)
-
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content(
+            "/proc/stat",
+            textwrap.dedent("""\
+                cpu   1 0 0 0 0 0 0 0 0 0
+                cpu0  1 0 0 0 0 0 0 0 0 0
+                cpu1  1 0 0 0 0 0 0 0 0 0
+                """).encode()) as m:
             # Increase "user" while steal goes "backwards" to zero.
             cpu_percent = psutil.cpu_percent()
             assert m.called
@@ -1254,16 +1257,9 @@ class TestMisc(unittest.TestCase):
         # Internally pid_exists relies on /proc/{pid}/status.
         # Emulate a case where this file is empty in which case
         # psutil is supposed to fall back on using pids().
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/%s/status" % os.getpid():
-                return io.StringIO(u(""))
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock_open_content("/proc/%s/status", "") as m:
             assert psutil.pid_exists(os.getpid())
+            assert m.called
 
 
 # =====================================================================
@@ -1378,51 +1374,33 @@ class TestSensorsBattery(unittest.TestCase):
     def test_emulate_no_base_files(self):
         # Emulate a case where base metrics files are not present,
         # in which case we're supposed to get None.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_now") or \
-                    name.startswith("/sys/class/power_supply/BAT0/charge_now"):
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertIsNone(psutil.sensors_battery())
-            assert m.called
+        with mock_open_exception(
+                "/sys/class/power_supply/BAT0/energy_now",
+                IOError(errno.ENOENT, "")):
+            with mock_open_exception(
+                    "/sys/class/power_supply/BAT0/charge_now",
+                    IOError(errno.ENOENT, "")):
+                self.assertIsNone(psutil.sensors_battery())
 
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/BAT0/energy_full"):
-                return io.BytesIO(b"0")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock_open_content(
+                "/sys/class/power_supply/BAT0/energy_full", b"0") as m:
             self.assertEqual(psutil.sensors_battery().percent, 0)
             assert m.called
 
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        def open_mock(name, *args, **kwargs):
-            energy_full = "/sys/class/power_supply/BAT0/energy_full"
-            charge_full = "/sys/class/power_supply/BAT0/charge_full"
-            if name.startswith(energy_full) or name.startswith(charge_full):
-                raise IOError(errno.ENOENT, "")
-            elif name.startswith("/sys/class/power_supply/BAT0/capacity"):
-                return io.BytesIO(b"88")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertEqual(psutil.sensors_battery().percent, 88)
-            assert m.called
+        with mock_open_exception(
+                "/sys/class/power_supply/BAT0/energy_full",
+                IOError(errno.ENOENT, "")):
+            with mock_open_exception(
+                    "/sys/class/power_supply/BAT0/charge_full",
+                    IOError(errno.ENOENT, "")):
+                with mock_open_content(
+                        "/sys/class/power_supply/BAT0/capacity", b"88"):
+                    self.assertEqual(psutil.sensors_battery().percent, 88)
 
     def test_emulate_no_ac0_online(self):
         # Emulate a case where /AC0/online file does not exist.
@@ -1440,19 +1418,16 @@ class TestSensorsBattery(unittest.TestCase):
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC/online") or \
-                    name.startswith("/sys/class/power_supply/AC0/online") or \
-                    name.startswith("/sys/class/power_supply/BAT0/status"):
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            self.assertIsNone(psutil.sensors_battery().power_plugged)
-            assert m.called
+        with mock_open_exception(
+                "/sys/class/power_supply/AC/online",
+                IOError(errno.ENOENT, "")):
+            with mock_open_exception(
+                    "/sys/class/power_supply/AC0/online",
+                    IOError(errno.ENOENT, "")):
+                with mock_open_exception(
+                        "/sys/class/power_supply/BAT0/status",
+                        IOError(errno.ENOENT, "")):
+                    self.assertIsNone(psutil.sensors_battery().power_plugged)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -1561,37 +1536,31 @@ class TestProcess(unittest.TestCase):
 
     def test_memory_full_info_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/%s/smaps" % os.getpid():
-                return io.BytesIO(textwrap.dedent("""\
-                    fffff0 r-xp 00000000 00:00 0                  [vsyscall]
-                    Size:                  1 kB
-                    Rss:                   2 kB
-                    Pss:                   3 kB
-                    Shared_Clean:          4 kB
-                    Shared_Dirty:          5 kB
-                    Private_Clean:         6 kB
-                    Private_Dirty:         7 kB
-                    Referenced:            8 kB
-                    Anonymous:             9 kB
-                    LazyFree:              10 kB
-                    AnonHugePages:         11 kB
-                    ShmemPmdMapped:        12 kB
-                    Shared_Hugetlb:        13 kB
-                    Private_Hugetlb:       14 kB
-                    Swap:                  15 kB
-                    SwapPss:               16 kB
-                    KernelPageSize:        17 kB
-                    MMUPageSize:           18 kB
-                    Locked:                19 kB
-                    VmFlags: rd ex
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_content(
+            "/proc/%s/smaps" % os.getpid(),
+            textwrap.dedent("""\
+                fffff0 r-xp 00000000 00:00 0                  [vsyscall]
+                Size:                  1 kB
+                Rss:                   2 kB
+                Pss:                   3 kB
+                Shared_Clean:          4 kB
+                Shared_Dirty:          5 kB
+                Private_Clean:         6 kB
+                Private_Dirty:         7 kB
+                Referenced:            8 kB
+                Anonymous:             9 kB
+                LazyFree:              10 kB
+                AnonHugePages:         11 kB
+                ShmemPmdMapped:        12 kB
+                Shared_Hugetlb:        13 kB
+                Private_Hugetlb:       14 kB
+                Swap:                  15 kB
+                SwapPss:               16 kB
+                KernelPageSize:        17 kB
+                MMUPageSize:           18 kB
+                Locked:                19 kB
+                VmFlags: rd ex
+                """).encode()) as m:
             p = psutil.Process()
             mem = p.memory_full_info()
             assert m.called
@@ -1775,15 +1744,9 @@ class TestProcess(unittest.TestCase):
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
-        def open_mock(name, *args, **kwargs):
-            if name.startswith('/proc/%s/smaps' % os.getpid()):
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock_open_exception(
+                '/proc/%s/smaps' % os.getpid(),
+                IOError(errno.ENOENT, "")) as m:
             p = psutil.Process()
             with self.assertRaises(IOError) as err:
                 p.memory_maps()
@@ -1819,56 +1782,49 @@ class TestProcess(unittest.TestCase):
     def test_stat_file_parsing(self):
         from psutil._pslinux import CLOCK_TICKS
 
-        def open_mock(name, *args, **kwargs):
-            if name.startswith('/proc/%s/stat' % os.getpid()):
-                args = [
-                    "0",      # pid
-                    "(cat)",  # name
-                    "Z",      # status
-                    "1",      # ppid
-                    "0",      # pgrp
-                    "0",      # session
-                    "0",      # tty
-                    "0",      # tpgid
-                    "0",      # flags
-                    "0",      # minflt
-                    "0",      # cminflt
-                    "0",      # majflt
-                    "0",      # cmajflt
-                    "2",      # utime
-                    "3",      # stime
-                    "4",      # cutime
-                    "5",      # cstime
-                    "0",      # priority
-                    "0",      # nice
-                    "0",      # num_threads
-                    "0",      # itrealvalue
-                    "6",      # starttime
-                    "0",      # vsize
-                    "0",      # rss
-                    "0",      # rsslim
-                    "0",      # startcode
-                    "0",      # endcode
-                    "0",      # startstack
-                    "0",      # kstkesp
-                    "0",      # kstkeip
-                    "0",      # signal
-                    "0",      # blocked
-                    "0",      # sigignore
-                    "0",      # sigcatch
-                    "0",      # wchan
-                    "0",      # nswap
-                    "0",      # cnswap
-                    "0",      # exit_signal
-                    "6",      # processor
-                ]
-                return io.BytesIO(" ".join(args).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        args = [
+            "0",      # pid
+            "(cat)",  # name
+            "Z",      # status
+            "1",      # ppid
+            "0",      # pgrp
+            "0",      # session
+            "0",      # tty
+            "0",      # tpgid
+            "0",      # flags
+            "0",      # minflt
+            "0",      # cminflt
+            "0",      # majflt
+            "0",      # cmajflt
+            "2",      # utime
+            "3",      # stime
+            "4",      # cutime
+            "5",      # cstime
+            "0",      # priority
+            "0",      # nice
+            "0",      # num_threads
+            "0",      # itrealvalue
+            "6",      # starttime
+            "0",      # vsize
+            "0",      # rss
+            "0",      # rsslim
+            "0",      # startcode
+            "0",      # endcode
+            "0",      # startstack
+            "0",      # kstkesp
+            "0",      # kstkeip
+            "0",      # signal
+            "0",      # blocked
+            "0",      # sigignore
+            "0",      # sigcatch
+            "0",      # wchan
+            "0",      # nswap
+            "0",      # cnswap
+            "0",      # exit_signal
+            "6",      # processor
+        ]
+        content = " ".join(args).encode()
+        with mock_open_content('/proc/%s/stat' % os.getpid(), content):
             p = psutil.Process()
             self.assertEqual(p.name(), 'cat')
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
@@ -1883,22 +1839,16 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):
-        def open_mock(name, *args, **kwargs):
-            if name.startswith('/proc/%s/status' % os.getpid()):
-                return io.BytesIO(textwrap.dedent("""\
-                    Uid:\t1000\t1001\t1002\t1003
-                    Gid:\t1004\t1005\t1006\t1007
-                    Threads:\t66
-                    Cpus_allowed:\tf
-                    Cpus_allowed_list:\t0-7
-                    voluntary_ctxt_switches:\t12
-                    nonvoluntary_ctxt_switches:\t13""").encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock_open_content(
+            '/proc/%s/status' % os.getpid(),
+            textwrap.dedent("""\
+                Uid:\t1000\t1001\t1002\t1003
+                Gid:\t1004\t1005\t1006\t1007
+                Threads:\t66
+                Cpus_allowed:\tf
+                Cpus_allowed_list:\t0-7
+                voluntary_ctxt_switches:\t12
+                nonvoluntary_ctxt_switches:\t13""").encode()):
             p = psutil.Process()
             self.assertEqual(p.num_ctx_switches().voluntary, 12)
             self.assertEqual(p.num_ctx_switches().involuntary, 13)
