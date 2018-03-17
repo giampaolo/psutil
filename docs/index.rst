@@ -266,6 +266,7 @@ Memory
   - **active** *(UNIX)*: memory currently in use or very recently used, and so
     it is in RAM.
   - **inactive** *(UNIX)*: memory that is marked as not used.
+  - **slab** *(Linux)*: in-kernel data structures cache.
   - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
   - **cached** *(Linux, BSD)*: cache for various things.
   - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
@@ -284,7 +285,7 @@ Memory
   >>> import psutil
   >>> mem = psutil.virtual_memory()
   >>> mem
-  svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+  svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
   >>>
   >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
   >>> if mem.available <= THRESHOLD:
