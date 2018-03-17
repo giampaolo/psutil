@@ -1144,20 +1144,13 @@ class TestMisc(unittest.TestCase):
     def test_cpu_steal_decrease(self):
         # Test cumulative cpu stats decrease. We should ignore this.
         # See issue #1210.
-
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/stat":
-                return io.BytesIO(textwrap.dedent("""\
-                    cpu   0 0 0 0 0 0 0 1 0 0
-                    cpu0  0 0 0 0 0 0 0 1 0 0
-                    cpu1  0 0 0 0 0 0 0 1 0 0
-                    """).encode())
-            return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_for_path(
+            "/proc/stat",
+            textwrap.dedent("""\
+                cpu   0 0 0 0 0 0 0 1 0 0
+                cpu0  0 0 0 0 0 0 0 1 0 0
+                cpu1  0 0 0 0 0 0 0 1 0 0
+                """).encode()) as m:
             # first call to "percent" functions should read the new stat file
             # and compare to the "real" file read at import time - so the
             # values are meaningless
@@ -1167,16 +1160,13 @@ class TestMisc(unittest.TestCase):
             psutil.cpu_times_percent()
             psutil.cpu_times_percent(percpu=True)
 
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/stat":
-                return io.BytesIO(textwrap.dedent("""\
-                    cpu   1 0 0 0 0 0 0 0 0 0
-                    cpu0  1 0 0 0 0 0 0 0 0 0
-                    cpu1  1 0 0 0 0 0 0 0 0 0
-                    """).encode())
-            return orig_open(name, *args, **kwargs)
-
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        with mock_open_for_path(
+            "/proc/stat",
+            textwrap.dedent("""\
+                cpu   1 0 0 0 0 0 0 0 0 0
+                cpu0  1 0 0 0 0 0 0 0 0 0
+                cpu1  1 0 0 0 0 0 0 0 0 0
+                """).encode()) as m:
             # Increase "user" while steal goes "backwards" to zero.
             cpu_percent = psutil.cpu_percent()
             assert m.called
@@ -1279,16 +1269,9 @@ class TestMisc(unittest.TestCase):
         # Internally pid_exists relies on /proc/{pid}/status.
         # Emulate a case where this file is empty in which case
         # psutil is supposed to fall back on using pids().
-        def open_mock(name, *args, **kwargs):
-            if name == "/proc/%s/status" % os.getpid():
-                return io.StringIO(u(""))
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock_open_for_path("/proc/%s/status", "") as m:
             assert psutil.pid_exists(os.getpid())
+            assert m.called
 
 
 # =====================================================================
