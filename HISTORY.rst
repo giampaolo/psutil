@@ -5,14 +5,11 @@
 
 XXXX-XX-XX
 
-**Enhancements**
+**Bug fixes**
 
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
-  address space first.
-
-**Bug fixes**
-
+  address space first.  (patch by Georg Sauthoff)
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
