@@ -7,12 +7,20 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1120_: [SunOS] cmdline() could be truncated at the 15th character when
+- 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.
 
 **Bug fixes**
 
+- 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
+  enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
+- 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
+  support real-time processes.  (patch by Georg Sauthoff)
+- 1194_: [SunOS] Fix double free in psutil_proc_cpu_num().  (patch by Georg
+  Sauthoff)
+- 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
+  and warnings.  (patch by Georg Sauthoff)
 - 1210_: [Linux] cpu_percent() steal time may remain stuck at 100% due to Linux
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
@@ -22,13 +30,6 @@ XXXX-XX-XX
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
-- 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
-  enough permissions for /proc/pid/cred
-- 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
-  support real-time processes
-- 1194_: [SunOS] Fix double free in psutil_proc_cpu_num()
-- 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
-  and warnings
 
 5.4.3
 =====
