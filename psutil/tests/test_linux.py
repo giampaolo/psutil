@@ -164,7 +164,7 @@ def mock_open_content(for_path, content):
 
 
 @contextlib.contextmanager
-def mock_open_ecxeption(for_path, exc):
+def mock_open_exception(for_path, exc):
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             raise exc
@@ -400,7 +400,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                     Shmem:            577588 kB
                     SReclaimable:     346648 kB
                     """).encode()):
-            with mock_open_ecxeption(
+            with mock_open_exception(
                     "/proc/zoneinfo",
                     IOError(errno.ENOENT, 'no such file or directory')):
                 with warnings.catch_warnings(record=True) as ws:
@@ -532,7 +532,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        with mock_open_ecxeption(
+        with mock_open_exception(
                 "/proc/vmstat",
                 IOError(errno.ENOENT, 'no such file or directory')) as m:
             with warnings.catch_warnings(record=True) as ws:
@@ -1412,10 +1412,10 @@ class TestSensorsBattery(unittest.TestCase):
     def test_emulate_energy_full_not_avail(self):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
-        with mock_open_ecxeption(
+        with mock_open_exception(
                 "/sys/class/power_supply/BAT0/energy_full",
                 IOError(errno.ENOENT, "")):
-            with mock_open_ecxeption(
+            with mock_open_exception(
                     "/sys/class/power_supply/BAT0/charge_full",
                     IOError(errno.ENOENT, "")):
                 with mock_open_content(
