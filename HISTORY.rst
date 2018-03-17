@@ -13,7 +13,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1210_: [Linux] cpu_percent() steal time may remain stuch at 100% due to Linux
+- 1210_: [Linux] cpu_percent() steal time may remain stuck at 100% due to Linux
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
