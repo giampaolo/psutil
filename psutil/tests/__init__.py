@@ -162,7 +162,7 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_THREADS = hasattr(psutil.Process, "threads")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
-HAS_BATTERY = HAS_SENSORS_BATTERY and psutil.sensors_battery()
+HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 

@@ -29,6 +29,8 @@ XXXX-XX-XX
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
 - 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
+- 1238_: [Linux] sensors_battery() may return None in case battery is not
+  listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".

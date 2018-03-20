@@ -1225,9 +1225,13 @@ def sensors_battery():
                 return int(ret) if ret.isdigit() else ret
         return None
 
-    root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
-    if not os.path.exists(root):
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT')]
+    if not bats:
         return None
+    # Get the first available battery. Usually this is "BAT0", except
+    # some rare exceptions:
+    # https://github.com/giampaolo/psutil/issues/1238
+    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
 
     # Base metrics.
     energy_now = multi_cat(
