@@ -1284,25 +1284,29 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 */
 static PyObject *
 psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
-    LPCWSTR   lpDevicePath;
+    LPCTSTR   lpDevicePath;
     TCHAR d = TEXT('A');
     TCHAR     szBuff[5];
 
-    if (!PyArg_ParseTuple(args, "u", &lpDevicePath))
+#if PY_MAJOR_VERSION <= 2
+    if (!PyArg_ParseTuple(args, "O", &lpDevicePath))
+#else
+    if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
+#endif
         return NULL;
 
     while (d <= TEXT('Z')) {
         TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
-        WCHAR szTarget[512] = {0};
-        if (QueryDosDeviceW(szDeviceName, szTarget, 511) != 0) {
-            if (wcscmp(lpDevicePath, szTarget) == 0) {
+        TCHAR szTarget[512] = {0};
+        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
+            if (_tcscmp(lpDevicePath, szTarget) == 0) {
                 _stprintf_s(szBuff, _countof(szBuff), TEXT("%c:"), d);
-                return Py_BuildValue("u", szBuff);
+                return Py_BuildValue("s", szBuff);
             }
         }
         d++;
     }
-    return Py_BuildValue("u", "");
+    return Py_BuildValue("s", "");
 }
 
 
