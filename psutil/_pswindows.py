@@ -799,7 +799,7 @@ class Process(object):
         stop_at = timer() + timeout if timeout is not None else None
 
         try:
-            # Return code is supposed to come from GetExitCodeProcess().
+            # Exit code is supposed to come from GetExitCodeProcess().
             # May also be None if OpenProcess() failed with
             # ERROR_INVALID_PARAMETER, meaning PID is already gone.
             exit_code = cext.proc_wait(self.pid, cext_timeout)
