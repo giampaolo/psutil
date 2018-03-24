@@ -476,7 +476,7 @@ def virtual_memory():
     if avail > total:
         avail = free
 
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
 
     # Warn about missing metrics which are set to 0.
     if missing_fields:
@@ -509,7 +509,7 @@ def swap_memory():
         free *= unit_multiplier
 
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     # get pgin/pgouts
     try:
         f = open_binary("%s/vmstat" % get_procfs_path())

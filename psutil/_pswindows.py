@@ -217,7 +217,7 @@ def virtual_memory():
     avail = availphys
     free = availphys
     used = total - avail
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free)
 
 
@@ -227,7 +227,7 @@ def swap_memory():
     total = mem[2]
     free = mem[3]
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
 
 
@@ -247,7 +247,7 @@ def disk_usage(path):
         path = path.decode(ENCODING, errors="strict")
     total, free = cext.disk_usage(path)
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sdiskusage(total, used, free, percent)
 
 

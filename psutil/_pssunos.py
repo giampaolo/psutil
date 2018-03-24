@@ -131,7 +131,7 @@ def virtual_memory():
     # note: there's no difference on Solaris
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return svmem(total, avail, percent, used, free)
 
 
@@ -163,7 +163,7 @@ def swap_memory():
         total += int(int(t) * 512)
         free += int(int(f) * 512)
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent,
                          sin * PAGE_SIZE, sout * PAGE_SIZE)
 

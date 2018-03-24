@@ -156,7 +156,7 @@ def disk_usage(path):
     # User usage percent compared to the total amount of space
     # the user can use. This number would be higher if compared
     # to root's because the user has less space (usually -5%).
-    usage_percent_user = usage_percent(used, total_user, _round=1)
+    usage_percent_user = usage_percent(used, total_user, round_=1)
 
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:

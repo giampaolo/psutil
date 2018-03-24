@@ -122,7 +122,7 @@ def virtual_memory():
     total, active, inactive, wired, free = cext.virtual_mem()
     avail = inactive + free
     used = active + inactive + wired
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, wired)
 
@@ -130,7 +130,7 @@ def virtual_memory():
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = cext.swap_mem()
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
 

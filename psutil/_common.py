@@ -261,14 +261,14 @@ del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 # ===================================================================
 
 
-def usage_percent(used, total, _round=None):
+def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
         ret = (used / total) * 100
     except ZeroDivisionError:
         ret = 0.0 if isinstance(used, float) or isinstance(total, float) else 0
-    if _round is not None:
-        return round(ret, _round)
+    if round_ is not None:
+        return round(ret, round_)
     else:
         return ret
 
