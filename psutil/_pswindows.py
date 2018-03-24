@@ -799,23 +799,28 @@ class Process(object):
         stop_at = timer() + timeout if timeout is not None else None
 
         try:
+            # Return code is supposed to come from GetExitCodeProcess().
+            # May also be None if OpenProcess() failed with
+            # ERROR_INVALID_PARAMETER, meaning PID is already gone.
             exit_code = cext.proc_wait(self.pid, cext_timeout)
         except cext.TimeoutExpired:
             # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
             raise TimeoutExpired(timeout, self.pid, self._name)
         except cext.TimeoutAbandoned:
-            # WaitForSingleObject() returned WAIT_ABANDONED. We'll
-            # just rely on the internal polling and return None when
-            # the PID disappears. subprocess module does the same
+            # WaitForSingleObject() returned WAIT_ABANDONED, see:
+            # https://github.com/giampaolo/psutil/issues/1224
+            # We'll just rely on the internal polling and return None
+            # when the PID disappears. Subprocess module does the same
             # (return None):
             # https://github.com/python/cpython/blob/
             #     be50a7b627d0aa37e08fa8e2d5568891f19903ce/
             #     Lib/subprocess.py#L1193-L1194
             exit_code = None
 
-        # WaitForSingleObject() returned WAIT_OBJECT_0, meaning the
-        # process is gone. Stupidly its PID may still stick around
-        # though so we do a further internal polling.
+        # At this point WaitForSingleObject() returned WAIT_OBJECT_0,
+        # meaning the process is gone. Stupidly there are cases where
+        # its PID may still stick around so we do a further internal
+        # polling.
         delay = 0.0001
         while True:
             if not pid_exists(self.pid):

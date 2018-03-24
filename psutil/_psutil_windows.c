@@ -416,6 +416,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (retVal == WAIT_ABANDONED) {
+        psutil_debug("WaitForSingleObject() -> WAIT_ABANDONED");
         CloseHandle(hProcess);
         PyErr_SetString(TimeoutAbandoned,
                         "WaitForSingleObject() returned WAIT_ABANDONED");
