@@ -28,6 +28,8 @@ PYTHON = os.getenv('PYTHON', sys.executable)
 TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
+HERE = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 DEPS = [
     "coverage",
     "flake8",
@@ -442,18 +444,26 @@ def test_memleaks():
 
 @cmd
 def install_git_hooks():
+    """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
-        shutil.copy(".git-pre-commit", ".git\\hooks\\pre-commit")
+        src = os.path.join(ROOT_DIR, ".git-pre-commit")
+        dst = os.path.realpath(
+            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
+        with open(src, "rt") as s:
+            with open(dst, "wt") as d:
+                d.write(s.read())
 
 
 @cmd
 def bench_oneshot():
+    """Benchmarks for oneshot() ctx manager (see #799)."""
     install()
     sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
+    """Same as above but using perf module (supposed to be more precise)."""
     install()
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
