@@ -201,6 +201,8 @@ psutil_get_nic_addresses() {
  * ============================================================================
  */
 
+// Raised by Process.wait().
+static PyObject *TimeoutExpired;
 
 static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
 
@@ -402,11 +404,14 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     if (retVal == WAIT_FAILED) {
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
     if (retVal == WAIT_TIMEOUT) {
         CloseHandle(hProcess);
-        return Py_BuildValue("l", WAIT_TIMEOUT);
+        PyErr_SetString(TimeoutExpired,
+                        "WaitForSingleObject() returned WAIT_TIMEOUT");
+        return NULL;
     }
 
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
@@ -2847,7 +2852,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
                 (double)process->UserTime.LowPart * LO_T;
     kernel_time = (double)process->KernelTime.HighPart * HI_T + \
                     (double)process->KernelTime.LowPart * LO_T;
-    
+
     // Convert the LARGE_INTEGER union to a Unix time.
     // It's the best I could find by googling and borrowing code here
     // and there. The time returned has a precision of 1 second.
@@ -3767,6 +3772,12 @@ void init_psutil_windows(void)
         Py_DECREF(module);
         INITERROR;
     }
+
+    // Exceptions.
+    TimeoutExpired = PyErr_NewException(
+        "_psutil_windows.TimeoutExpired", NULL, NULL);
+    Py_INCREF(TimeoutExpired);
+    PyModule_AddObject(module, "TimeoutExpired", TimeoutExpired);
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
