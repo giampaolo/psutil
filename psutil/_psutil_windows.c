@@ -203,6 +203,7 @@ psutil_get_nic_addresses() {
 
 // Raised by Process.wait().
 static PyObject *TimeoutExpired;
+static PyObject *TimeoutAbandoned;
 
 static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
 
@@ -402,6 +403,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     retVal = WaitForSingleObject(hProcess, timeout);
     Py_END_ALLOW_THREADS
 
+    // handle return code
     if (retVal == WAIT_FAILED) {
         CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
@@ -413,12 +415,20 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
                         "WaitForSingleObject() returned WAIT_TIMEOUT");
         return NULL;
     }
+    if (retVal == WAIT_ABANDONED) {
+        CloseHandle(hProcess);
+        PyErr_SetString(TimeoutAbandoned,
+                        "WaitForSingleObject() returned WAIT_ABANDONED");
+        return NULL;
+    }
 
+    // WaitForSingleObject() returned WAIT_OBJECT_0. It means the
+    // process is gone so we can get its process exit code. The PID
+    // may still stick around though but we'll handle that from Python.
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
-
     CloseHandle(hProcess);
 
 #if PY_MAJOR_VERSION >= 3
@@ -3779,6 +3789,12 @@ void init_psutil_windows(void)
     Py_INCREF(TimeoutExpired);
     PyModule_AddObject(module, "TimeoutExpired", TimeoutExpired);
 
+    TimeoutAbandoned = PyErr_NewException(
+        "_psutil_windows.TimeoutAbandoned", NULL, NULL);
+    Py_INCREF(TimeoutAbandoned);
+    PyModule_AddObject(module, "TimeoutAbandoned", TimeoutAbandoned);
+
+    // version constant
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     // process status constants

@@ -9,6 +9,7 @@ import errno
 import functools
 import os
 import sys
+import time
 from collections import namedtuple
 
 from . import _common
@@ -791,19 +792,38 @@ class Process(object):
         if timeout is None:
             cext_timeout = cext.INFINITE
         else:
-            # WaitForSingleObject() expects time in milliseconds
+            # WaitForSingleObject() expects time in milliseconds.
             cext_timeout = int(timeout * 1000)
+
+        timer = getattr(time, 'monotonic', time.time)
+        stop_at = timer() + timeout if timeout is not None else None
+
+        try:
+            exit_code = cext.proc_wait(self.pid, cext_timeout)
+        except cext.TimeoutExpired:
+            # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
+            raise TimeoutExpired(timeout, self.pid, self._name)
+        except cext.TimeoutAbandoned:
+            # WaitForSingleObject() returned WAIT_ABANDONED. We'll
+            # just rely on the internal polling and return None when
+            # the PID disappears. subprocess module does the same
+            # (return None):
+            # https://github.com/python/cpython/blob/
+            #     be50a7b627d0aa37e08fa8e2d5568891f19903ce/
+            #     Lib/subprocess.py#L1193-L1194
+            exit_code = None
+
+        # WaitForSingleObject() returned WAIT_OBJECT_0, meaning the
+        # process is gone. Stupidly its PID may still stick around
+        # though so we do a further internal polling.
+        delay = 0.0001
         while True:
-            try:
-                ret = cext.proc_wait(self.pid, cext_timeout)
-            except cext.TimeoutExpired:
-                raise TimeoutExpired(timeout, self.pid, self._name)
-            if pid_exists(self.pid):
-                if timeout is None:
-                    continue
-                else:
-                    raise TimeoutExpired(timeout, self.pid, self._name)
-            return ret
+            if not pid_exists(self.pid):
+                return exit_code
+            if stop_at and timer() >= stop_at:
+                raise TimeoutExpired(timeout, pid=self.pid, name=self._name)
+            time.sleep(delay)
+            delay = min(delay * 2, 0.04)  # incremental delay
 
     @wrap_exceptions
     def username(self):
