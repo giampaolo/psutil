@@ -1206,9 +1206,9 @@ class TestProcess(unittest.TestCase):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
         # Example:
-        #  >>> proc = Process(1234)
+        # >>> proc = Process(1234)
         # >>> time.sleep(2)  # time-consuming task, process dies in meantime
-        #  >>> proc.name()
+        # >>> proc.name()
         # Refers to Issue #15
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
