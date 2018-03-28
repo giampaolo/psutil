@@ -100,8 +100,6 @@ cache:
 skip_commits:
   message: skip-ci
 
-Commented as per:
-https://help.appveyor.com/discussions/problems/13269
 # run build only if one of the following files is modified on commit
 only_commits:
   files:
