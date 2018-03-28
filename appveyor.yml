@@ -100,24 +100,26 @@ cache:
 skip_commits:
   message: skip-ci
 
-# run build only if one of the following files is modified on commit
-only_commits:
-  files:
-    .ci/appveyor/*
-    appveyor.yml
-    psutil/__init__.py
-    psutil/_common.py
-    psutil/_compat.py
-    psutil/_psutil_common.*
-    psutil/_psutil_windows.*
-    psutil/_pswindows.py
-    psutil/arch/windows/*
-    psutil/tests/__init__.py
-    psutil/tests/__main__.py
-    psutil/tests/test_memory_leaks.py
-    psutil/tests/test_misc.py
-    psutil/tests/test_process.py
-    psutil/tests/test_system.py
-    psutil/tests/test_windows.py
-    scripts/*
-    setup.py
+# Commented as per:
+# https://help.appveyor.com/discussions/problems/13269
+# # run build only if one of the following files is modified on commit
+# only_commits:
+#   files:
+#     .ci/appveyor/*
+#     appveyor.yml
+#     psutil/__init__.py
+#     psutil/_common.py
+#     psutil/_compat.py
+#     psutil/_psutil_common.*
+#     psutil/_psutil_windows.*
+#     psutil/_pswindows.py
+#     psutil/arch/windows/*
+#     psutil/tests/__init__.py
+#     psutil/tests/__main__.py
+#     psutil/tests/test_memory_leaks.py
+#     psutil/tests/test_misc.py
+#     psutil/tests/test_process.py
+#     psutil/tests/test_system.py
+#     psutil/tests/test_windows.py
+#     scripts/*
+#     setup.py
