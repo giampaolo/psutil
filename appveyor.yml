@@ -97,6 +97,7 @@ artifacts:
 skip_commits:
   message: skip-ci
 
+
 # run build only if one of the following files is modified on commit
 only_commits:
   files:
