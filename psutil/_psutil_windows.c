@@ -196,8 +196,7 @@ psutil_get_nic_addresses() {
 
 
 // Helper function to count set bits in the cpu_count() processor mask.
-DWORD psutil_cpu_count_set_bits(ULONG_PTR bitMask)
-{
+DWORD psutil_cpu_count_set_bits(ULONG_PTR bitMask) {
     DWORD LSHIFT = sizeof(ULONG_PTR) * 8 - 1;
     DWORD bitSetCount = 0;
     ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;
