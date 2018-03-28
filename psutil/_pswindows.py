@@ -284,12 +284,12 @@ def per_cpu_times():
 
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
-    return cext.cpu_count()[0]
+    return cext.cpu_count()[0] or None
 
 
 def cpu_count_physical():
     """Return the number of physical CPU cores in the system."""
-    return cext.cpu_count()[1]
+    return cext.cpu_count()[1] or None
 
 
 def cpu_stats():

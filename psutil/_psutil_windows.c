@@ -591,7 +591,7 @@ psutil_cpu_count(PyObject *self, PyObject *args) {
                                      "GetLogicalProcessorInformation");
     if (glpi == NULL) {
         psutil_debug("failed loading GetLogicalProcessorInformation()");
-        goto return_none;
+        goto return_null_result;
     }
 
     while (1) {
@@ -608,7 +608,7 @@ psutil_cpu_count(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                goto return_none;
+                goto return_null_result;
             }
         }
         else {
@@ -628,16 +628,12 @@ psutil_cpu_count(PyObject *self, PyObject *args) {
     }
 
     free(buffer);
-    if (logicalProcessorCount == 0)
-        goto return_none;
-    else
-        return Py_BuildValue("II", logicalProcessorCount, processorCoreCount);
+    return Py_BuildValue("II", logicalProcessorCount, processorCoreCount);
 
-return_none:
-    // mimic os.cpu_count()
+return_null_result:
     if (buffer != NULL)
         free(buffer);
-    Py_RETURN_NONE;
+    return Py_BuildValue("ii", 0, 0);
 }
 
 
