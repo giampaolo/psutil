@@ -195,6 +195,23 @@ psutil_get_nic_addresses() {
 }
 
 
+// Helper function to count set bits in the cpu_count() processor mask.
+DWORD psutil_cpu_count_set_bits(ULONG_PTR bitMask)
+{
+    DWORD LSHIFT = sizeof(ULONG_PTR) * 8 - 1;
+    DWORD bitSetCount = 0;
+    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;
+    DWORD i;
+
+    for (i = 0; i <= LSHIFT; ++i) {
+        bitSetCount += ((bitMask & bitTest) ? 1 : 0);
+        bitTest /= 2;
+    }
+
+    return bitSetCount;
+}
+
+
 /*
  * ============================================================================
  * Public Python API
@@ -553,40 +570,29 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
 }
 
 
-
-/*
- * Return the number of logical CPUs.
- */
-static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    SYSTEM_INFO system_info;
-    system_info.dwNumberOfProcessors = 0;
-
-    GetSystemInfo(&system_info);
-    if (system_info.dwNumberOfProcessors == 0)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("I", system_info.dwNumberOfProcessors);
-}
-
-
 /*
  * Return the number of physical CPU cores.
+ * Adapted from:
+ * https://msdn.microsoft.com/en-us/library/windows/desktop/
+ *     ms683194(v=vs.85).aspx
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+psutil_cpu_count(PyObject *self, PyObject *args) {
     LPFN_GLPI glpi;
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    int ncpus = 0;
+    DWORD logicalProcessorCount = 0;
+    DWORD processorCoreCount = 0;
 
     glpi = (LPFN_GLPI)GetProcAddress(GetModuleHandle(TEXT("kernel32")),
                                      "GetLogicalProcessorInformation");
-    if (glpi == NULL)
+    if (glpi == NULL) {
+        psutil_debug("failed loading GetLogicalProcessorInformation()");
         goto return_none;
+    }
 
     while (1) {
         rc = glpi(buffer, &length);
@@ -612,17 +618,20 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 
     ptr = buffer;
     while (offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= length) {
-        if (ptr->Relationship == RelationProcessorCore)
-            ncpus += 1;
+        if (ptr->Relationship == RelationProcessorCore) {
+            processorCoreCount += 1;
+            logicalProcessorCount += psutil_cpu_count_set_bits(
+                ptr->ProcessorMask);
+        }
         offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
         ptr++;
     }
 
     free(buffer);
-    if (ncpus == 0)
+    if (logicalProcessorCount == 0)
         goto return_none;
     else
-        return Py_BuildValue("i", ncpus);
+        return Py_BuildValue("II", logicalProcessorCount, processorCoreCount);
 
 return_none:
     // mimic os.cpu_count()
@@ -3661,10 +3670,8 @@ PsutilMethods[] = {
      "Return a {pid:ppid, ...} dict for all running processes"},
     {"pid_exists", psutil_pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},
-    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
-     "Returns the number of logical CPUs on the system"},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Returns the number of physical CPUs on the system"},
+    {"cpu_count", psutil_cpu_count, METH_VARARGS,
+     "Returns the number of CPUs in the system"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
