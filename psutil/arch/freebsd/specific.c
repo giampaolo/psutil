@@ -518,12 +518,15 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     int pagesize = getpagesize();
 
-    return Py_BuildValue("(KKKII)",
-                         (unsigned long long) kvmsw[0].ksw_total * pagesize,                                // total
-                         (unsigned long long) kvmsw[0].ksw_used * pagesize,                                 // used
-                         (unsigned long long) kvmsw[0].ksw_total * pagesize - kvmsw[0].ksw_used * pagesize, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+    return Py_BuildValue(
+        "(KKKII)",
+        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
+        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
+        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
+                                kvmsw[0].ksw_used * pagesize,
+        swapin + swapout,  // swap in
+        nodein + nodeout  // swap out
+    );
 
 error:
     return PyErr_SetFromErrno(PyExc_OSError);

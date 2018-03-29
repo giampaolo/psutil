@@ -35,6 +35,8 @@ XXXX-XX-XX
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
+- 1255_: [FreeBSD] swap_memory() stats were erroneously represented in KB.
+  (patch by Denis Krienbühl)
 
 5.4.3
 =====
