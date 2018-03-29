@@ -163,3 +163,4 @@ RESOURCES
 - zabbix: https://zabbix.org/wiki/Get_Zabbix
 - libstatgrab: http://www.i-scream.org/libstatgrab/
 - top: http://www.unixtop.org/
+- oshi: https://github.com/oshi/oshi

@@ -213,7 +213,7 @@ def build():
 
 
 @cmd
-def build_wheel():
+def wheel():
     """Create wheel file."""
     build()
     sh("%s setup.py bdist_wheel" % PYTHON)
