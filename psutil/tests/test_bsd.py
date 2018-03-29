@@ -344,6 +344,40 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     #    self.assertAlmostEqual(psutil.cpu_stats().traps,
     #                           sysctl('vm.stats.sys.v_trap'), delta=1000)
 
+    # --- swap memory
+    @staticmethod
+    def parse_swapinfo():
+
+        # the last line is always the total
+        output = sh("swapinfo -k").splitlines()[-1]
+        parts = re.split(r'\s+', output)
+
+        if not parts:
+            raise ValueError("Can't parse swapinfo: %s" % output)
+
+        # the size is in 1k units, so multiply by 1024
+        total, used, free = (int(p) * 1024 for p in parts[1:4])
+
+        return total, used, free
+
+    def test_swapmem_free(self):
+        total, used, free = self.parse_swapinfo()
+
+        self.assertAlmostEqual(
+            psutil.swap_memory().free, free, delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_used(self):
+        total, used, free = self.parse_swapinfo()
+
+        self.assertAlmostEqual(
+            psutil.swap_memory().used, used, delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_total(self):
+        total, used, free = self.parse_swapinfo()
+
+        self.assertAlmostEqual(
+            psutil.swap_memory().total, total, delta=MEMORY_TOLERANCE)
+
     # --- others
 
     def test_boot_time(self):
