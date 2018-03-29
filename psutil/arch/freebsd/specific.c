@@ -516,12 +516,17 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
         goto error;
 
-    return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+    int pagesize = getpagesize();
+
+    return Py_BuildValue(
+        "(KKKII)",
+        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
+        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
+        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
+                                kvmsw[0].ksw_used * pagesize,
+        swapin + swapout,  // swap in
+        nodein + nodeout  // swap out
+    );
 
 error:
     return PyErr_SetFromErrno(PyExc_OSError);
