@@ -179,8 +179,8 @@ CPU
   Note that this number is not equivalent to the number of CPUs the current
   process can actually use.
   That can vary in case process CPU affinity has been changed, Linux cgroups
-  are being used or on Windows systems using process groups or having more than
-  64 CPUs.
+  are being used or on Windows systems using processor groups or having more
+  than 64 CPUs.
   The number of usable CPUs can be obtained with:
 
     >>> len(psutil.Process().cpu_affinity())
