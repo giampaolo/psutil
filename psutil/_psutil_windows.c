@@ -200,8 +200,9 @@ psutil_get_nic_addresses() {
  * https://bugs.python.org/issue33166#msg314631
  */
 unsigned int
-psutil_get_num_cpus() {
+psutil_get_num_cpus(int fail_on_err) {
     HINSTANCE hKernel32;
+    unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
     static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
 
@@ -211,14 +212,22 @@ psutil_get_num_cpus() {
 
     if (_GetActiveProcessorCount != NULL) {
         // Windows >= 7.
-        return _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+        ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+        if ((ncpus == 0) && (fail_on_err == 1)) {
+            PyErr_SetFromWindowsErr(0);
+        }
     }
     else {
         psutil_debug(
             "GetActiveProcessorCount() not available; using GetSystemInfo()");
         GetSystemInfo(&sysinfo);
-        return (unsigned int)sysinfo.dwNumberOfProcessors;
+        ncpus = (unsigned int)sysinfo.dwNumberOfProcessors;
+        if ((ncpus == 0) && (fail_on_err == 1)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "GetSystemInfo() failed to retrieve CPU count");
+        }
     }
+    return ncpus;
 }
 
 
@@ -585,7 +594,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    return Py_BuildValue("I", psutil_get_num_cpus());
+    return Py_BuildValue("I", psutil_get_num_cpus(0));
 }
 
 

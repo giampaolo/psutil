@@ -92,14 +92,6 @@ class TestSystemAPIs(unittest.TestCase):
         psutil_value = psutil.cpu_count()
         self.assertEqual(sys_value, psutil_value)
 
-    def test_cpu_count_mocked(self):
-        # Emulate a case where the C extension is unable to determine
-        # CPU count.
-        with mock.patch('psutil._pswindows.cext.cpu_count',
-                        return_value=(0, 0)):
-            self.assertIsNone(psutil.cpu_count(logical=True))
-            self.assertIsNone(psutil.cpu_count(logical=False))
-
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
