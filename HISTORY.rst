@@ -44,6 +44,11 @@ XXXX-XX-XX
 - 1255_: [FreeBSD] swap_memory() stats were erroneously represented in KB.
   (patch by Denis Krienbühl)
 
+**Backward compatibility**
+
+- 771_: [Windows] cpu_count(logical=False) on Windows XP and Vista is no
+  longer supported and returns None.
+
 5.4.3
 =====
 
