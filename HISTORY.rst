@@ -15,6 +15,12 @@ XXXX-XX-XX
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
+- 771_: [Windows] cpu_count() (both logical and physical) return a wrong
+  (smaller) number on systems using process groups (> 64 cores).
+- 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
+  process groups (> 64 cores).
+- 771_: [Windows] cpu_stats() and cpu_freq() may return incorrect results on
+  systems using process groups (> 64 cores).
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't

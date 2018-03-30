@@ -660,6 +660,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
                 }
             }
             else {
+                // TODO: debug message
                 goto return_none;
             }
         }
@@ -677,7 +678,10 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     }
 
     free(buffer);
-    return Py_BuildValue("I", ncpu);
+    if (ncpus != 0)
+        return Py_BuildValue("I", ncpus);
+    else
+        Py_RETURN_NONE;  // mimick os.cpu_count()
 
 return_none:
     if (buffer != NULL)
