@@ -196,35 +196,38 @@ psutil_get_nic_addresses() {
 
 
 /*
- * Return the number of logical, active CPUs. See discussion at:
- * https://bugs.python.org/issue33166#msg314631
+ * Return the number of logical, active CPUs. Return 0 if undetermined.
+ * See discussion at: https://bugs.python.org/issue33166#msg314631
  */
 unsigned int
 psutil_get_num_cpus(int fail_on_err) {
-    HINSTANCE hKernel32;
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
     static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
+    HINSTANCE hKernel32;
 
+    // GetActiveProcessorCount is available only on 64 bit versions
+    // of Windows from Windows 7 onward.
+    // Windows Vista 64 bit and Windows XP doesn't have it.
     hKernel32 = GetModuleHandleW(L"KERNEL32");
     _GetActiveProcessorCount = (void*)GetProcAddress(
         hKernel32, "GetActiveProcessorCount");
 
     if (_GetActiveProcessorCount != NULL) {
-        // Windows >= 7.
         ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetFromWindowsErr(0);
         }
     }
     else {
-        psutil_debug(
-            "GetActiveProcessorCount() not available; using GetSystemInfo()");
-        GetSystemInfo(&sysinfo);
+        psutil_debug("GetActiveProcessorCount() not available; "
+                     "using GetNativeSystemInfo()");
+        GetNativeSystemInfo(&sysinfo);
         ncpus = (unsigned int)sysinfo.dwNumberOfProcessors;
         if ((ncpus == 0) && (fail_on_err == 1)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "GetSystemInfo() failed to retrieve CPU count");
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "GetNativeSystemInfo() failed to retrieve CPU count");
         }
     }
     return ncpus;
