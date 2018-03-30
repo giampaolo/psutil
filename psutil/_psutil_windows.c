@@ -66,6 +66,14 @@
 typedef BOOL (WINAPI *LPFN_GLPI)
     (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
 
+#if (_WIN32_WINNT >= 0x0601)  // Windows  7
+typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
+    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnLength);
+static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
+#endif
+
 // Fix for mingw32, see:
 // https://github.com/giampaolo/psutil/issues/351#c2
 // This is actually a DISK_PERFORMANCE struct:
@@ -597,81 +605,30 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    return Py_BuildValue("I", psutil_get_num_cpus(0));
+    unsigned int ncpus;
+
+    ncpus = psutil_get_num_cpus(0);
+    if (ncpus != 0)
+        return Py_BuildValue("I", ncpus);
+    else
+        Py_RETURN_NONE;  // mimick os.cpu_count()
 }
 
 
 /*
- * Return the number of physical CPU cores.
- * Adapted from:
- * https://msdn.microsoft.com/en-us/library/windows/desktop/
- *     ms683194(v=vs.85).aspx
-
+ * Return the number of physical CPU cores (hyper-thread CPUs count
+ * is excluded).
+ */
+#if (_WIN32_WINNT < 0x0601)  // < Windows 7 (namely Vista and XP)
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    LPFN_GLPI glpi;
-    DWORD rc;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
-    DWORD length = 0;
-    DWORD offset = 0;
-    DWORD processorCoreCount = 0;
-
-    glpi = (LPFN_GLPI)GetProcAddress(GetModuleHandle(TEXT("kernel32")),
-                                     "GetLogicalProcessorInformation");
-    if (glpi == NULL) {
-        psutil_debug("failed loading GetLogicalProcessorInformation()");
-        goto return_none;
-    }
-
-    while (1) {
-        rc = glpi(buffer, &length);
-        if (rc == FALSE) {
-            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                if (buffer)
-                    free(buffer);
-                buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(
-                    length);
-                if (NULL == buffer) {
-                    PyErr_NoMemory();
-                    return NULL;
-                }
-            }
-            else {
-                goto return_none;
-            }
-        }
-        else {
-            break;
-        }
-    }
-
-    ptr = buffer;
-    while (offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= length) {
-        if (ptr->Relationship == RelationProcessorCore) {
-            processorCoreCount += 1;
-        }
-        offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-        ptr++;
-    }
-
-    free(buffer);
-    return Py_BuildValue("I", processorCoreCount);
-
-return_none:
-    if (buffer != NULL)
-        free(buffer);
+    // Note: we may have used GetLogicalProcessorInformation()
+    // but I don't want to prolong support for Windows XP and Vista.
+    // On such old systems psutil will compile but this API will
+    // just return None.
     Py_RETURN_NONE;
 }
-*/
-
-
-typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
-    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
-    PDWORD ReturnLength);
-static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
-
+#else  // Windows >= 7
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
@@ -683,9 +640,9 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
-    // it supports process groups, meaning is able to report more
-    // than 64 CPUs.
-    // See: https://bugs.python.org/issue33166
+    // it supports process groups, meaning this is able to report more
+    // than 64 CPUs. See:
+    // https://bugs.python.org/issue33166
     _GetLogicalProcessorInformationEx = \
         (PFN_GETLOGICALPROCESSORINFORMATIONEX)GetProcAddress(
             GetModuleHandle(TEXT("kernel32")),
@@ -734,6 +691,7 @@ return_none:
         free(procInfoTotal);
     Py_RETURN_NONE;
 }
+#endif
 
 
 /*
