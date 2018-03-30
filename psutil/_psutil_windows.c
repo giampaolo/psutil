@@ -196,7 +196,8 @@ psutil_get_nic_addresses() {
 
 
 // Helper function to count set bits in the cpu_count() processor mask.
-DWORD psutil_cpu_count_set_bits(ULONG_PTR bitMask) {
+DWORD
+psutil_cpu_count_set_bits(ULONG_PTR bitMask) {
     DWORD LSHIFT = sizeof(ULONG_PTR) * 8 - 1;
     DWORD bitSetCount = 0;
     ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;
@@ -208,6 +209,33 @@ DWORD psutil_cpu_count_set_bits(ULONG_PTR bitMask) {
     }
 
     return bitSetCount;
+}
+
+
+/*
+ * Return the number of logical, active CPUs. See discussion at:
+ * https://bugs.python.org/issue33166#msg314631
+ */
+unsigned int
+psutil_get_num_cpus() {
+    HINSTANCE hKernel32;
+    SYSTEM_INFO sysinfo;
+    static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
+
+    hKernel32 = GetModuleHandleW(L"KERNEL32");
+    _GetActiveProcessorCount = (void*)GetProcAddress(
+        hKernel32, "GetActiveProcessorCount");
+
+    if (_GetActiveProcessorCount != NULL) {
+        // Windows >= 7.
+        return _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    }
+    else {
+        psutil_debug(
+            "GetActiveProcessorCount() not available; using GetSystemInfo()");
+        GetSystemInfo(&sysinfo);
+        return (unsigned int)sysinfo.dwNumberOfProcessors;
+    }
 }
 
 
@@ -570,27 +598,35 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return the number of active, logical CPUs.
+ */
+static PyObject *
+psutil_cpu_count_logical(PyObject *self, PyObject *args) {
+    return Py_BuildValue("I", psutil_get_num_cpus());
+}
+
+
+/*
  * Return the number of physical CPU cores.
  * Adapted from:
  * https://msdn.microsoft.com/en-us/library/windows/desktop/
  *     ms683194(v=vs.85).aspx
  */
 static PyObject *
-psutil_cpu_count(PyObject *self, PyObject *args) {
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     LPFN_GLPI glpi;
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    DWORD logicalProcessorCount = 0;
     DWORD processorCoreCount = 0;
 
     glpi = (LPFN_GLPI)GetProcAddress(GetModuleHandle(TEXT("kernel32")),
                                      "GetLogicalProcessorInformation");
     if (glpi == NULL) {
         psutil_debug("failed loading GetLogicalProcessorInformation()");
-        goto return_null_result;
+        goto return_none;
     }
 
     while (1) {
@@ -607,7 +643,7 @@ psutil_cpu_count(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                goto return_null_result;
+                goto return_none;
             }
         }
         else {
@@ -619,20 +655,18 @@ psutil_cpu_count(PyObject *self, PyObject *args) {
     while (offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= length) {
         if (ptr->Relationship == RelationProcessorCore) {
             processorCoreCount += 1;
-            logicalProcessorCount += psutil_cpu_count_set_bits(
-                ptr->ProcessorMask);
         }
         offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
         ptr++;
     }
 
     free(buffer);
-    return Py_BuildValue("II", logicalProcessorCount, processorCoreCount);
+    return Py_BuildValue("I", processorCoreCount);
 
-return_null_result:
+return_none:
     if (buffer != NULL)
         free(buffer);
-    return Py_BuildValue("ii", 0, 0);
+    Py_RETURN_NONE;
 }
 
 
@@ -3665,8 +3699,10 @@ PsutilMethods[] = {
      "Return a {pid:ppid, ...} dict for all running processes"},
     {"pid_exists", psutil_pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},
-    {"cpu_count", psutil_cpu_count, METH_VARARGS,
-     "Returns the number of CPUs in the system"},
+    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
+     "Returns the number of logical CPUs on the system"},
+    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
+     "Returns the number of physical CPUs on the system"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
