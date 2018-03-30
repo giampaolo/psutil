@@ -606,7 +606,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
  * Adapted from:
  * https://msdn.microsoft.com/en-us/library/windows/desktop/
  *     ms683194(v=vs.85).aspx
- */
+
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     LPFN_GLPI glpi;
@@ -661,6 +661,77 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 return_none:
     if (buffer != NULL)
         free(buffer);
+    Py_RETURN_NONE;
+}
+*/
+
+
+typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
+    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnLength);
+static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
+
+static PyObject *
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+    DWORD rc;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX procInfoTotal;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX procInfo;
+    DWORD length = 0;
+    DWORD offset = 0;
+    DWORD ncpu = 0;
+
+    // GetLogicalProcessorInformationEx() is available from Windows 7
+    // onward. Differently from GetLogicalProcessorInformation()
+    // it supports process groups, meaning is able to report more
+    // than 64 CPUs.
+    // See: https://bugs.python.org/issue33166
+    _GetLogicalProcessorInformationEx = \
+        (PFN_GETLOGICALPROCESSORINFORMATIONEX)GetProcAddress(
+            GetModuleHandle(TEXT("kernel32")),
+                            "GetLogicalProcessorInformationEx");
+    if (_GetLogicalProcessorInformationEx == NULL) {
+        psutil_debug("failed loading GetLogicalProcessorInformationEx()");
+        goto return_none;
+    }
+
+    while (1) {
+        rc = _GetLogicalProcessorInformationEx(
+            RelationAll, procInfoTotal, &length);
+        if (rc == FALSE) {
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                if (procInfoTotal)
+                    free(procInfoTotal);
+                procInfoTotal = \
+                    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(length);
+                if (NULL == procInfoTotal) {
+                    PyErr_NoMemory();
+                    return NULL;
+                }
+            }
+            else {
+                goto return_none;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+   for (procInfo = procInfoTotal;
+            (void*)procInfo < (void*) ((unsigned long)procInfoTotal + length);
+            procInfo = (void*)((unsigned long)procInfo + procInfo->Size)) {
+
+        if (procInfo->Relationship == RelationProcessorCore) {
+            ncpu += 1;
+        }
+    }
+
+    return Py_BuildValue("I", ncpu);
+
+return_none:
+    if (procInfoTotal != NULL)
+        free(procInfoTotal);
     Py_RETURN_NONE;
 }
 
