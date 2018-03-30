@@ -629,7 +629,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    DWORD ncpu = 0;
+    DWORD ncpus = 0;
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
@@ -673,7 +673,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
             (void*)ptr < (void*)((unsigned long)buffer + length);
             ptr = (void*)((unsigned long)ptr + ptr->Size)) {
         if (ptr->Relationship == RelationProcessorCore) {
-            ncpu += 1;
+            ncpus += 1;
         }
     }
 

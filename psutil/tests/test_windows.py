@@ -92,6 +92,16 @@ class TestSystemAPIs(unittest.TestCase):
         psutil_value = psutil.cpu_count()
         self.assertEqual(sys_value, psutil_value)
 
+    def test_cpu_count_3(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+
+    def test_cpu_count_4(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
