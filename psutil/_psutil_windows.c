@@ -989,8 +989,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-    SYSTEM_INFO si;
     UINT i;
+    unsigned int ncpus;
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -1011,13 +1011,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     // retrives number of processors
-    GetSystemInfo(&si);
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        goto error;
 
     // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
     sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-           malloc(si.dwNumberOfProcessors * \
-                  sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+           malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1027,8 +1028,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        si.dwNumberOfProcessors * sizeof
-            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
@@ -1038,7 +1038,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // computes system global times summing each
     // processor value
     idle = user = kernel = interrupt = dpc = 0;
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         py_tuple = NULL;
         user = (double)((HI_T * sppi[i].UserTime.HighPart) +
                        (LO_T * sppi[i].UserTime.LowPart));
@@ -3435,7 +3435,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
-    SYSTEM_INFO si;
+    unsigned int ncpus;
     UINT i;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
@@ -3454,12 +3454,13 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     }
 
     // retrives number of processors
-    GetSystemInfo(&si);
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        goto error;
 
     // get syscalls / ctx switches
     spi = (_SYSTEM_PERFORMANCE_INFORMATION *) \
-           malloc(si.dwNumberOfProcessors * \
-                  sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
+           malloc(ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
     if (spi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3467,7 +3468,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
-        si.dwNumberOfProcessors * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
@@ -3476,8 +3477,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     // get DPCs
     InterruptInformation = \
-        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) *
-               si.dwNumberOfProcessors);
+        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus);
     if (InterruptInformation == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3486,20 +3486,19 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
-        si.dwNumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION),
+        ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         dpcs += InterruptInformation[i].DpcCount;
     }
 
     // get interrupts
     sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-        malloc(si.dwNumberOfProcessors * \
-               sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+        malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3508,15 +3507,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        si.dwNumberOfProcessors * sizeof
-            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         interrupts += sppi[i].InterruptCount;
     }
 
@@ -3557,19 +3555,18 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     LPBYTE pBuffer = NULL;
     ULONG current;
     ULONG max;
-    unsigned int num_cpus;
-    SYSTEM_INFO system_info;
-    system_info.dwNumberOfProcessors = 0;
+    unsigned int ncpus;
 
     // Get the number of CPUs.
-    GetSystemInfo(&system_info);
-    if (system_info.dwNumberOfProcessors == 0)
-        num_cpus = 1;
-    else
-        num_cpus = system_info.dwNumberOfProcessors;
+    ncpus = psutil_get_num_cpus(0);
+    if (ncpus == 0) {
+        psutil_debug("psutil_get_num_cpus() returned error; ignoring it"
+                     "and assume num_cpus = 1");
+        ncpus = 1;
+    }
 
     // Allocate size.
-    size = num_cpus * sizeof(PROCESSOR_POWER_INFORMATION);
+    size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
     pBuffer = (BYTE*)LocalAlloc(LPTR, size);
     if (! pBuffer)
         return PyErr_SetFromWindowsErr(0);
