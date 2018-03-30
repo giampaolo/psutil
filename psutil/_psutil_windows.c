@@ -38,10 +38,6 @@
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
 
-#ifdef __MINGW32__
-#include "arch/windows/glpi.h"
-#endif
-
 
 /*
  * ============================================================================
@@ -62,9 +58,6 @@
     Py_DECREF(_AF_INET6);\
     Py_DECREF(_SOCK_STREAM);\
     Py_DECREF(_SOCK_DGRAM);
-
-typedef BOOL (WINAPI *LPFN_GLPI)
-    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
 
 #if (_WIN32_WINNT >= 0x0601)  // Windows  7
 typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
@@ -632,8 +625,8 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
     DWORD ncpu = 0;
@@ -683,6 +676,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         }
     }
 
+    free(buffer);
     return Py_BuildValue("I", ncpu);
 
 return_none:
