@@ -632,8 +632,8 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX procInfoTotal;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX procInfo;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr;
     DWORD length = 0;
     DWORD offset = 0;
     DWORD ncpu = 0;
@@ -654,14 +654,14 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 
     while (1) {
         rc = _GetLogicalProcessorInformationEx(
-            RelationAll, procInfoTotal, &length);
+            RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                if (procInfoTotal)
-                    free(procInfoTotal);
-                procInfoTotal = \
+                if (buffer)
+                    free(buffer);
+                buffer = \
                     (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(length);
-                if (NULL == procInfoTotal) {
+                if (NULL == buffer) {
                     PyErr_NoMemory();
                     return NULL;
                 }
@@ -675,11 +675,10 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         }
     }
 
-   for (procInfo = procInfoTotal;
-            (void*)procInfo < (void*) ((unsigned long)procInfoTotal + length);
-            procInfo = (void*)((unsigned long)procInfo + procInfo->Size)) {
-
-        if (procInfo->Relationship == RelationProcessorCore) {
+   for (ptr = buffer;
+            (void*)ptr < (void*)((unsigned long)buffer + length);
+            ptr = (void*)((unsigned long)ptr + ptr->Size)) {
+        if (ptr->Relationship == RelationProcessorCore) {
             ncpu += 1;
         }
     }
@@ -687,8 +686,8 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     return Py_BuildValue("I", ncpu);
 
 return_none:
-    if (procInfoTotal != NULL)
-        free(procInfoTotal);
+    if (buffer != NULL)
+        free(buffer);
     Py_RETURN_NONE;
 }
 #endif
