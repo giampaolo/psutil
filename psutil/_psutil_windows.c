@@ -1010,7 +1010,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // retrives number of processors
+    // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
     if (ncpus == 0)
         goto error;
@@ -3453,7 +3453,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // retrives number of processors
+    // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
     if (ncpus == 0)
         goto error;
@@ -3558,12 +3558,9 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     unsigned int ncpus;
 
     // Get the number of CPUs.
-    ncpus = psutil_get_num_cpus(0);
-    if (ncpus == 0) {
-        psutil_debug("psutil_get_num_cpus() returned error; ignoring it"
-                     "and assume num_cpus = 1");
-        ncpus = 1;
-    }
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        return NULL;
 
     // Allocate size.
     size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
