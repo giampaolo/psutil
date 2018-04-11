@@ -357,7 +357,7 @@ def create_proc_children_pair():
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
     data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    os.remove(_TESTFN2)
+    safe_rmpath(_TESTFN2)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
@@ -663,7 +663,7 @@ def wait_for_file(fname, delete=True, empty=False):
     if not empty:
         assert data
     if delete:
-        os.remove(fname)
+        safe_rmpath(fname)
     return data
 
 
@@ -685,12 +685,34 @@ def call_until(fun, expr):
 
 def safe_rmpath(path):
     "Convenience function for removing temporary test files or dirs"
+    def retry_fun(fun):
+        # On Windows it could happen that the file or directory has
+        # open handles or references preventing the delete operation
+        # to succeed immediately, so we retry for a while. See:
+        # https://bugs.python.org/issue33240
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            try:
+                return fun()
+            except WindowsError as _:
+                err = _
+                if err.errno != errno.ENOENT:
+                    raise
+                else:
+                    warn("ignoring %s" % (str(err)))
+                    time.sleep(0.01)
+        raise err
+
     try:
         st = os.stat(path)
         if stat.S_ISDIR(st.st_mode):
-            os.rmdir(path)
+            fun = functools.partial(shutil.rmtree, path)
         else:
-            os.remove(path)
+            fun = functools.partial(os.remove, path)
+        if POSIX:
+            fun()
+        else:
+            retry_fun(fun)
     except OSError as err:
         if err.errno != errno.ENOENT:
             raise
