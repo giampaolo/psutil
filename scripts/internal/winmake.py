@@ -33,20 +33,24 @@ ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 DEPS = [
     "coverage",
     "flake8",
-    "ipaddress",
-    "mock",
     "nose",
     "pdbpp",
     "perf",
     "pip",
-    "pypiwin32",
+    "pypiwin32==219" if sys.version_info[:2] <= (3, 4) else "pypiwin32",
     "pyreadline",
     "setuptools",
-    "unittest2",
     "wheel",
     "wmi",
     "requests"
 ]
+if sys.version_info[:2] <= (2, 6):
+    DEPS.append('unittest2')
+if sys.version_info[:2] <= (2, 7):
+    DEPS.append('mock')
+if sys.version_info[:2] <= (3, 2):
+    DEPS.append('ipaddress')
+
 _cmds = {}
 if PY3:
     basestring = str

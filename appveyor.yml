@@ -71,14 +71,11 @@ install:
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32==219 wmi wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py setup-dev-env"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
-  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py clean"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
-  # 1.0.1 is the latest release supporting python 2.6
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install mock==1.0.1"
 
 build: off
 
