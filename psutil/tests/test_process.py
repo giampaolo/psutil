@@ -238,10 +238,6 @@ class TestProcess(unittest.TestCase):
             percent = p.cpu_percent(interval=None)
             self.assertIsInstance(percent, float)
             self.assertGreaterEqual(percent, 0.0)
-            if not POSIX:
-                self.assertLessEqual(percent, 100.0)
-            else:
-                self.assertGreaterEqual(percent, 0.0)
         with self.assertRaises(ValueError):
             p.cpu_percent(interval=-1)
 

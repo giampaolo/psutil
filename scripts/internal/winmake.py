@@ -24,7 +24,11 @@ import sys
 import tempfile
 
 
-PYTHON = os.getenv('PYTHON', sys.executable)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
+if APPVEYOR:
+    PYTHON = sys.executable
+else:
+    PYTHON = os.getenv('PYTHON', sys.executable)
 TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
@@ -33,20 +37,24 @@ ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 DEPS = [
     "coverage",
     "flake8",
-    "ipaddress",
-    "mock",
     "nose",
     "pdbpp",
     "perf",
     "pip",
-    "pypiwin32",
+    "pypiwin32==219" if sys.version_info[:2] <= (3, 4) else "pypiwin32",
     "pyreadline",
     "setuptools",
-    "unittest2",
     "wheel",
     "wmi",
     "requests"
 ]
+if sys.version_info[:2] <= (2, 6):
+    DEPS.append('unittest2')
+if sys.version_info[:2] <= (2, 7):
+    DEPS.append('mock')
+if sys.version_info[:2] <= (3, 2):
+    DEPS.append('ipaddress')
+
 _cmds = {}
 if PY3:
     basestring = str
