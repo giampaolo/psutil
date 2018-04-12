@@ -71,11 +71,11 @@ install:
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
-  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py setup-dev-env"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
 
 build: off
 
