@@ -24,7 +24,11 @@ import sys
 import tempfile
 
 
-PYTHON = os.getenv('PYTHON', sys.executable)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
+if APPVEYOR:
+    PYTHON = sys.executable
+else:
+    PYTHON = os.getenv('PYTHON', sys.executable)
 TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
