@@ -1243,7 +1243,9 @@ def sensors_battery():
     energy_full = multi_cat(
         root + "/energy_full",
         root + "/charge_full")
-    if energy_now is None or power_now is None:
+    if power_now is None: 
+        power_now = 0 # provide a fallback since some systems don't provide this.
+    if energy_now is None:
         return None
 
     # Percent. If we have energy_full the percentage will be more
@@ -1264,7 +1266,9 @@ def sensors_battery():
     power_plugged = None
     online = multi_cat(
         os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
-        os.path.join(POWER_SUPPLY_PATH, "AC/online"))
+        os.path.join(POWER_SUPPLY_PATH, "AC/online"),
+        os.path.join(POWER_SUPPLY_PATH, "ADP0/online"),
+         os.path.join(POWER_SUPPLY_PATH, "ADP1/online"))
     if online is not None:
         power_plugged = online == 1
     else:
