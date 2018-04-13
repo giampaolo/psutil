@@ -45,20 +45,13 @@ environment:
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
-      ARCH: x86_64
-      VS_VER: "2015"
-      INSTANCENAME: "SQL2012SP1"
 
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
-      ARCH: x86_64
-      VS_VER: "2015"
-      INSTANCENAME: "SQL2012SP1"
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
-
     # - PYTHON: "C:\\Python266"
     #   PYTHON_VERSION: "2.6.6"
     #   PYTHON_ARCH: "32"

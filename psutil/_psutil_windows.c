@@ -646,9 +646,6 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         goto return_none;
     }
 
-    printf("inside 1\n");
-    psutil_debug("inside 1");
-
     while (1) {
         rc = _GetLogicalProcessorInformationEx(
             RelationAll, buffer, &length);
