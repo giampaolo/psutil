@@ -619,6 +619,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // but I don't want to prolong support for Windows XP and Vista.
     // On such old systems psutil will compile but this API will
     // just return None.
+    psutil_debug("Win < 7; cpu_count_phys() forced to None");
     Py_RETURN_NONE;
 }
 #else  // Windows >= 7
