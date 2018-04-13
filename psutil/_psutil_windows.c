@@ -631,6 +631,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD length = 0;
     DWORD offset = 0;
     DWORD ncpus = 0;
+    DWORD i;
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
@@ -651,8 +652,9 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
             RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                if (buffer)
+                if (buffer) {
                     free(buffer);
+                }
                 buffer = \
                     (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(length);
                 if (NULL == buffer) {
@@ -671,10 +673,16 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         }
     }
 
-   for (ptr = buffer;
-            (void*)ptr < (void*)((unsigned long)buffer + length);
-            ptr = (void*)((unsigned long)ptr + ptr->Size)) {
-        if (ptr->Relationship == RelationProcessorCore) {
+    // Old for loop. This didn't work on Python 3.5 and 3.6 64-bit for
+    // some reason.
+    // for (ptr = buffer;
+    //         (void*)ptr < (void*)((unsigned long)buffer + length);
+    //         ptr = (void*)((unsigned long)ptr + ptr->Size)) {
+    for (i=0;
+         i < length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX) / 2;
+         i++)
+    {
+        if ((buffer+i)->Relationship == RelationProcessorCore) {
             ncpus += 1;
         }
     }
