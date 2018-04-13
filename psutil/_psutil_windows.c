@@ -2958,7 +2958,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
-    PVOID previousAllocationBase;
+    ULONGLONG previousAllocationBase;
     WCHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
