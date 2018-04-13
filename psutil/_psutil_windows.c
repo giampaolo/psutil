@@ -855,7 +855,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
         goto done;
     }
 
-    info_array_size = tmp_size + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
+    info_array_size = tmp_size + \
+        ((DWORD)entries * sizeof(PSAPI_WORKING_SET_BLOCK));
     info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
     if (!info_array) {
         PyErr_NoMemory();
@@ -2381,7 +2382,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int devNum;
     int i;
     size_t ioctrlSize;
-    BOOL WINAPI ret;
+    BOOL ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
 
