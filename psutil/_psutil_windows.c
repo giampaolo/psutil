@@ -661,7 +661,8 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                // TODO: debug message
+                psutil_debug("GetLogicalProcessorInformationEx() returned ",
+                             GetLastError());
                 goto return_none;
             }
         }
@@ -679,10 +680,13 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     }
 
     free(buffer);
-    if (ncpus != 0)
+    if (ncpus != 0) {
         return Py_BuildValue("I", ncpus);
-    else
+    }
+    else {
+        psutil_debug("GetLogicalProcessorInformationEx() count was 0");
         Py_RETURN_NONE;  // mimick os.cpu_count()
+    }
 
 return_none:
     if (buffer != NULL)
