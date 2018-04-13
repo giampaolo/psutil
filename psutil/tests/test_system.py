@@ -268,8 +268,11 @@ class TestSystemAPIs(unittest.TestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
-        self.assertGreaterEqual(physical, 1)
-        self.assertGreaterEqual(logical, physical)
+        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
+            self.assertIsNone(physical)
+        else:
+            self.assertGreaterEqual(physical, 1)
+            self.assertGreaterEqual(logical, physical)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085

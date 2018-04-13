@@ -164,15 +164,11 @@ CPU
   Return the number of logical CPUs in the system (same as
   `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
   in Python 3.4) or ``None`` if undetermined.
-  This number may not be equivalent to the number of CPUs the current process
-  can actually use in case process CPU affinity has been changed or Linux
-  cgroups are being used.
-  The number of usable CPUs can be obtained with
-  ``len(psutil.Process().cpu_affinity())``.
   If *logical* is ``False`` return the number of physical cores only (hyper
-  thread CPUs are excluded).
+  thread CPUs are excluded) or ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
-  ``None``. Example on a system having 2 physical hyper-thread CPU cores:
+  ``None``.
+  Example on a system having 2 physical hyper-thread CPU cores:
 
     >>> import psutil
     >>> psutil.cpu_count()
@@ -180,7 +176,12 @@ CPU
     >>> psutil.cpu_count(logical=False)
     2
 
-  Example returning the number of CPUs usable by the current process:
+  Note that this number is not equivalent to the number of CPUs the current
+  process can actually use.
+  That can vary in case process CPU affinity has been changed, Linux cgroups
+  are being used or on Windows systems using processor groups or having more
+  than 64 CPUs.
+  The number of usable CPUs can be obtained with:
 
     >>> len(psutil.Process().cpu_affinity())
     1

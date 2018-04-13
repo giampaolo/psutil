@@ -45,20 +45,13 @@ environment:
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
-      ARCH: x86_64
-      VS_VER: "2015"
-      INSTANCENAME: "SQL2012SP1"
 
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
-      ARCH: x86_64
-      VS_VER: "2015"
-      INSTANCENAME: "SQL2012SP1"
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
-
     # - PYTHON: "C:\\Python266"
     #   PYTHON_VERSION: "2.6.6"
     #   PYTHON_ARCH: "32"
@@ -71,20 +64,17 @@ install:
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
-  - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py setup-dev-env"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py install"
 
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test"
 
 after_test:
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py wheel"
 
 artifacts:
   - path: dist\*

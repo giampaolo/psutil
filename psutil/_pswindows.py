@@ -288,7 +288,7 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
+    """Return the number of physical CPU cores in the system."""
     return cext.cpu_count_phys()
 
 
