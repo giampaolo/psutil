@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.5
+=====
+
+2018-04-14
+
+**Bug fixes**
+
+- 1268_: setup.py's extra_require parameter requires latest setuptools version,
+  breaking quite a lot of installations.
+
 5.4.4
 =====
 
