@@ -89,14 +89,12 @@ after_test:
 artifacts:
   - path: dist\*
 
-cache:
-  - '%LOCALAPPDATA%\pip\Cache'
-
 # on_success:
 #   - might want to upload the content of dist/*.whl to a public wheelhouse
 
 skip_commits:
   message: skip-ci
+
 
 # run build only if one of the following files is modified on commit
 only_commits:

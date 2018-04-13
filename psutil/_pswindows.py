@@ -33,6 +33,7 @@ except ImportError as err:
     else:
         raise
 
+
 from ._common import conn_tmap
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
