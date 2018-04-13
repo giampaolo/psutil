@@ -365,7 +365,7 @@ def test_process():
     """Run process tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_process" % PYTHON)
+    sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 @cmd
@@ -373,7 +373,7 @@ def test_system():
     """Run system tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_system" % PYTHON)
+    sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 @cmd
@@ -381,7 +381,7 @@ def test_platform():
     """Run windows only tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_windows" % PYTHON)
+    sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 @cmd
@@ -389,7 +389,7 @@ def test_misc():
     """Run misc tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
+    sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 @cmd
@@ -397,7 +397,7 @@ def test_unicode():
     """Run unicode tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
+    sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 @cmd
@@ -405,7 +405,7 @@ def test_connections():
     """Run connections tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+    sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 @cmd
@@ -413,7 +413,7 @@ def test_contracts():
     """Run contracts tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
+    sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 @cmd
