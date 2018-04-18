@@ -449,7 +449,7 @@ Disks
 Network
 -------
 
-.. function:: net_io_counters(pernic=False)
+.. function:: net_io_counters(pernic=False, nowrap=True)
 
   Return system-wide network I/O statistics as a named tuple including the
   following attributes:
