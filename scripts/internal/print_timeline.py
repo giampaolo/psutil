@@ -13,7 +13,7 @@ import subprocess
 
 entry = """\
 - {date}:
-  `{ver} <https://pypi.python.org/pypi?name=psutil&version={ver}&:action=files>`__ -
+  `{ver} <https://pypi.org/project/psutil/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#{nodotver}>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/{prevtag}...{tag}#files_bucket>`__"""  # NOQA
 

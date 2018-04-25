@@ -76,15 +76,15 @@ Windows
 
 The easiest way to install psutil on Windows is to just use the pre-compiled
 exe/wheel installers hosted on
-`PYPI <https://pypi.python.org/pypi/psutil/#downloads>`__ via pip:
+`PYPI <https://pypi.org/project/psutil/#files>`__ via pip:
 
 .. code-block:: bat
 
     C:\Python27\python.exe -m pip install psutil
 
 If you want to compile psutil from sources you'll need **Visual Studio**
-(Mingw32 is no longer supported), which really is a mess. 
-The VS versions are the onle listed below. 
+(Mingw32 is no longer supported), which really is a mess.
+The VS versions are the onle listed below.
 This  `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
 provides numerous info on how to properly set up VS (good luck with that).
 

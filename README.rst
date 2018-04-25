@@ -15,7 +15,7 @@
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: Latest version
 
 .. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
@@ -23,7 +23,7 @@
     :alt: Github stars
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: License
 
 ===========
@@ -33,7 +33,7 @@ Quick links
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
+- `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
@@ -86,7 +86,7 @@ Projects using psutil
 At the time of writing psutil has roughly
 `2.9 milion downloads <https://github.com/giampaolo/psutil/issues/1053#issuecomment-340166262>`__
 per month and there are over
-`7000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`8000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 

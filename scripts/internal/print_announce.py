@@ -20,7 +20,7 @@ HISTORY = os.path.abspath(os.path.join(HERE, '../../HISTORY.rst'))
 PRJ_NAME = 'psutil'
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'http://psutil.readthedocs.io'
-PRJ_URL_DOWNLOAD = 'https://pypi.python.org/pypi/psutil'
+PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
 PRJ_URL_WHATSNEW = \
     'https://github.com/giampaolo/psutil/blob/master/HISTORY.rst'
 

@@ -206,7 +206,7 @@ win-download-wheels:  ## Download wheels hosted on appveyor.
 
 # --- upload
 
-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
+upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
