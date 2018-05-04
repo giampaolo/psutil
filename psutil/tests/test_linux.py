@@ -1408,20 +1408,6 @@ class TestSensorsBattery(unittest.TestCase):
                         "/sys/class/power_supply/BAT0/capacity", b"88"):
                     self.assertEqual(psutil.sensors_battery().percent, 88)
 
-    def test_emulate_no_ac0_online(self):
-        # Emulate a case where /AC0/online file does not exist.
-        def path_exists_mock(name):
-            if name.startswith("/sys/class/power_supply/AC0/online"):
-                return False
-            else:
-                return orig_path_exists(name)
-
-        orig_path_exists = os.path.exists
-        with mock.patch("psutil._pslinux.os.path.exists",
-                        side_effect=path_exists_mock) as m:
-            psutil.sensors_battery()
-            assert m.called
-
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
         with mock_open_exception(
