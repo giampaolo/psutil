@@ -43,8 +43,6 @@ from _common import AIX  # NOQA
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
-if WINDOWS:
-    macros.append(("PSUTIL_WINDOWS", 1))
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
@@ -117,6 +115,7 @@ if WINDOWS:
         msg += "Visual Studio and may also (kind of) work though"
         warnings.warn(msg, UserWarning)
 
+    macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
         # be nice to mingw, see:
         # http://www.mingw.org/wiki/Use_more_recent_defined_functions
@@ -252,6 +251,7 @@ elif AIX:
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
         define_macros=macros)
+
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
