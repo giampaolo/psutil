@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.6
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
+  "snicaddr".
+
 5.4.5
 =====
 

@@ -77,7 +77,7 @@ install:  ## Install this package as current user in "edit" mode.
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil || true
-	$(PYTHON) scripts/internal/purge.py
+	$(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
 	$(PYTHON) -c \

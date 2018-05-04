@@ -2155,7 +2155,7 @@ def net_if_addrs():
             separator = ":" if POSIX else "-"
             while addr.count(separator) < 5:
                 addr += "%s00" % separator
-        ret[name].append(_common.snic(fam, addr, mask, broadcast, ptp))
+        ret[name].append(_common.snicaddr(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 
 

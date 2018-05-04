@@ -59,7 +59,7 @@ __all__ = [
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
-    'sdiskusage', 'snetio', 'snic', 'snicstats', 'sswap', 'suser',
+    'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
@@ -182,7 +182,8 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
 # psutil.net_if_addrs()
-snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
+snicaddr = namedtuple('snicaddr',
+                      ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
 snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
