@@ -831,7 +831,7 @@ psutil_users(PyObject *self, PyObject *args) {
             py_tty,             // tty
             py_hostname,        // hostname
             (float)ut.ut_time,  // start time
-#ifdef PSUTIL_OPENBSD
+#if defined(PSUTIL_OPENBSD) || (defined(__FreeBSD_version) && __FreeBSD_version < 900000)
             -1                  // process id (set to None later)
 #else
             ut.ut_pid           // TODO: use PyLong_FromPid
