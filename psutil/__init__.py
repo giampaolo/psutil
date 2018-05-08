@@ -218,7 +218,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.4.5"
+__version__ = "5.4.6"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
@@ -265,13 +265,9 @@ else:
         ret = {}
         for pid in pids():
             try:
-                proc = _psplatform.Process(pid)
-                ppid = proc.ppid()
-            except (NoSuchProcess, AccessDenied):
-                # Note: AccessDenied is unlikely to happen.
+                ret[pid] = _psplatform.Process(pid).ppid()
+            except (NoSuchProcess, ZombieProcess):
                 pass
-            else:
-                ret[pid] = ppid
         return ret
 
 

@@ -1380,9 +1380,8 @@ def ppid_map():
                 data = f.read()
         except EnvironmentError as err:
             # Note: we should be able to access /stat for all processes
-            # so we won't bump into EPERM, which is good.
-            if err.errno not in (errno.ENOENT, errno.ESRCH,
-                                 errno.EPERM, errno.EACCES):
+            # aka it's unlikely we'll bump into EPERM, which is good.
+            if err.errno not in (errno.ENOENT, errno.ESRCH):
                 raise
         else:
             rpar = data.rfind(b')')

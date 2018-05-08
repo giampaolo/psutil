@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
   "snicaddr".
+- 1274_: [Linux] there was a small chance Process.children() may swallow
+  AccessDenied exceptions.
 
 5.4.5
 =====
