@@ -273,7 +273,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int mib[4];
     int ret;
     size_t size;
-    const char *encoding_errs;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -540,7 +539,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
-    const char *encoding_errs;
     PyObject *py_path = NULL;
 
     int i, cnt;
