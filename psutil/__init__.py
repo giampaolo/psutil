@@ -2175,7 +2175,7 @@ def net_if_stats():
 # =====================================================================
 
 
-# Linux
+# Linux, OSX
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):

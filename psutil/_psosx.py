@@ -6,6 +6,7 @@
 
 import contextlib
 import errno
+import collections
 import functools
 import os
 from socket import AF_INET
@@ -210,6 +211,31 @@ def disk_partitions(all=False):
 # =====================================================================
 # --- sensors
 # =====================================================================
+
+
+def sensors_temperatures():
+    """Return hardware (CPU and others) temperatures as a dict
+    including hardware name and temperature.
+    """
+    ret = collections.defaultdict(list)
+    rawdict = cext.sensors_temperatures()
+
+    for name, values in rawdict.items():
+        current = round(values['current'], 2)
+        label = ''
+        high = values['high']
+        if high == int(0):
+            high = 105
+        critical = None
+
+        if high and not critical:
+            critical = high
+        elif critical and not high:
+            high = critical
+
+        ret[name].append((label, current, high, critical))
+
+    return dict(ret)
 
 
 def sensors_battery():
