@@ -286,6 +286,17 @@ class TestSensorsBattery(unittest.TestCase):
                              psutil.POWER_TIME_UNKNOWN)
             assert m.called
 
+# ===================================================================
+# sensors_temperatures()
+# ===================================================================
+
+
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestSensorsTemperatures(unittest.TestCase):
+
+    def test_get_temperature_wmi(self):
+        self.assertEqual(len(psutil.sensors_temperatures()), 1)
+
 
 # ===================================================================
 # Process APIs
