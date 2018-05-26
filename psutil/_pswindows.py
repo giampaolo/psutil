@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 """Windows platform implementation."""
-
+import collections
 import contextlib
 import errno
 import functools
@@ -11,8 +11,10 @@ import os
 import sys
 import time
 from collections import namedtuple
+from subprocess import Popen, PIPE
 
 from . import _common
+
 try:
     from . import _psutil_windows as cext
 except ImportError as err:
@@ -73,7 +75,6 @@ __extra__all__ = [
     "AF_LINK",
 ]
 
-
 # =====================================================================
 # --- globals
 # =====================================================================
@@ -83,7 +84,6 @@ ACCESS_DENIED_ERRSET = frozenset([errno.EPERM, errno.EACCES,
                                   cext.ERROR_ACCESS_DENIED])
 NO_SUCH_SERVICE_ERRSET = frozenset([cext.ERROR_INVALID_NAME,
                                     cext.ERROR_SERVICE_DOES_NOT_EXIST])
-
 
 if enum is None:
     AF_LINK = -1
@@ -116,6 +116,7 @@ if enum is not None:
         NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
+
     globals().update(Priority.__members__)
 
 pinfo_map = dict(
@@ -143,6 +144,8 @@ pinfo_map = dict(
     mem_private=21,
 )
 
+ACCESS_DENIED_INDICATOR = "Description = Access denied"
+OS_NOT_SUPPORTED_INDICATOR = "Not supported"
 
 # =====================================================================
 # --- named tuples
@@ -161,7 +164,7 @@ pmem = namedtuple(
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
 # psutil.Process.memory_full_info()
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss',))
 # psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 # psutil.Process.memory_maps(grouped=False)
@@ -399,6 +402,30 @@ def sensors_battery():
     return _common.sbattery(percent, secsleft, power_plugged)
 
 
+def sensors_temperatures():
+    """Return hardware devices temperatures as a dict
+    including hardware name, label, current, max and critical
+    temperatures.
+    """
+    instance_temp = {}
+    ret = collections.defaultdict(list)
+    temperature_resource_query = r"wmic /namespace:\\root\wmi PATH MSAcpi_ThermalZoneTemperature get * /value"
+    data = Popen(temperature_resource_query, stdout=PIPE, stderr=PIPE).communicate()
+    if ACCESS_DENIED_INDICATOR in str(data[1]):
+        raise AccessDenied(msg="Session must be evaluated for getting temperatures")
+    if OS_NOT_SUPPORTED_INDICATOR in str(data[1]):
+        raise EnvironmentError("Cannot retrieve temperature")
+    instance = str(data[0]).strip().split("\r\r\n")
+    map(lambda x: instance_temp.update({x.split("=")[0]: x.split("=")[1]}), instance)
+    # in Kelvin, converting to Celsius by div in 10 and sub with 273.15
+    ret[instance_temp["InstanceName"]].append(["",
+                                               float(instance_temp["CurrentTemperature"]) / 10.0 - 273.15,
+                                               None,
+                                               float(instance_temp["CriticalTripPoint"]) / 10.0 - 273.15])
+
+    return ret
+
+
 # =====================================================================
 # --- other system functions
 # =====================================================================
@@ -629,6 +656,7 @@ def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
     exceptions into NoSuchProcess and AccessDenied.
     """
+
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
@@ -639,6 +667,7 @@ def wrap_exceptions(fun):
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
             raise
+
     return wrapper
 
 
@@ -751,13 +780,13 @@ class Process(object):
         t = self._get_raw_meminfo()
         rss = t[2]  # wset
         vms = t[7]  # pagefile
-        return pmem(*(rss, vms, ) + t)
+        return pmem(*(rss, vms,) + t)
 
     @wrap_exceptions
     def memory_full_info(self):
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
-        return pfullmem(*basic_mem + (uss, ))
+        return pfullmem(*basic_mem + (uss,))
 
     def memory_maps(self):
         try:
@@ -974,6 +1003,7 @@ class Process(object):
     def cpu_affinity_get(self):
         def from_bitmask(x):
             return [i for i in xrange(64) if (1 << i) & x]
+
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
