@@ -145,6 +145,7 @@ pinfo_map = dict(
 )
 
 ACCESS_DENIED_INDICATOR = "Description = Access denied"
+OS_NOT_SUPPORTED_INDICATOR = "Not supported"
 
 # =====================================================================
 # --- named tuples
@@ -412,10 +413,12 @@ def sensors_temperatures():
     data = Popen(temperature_resource_query, stdout=PIPE, stderr=PIPE).communicate()
     if ACCESS_DENIED_INDICATOR in data[1]:
         raise AccessDenied(msg="Session must be evaluated for getting temperatures")
+    if OS_NOT_SUPPORTED_INDICATOR in data[1]:
+        raise EnvironmentError("Cannot retrieve temperature")
     instance = data[0].strip().split("\r\r\n")
     map(lambda x: instance_temp.update({x.split("=")[0]: x.split("=")[1]}), instance)
     # in Kelvin, converting to Celsius by div in 10 and sub with 273.15
-    ret[instance_temp["InstanceName"]].append([None,
+    ret[instance_temp["InstanceName"]].append(["",
                                                float(instance_temp["CurrentTemperature"]) / 10.0 - 273.15,
                                                None,
                                                float(instance_temp["CriticalTripPoint"]) / 10.0 - 273.15])
