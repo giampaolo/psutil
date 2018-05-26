@@ -21,7 +21,7 @@
 #define SMC_KEY_CPU_TEMP_HIGH "TC0G"
 #define SMC_KEY_BATTERY_TEMP  "TB0T"
 #define SMC_KEY_FAN_NUM       "FNum"
-#define SMC_KEY_FAN_SPEED     "F%dAc"
+#define SMC_KEY_FAN_SPEED     "F%dAb"
 
 typedef struct {
     char                  major;

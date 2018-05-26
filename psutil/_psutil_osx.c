@@ -1803,7 +1803,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
  * Return temperatures of hardware components.
  */
 static PyObject *
-psutil_sensors_temperatures(PyObject *self, PyObject *args) {
+cpu_die_temperatures(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
     // CPU only stats
     PyObject *py_cpu_temp = PyDict_New();
@@ -1964,7 +1964,7 @@ psutil_sensors_fans(PyObject *self, PyObject *args) {
         py_fan_speed = Py_BuildValue("f", fan_speed);
         if (py_fan_speed == NULL)
             goto error;
-        sprintf(key, "Fan %d", i);
+        sprintf(key, "Fan%d", i);
         if (PyDict_SetItemString(py_retdict, key, py_fan_speed)) {
             goto error;
         }
@@ -2044,12 +2044,12 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-    {"sensors_temperatures", psutil_sensors_temperatures, METH_VARARGS,
+    {"cpu_die_temperatures", cpu_die_temperatures, METH_VARARGS,
      "Return temperatures of hardware components."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
     {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
-     "Return fan spped information."},
+     "Return fan speed information."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,

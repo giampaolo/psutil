@@ -7,7 +7,6 @@
 import contextlib
 import errno
 import collections
-import warnings
 import functools
 import os
 from socket import AF_INET
@@ -215,24 +214,24 @@ def disk_partitions(all=False):
 
 
 def sensors_temperatures():
-    """Return hardware (CPU and others) temperatures as a dict
-    including hardware name and temperature.
+    """Return CPU temperatures
+    including key name and temperature.
     """
     ret = collections.defaultdict(list)
-    rawdict = cext.sensors_temperatures()
+    rawdict = cext.cpu_die_temperatures()
 
     for name, values in rawdict.items():
         current = round(values['current'], 2)
         label = ''
         high = values['high']
-        if high == int(0):
-            high = 105
+        if int(high) == 0:
+            # Set to 105 if no high temperature sensors detected
+            # (105C is shutdown temperature for most Intel CPUs)
+            high = 105.0
         critical = None
 
         if high and not critical:
             critical = high
-        elif critical and not high:
-            high = critical
 
         ret[name].append((label, current, high, critical))
 
@@ -261,12 +260,12 @@ def sensors_fans():
     """Return fans speed information.
     """
     ret = collections.defaultdict(list)
-    for key, value in cext.sensors_fans().items():
-        try:
+    try:
+        for key, value in cext.sensors_fans().items():
             ret[key].append(_common.sfan(key, int(value)))
-        except (OSError, IOError) as err:
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
-            continue
+    except (SystemError):
+        # Returns an empty dict if no fans were detected
+        pass
     return dict(ret)
 
 
