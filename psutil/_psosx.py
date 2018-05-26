@@ -7,6 +7,7 @@
 import contextlib
 import errno
 import collections
+import warnings
 import functools
 import os
 from socket import AF_INET
@@ -254,6 +255,19 @@ def sensors_battery():
     else:
         secsleft = minsleft * 60
     return _common.sbattery(percent, secsleft, power_plugged)
+
+
+def sensors_fans():
+    """Return fans speed information.
+    """
+    ret = collections.defaultdict(list)
+    for key, value in cext.sensors_fans().items():
+        try:
+            ret[key].append(_common.sfan(key, int(value)))
+        except (OSError, IOError) as err:
+            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            continue
+    return dict(ret)
 
 
 # =====================================================================

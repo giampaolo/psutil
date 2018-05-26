@@ -19,6 +19,24 @@ UInt32 _strtoul(char *str, int size, int base)
 }
 
 
+float _strtof(unsigned char *str, int size, int e)
+{
+    float total = 0;
+    int i;
+
+    for (i = 0; i < size; i++) {
+        if (i == (size - 1))
+            total += (str[i] & 0xff) >> e;
+        else
+            total += str[i] << (size - 1 - i) * (8 - e);
+    }
+
+    total += (str[size-1] & 0x03) * 0.25;
+
+    return total;
+}
+
+
 void _ultostr(char *str, UInt32 val)
 {
     str[0] = '\0';
@@ -162,4 +180,47 @@ double SMCGetTemperature(char *key) {
     // read failed
     SMCClose(conn);
     return 0.0;
+}
+
+
+float SMCGetFanSpeed(int fanNum)
+{
+    SMCVal_t val;
+    kern_return_t result;
+    UInt32Char_t  key;
+    io_connect_t conn;
+
+    result = SMCOpen(&conn);
+    if (result != kIOReturnSuccess) {
+        return -1;
+    }
+
+    sprintf(key, SMC_KEY_FAN_SPEED, fanNum);
+    result = SMCReadKey(conn, key, &val);
+     if (result != kIOReturnSuccess) {
+        SMCClose(conn);
+        return -1;
+    }
+    SMCClose(conn);
+    return _strtof((unsigned char *)val.bytes, val.dataSize, 2);
+}
+
+int SMCGetFanNumber(char *key)
+{
+    SMCVal_t val;
+    kern_return_t result;
+    io_connect_t conn;
+
+    result = SMCOpen(&conn);
+    if (result != kIOReturnSuccess) {
+        return 0;
+    }
+
+    result = SMCReadKey(conn, key, &val);
+     if (result != kIOReturnSuccess) {
+        SMCClose(conn);
+        return 0;
+    }
+    SMCClose(conn);
+    return _strtoul((char *)val.bytes, val.dataSize, 10);
 }
