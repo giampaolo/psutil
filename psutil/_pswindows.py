@@ -411,11 +411,11 @@ def sensors_temperatures():
     ret = collections.defaultdict(list)
     temperature_resource_query = r"wmic /namespace:\\root\wmi PATH MSAcpi_ThermalZoneTemperature get * /value"
     data = Popen(temperature_resource_query, stdout=PIPE, stderr=PIPE).communicate()
-    if ACCESS_DENIED_INDICATOR in data[1]:
+    if ACCESS_DENIED_INDICATOR in str(data[1]):
         raise AccessDenied(msg="Session must be evaluated for getting temperatures")
-    if OS_NOT_SUPPORTED_INDICATOR in data[1]:
+    if OS_NOT_SUPPORTED_INDICATOR in str(data[1]):
         raise EnvironmentError("Cannot retrieve temperature")
-    instance = data[0].strip().split("\r\r\n")
+    instance = str(data[0]).strip().split("\r\r\n")
     map(lambda x: instance_temp.update({x.split("=")[0]: x.split("=")[1]}), instance)
     # in Kelvin, converting to Celsius by div in 10 and sub with 273.15
     ret[instance_temp["InstanceName"]].append(["",
