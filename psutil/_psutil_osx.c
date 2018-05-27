@@ -47,6 +47,8 @@
 #include "arch/osx/smc.h"
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
@@ -321,7 +323,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     char perms[8];
     int pagesize = getpagesize();
     long pid;
-    kern_return_t err = KERN_SUCCESS;
+    kern_return_t err;
     mach_port_t task = MACH_PORT_NULL;
     uint32_t depth = 1;
     vm_address_t address = 0;
@@ -569,7 +571,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
     vm_size_t page_size;
-    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
+    mach_vm_address_t addr;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
     mach_port_t object_name;
@@ -892,7 +894,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     len = sizeof(*fs) * num;
-    fs = malloc(len);
+    fs = malloc((size_t) len);
     if (fs == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1005,7 +1007,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     int err, ret;
     kern_return_t kr;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    unsigned int info_count;
     mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
@@ -1136,7 +1138,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1153,11 +1155,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
             errno = 0;
-            nb = proc_pidfdinfo((pid_t)pid,
-                                fdp_pointer->proc_fd,
-                                PROC_PIDFDVNODEPATHINFO,
-                                &vi,
-                                sizeof(vi));
+            nb = (unsigned long) proc_pidfdinfo((pid_t)pid,
+                                                fdp_pointer->proc_fd,
+                                                PROC_PIDFDVNODEPATHINFO,
+                                                &vi,
+                                                sizeof(vi));
 
             // --- errors checking
             if ((nb <= 0) || nb < sizeof(vi)) {
@@ -1250,7 +1252,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1270,8 +1272,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
-            nb = proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
-                                PROC_PIDFDSOCKETINFO, &si, sizeof(si));
+            nb = (unsigned long) proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
+                                                PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
             if ((nb <= 0) || (nb < sizeof(si))) {
@@ -1430,7 +1432,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         return PyErr_SetFromErrno(PyExc_OSError);
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL)
         return PyErr_NoMemory();
     pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, fds_pointer,
@@ -1491,7 +1493,6 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         next += ifm->ifm_msglen;
 
         if (ifm->ifm_type == RTM_IFINFO2) {
-            py_ifc_info = NULL;
             struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
             struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
             char ifc_name[32];
@@ -1564,7 +1565,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         py_disk_info = NULL;
         parent_dict = NULL;
         props_dict = NULL;
-        stats_dict = NULL;
 
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
                 != kIOReturnSuccess) {
@@ -2142,3 +2142,5 @@ init_psutil_osx(void)
     return module;
 #endif
 }
+
+#pragma clang diagnostic pop
