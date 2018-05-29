@@ -52,31 +52,47 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
-typedef const struct smc_sensor *pSensor;
-pSensor detected_temperature_sensors = detect_sensors(temperature_sensors);
-const struct smc_sensor * detected_fan_sensors = detect_sensors(fan_sensors);
-const struct smc_sensor * detected_other_sensors = detect_sensors(other_sensors);
+bool detection_has_run = false;
+const struct smc_sensor * detected_temperature_sensors;
+const struct smc_sensor * detected_fan_sensors;
+const struct smc_sensor * detected_other_sensors;
 
-struct smc_sensor * detect_sensors(struct potential_smc_sensors * potential_sensors) {
+struct smc_sensor * detect_sensors(const struct potential_smc_sensors * potential_sensors) {
 
-    // TODO actually use to the fixed counting
+    // TODO actually use the fixed counting
 
-    // TODO Singly linked list
+    // Screw doing an actual list, we're just going to over allocate and then cut it back once we're done
+    size_t total_size = 0;
     for (int i = 0; i < sizeof(potential_sensors); i++) {
-        int count = 0;
-        while (true) {
-            // TODO replace underscores
-            double temp = SMCGetTemperature((char *) potential_sensors[i].sensors->key);
-            if (temp < MIN_TEMP || temp > MAX_TEMP) {
-                break;
-            } else {
-                // TODO add it to the linked list
+        total_size += sizeof(potential_sensors[i]);
+    }
+    struct smc_sensor * detected_sensors = malloc(total_size);
+    int sensor_index = 0;
+
+    for (int i = 0; i < sizeof(potential_sensors); i++) {
+        for (int j = 0; j < sizeof(potential_sensors[i]); j++) {
+            int count = 0;
+            while (true) {
+
+                // TODO replace underscores
+
+                struct smc_sensor s = potential_sensors[i].sensors[j];
+
+                double val = ((*s.get_function)((char *) s.key));
+                if (*s.get_function) {
+                    break;
+                } else {
+                    detected_sensors[sensor_index++] = s;
+                }
+                count++;
             }
-            count++;
         }
     }
 
-    // TODO return
+    detection_has_run = true;
+
+    // Realloc for proper size
+    realloc(detected_sensors, sizeof(potential_sensors[0].sensors[0]) * (sensor_index + 1));
 }
 
 /*
@@ -1824,11 +1840,19 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
-PyObject * sensor_python(struct smc_sensor sensors[]) {
+PyObject * sensor_python(const struct smc_sensor sensors[]) {
+    // TODO better implementation
+    if (!detection_has_run) {
+        detected_temperature_sensors = detect_sensors(temperature_sensors);
+        detected_fan_sensors = detect_sensors(fan_sensors);
+        detected_other_sensors = detect_sensors(other_sensors);
+    }
+
     PyObject *py_retdict = PyDict_New();
     for (int i = 0; i < sizeof(sensors) ; i++) {
         PyDict_SetItemString(py_retdict, sensors[i].name,
-            Py_BuildValue("d", SMCGetTemperature((char *) sensors[i].key)));
+            // Dereference the function pointer and pass it the sensor key, then store that in the dictionary
+            Py_BuildValue("d", (*sensors[i].get_function)((char *) sensors[i].key)));
     }
     return py_retdict;
 }
@@ -1842,7 +1866,7 @@ static PyObject * sensor_fan_speeds(PyObject * self, PyObject args) {
 }
 
 static PyObject * sensor_others(PyObject * self, PyObject args) {
-    return sensor_python(detected_other_sensors)
+    return sensor_python(detected_other_sensors);
 }
 
 /*
