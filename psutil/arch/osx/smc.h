@@ -79,11 +79,16 @@ int count_cpu_cores();
 int count_physical_cpus();
 int count_gpus();
 int count_dimms();
+bool temperature_reasonable(double d);
+bool fan_speed_reasonable(double d);
+bool always_true(double d);
 
 const struct smc_sensor {
     // Actual types are varied, but they can all be contained in this less efficient format
     const char key[5];
     const char name[];
+    double (*get_function)(char *);
+    bool (*reasonable_function)(double);
 };
 
 const struct potential_smc_sensors {
@@ -97,112 +102,112 @@ const struct potential_smc_sensors {
 const struct potential_smc_sensors temperature_sensors[] = {
     {
         {
-            {"TA0P", "Ambient"},
-            {"TA0S", "PCI Slot 1 Pos 1"},
-            {"TA1P", "Ambient temperature"},
-            {"TA1S", "PCI Slot 1 Pos 2"},
-            {"TA2S", "PCI Slot 2 Pos 1"},
-            {"TA3S", "PCI Slot 2 Pos 2"},
-            {"TB0P", "BLC Proximity"},
-            {"TB0T", "Battery TS_MAX"},
-            {"TB1T", "Battery 1"},
-            {"TB2T", "Battery 2"},
-            {"TB3T", "Battery 3"},
-            {"TCGC", "PECI GPU"},
-            {"TCSA", "PECI SA"},
-            {"TCSC", "PECI SA"},
-            {"TCXC", "PECI CPU"},
+            {"TA0P", "Ambient", &SMCGetTemperature, &temperature_reasonable},
+            {"TA0S", "PCI Slot 1 Pos 1", &SMCGetTemperature, &temperature_reasonable},
+            {"TA1P", "Ambient temperature", &SMCGetTemperature, &temperature_reasonable},
+            {"TA1S", "PCI Slot 1 Pos 2", &SMCGetTemperature, &temperature_reasonable},
+            {"TA2S", "PCI Slot 2 Pos 1", &SMCGetTemperature, &temperature_reasonable},
+            {"TA3S", "PCI Slot 2 Pos 2", &SMCGetTemperature, &temperature_reasonable},
+            {"TB0P", "BLC Proximity", &SMCGetTemperature, &temperature_reasonable},
+            {"TB0T", "Battery TS_MAX", &SMCGetTemperature, &temperature_reasonable},
+            {"TB1T", "Battery 1", &SMCGetTemperature, &temperature_reasonable},
+            {"TB2T", "Battery 2", &SMCGetTemperature, &temperature_reasonable},
+            {"TB3T", "Battery 3", &SMCGetTemperature, &temperature_reasonable},
+            {"TCGC", "PECI GPU", &SMCGetTemperature, &temperature_reasonable},
+            {"TCSA", "PECI SA", &SMCGetTemperature, &temperature_reasonable},
+            {"TCSC", "PECI SA", &SMCGetTemperature, &temperature_reasonable},
+            {"TCXC", "PECI CPU", &SMCGetTemperature, &temperature_reasonable},
             // For these values: appears that the hardware can only support one, but the SMC keys seem to indicate
             // support for multiple
-            {"TN0D", "Northbridge Die"},
-            {"TN0H", "Northbridge Heatsink"},
-            {"TN0P", "Northbridge Proximity"},
-            {"TS0C", "Expansion Slots"},
-            {"TS0S", "Memory Bank Proximity"},
-            {"TW0P", "AirPort Proximity"}
+            {"TN0D", "Northbridge Die", &SMCGetTemperature, &temperature_reasonable},
+            {"TN0H", "Northbridge Heatsink", &SMCGetTemperature, &temperature_reasonable},
+            {"TN0P", "Northbridge Proximity", &SMCGetTemperature, &temperature_reasonable},
+            {"TS0C", "Expansion Slots", &SMCGetTemperature, &temperature_reasonable},
+            {"TS0S", "Memory Bank Proximity", &SMCGetTemperature, &temperature_reasonable},
+            {"TW0P", "AirPort Proximity", &SMCGetTemperature, &temperature_reasonable}
         }, false, false
     },
     {
         {
-            {"TC_C", "CPU Core _"},
+            {"TC_C", "CPU Core _", &SMCGetTemperature, &temperature_reasonable},
         }, true, true, &count_cpu_cores
     },
     {
         {
-            {"TC_D", "CPU _ Die"},
-            {"TC_E", "CPU _ ??"},
-            {"TC_F", "CPU _ ??"},
-            {"TC_G", "CPU _ ??"},
-            {"TC_H", "CPU _ Heatsink"},
-            {"TC_J", "CPU _ ??"},
-            {"TC_P", "CPU _ Proximity"},
+            {"TC_D", "CPU _ Die", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_E", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_F", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_G", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_H", "CPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_J", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable},
+            {"TC_P", "CPU _ Proximity", &SMCGetTemperature, &temperature_reasonable},
         }, true, true, &count_physical_cpus
     },
     {
         {
-            {"TG_D", "GPU _ Die"},
-            {"TG_H", "GPU _ Heatsink"},
-            {"TG_P", "GPU _ Proximity"},
+            {"TG_D", "GPU _ Die", &SMCGetTemperature, &temperature_reasonable},
+            {"TG_H", "GPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable},
+            {"TG_P", "GPU _ Proximity", &SMCGetTemperature, &temperature_reasonable},
         }, true, true, &count_gpus
     },
     {
         {
-            {"TH_H", "Heatsink _ Proximity"}
+            {"TH_H", "Heatsink _ Proximity", &SMCGetTemperature, &temperature_reasonable}
         }, true, false
     },
     {
         {
-            {"TH_P", "HDD _ Proximity"},
+            {"TH_P", "HDD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
         }, true, false
     },
     {
         {
-            {"TI_P", "Thunderbolt _"},
+            {"TI_P", "Thunderbolt _", &SMCGetTemperature, &temperature_reasonable},
         }, true, false
     },
     {
         {
-            {"TL_P", "LCD _ Proximity"},
-            {"TL_P", "LCD _"},
+            {"TL_P", "LCD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+            {"TL_P", "LCD _", &SMCGetTemperature, &temperature_reasonable},
         }, true, false
     },
     {
         {
-            {"TM_P", "Memory _ Proximity"},
-            {"TM_S", "Memory Slot _"},
-            {"TMA_", "DIMM A _"},
-            {"TMB_", "DIMM B _"},
+            {"TM_P", "Memory _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+            {"TM_S", "Memory Slot _", &SMCGetTemperature, &temperature_reasonable},
+            {"TMA_", "DIMM A _", &SMCGetTemperature, &temperature_reasonable},
+            {"TMB_", "DIMM B _", &SMCGetTemperature, &temperature_reasonable},
         }, true, true, &count_dimms
     },
     {
         {
-            {"TO_P", "Optical Drive _ Proximity"},
-        }, true, // ?
+            {"TO_P", "Optical Drive _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+        }, true, false
     },
     {
         {
-            {"TP_C", "Power Supply _"},
-            {"TP_P", "Power Supply _ Proximity"},
-        }, true, // ?
+            {"TP_C", "Power Supply _", &SMCGetTemperature, &temperature_reasonable},
+            {"TP_P", "Power Supply _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+        }, true, false
     },
     {
         {
-            {"TS_C", "Expansion Slot _"},
-        }, true, // ?
+            {"TS_C", "Expansion Slot _", &SMCGetTemperature, &temperature_reasonable},
+        }, true, false
     },
     {
         {
-            {"TS_P", "Palm Rest _"},
-        }, true, // ?
+            {"TS_P", "Palm Rest _", &SMCGetTemperature, &temperature_reasonable},
+        }, true, false
     }
 };
 
 const struct potential_smc_sensors fan_sensors[] = {
-
+    // TODO
 };
 
 const struct potential_smc_sensors other_sensors[] = {
-    // This includes ambient sensors
+    // TODO
 };
 
 #endif
