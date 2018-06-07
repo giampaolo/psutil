@@ -7,6 +7,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1258_: [Windows] Process.username() may cause a segfault (Python interpreter
+  crash).  (patch by Jean-Luc Migot)
 - 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
   "snicaddr".
 - 1274_: [Linux] there was a small chance Process.children() may swallow
