@@ -72,6 +72,36 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
 
 /*
+ * A wrapper around task_for_pid() which sucks big time.
+ * http://os-tres.net/blog/2010/02/17/mac-os-x-and-task-for-pid-mach-call/
+ */
+int
+psutil_task_for_pid(long pid, mach_port_t *task)
+{
+    kern_return_t err = KERN_SUCCESS;
+
+    err = task_for_pid(mach_task_self(), (pid_t)pid, task);
+    if (err != KERN_SUCCESS) {
+        if ((err == 5) && (errno == ENOENT)) {
+            // See: https://github.com/giampaolo/psutil/issues/1181
+            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
+                         "errno=%i, msg='%s'\n", err, errno,
+                         mach_error_string(err));
+            AccessDenied("");
+        }
+        else if (psutil_pid_exists(pid) == 0) {
+            NoSuchProcess("");
+        }
+        else {
+            AccessDenied("");
+        }
+        return 1;
+    }
+    return 0;
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
@@ -336,20 +366,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if ((err == 5) && (errno == ENOENT)) {
-            // See: https://github.com/giampaolo/psutil/issues/1181
-            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
-                         "errno=%i, msg='%s'\n", err, errno,
-                         mach_error_string(err));
-            AccessDenied("");
-        }
-        else {
-            psutil_raise_for_pid(pid, "task_for_pid(MACH_PORT_NULL)");
-        }
+    if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
-    }
 
     while (1) {
         py_tuple = NULL;
@@ -560,7 +578,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     long pid;
-    int err;
     size_t len;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
@@ -576,14 +593,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("");
-        else
-            AccessDenied("");
+    if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
-    }
 
     len = sizeof(cpu_type);
     if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
@@ -1018,19 +1029,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // the argument passed should be a process id
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    // task_for_pid() requires root privileges
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("");
-        else
-            AccessDenied("");
+    if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
-    }
 
     info_count = TASK_BASIC_INFO_COUNT;
     err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
