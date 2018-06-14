@@ -109,15 +109,17 @@ psutil_task_for_pid(long pid, mach_port_t *task)
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, task);
     if (err != KERN_SUCCESS) {
-        psutil_debug(
-            "task_for_pid() failed; pid=%ld, err=%i, errno=%i, msg='%s'",
-            pid, err, errno, mach_error_string(err));
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess("task_for_pid() failed");
         else if (psutil_is_zombie(pid) == 1)
             PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
-        else
+        else {
+            psutil_debug(
+                "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
+                "setting AccessDenied()",
+                pid, err, errno, mach_error_string(err));
             AccessDenied("task_for_pid() failed");
+        }
         return 1;
     }
     return 0;
