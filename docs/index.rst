@@ -993,11 +993,11 @@ Process class
   When accessing methods of this class always be  prepared to catch
   :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
   exceptions.
-  `hash() <http://docs.python.org/2/library/functions.html#hash>`__ builtin can
+  `hash() <https://docs.python.org/3/library/functions.html#hash>`__ builtin can
   be used against instances of this class in order to identify a process
   univocally over time (the hash is determined by mixing process PID
   and creation time). As such it can also be used with
-  `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`__.
+  `set()s <https://docs.python.org/3/library/stdtypes.html#types-set>`__.
 
   .. note::
 
@@ -1761,7 +1761,7 @@ Process class
       ``'r+'`` and ``'a+'``. There's no distinction between files opened in
       bynary or text mode (``"b"`` or ``"t"``).
     - **flags** (*Linux*): the flags which were passed to the underlying
-      `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
+      `os.open <https://docs.python.org/3/library/os.html#os.open>`__ C call
       when the file was opened (e.g.
       `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
       `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
@@ -2600,7 +2600,7 @@ FAQs
 * Q: What about load average?
 * A: psutil does not expose any load average function as it's already available
   in python as
-  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__.
+  `os.getloadavg <https://docs.python.org/3/library/os.html#os.getloadavg>`__.
 
 Running tests
 =============
