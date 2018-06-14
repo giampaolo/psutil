@@ -334,6 +334,8 @@ def wrap_exceptions(fun):
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
+        except cext.ZombieProcessError:
+            raise ZombieProcess(self.pid, self._name, self._ppid)
     return wrapper
 
 
@@ -557,8 +559,7 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
-        with catch_zombie(self):
-            rawlist = cext.proc_threads(self.pid)
+        rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = _common.pthread(thread_id, utime, stime)
@@ -567,5 +568,4 @@ class Process(object):
 
     @wrap_exceptions
     def memory_maps(self):
-        with catch_zombie(self):
-            return cext.proc_memory_maps(self.pid)
+        return cext.proc_memory_maps(self.pid)

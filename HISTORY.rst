@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.7
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1209_: [OSX] Process.memory_maps() may fail with EINVAL due to poor
+  task_for_pid() syscall. AccessDenied is now raised instead.
+
 5.4.6
 =====
 
