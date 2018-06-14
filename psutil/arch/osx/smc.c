@@ -205,6 +205,8 @@ float SMCGetFanSpeed(int fanNum)
     return _strtof((unsigned char *)val.bytes, val.dataSize, 2);
 }
 
+
+
 int SMCGetFanNumber(char *key)
 {
     SMCVal_t val;

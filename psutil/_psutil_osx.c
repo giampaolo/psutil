@@ -1798,9 +1798,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
-
 /*
- * Return temperatures of hardware components.
+ * Return temperature of cpu die, if sensors present
  */
 static PyObject *
 cpu_die_temperatures(PyObject *self, PyObject *args) {
@@ -1816,6 +1815,7 @@ cpu_die_temperatures(PyObject *self, PyObject *args) {
     if (py_cpu_temp == NULL)
         goto error;
 
+    // Get cpu die sensor temperature
     py_cpu_temp_current = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_CPU_TEMP));
     if (!py_cpu_temp_current)
         goto error;
@@ -1831,10 +1831,9 @@ cpu_die_temperatures(PyObject *self, PyObject *args) {
     if (PyDict_SetItemString(py_cpu_temp, "high", py_cpu_temp_high)) {
         goto error;
     }
-    if (PyDict_SetItemString(py_retdict, "TC0F", py_cpu_temp)) {
+    if (PyDict_SetItemString(py_retdict, "CPUdie", py_cpu_temp)) {
         goto error;
     }
-
 
     Py_DECREF(py_cpu_temp);
     Py_DECREF(py_cpu_temp_current);
@@ -1847,6 +1846,57 @@ error:
     Py_XDECREF(py_cpu_temp);
     Py_XDECREF(py_retdict);
     return NULL;
+}
+
+/*
+ * Return temperatures of cpu cores
+ */
+static PyObject *
+cpu_cores_temperatures(PyObject *self, PyObject *args) {
+    int physicalcpus;
+    size_t size = sizeof(int);
+    int i;
+    float core_temp;
+    char key[16];
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (sysctlbyname("hw.physicalcpu", &physicalcpus, &size, NULL, 0))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    //printf("Num cpus %d\n", physicalcpus);
+    for (i = 0; i < physicalcpus; i++) {
+        sprintf(key, SMC_KEY_CORE_TEMP, i);
+        core_temp = SMCGetTemperature(key);
+        //printf("Fetch core %d\n", i);
+        if (core_temp < 0) {
+            continue;
+        }
+
+        sprintf(key, "Core%d", i);
+        //printf("Temp is %f\n", core_temp);
+        py_tuple = Py_BuildValue(
+            "(sf)",
+            key,               // lable
+            core_temp          // value
+        );
+        if (!py_tuple)
+            goto error;
+
+        if (PyList_Append(py_retlist, py_tuple)) {
+            goto error;
+        }
+        Py_DECREF(py_tuple);
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
+
 }
 
 
@@ -2045,7 +2095,9 @@ PsutilMethods[] = {
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
     {"cpu_die_temperatures", cpu_die_temperatures, METH_VARARGS,
-     "Return temperatures of hardware components."},
+     "Return temperature of cpu die."},
+    {"cpu_cores_temperatures", cpu_cores_temperatures, METH_VARARGS,
+     "Return temperatures of cpu cores."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
     {"sensors_fans", psutil_sensors_fans, METH_VARARGS,

@@ -225,15 +225,19 @@ def sensors_temperatures():
         label = ''
         high = values['high']
         if int(high) == 0:
-            # Set to 105 if no high temperature sensors detected
-            # (105C is shutdown temperature for most Intel CPUs)
-            high = 105.0
+            high = None
         critical = None
 
         if high and not critical:
             critical = high
 
         ret[name].append((label, current, high, critical))
+
+    # This handles returning per-core temperature. The SMCkeys for core
+    # temperatue are known
+    rawlist = cext.cpu_cores_temperatures()
+    for core in rawlist:
+        ret["Cores"].append((core[0], core[1], None, None))
 
     return dict(ret)
 

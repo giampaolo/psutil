@@ -18,10 +18,12 @@
 
 // key values
 #define SMC_KEY_CPU_TEMP      "TC0F"
+#define SMC_KEY_CPU_PROXIMITY "TC0P"
 #define SMC_KEY_CPU_TEMP_HIGH "TC0G"
 #define SMC_KEY_BATTERY_TEMP  "TB0T"
 #define SMC_KEY_FAN_NUM       "FNum"
 #define SMC_KEY_FAN_SPEED     "F%dAb"
+#define SMC_KEY_CORE_TEMP     "TC%dC"
 
 typedef struct {
     char                  major;
