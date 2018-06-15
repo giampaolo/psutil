@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1209_: [OSX] Process.memory_maps() may fail with EINVAL due to poor
   task_for_pid() syscall. AccessDenied is now raised instead.
+- 1278_: [OSX] Process.threads() incorrectly return microseconds instead of
+  seconds. (patch by Nikhil Marathe)
 
 5.4.6
 =====
