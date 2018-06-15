@@ -1069,8 +1069,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         py_tuple = Py_BuildValue(
             "Iff",
             j + 1,
-            basic_info_th->user_time.seconds + (float)basic_info_th->user_time.microseconds / 1000000.0,
-            basic_info_th->system_time.seconds + (float)basic_info_th->system_time.microseconds / 1000000.0
+            basic_info_th->user_time.seconds + \
+                (float)basic_info_th->user_time.microseconds / 1000000.0,
+            basic_info_th->system_time.seconds + \
+                (float)basic_info_th->system_time.microseconds / 1000000.0
         );
         if (!py_tuple)
             goto error;
