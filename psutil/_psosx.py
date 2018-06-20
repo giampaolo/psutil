@@ -218,26 +218,33 @@ def sensors_temperatures():
     including key name and temperature.
     """
     ret = collections.defaultdict(list)
-    rawdict = cext.cpu_die_temperatures()
-
-    for name, values in rawdict.items():
-        current = round(values['current'], 2)
-        label = ''
-        high = values['high']
-        if int(high) == 0:
-            high = None
-        critical = None
-
-        if high and not critical:
-            critical = high
-
-        ret[name].append((label, current, high, critical))
 
     # This handles returning per-core temperature. The SMCkeys for core
     # temperatue are known
     rawlist = cext.cpu_cores_temperatures()
     for core in rawlist:
-        ret["Cores"].append((core[0], core[1], None, None))
+        ret["CPU"].append((core[0], core[1], None, None))
+
+    # Additional CPU sensors
+    rawlist = cext.cpu_misc_temperatures()
+    for core in rawlist:
+        ret["CPU"].append((core[0], core[1], None, None))
+
+    try:
+        rawlist = cext.battery_temperatures()
+        if rawlist is not None:
+            for batt in rawlist:
+                ret["Batteries"].append((batt[0], batt[1], None, None))
+    except(SystemError):
+        pass
+
+    try:
+        rawlist = cext.hdd_temperatures()
+        if rawlist is not None:
+            for temp in rawlist:
+                ret["HDD"].append((temp[0], temp[1], None, None))
+    except(SystemError):
+        pass
 
     return dict(ret)
 
@@ -266,7 +273,7 @@ def sensors_fans():
     ret = collections.defaultdict(list)
     try:
         for key, value in cext.sensors_fans().items():
-            ret[key].append(_common.sfan(key, int(value)))
+            ret["Fans"].append(_common.sfan(key, int(value)))
     except (SystemError):
         # Returns an empty dict if no fans were detected
         pass

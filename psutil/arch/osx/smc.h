@@ -10,20 +10,22 @@
 #define SMC_CMD_READ_PLIMIT   11
 #define SMC_CMD_READ_VERS     12
 
+
 #define DATATYPE_FPE2         "fpe2"
 #define DATATYPE_UINT8        "ui8 "
 #define DATATYPE_UINT16       "ui16"
 #define DATATYPE_UINT32       "ui32"
 #define DATATYPE_SP78         "sp78"
 
-// key values
-#define SMC_KEY_CPU_TEMP      "TC0F"
-#define SMC_KEY_CPU_PROXIMITY "TC0P"
-#define SMC_KEY_CPU_TEMP_HIGH "TC0G"
-#define SMC_KEY_BATTERY_TEMP  "TB0T"
+typedef struct {
+    char key[6];
+    char label[25];
+} smc_key;
+
+
+// Fans SMC key values
+#define SMC_KEY_FAN_SPEED     "F%dAc"
 #define SMC_KEY_FAN_NUM       "FNum"
-#define SMC_KEY_FAN_SPEED     "F%dAb"
-#define SMC_KEY_CORE_TEMP     "TC%dC"
 
 typedef struct {
     char                  major;
