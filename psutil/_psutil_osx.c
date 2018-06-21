@@ -875,8 +875,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 /*
- * Return a Python float indicating the system boot time expressed in
- * seconds since the epoch.
+ * Return a Python float indicating the value of the temperature
+ * measured by an SMC key
  */
 static PyObject *
 smc_get_temperatrue(PyObject *self, PyObject *args) {
@@ -887,6 +887,33 @@ smc_get_temperatrue(PyObject *self, PyObject *args) {
 	}
 	temp = SMCGetTemperature(key);
     return Py_BuildValue("f", (float)temp);
+}
+
+/*
+ * Return a Python float indicating the number of fans in the system
+ */
+static PyObject *
+smc_get_fan_num(PyObject *self, PyObject *args) {
+	int fan_count;
+    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
+    if (fan_count <= 0) {
+        return 0;
+    }
+    return Py_BuildValue("i", (int)fan_count);
+}
+
+/*
+ * Return a Python float indicating the fan speed of the number of fan passed
+ */
+static PyObject *
+smc_get_fan_speed(PyObject *self, PyObject *args) {
+	int key;
+	float speed;
+    if (! PyArg_ParseTuple(args, "i", &key)) {
+        return NULL;
+	}
+	speed = SMCGetFanSpeed(key);
+    return Py_BuildValue("f", (float)speed);
 }
 
 
@@ -1916,48 +1943,6 @@ error:
 
 
 /*
- * Return fan spped information.
- */
-static PyObject *
-psutil_sensors_fans(PyObject *self, PyObject *args) {
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_fan_speed = NULL;
-    int i;
-    int fan_count;
-    float fan_speed;
-    char key[16];
-
-    if (py_retdict == NULL)
-        goto error;
-
-    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count <= 0) {
-        goto error;
-    }
-    for (i = 0; i < fan_count; i++) {
-        fan_speed = SMCGetFanSpeed(i);
-        if (fan_speed < 0) {
-            continue;
-        }
-        py_fan_speed = Py_BuildValue("f", fan_speed);
-        if (py_fan_speed == NULL)
-            goto error;
-        sprintf(key, "Fan%d", i);
-        if (PyDict_SetItemString(py_retdict, key, py_fan_speed)) {
-            goto error;
-        }
-    }
-
-    Py_DECREF(py_fan_speed);
-    return py_retdict;
-
-error:
-    Py_XDECREF(py_fan_speed);
-    Py_XDECREF(py_retdict);
-    return NULL;
-}
-
-/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -2026,10 +2011,12 @@ PsutilMethods[] = {
      "Return CPU statistics"},
     {"smc_get_temperatrue", smc_get_temperatrue, METH_VARARGS,
      "Temperature of SMC key as float"},
+    {"smc_get_fan_num", smc_get_fan_num, METH_VARARGS,
+     "Return the number of fans"},
+    {"smc_get_fan_speed", smc_get_fan_speed, METH_VARARGS,
+     "Return the RPM of the fan with SMC key"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
-    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
-     "Return fan speed information."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,

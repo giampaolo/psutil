@@ -214,9 +214,9 @@ def disk_partitions(all=False):
 
 
 def get_smc_temperatures(smc_keys, iter_num, iteratable):
-    """ Recieves a dictionary of SMC keys, and a number possible keys
+    """ Receives a dictionary of SMC keys, and a number possible keys
     If keys can be iterated, replaces the expected %d in the key.
-    Returns a list of all smc_get_temperatrue results higher than 0
+    Returns a list of all smc_get_temperature results higher than 0
     """
     ret = list()
     if iteratable:
@@ -313,12 +313,13 @@ def sensors_fans():
     """Return fans speed information.
     """
     ret = collections.defaultdict(list)
-    try:
-        for key, value in cext.sensors_fans().items():
-            ret["Fans"].append(_common.sfan(key, int(value)))
-    except (SystemError):
-        # Returns an empty dict if no fans were detected
-        pass
+    fan_num = cext.smc_get_fan_num()
+    for fan in range(fan_num):
+        result = cext.smc_get_fan_speed(fan)
+        if int(result) < 0:
+            continue
+        ret["Fans"].append(_common.sfan("Fan %d" % fan, int(result)))
+
     return dict(ret)
 
 

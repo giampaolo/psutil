@@ -17,12 +17,6 @@
 #define DATATYPE_UINT32       "ui32"
 #define DATATYPE_SP78         "sp78"
 
-typedef struct {
-    char key[6];
-    char label[25];
-} smc_key;
-
-
 // Fans SMC key values
 #define SMC_KEY_FAN_SPEED     "F%dAc"
 #define SMC_KEY_FAN_NUM       "FNum"
