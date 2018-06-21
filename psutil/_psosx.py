@@ -214,22 +214,31 @@ def disk_partitions(all=False):
 
 
 def get_smc_temperatures(smc_keys, iter_num, iteratable):
-    """ Receives a dictionary of SMC keys, and a number possible keys
-    If keys can be iterated, replaces the expected %d in the key.
-    Returns a list of all smc_get_temperature results higher than 0
+    """ Receives a dictionary of SMC keys, and a number of possible keys.
+    If keys can be iterated, replaces the expected %i in the key.
+    Returns a list of all smc_get_temperature results higher than 0.
+    References:
+
+    https://github.com/Chris911/iStats/blob/
+        09b159f85a9481b59f347a37259f6d272f65cc05/lib/iStats/smc.rb
+
+    http://web.archive.org/web/20140714090133/http://www.parhelia.ch:80/
+        blog/statics/k3_keys.html
     """
     ret = list()
     if iteratable:
         for idx in range(iter_num):
             for key, label in smc_keys.items():
-                result = cext.smc_get_temperatrue(key % idx)
-                if int(result) <= 0:
+                result = cext.psutil_smc_get_temperature(key % idx)
+                result = round(result, 1)
+                if result <= 0:
                     continue
                 ret.append((label % idx, result, None, None))
     else:
         for key, label in smc_keys.items():
-            result = cext.smc_get_temperatrue(key)
-            if int(result) <= 0:
+            result = cext.psutil_smc_get_temperature(key)
+            result = round(result, 1)
+            if result <= 0:
                 continue
             ret.append((label, result, None, None))
 
@@ -237,33 +246,31 @@ def get_smc_temperatures(smc_keys, iter_num, iteratable):
 
 
 def sensors_temperatures():
-    """Return CPU temperatures
-    including key name and temperature.
-    """
+    """Return CPU temperatures including key name and temperature.  """
     ret = collections.defaultdict(list)
     # Handle CPU cores
     num_cpus = cext.cpu_count_phys()
     core_temps = {
-        "TC%dC": "Core%d",
+        "TC%iC": "Core %i",
     }
-    if num_cpus > 0:
+    if num_cpus:
         results = get_smc_temperatures(core_temps, num_cpus + 1, True)
         ret["CPU"] = ret["CPU"] + results
 
     # Handle other CPU sensors
     cpu_temps = {
-        "TC%dF": "CPU TC%dF",
-        "TC%dG": "CPU TC%dG",
-        "TC%dP": "CPU %d Proximity",
+        "TC%iF": "CPU TC%iF",
+        "TC%iG": "CPU TC%iG",
+        "TC%iP": "CPU %i Proximity",
     }
     num_packages = cext.cpu_count_packages()
-    if num_packages > 0:
+    if num_packages:
         results = get_smc_temperatures(cpu_temps, num_packages, True)
         ret["CPU"] = ret["CPU"] + results
 
     # Handle Battery Temperature
     battery_temps = {
-        "TB%dT": "Battery%d",
+        "TB%iT": "Battery%i",
     }
     # 2 is the highest number of batteries recoreded in iStats
     results = get_smc_temperatures(battery_temps, 3, True)
@@ -271,21 +278,21 @@ def sensors_temperatures():
 
     # Handle HDD temperatures
     hdd_temps = {
-        "TH%dP": "HDD %d Proximity",
-        "TH%da": "HDD %d Unknown",
+        "TH%iP": "HDD %i Proximity",
+        "TH%ia": "HDD %i Unknown",
     }
     # 2 is a logically normal number of HDDs
-    results = get_smc_temperatures(hdd_temps, 3, True)
+    results = get_smc_temperatures(hdd_temps, 2, True)
     ret["HDD"] = ret["HDD"] + results
 
     # Handle GPU temperature
     gpu_temps = {
-        "TG%dH": "GPU %d Heatsink",
-        "TG%dP": "GPU %d Proximity",
-        "TG%dD": "GPU %d Die",
+        "TG%iH": "GPU %i Heatsink",
+        "TG%iP": "GPU %i Proximity",
+        "TG%iD": "GPU %i Die",
     }
     # Assume 2 possible GPUs
-    results = get_smc_temperatures(gpu_temps, 3, True)
+    results = get_smc_temperatures(gpu_temps, 2, True)
     ret["GPU"] = ret["GPU"] + results
 
     return dict(ret)
@@ -313,12 +320,12 @@ def sensors_fans():
     """Return fans speed information.
     """
     ret = collections.defaultdict(list)
-    fan_num = cext.smc_get_fan_num()
+    fan_num = cext.psutil_fans_count()
     for fan in range(fan_num):
-        result = cext.smc_get_fan_speed(fan)
-        if int(result) < 0:
+        result = cext.psutil_get_fan_speed(fan)
+        if result < 0:
             continue
-        ret["Fans"].append(_common.sfan("Fan %d" % fan, int(result)))
+        ret["Fans"].append(_common.sfan("Fan %i" % fan, int(result)))
 
     return dict(ret)
 

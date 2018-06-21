@@ -879,43 +879,42 @@ psutil_boot_time(PyObject *self, PyObject *args) {
  * measured by an SMC key
  */
 static PyObject *
-smc_get_temperatrue(PyObject *self, PyObject *args) {
-	char* key;
-	float temp;
+psutil_smc_get_temperature(PyObject *self, PyObject *args) {
+    char* key;
+    float temp;
     if (! PyArg_ParseTuple(args, "s", &key)) {
         return NULL;
-	}
-	temp = SMCGetTemperature(key);
-    return Py_BuildValue("f", (float)temp);
+    }
+    temp = SMCGetTemperature(key);
+    return Py_BuildValue("d", temp);
 }
 
 /*
  * Return a Python float indicating the number of fans in the system
  */
 static PyObject *
-smc_get_fan_num(PyObject *self, PyObject *args) {
-	int fan_count;
+psutil_fans_count(PyObject *self, PyObject *args) {
+    int fan_count;
     fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count <= 0) {
-        return 0;
+    if (fan_count < 0) {
+        fan_count = 0;
     }
-    return Py_BuildValue("i", (int)fan_count);
+    return Py_BuildValue("i", fan_count);
 }
 
 /*
  * Return a Python float indicating the fan speed of the number of fan passed
  */
 static PyObject *
-smc_get_fan_speed(PyObject *self, PyObject *args) {
-	int key;
-	float speed;
+psutil_get_fan_speed(PyObject *self, PyObject *args) {
+    int key;
+    float speed;
     if (! PyArg_ParseTuple(args, "i", &key)) {
         return NULL;
-	}
-	speed = SMCGetFanSpeed(key);
-    return Py_BuildValue("f", (float)speed);
+    }
+    speed = SMCGetFanSpeed(key);
+    return Py_BuildValue("f", speed);
 }
-
 
 /*
  * Return a list of tuples including device, mount point and fs type
@@ -923,6 +922,7 @@ smc_get_fan_speed(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
+
     int num;
     int i;
     int len;
@@ -2009,11 +2009,11 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-    {"smc_get_temperatrue", smc_get_temperatrue, METH_VARARGS,
+    {"psutil_smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
      "Temperature of SMC key as float"},
-    {"smc_get_fan_num", smc_get_fan_num, METH_VARARGS,
+    {"psutil_fans_count", psutil_fans_count, METH_VARARGS,
      "Return the number of fans"},
-    {"smc_get_fan_speed", smc_get_fan_speed, METH_VARARGS,
+    {"psutil_get_fan_speed", psutil_get_fan_speed, METH_VARARGS,
      "Return the RPM of the fan with SMC key"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},

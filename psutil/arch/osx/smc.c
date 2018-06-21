@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Interface to SMC API, needed in order to collect sensors stats.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <IOKit/IOKitLib.h>
@@ -13,7 +21,7 @@ UInt32 _strtoul(char *str, int size, int base)
         if (base == 16)
             total += str[i] << (size - 1 - i) * 8;
         else
-           total += (unsigned char) (str[i] << (size - 1 - i) * 8);
+            total += (unsigned char) (str[i] << (size - 1 - i) * 8);
     }
     return total;
 }
