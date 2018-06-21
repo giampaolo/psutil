@@ -270,7 +270,7 @@ def sensors_temperatures():
 
     # Handle Battery Temperature
     battery_temps = {
-        "TB%iT": "Battery%i",
+        "TB%iT": "Battery %i",
     }
     # 2 is the highest number of batteries recoreded in iStats
     results = get_smc_temperatures(battery_temps, 3, True)

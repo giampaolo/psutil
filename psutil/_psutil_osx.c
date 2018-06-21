@@ -882,6 +882,7 @@ static PyObject *
 psutil_smc_get_temperature(PyObject *self, PyObject *args) {
     char* key;
     float temp;
+
     if (! PyArg_ParseTuple(args, "s", &key)) {
         return NULL;
     }
@@ -895,6 +896,7 @@ psutil_smc_get_temperature(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_fans_count(PyObject *self, PyObject *args) {
     int fan_count;
+
     fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
     if (fan_count < 0) {
         fan_count = 0;
@@ -909,6 +911,7 @@ static PyObject *
 psutil_get_fan_speed(PyObject *self, PyObject *args) {
     int key;
     float speed;
+
     if (! PyArg_ParseTuple(args, "i", &key)) {
         return NULL;
     }
@@ -2009,11 +2012,11 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-    {"psutil_smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
+    {"smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
      "Temperature of SMC key as float"},
-    {"psutil_fans_count", psutil_fans_count, METH_VARARGS,
+    {"fans_count", psutil_fans_count, METH_VARARGS,
      "Return the number of fans"},
-    {"psutil_get_fan_speed", psutil_get_fan_speed, METH_VARARGS,
+    {"get_fan_speed", psutil_get_fan_speed, METH_VARARGS,
      "Return the RPM of the fan with SMC key"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
