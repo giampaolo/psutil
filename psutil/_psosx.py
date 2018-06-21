@@ -213,38 +213,80 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
+def get_smc_temperatures(smc_keys, iter_num, iteratable):
+    """ Recieves a dictionary of SMC keys, and a number possible keys
+    If keys can be iterated, replaces the expected %d in the key.
+    Returns a list of all smc_get_temperatrue results higher than 0
+    """
+    ret = list()
+    if iteratable:
+        for idx in range(iter_num):
+            for key, label in smc_keys.items():
+                result = cext.smc_get_temperatrue(key % idx)
+                if int(result) <= 0:
+                    continue
+                ret.append((label % idx, result, None, None))
+    else:
+        for key, label in smc_keys.items():
+            result = cext.smc_get_temperatrue(key)
+            if int(result) <= 0:
+                continue
+            ret.append((label, result, None, None))
+
+    return ret
+
+
 def sensors_temperatures():
     """Return CPU temperatures
     including key name and temperature.
     """
     ret = collections.defaultdict(list)
+    # Handle CPU cores
+    num_cpus = cext.cpu_count_phys()
+    core_temps = {
+        "TC%dC": "Core%d",
+    }
+    if num_cpus > 0:
+        results = get_smc_temperatures(core_temps, num_cpus + 1, True)
+        ret["CPU"] = ret["CPU"] + results
 
-    # This handles returning per-core temperature. The SMCkeys for core
-    # temperatue are known
-    rawlist = cext.cpu_cores_temperatures()
-    for core in rawlist:
-        ret["CPU"].append((core[0], core[1], None, None))
+    # Handle other CPU sensors
+    cpu_temps = {
+        "TC%dF": "CPU TC%dF",
+        "TC%dG": "CPU TC%dG",
+        "TC%dP": "CPU %d Proximity",
+    }
+    num_packages = cext.cpu_count_packages()
+    if num_packages > 0:
+        results = get_smc_temperatures(cpu_temps, num_packages, True)
+        ret["CPU"] = ret["CPU"] + results
 
-    # Additional CPU sensors
-    rawlist = cext.cpu_misc_temperatures()
-    for core in rawlist:
-        ret["CPU"].append((core[0], core[1], None, None))
+    # Handle Battery Temperature
+    battery_temps = {
+        "TB%dT": "Battery%d",
+    }
+    # 2 is the highest number of batteries recoreded in iStats
+    results = get_smc_temperatures(battery_temps, 3, True)
+    ret["Battery"] = ret["Battery"] + results
 
-    try:
-        rawlist = cext.battery_temperatures()
-        if rawlist is not None:
-            for batt in rawlist:
-                ret["Batteries"].append((batt[0], batt[1], None, None))
-    except(SystemError):
-        pass
+    # Handle HDD temperatures
+    hdd_temps = {
+        "TH%dP": "HDD %d Proximity",
+        "TH%da": "HDD %d Unknown",
+    }
+    # 2 is a logically normal number of HDDs
+    results = get_smc_temperatures(hdd_temps, 3, True)
+    ret["HDD"] = ret["HDD"] + results
 
-    try:
-        rawlist = cext.hdd_temperatures()
-        if rawlist is not None:
-            for temp in rawlist:
-                ret["HDD"].append((temp[0], temp[1], None, None))
-    except(SystemError):
-        pass
+    # Handle GPU temperature
+    gpu_temps = {
+        "TG%dH": "GPU %d Heatsink",
+        "TG%dP": "GPU %d Proximity",
+        "TG%dD": "GPU %d Die",
+    }
+    # Assume 2 possible GPUs
+    results = get_smc_temperatures(gpu_temps, 3, True)
+    ret["GPU"] = ret["GPU"] + results
 
     return dict(ret)
 

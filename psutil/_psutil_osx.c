@@ -522,6 +522,19 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         return Py_BuildValue("i", num);
 }
 
+/*
+ * Return the number of CPU packages
+ */
+static PyObject *
+psutil_cpu_count_packages(PyObject *self, PyObject *args) {
+    int num;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.packages", &num, &size, NULL, 0))
+        Py_RETURN_NONE;
+    else
+        return Py_BuildValue("i", num);
+}
 
 /*
  * Indicates if the given virtual address on the given architecture is in the
@@ -859,6 +872,21 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         return PyErr_SetFromErrno(PyExc_OSError);
     boot_time = result.tv_sec;
     return Py_BuildValue("f", (float)boot_time);
+}
+
+/*
+ * Return a Python float indicating the system boot time expressed in
+ * seconds since the epoch.
+ */
+static PyObject *
+smc_get_temperatrue(PyObject *self, PyObject *args) {
+	char* key;
+	float temp;
+    if (! PyArg_ParseTuple(args, "s", &key)) {
+        return NULL;
+	}
+	temp = SMCGetTemperature(key);
+    return Py_BuildValue("f", (float)temp);
 }
 
 
@@ -1799,277 +1827,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return temperatures of cpu cores
- */
-static PyObject *
-cpu_cores_temperatures(PyObject *self, PyObject *args) {
-	smc_key smc_keys[] = {
-		{"TC%dC\0", "Core %d"},
-	};
-    int physicalcpus;
-    size_t size = sizeof(int);
-    int i;
-    float core_temp;
-    char key[16];
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (sysctlbyname("hw.physicalcpu", &physicalcpus, &size, NULL, -1))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    for (i = 0; i < physicalcpus + 1; i++) {
-		// +1 as it appears on some systems, core count starts at 1
-        sprintf(key, smc_keys[0].key, i);
-        core_temp = SMCGetTemperature(key);
-		// Problem if CPU actaully reaches negative temperature
-        if ((int)core_temp <= 0) {
-            continue;
-        }
-
-        sprintf(key, "Core%d", i);
-        py_tuple = Py_BuildValue(
-            "(sf)",
-            key,               // lable
-            core_temp          // value
-        );
-        if (!py_tuple)
-            goto error;
-
-        if (PyList_Append(py_retlist, py_tuple)) {
-            goto error;
-        }
-        Py_XDECREF(py_tuple);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
-    return NULL;
-
-}
-
-/*
- * Return temperatures of cpu misc sensors
- */
-static PyObject *
-cpu_misc_temperatures(PyObject *self, PyObject *args) {
-	// Define a struct of relevant SMC keys
-	smc_key smc_keys[] = {
-		{"TC%dP\0", "CPU %d Proximity"},
-		{"TC%dE\0", "CPU TC%dE"},
-		{"TC%dF\0", "CPU TC%dF"},
-		{"TC%dD\0", "CPU %d die"},
-		{"TC%dH\0", "CPU %d Heatsink"},
-		{"", ""} // Marker for end of array
-	};
-    int num_cpus;
-    size_t size = sizeof(int);
-    int i;
-    float temp;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (sysctlbyname("hw.packages", &num_cpus, &size, NULL, 0))
-        Py_RETURN_NONE;
-	smc_key* iter_key = smc_keys;
-	while (iter_key->key[0] != '\0') {
-		for (i = 0; i < num_cpus; i++) {
-			char curr_key[6];
-			char curr_label[25];
-			sprintf(curr_key, iter_key->key, i);
-			sprintf(curr_label, iter_key->label, i);
-			temp = SMCGetTemperature(curr_key);
-			if ((int)temp <= 0) {
-				iter_key++;
-				continue;
-			}
-			py_tuple = Py_BuildValue(
-				"(sf)",
-				curr_label,          // label
-				temp          			  // value
-			);
-			if (!py_tuple)
-				goto error;
-
-			if (PyList_Append(py_retlist, py_tuple)) {
-				goto error;
-			}
-			Py_XDECREF(py_tuple);
-			iter_key++;
-		}
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
-    return NULL;
-
-}
-
-/*
- * Return temperatures of gpus
- */
-static PyObject *
-gpu_temperatures(PyObject *self, PyObject *args) {
-	// Define a struct of relevant SMC keys
-	smc_key smc_keys[] = {
-		{"TG%dH\0", "GPU %d Heatsink"},
-		{"TG%dP\0", "GPU %d Proximity"},
-		{"TG%dD\0", "GPU %d Die"},
-		{"", ""} // Marker for end of array
-	};
-    int num_gpus = 2; // max number in iStat
-    int i;
-    float temp;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-	smc_key* iter_key = smc_keys;
-	while (iter_key->key[0] != '\0') {
-		for (i = 0; i < num_gpus; i++) {
-			char curr_key[6];
-			char curr_label[25];
-			sprintf(curr_key, iter_key->key, i);
-			sprintf(curr_label, iter_key->label, i);
-			temp = SMCGetTemperature(curr_key);
-			if ((int)temp <= 0) {
-				iter_key++;
-				continue;
-			}
-			py_tuple = Py_BuildValue(
-				"(sf)",
-				curr_label,          // label
-				temp          			  // value
-			);
-			if (!py_tuple)
-				goto error;
-
-			if (PyList_Append(py_retlist, py_tuple)) {
-				goto error;
-			}
-			Py_XDECREF(py_tuple);
-			iter_key++;
-		}
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
-    return NULL;
-
-}
-
-/*
- * Return temperatures of cpu misc sensors
- */
-static PyObject *
-hdd_temperatures(PyObject *self, PyObject *args) {
-	// Define a struct of relevant SMC keys
-	smc_key smc_keys[] = {
-		{"TH%dP\0", "HDD %d Proximity"},
-		{"TH%da\0", "HDD %d unkonwn"},
-		{"", ""} // Marker for end of array
-	};
-    int num_hdds = 2; // just a guess
-    int i;
-    float temp;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-	smc_key* iter_key = smc_keys;
-	while (iter_key->key[0] != '\0') {
-		for (i = 0; i < num_hdds; i++) {
-			char curr_key[6];
-			char curr_label[25];
-			sprintf(curr_key, iter_key->key, i);
-			sprintf(curr_label, iter_key->label, i);
-			temp = SMCGetTemperature(curr_key);
-			if ((int)temp <= 0) {
-				iter_key++;
-				continue;
-			}
-			py_tuple = Py_BuildValue(
-				"(sf)",
-				curr_label,          // label
-				temp          			  // value
-			);
-			if (!py_tuple)
-				goto error;
-
-			if (PyList_Append(py_retlist, py_tuple)) {
-				goto error;
-			}
-			Py_XDECREF(py_tuple);
-			iter_key++;
-		}
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
-    return NULL;
-
-}
-
-/*
- * Return temperatures of batteries
- */
-static PyObject *
-battery_temperatures(PyObject *self, PyObject *args) { int i;
-	smc_key smc_keys[] = {
-		{"TB%dT\0", "Battery %d"},
-	};
-	int battery_num = 3; //Highest recoreded in iStat
-    float batt_temp;
-    char key[16];
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    for (i = 0; i < battery_num; i++) {
-        sprintf(key, smc_keys[0].key, i);
-        batt_temp = SMCGetTemperature(key);
-        if ((int)batt_temp <= 0) {
-			continue;
-        }
-        py_tuple = Py_BuildValue(
-            "(sf)",
-            key,               // label
-            batt_temp          // value
-        );
-        if (!py_tuple)
-            goto error;
-
-        if (PyList_Append(py_retlist, py_tuple)) {
-	        goto error;
-        }
-        Py_XDECREF(py_tuple);
-    }
-
-    return py_retlist;
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
-    return NULL;
-}
-
 
 /*
  * Return battery information.
@@ -2242,6 +1999,8 @@ PsutilMethods[] = {
      "Return number of logical CPUs on the system"},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return number of physical CPUs on the system"},
+    {"cpu_count_packages", psutil_cpu_count_packages, METH_VARARGS,
+     "Return number of cpu packages"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
@@ -2265,16 +2024,8 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-    {"gpu_temperatures", gpu_temperatures, METH_VARARGS,
-     "Return gpu temperatures"},
-    {"cpu_misc_temperatures", cpu_misc_temperatures, METH_VARARGS,
-     "Return additional CPU sensors"},
-    {"hdd_temperatures", hdd_temperatures, METH_VARARGS,
-     "Return HDD temperature"},
-    {"cpu_cores_temperatures", cpu_cores_temperatures, METH_VARARGS,
-     "Return temperatures of cpu cores."},
-    {"battery_temperatures", battery_temperatures, METH_VARARGS,
-     "Return temperatures of the batteries"},
+    {"smc_get_temperatrue", smc_get_temperatrue, METH_VARARGS,
+     "Temperature of SMC key as float"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
     {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
