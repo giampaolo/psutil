@@ -229,14 +229,14 @@ def get_smc_temperatures(smc_keys, iter_num, iteratable):
     if iteratable:
         for idx in range(iter_num):
             for key, label in smc_keys.items():
-                result = cext.psutil_smc_get_temperature(key % idx)
+                result = cext.smc_get_temperature(key % idx)
                 result = round(result, 1)
                 if result <= 0:
                     continue
                 ret.append((label % idx, result, None, None))
     else:
         for key, label in smc_keys.items():
-            result = cext.psutil_smc_get_temperature(key)
+            result = cext.smc_get_temperature(key)
             result = round(result, 1)
             if result <= 0:
                 continue
@@ -320,9 +320,9 @@ def sensors_fans():
     """Return fans speed information.
     """
     ret = collections.defaultdict(list)
-    fan_num = cext.psutil_fans_count()
+    fan_num = cext.fans_count()
     for fan in range(fan_num):
-        result = cext.psutil_get_fan_speed(fan)
+        result = cext.get_fan_speed(fan)
         if result < 0:
             continue
         ret["Fans"].append(_common.sfan("Fan %i" % fan, int(result)))

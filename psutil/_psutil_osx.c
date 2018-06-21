@@ -925,7 +925,6 @@ psutil_get_fan_speed(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
-
     int num;
     int i;
     int len;
