@@ -57,7 +57,7 @@ const struct smc_sensor * detected_temperature_sensors;
 const struct smc_sensor * detected_fan_sensors;
 const struct smc_sensor * detected_other_sensors;
 
-struct smc_sensor * detect_sensors(const struct potential_smc_sensors * potential_sensors) {
+struct smc_sensor * detect_sensors(const struct smc_sensor potential_sensors[]) {
 
     // TODO actually use the fixed counting
 
@@ -70,13 +70,12 @@ struct smc_sensor * detect_sensors(const struct potential_smc_sensors * potentia
     int sensor_index = 0;
 
     for (int i = 0; i < sizeof(potential_sensors); i++) {
-        for (int j = 0; j < sizeof(potential_sensors[i]); j++) {
             int count = 0;
             while (true) {
 
                 // TODO replace underscores
 
-                struct smc_sensor s = potential_sensors[i].sensors[j];
+                struct smc_sensor s = potential_sensors[i];
 
                 double val = ((*s.get_function)((char *) s.key));
                 if (*s.get_function) {
@@ -86,13 +85,12 @@ struct smc_sensor * detect_sensors(const struct potential_smc_sensors * potentia
                 }
                 count++;
             }
-        }
     }
 
     detection_has_run = true;
 
     // Realloc for proper size
-    realloc(detected_sensors, sizeof(potential_sensors[0].sensors[0]) * (sensor_index + 1));
+    realloc(detected_sensors, sizeof(potential_sensors[0]) * (sensor_index + 1));
 }
 
 /*
@@ -2182,7 +2180,8 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+    // FIXME compile error
+//    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     PyModule_AddIntConstant(module, "SIDL", SIDL);
