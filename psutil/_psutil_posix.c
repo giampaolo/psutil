@@ -28,7 +28,7 @@
     #include <netdb.h>
     #include <linux/types.h>
     #include <linux/if_packet.h>
-#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#elif defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
     #include <netdb.h>
     #include <netinet/in.h>
     #include <net/if_dl.h>
@@ -71,7 +71,7 @@ psutil_pid_exists(long pid) {
 #endif
     }
 
-#if defined(PSUTIL_OSX)
+#if defined(PSUTIL_MACOS)
     ret = kill((pid_t)pid , 0);
 #else
     ret = kill(pid , 0);
@@ -143,7 +143,7 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-#ifdef PSUTIL_OSX
+#ifdef PSUTIL_MACOS
     priority = getpriority(PRIO_PROCESS, (id_t)pid);
 #else
     priority = getpriority(PRIO_PROCESS, pid);
@@ -166,7 +166,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
 
-#ifdef PSUTIL_OSX
+#ifdef PSUTIL_MACOS
     retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
 #else
     retval = setpriority(PRIO_PROCESS, pid, priority);
@@ -221,7 +221,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
         len = lladdr->sll_halen;
         data = (const char *)lladdr->sll_addr;
     }
-#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#elif defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
     else if (addr->sa_family == AF_LINK) {
         // Note: prior to Python 3.4 socket module does not expose
         // AF_LINK so we'll do.
@@ -431,9 +431,9 @@ error:
 
 
 /*
- * net_if_stats() OSX/BSD implementation.
+ * net_if_stats() macOS/BSD implementation.
  */
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
 
 int psutil_get_nic_speed(int ifm_active) {
     // Determine NIC speed. Taken from:
@@ -620,7 +620,7 @@ error:
         close(sock);
     return PyErr_SetFromErrno(PyExc_OSError);
 }
-#endif  // net_if_stats() OSX/BSD implementation
+#endif  // net_if_stats() macOS/BSD implementation
 
 
 /*
@@ -638,7 +638,7 @@ PsutilMethods[] = {
      "Retrieve NIC MTU"},
     {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
      "Retrieve NIC flags"},
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},
 #endif
@@ -698,7 +698,7 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) || defined(PSUTIL_AIX)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_MACOS) || defined(PSUTIL_SUNOS) || defined(PSUTIL_AIX)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 

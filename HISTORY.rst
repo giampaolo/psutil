@@ -7,14 +7,16 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1284_: [OSX] added support for sensors_temperatures() and sensors_fans().
+- 1284_: [macOS] added support for sensors_temperatures() and sensors_fans().
   (patch by Alex Manuskin)
+- 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
+  psutil.MACOS.
 
 **Bug fixes**
 
-- 1209_: [OSX] Process.memory_maps() may fail with EINVAL due to poor
+- 1209_: [macOS] Process.memory_maps() may fail with EINVAL due to poor
   task_for_pid() syscall. AccessDenied is now raised instead.
-- 1278_: [OSX] Process.threads() incorrectly return microseconds instead of
+- 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 
 5.4.6
@@ -101,7 +103,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1193_: pids() may return False on OSX.
+- 1193_: pids() may return False on macOS.
 
 5.4.2
 =====
@@ -112,7 +114,7 @@ XXXX-XX-XX
 
 - 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
-- 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
+- 1177_: added support for sensors_battery() on macOS.  (patch by Arnon Yaari)
 - 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
 - 1188_: deprecated method Process.memory_info_ex() now warns by using
   FutureWarning instead of DeprecationWarning.
@@ -126,8 +128,8 @@ XXXX-XX-XX
 - 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
-- 1181_: [OSX] Process.memory_maps() may raise ENOENT.
-- 1187_: [OSX] pids() does not return PID 0 on recent OSX versions.
+- 1181_: [macOS] Process.memory_maps() may raise ENOENT.
+- 1187_: [macOS] pids() does not return PID 0 on recent macOS versions.
 
 5.4.1
 =====
@@ -164,7 +166,7 @@ XXXX-XX-XX
 - 1009_: [Linux] sensors_temperatures() may crash with IOError.
 - 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
   in tens of micro seconds instead of milliseconds.
-- 1127_: [OSX] invalid reference counting in Process.open_files() may lead to
+- 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
   segfault.  (patch by Jakub Bacic)
 - 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
   Saip)
@@ -236,14 +238,14 @@ XXXX-XX-XX
   cards installed.
 - 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
   skipping a file which gets deleted while open files are retrieved.
-- 1029_: [OSX, FreeBSD] Process.connections('unix') on Python 3 doesn't
+- 1029_: [macOS, FreeBSD] Process.connections('unix') on Python 3 doesn't
   properly handle unicode paths and may raise UnicodeDecodeError.
-- 1033_: [OSX, FreeBSD] memory leak for net_connections() and
+- 1033_: [macOS, FreeBSD] memory leak for net_connections() and
   Process.connections() when retrieving UNIX sockets (kind='unix').
 - 1040_: fixed many unicode related issues such as UnicodeDecodeError on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
-- 1044_: [OSX] different Process methods incorrectly raise AccessDenied for
+- 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
   zombie processes.
 - 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
@@ -345,7 +347,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 872_: [Linux] can now compile on Linux by using MUSL C library.
-- 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread for `NtQueryObject` times out.
+- 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread
+  for `NtQueryObject` times out.
 - 986_: [Linux] Process.cwd() may raise NoSuchProcess instead of ZombieProcess.
 
 5.1.3
@@ -485,8 +488,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 514_: [OSX] possibly fix Process.memory_maps() segfault (critical!).
-- 783_: [OSX] Process.status() may erroneously return "running" for zombie
+- 514_: [macOS] possibly fix Process.memory_maps() segfault (critical!).
+- 783_: [macOS] Process.status() may erroneously return "running" for zombie
   processes.
 - 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
 - 825_: [Linux] cpu_affinity; fix possible double close and use of unopened
@@ -499,12 +502,12 @@ XXXX-XX-XX
 - 906_: [BSD] disk_partitions(all=False) returned an empty list. Now the
   argument is ignored and all partitions are always returned.
 - 907_: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
-- 908_: [OSX, BSD] different process methods could errounesuly mask the real
+- 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
   instead of OSError and RuntimeError.
-- 909_: [OSX] Process open_files() and connections() methods may raise
+- 909_: [macOS] Process open_files() and connections() methods may raise
   OSError with no exception set if process is gone.
-- 916_: [OSX] fix many compilation warnings.
+- 916_: [macOS] fix many compilation warnings.
 
 4.3.1
 =====
@@ -585,7 +588,7 @@ XXXX-XX-XX
 - 777_: [Linux] Process.open_files() on Linux return 3 new fields: position,
   mode and flags.
 - 779_: Process.cpu_times() returns two new fields, 'children_user' and
-  'children_system' (always set to 0 on OSX and Windows).
+  'children_system' (always set to 0 on macOS and Windows).
 - 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
   "dpc". Same for psutil.cpu_times_percent().
 - 792_: new psutil.cpu_stats() function returning number of CPU ctx switches
@@ -597,10 +600,10 @@ XXXX-XX-XX
   provides it.
 - 776_: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
   (patch by wxwright)
-- 780_: [OSX] psutil does not compile with some gcc versions.
+- 780_: [macOS] psutil does not compile with some gcc versions.
 - 786_: net_if_addrs() may report incomplete MAC addresses.
 - 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
-- 790_: [OSX] psutil won't compile on OSX 10.4.
+- 790_: [macOS] psutil won't compile on macOS 10.4.
 
 4.0.0
 =====
@@ -613,11 +616,11 @@ XXXX-XX-XX
 - 660_: [Windows] make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - 732_: Process.environ().  (patch by Frank Benkstein)
-- 753_: [Linux, OSX, Windows] Process USS and PSS (Linux) "real" memory stats.
+- 753_: [Linux, macOS, Windows] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
 - 755_: Process.memory_percent() "memtype" parameter.
 - 758_: tests now live in psutil namespace.
-- 760_: expose OS constants (psutil.LINUX, psutil.OSX, etc.)
+- 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
 - 756_: [Linux] disk_io_counters() return 2 new fields: read_merged_count and
   write_merged_count.
 - 762_: new scripts/procsmem.py script.
@@ -734,7 +737,7 @@ XXXX-XX-XX
 
 - 644_: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
   to use with Process.send_signal().
-- 648_: CI test integration for OSX. (patch by Jeff Tang)
+- 648_: CI test integration for macOS. (patch by Jeff Tang)
 - 663_: [UNIX] net_if_addrs() now returns point-to-point (VPNs) addresses.
 - 655_: [Windows] different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
@@ -1253,7 +1256,7 @@ DeprecationWarning.
 - 374_: [Windows] negative memory usage reported if process uses a lot of
   memory.
 - 379_: [Linux] Process.get_memory_maps() may raise ValueError.
-- 394_: [OSX] Mapped memory regions report incorrect file name.
+- 394_: [macOS] Mapped memory regions report incorrect file name.
 - 404_: [Linux] sched_*affinity() are implicitly declared. (patch by Arfrever)
 
 **API changes**
@@ -1302,16 +1305,16 @@ DeprecationWarning.
   certain exotic Linux flavors having an incomplete /proc interface.
   If that's the case we now set the unretrievable stats to 0 and raise a
   RuntimeWarning.
-- 315_: [OSX] fix some compilation warnings.
+- 315_: [macOS] fix some compilation warnings.
 - 317_: [Windows] cannot set process CPU affinity above 31 cores.
 - 319_: [Linux] process get_memory_maps() raises KeyError 'Anonymous' on Debian
   squeeze.
 - 321_: [UNIX] Process.ppid property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
-- 323_: [OSX] disk_io_counters()'s read_time and write_time parameters were
+- 323_: [macOS] disk_io_counters()'s read_time and write_time parameters were
   reporting microseconds not milliseconds.  (patch by Gregory Szorc)
 - 331_: Process cmdline is no longer cached after first acces as it may change.
-- 333_: [OSX] Leak of Mach ports on OS X (patch by rsesek@google.com)
+- 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
 - 337_: [Linux] process methods not working because of a poor /proc
   implementation will raise NotImplementedError rather than RuntimeError
   and Process.as_dict() will not blow up.  (patch by Curtin1060)
@@ -1324,7 +1327,7 @@ DeprecationWarning.
 - 338_: [Linux] disk_io_counters() fails to find some disks.
 - 351_: [Windows] if psutil is compiled with mingw32 (provided installers for
   py2.4 and py2.5 are) disk_io_counters() will fail. (Patch by m.malycha)
-- 353_: [OSX] get_users() returns an empty list on OSX 10.8.
+- 353_: [macOS] get_users() returns an empty list on macOS 10.8.
 - 356_: Process.parent now checks whether parent PID has been reused in which
   case returns None.
 - 365_: Process.set_nice() should check PID has not been reused by another
@@ -1370,11 +1373,11 @@ DeprecationWarning.
 - 216_: [POSIX] get_connections() UNIX sockets support.
 - 220_: [FreeBSD] get_connections() has been rewritten in C and no longer
   requires lsof.
-- 222_: [OSX] add support for process cwd.
+- 222_: [macOS] add support for process cwd.
 - 261_: process extended memory info.
-- 295_: [OSX] process executable path is now determined by asking the OS
+- 295_: [macOS] process executable path is now determined by asking the OS
   instead of being guessed from process cmdline.
-- 297_: [OSX] the Process methods below were always raising AccessDenied for
+- 297_: [macOS] the Process methods below were always raising AccessDenied for
   any process except the current one. Now this is no longer true. Also
   they are 2.5x faster.
   - name
@@ -1407,8 +1410,8 @@ DeprecationWarning.
   - active [POSIX]
   - inactive [POSIX]
   - buffers (BSD, Linux)
-  - cached (BSD, OSX)
-  - wired (OSX, BSD)
+  - cached (BSD, macOS)
+  - wired (macOS, BSD)
   - shared [FreeBSD]
   New psutil.swap_memory() provides:
   - total
@@ -1425,7 +1428,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 298_: [OSX and BSD] memory leak in get_num_fds().
+- 298_: [macOS and BSD] memory leak in get_num_fds().
 - 299_: potential memory leak every time PyList_New(0) is used.
 - 303_: [Windows] potential heap corruption in get_num_threads() and
   get_status() Process methods.
@@ -1480,7 +1483,7 @@ DeprecationWarning.
 - 245_: [POSIX] Process.wait() incrementally consumes less CPU cycles.
 - 257_: [Windows] removed Windows 2000 support.
 - 258_: [Linux] Process.get_memory_info() is now 0.5x faster.
-- 260_: process's mapped memory regions. (Windows patch by wj32.64, OSX patch
+- 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
 - 262_: [Windows] psutil.disk_partitions() was slow due to inspecting the
   floppy disk drive also when "all" argument was False.
@@ -1503,7 +1506,7 @@ DeprecationWarning.
 
 - 193_: psutil.Popen constructor can throw an exception if the spawned process
   terminates quickly.
-- 240_: [OSX] incorrect use of free() for Process.get_connections().
+- 240_: [macOS] incorrect use of free() for Process.get_connections().
 - 244_: [POSIX] Process.wait() can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
@@ -1511,7 +1514,7 @@ DeprecationWarning.
   processes owned by another user.  It now raises AccessDenied instead.
 - 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
   (patch by Amoser)
-- 267_: [OSX] Process.get_connections() - an erroneous remote address was
+- 267_: [macOS] Process.get_connections() - an erroneous remote address was
   returned. (Patch by Amoser)
 - 272_: [Linux] Porcess.get_open_files() - potential race condition can lead to
   unexpected NoSuchProcess exception.  Also, we can get incorrect reports
@@ -1542,7 +1545,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 228_: some example scripts were not working with python 3.
-- 230_: [Windows / OSX] memory leak in Process.get_connections().
+- 230_: [Windows / macOS] memory leak in Process.get_connections().
 - 232_: [Linux] psutil.phymem_usage() can report erroneous values which are
   different than "free" command.
 - 236_: [Windows] memory/handle leak in Process's get_memory_info(),
@@ -1555,12 +1558,12 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 150_: network I/O counters. (OSX and Windows patch by Jeremy Whitlock)
+- 150_: network I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 154_: [FreeBSD] add support for process getcwd()
 - 157_: [Windows] provide installer for Python 3.2 64-bit.
 - 198_: Process.wait(timeout=0) can now be used to make wait() return
   immediately.
-- 206_: disk I/O counters. (OSX and Windows patch by Jeremy Whitlock)
+- 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 213_: examples/iotop.py script.
 - 217_: Process.get_connections() now has a "kind" argument to filter
   for connections with different criteria.
@@ -1571,7 +1574,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 135_: [OSX] psutil cannot create Process object.
+- 135_: [macOS] psutil cannot create Process object.
 - 144_: [Linux] no longer support 0 special PID.
 - 188_: [Linux] psutil import error on Linux ARM architectures.
 - 194_: [POSIX] psutil.Process.get_cpu_percent() now reports a percentage over
@@ -1613,7 +1616,7 @@ DeprecationWarning.
 - 166_: get_memory_info() leaks handles hogging system resources.
 - 168_: psutil.cpu_percent() returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
-- 178_: OSX - Process.get_threads() leaks memory
+- 178_: macOS - Process.get_threads() leaks memory
 - 180_: [Windows] Process's get_num_threads() and get_threads() methods can
   raise NoSuchProcess exception while process still exists.
 
@@ -1638,14 +1641,14 @@ DeprecationWarning.
 - 147_: per-process I/O nice (priority) - Linux only.
 - 148_: psutil.Popen class which tidies up subprocess.Popen and psutil.Process
   in a unique interface.
-- 152_: [OSX] get_process_open_files() implementation has been rewritten
+- 152_: [macOS] get_process_open_files() implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
-- 153_: [OSX] get_process_connection() implementation has been rewritten
+- 153_: [macOS] get_process_connection() implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
 
 **Bug fixes**
 
-- 83_:  process cmdline is empty on OSX 64-bit.
+- 83_:  process cmdline is empty on macOS 64-bit.
 - 130_: a race condition can cause IOError exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
 - 145_: WindowsError was raised instead of psutil.AccessDenied when using
@@ -1697,7 +1700,7 @@ DeprecationWarning.
   left behind every time Process class was instantiated.
 - 111_: path and name Process properties report truncated or erroneous
   values on UNIX.
-- 120_: cpu_percent() always returning 100% on OS X.
+- 120_: cpu_percent() always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
 - 126_: ppid, uid, gid, name, exe, cmdline and create_time properties are
@@ -1746,7 +1749,7 @@ DeprecationWarning.
   available
 - 58_: is_running() is now called before kill() to make sure we are going
   to kill the correct process.
-- 73_: virtual memory size reported on OS X includes shared library size
+- 73_: virtual memory size reported on macOS includes shared library size
 - 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
   used first.
 
@@ -1770,7 +1773,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
-- 40_: test_get_cpu_times() failing on FreeBSD and OS X.
+- 40_: test_get_cpu_times() failing on FreeBSD and macOS.
 - 42_: [Windows] get_memory_percent() raises AccessDenied.
 
 0.1.1

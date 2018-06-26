@@ -4,14 +4,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""OSX specific tests."""
+"""MACOS specific tests."""
 
 import os
 import re
 import time
 
 import psutil
-from psutil import OSX
+from psutil import MACOS
 from psutil.tests import create_zombie_proc
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
@@ -23,7 +23,7 @@ from psutil.tests import sh
 from psutil.tests import unittest
 
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE") if OSX else None
+PAGESIZE = os.sysconf("SC_PAGE_SIZE") if MACOS else None
 
 
 def sysctl(cmdline):
@@ -76,7 +76,7 @@ def human2bytes(s):
     return int(num * prefix[letter])
 
 
-@unittest.skipIf(not OSX, "OSX only")
+@unittest.skipIf(not MACOS, "MACOS only")
 class TestProcess(unittest.TestCase):
 
     @classmethod
@@ -101,7 +101,7 @@ class TestProcess(unittest.TestCase):
             time.strftime("%Y", time.localtime(start_psutil)))
 
 
-@unittest.skipIf(not OSX, "OSX only")
+@unittest.skipIf(not MACOS, "MACOS only")
 class TestZombieProcessAPIs(unittest.TestCase):
 
     @classmethod
@@ -162,7 +162,7 @@ class TestZombieProcessAPIs(unittest.TestCase):
         self.assertRaises(psutil.ZombieProcess, self.p.memory_maps)
 
 
-@unittest.skipIf(not OSX, "OSX only")
+@unittest.skipIf(not MACOS, "MACOS only")
 class TestSystemAPIs(unittest.TestCase):
 
     # --- disk

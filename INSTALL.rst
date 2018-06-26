@@ -10,7 +10,7 @@ On Linux or via wget:
 
     wget https://bootstrap.pypa.io/get-pip.py -O - | python
 
-On OSX or via curl:
+On macOS or via curl:
 
 .. code-block:: bash
 
@@ -61,8 +61,8 @@ RedHat / CentOS:
 
 If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
 
-OSX
-===
+macOS
+=====
 
 Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__
 first, then:

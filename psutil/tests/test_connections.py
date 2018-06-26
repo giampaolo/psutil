@@ -18,9 +18,9 @@ from socket import SOCK_STREAM
 import psutil
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -124,9 +124,9 @@ class Base(object):
         try:
             sys_cons = psutil.net_connections(kind=kind)
         except psutil.AccessDenied:
-            # On OSX, system-wide connections are retrieved by iterating
+            # On MACOS, system-wide connections are retrieved by iterating
             # over all processes
-            if OSX:
+            if MACOS:
                 return
             else:
                 raise
@@ -257,7 +257,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                 server.close()
                 client.close()
 
-    @skip_on_access_denied(only_if=OSX)
+    @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
             all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
@@ -455,7 +455,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
 
     @skip_on_access_denied()
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
-    @unittest.skipIf(OSX and TRAVIS, "unreliable on OSX + TRAVIS")
+    @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
         # sockets. For each process check that proc.connections()

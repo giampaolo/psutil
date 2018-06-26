@@ -19,8 +19,8 @@ import psutil
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil._compat import PY3
@@ -152,7 +152,7 @@ class TestProcess(unittest.TestCase):
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
-        # ...because of how we calculate PYTHON_EXE; on OSX this may
+        # ...because of how we calculate PYTHON_EXE; on MACOS this may
         # be "pythonX.Y".
         name_ps = re.sub(r"\d.\d", "", name_ps)
         name_psutil = re.sub(r"\d.\d", "", name_psutil)
@@ -194,7 +194,7 @@ class TestProcess(unittest.TestCase):
                 p = psutil.Process()
                 self.assertRaises(psutil.NoSuchProcess, p.name)
 
-    @unittest.skipIf(OSX or BSD, 'ps -o start not available')
+    @unittest.skipIf(MACOS or BSD, 'ps -o start not available')
     def test_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time()
@@ -309,8 +309,8 @@ class TestSystemAPIs(unittest.TestCase):
         pids_ps.sort()
         pids_psutil.sort()
 
-        # on OSX and OPENBSD ps doesn't show pid 0
-        if OSX or OPENBSD and 0 not in pids_ps:
+        # on MACOS and OPENBSD ps doesn't show pid 0
+        if MACOS or OPENBSD and 0 not in pids_ps:
             pids_ps.insert(0, 0)
         self.assertEqual(pids_ps, pids_psutil)
 

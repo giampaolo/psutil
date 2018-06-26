@@ -28,16 +28,16 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 # ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
+from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import LINUX  # NOQA
+from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
 from _common import OPENBSD  # NOQA
-from _common import OSX  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
-from _common import AIX  # NOQA
 
 
 macros = []
@@ -145,14 +145,14 @@ if WINDOWS:
         # extra_link_args=["/DEBUG"]
     )
 
-elif OSX:
-    macros.append(("PSUTIL_OSX", 1))
+elif MACOS:
+    macros.append(("PSUTIL_MACOS", 1))
     ext = Extension(
-        'psutil._psutil_osx',
+        'psutil._psutil_macos',
         sources=sources + [
-            'psutil/_psutil_osx.c',
-            'psutil/arch/osx/process_info.c',
-            'psutil/arch/osx/smc.c',
+            'psutil/_psutil_macos.c',
+            'psutil/arch/macos/process_info.c',
+            'psutil/arch/macos/smc.c',
         ],
         define_macros=macros,
         extra_link_args=[

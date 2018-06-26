@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""OSX platform implementation."""
+"""macOS platform implementation."""
 
 import collections
 import contextlib
@@ -14,7 +14,7 @@ from collections import namedtuple
 
 from . import _common
 from . import _psposix
-from . import _psutil_osx as cext
+from . import _psutil_macos as cext
 from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
 from ._common import conn_tmap
@@ -277,7 +277,7 @@ def cpu_stats():
 
 def cpu_freq():
     """Return CPU frequency.
-    On OSX per-cpu frequency is not supported.
+    On macOS per-cpu frequency is not supported.
     Also, the returned frequency never changes, see:
     https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
     """
@@ -381,7 +381,7 @@ net_if_addrs = cext_posix.net_if_addrs
 
 def net_connections(kind='inet'):
     """System-wide network connections."""
-    # Note: on OSX this will fail with AccessDenied unless
+    # Note: on macOS this will fail with AccessDenied unless
     # the process is owned by root.
     ret = []
     for pid in pids():
@@ -444,7 +444,7 @@ def users():
 def pids():
     ls = cext.pids()
     if 0 not in ls:
-        # On certain OSX versions pids() C doesn't return PID 0 but
+        # On certain macOS versions pids() C doesn't return PID 0 but
         # "ps" does and the process is querable via sysctl():
         # https://travis-ci.org/giampaolo/psutil/jobs/309619941
         try:
