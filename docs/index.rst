@@ -698,9 +698,11 @@ Sensors
   See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux
+  Availability: Linux, OSX
 
   .. versionadded:: 5.1.0
+
+  .. versionchanged:: 5.5.0: added OSX support
 
   .. warning::
 
@@ -722,9 +724,11 @@ Sensors
   See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux
+  Availability: Linux, OSX
 
   .. versionadded:: 5.2.0
+
+  .. versionchanged:: 5.5.0: added OSX support
 
   .. warning::
 

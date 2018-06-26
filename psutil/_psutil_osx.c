@@ -930,33 +930,27 @@ psutil_sensors_fans(PyObject *self, PyObject *args) {
         return NULL;
 
     fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count < 0) {
+    if (fan_count < 0)
         fan_count = 0;
-    }
-    for (key =0; key < fan_count; key++) {
+
+    for (key = 0; key < fan_count; key++) {
         sprintf(fan, "Fan %d", key);
         speed = SMCGetFanSpeed(key);
-        if (speed < 0) {
+        if (speed < 0)
             continue;
-        }
-        py_tuple = Py_BuildValue(
-                "(si)",
-                fan,           // label
-                speed          // value
-                );
+        py_tuple = Py_BuildValue("(si)", fan, speed);
         if (!py_tuple)
             goto error;
-
-        if (PyList_Append(py_retlist, py_tuple)) {
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        }
         Py_XDECREF(py_tuple);
     }
 
     return py_retlist;
+
 error:
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_retlist);
+    Py_DECREF(py_retlist);
     return NULL;
 }
 

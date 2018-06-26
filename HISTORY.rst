@@ -1,9 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.4.7
+5.5.0
 =====
 
 XXXX-XX-XX
+
+**Enhancements**
+
+- 1284_: [OSX] added support for sensors_temperatures() and sensors_fans().
+  (patch by Alex Manuskin)
 
 **Bug fixes**
 

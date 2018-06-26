@@ -4,9 +4,9 @@
 
 """OSX platform implementation."""
 
+import collections
 import contextlib
 import errno
-import collections
 import functools
 import os
 from socket import AF_INET
@@ -63,9 +63,7 @@ PROC_STATUSES = {
     cext.SZOMB: _common.STATUS_ZOMBIE,
 }
 
-temperatures = (
-    # group, key, label
-
+SMC_TEMPERATURES = (
     # --- CPU
     ("CPU", "TCXC", "PECI CPU"),
     ("CPU", "TCXc", "PECI CPU"),
@@ -319,36 +317,34 @@ def disk_partitions(all=False):
 
 def sensors_temperatures():
     """Returns a dictionary of regions of temperature sensors:
-        CPU/GPU/Memory/Others
-    Each entry contains a list of results of all the successfully polled
-    SMC keys from the system.
-
+    CPU/GPU/Memory/HDD/Battery/Others.
+    Each entry contains a list of results of all the SMC keys successfully
+    polled from the system.
     References for SMC keys and meaning:
 
-    https://stackoverflow.com/questions/28568775/
+    * https://stackoverflow.com/questions/28568775/
         description-for-apples-smc-keys/31033665#31033665
 
-    https://github.com/Chris911/iStats/blob/
+    * https://github.com/Chris911/iStats/blob/
         09b159f85a9481b59f347a37259f6d272f65cc05/lib/iStats/smc.rb
 
-    http://web.archive.org/web/20140714090133/http://www.parhelia.ch:80/
+    * http://web.archive.org/web/20140714090133/http://www.parhelia.ch:80/
         blog/statics/k3_keys.html
     """
+    # TODO: this should be rewritten in C:
+    # https://github.com/giampaolo/psutil/pull/1284#issuecomment-399480983
     ret = collections.defaultdict(list)
-
-    for group, key, label in temperatures:
+    for group, key, label in SMC_TEMPERATURES:
         result = cext.smc_get_temperature(key)
         result = round(result, 1)
         if result <= 0:
             continue
         ret[group].append((label, result, None, None))
-
     return dict(ret)
 
 
 def sensors_battery():
-    """Return battery information.
-    """
+    """Return battery information."""
     try:
         percent, minsleft, power_plugged = cext.sensors_battery()
     except NotImplementedError:
@@ -369,10 +365,8 @@ def sensors_fans():
     """
     ret = collections.defaultdict(list)
     rawlist = cext.sensors_fans()
-    if rawlist is not None:
-        for fan in rawlist:
-            ret["Fans"].append(_common.sfan(fan[0], fan[1]))
-
+    for fan in rawlist:
+        ret["Fans"].append(_common.sfan(fan[0], fan[1]))
     return dict(ret)
 
 

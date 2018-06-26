@@ -105,14 +105,16 @@ kern_return_t SMCCall(io_connect_t conn,
 
 #if MAC_OS_X_VERSION_10_5
     return IOConnectCallStructMethod(
-        conn, index,
+        conn,
+        index,
         inputStructure,
         structureInputSize,
         outputStructure,
         &structureOutputSize);
 #else
     return IOConnectMethodStructureIStructureO(
-        conn, index,
+        conn,
+        index,
         structureInputSize,
         &structureOutputSize,
         inputStructure,
