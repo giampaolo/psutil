@@ -34,7 +34,7 @@ Github usernames of people to CC on github when in need of help.
     - glebius, Gleb Smirnoff (#1013)
     - sunpoet, Po-Chuan Hsieh (pkg maintainer, #1105)
     - kostikbel, Konstantin Belousov (#1105)
-- OSX:
+- macOS:
     - whitlockjc, Jeremy Whitlock
 - Windows:
     - mrjefftang, Jeff Tang
@@ -65,7 +65,7 @@ I: 340, 529, 616, 653, 654, 648, 641
 
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
-D: great help with OSX C development.
+D: great help with macOS C development.
 I: 125, 150, 174, 206
 
 N: Landry Breuil
