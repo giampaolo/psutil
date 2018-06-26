@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1284_: [macOS] added support for sensors_temperatures() and sensors_fans().
   (patch by Alex Manuskin)
+- 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
+  psutil.MACOS.
 
 **Bug fixes**
 
