@@ -1059,6 +1059,7 @@ class TestProcess(unittest.TestCase):
             self.assertIsNone(p.parent())
 
     def test_children(self):
+        reap_children(recursive=True)
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
