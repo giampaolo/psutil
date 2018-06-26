@@ -116,10 +116,10 @@ class TestAvailability(unittest.TestCase):
         self.assertEqual(hasattr(psutil, "cpu_freq"), linux or OSX or WINDOWS)
 
     def test_sensors_temperatures(self):
-        self.assertEqual(hasattr(psutil, "sensors_temperatures"), LINUX)
+        self.assertEqual(hasattr(psutil, "sensors_temperatures"), LINUX or OSX)
 
     def test_sensors_fans(self):
-        self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)
+        self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX or OSX)
 
     def test_battery(self):
         self.assertEqual(hasattr(psutil, "sensors_battery"),

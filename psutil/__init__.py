@@ -2175,7 +2175,7 @@ def net_if_stats():
 # =====================================================================
 
 
-# Linux
+# Linux, OSX
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):
@@ -2213,7 +2213,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
     __all__.append("sensors_temperatures")
 
 
-# Linux
+# Linux, OSX
 if hasattr(_psplatform, "sensors_fans"):
 
     def sensors_fans():
