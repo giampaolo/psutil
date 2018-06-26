@@ -522,19 +522,6 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
         return Py_BuildValue("i", num);
 }
 
-/*
- * Return the number of CPU packages
- */
-static PyObject *
-psutil_cpu_count_packages(PyObject *self, PyObject *args) {
-    int num;
-    size_t size = sizeof(int);
-
-    if (sysctlbyname("hw.packages", &num, &size, NULL, 0))
-        Py_RETURN_NONE;
-    else
-        return Py_BuildValue("i", num);
-}
 
 /*
  * Indicates if the given virtual address on the given architecture is in the
@@ -890,33 +877,51 @@ psutil_smc_get_temperature(PyObject *self, PyObject *args) {
     return Py_BuildValue("d", temp);
 }
 
+
 /*
- * Return a Python float indicating the number of fans in the system
+ * Return a Python list of tuples of fan label and speed
  */
 static PyObject *
-psutil_fans_count(PyObject *self, PyObject *args) {
+psutil_sensors_fans(PyObject *self, PyObject *args) {
+    int key;
+    int speed;
+    char fan[7];
     int fan_count;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
 
     fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
     if (fan_count < 0) {
         fan_count = 0;
     }
-    return Py_BuildValue("i", fan_count);
-}
+    for (key =0; key < fan_count; key++) {
+        sprintf(fan, "Fan %d", key);
+        speed = SMCGetFanSpeed(key);
+        if (speed < 0) {
+            continue;
+        }
+        py_tuple = Py_BuildValue(
+                "(si)",
+                fan,           // label
+                speed          // value
+                );
+        if (!py_tuple)
+            goto error;
 
-/*
- * Return a Python float indicating the fan speed of the number of fan passed
- */
-static PyObject *
-psutil_get_fan_speed(PyObject *self, PyObject *args) {
-    int key;
-    float speed;
-
-    if (! PyArg_ParseTuple(args, "i", &key)) {
-        return NULL;
+        if (PyList_Append(py_retlist, py_tuple)) {
+            goto error;
+        }
+        Py_XDECREF(py_tuple);
     }
-    speed = SMCGetFanSpeed(key);
-    return Py_BuildValue("f", speed);
+
+    return py_retlist;
+error:
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_retlist);
+    return NULL;
 }
 
 /*
@@ -1986,8 +1991,6 @@ PsutilMethods[] = {
      "Return number of logical CPUs on the system"},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return number of physical CPUs on the system"},
-    {"cpu_count_packages", psutil_cpu_count_packages, METH_VARARGS,
-     "Return number of cpu packages"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
@@ -2013,9 +2016,7 @@ PsutilMethods[] = {
      "Return CPU statistics"},
     {"smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
      "Temperature of SMC key as float"},
-    {"fans_count", psutil_fans_count, METH_VARARGS,
-     "Return the number of fans"},
-    {"get_fan_speed", psutil_get_fan_speed, METH_VARARGS,
+    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
      "Return the RPM of the fan with SMC key"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
