@@ -36,7 +36,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
-from psutil import OSX
+from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -179,7 +179,7 @@ def _get_py_exe():
         else:
             return exe
 
-    if OSX:
+    if MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -367,7 +367,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
+    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if MACOS else TESTFN
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()

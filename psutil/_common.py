@@ -75,7 +75,8 @@ __all__ = [
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith("linux")
-OSX = sys.platform.startswith("darwin")
+MACOS = sys.platform.startswith("darwin")
+OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
