@@ -79,7 +79,7 @@ elif psutil.SUNOS:
         'terminal',
         'uids',
     ]
-elif psutil.OSX:
+elif psutil.MACOS:
     names += [
         'cpu_times',
         'create_time',

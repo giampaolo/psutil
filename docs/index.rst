@@ -2118,7 +2118,7 @@ Constants
 .. data:: POSIX
 .. data:: WINDOWS
 .. data:: LINUX
-.. data:: OSX
+.. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
 .. data:: OPENBSD
@@ -2131,6 +2131,13 @@ Constants
 
   .. versionadded:: 4.0.0
   .. versionchanged:: 5.4.0 added AIX
+
+.. data:: OSX
+
+  Alias for :const:`MACOS` (deprecated).
+
+  .. warning::
+    deprecated in version 5.5.0; use :const:`MACOS` instead.
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH

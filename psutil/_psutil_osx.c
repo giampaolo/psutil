@@ -251,7 +251,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
         "(ddKKkkkk)",
         (float)pti.pti_total_user / 1000000000.0,     // (float) cpu user time
         (float)pti.pti_total_system / 1000000000.0,   // (float) cpu sys time
-        // Note about memory: determining other mem stats on OSX is a mess:
+        // Note about memory: determining other mem stats on macOS is a mess:
         // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
         // I just give up.
         // struct proc_regioninfo pri;

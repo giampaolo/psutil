@@ -393,7 +393,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 /*
  * Return the number of logical CPUs in the system.
- * XXX this could be shared with OSX
+ * XXX this could be shared with macOS
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
