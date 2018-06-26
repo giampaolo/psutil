@@ -14,7 +14,7 @@ from collections import namedtuple
 
 from . import _common
 from . import _psposix
-from . import _psutil_osx as cext
+from . import _psutil_macos as cext
 from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
 from ._common import conn_tmap

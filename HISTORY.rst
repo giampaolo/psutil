@@ -1312,7 +1312,7 @@ DeprecationWarning.
 - 323_: [macOS] disk_io_counters()'s read_time and write_time parameters were
   reporting microseconds not milliseconds.  (patch by Gregory Szorc)
 - 331_: Process cmdline is no longer cached after first acces as it may change.
-- 333_: [macOS] Leak of Mach ports on OS X (patch by rsesek@google.com)
+- 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
 - 337_: [Linux] process methods not working because of a poor /proc
   implementation will raise NotImplementedError rather than RuntimeError
   and Process.as_dict() will not blow up.  (patch by Curtin1060)
@@ -1698,7 +1698,7 @@ DeprecationWarning.
   left behind every time Process class was instantiated.
 - 111_: path and name Process properties report truncated or erroneous
   values on UNIX.
-- 120_: cpu_percent() always returning 100% on OS X.
+- 120_: cpu_percent() always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
 - 126_: ppid, uid, gid, name, exe, cmdline and create_time properties are
@@ -1747,7 +1747,7 @@ DeprecationWarning.
   available
 - 58_: is_running() is now called before kill() to make sure we are going
   to kill the correct process.
-- 73_: virtual memory size reported on OS X includes shared library size
+- 73_: virtual memory size reported on macOS includes shared library size
 - 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
   used first.
 
@@ -1771,7 +1771,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
-- 40_: test_get_cpu_times() failing on FreeBSD and OS X.
+- 40_: test_get_cpu_times() failing on FreeBSD and macOS.
 - 42_: [Windows] get_memory_percent() raises AccessDenied.
 
 0.1.1
