@@ -57,6 +57,71 @@ const struct smc_sensor * detected_temperature_sensors;
 const struct smc_sensor * detected_fan_sensors;
 const struct smc_sensor * detected_other_sensors;
 
+const struct smc_sensor temperature_sensors[] = {
+    {"TA0P", "Ambient", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA0S", "PCI Slot 1 Pos 1", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA1P", "Ambient temperature", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA1S", "PCI Slot 1 Pos 2", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA2S", "PCI Slot 2 Pos 1", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA3S", "PCI Slot 2 Pos 2", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TB0P", "BLC Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TB0T", "Battery TS_MAX", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TB1T", "Battery 1", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TB2T", "Battery 2", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TB3T", "Battery 3", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TCGC", "PECI GPU", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TCSA", "PECI SA", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TCSC", "PECI SA", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TCXC", "PECI CPU", &SMCGetTemperature, &temperature_reasonable, NULL},
+    // For these values: appears that the hardware can only support one, but the SMC keys seem to indicate
+    // support for multiple
+    {"TN0D", "Northbridge Die", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TN0H", "Northbridge Heatsink", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TN0P", "Northbridge Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TS0C", "Expansion Slots", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TS0S", "Memory Bank Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TW0P", "AirPort Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
+
+    {"TC_C", "CPU Core _", &SMCGetTemperature, &temperature_reasonable, &count_cpu_cores},
+
+    {"TC_D", "CPU _ Die", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_E", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_F", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_G", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_H", "CPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_J", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_P", "CPU _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+
+    {"TG_D", "GPU _ Die", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
+    {"TG_H", "GPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
+    {"TG_P", "GPU _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
+
+    {"TH_H", "Heatsink _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+    {"TH_P", "HDD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+    {"TI_P", "Thunderbolt _", &SMCGetTemperature, &temperature_reasonable},
+    {"TL_P", "LCD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+    {"TL_P", "LCD _", &SMCGetTemperature, &temperature_reasonable},
+
+    {"TM_P", "Memory _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
+    {"TM_S", "Memory Slot _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
+    {"TMA_", "DIMM A _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
+    {"TMB_", "DIMM B _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
+
+    {"TO_P", "Optical Drive _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+    {"TP_C", "Power Supply _", &SMCGetTemperature, &temperature_reasonable},
+    {"TP_P", "Power Supply _ Proximity", &SMCGetTemperature, &temperature_reasonable},
+    {"TS_C", "Expansion Slot _", &SMCGetTemperature, &temperature_reasonable},
+    {"TS_P", "Palm Rest _", &SMCGetTemperature, &temperature_reasonable}
+};
+
+const struct smc_sensor fan_sensors[] = {
+    // TODO
+};
+
+const struct smc_sensor other_sensors[] = {
+    // TODO
+};
+
 struct smc_sensor * detect_sensors(const struct smc_sensor potential_sensors[]) {
 
     // TODO actually use the fixed counting
@@ -2180,8 +2245,7 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
-    // FIXME compile error
-//    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     PyModule_AddIntConstant(module, "SIDL", SIDL);

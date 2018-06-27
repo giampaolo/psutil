@@ -224,3 +224,31 @@ int SMCGetFanNumber(char *key)
     SMCClose(conn);
     return _strtoul((char *)val.bytes, val.dataSize, 10);
 }
+
+int count_cpu_cores() {
+    // TODO
+    return 1;
+}
+int count_physical_cpus() {
+    // TODO
+    return 1;
+}
+int count_gpus() {
+    // TODO
+    return 1;
+}
+int count_dimms() {
+    // TODO
+    return 2;
+}
+bool temperature_reasonable(double d) {
+    // TODO
+    return d > 10;
+}
+bool fan_speed_reasonable(double d) {
+    // TODO
+    return d > 100;
+}
+bool always_true(double d) {
+    return true;
+}
