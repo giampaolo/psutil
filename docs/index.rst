@@ -32,7 +32,7 @@ psutil currently supports the following platforms:
 
 - **Linux**
 - **Windows**
-- **macOS**,
+- **macOS**
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
