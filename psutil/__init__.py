@@ -153,7 +153,7 @@ elif WINDOWS:
     from ._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif MACOS:
-    from . import _psmacos as _psplatform
+    from . import _psosx as _psplatform
 
 elif BSD:
     from . import _psbsd as _psplatform

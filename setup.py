@@ -146,13 +146,13 @@ if WINDOWS:
     )
 
 elif MACOS:
-    macros.append(("PSUTIL_MACOS", 1))
+    macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
-        'psutil._psutil_macos',
+        'psutil._psutil_osx',
         sources=sources + [
-            'psutil/_psutil_macos.c',
-            'psutil/arch/macos/process_info.c',
-            'psutil/arch/macos/smc.c',
+            'psutil/_psutil_osx.c',
+            'psutil/arch/osx/process_info.c',
+            'psutil/arch/osx/smc.c',
         ],
         define_macros=macros,
         extra_link_args=[

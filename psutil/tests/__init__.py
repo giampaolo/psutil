@@ -810,7 +810,7 @@ def get_suite():
                 x.startswith('test_memory_leaks')]
     if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
         testmods = [x for x in testmods if not x.endswith((
-                    "macos", "posix", "linux"))]
+                    "osx", "posix", "linux"))]
     suite = unittest.TestSuite()
     for tm in testmods:
         # ...so that the full test paths are printed on screen

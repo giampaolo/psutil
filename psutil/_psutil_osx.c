@@ -43,8 +43,8 @@
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
-#include "arch/macos/process_info.h"
-#include "arch/macos/smc.h"
+#include "arch/osx/process_info.h"
+#include "arch/osx/smc.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -342,7 +342,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    // get the commandline, defined in arch/macos/process_info.c
+    // get the commandline, defined in arch/osx/process_info.c
     py_retlist = psutil_get_cmdline(pid);
     return py_retlist;
 }
@@ -359,7 +359,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    // get the environment block, defined in arch/macos/process_info.c
+    // get the environment block, defined in arch/osx/process_info.c
     py_retdict = psutil_get_environ(pid);
     return py_retdict;
 }
@@ -2066,13 +2066,13 @@ struct module_state {
 #if PY_MAJOR_VERSION >= 3
 
 static int
-psutil_macos_traverse(PyObject *m, visitproc visit, void *arg) {
+psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
 static int
-psutil_macos_clear(PyObject *m) {
+psutil_osx_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
@@ -2080,31 +2080,31 @@ psutil_macos_clear(PyObject *m) {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "psutil_macos",
+    "psutil_osx",
     NULL,
     sizeof(struct module_state),
     PsutilMethods,
     NULL,
-    psutil_macos_traverse,
-    psutil_macos_clear,
+    psutil_osx_traverse,
+    psutil_osx_clear,
     NULL
 };
 
 #define INITERROR return NULL
 
-PyMODINIT_FUNC PyInit__psutil_macos(void)
+PyMODINIT_FUNC PyInit__psutil_osx(void)
 
 #else
 #define INITERROR return
 
 void
-init_psutil_macos(void)
+init_psutil_osx(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("_psutil_macos", PsutilMethods);
+    PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
@@ -2130,7 +2130,7 @@ init_psutil_macos(void)
 
     // Exception.
     ZombieProcessError = PyErr_NewException(
-        "_psutil_macos.ZombieProcessError", NULL, NULL);
+        "_psutil_osx.ZombieProcessError", NULL, NULL);
     Py_INCREF(ZombieProcessError);
     PyModule_AddObject(module, "ZombieProcessError", ZombieProcessError);
 
