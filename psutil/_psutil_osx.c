@@ -52,66 +52,69 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
+#define TEMPERATURE_MACRO &SMCGetTemperature, &temperature_reasonable
+
 bool detection_has_run = false;
 const struct smc_sensor * detected_temperature_sensors;
 const struct smc_sensor * detected_fan_sensors;
 const struct smc_sensor * detected_other_sensors;
 
 const struct smc_sensor temperature_sensors[] = {
-    {"TA0P", "Ambient", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TA0S", "PCI Slot 1 Pos 1", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TA1P", "Ambient temperature", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TA1S", "PCI Slot 1 Pos 2", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TA2S", "PCI Slot 2 Pos 1", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TA3S", "PCI Slot 2 Pos 2", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TB0P", "BLC Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TB0T", "Battery TS_MAX", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TB1T", "Battery 1", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TB2T", "Battery 2", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TB3T", "Battery 3", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TCGC", "PECI GPU", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TCSA", "PECI SA", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TCSC", "PECI SA", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TCXC", "PECI CPU", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TA0P", "Ambient", TEMPERATURE_MACRO, NULL},
+    {"TA0S", "PCI Slot 1 Pos 1", TEMPERATURE_MACRO, NULL},
+    {"TA1P", "Ambient temperature", TEMPERATURE_MACRO, NULL},
+    {"TA1S", "PCI Slot 1 Pos 2", TEMPERATURE_MACRO, NULL},
+    {"TA2S", "PCI Slot 2 Pos 1", TEMPERATURE_MACRO, NULL},
+    {"TA3S", "PCI Slot 2 Pos 2", TEMPERATURE_MACRO, NULL},
+    {"TB0P", "BLC Proximity", TEMPERATURE_MACRO, NULL},
+    {"TB0T", "Battery TS_MAX", TEMPERATURE_MACRO, NULL},
+    {"TB1T", "Battery 1", TEMPERATURE_MACRO, NULL},
+    {"TB2T", "Battery 2", TEMPERATURE_MACRO, NULL},
+    {"TB3T", "Battery 3", TEMPERATURE_MACRO, NULL},
+    {"TCGC", "PECI GPU", TEMPERATURE_MACRO, NULL},
+    {"TCSA", "PECI SA", TEMPERATURE_MACRO, NULL},
+    {"TCSC", "PECI SA", TEMPERATURE_MACRO, NULL},
+    {"TCXC", "PECI CPU", TEMPERATURE_MACRO, NULL},
     // For these values: appears that the hardware can only support one, but the SMC keys seem to indicate
     // support for multiple
-    {"TN0D", "Northbridge Die", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TN0H", "Northbridge Heatsink", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TN0P", "Northbridge Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TS0C", "Expansion Slots", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TS0S", "Memory Bank Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
-    {"TW0P", "AirPort Proximity", &SMCGetTemperature, &temperature_reasonable, NULL},
+    {"TN0D", "Northbridge Die", TEMPERATURE_MACRO, NULL},
+    {"TN0H", "Northbridge Heatsink", TEMPERATURE_MACRO, NULL},
+    {"TN0P", "Northbridge Proximity", TEMPERATURE_MACRO, NULL},
+    {"TS0C", "Expansion Slots", TEMPERATURE_MACRO, NULL},
+    {"TS0S", "Memory Bank Proximity", TEMPERATURE_MACRO, NULL},
+    {"TW0P", "AirPort Proximity", TEMPERATURE_MACRO, NULL},
 
-    {"TC_C", "CPU Core _", &SMCGetTemperature, &temperature_reasonable, &count_cpu_cores},
+    {"TC_C", "CPU Core _", TEMPERATURE_MACRO, &count_cpu_cores},
 
-    {"TC_D", "CPU _ Die", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_E", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_F", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_G", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_H", "CPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_J", "CPU _ ??", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
-    {"TC_P", "CPU _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_physical_cpus},
+    {"TC_D", "CPU _ Die", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_E", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_F", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_G", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_H", "CPU _ Heatsink", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_J", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_P", "CPU _ Proximity", TEMPERATURE_MACRO, &count_physical_cpus},
 
-    {"TG_D", "GPU _ Die", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
-    {"TG_H", "GPU _ Heatsink", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
-    {"TG_P", "GPU _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_gpus},
+    {"TG_D", "GPU _ Die", TEMPERATURE_MACRO, &count_gpus},
+    {"TG_H", "GPU _ Heatsink", TEMPERATURE_MACRO, &count_gpus},
+    {"TG_P", "GPU _ Proximity", TEMPERATURE_MACRO, &count_gpus},
 
-    {"TH_H", "Heatsink _ Proximity", &SMCGetTemperature, &temperature_reasonable},
-    {"TH_P", "HDD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
-    {"TI_P", "Thunderbolt _", &SMCGetTemperature, &temperature_reasonable},
-    {"TL_P", "LCD _ Proximity", &SMCGetTemperature, &temperature_reasonable},
-    {"TL_P", "LCD _", &SMCGetTemperature, &temperature_reasonable},
+    {"TH_H", "Heatsink _ Proximity", TEMPERATURE_MACRO},
+    {"TH_P", "HDD _ Proximity", TEMPERATURE_MACRO},
+    {"TI_P", "Thunderbolt _", TEMPERATURE_MACRO},
+    {"TL_P", "LCD _ Proximity", TEMPERATURE_MACRO},
+    {"TL_P", "LCD _", TEMPERATURE_MACRO},
 
-    {"TM_P", "Memory _ Proximity", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
-    {"TM_S", "Memory Slot _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
-    {"TMA_", "DIMM A _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
-    {"TMB_", "DIMM B _", &SMCGetTemperature, &temperature_reasonable, &count_dimms},
+    {"TM_P", "Memory _ Proximity", TEMPERATURE_MACRO, &count_dimms},
+    {"TM_S", "Memory Slot _", TEMPERATURE_MACRO, &count_dimms},
+    {"TMA_", "DIMM A _", TEMPERATURE_MACRO, &count_dimms},
+    {"TMB_", "DIMM B _", TEMPERATURE_MACRO, &count_dimms},
 
-    {"TO_P", "Optical Drive _ Proximity", &SMCGetTemperature, &temperature_reasonable},
-    {"TP_C", "Power Supply _", &SMCGetTemperature, &temperature_reasonable},
-    {"TP_P", "Power Supply _ Proximity", &SMCGetTemperature, &temperature_reasonable},
-    {"TS_C", "Expansion Slot _", &SMCGetTemperature, &temperature_reasonable},
-    {"TS_P", "Palm Rest _", &SMCGetTemperature, &temperature_reasonable}
+    {"TO_P", "Optical Drive _ Proximity", TEMPERATURE_MACRO},
+    {"TP_C", "Power Supply _", TEMPERATURE_MACRO},
+    {"TP_P", "Power Supply _ Proximity", TEMPERATURE_MACRO},
+    {"TS_C", "Expansion Slot _", TEMPERATURE_MACRO},
+    {"TS_P", "Palm Rest _", TEMPERATURE_MACRO},
+    {NULL}
 };
 
 const struct smc_sensor fan_sensors[] = {
@@ -122,40 +125,43 @@ const struct smc_sensor other_sensors[] = {
     // TODO
 };
 
-struct smc_sensor * detect_sensors(const struct smc_sensor potential_sensors[]) {
+struct smc_sensor * detect_sensors(const struct smc_sensor
+        potential_sensors[]) {
 
     // TODO actually use the fixed counting
 
-    // Screw doing an actual list, we're just going to over allocate and then cut it back once we're done
-    size_t total_size = 0;
-    for (int i = 0; i < sizeof(potential_sensors); i++) {
-        total_size += sizeof(potential_sensors[i]);
-    }
-    struct smc_sensor * detected_sensors = malloc(total_size);
+    // Screw doing an actual list, we're just going to over allocate and then
+    // cut it back once we're done
+    struct smc_sensor * detected_sensors = malloc(sizeof(potential_sensors));
     int sensor_index = 0;
+    int i = 0;
 
-    for (int i = 0; i < sizeof(potential_sensors); i++) {
-            int count = 0;
-            while (true) {
+    for (struct smc_sensor s = potential_sensors[i]; s.key != NULL; s =
+            potential_sensors[++i]) {
+        int count = 0;
+        while (true) {
 
-                // TODO replace underscores
+            // TODO replace underscores
 
-                struct smc_sensor s = potential_sensors[i];
-
-                double val = ((*s.get_function)((char *) s.key));
-                if (*s.get_function) {
-                    break;
-                } else {
-                    detected_sensors[sensor_index++] = s;
-                }
-                count++;
+            double val = ((*s.get_function)((char *) s.key));
+            if (!(*s.reasonable_function)(val)) {
+                break;
+            } else {
+                detected_sensors[sensor_index++] = s;
             }
+            count++;
+
+            if (s.count_function_pointer == NULL) {
+                break;
+            }
+        }
     }
 
     detection_has_run = true;
 
     // Realloc for proper size
-    realloc(detected_sensors, sizeof(potential_sensors[0]) * (sensor_index + 1));
+    realloc(detected_sensors, sizeof(potential_sensors[0]) * (sensor_index
+                                                               + 1));
 }
 
 /*
@@ -1377,8 +1383,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
-            nb = (unsigned long) proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
-                                                PROC_PIDFDSOCKETINFO, &si, sizeof(si));
+            nb = (unsigned long) proc_pidfdinfo((pid_t)pid,
+                    fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO, &si, sizeof
+                                                (si));
 
             // --- errors checking
             if ((nb <= 0) || (nb < sizeof(si))) {
@@ -1903,7 +1910,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
-PyObject * sensor_python(const struct smc_sensor sensors[]) {
+static PyObject * sensor_python(const struct smc_sensor sensors[]) {
     // TODO better implementation
     if (!detection_has_run) {
         detected_temperature_sensors = detect_sensors(temperature_sensors);
@@ -1913,75 +1920,24 @@ PyObject * sensor_python(const struct smc_sensor sensors[]) {
 
     PyObject *py_retdict = PyDict_New();
     for (int i = 0; i < sizeof(sensors) ; i++) {
-        PyDict_SetItemString(py_retdict, sensors[i].name,
-            // Dereference the function pointer and pass it the sensor key, then store that in the dictionary
-            Py_BuildValue("d", (*sensors[i].get_function)((char *) sensors[i].key)));
+        // Dereference the function pointer and pass it the sensor key, then store that in the dictionary
+        PyDict_SetItemString(py_retdict, sensors[i].name, Py_BuildValue
+                 ("d", (*sensors[i].get_function)((char *) sensors[i].key)));
     }
     return py_retdict;
 }
 
-static PyObject * sensor_temperatures(PyObject * self, PyObject args) {
+static PyObject * sensor_temperatures(PyObject *self, PyObject *args) {
     return sensor_python(detected_temperature_sensors);
 }
 
-static PyObject * sensor_fan_speeds(PyObject * self, PyObject args) {
+static PyObject * sensor_fan_speeds(PyObject *self, PyObject *args) {
     return sensor_python(detected_fan_sensors);
 }
 
-static PyObject * sensor_others(PyObject * self, PyObject args) {
+static PyObject * sensor_others(PyObject *self, PyObject *args) {
     return sensor_python(detected_other_sensors);
 }
-
-/*
- * Return temperatures of hardware components.
- */
-static PyObject *
-cpu_die_temperatures(PyObject *self, PyObject *args) {
-    PyObject *py_retdict = PyDict_New();
-    // CPU only stats
-    PyObject *py_cpu_temp = PyDict_New();
-    PyObject *py_cpu_temp_current = NULL;
-    PyObject *py_cpu_temp_high = NULL;
-
-    if (py_retdict == NULL)
-        goto error;
-
-    if (py_cpu_temp == NULL)
-        goto error;
-
-    py_cpu_temp_current = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_CPU_TEMP));
-    if (!py_cpu_temp_current)
-        goto error;
-
-    if (PyDict_SetItemString(py_cpu_temp, "current", py_cpu_temp_current)) {
-        goto error;
-    }
-
-    py_cpu_temp_high = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_CPU_TEMP_HIGH));
-    if (!py_cpu_temp_high)
-        goto error;
-
-    if (PyDict_SetItemString(py_cpu_temp, "high", py_cpu_temp_high)) {
-        goto error;
-    }
-    if (PyDict_SetItemString(py_retdict, "TC0F", py_cpu_temp)) {
-        goto error;
-    }
-
-
-    Py_DECREF(py_cpu_temp);
-    Py_DECREF(py_cpu_temp_current);
-    Py_DECREF(py_cpu_temp_high);
-    return py_retdict;
-
-    error:
-    Py_XDECREF(py_cpu_temp_current);
-    Py_XDECREF(py_cpu_temp_high);
-    Py_XDECREF(py_cpu_temp);
-    Py_XDECREF(py_retdict);
-    return NULL;
-}
-
 
 /*
  * Return battery information.
@@ -2026,8 +1982,9 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
     if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "No battery capacity infomration in power sources info");
+        PyErr_SetString(PyExc_RuntimeError, "No battery capacity "
+                                            "infomration in power sources "
+                                              "info");
         goto error;
     }
 
@@ -2167,8 +2124,8 @@ static PyMethodDef
     {"boot_time", psutil_boot_time, METH_VARARGS,
         "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-        "Return a list of tuples including device, mount point and "
-        "fs type for all partitions mounted on the system."},
+         "Return a list of tuples including device, mount point and fs type "
+         "for all partitions mounted on the system."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
         "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
@@ -2177,12 +2134,12 @@ static PyMethodDef
         "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
         "Return CPU statistics"},
-    {"cpu_die_temperatures", cpu_die_temperatures, METH_VARARGS,
-        "Return temperatures of hardware components."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
         "Return battery information."},
     {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
         "Return fan speed information."},
+    {"sensor_temperatures", sensor_temperatures, METH_VARARGS,
+        "Returns temperatures."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
