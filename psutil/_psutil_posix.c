@@ -433,7 +433,7 @@ error:
 
 
 /*
- * net_if_stats() OSX/BSD implementation.
+ * net_if_stats() macOS/BSD implementation.
  */
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 
@@ -622,7 +622,7 @@ error:
         close(sock);
     return PyErr_SetFromErrno(PyExc_OSError);
 }
-#endif  // net_if_stats() OSX/BSD implementation
+#endif  // net_if_stats() macOS/BSD implementation
 
 
 /*

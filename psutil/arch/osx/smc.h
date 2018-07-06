@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
 #ifndef __SMC_H__
 #define __SMC_H__
 
@@ -16,15 +22,9 @@
 #define DATATYPE_UINT32       "ui32"
 #define DATATYPE_SP78         "sp78"
 
-#define MIN_TEMP              0
-#define MAX_TEMP              200
-
-// key values
-#define SMC_KEY_CPU_TEMP      "TC0F"
-#define SMC_KEY_CPU_TEMP_HIGH "TC0G"
-#define SMC_KEY_BATTERY_TEMP  "TB0T"
+// Fans SMC key values
+#define SMC_KEY_FAN_SPEED     "F%dAc"
 #define SMC_KEY_FAN_NUM       "FNum"
-#define SMC_KEY_FAN_SPEED     "F%dAb"
 
 typedef struct {
     char                  major;

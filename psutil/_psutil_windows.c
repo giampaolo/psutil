@@ -1405,9 +1405,9 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG nameSize;
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
-    PyObject *py_username;
-    PyObject *py_domain;
-    PyObject *py_tuple;
+    PyObject *py_username = NULL;
+    PyObject *py_domain = NULL;
+    PyObject *py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;

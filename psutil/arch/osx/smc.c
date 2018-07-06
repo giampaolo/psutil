@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Interface to SMC API, needed in order to collect sensors stats.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <IOKit/IOKitLib.h>
@@ -97,14 +105,16 @@ kern_return_t SMCCall(io_connect_t conn,
 
 #if MAC_OS_X_VERSION_10_5
     return IOConnectCallStructMethod(
-        conn, index,
+        conn,
+        index,
         inputStructure,
         structureInputSize,
         outputStructure,
         &structureOutputSize);
 #else
     return IOConnectMethodStructureIStructureO(
-        conn, index,
+        conn,
+        index,
         structureInputSize,
         &structureOutputSize,
         inputStructure,

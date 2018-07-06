@@ -25,9 +25,9 @@ import psutil
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -504,7 +504,7 @@ class TestProcess(unittest.TestCase):
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
-        # but this does not apply across all platforms (OSX, Windows)
+        # but this does not apply across all platforms (MACOS, Windows)
         p = psutil.Process()
         if OPENBSD:
             try:
@@ -548,7 +548,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.system_time, athread[2])
 
     @retry_before_failing()
-    @skip_on_access_denied(only_if=OSX)
+    @skip_on_access_denied(only_if=MACOS)
     @unittest.skipIf(not HAS_THREADS, 'not supported')
     def test_threads_2(self):
         sproc = get_test_subprocess()
@@ -603,7 +603,7 @@ class TestProcess(unittest.TestCase):
             value = getattr(mem, name)
             self.assertGreaterEqual(value, 0, msg=(name, value))
             self.assertLessEqual(value, total, msg=(name, value, total))
-        if LINUX or WINDOWS or OSX:
+        if LINUX or WINDOWS or MACOS:
             self.assertGreaterEqual(mem.uss, 0)
         if LINUX:
             self.assertGreaterEqual(mem.pss, 0)
@@ -668,7 +668,7 @@ class TestProcess(unittest.TestCase):
         assert 0 <= ret <= 100, ret
         assert 0 <= ret <= 100, ret
         self.assertRaises(ValueError, p.memory_percent, memtype="?!?")
-        if LINUX or OSX or WINDOWS:
+        if LINUX or MACOS or WINDOWS:
             ret = p.memory_percent(memtype='uss')
             assert 0 <= ret <= 100, ret
             assert 0 <= ret <= 100, ret
@@ -705,7 +705,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(exe.replace(ver, ''),
                                      PYTHON_EXE.replace(ver, ''))
                 except AssertionError:
-                    # Tipically OSX. Really not sure what to do here.
+                    # Tipically MACOS. Really not sure what to do here.
                     pass
 
         out = sh([exe, "-c", "import os; print('hey')"])
@@ -825,8 +825,8 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(
                         os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
                 # XXX - going back to previous nice value raises
-                # AccessDenied on OSX
-                if not OSX:
+                # AccessDenied on MACOS
+                if not MACOS:
                     p.nice(0)
                     self.assertEqual(p.nice(), 0)
             except psutil.AccessDenied:
@@ -1059,6 +1059,7 @@ class TestProcess(unittest.TestCase):
             self.assertIsNone(p.parent())
 
     def test_children(self):
+        reap_children(recursive=True)
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
@@ -1316,7 +1317,7 @@ class TestProcess(unittest.TestCase):
         succeed_or_zombie_p_exc(zproc.kill)
 
         # ...its parent should 'see' it
-        # edit: not true on BSD and OSX
+        # edit: not true on BSD and MACOS
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
         # self.assertIn(zpid, descendants)
@@ -1326,9 +1327,9 @@ class TestProcess(unittest.TestCase):
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
         self.assertTrue(psutil.pid_exists(zpid))
-        if not TRAVIS and OSX:
+        if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
-            # Maybe they upgraded OSX version?
+            # Maybe they upgraded MACOS version?
             # https://travis-ci.org/giampaolo/psutil/jobs/310896404
             self.assertIn(zpid, psutil.pids())
             self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
@@ -1401,7 +1402,7 @@ class TestProcess(unittest.TestCase):
             d.pop("PSUTIL_TESTING", None)
             d.pop("PLAT", None)
             d.pop("HOME", None)
-            if OSX:
+            if MACOS:
                 d.pop("__CF_USER_TEXT_ENCODING", None)
                 d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
                 d.pop("VERSIONER_PYTHON_VERSION", None)

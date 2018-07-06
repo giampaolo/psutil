@@ -32,7 +32,7 @@ psutil currently supports the following platforms:
 
 - **Linux**
 - **Windows**
-- **OSX**,
+- **macOS**
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
@@ -235,7 +235,7 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, OSX, Windows
+    Availability: Linux, macOS, Windows
 
     .. versionadded:: 5.1.0
 
@@ -272,7 +272,7 @@ Memory
   - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
     multiple processes.
   - **slab** *(Linux)*: in-kernel data structures cache.
-  - **wired** *(BSD, OSX)*: memory that is marked to always stay in RAM. It is
+  - **wired** *(BSD, macOS)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
 
   The sum of **used** and **available** does not necessarily equal **total**.
@@ -345,7 +345,7 @@ Disks
   On Windows it is determined via
   `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`__
   and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
-  ``"unmounted"`` or ``"ramdisk"``. On OSX and BSD it is retrieved via
+  ``"unmounted"`` or ``"ramdisk"``. On macOS and BSD it is retrieved via
   `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
   `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
   script providing an example usage.
@@ -462,7 +462,7 @@ Network
   - **errout**: total number of errors while sending
   - **dropin**: total number of incoming packets which were dropped
   - **dropout**: total number of outgoing packets which were dropped (always 0
-    on OSX and BSD)
+    on macOS and BSD)
 
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
@@ -555,7 +555,7 @@ Network
    | ``"all"``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
-  On OSX and AIX this function requires root privileges.
+  On macOS and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.connections`.
   Also, see
   `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py>`__.
@@ -570,7 +570,7 @@ Network
      ...]
 
   .. note::
-    (OSX and AIX) :class:`psutil.AccessDenied` is always raised unless running
+    (macOS and AIX) :class:`psutil.AccessDenied` is always raised unless running
     as root. This is a limitation of the OS and ``lsof`` does the same.
 
   .. note::
@@ -698,9 +698,11 @@ Sensors
   See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux
+  Availability: Linux, macOS
 
   .. versionadded:: 5.1.0
+
+  .. versionchanged:: 5.5.0: added macOS support
 
   .. warning::
 
@@ -722,9 +724,11 @@ Sensors
   See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux
+  Availability: Linux, macOS
 
   .. versionadded:: 5.2.0
+
+  .. versionchanged:: 5.5.0: added macOS support
 
   .. warning::
 
@@ -768,7 +772,7 @@ Sensors
 
   .. versionadded:: 5.1.0
 
-  .. versionchanged:: 5.4.2 added OSX support
+  .. versionchanged:: 5.4.2 added macOS support
 
   .. warning::
 
@@ -993,11 +997,11 @@ Process class
   When accessing methods of this class always be  prepared to catch
   :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
   exceptions.
-  `hash() <http://docs.python.org/2/library/functions.html#hash>`__ builtin can
+  `hash() <https://docs.python.org/3/library/functions.html#hash>`__ builtin can
   be used against instances of this class in order to identify a process
   univocally over time (the hash is determined by mixing process PID
   and creation time). As such it can also be used with
-  `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`__.
+  `set()s <https://docs.python.org/3/library/stdtypes.html#types-set>`__.
 
   .. note::
 
@@ -1066,7 +1070,7 @@ Process class
     if you call all the methods together (best case scenario).
 
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | Linux                        | Windows                       | OSX                          | BSD                          | SunOS                    | AIX                      |
+    | Linux                        | Windows                       | macOS                        | BSD                          | SunOS                    | AIX                      |
     +==============================+===============================+==============================+==============================+==========================+==========================+
     | :meth:`cpu_num`              | :meth:`cpu_percent`           | :meth:`cpu_percent`          | :meth:`cpu_num`              | :meth:`name`             | :meth:`name`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1154,7 +1158,7 @@ Process class
     >>> psutil.Process().environ()
     {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
 
-    Availability: Linux, OSX, Windows, SunOS
+    Availability: Linux, macOS, Windows, SunOS
 
     .. versionadded:: 4.0.0
     .. versionchanged:: 5.3.0 added SunOS support
@@ -1410,7 +1414,7 @@ Process class
     Return a `(user, system, children_user, children_system)` named tuple
     representing the accumulated process time, in seconds (see
     `explanation <http://stackoverflow.com/questions/556405/>`__).
-    On Windows and OSX only *user* and *system* are filled, the others are
+    On Windows and macOS only *user* and *system* are filled, the others are
     set to ``0``.
     This is similar to
     `os.times() <http://docs.python.org//library/os.html#os.times>`__
@@ -1518,7 +1522,7 @@ Process class
     All numbers are expressed in bytes.
 
     +---------+---------+-------+---------+-----+------------------------------+
-    | Linux   | OSX     | BSD   | Solaris | AIX | Windows                      |
+    | Linux   | macOS   | BSD   | Solaris | AIX | Windows                      |
     +=========+=========+=======+=========+=====+==============================+
     | rss     | rss     | rss   | rss     | rss | rss (alias for ``wset``)     |
     +---------+---------+-------+---------+-----+------------------------------+
@@ -1578,9 +1582,9 @@ Process class
 
     - **dirty** *(Linux)*: the number of dirty pages.
 
-    - **pfaults** *(OSX)*: number of page faults.
+    - **pfaults** *(macOS)*: number of page faults.
 
-    - **pageins** *(OSX)*: number of actual pageins.
+    - **pageins** *(macOS)*: number of actual pageins.
 
     For on explanation of Windows fields rely on
     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
@@ -1604,7 +1608,7 @@ Process class
   .. method:: memory_full_info()
 
     This method returns the same information as :meth:`memory_info`, plus, on
-    some platform (Linux, OSX, Windows), also provides additional metrics
+    some platform (Linux, macOS, Windows), also provides additional metrics
     (USS, PSS and swap).
     The additional metrics provide a better representation of "effective"
     process memory consumption (in case of USS) as explained in detail in this
@@ -1615,7 +1619,7 @@ Process class
     On platforms where extra fields are not implemented this simply returns the
     same metrics as :meth:`memory_info`.
 
-    - **uss** *(Linux, OSX, Windows)*:
+    - **uss** *(Linux, macOS, Windows)*:
       aka "Unique Set Size", this is the memory which is unique to a process
       and which would be freed if the process was terminated right now.
 
@@ -1674,7 +1678,7 @@ Process class
     for an example application.
 
     +---------------+--------------+---------+-----------+--------------+
-    | Linux         |  OSX         | Windows | Solaris   | FreeBSD      |
+    | Linux         |  macOS       | Windows | Solaris   | FreeBSD      |
     +===============+==============+=========+===========+==============+
     | rss           | rss          | rss     | rss       | rss          |
     +---------------+--------------+---------+-----------+--------------+
@@ -1761,7 +1765,7 @@ Process class
       ``'r+'`` and ``'a+'``. There's no distinction between files opened in
       bynary or text mode (``"b"`` or ``"t"``).
     - **flags** (*Linux*): the flags which were passed to the underlying
-      `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
+      `os.open <https://docs.python.org/3/library/os.html#os.open>`__ C call
       when the file was opened (e.g.
       `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
       `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
@@ -2114,7 +2118,7 @@ Constants
 .. data:: POSIX
 .. data:: WINDOWS
 .. data:: LINUX
-.. data:: OSX
+.. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
 .. data:: OPENBSD
@@ -2127,6 +2131,13 @@ Constants
 
   .. versionadded:: 4.0.0
   .. versionchanged:: 5.4.0 added AIX
+
+.. data:: OSX
+
+  Alias for :const:`MACOS` (deprecated).
+
+  .. warning::
+    deprecated in version 5.5.0; use :const:`MACOS` instead.
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
@@ -2160,7 +2171,7 @@ Constants
 .. data:: STATUS_DEAD
 .. data:: STATUS_WAKE_KILL
 .. data:: STATUS_WAKING
-.. data:: STATUS_IDLE (OSX, FreeBSD)
+.. data:: STATUS_IDLE (macOS, FreeBSD)
 .. data:: STATUS_LOCKED (FreeBSD)
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
@@ -2316,7 +2327,7 @@ methods such as :meth:`Process.username` or :meth:`WindowsService.description`:
 
 * all strings are encoded by using the OS filesystem encoding
   (``sys.getfilesystemencoding()``) which varies depending on the platform
-  (e.g. "UTF-8" on OSX, "mbcs" on Win)
+  (e.g. "UTF-8" on macOS, "mbcs" on Win)
 * no API call is supposed to crash with ``UnicodeDecodeError``
 * instead, in case of badly encoded data returned by the OS, the following error handlers are used to replace the corrupted characters in the string:
     * Python 3: ``sys.getfilesystemencodeerrors()`` (PY 3.6+) or
@@ -2585,7 +2596,7 @@ FAQs
 
 * Q: Why do I get :class:`AccessDenied` for certain processes?
 * A: This may happen when you query processess owned by another user,
-  especially on `OSX <https://github.com/giampaolo/psutil/issues/883>`__ and
+  especially on `macOS <https://github.com/giampaolo/psutil/issues/883>`__ and
   Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
@@ -2600,7 +2611,7 @@ FAQs
 * Q: What about load average?
 * A: psutil does not expose any load average function as it's already available
   in python as
-  `os.getloadavg <https://docs.python.org/2/library/os.html#os.getloadavg>`__.
+  `os.getloadavg <https://docs.python.org/3/library/os.html#os.getloadavg>`__.
 
 Running tests
 =============
@@ -2624,6 +2635,10 @@ take a look at the
 Timeline
 ========
 
+- 2018-06-07:
+  `5.4.6 <https://pypi.org/project/psutil/5.4.6/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#546>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.5...release-5.4.6#files_bucket>`__
 - 2018-04-14:
   `5.4.5 <https://pypi.org/project/psutil/5.4.5/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#545>`__ -

@@ -8,7 +8,7 @@
 A clone of iotop (http://guichaz.free.fr/iotop/) showing real time
 disk I/O statistics.
 
-It works on Linux only (FreeBSD and OSX are missing support for IO
+It works on Linux only (FreeBSD and macOS are missing support for IO
 counters).
 It doesn't work on Windows as curses module is required.
 

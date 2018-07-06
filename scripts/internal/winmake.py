@@ -228,6 +228,13 @@ def wheel():
 
 
 @cmd
+def upload_wheels():
+    """Upload wheel files on PYPI."""
+    build()
+    sh("%s -m twine upload dist/*.whl" % PYTHON)
+
+
+@cmd
 def install_pip():
     """Install pip"""
     try:

@@ -18,7 +18,7 @@ PLATFORMS
 FEATURES
 ========
 
-- #371: sensors_temperatures() at least for OSX.
+- #371: sensors_temperatures() at least for macOS.
 
 - #669: Windows / net_if_addrs(): return broadcast addr.
 
@@ -27,7 +27,7 @@ FEATURES
 
 - #772: extended net_io_counters() metrics.
 
-- #900: wheels for OSX and Linux.
+- #900: wheels for macOS and Linux.
 
 - #922: extended net_io_stats() info.
 
@@ -51,7 +51,7 @@ FEATURES
   Linux: yes
   Others: ?
 
-- Process.threads(): thread names; patch for OSX available at:
+- Process.threads(): thread names; patch for macOS available at:
   https://code.google.com/p/plcrashreporter/issues/detail?id=65
   Sample code:
   https://github.com/janmojzis/pstree/blob/master/proc_kvm.c

@@ -13,7 +13,6 @@ $ python -m psutil.tests
 import contextlib
 import optparse
 import os
-import ssl
 import sys
 import tempfile
 try:
@@ -38,6 +37,7 @@ def install_pip():
     try:
         import pip  # NOQA
     except ImportError:
+        import ssl
         f = tempfile.NamedTemporaryFile(suffix='.py')
         with contextlib.closing(f):
             print("downloading %s to %s" % (GET_PIP_URL, f.name))

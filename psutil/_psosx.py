@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""OSX platform implementation."""
+"""macOS platform implementation."""
 
 import contextlib
 import errno
@@ -175,7 +175,7 @@ def cpu_stats():
 
 def cpu_freq():
     """Return CPU frequency.
-    On OSX per-cpu frequency is not supported.
+    On macOS per-cpu frequency is not supported.
     Also, the returned frequency never changes, see:
     https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
     """
@@ -239,8 +239,7 @@ def sensors_temperatures():
 
 
 def sensors_battery():
-    """Return battery information.
-    """
+    """Return battery information."""
     try:
         percent, minsleft, power_plugged = cext.sensors_battery()
     except NotImplementedError:
@@ -260,12 +259,9 @@ def sensors_fans():
     """Return fans speed information.
     """
     ret = collections.defaultdict(list)
-    try:
-        for key, value in cext.sensors_fans().items():
-            ret[key].append(_common.sfan(key, int(value)))
-    except (SystemError):
-        # Returns an empty dict if no fans were detected
-        pass
+    rawlist = cext.sensors_fans()
+    for fan in rawlist:
+        ret["Fans"].append(_common.sfan(fan[0], fan[1]))
     return dict(ret)
 
 
@@ -280,7 +276,7 @@ net_if_addrs = cext_posix.net_if_addrs
 
 def net_connections(kind='inet'):
     """System-wide network connections."""
-    # Note: on OSX this will fail with AccessDenied unless
+    # Note: on macOS this will fail with AccessDenied unless
     # the process is owned by root.
     ret = []
     for pid in pids():
@@ -343,16 +339,16 @@ def users():
 def pids():
     ls = cext.pids()
     if 0 not in ls:
-        # On certain OSX versions pids() C doesn't return PID 0 but
+        # On certain macOS versions pids() C doesn't return PID 0 but
         # "ps" does and the process is querable via sysctl():
         # https://travis-ci.org/giampaolo/psutil/jobs/309619941
         try:
             Process(0).create_time()
-            ls.append(0)
+            ls.insert(0, 0)
         except NoSuchProcess:
             pass
         except AccessDenied:
-            ls.append(0)
+            ls.insert(0, 0)
     return ls
 
 
@@ -373,6 +369,8 @@ def wrap_exceptions(fun):
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
+        except cext.ZombieProcessError:
+            raise ZombieProcess(self.pid, self._name, self._ppid)
     return wrapper
 
 
@@ -596,8 +594,7 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
-        with catch_zombie(self):
-            rawlist = cext.proc_threads(self.pid)
+        rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = _common.pthread(thread_id, utime, stime)
@@ -606,5 +603,4 @@ class Process(object):
 
     @wrap_exceptions
     def memory_maps(self):
-        with catch_zombie(self):
-            return cext.proc_memory_maps(self.pid)
+        return cext.proc_memory_maps(self.pid)
