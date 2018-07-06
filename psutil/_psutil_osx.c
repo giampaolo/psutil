@@ -1027,46 +1027,6 @@ psutil_smc_get_temperature(PyObject *self, PyObject *args) {
 
 
 /*
- * Return a Python list of tuples of fan label and speed
- */
-static PyObject *
-psutil_sensors_fans(PyObject *self, PyObject *args) {
-    int key;
-    int speed;
-    char fan[7];
-    int fan_count;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count < 0)
-        fan_count = 0;
-
-    for (key = 0; key < fan_count; key++) {
-        sprintf(fan, "Fan %d", key);
-        speed = SMCGetFanSpeed(key);
-        if (speed < 0)
-            continue;
-        py_tuple = Py_BuildValue("(si)", fan, speed);
-        if (!py_tuple)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_XDECREF(py_tuple);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
-
-/*
  * Return a list of tuples including device, mount point and fs type
  * for all partitions mounted on the system.
  */
