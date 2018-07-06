@@ -117,7 +117,7 @@ def get_procfs_path():
 
 def virtual_memory():
     total, avail, free, pinned, inuse = cext.virtual_mem()
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 
 
@@ -125,7 +125,7 @@ def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, free, sin, sout = cext.swap_mem()
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
 

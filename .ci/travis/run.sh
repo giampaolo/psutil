@@ -5,7 +5,7 @@ set -x
 
 PYVER=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
 
-# setup OSX
+# setup macOS
 if [[ "$(uname -s)" == 'Darwin' ]]; then
     if which pyenv > /dev/null; then
         eval "$(pyenv init -)"

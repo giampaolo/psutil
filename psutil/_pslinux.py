@@ -149,7 +149,7 @@ TCP_STATUSES = {
 # psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared'])
+              'active', 'inactive', 'buffers', 'cached', 'shared', 'slab'])
 # psutil.disk_io_counters()
 sdiskio = namedtuple(
     'sdiskio', ['read_count', 'write_count',
@@ -441,6 +441,11 @@ def virtual_memory():
             inactive = 0
             missing_fields.append('inactive')
 
+    try:
+        slab = mems[b"Slab:"]
+    except KeyError:
+        slab = 0
+
     used = total - free - cached - buffers
     if used < 0:
         # May be symptomatic of running within a LCX container where such
@@ -471,7 +476,7 @@ def virtual_memory():
     if avail > total:
         avail = free
 
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
 
     # Warn about missing metrics which are set to 0.
     if missing_fields:
@@ -481,7 +486,7 @@ def virtual_memory():
         warnings.warn(msg, RuntimeWarning)
 
     return svmem(total, avail, percent, used, free,
-                 active, inactive, buffers, cached, shared)
+                 active, inactive, buffers, cached, shared, slab)
 
 
 def swap_memory():
@@ -504,7 +509,7 @@ def swap_memory():
         free *= unit_multiplier
 
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     # get pgin/pgouts
     try:
         f = open_binary("%s/vmstat" % get_procfs_path())
@@ -1220,9 +1225,13 @@ def sensors_battery():
                 return int(ret) if ret.isdigit() else ret
         return None
 
-    root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
-    if not os.path.exists(root):
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT')]
+    if not bats:
         return None
+    # Get the first available battery. Usually this is "BAT0", except
+    # some rare exceptions:
+    # https://github.com/giampaolo/psutil/issues/1238
+    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
 
     # Base metrics.
     energy_now = multi_cat(
@@ -1371,9 +1380,8 @@ def ppid_map():
                 data = f.read()
         except EnvironmentError as err:
             # Note: we should be able to access /stat for all processes
-            # so we won't bump into EPERM, which is good.
-            if err.errno not in (errno.ENOENT, errno.ESRCH,
-                                 errno.EPERM, errno.EACCES):
+            # aka it's unlikely we'll bump into EPERM, which is good.
+            if err.errno not in (errno.ENOENT, errno.ESRCH):
                 raise
         else:
             rpar = data.rfind(b')')

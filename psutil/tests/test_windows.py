@@ -69,6 +69,45 @@ def wrap_exceptions(fun):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestCpuAPIs(unittest.TestCase):
+
+    @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
+                     'NUMBER_OF_PROCESSORS env var is not available')
+    def test_cpu_count_vs_NUMBER_OF_PROCESSORS(self):
+        # Will likely fail on many-cores systems:
+        # https://stackoverflow.com/questions/31209256
+        num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
+        self.assertEqual(num_cpus, psutil.cpu_count())
+
+    def test_cpu_count_vs_GetSystemInfo(self):
+        # Will likely fail on many-cores systems:
+        # https://stackoverflow.com/questions/31209256
+        sys_value = win32api.GetSystemInfo()[5]
+        psutil_value = psutil.cpu_count()
+        self.assertEqual(sys_value, psutil_value)
+
+    def test_cpu_count_logical_vs_wmi(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+
+    def test_cpu_count_phys_vs_wmi(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+
+    def test_cpu_count_vs_cpu_times(self):
+        self.assertEqual(psutil.cpu_count(),
+                         len(psutil.cpu_times(percpu=True)))
+
+    def test_cpu_freq(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
+        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
+
+
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
@@ -80,23 +119,6 @@ class TestSystemAPIs(unittest.TestCase):
             if nic not in out:
                 self.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
-
-    @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
-                     'NUMBER_OF_PROCESSORS env var is not available')
-    def test_cpu_count(self):
-        num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
-        self.assertEqual(num_cpus, psutil.cpu_count())
-
-    def test_cpu_count_2(self):
-        sys_value = win32api.GetSystemInfo()[5]
-        psutil_value = psutil.cpu_count()
-        self.assertEqual(sys_value, psutil_value)
-
-    def test_cpu_freq(self):
-        w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
-        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]

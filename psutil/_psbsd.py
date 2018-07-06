@@ -188,7 +188,7 @@ def virtual_memory():
                     shared = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared, wired)
 
@@ -196,7 +196,7 @@ def virtual_memory():
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = cext.swap_mem()
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
 

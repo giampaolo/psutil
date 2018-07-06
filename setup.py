@@ -28,29 +28,39 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 # ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
+from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import LINUX  # NOQA
+from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
 from _common import OPENBSD  # NOQA
-from _common import OSX  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
-from _common import AIX  # NOQA
 
 
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
-if WINDOWS:
-    macros.append(("PSUTIL_WINDOWS", 1))
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
 sources = ['psutil/_psutil_common.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
+
+tests_require = []
+if sys.version_info[:2] <= (2, 6):
+    tests_require.append('unittest2')
+if sys.version_info[:2] <= (2, 7):
+    tests_require.append('mock')
+if sys.version_info[:2] <= (3, 2):
+    tests_require.append('ipaddress')
+
+extras_require = {}
+if sys.version_info[:2] <= (3, 3):
+    extras_require.update(dict(enum='enum34'))
 
 
 def get_version():
@@ -105,6 +115,7 @@ if WINDOWS:
         msg += "Visual Studio and may also (kind of) work though"
         warnings.warn(msg, UserWarning)
 
+    macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
         # be nice to mingw, see:
         # http://www.mingw.org/wiki/Use_more_recent_defined_functions
@@ -134,13 +145,14 @@ if WINDOWS:
         # extra_link_args=["/DEBUG"]
     )
 
-elif OSX:
+elif MACOS:
     macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
         'psutil._psutil_osx',
         sources=sources + [
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
+            'psutil/arch/osx/smc.c',
         ],
         define_macros=macros,
         extra_link_args=[
@@ -240,6 +252,7 @@ elif AIX:
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
         define_macros=macros)
+
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
@@ -328,14 +341,8 @@ def main():
         kwargs.update(
             python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
             test_suite="psutil.tests.get_suite",
-            tests_require=[
-                'ipaddress; python_version < "3.3"',
-                'mock; python_version < "3.3"',
-                'unittest2; python_version < "2.7"',
-            ],
-            extras_require={
-                'enum': 'enum34; python_version < "3.4"',
-            },
+            tests_require=tests_require,
+            extras_require=extras_require,
             zip_safe=False,
         )
     setup(**kwargs)

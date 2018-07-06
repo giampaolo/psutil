@@ -42,8 +42,8 @@ PY3 = sys.version_info[0] == 3
 
 __all__ = [
     # constants
-    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
-    'WINDOWS',
+    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
+    'SUNOS', 'WINDOWS',
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
@@ -59,7 +59,7 @@ __all__ = [
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
-    'sdiskusage', 'snetio', 'snic', 'snicstats', 'sswap', 'suser',
+    'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
@@ -75,12 +75,13 @@ __all__ = [
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith("linux")
-OSX = sys.platform.startswith("darwin")
+MACOS = sys.platform.startswith("darwin")
+OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
-SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+SUNOS = sys.platform.startswith(("sunos", "solaris"))
 AIX = sys.platform.startswith("aix")
 
 
@@ -99,7 +100,7 @@ STATUS_ZOMBIE = "zombie"
 STATUS_DEAD = "dead"
 STATUS_WAKE_KILL = "wake-kill"
 STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # FreeBSD, OSX
+STATUS_IDLE = "idle"  # FreeBSD, macOS
 STATUS_LOCKED = "locked"  # FreeBSD
 STATUS_WAITING = "waiting"  # FreeBSD
 STATUS_SUSPENDED = "suspended"  # NetBSD
@@ -182,7 +183,8 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
 # psutil.net_if_addrs()
-snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
+snicaddr = namedtuple('snicaddr',
+                      ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
 snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
@@ -195,7 +197,7 @@ shwtemp = namedtuple(
     'shwtemp', ['label', 'current', 'high', 'critical'])
 # psutil.sensors_battery()
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
-# psutil.sensors_battery()
+# psutil.sensors_fans()
 sfan = namedtuple('sfan', ['label', 'current'])
 
 # --- for Process methods
@@ -261,14 +263,14 @@ del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 # ===================================================================
 
 
-def usage_percent(used, total, _round=None):
+def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
         ret = (used / total) * 100
     except ZeroDivisionError:
         ret = 0.0 if isinstance(used, float) or isinstance(total, float) else 0
-    if _round is not None:
-        return round(ret, _round)
+    if round_ is not None:
+        return round(ret, round_)
     else:
         return ret
 

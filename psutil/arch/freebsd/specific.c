@@ -273,7 +273,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int mib[4];
     int ret;
     size_t size;
-    const char *encoding_errs;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -516,12 +515,17 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
         goto error;
 
-    return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+    int pagesize = getpagesize();
+
+    return Py_BuildValue(
+        "(KKKII)",
+        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
+        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
+        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
+                                kvmsw[0].ksw_used * pagesize,
+        swapin + swapout,  // swap in
+        nodein + nodeout  // swap out
+    );
 
 error:
     return PyErr_SetFromErrno(PyExc_OSError);
@@ -535,7 +539,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
-    const char *encoding_errs;
     PyObject *py_path = NULL;
 
     int i, cnt;

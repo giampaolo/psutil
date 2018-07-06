@@ -36,7 +36,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
-from psutil import OSX
+from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -54,7 +54,9 @@ else:
 try:
     from unittest import mock  # py3
 except ImportError:
-    import mock  # NOQA - requires "pip install mock"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import mock  # NOQA - requires "pip install mock"
 
 if sys.version_info >= (3, 4):
     import enum
@@ -123,7 +125,7 @@ NO_RETRIES = 10
 # bytes tolerance for system-wide memory related tests
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
-GLOBAL_TIMEOUT = 3
+GLOBAL_TIMEOUT = 3 if TRAVIS or APPVEYOR else 0.5
 # test output verbosity
 VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 # be more tolerant if we're on travis / appveyor in order to avoid
@@ -160,7 +162,7 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_THREADS = hasattr(psutil.Process, "threads")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
-HAS_BATTERY = HAS_SENSORS_BATTERY and psutil.sensors_battery()
+HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 
@@ -177,7 +179,7 @@ def _get_py_exe():
         else:
             return exe
 
-    if OSX:
+    if MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -355,7 +357,7 @@ def create_proc_children_pair():
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
     data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    os.remove(_TESTFN2)
+    safe_rmpath(_TESTFN2)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
@@ -365,7 +367,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
+    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if MACOS else TESTFN
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -480,7 +482,9 @@ def reap_children(recursive=False):
         try:
             subp.terminate()
         except OSError as err:
-            if err.errno != errno.ESRCH:
+            if WINDOWS and err.errno == 6:  # "invalid handle"
+                pass
+            elif err.errno != errno.ESRCH:
                 raise
         if subp.stdout:
             subp.stdout.close()
@@ -659,7 +663,7 @@ def wait_for_file(fname, delete=True, empty=False):
     if not empty:
         assert data
     if delete:
-        os.remove(fname)
+        safe_rmpath(fname)
     return data
 
 
@@ -681,12 +685,34 @@ def call_until(fun, expr):
 
 def safe_rmpath(path):
     "Convenience function for removing temporary test files or dirs"
+    def retry_fun(fun):
+        # On Windows it could happen that the file or directory has
+        # open handles or references preventing the delete operation
+        # to succeed immediately, so we retry for a while. See:
+        # https://bugs.python.org/issue33240
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            try:
+                return fun()
+            except WindowsError as _:
+                err = _
+                if err.errno != errno.ENOENT:
+                    raise
+                else:
+                    warn("ignoring %s" % (str(err)))
+                    time.sleep(0.01)
+        raise err
+
     try:
         st = os.stat(path)
         if stat.S_ISDIR(st.st_mode):
-            os.rmdir(path)
+            fun = functools.partial(shutil.rmtree, path)
         else:
-            os.remove(path)
+            fun = functools.partial(os.remove, path)
+        if POSIX:
+            fun()
+        else:
+            retry_fun(fun)
     except OSError as err:
         if err.errno != errno.ENOENT:
             raise

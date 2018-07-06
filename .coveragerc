@@ -21,7 +21,7 @@ exclude_lines =
     if LITTLE_ENDIAN:
     if NETBSD
     if OPENBSD
-    if OSX
+    if MACOS
     if ppid_map is None:
     if PY3:
     if SUNOS

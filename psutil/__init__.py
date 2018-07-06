@@ -10,7 +10,7 @@ sensors) in Python. Supported platforms:
 
  - Linux
  - Windows
- - OSX
+ - macOS
  - FreeBSD
  - OpenBSD
  - NetBSD
@@ -78,9 +78,10 @@ from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
+from ._common import MACOS
 from ._common import NETBSD  # NOQA
 from ._common import OPENBSD  # NOQA
-from ._common import OSX
+from ._common import OSX  # deprecated alias
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
@@ -151,7 +152,7 @@ elif WINDOWS:
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
 
-elif OSX:
+elif MACOS:
     from . import _psosx as _psplatform
 
 elif BSD:
@@ -199,8 +200,8 @@ __all__ = [
 
     "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
-    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
-    "WINDOWS", "AIX",
+    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
+    "SUNOS", "WINDOWS", "AIX",
 
     # classes
     "Process", "Popen",
@@ -218,7 +219,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.4.4"
+__version__ = "5.4.6"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
@@ -265,13 +266,9 @@ else:
         ret = {}
         for pid in pids():
             try:
-                proc = _psplatform.Process(pid)
-                ppid = proc.ppid()
-            except (NoSuchProcess, AccessDenied):
-                # Note: AccessDenied is unlikely to happen.
+                ret[pid] = _psplatform.Process(pid).ppid()
+            except (NoSuchProcess, ZombieProcess):
                 pass
-            else:
-                ret[pid] = ppid
         return ret
 
 
@@ -827,7 +824,7 @@ class Process(object):
             """
             return self._proc.cpu_num()
 
-    # Linux, OSX and Windows only
+    # Linux, macOS and Windows only
     if hasattr(_psplatform.Process, "environ"):
 
         def environ(self):
@@ -1031,7 +1028,7 @@ class Process(object):
         namedtuple representing the accumulated process time, in
         seconds.
         This is similar to os.times() but per-process.
-        On OSX and Windows children_user and children_system are
+        On macOS and Windows children_user and children_system are
         always set to 0.
         """
         return self._proc.cpu_times()
@@ -1053,7 +1050,7 @@ class Process(object):
 
     def memory_full_info(self):
         """This method returns the same information as memory_info(),
-        plus, on some platform (Linux, OSX, Windows), also provides
+        plus, on some platform (Linux, macOS, Windows), also provides
         additional metrics (USS, PSS and swap).
         The additional metrics provide a better representation of actual
         process memory usage.
@@ -1902,9 +1899,9 @@ def virtual_memory():
      - used:
         memory used, calculated differently depending on the platform and
         designed for informational purposes only:
-        OSX: active + inactive + wired
+        macOS: active + inactive + wired
         BSD: active + wired + cached
-        LINUX: total - free
+        Linux: total - free
 
      - free:
        memory not being used at all (zeroed) that is readily available;
@@ -1922,10 +1919,10 @@ def virtual_memory():
      - buffers (BSD, Linux):
        cache for things like file system metadata.
 
-     - cached (BSD, OSX):
+     - cached (BSD, macOS):
        cache for various things.
 
-     - wired (OSX, BSD):
+     - wired (macOS, BSD):
        memory that is marked to always stay in RAM. It is never moved to disk.
 
      - shared (BSD):
@@ -2050,7 +2047,7 @@ def net_io_counters(pernic=False, nowrap=True):
      - errout:       total number of errors while sending
      - dropin:       total number of incoming packets which were dropped
      - dropout:      total number of outgoing packets which were dropped
-                     (always 0 on OSX and BSD)
+                     (always 0 on macOS and BSD)
 
     If *pernic* is True return the same information for every
     network interface installed on the system as a dictionary
@@ -2106,7 +2103,7 @@ def net_connections(kind='inet'):
     | all        | the sum of all the possible families and protocols |
     +------------+----------------------------------------------------+
 
-    On OSX this function requires root privileges.
+    On macOS this function requires root privileges.
     """
     return _psplatform.net_connections(kind)
 
@@ -2155,7 +2152,7 @@ def net_if_addrs():
             separator = ":" if POSIX else "-"
             while addr.count(separator) < 5:
                 addr += "%s00" % separator
-        ret[name].append(_common.snic(fam, addr, mask, broadcast, ptp))
+        ret[name].append(_common.snicaddr(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 
 
@@ -2179,7 +2176,7 @@ def net_if_stats():
 # =====================================================================
 
 
-# Linux
+# Linux, macOS
 if hasattr(_psplatform, "sensors_temperatures"):
 
     def sensors_temperatures(fahrenheit=False):
@@ -2217,7 +2214,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
     __all__.append("sensors_temperatures")
 
 
-# Linux
+# Linux, macOS
 if hasattr(_psplatform, "sensors_fans"):
 
     def sensors_fans():
@@ -2230,7 +2227,7 @@ if hasattr(_psplatform, "sensors_fans"):
     __all__.append("sensors_fans")
 
 
-# Linux, Windows, FreeBSD, OSX
+# Linux, Windows, FreeBSD, macOS
 if hasattr(_psplatform, "sensors_battery"):
 
     def sensors_battery():

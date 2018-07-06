@@ -25,8 +25,8 @@ import time
 import psutil
 import psutil._common
 from psutil import LINUX
+from psutil import MACOS
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -176,7 +176,7 @@ class TestMemLeak(unittest.TestCase):
     def _get_mem():
         # By using USS memory it seems it's less likely to bump
         # into false positives.
-        if LINUX or WINDOWS or OSX:
+        if LINUX or WINDOWS or MACOS:
             return thisproc.memory_full_info().uss
         else:
             return thisproc.memory_info().rss
@@ -344,8 +344,8 @@ class TestProcessObjectLeaks(TestMemLeak):
         with open(TESTFN, 'w'):
             self.execute(self.proc.open_files)
 
-    # OSX implementation is unbelievably slow
-    @unittest.skipIf(OSX, "too slow on OSX")
+    # MACOS implementation is unbelievably slow
+    @unittest.skipIf(MACOS, "too slow on MACOS")
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @skip_if_linux()
     def test_memory_maps(self):
@@ -530,7 +530,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     @unittest.skipIf(LINUX,
                      "worthless on Linux (pure python)")
-    @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
+    @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         with create_sockets():
             self.execute(psutil.net_connections)

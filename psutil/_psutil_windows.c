@@ -38,10 +38,6 @@
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
 
-#ifdef __MINGW32__
-#include "arch/windows/glpi.h"
-#endif
-
 
 /*
  * ============================================================================
@@ -63,8 +59,13 @@
     Py_DECREF(_SOCK_STREAM);\
     Py_DECREF(_SOCK_DGRAM);
 
-typedef BOOL (WINAPI *LPFN_GLPI)
-    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
+#if (_WIN32_WINNT >= 0x0601)  // Windows  7
+typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
+    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnLength);
+static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
+#endif
 
 // Fix for mingw32, see:
 // https://github.com/giampaolo/psutil/issues/351#c2
@@ -196,11 +197,53 @@ psutil_get_nic_addresses() {
 
 
 /*
+ * Return the number of logical, active CPUs. Return 0 if undetermined.
+ * See discussion at: https://bugs.python.org/issue33166#msg314631
+ */
+unsigned int
+psutil_get_num_cpus(int fail_on_err) {
+    unsigned int ncpus = 0;
+    SYSTEM_INFO sysinfo;
+    static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
+    HINSTANCE hKernel32;
+
+    // GetActiveProcessorCount is available only on 64 bit versions
+    // of Windows from Windows 7 onward.
+    // Windows Vista 64 bit and Windows XP doesn't have it.
+    hKernel32 = GetModuleHandleW(L"KERNEL32");
+    _GetActiveProcessorCount = (void*)GetProcAddress(
+        hKernel32, "GetActiveProcessorCount");
+
+    if (_GetActiveProcessorCount != NULL) {
+        ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+        if ((ncpus == 0) && (fail_on_err == 1)) {
+            PyErr_SetFromWindowsErr(0);
+        }
+    }
+    else {
+        psutil_debug("GetActiveProcessorCount() not available; "
+                     "using GetNativeSystemInfo()");
+        GetNativeSystemInfo(&sysinfo);
+        ncpus = (unsigned int)sysinfo.dwNumberOfProcessors;
+        if ((ncpus == 0) && (fail_on_err == 1)) {
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "GetNativeSystemInfo() failed to retrieve CPU count");
+        }
+    }
+    return ncpus;
+}
+
+
+/*
  * ============================================================================
  * Public Python API
  * ============================================================================
  */
 
+// Raised by Process.wait().
+static PyObject *TimeoutExpired;
+static PyObject *TimeoutAbandoned;
 
 static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
 
@@ -400,20 +443,33 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     retVal = WaitForSingleObject(hProcess, timeout);
     Py_END_ALLOW_THREADS
 
+    // handle return code
     if (retVal == WAIT_FAILED) {
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
     if (retVal == WAIT_TIMEOUT) {
         CloseHandle(hProcess);
-        return Py_BuildValue("l", WAIT_TIMEOUT);
+        PyErr_SetString(TimeoutExpired,
+                        "WaitForSingleObject() returned WAIT_TIMEOUT");
+        return NULL;
+    }
+    if (retVal == WAIT_ABANDONED) {
+        psutil_debug("WaitForSingleObject() -> WAIT_ABANDONED");
+        CloseHandle(hProcess);
+        PyErr_SetString(TimeoutAbandoned,
+                        "WaitForSingleObject() returned WAIT_ABANDONED");
+        return NULL;
     }
 
+    // WaitForSingleObject() returned WAIT_OBJECT_0. It means the
+    // process is gone so we can get its process exit code. The PID
+    // may still stick around though but we'll handle that from Python.
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
-
     CloseHandle(hProcess);
 
 #if PY_MAJOR_VERSION >= 3
@@ -537,55 +593,77 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
 }
 
 
-
 /*
- * Return the number of logical CPUs.
+ * Return the number of active, logical CPUs.
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    SYSTEM_INFO system_info;
-    system_info.dwNumberOfProcessors = 0;
+    unsigned int ncpus;
 
-    GetSystemInfo(&system_info);
-    if (system_info.dwNumberOfProcessors == 0)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
+    ncpus = psutil_get_num_cpus(0);
+    if (ncpus != 0)
+        return Py_BuildValue("I", ncpus);
     else
-        return Py_BuildValue("I", system_info.dwNumberOfProcessors);
+        Py_RETURN_NONE;  // mimick os.cpu_count()
 }
 
 
 /*
- * Return the number of physical CPU cores.
+ * Return the number of physical CPU cores (hyper-thread CPUs count
+ * is excluded).
  */
+#if (_WIN32_WINNT < 0x0601)  // < Windows 7 (namely Vista and XP)
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    LPFN_GLPI glpi;
+    // Note: we may have used GetLogicalProcessorInformation()
+    // but I don't want to prolong support for Windows XP and Vista.
+    // On such old systems psutil will compile but this API will
+    // just return None.
+    psutil_debug("Win < 7; cpu_count_phys() forced to None");
+    Py_RETURN_NONE;
+}
+#else  // Windows >= 7
+static PyObject *
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    int ncpus = 0;
+    DWORD ncpus = 0;
 
-    glpi = (LPFN_GLPI)GetProcAddress(GetModuleHandle(TEXT("kernel32")),
-                                     "GetLogicalProcessorInformation");
-    if (glpi == NULL)
+    // GetLogicalProcessorInformationEx() is available from Windows 7
+    // onward. Differently from GetLogicalProcessorInformation()
+    // it supports process groups, meaning this is able to report more
+    // than 64 CPUs. See:
+    // https://bugs.python.org/issue33166
+    _GetLogicalProcessorInformationEx = \
+        (PFN_GETLOGICALPROCESSORINFORMATIONEX)GetProcAddress(
+            GetModuleHandle(TEXT("kernel32")),
+                            "GetLogicalProcessorInformationEx");
+    if (_GetLogicalProcessorInformationEx == NULL) {
+        psutil_debug("failed loading GetLogicalProcessorInformationEx()");
         goto return_none;
+    }
 
     while (1) {
-        rc = glpi(buffer, &length);
+        rc = _GetLogicalProcessorInformationEx(
+            RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                if (buffer)
+                if (buffer) {
                     free(buffer);
-                buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(
-                    length);
+                }
+                buffer = \
+                    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(length);
                 if (NULL == buffer) {
                     PyErr_NoMemory();
                     return NULL;
                 }
             }
             else {
+                psutil_debug("GetLogicalProcessorInformationEx() returned ",
+                             GetLastError());
                 goto return_none;
             }
         }
@@ -595,25 +673,30 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     }
 
     ptr = buffer;
-    while (offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= length) {
-        if (ptr->Relationship == RelationProcessorCore)
+    while (ptr->Size > 0 && offset + ptr->Size <= length) {
+        if (ptr->Relationship == RelationProcessorCore) {
             ncpus += 1;
-        offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-        ptr++;
+        }
+        offset += ptr->Size;
+        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)\
+            (((char*)ptr) + ptr->Size);
     }
 
     free(buffer);
-    if (ncpus == 0)
-        goto return_none;
-    else
-        return Py_BuildValue("i", ncpus);
+    if (ncpus != 0) {
+        return Py_BuildValue("I", ncpus);
+    }
+    else {
+        psutil_debug("GetLogicalProcessorInformationEx() count was 0");
+        Py_RETURN_NONE;  // mimick os.cpu_count()
+    }
 
 return_none:
-    // mimic os.cpu_count()
     if (buffer != NULL)
         free(buffer);
     Py_RETURN_NONE;
 }
+#endif
 
 
 /*
@@ -839,7 +922,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
         goto done;
     }
 
-    info_array_size = tmp_size + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
+    info_array_size = tmp_size + \
+        ((DWORD)entries * sizeof(PSAPI_WORKING_SET_BLOCK));
     info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
     if (!info_array) {
         PyErr_NoMemory();
@@ -940,8 +1024,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-    SYSTEM_INFO si;
     UINT i;
+    unsigned int ncpus;
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -961,14 +1045,15 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // retrives number of processors
-    GetSystemInfo(&si);
+    // retrieves number of processors
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        goto error;
 
     // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
     sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-           malloc(si.dwNumberOfProcessors * \
-                  sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+           malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -978,8 +1063,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        si.dwNumberOfProcessors * sizeof
-            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
@@ -989,7 +1073,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // computes system global times summing each
     // processor value
     idle = user = kernel = interrupt = dpc = 0;
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         py_tuple = NULL;
         user = (double)((HI_T * sppi[i].UserTime.HighPart) +
                        (LO_T * sppi[i].UserTime.LowPart));
@@ -1321,9 +1405,9 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG nameSize;
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
-    PyObject *py_username;
-    PyObject *py_domain;
-    PyObject *py_tuple;
+    PyObject *py_username = NULL;
+    PyObject *py_domain = NULL;
+    PyObject *py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -2365,7 +2449,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int devNum;
     int i;
     size_t ioctrlSize;
-    BOOL WINAPI ret;
+    BOOL ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
 
@@ -2847,7 +2931,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
                 (double)process->UserTime.LowPart * LO_T;
     kernel_time = (double)process->KernelTime.HighPart * HI_T + \
                     (double)process->KernelTime.LowPart * LO_T;
-    
+
     // Convert the LARGE_INTEGER union to a Unix time.
     // It's the best I could find by googling and borrowing code here
     // and there. The time returned has a precision of 1 second.
@@ -2941,7 +3025,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
-    PVOID previousAllocationBase;
+    ULONGLONG previousAllocationBase;
     WCHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
@@ -3386,7 +3470,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
-    SYSTEM_INFO si;
+    unsigned int ncpus;
     UINT i;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
@@ -3404,13 +3488,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // retrives number of processors
-    GetSystemInfo(&si);
+    // retrieves number of processors
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        goto error;
 
     // get syscalls / ctx switches
     spi = (_SYSTEM_PERFORMANCE_INFORMATION *) \
-           malloc(si.dwNumberOfProcessors * \
-                  sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
+           malloc(ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
     if (spi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3418,7 +3503,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
-        si.dwNumberOfProcessors * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
@@ -3427,8 +3512,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     // get DPCs
     InterruptInformation = \
-        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) *
-               si.dwNumberOfProcessors);
+        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus);
     if (InterruptInformation == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3437,20 +3521,19 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
-        si.dwNumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION),
+        ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         dpcs += InterruptInformation[i].DpcCount;
     }
 
     // get interrupts
     sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-        malloc(si.dwNumberOfProcessors * \
-               sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+        malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -3459,15 +3542,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
-        si.dwNumberOfProcessors * sizeof
-            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
-    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+    for (i = 0; i < ncpus; i++) {
         interrupts += sppi[i].InterruptCount;
     }
 
@@ -3508,19 +3590,15 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     LPBYTE pBuffer = NULL;
     ULONG current;
     ULONG max;
-    unsigned int num_cpus;
-    SYSTEM_INFO system_info;
-    system_info.dwNumberOfProcessors = 0;
+    unsigned int ncpus;
 
     // Get the number of CPUs.
-    GetSystemInfo(&system_info);
-    if (system_info.dwNumberOfProcessors == 0)
-        num_cpus = 1;
-    else
-        num_cpus = system_info.dwNumberOfProcessors;
+    ncpus = psutil_get_num_cpus(1);
+    if (ncpus == 0)
+        return NULL;
 
     // Allocate size.
-    size = num_cpus * sizeof(PROCESSOR_POWER_INFORMATION);
+    size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
     pBuffer = (BYTE*)LocalAlloc(LPTR, size);
     if (! pBuffer)
         return PyErr_SetFromWindowsErr(0);
@@ -3768,6 +3846,18 @@ void init_psutil_windows(void)
         INITERROR;
     }
 
+    // Exceptions.
+    TimeoutExpired = PyErr_NewException(
+        "_psutil_windows.TimeoutExpired", NULL, NULL);
+    Py_INCREF(TimeoutExpired);
+    PyModule_AddObject(module, "TimeoutExpired", TimeoutExpired);
+
+    TimeoutAbandoned = PyErr_NewException(
+        "_psutil_windows.TimeoutAbandoned", NULL, NULL);
+    Py_INCREF(TimeoutAbandoned);
+    PyModule_AddObject(module, "TimeoutAbandoned", TimeoutAbandoned);
+
+    // version constant
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     // process status constants

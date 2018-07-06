@@ -23,9 +23,9 @@ from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -268,8 +268,11 @@ class TestSystemAPIs(unittest.TestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
-        self.assertGreaterEqual(physical, 1)
-        self.assertGreaterEqual(logical, physical)
+        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
+            self.assertIsNone(physical)
+        else:
+            self.assertGreaterEqual(physical, 1)
+            self.assertGreaterEqual(logical, physical)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -511,7 +514,7 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and OSX and err.errno == errno.EIO:
+                    if TRAVIS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
@@ -627,7 +630,7 @@ class TestSystemAPIs(unittest.TestCase):
                 elif addr.ptp:
                     self.assertIsNone(addr.broadcast)
 
-        if BSD or OSX or SUNOS:
+        if BSD or MACOS or SUNOS:
             if hasattr(socket, "AF_LINK"):
                 self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
         elif LINUX:
@@ -771,7 +774,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(ls), psutil.cpu_count())
 
     def test_os_constants(self):
-        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+        names = ["POSIX", "WINDOWS", "LINUX", "MACOS", "FREEBSD", "OPENBSD",
                  "NETBSD", "BSD", "SUNOS"]
         for name in names:
             self.assertIsInstance(getattr(psutil, name), bool, msg=name)
@@ -796,8 +799,8 @@ class TestSystemAPIs(unittest.TestCase):
                 assert psutil.SUNOS
                 names.remove("SUNOS")
             elif "darwin" in sys.platform.lower():
-                assert psutil.OSX
-                names.remove("OSX")
+                assert psutil.MACOS
+                names.remove("MACOS")
         else:
             assert psutil.WINDOWS
             assert not psutil.POSIX

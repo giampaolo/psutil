@@ -24,27 +24,37 @@ import sys
 import tempfile
 
 
-PYTHON = os.getenv('PYTHON', sys.executable)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
+if APPVEYOR:
+    PYTHON = sys.executable
+else:
+    PYTHON = os.getenv('PYTHON', sys.executable)
 TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
+HERE = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 DEPS = [
     "coverage",
     "flake8",
-    "ipaddress",
-    "mock",
     "nose",
     "pdbpp",
     "perf",
     "pip",
-    "pypiwin32",
+    "pypiwin32==219" if sys.version_info[:2] <= (3, 4) else "pypiwin32",
     "pyreadline",
     "setuptools",
-    "unittest2",
     "wheel",
     "wmi",
     "requests"
 ]
+if sys.version_info[:2] <= (2, 6):
+    DEPS.append('unittest2')
+if sys.version_info[:2] <= (2, 7):
+    DEPS.append('mock')
+if sys.version_info[:2] <= (3, 2):
+    DEPS.append('ipaddress')
+
 _cmds = {}
 if PY3:
     basestring = str
@@ -211,10 +221,17 @@ def build():
 
 
 @cmd
-def build_wheel():
+def wheel():
     """Create wheel file."""
     build()
     sh("%s setup.py bdist_wheel" % PYTHON)
+
+
+@cmd
+def upload_wheels():
+    """Upload wheel files on PYPI."""
+    build()
+    sh("%s -m twine upload dist/*.whl" % PYTHON)
 
 
 @cmd
@@ -355,7 +372,7 @@ def test_process():
     """Run process tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_process" % PYTHON)
+    sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 @cmd
@@ -363,7 +380,7 @@ def test_system():
     """Run system tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_system" % PYTHON)
+    sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 @cmd
@@ -371,7 +388,7 @@ def test_platform():
     """Run windows only tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_windows" % PYTHON)
+    sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 @cmd
@@ -379,7 +396,7 @@ def test_misc():
     """Run misc tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
+    sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 @cmd
@@ -387,7 +404,7 @@ def test_unicode():
     """Run unicode tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
+    sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 @cmd
@@ -395,7 +412,7 @@ def test_connections():
     """Run connections tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+    sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 @cmd
@@ -403,7 +420,7 @@ def test_contracts():
     """Run contracts tests"""
     install()
     test_setup()
-    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
+    sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 @cmd
@@ -442,18 +459,26 @@ def test_memleaks():
 
 @cmd
 def install_git_hooks():
+    """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
-        shutil.copy(".git-pre-commit", ".git\\hooks\\pre-commit")
+        src = os.path.join(ROOT_DIR, ".git-pre-commit")
+        dst = os.path.realpath(
+            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
+        with open(src, "rt") as s:
+            with open(dst, "wt") as d:
+                d.write(s.read())
 
 
 @cmd
 def bench_oneshot():
+    """Benchmarks for oneshot() ctx manager (see #799)."""
     install()
     sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
+    """Same as above but using perf module (supposed to be more precise)."""
     install()
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
