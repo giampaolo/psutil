@@ -56,11 +56,11 @@ static PyObject *ZombieProcessError;
 #define TEMPERATURE_MACRO &SMCGetTemperature, &temperature_reasonable
 
 bool detection_has_run = false;
-const struct smc_sensor * detected_temperature_sensors;
-const struct smc_sensor * detected_fan_sensors;
-const struct smc_sensor * detected_other_sensors;
+struct smc_sensor **detected_temperature_sensors;
+const struct smc_sensor ** detected_fan_sensors;
+const struct smc_sensor ** detected_other_sensors;
 
-const struct smc_sensor temperature_sensors[] = {
+const struct smc_sensor potential_temperature_sensors[] = {
     {"TA0P", "Ambient", TEMPERATURE_MACRO, NULL},
     {"TA0S", "PCI Slot 1 Pos 1", TEMPERATURE_MACRO, NULL},
     {"TA1P", "Ambient temperature", TEMPERATURE_MACRO, NULL},
@@ -115,7 +115,6 @@ const struct smc_sensor temperature_sensors[] = {
     {"TP_P", "Power Supply _ Proximity", TEMPERATURE_MACRO},
     {"TS_C", "Expansion Slot _", TEMPERATURE_MACRO},
     {"TS_P", "Palm Rest _", TEMPERATURE_MACRO},
-    {NULL}
 };
 
 const struct smc_sensor fan_sensors[] = {
@@ -126,33 +125,39 @@ const struct smc_sensor other_sensors[] = {
     // TODO
 };
 
-struct smc_sensor * detect_sensors(const struct smc_sensor
+struct smc_sensor ** detect_sensors(const struct smc_sensor
         potential_sensors[]) {
 
     // TODO actually use the fixed counting
 
     // Screw doing an actual list, we're just going to over allocate and then
     // cut it back once we're done
-    struct smc_sensor * detected_sensors = malloc(sizeof(potential_sensors));
-    int sensor_index = 0;
-    int i = 0;
 
-    for (struct smc_sensor s = potential_sensors[i]; s.key != NULL; s =
-            potential_sensors[++i]) {
+    // FIXME memory allocation in a not dumb way
+    struct smc_sensor ** detected_sensors = malloc(sizeof(struct smc_sensor *)
+            * 100);
+    int sensor_index = 0;
+
+    for (int i = 0; i < sizeof(potential_temperature_sensors) / sizeof(struct
+            smc_sensor); i++) {
+
+        struct smc_sensor * s = (struct smc_sensor *)
+                &(potential_temperature_sensors[i]);
+
         int count = 0;
         while (true) {
 
             // TODO replace underscores
 
-            double val = ((*s.get_function)((char *) s.key));
-            if (!(*s.reasonable_function)(val)) {
+            double val = (s->get_function)((char *) (s->key));
+            if (!s->reasonable_function(val)) {
                 break;
             } else {
                 detected_sensors[sensor_index++] = s;
             }
             count++;
 
-            if (s.count_function_pointer == NULL) {
+            if (s->count_function_pointer == NULL) {
                 break;
             }
         }
@@ -161,8 +166,8 @@ struct smc_sensor * detect_sensors(const struct smc_sensor
     detection_has_run = true;
 
     // Realloc for proper size
-    realloc(detected_sensors, sizeof(potential_sensors[0]) * (sensor_index
-                                                               + 1));
+    return realloc(detected_sensors, sizeof(struct smc_sensor *) *
+            (sensor_index + 1));
 }
 
 /*
@@ -1955,19 +1960,22 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
-static PyObject * sensor_python(const struct smc_sensor sensors[]) {
+static PyObject * sensor_python(struct smc_sensor ** sensors) {
     // TODO better implementation
     if (!detection_has_run) {
-        detected_temperature_sensors = detect_sensors(temperature_sensors);
-        detected_fan_sensors = detect_sensors(fan_sensors);
-        detected_other_sensors = detect_sensors(other_sensors);
+        detected_temperature_sensors = detect_sensors(potential_temperature_sensors);
+//        detected_fan_sensors = detect_sensors(fan_sensors);
+//        detected_other_sensors = detect_sensors(other_sensors);
     }
 
     PyObject *py_retdict = PyDict_New();
-    for (int i = 0; i < sizeof(sensors) ; i++) {
-        // Dereference the function pointer and pass it the sensor key, then store that in the dictionary
-        PyDict_SetItemString(py_retdict, sensors[i].name, Py_BuildValue
-                 ("d", (*sensors[i].get_function)((char *) sensors[i].key)));
+    for (int i = 0; i < sizeof(detected_temperature_sensors) /
+                        sizeof(struct smc_sensor); i++) {
+        // Dereference the function pointer and pass it the sensor key,
+        // then store that in the dictionary
+        PyDict_SetItemString(py_retdict,
+                             detected_temperature_sensors[i]->name,
+                             Py_BuildValue("d", (*detected_temperature_sensors[i]->get_function)((char *) sensors[i]->key)));
     }
     return py_retdict;
 }
@@ -2248,7 +2256,7 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+//    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     PyModule_AddIntConstant(module, "SIDL", SIDL);
