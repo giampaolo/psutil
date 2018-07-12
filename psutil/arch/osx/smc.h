@@ -92,4 +92,9 @@ struct smc_sensor {
     int (*count_function_pointer)();
 };
 
+struct smc_sensor_group {
+    const struct smc_sensor * potential_sensors;
+    struct smc_sensor ** detected_sensors;
+};
+
 #endif

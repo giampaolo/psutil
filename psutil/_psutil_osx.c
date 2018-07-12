@@ -56,9 +56,6 @@ static PyObject *ZombieProcessError;
 #define TEMPERATURE_MACRO &SMCGetTemperature, &temperature_reasonable
 
 bool detection_has_run = false;
-struct smc_sensor **detected_temperature_sensors;
-const struct smc_sensor ** detected_fan_sensors;
-const struct smc_sensor ** detected_other_sensors;
 
 const struct smc_sensor potential_temperature_sensors[] = {
     {"TA0P", "Ambient", TEMPERATURE_MACRO, NULL},
@@ -115,18 +112,15 @@ const struct smc_sensor potential_temperature_sensors[] = {
     {"TP_P", "Power Supply _ Proximity", TEMPERATURE_MACRO},
     {"TS_C", "Expansion Slot _", TEMPERATURE_MACRO},
     {"TS_P", "Palm Rest _", TEMPERATURE_MACRO},
+    {NULL, NULL, NULL, NULL, NULL}
 };
-
-const struct smc_sensor fan_sensors[] = {
-    // TODO
+struct smc_sensor_group temperature_sensors = {
+    .potential_sensors = potential_temperature_sensors
 };
+struct smc_sensor_group fan_sensors;
+struct smc_sensor_group other_sensors;
 
-const struct smc_sensor other_sensors[] = {
-    // TODO
-};
-
-struct smc_sensor ** detect_sensors(const struct smc_sensor
-        potential_sensors[]) {
+void detect_sensors(struct smc_sensor_group * group) {
 
     // TODO actually use the fixed counting
 
@@ -135,14 +129,13 @@ struct smc_sensor ** detect_sensors(const struct smc_sensor
 
     // FIXME memory allocation in a not dumb way
     struct smc_sensor ** detected_sensors = malloc(sizeof(struct smc_sensor *)
-            * 100);
+                                                   * 100);
     int sensor_index = 0;
+    struct smc_sensor * s;
 
-    for (int i = 0; i < sizeof(potential_temperature_sensors) / sizeof(struct
-            smc_sensor); i++) {
-
-        struct smc_sensor * s = (struct smc_sensor *)
-                &(potential_temperature_sensors[i]);
+    // Iterate up with null termination
+    for (int i = 0; (s = (struct smc_sensor *) &(group->potential_sensors[i]))->get_function !=
+                    NULL; i++) {
 
         int count = 0;
         while (true) {
@@ -166,8 +159,8 @@ struct smc_sensor ** detect_sensors(const struct smc_sensor
     detection_has_run = true;
 
     // Realloc for proper size
-    return realloc(detected_sensors, sizeof(struct smc_sensor *) *
-            (sensor_index + 1));
+    group->detected_sensors = realloc(detected_sensors, sizeof(struct
+        smc_sensor *) * (sensor_index));
 }
 
 /*
@@ -1014,22 +1007,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     return Py_BuildValue("f", (float)boot_time);
 }
 
-/*
- * Return a Python float indicating the value of the temperature
- * measured by an SMC key
- */
-static PyObject *
-psutil_smc_get_temperature(PyObject *self, PyObject *args) {
-    char* key;
-    float temp;
-
-    if (! PyArg_ParseTuple(args, "s", &key)) {
-        return NULL;
-    }
-    temp = SMCGetTemperature(key);
-    return Py_BuildValue("d", temp);
-}
-
 
 /*
  * Return a list of tuples including device, mount point and fs type
@@ -1434,7 +1411,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
             nb = (unsigned long) proc_pidfdinfo((pid_t)pid,
-                    fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO, &si, sizeof
+                                                fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO, &si, sizeof
                                                 (si));
 
             // --- errors checking
@@ -1960,36 +1937,37 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
-static PyObject * sensor_python(struct smc_sensor ** sensors) {
+static PyObject * sensor_python(struct smc_sensor_group * group) {
     // TODO better implementation
     if (!detection_has_run) {
-        detected_temperature_sensors = detect_sensors(potential_temperature_sensors);
+        detect_sensors(group);
 //        detected_fan_sensors = detect_sensors(fan_sensors);
 //        detected_other_sensors = detect_sensors(other_sensors);
     }
 
+    struct smc_sensor * s;
     PyObject *py_retdict = PyDict_New();
-    for (int i = 0; i < sizeof(detected_temperature_sensors) /
-                        sizeof(struct smc_sensor); i++) {
+    // Iterate up with null termination
+    for (int i = 0; (s = (group->detected_sensors[i]))->get_function != NULL; i++) {
+        printf("%f\n", (s->get_function)((char *) (s->key)));
         // Dereference the function pointer and pass it the sensor key,
         // then store that in the dictionary
-        PyDict_SetItemString(py_retdict,
-                             detected_temperature_sensors[i]->name,
-                             Py_BuildValue("d", (*detected_temperature_sensors[i]->get_function)((char *) sensors[i]->key)));
+        // FIXME
+        PyDict_SetItemString(py_retdict, s->name, PyFloat_FromDouble((s->get_function)((char *) s->key)));
     }
     return py_retdict;
 }
 
 static PyObject * sensor_temperatures(PyObject *self, PyObject *args) {
-    return sensor_python(detected_temperature_sensors);
+    return sensor_python(&temperature_sensors);
 }
 
 static PyObject * sensor_fan_speeds(PyObject *self, PyObject *args) {
-    return sensor_python(detected_fan_sensors);
+    return sensor_python(&fan_sensors);
 }
 
 static PyObject * sensor_others(PyObject *self, PyObject *args) {
-    return sensor_python(detected_other_sensors);
+    return sensor_python(&other_sensors);
 }
 
 
@@ -2038,7 +2016,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
         PyErr_SetString(PyExc_RuntimeError, "No battery capacity "
                                             "infomration in power sources "
-                                              "info");
+                                            "info");
         goto error;
     }
 
@@ -2178,8 +2156,8 @@ static PyMethodDef
     {"boot_time", psutil_boot_time, METH_VARARGS,
         "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-         "Return a list of tuples including device, mount point and fs type "
-         "for all partitions mounted on the system."},
+        "Return a list of tuples including device, mount point and fs type "
+        "for all partitions mounted on the system."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
         "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
