@@ -18,6 +18,7 @@ XXXX-XX-XX
   task_for_pid() syscall. AccessDenied is now raised instead.
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
+- 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
 
 5.4.6
 =====

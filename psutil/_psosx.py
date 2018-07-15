@@ -402,12 +402,18 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        mtu = cext_posix.net_if_mtu(name)
-        isup = cext_posix.net_if_flags(name)
-        duplex, speed = cext_posix.net_if_duplex_speed(name)
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        try:
+            mtu = cext_posix.net_if_mtu(name)
+            isup = cext_posix.net_if_flags(name)
+            duplex, speed = cext_posix.net_if_duplex_speed(name)
+        except OSError as err:
+            # https://github.com/giampaolo/psutil/issues/1279
+            if err.errno != errno.ENODEV:
+                raise
+        else:
+            if hasattr(_common, 'NicDuplex'):
+                duplex = _common.NicDuplex(duplex)
+            ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     return ret
 
 

@@ -1880,11 +1880,11 @@ Process class
        (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
 
-    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+    .. note::
+      (AIX) :class:`psutil.AccessDenied` is always raised unless running
+      as root (lsof does the same).
 
-  .. note::
-    (AIX) :class:`psutil.AccessDenied` is always raised unless running
-    as root (lsof does the same).
+    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
 
   .. method:: is_running()
 

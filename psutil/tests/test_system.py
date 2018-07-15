@@ -671,6 +671,16 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
 
+    @unittest.skipIf(not (LINUX or BSD or MACOS),
+                     "LINUX or BSD or MACOS specific")
+    def test_net_if_stats_enodev(self):
+        # See: https://github.com/giampaolo/psutil/issues/1279
+        with mock.patch('psutil._psutil_posix.net_if_mtu',
+                        side_effect=OSError(errno.ENODEV, "")) as m:
+            ret = psutil.net_if_stats()
+            self.assertEqual(ret, {})
+            assert m.called
+
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     @unittest.skipIf(APPVEYOR and psutil.disk_io_counters() is None,
