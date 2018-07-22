@@ -19,6 +19,9 @@ XXXX-XX-XX
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
+- 1395_: [Linux] disk_io_counters() can report inflated IO counters due to
+  counting disk device and disk partition(s) twice. This was fixed and now it
+  mirrors "iostat" cmdline tool behavior.
 
 5.4.6
 =====

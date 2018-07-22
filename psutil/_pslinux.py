@@ -247,17 +247,34 @@ def file_flags_to_mode(flags):
     return mode
 
 
-def get_sector_size(partition):
-    """Return the sector size of a partition.
-    Used by disk_io_counters().
-    """
+def get_sector_size(name):
+    """Return the sector size of a device or partition name."""
+    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
+    name = name.replace('/', '!')
     try:
-        with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
+        with open("/sys/block/%s/queue/hw_sector_size" % name, "rt") as f:
             return int(f.read())
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
         # have a size of 512 bytes since 2.4 kernels.
         return SECTOR_SIZE_FALLBACK
+
+
+def is_storage_device(name):
+    """Return True if the given name is a device or a partition.
+    This also includes virtual devices.
+    """
+    # Readapted from iostat source code, see:
+    # https://github.com/sysstat/sysstat/blob/
+    #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
+    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
+    name = name.replace('/', '!')
+    including_virtual = True
+    if including_virtual:
+        path = "/sys/block/%s" % name
+    else:
+        path = "/sys/block/%s/device" % name
+    return os.access(path, os.F_OK)
 
 
 @memoize
@@ -1027,28 +1044,7 @@ def disk_io_counters():
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    # determine partitions we want to look for
-    def get_partitions():
-        partitions = []
-        with open_text("%s/partitions" % get_procfs_path()) as f:
-            lines = f.readlines()[2:]
-        for line in reversed(lines):
-            _, _, _, name = line.split()
-            if name[-1].isdigit():
-                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-                # also be around but we want to omit it
-                partitions.append(name)
-            else:
-                if not partitions or not partitions[-1].startswith(name):
-                    # we're dealing with a disk entity for which no
-                    # partitions have been defined (e.g. 'sda' but
-                    # 'sda1' was not around), see:
-                    # https://github.com/giampaolo/psutil/issues/338
-                    partitions.append(name)
-        return partitions
-
     retdict = {}
-    partitions = get_partitions()
     with open_text("%s/diskstats" % get_procfs_path()) as f:
         lines = f.readlines()
     for line in lines:
@@ -1086,12 +1082,13 @@ def disk_io_counters():
         else:
             raise ValueError("not sure how to interpret line %r" % line)
 
-        if name in partitions:
+        if is_storage_device(name):
             ssize = get_sector_size(name)
             rbytes *= ssize
             wbytes *= ssize
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
                              reads_merged, writes_merged, busy_time)
+
     return retdict
 
 

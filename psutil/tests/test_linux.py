@@ -995,16 +995,18 @@ class TestSystemDisks(unittest.TestCase):
             with mock_open_content(
                     '/proc/diskstats',
                     "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"):
-                ret = psutil.disk_io_counters(nowrap=False)
-                self.assertEqual(ret.read_count, 1)
-                self.assertEqual(ret.read_merged_count, 2)
-                self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
-                self.assertEqual(ret.read_time, 4)
-                self.assertEqual(ret.write_count, 5)
-                self.assertEqual(ret.write_merged_count, 6)
-                self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
-                self.assertEqual(ret.write_time, 8)
-                self.assertEqual(ret.busy_time, 10)
+                with mock.patch('psutil._pslinux.is_storage_device',
+                                return_value=True):
+                    ret = psutil.disk_io_counters(nowrap=False)
+                    self.assertEqual(ret.read_count, 1)
+                    self.assertEqual(ret.read_merged_count, 2)
+                    self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
+                    self.assertEqual(ret.read_time, 4)
+                    self.assertEqual(ret.write_count, 5)
+                    self.assertEqual(ret.write_merged_count, 6)
+                    self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
+                    self.assertEqual(ret.write_time, 8)
+                    self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_full_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -1020,16 +1022,18 @@ class TestSystemDisks(unittest.TestCase):
             with mock_open_content(
                     '/proc/diskstats',
                     "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"):
-                ret = psutil.disk_io_counters(nowrap=False)
-                self.assertEqual(ret.read_count, 1)
-                self.assertEqual(ret.read_merged_count, 2)
-                self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
-                self.assertEqual(ret.read_time, 4)
-                self.assertEqual(ret.write_count, 5)
-                self.assertEqual(ret.write_merged_count, 6)
-                self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
-                self.assertEqual(ret.write_time, 8)
-                self.assertEqual(ret.busy_time, 10)
+                with mock.patch('psutil._pslinux.is_storage_device',
+                                return_value=True):
+                    ret = psutil.disk_io_counters(nowrap=False)
+                    self.assertEqual(ret.read_count, 1)
+                    self.assertEqual(ret.read_merged_count, 2)
+                    self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
+                    self.assertEqual(ret.read_time, 4)
+                    self.assertEqual(ret.write_count, 5)
+                    self.assertEqual(ret.write_merged_count, 6)
+                    self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
+                    self.assertEqual(ret.write_time, 8)
+                    self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_limited_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -1047,17 +1051,19 @@ class TestSystemDisks(unittest.TestCase):
             with mock_open_content(
                     '/proc/diskstats',
                     "   3    1   hda 1 2 3 4"):
-                ret = psutil.disk_io_counters(nowrap=False)
-                self.assertEqual(ret.read_count, 1)
-                self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
-                self.assertEqual(ret.write_count, 3)
-                self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
+                with mock.patch('psutil._pslinux.is_storage_device',
+                                return_value=True):
+                    ret = psutil.disk_io_counters(nowrap=False)
+                    self.assertEqual(ret.read_count, 1)
+                    self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
+                    self.assertEqual(ret.write_count, 3)
+                    self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
 
-                self.assertEqual(ret.read_merged_count, 0)
-                self.assertEqual(ret.read_time, 0)
-                self.assertEqual(ret.write_merged_count, 0)
-                self.assertEqual(ret.write_time, 0)
-                self.assertEqual(ret.busy_time, 0)
+                    self.assertEqual(ret.read_merged_count, 0)
+                    self.assertEqual(ret.read_time, 0)
+                    self.assertEqual(ret.write_merged_count, 0)
+                    self.assertEqual(ret.write_time, 0)
+                    self.assertEqual(ret.busy_time, 0)
 
 
 # =====================================================================
