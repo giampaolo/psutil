@@ -1489,7 +1489,6 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    Py_BEGIN_ALLOW_THREADS;
     error = call(NULL, size, FALSE, address_family,
                  TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER)
@@ -1506,7 +1505,6 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
             *data = NULL;
         }
     }
-    Py_END_ALLOW_THREADS;
     return error;
 }
 
@@ -1530,7 +1528,6 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    Py_BEGIN_ALLOW_THREADS;
     error = call(NULL, size, FALSE, address_family,
                  UDP_TABLE_OWNER_PID, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER)
@@ -1547,7 +1544,6 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
             *data = NULL;
         }
     }
-    Py_END_ALLOW_THREADS;
     return error;
 }
 
