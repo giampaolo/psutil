@@ -848,10 +848,8 @@ Functions
   Cached :class:`Process` instances are checked for identity so that you're
   safe in case a PID has been reused by another process, in which case the
   cached instance is updated.
-  This is should be preferred over :func:`psutil.pids()` for iterating over
-  processes.
-  Sorting order in which processes are returned is
-  based on their PID.
+  This is preferred over :func:`psutil.pids()` for iterating over processes.
+  Sorting order in which processes are returned is based on their PID.
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
   If *attrs* is specified :meth:`Process.as_dict()` is called internally and
   the resulting dict is stored as a ``info`` attribute which is attached to the
