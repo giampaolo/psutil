@@ -19,6 +19,8 @@ XXXX-XX-XX
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
+- 1294_: [Windows] psutil.Process().connections() may sometime fail with
+  MemoryError.  (patch by sylvainduchesne)
 
 5.4.6
 =====
