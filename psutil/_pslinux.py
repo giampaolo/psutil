@@ -252,12 +252,33 @@ def file_flags_to_mode(flags):
     return mode
 
 
+def get_partition_device(partition):
+    """given a partition, return the device that the partition is a part of.
+    If "parition" is already a name of a device, return None
+    """
+    # https://unix.stackexchange.com/questions/226420
+    # /sys/class/block/sda1 ->
+    #    ../../devices/pci0000:00/0000:00:10.0/host2/target2:0:0/
+    #        2:0:0:0/block/sda/sda1
+    # for NVMe:
+    # /sys/class/block/nvme0n1p1 ->
+    #    ../../devices/pci0000:00/0000:00:17.0/0000:13:00.0/
+    #       nvme/nvme0/nvme0n1/nvme0n1p1
+    device_path = os.readlink("/sys/class/block/" + partition)
+    parent = device_path.split(os.sep)[-2]
+    # "/sys/block" doesn't contain partitions, but does contain devices
+    if os.path.exists("/sys/block/" + parent):
+        return parent
+    return None
+
+
 def get_sector_size(partition):
-    """Return the sector size of a partition.
+    """Return the sector size of a device or partition.
     Used by disk_io_counters().
     """
+    device = get_partition_device(partition) or partition
     try:
-        with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
+        with open("/sys/block/%s/queue/hw_sector_size" % device, "rt") as f:
             return int(f.read())
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
@@ -1036,20 +1057,19 @@ def disk_io_counters():
     def get_partitions():
         partitions = []
         with open_text("%s/partitions" % get_procfs_path()) as f:
-            lines = f.readlines()[2:]
-        for line in reversed(lines):
-            _, _, _, name = line.split()
-            if name[-1].isdigit():
-                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-                # also be around but we want to omit it
+            for line in f.readlines()[2:]:
+                _, _, _, name = line.split()
                 partitions.append(name)
-            else:
-                if not partitions or not partitions[-1].startswith(name):
-                    # we're dealing with a disk entity for which no
-                    # partitions have been defined (e.g. 'sda' but
-                    # 'sda1' was not around), see:
-                    # https://github.com/giampaolo/psutil/issues/338
-                    partitions.append(name)
+        # when we sum all disk counters, we need to ignore devices
+        # that have partitions, to avoid multiple counting.
+        # e.g. if we have "sda" and "sda1", we don't want "sda"
+        # note that a "partition in partitions" can be a name of a device -
+        # "get_partition_device" will return None for these names, and they
+        # will not be in "parent_devices" if they don't have partitions
+        parent_devices = set(get_partition_device(partition)
+                             for partition in partitions)
+        partitions = [partition for partition in partitions if
+                      partition not in parent_devices]
         return partitions
 
     retdict = {}
@@ -1079,12 +1099,12 @@ def disk_io_counters():
             (reads_merged, rbytes, rtime, writes, writes_merged,
                 wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
         elif fields_len == 14:
-            # Linux 2.6+, line referring to a disk
+            # Linux 2.6+, line referring to a disk or partition
             name = fields[2]
             (reads, reads_merged, rbytes, rtime, writes, writes_merged,
                 wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
         elif fields_len == 7:
-            # Linux 2.6+, line referring to a partition
+            # Linux >=2.6, <2.6.25, line referring to a partition
             name = fields[2]
             reads, rbytes, writes, wbytes = map(int, fields[3:])
             rtime = wtime = reads_merged = writes_merged = busy_time = 0
