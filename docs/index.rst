@@ -2169,7 +2169,8 @@ Constants
 .. data:: STATUS_DEAD
 .. data:: STATUS_WAKE_KILL
 .. data:: STATUS_WAKING
-.. data:: STATUS_IDLE (macOS, FreeBSD)
+.. data:: STATUS_PARKED (Linux)
+.. data:: STATUS_IDLE (Linux, macOS, FreeBSD)
 .. data:: STATUS_LOCKED (FreeBSD)
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
@@ -2178,6 +2179,7 @@ Constants
   Returned by :meth:`psutil.Process.status()`.
 
   .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
+  .. versionadded:: 5.5.0 STATUS_PARKED (Linux)
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED

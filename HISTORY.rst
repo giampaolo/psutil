@@ -11,6 +11,7 @@ XXXX-XX-XX
   (patch by Alex Manuskin)
 - 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
   psutil.MACOS.
+- 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
 
 **Bug fixes**
 
@@ -21,6 +22,8 @@ XXXX-XX-XX
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
 - 1294_: [Windows] psutil.Process().connections() may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
+- 1309_: [Linux] Process.status() is unable to recognie "idle" and "parked"
+  statuses (returns '?').
 
 5.4.6
 =====

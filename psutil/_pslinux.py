@@ -111,7 +111,10 @@ else:
 
     globals().update(IOPriority.__members__)
 
-# taken from /fs/proc/array.c
+# See:
+# https://github.com/torvalds/linux/blame/master/fs/proc/array.c
+# ...and (TASK_* constants):
+# https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
     "R": _common.STATUS_RUNNING,
     "S": _common.STATUS_SLEEPING,
@@ -122,7 +125,9 @@ PROC_STATUSES = {
     "X": _common.STATUS_DEAD,
     "x": _common.STATUS_DEAD,
     "K": _common.STATUS_WAKE_KILL,
-    "W": _common.STATUS_WAKING
+    "W": _common.STATUS_WAKING,
+    "I": _common.STATUS_IDLE,
+    "P": _common.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
