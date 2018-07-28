@@ -137,7 +137,16 @@ if TRAVIS or APPVEYOR:
 # --- files
 
 TESTFILE_PREFIX = '$testfn'
+if os.name == 'java':
+    # Jython disallows @ in module names
+    TESTFILE_PREFIX = '$psutil-test-'
+else:
+    TESTFILE_PREFIX = '@psutil-test-'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
+# Disambiguate TESTFN for parallel testing, while letting it remain a valid
+# module name.
+TESTFN = TESTFN + str(os.getpid())
+
 _TESTFN = TESTFN + '-internal'
 TESTFN_UNICODE = TESTFN + u("-ƒőő")
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
@@ -206,8 +215,13 @@ _pids_started = set()
 _testfiles_created = set()
 
 
+def logstderr(s):
+    print(s, file=sys.stderr)
+
+
 @atexit.register
-def _cleanup_files():
+def cleanup_test_files():
+    logstderr("executing cleanup_test_files() atexit function")
     DEVNULL.close()
     for name in os.listdir(u('.')):
         if isinstance(name, unicode):
@@ -215,11 +229,13 @@ def _cleanup_files():
         else:
             prefix = TESTFILE_PREFIX
         if name.startswith(prefix):
+            logstderr("removing temporary test file %r" % name)
             try:
                 safe_rmpath(name)
             except Exception:
                 traceback.print_exc()
     for path in _testfiles_created:
+        logstderr("removing temporary test file %r" % path)
         try:
             safe_rmpath(path)
         except Exception:
@@ -228,7 +244,8 @@ def _cleanup_files():
 
 # this is executed first
 @atexit.register
-def _cleanup_procs():
+def cleanup_test_procs():
+    logstderr("executing cleanup_test_procs() atexit function")
     reap_children(recursive=True)
 
 

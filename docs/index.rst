@@ -848,10 +848,8 @@ Functions
   Cached :class:`Process` instances are checked for identity so that you're
   safe in case a PID has been reused by another process, in which case the
   cached instance is updated.
-  This is should be preferred over :func:`psutil.pids()` for iterating over
-  processes.
-  Sorting order in which processes are returned is
-  based on their PID.
+  This is preferred over :func:`psutil.pids()` for iterating over processes.
+  Sorting order in which processes are returned is based on their PID.
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
   If *attrs* is specified :meth:`Process.as_dict()` is called internally and
   the resulting dict is stored as a ``info`` attribute which is attached to the
@@ -2171,7 +2169,8 @@ Constants
 .. data:: STATUS_DEAD
 .. data:: STATUS_WAKE_KILL
 .. data:: STATUS_WAKING
-.. data:: STATUS_IDLE (macOS, FreeBSD)
+.. data:: STATUS_PARKED (Linux)
+.. data:: STATUS_IDLE (Linux, macOS, FreeBSD)
 .. data:: STATUS_LOCKED (FreeBSD)
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
@@ -2180,6 +2179,7 @@ Constants
   Returned by :meth:`psutil.Process.status()`.
 
   .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
+  .. versionadded:: 5.5.0 STATUS_PARKED (Linux)
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED

@@ -55,7 +55,7 @@ __all__ = [
     'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
     'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
-    'STATUS_WAKING', 'STATUS_ZOMBIE',
+    'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
@@ -100,10 +100,11 @@ STATUS_ZOMBIE = "zombie"
 STATUS_DEAD = "dead"
 STATUS_WAKE_KILL = "wake-kill"
 STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # FreeBSD, macOS
+STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
 STATUS_LOCKED = "locked"  # FreeBSD
 STATUS_WAITING = "waiting"  # FreeBSD
 STATUS_SUSPENDED = "suspended"  # NetBSD
+STATUS_PARKED = "parked"  # Linux
 
 # Process.connections() and psutil.net_connections()
 CONN_ESTABLISHED = "ESTABLISHED"

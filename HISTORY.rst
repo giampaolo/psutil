@@ -11,6 +11,7 @@ XXXX-XX-XX
   (patch by Alex Manuskin)
 - 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
   psutil.MACOS.
+- 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
 
 **Bug fixes**
 
@@ -19,7 +20,11 @@ XXXX-XX-XX
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
-- 1395_: [Linux] disk_io_counters() can report inflated IO counters due to
+- 1294_: [Windows] psutil.Process().connections() may sometime fail with
+  MemoryError.  (patch by sylvainduchesne)
+- 1309_: [Linux] Process.status() is unable to recognie "idle" and "parked"
+  statuses (returns '?').
+- 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
   counting disk device and disk partition(s) twice. This was fixed and now it
   mirrors "iostat" cmdline tool behavior.
 
