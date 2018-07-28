@@ -2013,7 +2013,8 @@ def disk_io_counters(perdisk=False, nowrap=True):
     On recent Windows versions 'diskperf -y' command may need to be
     executed first otherwise this function won't find any disk.
     """
-    rawdict = _psplatform.disk_io_counters()
+    kwargs = dict(perdisk=perdisk) if LINUX else {}
+    rawdict = _psplatform.disk_io_counters(**kwargs)
     if not rawdict:
         return {} if perdisk else None
     if nowrap:

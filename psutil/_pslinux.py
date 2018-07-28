@@ -252,17 +252,36 @@ def file_flags_to_mode(flags):
     return mode
 
 
-def get_sector_size(partition):
-    """Return the sector size of a partition.
-    Used by disk_io_counters().
-    """
+def get_sector_size(name):
+    """Return the sector size of a storage device."""
+    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
+    name = name.replace('/', '!')
     try:
-        with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
+        with open("/sys/block/%s/queue/hw_sector_size" % name, "rt") as f:
             return int(f.read())
     except (IOError, ValueError):
         # man iostat states that sectors are equivalent with blocks and
         # have a size of 512 bytes since 2.4 kernels.
         return SECTOR_SIZE_FALLBACK
+
+
+def is_storage_device(name):
+    """Return True if the given name refers to a physical (e.g. "sda",
+    "nvme0n1") or virtual (e.g. "loop1", "ram") storage device.
+    In case name refers to a device's partition (e.g. "sda1", "nvme0n1p1")
+    this is supposed to return False.
+    """
+    # Readapted from iostat source code, see:
+    # https://github.com/sysstat/sysstat/blob/
+    #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
+    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
+    name = name.replace('/', '!')
+    including_virtual = True
+    if including_virtual:
+        path = "/sys/block/%s" % name
+    else:
+        path = "/sys/block/%s/device" % name
+    return os.access(path, os.F_OK)
 
 
 @memoize
@@ -1028,32 +1047,11 @@ def net_if_stats():
 disk_usage = _psposix.disk_usage
 
 
-def disk_io_counters():
+def disk_io_counters(perdisk=False):
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    # determine partitions we want to look for
-    def get_partitions():
-        partitions = []
-        with open_text("%s/partitions" % get_procfs_path()) as f:
-            lines = f.readlines()[2:]
-        for line in reversed(lines):
-            _, _, _, name = line.split()
-            if name[-1].isdigit():
-                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-                # also be around but we want to omit it
-                partitions.append(name)
-            else:
-                if not partitions or not partitions[-1].startswith(name):
-                    # we're dealing with a disk entity for which no
-                    # partitions have been defined (e.g. 'sda' but
-                    # 'sda1' was not around), see:
-                    # https://github.com/giampaolo/psutil/issues/338
-                    partitions.append(name)
-        return partitions
-
     retdict = {}
-    partitions = get_partitions()
     with open_text("%s/diskstats" % get_procfs_path()) as f:
         lines = f.readlines()
     for line in lines:
@@ -1091,12 +1089,26 @@ def disk_io_counters():
         else:
             raise ValueError("not sure how to interpret line %r" % line)
 
-        if name in partitions:
-            ssize = get_sector_size(name)
-            rbytes *= ssize
-            wbytes *= ssize
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
-                             reads_merged, writes_merged, busy_time)
+        if not perdisk and not is_storage_device(name):
+            # perdisk=False means we want to calculate totals so we skip
+            # partitions (e.g. 'sda1', 'nvme0n1p1') and only include
+            # base disk devices (e.g. 'sda', 'nvme0n1'). Base disks
+            # include a total of all their partitions + some extra size
+            # of their own:
+            #     $ cat /proc/diskstats
+            #     259       0 sda 10485760 ...
+            #     259       1 sda1 5186039 ...
+            #     259       1 sda2 5082039 ...
+            # See:
+            # https://github.com/giampaolo/psutil/pull/1313
+            continue
+
+        ssize = get_sector_size(name)
+        rbytes *= ssize
+        wbytes *= ssize
+        retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                         reads_merged, writes_merged, busy_time)
+
     return retdict
 
 

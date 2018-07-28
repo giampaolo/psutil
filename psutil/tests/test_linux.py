@@ -986,15 +986,10 @@ class TestSystemDisks(unittest.TestCase):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
         with mock_open_content(
-                '/proc/partitions',
-                textwrap.dedent("""\
-                    major minor  #blocks  name
-
-                       8        0  488386584 hda
-                    """)):
-            with mock_open_content(
-                    '/proc/diskstats',
-                    "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"):
+                '/proc/diskstats',
+                "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_merged_count, 2)
@@ -1011,15 +1006,10 @@ class TestSystemDisks(unittest.TestCase):
         # lines reporting all metrics:
         # https://github.com/giampaolo/psutil/issues/767
         with mock_open_content(
-                '/proc/partitions',
-                textwrap.dedent("""\
-                    major minor  #blocks  name
-
-                       8        0  488386584 hda
-                    """)):
-            with mock_open_content(
-                    '/proc/diskstats',
-                    "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"):
+                '/proc/diskstats',
+                "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_merged_count, 2)
@@ -1038,15 +1028,10 @@ class TestSystemDisks(unittest.TestCase):
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
         with mock_open_content(
-                '/proc/partitions',
-                textwrap.dedent("""\
-                    major minor  #blocks  name
-
-                       8        0  488386584 hda
-                    """)):
-            with mock_open_content(
-                    '/proc/diskstats',
-                    "   3    1   hda 1 2 3 4"):
+                '/proc/diskstats',
+                "   3    1   hda 1 2 3 4"):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
@@ -1058,6 +1043,56 @@ class TestSystemDisks(unittest.TestCase):
                 self.assertEqual(ret.write_merged_count, 0)
                 self.assertEqual(ret.write_time, 0)
                 self.assertEqual(ret.busy_time, 0)
+
+    def test_disk_io_counters_include_partitions(self):
+        # Make sure that when perdisk=True disk partitions are returned,
+        # see:
+        # https://github.com/giampaolo/psutil/pull/1313#issuecomment-408626842
+        with mock_open_content(
+                '/proc/diskstats',
+                textwrap.dedent("""\
+                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+                    """)):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            return_value=False):
+                ret = psutil.disk_io_counters(perdisk=True, nowrap=False)
+                self.assertEqual(len(ret), 2)
+                self.assertEqual(ret['nvme0n1'].read_count, 1)
+                self.assertEqual(ret['nvme0n1p1'].read_count, 1)
+                self.assertEqual(ret['nvme0n1'].write_count, 5)
+                self.assertEqual(ret['nvme0n1p1'].write_count, 5)
+
+    def test_disk_io_counters_exclude_partitions(self):
+        # Make sure that when perdisk=False partitions (e.g. 'sda1',
+        # 'nvme0n1p1') are skipped and not included in the total count.
+        # https://github.com/giampaolo/psutil/pull/1313#issuecomment-408626842
+        with mock_open_content(
+                '/proc/diskstats',
+                textwrap.dedent("""\
+                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+                    """)):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            return_value=False):
+                ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
+                self.assertIsNone(ret)
+
+        #
+        def is_storage_device(name):
+            return name == 'nvme0n1'
+
+        with mock_open_content(
+                '/proc/diskstats',
+                textwrap.dedent("""\
+                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+                    """)):
+            with mock.patch('psutil._pslinux.is_storage_device',
+                            create=True, side_effect=is_storage_device):
+                ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
+                self.assertEqual(ret.read_count, 1)
+                self.assertEqual(ret.write_count, 5)
 
 
 # =====================================================================
