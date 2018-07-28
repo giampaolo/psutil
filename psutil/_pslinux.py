@@ -266,8 +266,10 @@ def get_sector_size(name):
 
 
 def is_storage_device(name):
-    """Return True if the given name is a device or a partition.
-    This also includes virtual devices.
+    """Return True if the given name refers to a physical (e.g. "sda",
+    "nvme0n1") or virtual (e.g. "loop1", "ram") storage device.
+    In case name refers to a device's partition (e.g. "sda1", "nvme0n1p1")
+    this is supposed to return False.
     """
     # Readapted from iostat source code, see:
     # https://github.com/sysstat/sysstat/blob/
