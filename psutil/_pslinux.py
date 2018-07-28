@@ -1033,23 +1033,24 @@ def disk_io_counters():
     system as a dict of raw tuples.
     """
     # determine partitions we want to look for
+    partition_suffix = re.compile(r'^p*\d+$')
+
     def get_partitions():
         partitions = []
         with open_text("%s/partitions" % get_procfs_path()) as f:
             lines = f.readlines()[2:]
         for line in reversed(lines):
             _, _, _, name = line.split()
-            if name[-1].isdigit():
-                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-                # also be around but we want to omit it
-                partitions.append(name)
-            else:
-                if not partitions or not partitions[-1].startswith(name):
-                    # we're dealing with a disk entity for which no
-                    # partitions have been defined (e.g. 'sda' but
-                    # 'sda1' was not around), see:
-                    # https://github.com/giampaolo/psutil/issues/338
+            if partitions and partitions[-1].startswith(name):
+                suffix = partitions[-1][len(name):]
+                if not partition_suffix.match(suffix):
+                    # If a disk entity (e.g. 'sda' or 'nvme0n1') has
+                    # partition(e.g. 'sda1' or 'nvme0n1p1'),
+                    # we will deal with the partition and ignore the
+                    # disk entiy.
                     partitions.append(name)
+            else:
+                partitions.append(name)
         return partitions
 
     retdict = {}

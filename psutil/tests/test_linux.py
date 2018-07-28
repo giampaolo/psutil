@@ -1059,6 +1059,39 @@ class TestSystemDisks(unittest.TestCase):
                 self.assertEqual(ret.write_time, 0)
                 self.assertEqual(ret.busy_time, 0)
 
+    def test_disk_io_counters_with_nvme(self):
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/partitions':
+                return io.StringIO(textwrap.dedent(u"""\
+                    major minor  #blocks  name
+
+                    259        0  250059096 nvme0n1
+                    259        1     266240 nvme0n1p1
+                    259        2      16384 nvme0n1p2
+                    """))
+            elif name == '/proc/diskstats':
+                return io.StringIO(textwrap.dedent(u"""\
+                        259       0 nvme0n1  3 6 9 12 15 18 21 24 27 30 33
+                        259       1 nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+                        259       2 nvme0n1p2 2 4 6 8 10 12 14 16 18 20 22
+                    """))
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            ret = psutil.disk_io_counters(nowrap=False)
+            assert m.called
+            self.assertEqual(ret.read_count, 3)
+            self.assertEqual(ret.read_merged_count, 6)
+            self.assertEqual(ret.read_bytes, 9 * SECTOR_SIZE)
+            self.assertEqual(ret.read_time, 12)
+            self.assertEqual(ret.write_count, 15)
+            self.assertEqual(ret.write_merged_count, 18)
+            self.assertEqual(ret.write_bytes, 21 * SECTOR_SIZE)
+            self.assertEqual(ret.write_time, 24)
+            self.assertEqual(ret.busy_time, 30)
 
 # =====================================================================
 # --- misc
