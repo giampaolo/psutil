@@ -421,6 +421,8 @@ Disks
   cache.
   On Windows it may be ncessary to issue ``diskperf -y`` command from cmd.exe
   first in order to enable IO counters.
+  On diskless machines this function will return ``None`` or ``{}`` if
+  *perdisk* is ``True``.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
@@ -474,6 +476,8 @@ Network
   numbers will always be increasing or remain the same, but never decrease.
   ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
+  On machines with no network iterfaces this function will return ``None`` or
+  ``{}`` if *pernic* is ``True``.
 
     >>> import psutil
     >>> psutil.net_io_counters()

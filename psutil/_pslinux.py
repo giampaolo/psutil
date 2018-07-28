@@ -253,7 +253,7 @@ def file_flags_to_mode(flags):
 
 
 def get_sector_size(name):
-    """Return the sector size of a device or partition name."""
+    """Return the sector size of a storage device."""
     # Some devices may have a slash in their name (e.g. cciss/c0d0...).
     name = name.replace('/', '!')
     try:
@@ -1047,7 +1047,7 @@ def net_if_stats():
 disk_usage = _psposix.disk_usage
 
 
-def disk_io_counters():
+def disk_io_counters(perdisk=False):
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
@@ -1089,12 +1089,25 @@ def disk_io_counters():
         else:
             raise ValueError("not sure how to interpret line %r" % line)
 
-        if is_storage_device(name):
-            ssize = get_sector_size(name)
-            rbytes *= ssize
-            wbytes *= ssize
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
-                             reads_merged, writes_merged, busy_time)
+        if not perdisk and not is_storage_device(name):
+            # perdisk=False means we want to calculate totals so we skip
+            # partitions (e.g. 'sda1', 'nvme0n1p1') and only include
+            # base disk devices (e.g. 'sda', 'nvme0n1'). Base disks
+            # include a total of all their partitions + some extra size
+            # of their own:
+            #     $ cat /proc/diskstats
+            #     259       0 sda 10485760 ...
+            #     259       1 sda1 5186039 ...
+            #     259       1 sda2 5082039 ...
+            # See:
+            # https://github.com/giampaolo/psutil/pull/1313
+            continue
+
+        ssize = get_sector_size(name)
+        rbytes *= ssize
+        wbytes *= ssize
+        retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                         reads_merged, writes_merged, busy_time)
 
     return retdict
 

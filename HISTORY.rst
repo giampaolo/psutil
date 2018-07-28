@@ -25,8 +25,7 @@ XXXX-XX-XX
 - 1309_: [Linux] Process.status() is unable to recognie "idle" and "parked"
   statuses (returns '?').
 - 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
-  counting disk device and disk partition(s) twice. This was fixed and now it
-  mirrors "iostat" cmdline tool behavior.
+  erroneously counting base disk device and its partition(s) twice.
 
 5.4.6
 =====
