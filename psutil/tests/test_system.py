@@ -712,12 +712,6 @@ class TestSystemAPIs(unittest.TestCase):
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
-            if LINUX and key[-1].isdigit():
-                # if 'sda1' is listed 'sda' shouldn't, see:
-                # https://github.com/giampaolo/psutil/issues/338
-                while key[-1].isdigit():
-                    key = key[:-1]
-                self.assertNotIn(key, ret.keys())
 
     def test_disk_io_counters_no_disks(self):
         # Emulate a case where no disks are installed, see:
