@@ -119,7 +119,7 @@ def subprocess_supports_unicode(name):
         safe_rmpath(name)
         create_exe(name)
         get_test_subprocess(cmd=[name])
-    except UnicodeEncodeError:
+    except (UnicodeEncodeError, IOError):
         return False
     else:
         return True
