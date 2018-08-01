@@ -266,10 +266,10 @@ def file_flags_to_mode(flags):
 
 
 def is_storage_device(name):
-    """Return True if the given name refers to a physical (e.g. "sda",
-    "nvme0n1") or virtual (e.g. "loop1", "ram") storage device.
-    In case name refers to a device's partition (e.g. "sda1", "nvme0n1p1")
-    this is supposed to return False.
+    """Return True if the given name refers to a root device (e.g.
+    "sda", "nvme0n1") as opposed to a logical partition (e.g.  "sda1",
+    "nvme0n1p1"). If name is a virtual device (e.g. "loop1", "ram")
+    return True.
     """
     # Readapted from iostat source code, see:
     # https://github.com/sysstat/sysstat/blob/
