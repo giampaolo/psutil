@@ -1257,25 +1257,6 @@ class TestMisc(unittest.TestCase):
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
 
-    def test_sector_size_mock(self):
-        # Test SECTOR_SIZE fallback in case 'hw_sector_size' file
-        # does not exist.
-        def open_mock(name, *args, **kwargs):
-            if PY3 and isinstance(name, bytes):
-                name = name.decode()
-            if "hw_sector_size" in name:
-                flag.append(None)
-                raise IOError(errno.ENOENT, '')
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        flag = []
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
-            psutil.disk_io_counters()
-            assert flag
-
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
