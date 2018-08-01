@@ -88,7 +88,20 @@ BOOT_TIME = None  # set later
 # speedup, see: https://github.com/giampaolo/psutil/issues/708
 BIGFILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
-SECTOR_SIZE_FALLBACK = 512
+
+# "man iostat" states that sectors are equivalent with blocks and have
+# a size of 512 bytes. Despite this value can be queried at runtime
+# via /sys/block/{DISK}/queue/hw_sector_size and results may vary
+# between 1k, 2k, or 4k... 512 appears to be a magic constant used
+# throughout Linux source code:
+# * https://stackoverflow.com/a/38136179/376587
+# * https://lists.gt.net/linux/kernel/2241060
+# * https://github.com/giampaolo/psutil/issues/1305
+# * https://github.com/torvalds/linux/blob/
+#     4f671fe2f9523a1ea206f63fe60a7c7b3a56d5c7/include/linux/bio.h#L99
+# * https://lkml.org/lkml/2015/8/17/234
+DISK_SECTOR_SIZE = 512
+
 if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
@@ -250,19 +263,6 @@ def file_flags_to_mode(flags):
     mode = mode.replace('w+', 'r+')
     # possible values: r, w, a, r+, a+
     return mode
-
-
-def get_sector_size(name):
-    """Return the sector size of a storage device."""
-    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
-    name = name.replace('/', '!')
-    try:
-        with open("/sys/block/%s/queue/hw_sector_size" % name, "rt") as f:
-            return int(f.read())
-    except (IOError, ValueError):
-        # man iostat states that sectors are equivalent with blocks and
-        # have a size of 512 bytes since 2.4 kernels.
-        return SECTOR_SIZE_FALLBACK
 
 
 def is_storage_device(name):
@@ -1103,9 +1103,8 @@ def disk_io_counters(perdisk=False):
             # https://github.com/giampaolo/psutil/pull/1313
             continue
 
-        ssize = get_sector_size(name)
-        rbytes *= ssize
-        wbytes *= ssize
+        rbytes *= DISK_SECTOR_SIZE
+        wbytes *= DISK_SECTOR_SIZE
         retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
                          reads_merged, writes_merged, busy_time)
 

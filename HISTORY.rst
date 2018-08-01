@@ -22,6 +22,7 @@ XXXX-XX-XX
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
 - 1294_: [Windows] psutil.Process().connections() may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
+- 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
 - 1309_: [Linux] Process.status() is unable to recognie "idle" and "parked"
   statuses (returns '?').
 - 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
