@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <libperfstat.h>
+#include <unistd.h>
 
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
@@ -617,6 +618,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
+    long ticks;
     perfstat_cpu_t *cpu = NULL;
     perfstat_id_t id;
     PyObject *py_retlist = PyList_New(0);
@@ -624,6 +626,13 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
+    /* get the number of ticks per second */
+    ticks = sysconf(_SC_CLK_TCK);
+    if (ticks < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
 
     /* get the number of cpus in ncpu */
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
@@ -650,10 +659,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     for (i = 0; i < ncpu; i++) {
         py_cputime = Py_BuildValue(
             "(dddd)",
-            (double)cpu[i].user,
-            (double)cpu[i].sys,
-            (double)cpu[i].idle,
-            (double)cpu[i].wait);
+            (double)cpu[i].user / ticks,
+            (double)cpu[i].sys / ticks,
+            (double)cpu[i].idle / ticks,
+            (double)cpu[i].wait / ticks);
         if (!py_cputime)
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
@@ -916,6 +925,10 @@ struct module_state {
 #define GETSTATE(m) (&_state)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if PY_MAJOR_VERSION >= 3
 
 static int
@@ -986,3 +999,7 @@ void init_psutil_aix(void)
     return module;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
