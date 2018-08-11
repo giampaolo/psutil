@@ -45,11 +45,24 @@ def main():
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        print(templ % (
-            m.addr.split('-')[0].zfill(16),
-            str(m.rss / 1024) + 'K',
-            m.perms,
-            m.path))
+        try:
+            print(templ % (
+                m.addr.split('-')[0].zfill(16),
+                str(m.rss / 1024) + 'K',
+                m.perms,
+                m.path))
+        except UnicodeEncodeError:
+            # It's possible to have a filename with Unicode surrogates
+            # that Python 3 won't accept, which will dump us to here.
+            # The best we can do is reduce it to a format that neuters
+            # the Unicode fugliness to something human-readable without
+            # losing data.
+            print(templ % (
+                m.addr.split('-')[0].zfill(16),
+                str(m.rss / 1024) + 'K',
+                m.perms,
+                repr(m.path)))
+
     print("-" * 33)
     print(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
 
