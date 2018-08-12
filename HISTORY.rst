@@ -23,7 +23,7 @@ XXXX-XX-XX
 - 1294_: [Windows] psutil.Process().connections() may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
-- 1309_: [Linux] Process.status() is unable to recognie "idle" and "parked"
+- 1309_: [Linux] Process.status() is unable to recognize "idle" and "parked"
   statuses (returns '?').
 - 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
