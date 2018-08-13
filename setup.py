@@ -152,7 +152,6 @@ elif MACOS:
         sources=sources + [
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
-            'psutil/arch/osx/smc.c',
         ],
         define_macros=macros,
         extra_link_args=[
