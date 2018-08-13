@@ -152,7 +152,6 @@ elif MACOS:
         sources=sources + [
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
-            'psutil/arch/osx/smc.c',
         ],
         define_macros=macros,
         extra_link_args=[
@@ -322,6 +321,7 @@ def main():
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',
