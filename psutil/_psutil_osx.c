@@ -47,10 +47,121 @@
 #include "arch/osx/smc.h"
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 static PyObject *ZombieProcessError;
 
+#define TEMPERATURE_MACRO &SMCGetTemperature, &temperature_reasonable
+
+bool detection_has_run = false;
+
+const struct smc_sensor potential_temperature_sensors[] = {
+    {"TA0P", "Ambient", TEMPERATURE_MACRO, NULL},
+    {"TA0S", "PCI Slot 1 Pos 1", TEMPERATURE_MACRO, NULL},
+    {"TA1P", "Ambient temperature", TEMPERATURE_MACRO, NULL},
+    {"TA1S", "PCI Slot 1 Pos 2", TEMPERATURE_MACRO, NULL},
+    {"TA2S", "PCI Slot 2 Pos 1", TEMPERATURE_MACRO, NULL},
+    {"TA3S", "PCI Slot 2 Pos 2", TEMPERATURE_MACRO, NULL},
+    {"TB0P", "BLC Proximity", TEMPERATURE_MACRO, NULL},
+    {"TB0T", "Battery TS_MAX", TEMPERATURE_MACRO, NULL},
+    {"TB1T", "Battery 1", TEMPERATURE_MACRO, NULL},
+    {"TB2T", "Battery 2", TEMPERATURE_MACRO, NULL},
+    {"TB3T", "Battery 3", TEMPERATURE_MACRO, NULL},
+    {"TCGC", "PECI GPU", TEMPERATURE_MACRO, NULL},
+    {"TCSA", "PECI SA", TEMPERATURE_MACRO, NULL},
+    {"TCSC", "PECI SA", TEMPERATURE_MACRO, NULL},
+    {"TCXC", "PECI CPU", TEMPERATURE_MACRO, NULL},
+    // For these values: appears that the hardware can only support one, but the SMC keys seem to indicate
+    // support for multiple
+    {"TN0D", "Northbridge Die", TEMPERATURE_MACRO, NULL},
+    {"TN0H", "Northbridge Heatsink", TEMPERATURE_MACRO, NULL},
+    {"TN0P", "Northbridge Proximity", TEMPERATURE_MACRO, NULL},
+    {"TS0C", "Expansion Slots", TEMPERATURE_MACRO, NULL},
+    {"TS0S", "Memory Bank Proximity", TEMPERATURE_MACRO, NULL},
+    {"TW0P", "AirPort Proximity", TEMPERATURE_MACRO, NULL},
+
+    {"TC_C", "CPU Core _", TEMPERATURE_MACRO, &count_cpu_cores},
+
+    {"TC_D", "CPU _ Die", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_E", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_F", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_G", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_H", "CPU _ Heatsink", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_J", "CPU _ ??", TEMPERATURE_MACRO, &count_physical_cpus},
+    {"TC_P", "CPU _ Proximity", TEMPERATURE_MACRO, &count_physical_cpus},
+
+    {"TG_D", "GPU _ Die", TEMPERATURE_MACRO, &count_gpus},
+    {"TG_H", "GPU _ Heatsink", TEMPERATURE_MACRO, &count_gpus},
+    {"TG_P", "GPU _ Proximity", TEMPERATURE_MACRO, &count_gpus},
+
+    {"TH_H", "Heatsink _ Proximity", TEMPERATURE_MACRO},
+    {"TH_P", "HDD _ Proximity", TEMPERATURE_MACRO},
+    {"TI_P", "Thunderbolt _", TEMPERATURE_MACRO},
+    {"TL_P", "LCD _ Proximity", TEMPERATURE_MACRO},
+    {"TL_P", "LCD _", TEMPERATURE_MACRO},
+
+    {"TM_P", "Memory _ Proximity", TEMPERATURE_MACRO, &count_dimms},
+    {"TM_S", "Memory Slot _", TEMPERATURE_MACRO, &count_dimms},
+    {"TMA_", "DIMM A _", TEMPERATURE_MACRO, &count_dimms},
+    {"TMB_", "DIMM B _", TEMPERATURE_MACRO, &count_dimms},
+
+    {"TO_P", "Optical Drive _ Proximity", TEMPERATURE_MACRO},
+    {"TP_C", "Power Supply _", TEMPERATURE_MACRO},
+    {"TP_P", "Power Supply _ Proximity", TEMPERATURE_MACRO},
+    {"TS_C", "Expansion Slot _", TEMPERATURE_MACRO},
+    {"TS_P", "Palm Rest _", TEMPERATURE_MACRO},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+struct smc_sensor_group temperature_sensors = {
+    .potential_sensors = potential_temperature_sensors
+};
+struct smc_sensor_group fan_sensors;
+struct smc_sensor_group other_sensors;
+
+void detect_sensors(struct smc_sensor_group * group) {
+
+    // TODO actually use the fixed counting
+
+    // Screw doing an actual list, we're just going to over allocate and then
+    // cut it back once we're done
+
+    // FIXME memory allocation in a not dumb way
+    struct smc_sensor ** detected_sensors = malloc(sizeof(struct smc_sensor *)
+                                                   * 100);
+    int sensor_index = 0;
+    struct smc_sensor * s;
+
+    // Iterate up with null termination
+    for (int i = 0; (s = (struct smc_sensor *) &(group->potential_sensors[i]))->get_function !=
+                    NULL; i++) {
+
+        int count = 0;
+        while (true) {
+
+            // TODO replace underscores
+
+            double val = (s->get_function)((char *) (s->key));
+            if (!s->reasonable_function(val)) {
+                break;
+            } else {
+                detected_sensors[sensor_index++] = s;
+            }
+            count++;
+
+            if (s->count_function_pointer == NULL) {
+                break;
+            }
+        }
+    }
+
+    detection_has_run = true;
+
+    // Realloc for proper size
+    group->detected_sensors = realloc(detected_sensors, sizeof(struct
+        smc_sensor *) * (sensor_index));
+}
 
 /*
  * A wrapper around host_statistics() invoked with HOST_VM_INFO.
@@ -169,7 +280,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     }
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     if (orig_address != NULL)
@@ -298,7 +409,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_proc_pidinfo(
-            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
+        pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
     {
         return NULL;
     }
@@ -376,7 +487,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     char perms[8];
     int pagesize = getpagesize();
     long pid;
-    kern_return_t err = KERN_SUCCESS;
+    kern_return_t err;
     mach_port_t task = MACH_PORT_NULL;
     uint32_t depth = 1;
     vm_address_t address = 0;
@@ -453,8 +564,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 switch (info.share_mode) {
 // #ifdef SM_LARGE_PAGE
                     // case SM_LARGE_PAGE:
-                        // Treat SM_LARGE_PAGE the same as SM_PRIVATE
-                        // since they are not shareable and are wired.
+                    // Treat SM_LARGE_PAGE the same as SM_PRIVATE
+                    // since they are not shareable and are wired.
 // #endif
                     case SM_COW:
                         strcpy(buf, "[cow]");
@@ -512,7 +623,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     return py_list;
 
-error:
+    error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
@@ -520,7 +631,6 @@ error:
     Py_DECREF(py_list);
     return NULL;
 }
-
 
 /*
  * Return the number of logical CPUs in the system.
@@ -611,7 +721,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
     vm_size_t page_size;
-    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
+    mach_vm_address_t addr;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
     mach_port_t object_name;
@@ -644,7 +754,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
 
         if (psutil_in_shared_region(addr, cpu_type) &&
-                info.share_mode != SM_PRIVATE) {
+            info.share_mode != SM_PRIVATE) {
             continue;
         }
 
@@ -813,7 +923,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         PyErr_Format(
             PyExc_RuntimeError,
             "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
-             mach_error_string(error));
+            mach_error_string(error));
         goto error;
     }
     mach_port_deallocate(mach_task_self(), host_port);
@@ -841,7 +951,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     if (cpu_load_info != NULL) {
@@ -897,62 +1007,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     return Py_BuildValue("f", (float)boot_time);
 }
 
-/*
- * Return a Python float indicating the value of the temperature
- * measured by an SMC key
- */
-static PyObject *
-psutil_smc_get_temperature(PyObject *self, PyObject *args) {
-    char* key;
-    float temp;
-
-    if (! PyArg_ParseTuple(args, "s", &key)) {
-        return NULL;
-    }
-    temp = SMCGetTemperature(key);
-    return Py_BuildValue("d", temp);
-}
-
-
-/*
- * Return a Python list of tuples of fan label and speed
- */
-static PyObject *
-psutil_sensors_fans(PyObject *self, PyObject *args) {
-    int key;
-    int speed;
-    char fan[7];
-    int fan_count;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count < 0)
-        fan_count = 0;
-
-    for (key = 0; key < fan_count; key++) {
-        sprintf(fan, "Fan %d", key);
-        speed = SMCGetFanSpeed(key);
-        if (speed < 0)
-            continue;
-        py_tuple = Py_BuildValue("(si)", fan, speed);
-        if (!py_tuple)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_XDECREF(py_tuple);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
 
 /*
  * Return a list of tuples including device, mount point and fs type
@@ -976,7 +1030,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
-    num = getfsstat(NULL, 0, MNT_NOWAIT);
+        num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -984,14 +1038,14 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     len = sizeof(*fs) * num;
-    fs = malloc(len);
+    fs = malloc((size_t) len);
     if (fs == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     Py_BEGIN_ALLOW_THREADS
-    num = getfsstat(fs, len, MNT_NOWAIT);
+        num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -1078,7 +1132,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     free(fs);
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
@@ -1097,7 +1151,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     int err, ret;
     kern_return_t kr;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    unsigned int info_count;
     mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
@@ -1175,7 +1229,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     return py_retlist;
 
-error:
+    error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
@@ -1222,7 +1276,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1239,11 +1293,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
             errno = 0;
-            nb = proc_pidfdinfo((pid_t)pid,
-                                fdp_pointer->proc_fd,
-                                PROC_PIDFDVNODEPATHINFO,
-                                &vi,
-                                sizeof(vi));
+            nb = (unsigned long) proc_pidfdinfo((pid_t)pid,
+                                                fdp_pointer->proc_fd,
+                                                PROC_PIDFDVNODEPATHINFO,
+                                                &vi,
+                                                sizeof(vi));
 
             // --- errors checking
             if ((nb <= 0) || nb < sizeof(vi)) {
@@ -1283,7 +1337,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     free(fds_pointer);
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
@@ -1336,7 +1390,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1356,8 +1410,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
-            nb = proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
-                                PROC_PIDFDSOCKETINFO, &si, sizeof(si));
+            nb = (unsigned long) proc_pidfdinfo((pid_t)pid,
+                                                fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO, &si, sizeof
+                                                (si));
 
             // --- errors checking
             if ((nb <= 0) || (nb < sizeof(si))) {
@@ -1487,7 +1542,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     free(fds_pointer);
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
@@ -1516,7 +1571,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (pidinfo_result <= 0)
         return PyErr_SetFromErrno(PyExc_OSError);
 
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = malloc((size_t) pidinfo_result);
     if (fds_pointer == NULL)
         return PyErr_NoMemory();
     pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, fds_pointer,
@@ -1577,7 +1632,6 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         next += ifm->ifm_msglen;
 
         if (ifm->ifm_type == RTM_IFINFO2) {
-            py_ifc_info = NULL;
             struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
             struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
             char ifc_name[32];
@@ -1610,7 +1664,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     free(buf);
     return py_retdict;
 
-error:
+    error:
     Py_XDECREF(py_ifc_info);
     Py_DECREF(py_retdict);
     if (buf != NULL)
@@ -1650,10 +1704,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         py_disk_info = NULL;
         parent_dict = NULL;
         props_dict = NULL;
-        stats_dict = NULL;
 
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
-                != kIOReturnSuccess) {
+            != kIOReturnSuccess) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get the disk's parent.");
             IOObjectRelease(disk);
@@ -1662,11 +1715,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
         if (IOObjectConformsTo(parent, "IOBlockStorageDriver")) {
             if (IORegistryEntryCreateCFProperties(
-                    disk,
-                    (CFMutableDictionaryRef *) &parent_dict,
-                    kCFAllocatorDefault,
-                    kNilOptions
-                ) != kIOReturnSuccess)
+                disk,
+                (CFMutableDictionaryRef *) &parent_dict,
+                kCFAllocatorDefault,
+                kNilOptions
+            ) != kIOReturnSuccess)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "unable to get the parent's properties.");
@@ -1676,11 +1729,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             }
 
             if (IORegistryEntryCreateCFProperties(
-                    parent,
-                    (CFMutableDictionaryRef *) &props_dict,
-                    kCFAllocatorDefault,
-                    kNilOptions
-                ) != kIOReturnSuccess)
+                parent,
+                (CFMutableDictionaryRef *) &props_dict,
+                kCFAllocatorDefault,
+                kNilOptions
+            ) != kIOReturnSuccess)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "unable to get the disk properties.");
@@ -1719,42 +1772,42 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
             // Get disk reads/writes
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &reads);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsWritesKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsWritesKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &writes);
             }
 
             // Get disk bytes read/written
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &read_bytes);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsBytesWrittenKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsBytesWrittenKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_bytes);
             }
 
             // Get disk time spent reading/writing (nanoseconds)
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &read_time);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                    stats_dict,
-                    CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey))))
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
             }
@@ -1769,7 +1822,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 write_bytes,
                 read_time / 1000 / 1000,
                 write_time / 1000 / 1000);
-           if (!py_disk_info)
+            if (!py_disk_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
                 goto error;
@@ -1786,7 +1839,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     return py_retdict;
 
-error:
+    error:
     Py_XDECREF(py_disk_info);
     Py_DECREF(py_retdict);
     return NULL;
@@ -1844,7 +1897,7 @@ psutil_users(PyObject *self, PyObject *args) {
     endutxent();
     return py_retlist;
 
-error:
+    error:
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
@@ -1884,6 +1937,38 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
+static PyObject * sensor_python(struct smc_sensor_group * group) {
+    // TODO better implementation
+    if (!detection_has_run) {
+        detect_sensors(group);
+//        detected_fan_sensors = detect_sensors(fan_sensors);
+//        detected_other_sensors = detect_sensors(other_sensors);
+    }
+
+    struct smc_sensor * s;
+    PyObject *py_retdict = PyDict_New();
+    // Iterate up with null termination
+    for (int i = 0; (s = (group->detected_sensors[i]))->get_function != NULL; i++) {
+        printf("%f\n", (s->get_function)((char *) (s->key)));
+        // Dereference the function pointer and pass it the sensor key,
+        // then store that in the dictionary
+        // FIXME
+        PyDict_SetItemString(py_retdict, s->name, PyFloat_FromDouble((s->get_function)((char *) s->key)));
+    }
+    return py_retdict;
+}
+
+static PyObject * sensor_temperatures(PyObject *self, PyObject *args) {
+    return sensor_python(&temperature_sensors);
+}
+
+static PyObject * sensor_fan_speeds(PyObject *self, PyObject *args) {
+    return sensor_python(&fan_sensors);
+}
+
+static PyObject * sensor_others(PyObject *self, PyObject *args) {
+    return sensor_python(&other_sensors);
+}
 
 
 /*
@@ -1906,14 +1991,14 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 
     if (!power_info) {
         PyErr_SetString(PyExc_RuntimeError,
-            "IOPSCopyPowerSourcesInfo() syscall failed");
+                        "IOPSCopyPowerSourcesInfo() syscall failed");
         goto error;
     }
 
     power_sources_list = IOPSCopyPowerSourcesList(power_info);
     if (!power_sources_list) {
         PyErr_SetString(PyExc_RuntimeError,
-            "IOPSCopyPowerSourcesList() syscall failed");
+                        "IOPSCopyPowerSourcesList() syscall failed");
         goto error;
     }
 
@@ -1929,8 +2014,9 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
     if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "No battery capacity infomration in power sources info");
+        PyErr_SetString(PyExc_RuntimeError, "No battery capacity "
+                                            "infomration in power sources "
+                                            "info");
         goto error;
     }
 
@@ -1938,7 +2024,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         power_sources_information, CFSTR(kIOPSPowerSourceStateKey));
     is_power_plugged = CFStringCompare(
         ps_state_ref, CFSTR(kIOPSACPowerValue), 0)
-        == kCFCompareEqualTo;
+                       == kCFCompareEqualTo;
 
     time_to_empty_ref = (CFNumberRef) CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSTimeToEmptyKey));
@@ -1952,7 +2038,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     }
 
     py_tuple = Py_BuildValue("Iii",
-        capacity, time_to_empty, is_power_plugged);
+                             capacity, time_to_empty, is_power_plugged);
     if (!py_tuple) {
         goto error;
     }
@@ -1963,7 +2049,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 
     return py_tuple;
 
-error:
+    error:
     if (power_info)
         CFRelease(power_info);
     if (power_sources_list)
@@ -1974,80 +2060,122 @@ error:
 
 
 /*
+ * Return fan spped information.
+ */
+static PyObject *
+psutil_sensors_fans(PyObject *self, PyObject *args) {
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_fan_speed = NULL;
+    int i;
+    int fan_count;
+    float fan_speed;
+    char key[16];
+
+    if (py_retdict == NULL)
+        goto error;
+
+    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
+    if (fan_count <= 0) {
+        goto error;
+    }
+    for (i = 0; i < fan_count; i++) {
+        fan_speed = SMCGetFanSpeed(i);
+        if (fan_speed < 0) {
+            continue;
+        }
+        py_fan_speed = Py_BuildValue("f", fan_speed);
+        if (py_fan_speed == NULL)
+            goto error;
+        sprintf(key, "Fan%d", i);
+        if (PyDict_SetItemString(py_retdict, key, py_fan_speed)) {
+            goto error;
+        }
+    }
+
+    Py_DECREF(py_fan_speed);
+    return py_retdict;
+
+    error:
+    Py_XDECREF(py_fan_speed);
+    Py_XDECREF(py_retdict);
+    return NULL;
+}
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] = {
+    PsutilMethods[] = {
     // --- per-process functions
 
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
-     "Return multiple process info."},
+        "Return multiple process info."},
     {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS,
-     "Return multiple process info."},
+        "Return multiple process info."},
     {"proc_name", psutil_proc_name, METH_VARARGS,
-     "Return process name"},
+        "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
-     "Return process cmdline as a list of cmdline arguments"},
+        "Return process cmdline as a list of cmdline arguments"},
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
-     "Return process environment data"},
+        "Return process environment data"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return path of the process executable"},
+        "Return path of the process executable"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
-     "Return process current working directory."},
+        "Return process current working directory."},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
-     "Return process USS memory"},
+        "Return process USS memory"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
-     "Return process threads as a list of tuples"},
+        "Return process threads as a list of tuples"},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process as a list of tuples"},
+        "Return files opened by process as a list of tuples"},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
-     "Return the number of fds opened by process."},
+        "Return the number of fds opened by process."},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Get process TCP and UDP connections as a list of tuples"},
+        "Get process TCP and UDP connections as a list of tuples"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
-     "Return a list of tuples for every process's memory map"},
+        "Return a list of tuples for every process's memory map"},
 
     // --- system-related functions
 
     {"pids", psutil_pids, METH_VARARGS,
-     "Returns a list of PIDs currently running on the system"},
+        "Returns a list of PIDs currently running on the system"},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
-     "Return number of logical CPUs on the system"},
+        "Return number of logical CPUs on the system"},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return number of physical CPUs on the system"},
+        "Return number of physical CPUs on the system"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
-     "Return system virtual memory stats"},
+        "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
-     "Return stats about swap memory, in bytes"},
+        "Return stats about swap memory, in bytes"},
     {"cpu_times", psutil_cpu_times, METH_VARARGS,
-     "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+        "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
-     "Return system per-cpu times as a list of tuples"},
+        "Return system per-cpu times as a list of tuples"},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
-     "Return cpu current frequency"},
+        "Return cpu current frequency"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
-     "Return the system boot time expressed in seconds since the epoch."},
+        "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-     "Return a list of tuples including device, mount point and "
-     "fs type for all partitions mounted on the system."},
+        "Return a list of tuples including device, mount point and fs type "
+        "for all partitions mounted on the system."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
-     "Return dict of tuples of networks I/O information."},
+        "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
-     "Return dict of tuples of disks I/O information."},
+        "Return dict of tuples of disks I/O information."},
     {"users", psutil_users, METH_VARARGS,
-     "Return currently connected users as a list of tuples"},
+        "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
-     "Return CPU statistics"},
-    {"smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
-     "Temperature of SMC key as float"},
-    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
-     "Return the RPM of the fan with SMC key"},
+        "Return CPU statistics"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
-     "Return battery information."},
+        "Return battery information."},
+    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
+        "Return fan speed information."},
+    {"sensor_temperatures", sensor_temperatures, METH_VARARGS,
+        "Returns temperatures."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+        "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -2106,7 +2234,7 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+//    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     PyModule_AddIntConstant(module, "SIDL", SIDL);
@@ -2142,3 +2270,5 @@ init_psutil_osx(void)
     return module;
 #endif
 }
+
+#pragma clang diagnostic pop

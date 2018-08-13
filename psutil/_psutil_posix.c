@@ -22,6 +22,8 @@
     #include "arch/aix/ifaddrs.h"
 #else
     #include <ifaddrs.h>
+#include <netdb.h>
+
 #endif
 
 #if defined(PSUTIL_LINUX)

@@ -16,7 +16,6 @@
 #define SMC_CMD_READ_PLIMIT   11
 #define SMC_CMD_READ_VERS     12
 
-
 #define DATATYPE_FPE2         "fpe2"
 #define DATATYPE_UINT8        "ui8 "
 #define DATATYPE_UINT16       "ui16"
@@ -52,28 +51,50 @@ typedef struct {
 typedef char              SMCBytes_t[32];
 
 typedef struct {
-    UInt32                  key;
-    SMCKeyData_vers_t       vers;
-    SMCKeyData_pLimitData_t pLimitData;
-    SMCKeyData_keyInfo_t    keyInfo;
-    char                    result;
-    char                    status;
-    char                    data8;
-    UInt32                  data32;
-    SMCBytes_t              bytes;
+  UInt32                  key;
+  SMCKeyData_vers_t       vers;
+  SMCKeyData_pLimitData_t pLimitData;
+  SMCKeyData_keyInfo_t    keyInfo;
+  char                    result;
+  char                    status;
+  char                    data8;
+  UInt32                  data32;
+  SMCBytes_t              bytes;
 } SMCKeyData_t;
 
 typedef char              UInt32Char_t[5];
 
 typedef struct {
-    UInt32Char_t            key;
-    UInt32                  dataSize;
-    UInt32Char_t            dataType;
-    SMCBytes_t              bytes;
+  UInt32Char_t            key;
+  UInt32                  dataSize;
+  UInt32Char_t            dataType;
+  SMCBytes_t              bytes;
 } SMCVal_t;
 
 double SMCGetTemperature(char *key);
 int SMCGetFanNumber(char *key);
 float SMCGetFanSpeed(int fanNum);
+
+int count_cpu_cores();
+int count_physical_cpus();
+int count_gpus();
+int count_dimms();
+bool temperature_reasonable(double d);
+bool fan_speed_reasonable(double d);
+bool always_true(double d);
+
+struct smc_sensor {
+    // Actual types are varied, but they can all be contained in this less efficient format
+    const char key[5];
+    const char * name;
+    double (*get_function)(char *);
+    bool (*reasonable_function)(double);
+    int (*count_function_pointer)();
+};
+
+struct smc_sensor_group {
+    const struct smc_sensor * potential_sensors;
+    struct smc_sensor ** detected_sensors;
+};
 
 #endif

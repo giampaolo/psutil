@@ -21,7 +21,7 @@ UInt32 _strtoul(char *str, int size, int base)
         if (base == 16)
             total += str[i] << (size - 1 - i) * 8;
         else
-            total += (unsigned char) (str[i] << (size - 1 - i) * 8);
+           total += (unsigned char) (str[i] << (size - 1 - i) * 8);
     }
     return total;
 }
@@ -215,8 +215,6 @@ float SMCGetFanSpeed(int fanNum)
     return _strtof((unsigned char *)val.bytes, val.dataSize, 2);
 }
 
-
-
 int SMCGetFanNumber(char *key)
 {
     SMCVal_t val;
@@ -235,4 +233,32 @@ int SMCGetFanNumber(char *key)
     }
     SMCClose(conn);
     return _strtoul((char *)val.bytes, val.dataSize, 10);
+}
+
+int count_cpu_cores() {
+    // TODO
+    return 1;
+}
+int count_physical_cpus() {
+    // TODO
+    return 1;
+}
+int count_gpus() {
+    // TODO
+    return 1;
+}
+int count_dimms() {
+    // TODO
+    return 2;
+}
+bool temperature_reasonable(double d) {
+    // TODO
+    return d > 10;
+}
+bool fan_speed_reasonable(double d) {
+    // TODO
+    return d > 100;
+}
+bool always_true(double d) {
+    return true;
 }
