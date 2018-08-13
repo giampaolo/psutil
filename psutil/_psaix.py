@@ -269,7 +269,8 @@ def net_if_stats():
             stdout, stderr = [x.decode(sys.stdout.encoding)
                               for x in (stdout, stderr)]
         if p.returncode == 0:
-            re_result = re.search(r"Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
+            re_result = re.search(
+                r"Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
             if re_result is not None:
                 speed = int(re_result.group(1))
                 duplex = re_result.group(2)

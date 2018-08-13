@@ -289,16 +289,6 @@ class TestFetchAllProcesses(unittest.TestCase):
     some sanity checks against Process API's returned values.
     """
 
-    def setUp(self):
-        if POSIX:
-            import pwd
-            import grp
-            users = pwd.getpwall()
-            groups = grp.getgrall()
-            self.all_uids = set([x.pw_uid for x in users])
-            self.all_usernames = set([x.pw_name for x in users])
-            self.all_gids = set([x.gr_gid for x in groups])
-
     def test_fetch_all(self):
         valid_procs = 0
         excluded_names = set([
@@ -425,7 +415,6 @@ class TestFetchAllProcesses(unittest.TestCase):
         for uid in ret:
             self.assertIsInstance(uid, int)
             self.assertGreaterEqual(uid, 0)
-            self.assertIn(uid, self.all_uids)
 
     def gids(self, ret, proc):
         assert is_namedtuple(ret)
@@ -435,13 +424,10 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertIsInstance(gid, int)
             if not MACOS and not NETBSD:
                 self.assertGreaterEqual(gid, 0)
-                self.assertIn(gid, self.all_gids)
 
     def username(self, ret, proc):
         self.assertIsInstance(ret, str)
         assert ret
-        if POSIX:
-            self.assertIn(ret, self.all_usernames)
 
     def status(self, ret, proc):
         self.assertIsInstance(ret, str)
@@ -526,6 +512,10 @@ class TestFetchAllProcesses(unittest.TestCase):
             value = getattr(ret, name)
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0, msg=(name, value))
+            if LINUX and name in ('vms', 'data'):
+                # On Linux there are processes (e.g. 'goa-daemon') whose
+                # VMS is incredibly high for some reason.
+                continue
             self.assertLessEqual(value, total, msg=(name, value, total))
 
         if LINUX:
