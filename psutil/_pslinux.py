@@ -1052,8 +1052,23 @@ def disk_io_counters(perdisk=False):
     system as a dict of raw tuples.
     """
     retdict = {}
-    with open_text("%s/diskstats" % get_procfs_path()) as f:
-        lines = f.readlines()
+    if os.path.exists("%s/diskstats" % get_procfs_path()):
+        with open_text("%s/diskstats" % get_procfs_path()) as f:
+            lines = f.readlines()
+    else:
+        # Try to use /sys/block/*/stat for disk_io_counters
+        # if /process/diskstats doesn't exist
+        lines = []
+        for block in os.listdir('/sys/block'):
+            for root, _dirs, files in os.walk(
+                    os.path.join('/sys/block', block)):
+                if 'stat' in files:
+                    with open_text(os.path.join(root, 'stat')) as f:
+                        line = f.readline()
+                        # Let's just set major and minor device number
+                        # to zero since we don't care about that
+                        lines.append(
+                            "0 0 %s %s" % (os.path.basename(root), line))
     for line in lines:
         # OK, this is a bit confusing. The format of /proc/diskstats can
         # have 3 variations.
