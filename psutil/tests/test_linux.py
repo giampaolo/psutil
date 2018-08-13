@@ -1094,6 +1094,26 @@ class TestSystemDisks(unittest.TestCase):
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.write_count, 5)
 
+    def test_disk_io_counters_sysfs(self):
+        def exists(path):
+            if path == '/proc/diskstats':
+                return False
+            return True
+
+        wprocfs = psutil.disk_io_counters(perdisk=True)
+        with mock.patch('psutil._pslinux.os.path.exists',
+                        create=True, side_effect=exists):
+            wsysfs = psutil.disk_io_counters(perdisk=True)
+        self.assertEqual(len(wprocfs), len(wsysfs))
+
+    def test_disk_io_counters_not_impl(self):
+        def exists(path):
+            return False
+
+        with mock.patch('psutil._pslinux.os.path.exists',
+                        create=True, side_effect=exists):
+            self.assertRaises(NotImplementedError, psutil.disk_io_counters)
+
 
 # =====================================================================
 # --- misc
