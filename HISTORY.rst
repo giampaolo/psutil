@@ -12,6 +12,9 @@ XXXX-XX-XX
 - 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
   psutil.MACOS.
 - 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
+- 1321_: [Linux] add disk_io_counters() dual implementation relying on
+  /sys/block filesystem in case /proc/diskstats is not available. (patch by
+  Lawrence Ye)
 
 **Bug fixes**
 

@@ -1250,7 +1250,7 @@ class TestMisc(unittest.TestCase):
             self.assertRaises(IOError, psutil.net_connections)
             self.assertRaises(IOError, psutil.net_io_counters)
             self.assertRaises(IOError, psutil.net_if_stats)
-            self.assertRaises(IOError, psutil.disk_io_counters)
+            # self.assertRaises(IOError, psutil.disk_io_counters)
             self.assertRaises(IOError, psutil.disk_partitions)
             self.assertRaises(psutil.NoSuchProcess, psutil.Process)
         finally:

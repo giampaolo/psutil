@@ -1051,25 +1051,7 @@ def disk_io_counters(perdisk=False):
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    retdict = {}
-    if os.path.exists("%s/diskstats" % get_procfs_path()):
-        with open_text("%s/diskstats" % get_procfs_path()) as f:
-            lines = f.readlines()
-    else:
-        # Try to use /sys/block/*/stat for disk_io_counters
-        # if /process/diskstats doesn't exist
-        lines = []
-        for block in os.listdir('/sys/block'):
-            for root, _dirs, files in os.walk(
-                    os.path.join('/sys/block', block)):
-                if 'stat' in files:
-                    with open_text(os.path.join(root, 'stat')) as f:
-                        line = f.readline()
-                        # Let's just set major and minor device number
-                        # to zero since we don't care about that
-                        lines.append(
-                            "0 0 %s %s" % (os.path.basename(root), line))
-    for line in lines:
+    def read_procfs():
         # OK, this is a bit confusing. The format of /proc/diskstats can
         # have 3 variations.
         # On Linux 2.4 each line has always 15 fields, e.g.:
@@ -1083,27 +1065,58 @@ def disk_io_counters(perdisk=False):
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-        fields = line.split()
-        fields_len = len(fields)
-        if fields_len == 15:
-            # Linux 2.4
-            name = fields[3]
-            reads = int(fields[2])
-            (reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
-        elif fields_len == 14:
-            # Linux 2.6+, line referring to a disk
-            name = fields[2]
-            (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
-        elif fields_len == 7:
-            # Linux 2.6+, line referring to a partition
-            name = fields[2]
-            reads, rbytes, writes, wbytes = map(int, fields[3:])
-            rtime = wtime = reads_merged = writes_merged = busy_time = 0
-        else:
-            raise ValueError("not sure how to interpret line %r" % line)
+        with open_text("%s/diskstats" % get_procfs_path()) as f:
+            lines = f.readlines()
+        for line in lines:
+            fields = line.split()
+            flen = len(fields)
+            if flen == 15:
+                # Linux 2.4
+                name = fields[3]
+                reads = int(fields[2])
+                (reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
+            elif flen == 14:
+                # Linux 2.6+, line referring to a disk
+                name = fields[2]
+                (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
+            elif flen == 7:
+                # Linux 2.6+, line referring to a partition
+                name = fields[2]
+                reads, rbytes, writes, wbytes = map(int, fields[3:])
+                rtime = wtime = reads_merged = writes_merged = busy_time = 0
+            else:
+                raise ValueError("not sure how to interpret line %r" % line)
+            yield (name, reads, writes, rbytes, wbytes, rtime, wtime,
+                   reads_merged, writes_merged, busy_time)
 
+    def read_sysfs():
+        for block in os.listdir('/sys/block'):
+            for root, _, files in os.walk(os.path.join('/sys/block', block)):
+                if 'stat' not in files:
+                    continue
+                with open_text(os.path.join(root, 'stat')) as f:
+                    fields = f.read().strip().split()
+                name = os.path.basename(root)
+                (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields)
+                yield (name, reads, writes, rbytes, wbytes, rtime,
+                       wtime, reads_merged, writes_merged, busy_time)
+
+    if os.path.exists('%s/diskstats' % get_procfs_path()):
+        gen = read_procfs()
+    elif os.path.exists('/sys/block'):
+        gen = read_sysfs()
+    else:
+        raise NotImplementedError(
+            "%s/diskstats nor /sys/block filesystem are available on this "
+            "system" % get_procfs_path())
+
+    retdict = {}
+    for entry in gen:
+        (name, reads, writes, rbytes, wbytes, rtime, wtime, reads_merged,
+            writes_merged, busy_time) = entry
         if not perdisk and not is_storage_device(name):
             # perdisk=False means we want to calculate totals so we skip
             # partitions (e.g. 'sda1', 'nvme0n1p1') and only include
