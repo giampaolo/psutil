@@ -30,6 +30,7 @@ XXXX-XX-XX
   statuses (returns '?').
 - 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
+- 1323_: [Linux] sensors_temperatures() may fail with ValueError.
 
 5.4.6
 =====

@@ -318,7 +318,7 @@ def cat(fname, fallback=_DEFAULT, binary=True):
     try:
         with open_binary(fname) if binary else open_text(fname) as f:
             return f.read().strip()
-    except IOError:
+    except (IOError, OSError):
         if fallback is not _DEFAULT:
             return fallback
         else:
@@ -1199,13 +1199,15 @@ def sensors_temperatures():
             current = float(cat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path, binary=False)
-        except (IOError, OSError) as err:
+        except (IOError, OSError, ValueError) as err:
             # A lot of things can go wrong here, so let's just skip the
-            # whole entry.
+            # whole entry. Sure thing is Linux's /sys/class/hwmon really
+            # is a stinky broken mess.
             # https://github.com/giampaolo/psutil/issues/1009
             # https://github.com/giampaolo/psutil/issues/1101
             # https://github.com/giampaolo/psutil/issues/1129
             # https://github.com/giampaolo/psutil/issues/1245
+            # https://github.com/giampaolo/psutil/issues/1323
             warnings.warn("ignoring %r for file %r" % (err, path),
                           RuntimeWarning)
             continue
@@ -1215,9 +1217,15 @@ def sensors_temperatures():
         label = cat(base + '_label', fallback='', binary=False)
 
         if high is not None:
-            high = float(high) / 1000.0
+            try:
+                high = float(high) / 1000.0
+            except ValueError:
+                high = None
         if critical is not None:
-            critical = float(critical) / 1000.0
+            try:
+                critical = float(critical) / 1000.0
+            except ValueError:
+                critical = None
 
         ret[unit_name].append((label, current, high, critical))
 
