@@ -706,8 +706,6 @@ Sensors
 
   .. versionadded:: 5.1.0
 
-  .. versionchanged:: 5.5.0: added macOS support
-
   .. warning::
 
     this API is experimental. Backward incompatible changes may occur if
@@ -731,8 +729,6 @@ Sensors
   Availability: Linux, macOS
 
   .. versionadded:: 5.2.0
-
-  .. versionchanged:: 5.5.0: added macOS support
 
   .. warning::
 

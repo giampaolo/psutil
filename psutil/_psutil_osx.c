@@ -44,7 +44,6 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
-#include "arch/osx/smc.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -897,62 +896,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     return Py_BuildValue("f", (float)boot_time);
 }
 
-/*
- * Return a Python float indicating the value of the temperature
- * measured by an SMC key
- */
-static PyObject *
-psutil_smc_get_temperature(PyObject *self, PyObject *args) {
-    char* key;
-    float temp;
-
-    if (! PyArg_ParseTuple(args, "s", &key)) {
-        return NULL;
-    }
-    temp = SMCGetTemperature(key);
-    return Py_BuildValue("d", temp);
-}
-
-
-/*
- * Return a Python list of tuples of fan label and speed
- */
-static PyObject *
-psutil_sensors_fans(PyObject *self, PyObject *args) {
-    int key;
-    int speed;
-    char fan[7];
-    int fan_count;
-    PyObject *py_tuple = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    fan_count = SMCGetFanNumber(SMC_KEY_FAN_NUM);
-    if (fan_count < 0)
-        fan_count = 0;
-
-    for (key = 0; key < fan_count; key++) {
-        sprintf(fan, "Fan %d", key);
-        speed = SMCGetFanSpeed(key);
-        if (speed < 0)
-            continue;
-        py_tuple = Py_BuildValue("(si)", fan, speed);
-        if (!py_tuple)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_XDECREF(py_tuple);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
 
 /*
  * Return a list of tuples including device, mount point and fs type
@@ -1885,7 +1828,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
-
 /*
  * Return battery information.
  */
@@ -2038,10 +1980,6 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-    {"smc_get_temperature", psutil_smc_get_temperature, METH_VARARGS,
-     "Temperature of SMC key as float"},
-    {"sensors_fans", psutil_sensors_fans, METH_VARARGS,
-     "Return the RPM of the fan with SMC key"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
 
