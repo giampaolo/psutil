@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.5.0
+5.4.7
 =====
 
 XXXX-XX-XX

@@ -2135,7 +2135,7 @@ Constants
   Alias for :const:`MACOS` (deprecated).
 
   .. warning::
-    deprecated in version 5.5.0; use :const:`MACOS` instead.
+    deprecated in version 5.4.7; use :const:`MACOS` instead.
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
@@ -2179,7 +2179,7 @@ Constants
   Returned by :meth:`psutil.Process.status()`.
 
   .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
-  .. versionadded:: 5.5.0 STATUS_PARKED (Linux)
+  .. versionadded:: 5.4.7 STATUS_PARKED (Linux)
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED

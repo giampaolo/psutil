@@ -63,8 +63,6 @@ include psutil/arch/openbsd/specific.c
 include psutil/arch/openbsd/specific.h
 include psutil/arch/osx/process_info.c
 include psutil/arch/osx/process_info.h
-include psutil/arch/osx/smc.c
-include psutil/arch/osx/smc.h
 include psutil/arch/solaris/environ.c
 include psutil/arch/solaris/environ.h
 include psutil/arch/solaris/v10/ifaddrs.c
@@ -88,9 +86,9 @@ include psutil/tests/test_bsd.py
 include psutil/tests/test_connections.py
 include psutil/tests/test_contracts.py
 include psutil/tests/test_linux.py
-include psutil/tests/test_osx.py
 include psutil/tests/test_memory_leaks.py
 include psutil/tests/test_misc.py
+include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
 include psutil/tests/test_sunos.py
