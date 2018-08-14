@@ -3,7 +3,7 @@
 5.4.7
 =====
 
-XXXX-XX-XX
+2018-08-14
 
 **Enhancements**
 
