@@ -659,16 +659,10 @@ class TestProcess(unittest.TestCase):
 
     def test_memory_percent(self):
         p = psutil.Process()
-        ret = p.memory_percent()
-        assert 0 <= ret <= 100, ret
-        ret = p.memory_percent(memtype='vms')
-        assert 0 <= ret <= 100, ret
-        assert 0 <= ret <= 100, ret
+        p.memory_percent()
         self.assertRaises(ValueError, p.memory_percent, memtype="?!?")
         if LINUX or MACOS or WINDOWS:
-            ret = p.memory_percent(memtype='uss')
-            assert 0 <= ret <= 100, ret
-            assert 0 <= ret <= 100, ret
+            p.memory_percent(memtype='uss')
 
     def test_is_running(self):
         sproc = get_test_subprocess()
