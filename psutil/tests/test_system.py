@@ -318,11 +318,12 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        time.sleep(0.1)
-        t2 = sum(psutil.cpu_times())
-        difference = t2 - t1
-        if not difference >= 0.05:
-            self.fail("difference %s" % difference)
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            t2 = sum(psutil.cpu_times())
+            if t2 > t1:
+                return
+        self.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
