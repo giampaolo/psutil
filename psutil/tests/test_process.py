@@ -538,9 +538,6 @@ class TestProcess(unittest.TestCase):
         with ThreadTask():
             step2 = p.threads()
             self.assertEqual(len(step2), len(step1) + 1)
-            # on Linux, first thread id is supposed to be this process
-            if LINUX:
-                self.assertEqual(step2[0].id, os.getpid())
             athread = step2[0]
             # test named tuple
             self.assertEqual(athread.id, athread[0])
