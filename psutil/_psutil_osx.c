@@ -682,8 +682,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 /*
  * Return system virtual memory stats.
  * See:
- * http://opensource.apple.com/source/system_cmds/system_cmds-498.2/
- *     vm_stat.tproj/vm_stat.c
+ * https://opensource.apple.com/source/system_cmds/system_cmds-790/
+ *     vm_stat.tproj/vm_stat.c.auto.html
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {

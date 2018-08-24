@@ -1,3 +1,7 @@
+.. image:: http://pepy.tech/badge/psutil
+    :target: http://pepy.tech/project/psutil
+    :alt: Downloads
+
 .. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
