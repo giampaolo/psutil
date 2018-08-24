@@ -18,7 +18,10 @@ matrix:
           env: PYVER=py27
         - language: generic
           os: osx
-          env: PYVER=py34
+          env: PYVER=py36
+        # pypy
+        - python: pypy
+        - python: pypy3
 install:
     - ./.ci/travis/install.sh
 script:
