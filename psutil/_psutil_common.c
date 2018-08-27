@@ -84,11 +84,13 @@ psutil_set_testing(PyObject *self, PyObject *args) {
 void
 psutil_debug(const char* format, ...) {
     va_list argptr;
-    va_start(argptr, format);
-    fprintf(stderr, "psutil-debug> ");
-    vfprintf(stderr, format, argptr);
-    fprintf(stderr, "\n");
-    va_end(argptr);
+    if (PSUTIL_DEBUG) {
+        va_start(argptr, format);
+        fprintf(stderr, "psutil-debug> ");
+        vfprintf(stderr, format, argptr);
+        fprintf(stderr, "\n");
+        va_end(argptr);
+    }
 }
 
 
