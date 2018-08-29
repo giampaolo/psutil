@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.8
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1332_: psutil debug messages are erroneously printed all the time.  (patch by
+  yanok)
+
 5.4.7
 =====
 
