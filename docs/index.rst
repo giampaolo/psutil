@@ -53,7 +53,7 @@ The easiest way to install psutil is via ``pip``::
 
 On UNIX this requires a C compiler (e.g. gcc) installed. On Windows pip will
 automatically retrieve a pre-compiled wheel version from
-`PYPI repository <https://pypi.org/project/psutil>`__.
+`PyPI repository <https://pypi.org/project/psutil>`__.
 Alternatively, see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 instructions.

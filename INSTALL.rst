@@ -76,7 +76,7 @@ Windows
 
 The easiest way to install psutil on Windows is to just use the pre-compiled
 exe/wheel installers hosted on
-`PYPI <https://pypi.org/project/psutil/#files>`__ via pip:
+`PyPI <https://pypi.org/project/psutil/#files>`__ via pip:
 
 .. code-block:: bat
 
