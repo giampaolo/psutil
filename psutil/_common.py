@@ -38,6 +38,7 @@ else:
     enum = None
 
 # can't take it from _common.py as this script is imported by setup.py
+PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
 __all__ = [
@@ -61,6 +62,7 @@ __all__ = [
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
     'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
+    'str2bytes', 'bytes2str', 'unicode2str',
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
@@ -263,6 +265,61 @@ del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 # ===================================================================
 # --- utils
 # ===================================================================
+
+if PY2:
+    def bytes2str(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given bytes, return a str.
+
+        On Python 2 this is a no-op since bytes is str; on Python 3 the bytes
+        are decoded using the optional encoding/errors arguments, or the
+        constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s
+
+    def str2bytes(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given a str, return bytes.
+
+        On Python 2 this is a no-op since str is bytes; on Python 3 the
+        bytes are encoding using the optional encoding/errors arguments, or
+        the constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s
+
+    def unicode2str(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given a Python 3 str or Python 2 unicode, return a str.
+
+        On Python 3 this is a no-op since str is unicode, but on Python 2
+        the unicode is encoded using the optional encoding/errors arguments,
+        or the constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s.encode(encoding, errors)
+else:
+    def bytes2str(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given bytes, return a str.
+
+        On Python 2 this is a no-op since bytes is str; on Python 3 the bytes
+        are decoded using the optional encoding/errors arguments, or the
+        constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s.decode(encoding, errors)
+
+    def str2bytes(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given a str, return bytes.
+
+        On Python 2 this is a no-op since str is bytes; on Python 3 the
+        bytes are encoding using the optional encoding/errors arguments, or
+        the constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s.encode(encoding, errors)
+
+    def unicode2str(s, encoding=ENCODING, errors=ENCODING_ERRS):
+        """Given a Python 3 str or Python 2 unicode, return a str.
+
+        On Python 3 this is a no-op since str is unicode, but on Python 2
+        the unicode is encoded using the optional encoding/errors arguments,
+        or the constants ENCODING/ENCODING_ERRS by default.
+        """
+        return s
 
 
 def usage_percent(used, total, round_=None):

@@ -25,8 +25,6 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
-from ._common import ENCODING
-from ._common import ENCODING_ERRS
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
@@ -39,6 +37,8 @@ from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._common import str2bytes
+from ._common import bytes2str
 from ._compat import b
 from ._compat import basestring
 from ._compat import PY3
@@ -205,14 +205,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-if PY3:
-    def decode(s):
-        return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
-else:
-    def decode(s):
-        return s
 
 
 def get_procfs_path():
@@ -838,8 +830,9 @@ class Connections:
         # no end-points connected
         if not port:
             return ()
-        if PY3:
-            ip = ip.encode('ascii')
+
+        ip = str2bytes(ip, 'ascii')
+
         if family == socket.AF_INET:
             # see: https://github.com/giampaolo/psutil/issues/201
             if LITTLE_ENDIAN:
@@ -1615,11 +1608,7 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        name = self._parse_stat_file()['name']
-        if PY3:
-            name = decode(name)
-        # XXX - gets changed later and probably needs refactoring
-        return name
+        return bytes2str(self._parse_stat_file()['name'])
 
     def exe(self):
         try:
@@ -1838,14 +1827,13 @@ class Process(object):
                 if not path:
                     path = '[anon]'
                 else:
-                    if PY3:
-                        path = decode(path)
+                    path = bytes2str(path)
                     path = path.strip()
                     if (path.endswith(' (deleted)') and not
                             path_exists_strict(path)):
                         path = path[:-10]
                 ls.append((
-                    decode(addr), decode(perms), path,
+                    bytes2str(addr), bytes2str(perms), path,
                     data[b'Rss:'],
                     data.get(b'Size:', 0),
                     data.get(b'Pss:', 0),
@@ -2021,9 +2009,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        letter = self._parse_stat_file()['status']
-        if PY3:
-            letter = letter.decode()
+        letter = bytes2str(self._parse_stat_file()['status'])
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(letter, '?')
 
