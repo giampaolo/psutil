@@ -63,8 +63,8 @@ __all__ = [
     'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
     'str2bytes', 'bytes2str', 'unicode2str',
-    'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
-    'parse_environ_block', 'path_exists_strict', 'usage_percent',
+    'conn_tmap', 'deprecated_method', 'get_procfs_path', 'isfile_strict',
+    'memoize', 'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'bytes2human',
 ]
@@ -421,6 +421,14 @@ def memoize_when_activated(fun):
     wrapper.cache_activate = cache_activate
     wrapper.cache_deactivate = cache_deactivate
     return wrapper
+
+
+def get_procfs_path():
+    """Return updted psutil.PROCFS_PATH constant."""
+    try:
+        return sys.modules['psutil'].PROCFS_PATH
+    except AttributeError:
+        raise RuntimeError("This platform does not have a proc filesystem.")
 
 
 def isfile_strict(path):

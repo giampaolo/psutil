@@ -28,6 +28,7 @@ from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import get_procfs_path
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
@@ -205,11 +206,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
 
 
 def readlink(path):

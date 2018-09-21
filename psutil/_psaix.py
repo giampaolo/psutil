@@ -20,6 +20,7 @@ from . import _psposix
 from . import _psutil_aix as cext
 from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
+from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -99,16 +100,6 @@ pfullmem = pmem
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-
-
-# =====================================================================
-# --- utils
-# =====================================================================
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
 
 
 # =====================================================================
