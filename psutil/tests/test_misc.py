@@ -26,6 +26,8 @@ from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
+from psutil._common import open_text
+from psutil._common import open_binary
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import bind_socket
@@ -895,6 +897,14 @@ class TestFSTestUtils(unittest.TestCase):
         safe_rmpath(TESTFN)
 
     tearDown = setUp
+
+    def test_open_text(self):
+        with open_text(__file__) as f:
+            self.assertEqual(f.mode, 'rt')
+
+    def test_open_binary(self):
+        with open_binary(__file__) as f:
+            self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
         safe_mkdir(TESTFN)
