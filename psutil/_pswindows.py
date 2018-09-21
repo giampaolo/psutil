@@ -34,8 +34,8 @@ except ImportError as err:
         raise
 
 from ._common import conn_tmap
-from ._common import ENCODING
-from ._common import ENCODING_ERRS
+from ._common import bytes2str
+from ._common import unicode2str
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
@@ -190,19 +190,6 @@ def convert_dos_path(s):
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
-def py2_strencode(s):
-    """Encode a unicode string to a byte string by using the default fs
-    encoding + "replace" error handler.
-    """
-    if PY3:
-        return s
-    else:
-        if isinstance(s, str):
-            return s
-        else:
-            return s.encode(ENCODING, ENCODING_ERRS)
-
-
 # =====================================================================
 # --- memory
 # =====================================================================
@@ -241,10 +228,10 @@ disk_io_counters = cext.disk_io_counters
 
 def disk_usage(path):
     """Return disk usage associated with path."""
-    if PY3 and isinstance(path, bytes):
+    if isinstance(path, bytes):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
-        path = path.decode(ENCODING, errors="strict")
+        path = bytes2str(path, errors='strict')
     total, free = cext.disk_usage(path)
     used = total - free
     percent = usage_percent(used, total, round_=1)
@@ -346,9 +333,7 @@ def net_if_stats():
     ret = {}
     rawdict = cext.net_if_stats()
     for name, items in rawdict.items():
-        if not PY3:
-            assert isinstance(name, unicode), type(name)
-            name = py2_strencode(name)
+        name = unicode2str(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
@@ -361,7 +346,7 @@ def net_io_counters():
     installed on the system as a dict of raw tuples.
     """
     ret = cext.net_io_counters()
-    return dict([(py2_strencode(k), v) for k, v in ret.items()])
+    return dict([(unicode2str(k), v) for k, v in ret.items()])
 
 
 def net_if_addrs():
@@ -369,7 +354,7 @@ def net_if_addrs():
     ret = []
     for items in cext.net_if_addrs():
         items = list(items)
-        items[0] = py2_strencode(items[0])
+        items[0] = unicode2str(items[0])
         ret.append(items)
     return ret
 
@@ -427,7 +412,7 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
-        user = py2_strencode(user)
+        user = unicode2str(user)
         nt = _common.suser(user, None, hostname, tstamp, None)
         retlist.append(nt)
     return retlist
@@ -441,7 +426,7 @@ def users():
 def win_service_iter():
     """Yields a list of WindowsService instances."""
     for name, display_name in cext.winservice_enumerate():
-        yield WindowsService(py2_strencode(name), py2_strencode(display_name))
+        yield WindowsService(unicode2str(name), unicode2str(display_name))
 
 
 def win_service_get(name):
@@ -482,10 +467,10 @@ class WindowsService(object):
                 cext.winservice_query_config(self._name)
         # XXX - update _self.display_name?
         return dict(
-            display_name=py2_strencode(display_name),
-            binpath=py2_strencode(binpath),
-            username=py2_strencode(username),
-            start_type=py2_strencode(start_type))
+            display_name=unicode2str(display_name),
+            binpath=unicode2str(binpath),
+            username=unicode2str(username),
+            start_type=unicode2str(start_type))
 
     def _query_status(self):
         with self._wrap_exceptions():
@@ -560,7 +545,7 @@ class WindowsService(object):
 
     def description(self):
         """Service long description."""
-        return py2_strencode(cext.winservice_query_descr(self.name()))
+        return unicode2str(cext.winservice_query_descr(self.name()))
 
     # utils
 
@@ -684,9 +669,9 @@ class Process(object):
             try:
                 # Note: this will fail with AD for most PIDs owned
                 # by another user but it's faster.
-                return py2_strencode(os.path.basename(self.exe()))
+                return unicode2str(os.path.basename(self.exe()))
             except AccessDenied:
-                return py2_strencode(cext.proc_name(self.pid))
+                return unicode2str(cext.proc_name(self.pid))
 
     @wrap_exceptions
     def exe(self):
@@ -698,7 +683,7 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
+        return unicode2str(convert_dos_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
     def cmdline(self):
@@ -706,14 +691,14 @@ class Process(object):
         if PY3:
             return ret
         else:
-            return [py2_strencode(s) for s in ret]
+            return [unicode2str(s) for s in ret]
 
     @wrap_exceptions
     def environ(self):
         ustr = cext.proc_environ(self.pid)
         if ustr and not PY3:
             assert isinstance(ustr, unicode), type(ustr)
-        return parse_environ_block(py2_strencode(ustr))
+        return parse_environ_block(unicode2str(ustr))
 
     def ppid(self):
         try:
@@ -775,7 +760,7 @@ class Process(object):
                 path = convert_dos_path(path)
                 if not PY3:
                     assert isinstance(path, unicode), type(path)
-                    path = py2_strencode(path)
+                    path = unicode2str(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
 
@@ -835,7 +820,7 @@ class Process(object):
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
         domain, user = cext.proc_username(self.pid)
-        return py2_strencode(domain) + '\\' + py2_strencode(user)
+        return unicode2str(domain) + '\\' + unicode2str(user)
 
     @wrap_exceptions
     def create_time(self):
@@ -891,7 +876,7 @@ class Process(object):
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)
-        return py2_strencode(os.path.normpath(path))
+        return unicode2str(os.path.normpath(path))
 
     @wrap_exceptions
     def open_files(self):
@@ -907,7 +892,7 @@ class Process(object):
             _file = convert_dos_path(_file)
             if isfile_strict(_file):
                 if not PY3:
-                    _file = py2_strencode(_file)
+                    _file = unicode2str(_file)
                 ntuple = _common.popenfile(_file, -1)
                 ret.add(ntuple)
         return list(ret)
