@@ -213,7 +213,7 @@ XXXX-XX-XX
 
 **Compatibility notes**
 
-- 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
+- 1120_: .exe files for Windows are no longer uploaded on PyPI as per PEP-527;
   only wheels are provided.
 
 5.3.0
@@ -1227,7 +1227,7 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 410_: host tar.gz and windows binary files are on PYPI.
+- 410_: host tar.gz and windows binary files are on PyPI.
 - 412_: [Linux] get/set process resource limits.
 - 415_: [Windows] Process.get_children() is an order of magnitude faster.
 - 426_: [Windows] Process.name is an order of magnitude faster.

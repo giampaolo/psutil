@@ -210,7 +210,7 @@ upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
-upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
+upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
 # --- others
@@ -233,7 +233,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
-	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
+	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
 print-announce:  ## Print announce of new release.

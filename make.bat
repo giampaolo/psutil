@@ -26,7 +26,7 @@ if "%TSCRIPT%" == "" (
     set TSCRIPT=psutil\tests\__main__.py
 )
 
-rem Needed to locate the .pypirc file and upload exes on PYPI.
+rem Needed to locate the .pypirc file and upload exes on PyPI.
 set HOME=%USERPROFILE%
 
 %PYTHON% scripts\internal\winmake.py %1 %2 %3 %4 %5 %6
