@@ -1530,15 +1530,14 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
     // important to call this in a loop to retry if that happens.
-    //
-    // Also, since we may loop a theoretically unbounded number of times here,
-    // release the GIL while we're doing this.
+    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
+    // and https://github.com/giampaolo/psutil/issues/1294
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
     error = call(NULL, size, FALSE, address_family,
                  TCP_TABLE_OWNER_PID_ALL, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER)
+    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
         if (*data == NULL) {
@@ -1569,15 +1568,14 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
     // important to call this in a loop to retry if that happens.
-    //
-    // Also, since we may loop a theoretically unbounded number of times here,
-    // release the GIL while we're doing this.
+    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
+    // and https://github.com/giampaolo/psutil/issues/1294
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
     error = call(NULL, size, FALSE, address_family,
                  UDP_TABLE_OWNER_PID, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER)
+    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
         if (*data == NULL) {
