@@ -1978,14 +1978,6 @@ class TestProcessAgainstStatus(unittest.TestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestUtils(unittest.TestCase):
 
-    def test_open_text(self):
-        with psutil._psplatform.open_text(__file__) as f:
-            self.assertEqual(f.mode, 'rt')
-
-    def test_open_binary(self):
-        with psutil._psplatform.open_binary(__file__) as f:
-            self.assertEqual(f.mode, 'rb')
-
     def test_readlink(self):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
