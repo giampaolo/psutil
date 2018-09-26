@@ -528,7 +528,7 @@ class TestSystemSwapMemory(unittest.TestCase):
             free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     def test_missing_sin_sout(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
+        with mock.patch('psutil._common.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -651,7 +651,7 @@ class TestSystemCPU(unittest.TestCase):
 
             # Let's have open() return emtpy data and make sure None is
             # returned ('cause we mimick os.cpu_count()).
-            with mock.patch('psutil._pslinux.open', create=True) as m:
+            with mock.patch('psutil._common.open', create=True) as m:
                 self.assertIsNone(psutil._pslinux.cpu_count_logical())
                 self.assertEqual(m.call_count, 2)
                 # /proc/stat should be the last one
@@ -662,7 +662,7 @@ class TestSystemCPU(unittest.TestCase):
             with open('/proc/cpuinfo', 'rb') as f:
                 cpuinfo_data = f.read()
             fake_file = io.BytesIO(cpuinfo_data)
-            with mock.patch('psutil._pslinux.open',
+            with mock.patch('psutil._common.open',
                             return_value=fake_file, create=True) as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
 
@@ -675,7 +675,7 @@ class TestSystemCPU(unittest.TestCase):
     def test_cpu_count_physical_mocked(self):
         # Have open() return emtpy data and make sure None is returned
         # ('cause we want to mimick os.cpu_count())
-        with mock.patch('psutil._pslinux.open', create=True) as m:
+        with mock.patch('psutil._common.open', create=True) as m:
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
 
@@ -971,7 +971,7 @@ class TestSystemDisks(unittest.TestCase):
         else:
             # No ZFS partitions on this system. Let's fake one.
             fake_file = io.StringIO(u("nodev\tzfs\n"))
-            with mock.patch('psutil._pslinux.open',
+            with mock.patch('psutil._common.open',
                             return_value=fake_file, create=True) as m1:
                 with mock.patch(
                         'psutil._pslinux.cext.disk_partitions',
@@ -1232,7 +1232,7 @@ class TestMisc(unittest.TestCase):
             self.assertNotEqual(cpu_times_percent.user, 0)
 
     def test_boot_time_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
+        with mock.patch('psutil._common.open', create=True) as m:
             self.assertRaises(
                 RuntimeError,
                 psutil._pslinux.boot_time)
@@ -1679,7 +1679,7 @@ class TestProcess(unittest.TestCase):
 
     # TODO: re-enable this test.
     # def test_num_ctx_switches_mocked(self):
-    #     with mock.patch('psutil._pslinux.open', create=True) as m:
+    #     with mock.patch('psutil._common.open', create=True) as m:
     #         self.assertRaises(
     #             NotImplementedError,
     #             psutil._pslinux.Process(os.getpid()).num_ctx_switches)
@@ -1689,12 +1689,12 @@ class TestProcess(unittest.TestCase):
         # see: https://github.com/giampaolo/psutil/issues/639
         p = psutil.Process()
         fake_file = io.StringIO(u('foo\x00bar\x00'))
-        with mock.patch('psutil._pslinux.open',
+        with mock.patch('psutil._common.open',
                         return_value=fake_file, create=True) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo\x00bar\x00\x00'))
-        with mock.patch('psutil._pslinux.open',
+        with mock.patch('psutil._common.open',
                         return_value=fake_file, create=True) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
@@ -1703,12 +1703,12 @@ class TestProcess(unittest.TestCase):
         # see: https://github.com/giampaolo/psutil/issues/1179
         p = psutil.Process()
         fake_file = io.StringIO(u('foo bar '))
-        with mock.patch('psutil._pslinux.open',
+        with mock.patch('psutil._common.open',
                         return_value=fake_file, create=True) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo bar  '))
-        with mock.patch('psutil._pslinux.open',
+        with mock.patch('psutil._common.open',
                         return_value=fake_file, create=True) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called

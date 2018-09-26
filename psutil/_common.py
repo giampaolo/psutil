@@ -576,3 +576,21 @@ def wrap_numbers(input_dict, name):
 _wn = _WrapNumbers()
 wrap_numbers.cache_clear = _wn.cache_clear
 wrap_numbers.cache_info = _wn.cache_info
+
+
+def open_binary(fname, **kwargs):
+    return open(fname, "rb", **kwargs)
+
+
+def open_text(fname, **kwargs):
+    """On Python 3 opens a file in text mode by using fs encoding and
+    a proper en/decoding errors handler.
+    On Python 2 this is just an alias for open(name, 'rt').
+    """
+    if PY3:
+        # See:
+        # https://github.com/giampaolo/psutil/issues/675
+        # https://github.com/giampaolo/psutil/pull/733
+        kwargs.setdefault('encoding', ENCODING)
+        kwargs.setdefault('errors', ENCODING_ERRS)
+    return open(fname, "rt", **kwargs)

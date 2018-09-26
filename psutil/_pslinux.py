@@ -33,6 +33,8 @@ from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import open_binary
+from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
@@ -199,24 +201,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-def open_binary(fname, **kwargs):
-    return open(fname, "rb", **kwargs)
-
-
-def open_text(fname, **kwargs):
-    """On Python 3 opens a file in text mode by using fs encoding and
-    a proper en/decoding errors handler.
-    On Python 2 this is just an alias for open(name, 'rt').
-    """
-    if PY3:
-        # See:
-        # https://github.com/giampaolo/psutil/issues/675
-        # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRS)
-    return open(fname, "rt", **kwargs)
 
 
 if PY3:
