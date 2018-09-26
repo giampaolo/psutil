@@ -62,7 +62,7 @@ __all__ = [
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
     'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
-    'str2bytes', 'bytes2str', 'unicode2str',
+    'str2bytes', 'bytes2str', 'unicode2str', 'open_binary', 'open_text',
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
