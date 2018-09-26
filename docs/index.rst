@@ -1179,11 +1179,14 @@ Process class
 
     Utility method retrieving multiple process information as a dictionary.
     If *attrs* is specified it must be a list of strings reflecting available
-    :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``),
-    else all public (read only) attributes are assumed. *ad_value* is the
-    value which gets assigned to a dict key in case :class:`AccessDenied`
-    or :class:`ZombieProcess` exception is raised when retrieving that
-    particular process information.
+    :class:`Process` class's attribute names. Here's a list of possible string
+    values:
+    ``'cmdline'``, ``'connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
+    If *attrs* argument is not passed all public read only attributes are
+    assumed.
+    *ad_value* is the value which gets assigned to a dict key in case
+    :class:`AccessDenied` or :class:`ZombieProcess` exception is raised when
+    retrieving that particular process information.
     Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
     there's no need you use it also.
 
