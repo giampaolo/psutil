@@ -9,7 +9,9 @@ XXXX-XX-XX
 
 - 1332_: psutil debug messages are erroneously printed all the time.  (patch by
   yanok)
-
+- 1294_: [Windows] psutil.Process().connections() may sometimes fail with
+  intermittent 0xC0000001.  (patch by Sylvain Duchesne)
+  
 5.4.7
 =====
 
