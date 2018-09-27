@@ -1229,6 +1229,49 @@ def sensors_temperatures():
 
         ret[unit_name].append((label, current, high, critical))
 
+    # Indication that no sensors were detected in /sys/class/hwmon/
+    if len(basenames) == 0:
+        basenames = glob.glob('/sys/class/thermal/thermal_zone*')
+        basenames = sorted(set(basenames))
+
+        for base in basenames:
+            try:
+                path = os.path.join(base, 'temp')
+                current = float(cat(path)) / 1000.0
+                path = os.path.join(base, 'type')
+                unit_name = cat(path, binary=False)
+            except (IOError, OSError, ValueError) as err:
+                warnings.warn("ignoring %r for file %r" % (err, path),
+                              RuntimeWarning)
+                continue
+
+            trip_paths = glob.glob(base + '/trip_point*')
+            trip_points = [os.path.basename(p) for p in trip_paths]
+            trip_points = sorted(set(["_".join(x.split('_')[0:3])
+                                      for x in trip_points]))
+            critical = None
+            high = None
+            for trip_point in trip_points:
+                path = os.path.join(base, trip_point + "_type")
+                trip_type = cat(path, fallback='', binary=False)
+                if trip_type == 'critical':
+                    critical = cat(os.path.join(base, trip_point + "_temp"))
+                elif trip_type == 'high':
+                    high = cat(os.path.join(base, trip_point + "_temp"))
+
+                if high is not None:
+                    try:
+                        high = float(high) / 1000.0
+                    except ValueError:
+                        high = None
+                if critical is not None:
+                    try:
+                        critical = float(critical) / 1000.0
+                    except ValueError:
+                        critical = None
+
+            ret[unit_name].append(('', current, high, critical))
+
     return ret
 
 
