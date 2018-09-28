@@ -35,6 +35,13 @@ import sys
 import psutil
 
 
+def safe_print(s):
+    try:
+        print(s)
+    except UnicodeEncodeError:
+        print(s.encode('ascii', 'ignore').decode())
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap <pid>')
@@ -45,7 +52,7 @@ def main():
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        print(templ % (
+        safe_print(templ % (
             m.addr.split('-')[0].zfill(16),
             str(m.rss / 1024) + 'K',
             m.perms,
