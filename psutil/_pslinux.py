@@ -1246,18 +1246,19 @@ def sensors_temperatures():
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = [os.path.basename(p) for p in trip_paths]
-            trip_points = sorted(set(["_".join(x.split('_')[0:3])
-                                      for x in trip_points]))
+            trip_points = set(['_'.join(
+                os.path.basename(p).split('_')[0:3]) for p in trip_paths])
             critical = None
             high = None
             for trip_point in trip_points:
                 path = os.path.join(base, trip_point + "_type")
                 trip_type = cat(path, fallback='', binary=False)
                 if trip_type == 'critical':
-                    critical = cat(os.path.join(base, trip_point + "_temp"))
+                    critical = cat(os.path.join(base, trip_point + "_temp"),
+                                   Fallback=None)
                 elif trip_type == 'high':
-                    high = cat(os.path.join(base, trip_point + "_temp"))
+                    high = cat(os.path.join(base, trip_point + "_temp"),
+                               Fallback=None)
 
                 if high is not None:
                     try:
