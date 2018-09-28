@@ -575,7 +575,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         total *= unit_multiplier
         free *= unit_multiplier
         self.assertEqual(swap.total, total)
-        self.assertEqual(swap.free, free)
+        self.assertEqual(swap.free, free, delta=MEMORY_TOLERANCE)
 
     def test_emulate_meminfo_has_no_metrics(self):
         # Emulate a case where /proc/meminfo provides no swap metrics

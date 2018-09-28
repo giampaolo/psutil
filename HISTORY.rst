@@ -7,11 +7,11 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1332_: psutil debug messages are erroneously printed all the time.  (patch by
-  yanok)
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
-  
+- 1332_: [OSX] psutil debug messages are erroneously printed all the time.
+  (patch by Ilya Yanok)
+
 5.4.7
 =====
 
