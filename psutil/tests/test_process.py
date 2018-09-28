@@ -31,6 +31,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import open_text
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
@@ -626,7 +627,7 @@ class TestProcess(unittest.TestCase):
                             raise
                         else:
                             # https://github.com/giampaolo/psutil/issues/759
-                            with open('/proc/self/smaps') as f:
+                            with open_text('/proc/self/smaps') as f:
                                 data = f.read()
                             if "%s (deleted)" % nt.path not in data:
                                 raise
