@@ -1230,7 +1230,7 @@ def sensors_temperatures():
         ret[unit_name].append((label, current, high, critical))
 
     # Indication that no sensors were detected in /sys/class/hwmon/
-    if len(basenames) == 0:
+    if not basenames:
         basenames = glob.glob('/sys/class/thermal/thermal_zone*')
         basenames = sorted(set(basenames))
 
@@ -1255,10 +1255,10 @@ def sensors_temperatures():
                 trip_type = cat(path, fallback='', binary=False)
                 if trip_type == 'critical':
                     critical = cat(os.path.join(base, trip_point + "_temp"),
-                                   Fallback=None)
+                                   fallback=None)
                 elif trip_type == 'high':
                     high = cat(os.path.join(base, trip_point + "_temp"),
-                               Fallback=None)
+                               fallback=None)
 
                 if high is not None:
                     try:
