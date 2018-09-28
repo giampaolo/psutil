@@ -1466,6 +1466,8 @@ class TestSensorsTemperatures(unittest.TestCase):
         def open_mock(name, *args, **kwargs):
             if name.endswith("_input"):
                 raise OSError(errno.EIO, "")
+            if name.endswith("temp"):
+                raise OSError(errno.EIO, "")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -1489,18 +1491,47 @@ class TestSensorsTemperatures(unittest.TestCase):
                 return io.BytesIO(b"40000")
             elif name.endswith('/temp1_crit'):
                 return io.BytesIO(b"50000")
+            # Files found in /sys/class/thermal/
+            elif name.endswith('0_temp'):
+                return io.BytesIO(b"50000")
+            elif name.endswith('temp'):
+                return io.BytesIO(b"30000")
+            elif name.endswith('0_type'):
+                return io.StringIO(u("critical"))
+            elif name.endswith('type'):
+                return io.StringIO(u("name"))
             else:
                 return orig_open(name, *args, **kwargs)
+
+        def glob_mock(path):
+            if path == '/sys/class/hwmon/hwmon*/temp*_*':
+                return []
+            elif path == '/sys/class/hwmon/hwmon*/device/temp*_*':
+                return []
+            elif path == '/sys/class/thermal/thermal_zone*':
+                return ['/sys/class/thermal/thermal_zone0']
+            elif path == '/sys/class/thermal/thermal_zone0/trip_point*':
+                return ['/sys/class/thermal/thermal_zone1/trip_point_0_type',
+                        '/sys/class/thermal/thermal_zone1/trip_point_0_temp']
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
+            # Test case with /sys/class/hwmon
             with mock.patch('glob.glob',
                             return_value=['/sys/class/hwmon/hwmon0/temp1']):
                 temp = psutil.sensors_temperatures()['name'][0]
                 self.assertEqual(temp.label, 'label')
                 self.assertEqual(temp.current, 30.0)
                 self.assertEqual(temp.high, 40.0)
+                self.assertEqual(temp.critical, 50.0)
+
+            # Test case with only /sys/class/thermal
+            with mock.patch('glob.glob', create=True, side_effect=glob_mock):
+                temp = psutil.sensors_temperatures()['name'][0]
+                self.assertEqual(temp.label, '')
+                self.assertEqual(temp.current, 30.0)
+                self.assertEqual(temp.high, 50.0)
                 self.assertEqual(temp.critical, 50.0)
 
 
