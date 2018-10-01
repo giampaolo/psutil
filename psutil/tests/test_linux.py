@@ -1466,7 +1466,7 @@ class TestSensorsTemperatures(unittest.TestCase):
         def open_mock(name, *args, **kwargs):
             if name.endswith("_input"):
                 raise OSError(errno.EIO, "")
-            if name.endswith("temp"):
+            elif name.endswith("temp"):
                 raise OSError(errno.EIO, "")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1479,7 +1479,7 @@ class TestSensorsTemperatures(unittest.TestCase):
                 assert m.called
                 self.assertIn("ignoring", str(ws[0].message))
 
-    def test_emulate_data(self):
+    def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
                 return io.StringIO(u("name"))
@@ -1491,8 +1491,24 @@ class TestSensorsTemperatures(unittest.TestCase):
                 return io.BytesIO(b"40000")
             elif name.endswith('/temp1_crit'):
                 return io.BytesIO(b"50000")
-            # Files found in /sys/class/thermal/
-            elif name.endswith('0_temp'):
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            # Test case with /sys/class/hwmon
+            with mock.patch('glob.glob',
+                            return_value=['/sys/class/hwmon/hwmon0/temp1']):
+                temp = psutil.sensors_temperatures()['name'][0]
+                self.assertEqual(temp.label, 'label')
+                self.assertEqual(temp.current, 30.0)
+                self.assertEqual(temp.high, 40.0)
+                self.assertEqual(temp.critical, 50.0)
+
+    def test_emulate_class_thermal(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith('0_temp'):
                 return io.BytesIO(b"50000")
             elif name.endswith('temp'):
                 return io.BytesIO(b"30000")
@@ -1517,16 +1533,7 @@ class TestSensorsTemperatures(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-            # Test case with /sys/class/hwmon
-            with mock.patch('glob.glob',
-                            return_value=['/sys/class/hwmon/hwmon0/temp1']):
-                temp = psutil.sensors_temperatures()['name'][0]
-                self.assertEqual(temp.label, 'label')
-                self.assertEqual(temp.current, 30.0)
-                self.assertEqual(temp.high, 40.0)
-                self.assertEqual(temp.critical, 50.0)
 
-            # Test case with only /sys/class/thermal
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
                 self.assertEqual(temp.label, '')
