@@ -5,6 +5,12 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
+  in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
+  by Alex Manuskin)
+
 **Bug fixes**
 
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
