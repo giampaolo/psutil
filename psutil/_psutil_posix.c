@@ -655,6 +655,10 @@ struct module_state {
 #define GETSTATE(m) (&_state)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if PY_MAJOR_VERSION >= 3
 
 static int
@@ -708,3 +712,7 @@ void init_psutil_posix(void)
     return module;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
