@@ -1173,7 +1173,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     mibhdr.len   = 0;
 #endif
     memcpy(buf, &tor, sizeof tor);
-    memcpy(buf + sizeof tor, &mibhdr, sizeof mibhdr);
+    memcpy(buf + tor.OPT_offset, &mibhdr, sizeof mibhdr);
 
     ctlbuf.buf = buf;
     ctlbuf.len = tor.OPT_offset + tor.OPT_length;
@@ -1212,6 +1212,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             PyErr_SetString(PyExc_RuntimeError, "ERROR_T_OPTMGMT_ACK");
             goto error;
         }
+
+        memset(&mibhdr, 0x0, sizeof(mibhdr));
+        memcpy(&mibhdr, buf + toa.OPT_offset, toa.OPT_length);
 
         databuf.maxlen = mibhdr.len;
         databuf.len = 0;
