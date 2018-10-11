@@ -10,11 +10,15 @@ XXXX-XX-XX
 - 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
   in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
+- 1320_: [Posix] better compilation support when using g++ instead of gcc.
+  (patch by Jaime Fullaondo)
 
 **Bug fixes**
 
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
+- 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
+  ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
   (patch by Ilya Yanok)
 - 1346_: [SunOS] net_connections() returns an empty list.  (patch by Oleksii
