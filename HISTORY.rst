@@ -17,6 +17,8 @@ XXXX-XX-XX
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
   (patch by Ilya Yanok)
+- 1346_: [SunOS] net_connections() returns an empty list.  (patch by Oleksii
+  Shevchuk)
 
 5.4.7
 =====

@@ -575,7 +575,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         total *= unit_multiplier
         free *= unit_multiplier
         self.assertEqual(swap.total, total)
-        self.assertEqual(swap.free, free, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(swap.free, free, delta=MEMORY_TOLERANCE)
 
     def test_emulate_meminfo_has_no_metrics(self):
         # Emulate a case where /proc/meminfo provides no swap metrics
@@ -1533,7 +1533,6 @@ class TestSensorsTemperatures(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
                 self.assertEqual(temp.label, '')
