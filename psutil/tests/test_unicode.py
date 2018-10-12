@@ -309,6 +309,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
                 return cls.funky_name in os.listdir(here)
 
 
+@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
                  "subprocess can't deal with invalid unicode")
