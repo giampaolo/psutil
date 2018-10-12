@@ -32,7 +32,6 @@ import signal
 import subprocess
 import sys
 import time
-import traceback
 try:
     import pwd
 except ImportError:
@@ -1609,14 +1608,12 @@ try:
 except Exception:
     # Don't want to crash at import time.
     _last_cpu_times = None
-    traceback.print_exc()
 
 try:
     _last_per_cpu_times = cpu_times(percpu=True)
 except Exception:
     # Don't want to crash at import time.
     _last_per_cpu_times = None
-    traceback.print_exc()
 
 
 def _cpu_tot_time(times):

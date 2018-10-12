@@ -15,6 +15,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 715_: do not print exception on import time in case cpu_times() fails.
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
 - 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
