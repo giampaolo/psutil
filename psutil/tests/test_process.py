@@ -899,8 +899,9 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
         # it should work with all iterables, not only lists
-        p.cpu_affinity(set(all_cpus))
-        p.cpu_affinity(tuple(all_cpus))
+        if not TRAVIS:
+            p.cpu_affinity(set(all_cpus))
+            p.cpu_affinity(tuple(all_cpus))
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
