@@ -117,6 +117,7 @@ TRAVIS = bool(os.environ.get('TRAVIS'))
 # whether we're running this test suite on Appveyor for Windows
 # (http://www.appveyor.com/)
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
+PYPY = '__pypy__' in sys.builtin_module_names
 
 # --- configurable defaults
 
@@ -215,13 +216,8 @@ _pids_started = set()
 _testfiles_created = set()
 
 
-def logstderr(s):
-    print(s, file=sys.stderr)
-
-
 @atexit.register
 def cleanup_test_files():
-    logstderr("executing cleanup_test_files() atexit function")
     DEVNULL.close()
     for name in os.listdir(u('.')):
         if isinstance(name, unicode):
@@ -229,13 +225,11 @@ def cleanup_test_files():
         else:
             prefix = TESTFILE_PREFIX
         if name.startswith(prefix):
-            logstderr("removing temporary test file %r" % name)
             try:
                 safe_rmpath(name)
             except Exception:
                 traceback.print_exc()
     for path in _testfiles_created:
-        logstderr("removing temporary test file %r" % path)
         try:
             safe_rmpath(path)
         except Exception:
@@ -245,7 +239,6 @@ def cleanup_test_files():
 # this is executed first
 @atexit.register
 def cleanup_test_procs():
-    logstderr("executing cleanup_test_procs() atexit function")
     reap_children(recursive=True)
 
 
@@ -1192,11 +1185,12 @@ if POSIX:
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
         """
+        exe = 'pypy' if PYPY else 'python'
         ext = ".so"
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 os.path.splitext(x.path)[1] == ext and
-                'python' in x.path.lower()]
+                exe in x.path.lower()]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
         try:

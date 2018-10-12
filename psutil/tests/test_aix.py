@@ -22,9 +22,9 @@ class AIXSpecificTestCase(unittest.TestCase):
 
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
-        re_pattern = "memory\s*"
+        re_pattern = r"memory\s*"
         for field in ("size inuse free pin virtual available mmode").split():
-            re_pattern += "(?P<%s>\S+)\s+" % (field,)
+            re_pattern += r"(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
         self.assertIsNotNone(

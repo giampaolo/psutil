@@ -28,6 +28,7 @@ from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
+from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -600,6 +601,8 @@ class TestProcess(unittest.TestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             self.assertGreaterEqual(value, 0, msg=(name, value))
+            if name == 'vms' and OSX or LINUX:
+                continue
             self.assertLessEqual(value, total, msg=(name, value, total))
         if LINUX or WINDOWS or MACOS:
             self.assertGreaterEqual(mem.uss, 0)

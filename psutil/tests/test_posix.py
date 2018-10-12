@@ -185,6 +185,9 @@ class TestProcess(unittest.TestCase):
         # be "pythonX.Y".
         name_ps = re.sub(r"\d.\d", "", name_ps)
         name_psutil = re.sub(r"\d.\d", "", name_psutil)
+        # ...may also be "python.X"
+        name_ps = re.sub(r"\d", "", name_ps)
+        name_psutil = re.sub(r"\d", "", name_psutil)
         self.assertEqual(name_ps, name_psutil)
 
     def test_name_long(self):

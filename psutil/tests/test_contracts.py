@@ -24,6 +24,7 @@ from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
+from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -512,7 +513,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             value = getattr(ret, name)
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0, msg=(name, value))
-            if LINUX and name in ('vms', 'data'):
+            if LINUX or OSX and name in ('vms', 'data'):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
                 # VMS is incredibly high for some reason.
                 continue

@@ -75,6 +75,7 @@ from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import mock
+from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
@@ -285,6 +286,8 @@ class _BaseFSAPIsTests(object):
                 self.assertIsInstance(path, str)
 
 
+# https://travis-ci.org/giampaolo/psutil/jobs/440073249
+@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
