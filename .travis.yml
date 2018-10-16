@@ -17,7 +17,7 @@ matrix:
           env: PYVER=py27
         - language: generic
           os: osx
-          env: PYVER=py37
+          env: PYVER=py36
         # pypy
         # - python: pypy
         # - python: pypy3
