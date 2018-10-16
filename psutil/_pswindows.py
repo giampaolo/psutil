@@ -83,6 +83,7 @@ ACCESS_DENIED_ERRSET = frozenset([errno.EPERM, errno.EACCES,
                                   cext.ERROR_ACCESS_DENIED])
 NO_SUCH_SERVICE_ERRSET = frozenset([cext.ERROR_INVALID_NAME,
                                     cext.ERROR_SERVICE_DOES_NOT_EXIST])
+HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
 
 
 if enum is None:
@@ -928,7 +929,7 @@ class Process(object):
         return cext.proc_priority_set(self.pid, value)
 
     # available on Windows >= Vista
-    if hasattr(cext, "proc_io_priority_get"):
+    if HAS_PROC_IO_PRIORITY:
         @wrap_exceptions
         def ionice_get(self):
             return cext.proc_io_priority_get(self.pid)

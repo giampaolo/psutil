@@ -73,6 +73,7 @@ __extra__all__ = [
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
+HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 _DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -1928,7 +1929,7 @@ class Process(object):
             raise
 
     # only starting from kernel 2.6.13
-    if hasattr(cext, "proc_ioprio_get"):
+    if HAS_PROC_IO_PRIORITY:
 
         @wrap_exceptions
         def ionice_get(self):
@@ -1971,6 +1972,7 @@ class Process(object):
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
+
         @wrap_exceptions
         def rlimit(self, resource, limits=None):
             # If pid is 0 prlimit() applies to the calling process and

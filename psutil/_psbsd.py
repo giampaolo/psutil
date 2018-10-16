@@ -103,6 +103,11 @@ else:
     PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
 
+HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
+HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
+HAS_PROC_OPEN_FILES = hasattr(cext, 'proc_open_files')
+HAS_PROC_NUM_FDS = hasattr(cext, 'proc_num_fds')
+
 kinfo_proc_map = dict(
     ppid=0,
     status=1,
@@ -211,7 +216,7 @@ def cpu_times():
     return scputimes(user, nice, system, idle, irq)
 
 
-if hasattr(cext, "per_cpu_times"):
+if HAS_PER_CPU_TIMES:
     def per_cpu_times():
         """Return system CPU times as a namedtuple"""
         ret = []
@@ -678,7 +683,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        if hasattr(cext, "proc_num_threads"):
+        if HAS_PROC_NUM_THREADS:
             # FreeBSD
             return cext.proc_num_threads(self.pid)
         else:
@@ -798,7 +803,7 @@ class Process(object):
         elif NETBSD:
             with wrap_exceptions_procfs(self):
                 return os.readlink("/proc/%s/cwd" % self.pid)
-        elif hasattr(cext, 'proc_open_files'):
+        elif HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
             return cext.proc_cwd(self.pid) or None
@@ -817,7 +822,7 @@ class Process(object):
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
-    if hasattr(cext, 'proc_open_files'):
+    if HAS_PROC_OPEN_FILES:
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
@@ -828,7 +833,7 @@ class Process(object):
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
-    if hasattr(cext, 'proc_num_fds'):
+    if HAS_PROC_NUM_FDS:
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
