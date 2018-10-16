@@ -711,13 +711,13 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
 
     return Py_BuildValue(
-        "KKKKK",
+        "KKKKKK",
         total,
         (unsigned long long) vm.active_count * pagesize,  // active
         (unsigned long long) vm.inactive_count * pagesize,  // inactive
         (unsigned long long) vm.wire_count * pagesize,  // wired
-        // free mem; this is how vm_stat cmd does it
-        (unsigned long long) (vm.free_count - vm.speculative_count) * pagesize
+        (unsigned long long) vm.free_count * pagesize,  // free
+        (unsigned long long) vm.speculative_count * pagesize  // speculative
     );
 }
 

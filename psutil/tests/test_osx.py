@@ -226,12 +226,6 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_vmem_available(self):
-        vmstat_val = vm_stat("inactive") + vm_stat("free")
-        psutil_val = psutil.virtual_memory().available
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
