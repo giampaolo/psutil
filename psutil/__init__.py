@@ -1861,13 +1861,25 @@ if hasattr(_psplatform, "cpu_freq"):
                 return ret[0]
             else:
                 currs, mins, maxs = 0.0, 0.0, 0.0
+                set_none = False
                 for cpu in ret:
                     currs += cpu.current
+                    # On Linux if /proc/cpuinfo is used min/max are set
+                    # to None.
+                    if LINUX and cpu.min is None:
+                        set_none = True
+                        continue
                     mins += cpu.min
                     maxs += cpu.max
+
                 current = currs / num_cpus
-                min_ = mins / num_cpus
-                max_ = maxs / num_cpus
+
+                if set_none:
+                    min_ = max_ = None
+                else:
+                    min_ = mins / num_cpus
+                    max_ = maxs / num_cpus
+
                 return _common.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")

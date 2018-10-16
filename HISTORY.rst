@@ -7,6 +7,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 1197_: [Linux] cpu_freq() is now implemented by parsing /proc/cpuinfo in case
+  /sys/devices/system/cpu/* filesystem is not available.
 - 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
   in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)

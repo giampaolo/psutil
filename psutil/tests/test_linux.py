@@ -704,6 +704,35 @@ class TestSystemCPU(unittest.TestCase):
             self.assertEqual(len(flags), 2)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    def test_cpu_freq_use_cpuinfo(self):
+        # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
+        # exist and /proc/cpuinfo is used instead.
+        def path_exists_mock(path):
+            if path.startswith('/sys/devices/system/cpu/'):
+                return False
+            else:
+                if path == "/proc/cpuinfo":
+                    flags.append(None)
+                return os_path_exists(path)
+
+        flags = []
+        os_path_exists = os.path.exists
+        try:
+            with mock.patch("os.path.exists", side_effect=path_exists_mock):
+                reload_module(psutil._pslinux)
+                ret = psutil.cpu_freq()
+                assert ret
+                assert flags
+                self.assertIsNone(ret.min)
+                self.assertIsNone(ret.max)
+                for freq in psutil.cpu_freq(percpu=True):
+                    self.assertIsNone(freq.min)
+                    self.assertIsNone(freq.max)
+        finally:
+            reload_module(psutil._pslinux)
+            reload_module(psutil)
+
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
