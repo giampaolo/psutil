@@ -160,21 +160,22 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 # --- support
 
+HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
-HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
-HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
+HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
-HAS_THREADS = hasattr(psutil.Process, "threads")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
+HAS_THREADS = hasattr(psutil.Process, "threads")
 
 # --- misc
 

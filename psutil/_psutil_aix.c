@@ -13,7 +13,9 @@
  *
  * Known limitations:
  * - psutil.Process.io_counters read count is always 0
+ * - psutil.Process.io_counters may not be available on older AIX versions
  * - psutil.Process.threads may not be available on older AIX versions
+ # - psutil.net_io_counters may not be available on older AIX versions
  * - reading basic process info may fail or return incorrect values when
  *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
  * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
@@ -172,6 +174,7 @@ error:
 
 
 #ifdef CURR_VERSION_THREAD
+
 /*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
@@ -237,8 +240,11 @@ error:
         free(threadt);
     return NULL;
 }
+
 #endif
 
+
+#ifdef CURR_VERSION_PROCESS
 
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
@@ -262,6 +268,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
                          procinfo.inBytes,    // XXX always 0
                          procinfo.outBytes);
 }
+
+#endif
 
 
 /*
@@ -469,6 +477,8 @@ error:
 }
 
 
+#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
+
 /*
  * Return a list of tuples for network I/O statistics.
  */
@@ -537,6 +547,8 @@ error:
     Py_DECREF(py_retdict);
     return NULL;
 }
+
+#endif
 
 
 static PyObject*
@@ -878,8 +890,10 @@ PsutilMethods[] =
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
 #endif
+#ifdef CURR_VERSION_PROCESS
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
+#endif
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Get process I/O counters."},
 
@@ -898,8 +912,10 @@ PsutilMethods[] =
      "Return system virtual memory usage statistics"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
      "Return stats about swap memory, in bytes"},
+#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for network I/O statistics."},
+#endif
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide connections"},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,

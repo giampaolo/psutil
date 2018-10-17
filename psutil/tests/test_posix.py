@@ -25,6 +25,7 @@ from psutil import SUNOS
 from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
@@ -341,6 +342,7 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True).keys():

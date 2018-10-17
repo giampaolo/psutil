@@ -44,6 +44,7 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
@@ -620,10 +621,10 @@ class TestWrapNumbers(unittest.TestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
-    @unittest.skipIf(
-        not psutil.disk_io_counters() or not psutil.net_io_counters(),
-        "no disks or NICs available")
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_cache_clear_public_apis(self):
+        if not psutil.disk_io_counters() or not psutil.net_io_counters():
+            return self.skipTest("no disks or NICs available")
         psutil.disk_io_counters()
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()

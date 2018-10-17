@@ -42,6 +42,8 @@ __extra__all__ = ["PROCFS_PATH"]
 
 
 HAS_THREADS = hasattr(cext, "proc_threads")
+HAS_NET_IO_COUNTERS = hasattr(cext, "net_io_counters")
+HAS_PROC_IO_COUNTERS = hasattr(cext, "proc_io_counters")
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
@@ -212,7 +214,9 @@ def disk_partitions(all=False):
 
 
 net_if_addrs = cext_posix.net_if_addrs
-net_io_counters = cext.net_io_counters
+
+if HAS_NET_IO_COUNTERS:
+    net_io_counters = cext.net_io_counters
 
 
 def net_connections(kind, _pid=-1):
@@ -561,14 +565,15 @@ class Process(object):
     def wait(self, timeout=None):
         return _psposix.wait_pid(self.pid, timeout, self._name)
 
-    @wrap_exceptions
-    def io_counters(self):
-        try:
-            rc, wc, rb, wb = cext.proc_io_counters(self.pid)
-        except OSError:
-            # if process is terminated, proc_io_counters returns OSError
-            # instead of NSP
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            raise
-        return _common.pio(rc, wc, rb, wb)
+    if HAS_PROC_IO_COUNTERS:
+        @wrap_exceptions
+        def io_counters(self):
+            try:
+                rc, wc, rb, wb = cext.proc_io_counters(self.pid)
+            except OSError:
+                # if process is terminated, proc_io_counters returns OSError
+                # instead of NSP
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                raise
+            return _common.pio(rc, wc, rb, wb)
