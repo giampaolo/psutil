@@ -29,4 +29,5 @@ PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
 PyObject* psutil_cpu_stats(PyObject* self, PyObject* args);
 #if defined(PSUTIL_FREEBSD)
 PyObject* psutil_sensors_battery(PyObject* self, PyObject* args);
+PyObject* psutil_sensors_temperatures(PyObject* self, PyObject* args);
 #endif

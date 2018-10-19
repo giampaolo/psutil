@@ -432,6 +432,22 @@ if FREEBSD:
             secsleft = minsleft * 60
         return _common.sbattery(percent, secsleft, power_plugged)
 
+    def sensors_temperatures():
+        """Return systemp temperatures"""
+        ret = dict()
+        ret["coretemp"] = list()
+        num_cpus = cpu_count_logical()
+        try:
+            for cpu in range(num_cpus):
+                current, tjmax = cext.sensors_temperatures(cpu)
+                name = "Core {}".format(cpu)
+                ret["coretemp"].append(
+                    _common.shwtemp(name, current, tjmax, tjmax))
+        except NotImplementedError:
+            return None
+
+        return ret
+
 
 # =====================================================================
 #  --- other system functions
