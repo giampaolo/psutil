@@ -53,6 +53,7 @@ thisproc = psutil.Process()
 class Base(object):
 
     def setUp(self):
+        safe_rmpath(TESTFN)
         if not NETBSD:
             # NetBSD opens a UNIX socket to /var/log/run.
             cons = thisproc.connections(kind='all')

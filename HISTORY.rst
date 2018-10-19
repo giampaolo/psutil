@@ -22,6 +22,7 @@ XXXX-XX-XX
   not accurate.
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
+- 1307_: [Linux] disk_partitions() does not honour PROCFS_PATH.
 - 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.

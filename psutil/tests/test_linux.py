@@ -1011,6 +1011,18 @@ class TestSystemDisks(unittest.TestCase):
                     assert ret
                     self.assertEqual(ret[0].fstype, 'zfs')
 
+    def test_disk_partitions_procfs(self):
+        # See: https://github.com/giampaolo/psutil/issues/1307
+        try:
+            with mock.patch('os.path.realpath',
+                            return_value='/non/existent') as m:
+                with self.assertRaises(OSError) as cm:
+                    psutil.disk_partitions()
+                assert m.called
+                self.assertEqual(cm.exception.errno, errno.ENOENT)
+        finally:
+            psutil.PROCFS_PATH = "/proc"
+
     def test_disk_io_counters_kernel_2_4_mocked(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767

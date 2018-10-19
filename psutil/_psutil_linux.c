@@ -195,6 +195,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
+    const char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
@@ -203,12 +204,14 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    if (!PyArg_ParseTuple(args, "s", &mtab_path))
+        return NULL;
+
     Py_BEGIN_ALLOW_THREADS
-    file = setmntent(MOUNTED, "r");
+    file = setmntent(mtab_path, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, MOUNTED);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, mtab_path);
         goto error;
     }
 

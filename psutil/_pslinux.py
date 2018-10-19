@@ -1140,7 +1140,8 @@ def disk_io_counters(perdisk=False):
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
-    with open_text("%s/filesystems" % get_procfs_path()) as f:
+    procfs_path = get_procfs_path()
+    with open_text("%s/filesystems" % procfs_path) as f:
         for line in f:
             line = line.strip()
             if not line.startswith("nodev"):
@@ -1151,8 +1152,14 @@ def disk_partitions(all=False):
                 if fstype == "zfs":
                     fstypes.add("zfs")
 
+    # See: https://github.com/giampaolo/psutil/issues/1307
+    if procfs_path == "/proc":
+        mtab_path = os.path.realpath("/etc/mtab")
+    else:
+        mtab_path = os.path.realpath("%s/self/mounts" % procfs_path)
+
     retlist = []
-    partitions = cext.disk_partitions()
+    partitions = cext.disk_partitions(mtab_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
