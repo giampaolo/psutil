@@ -12,11 +12,16 @@ PLATFORMS
 - #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
 - #693: Windows Nano
+- #1251: Windows bash
 - DragonFlyBSD
 - HP-UX
 
 FEATURES
 ========
+
+- #1115: users() idle time.
+
+- #1102: Process.is64bit().
 
 - #371: sensors_temperatures() at least for macOS.
 

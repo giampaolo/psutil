@@ -1650,18 +1650,27 @@ class Process(object):
                     # https://github.com/giampaolo/psutil/issues/1004
                     line = line.strip()
                     if line:
-                        name, value = line.split(b': ')
-                        fields[name] = int(value)
+                        try:
+                            name, value = line.split(b': ')
+                        except ValueError:
+                            # https://github.com/giampaolo/psutil/issues/1004
+                            continue
+                        else:
+                            fields[name] = int(value)
             if not fields:
                 raise RuntimeError("%s file was empty" % fname)
-            return pio(
-                fields[b'syscr'],  # read syscalls
-                fields[b'syscw'],  # write syscalls
-                fields[b'read_bytes'],  # read bytes
-                fields[b'write_bytes'],  # write bytes
-                fields[b'rchar'],  # read chars
-                fields[b'wchar'],  # write chars
-            )
+            try:
+                return pio(
+                    fields[b'syscr'],  # read syscalls
+                    fields[b'syscw'],  # write syscalls
+                    fields[b'read_bytes'],  # read bytes
+                    fields[b'write_bytes'],  # write bytes
+                    fields[b'rchar'],  # read chars
+                    fields[b'wchar'],  # write chars
+                )
+            except KeyError as err:
+                raise ValueError("%r field was not found in %s; found fields "
+                                 "are %r" % (err[0], fname, fields))
     else:
         def io_counters(self):
             raise NotImplementedError("couldn't find /proc/%s/io (kernel "

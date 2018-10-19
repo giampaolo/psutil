@@ -18,6 +18,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 715_: do not print exception on import time in case cpu_times() fails.
+- 1004_: [Linux] Process.io_counters() may raise ValueError.
 - 1277_: [OSX] available and used memory (psutil.virtual_memory()) metrics are
   not accurate.
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
