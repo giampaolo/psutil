@@ -1278,7 +1278,7 @@ def sensors_temperatures():
 
             ret[unit_name].append(('', current, high, critical))
 
-    return ret
+    return dict(ret)
 
 
 def sensors_fans():

@@ -169,3 +169,4 @@ RESOURCES
 - libstatgrab: http://www.i-scream.org/libstatgrab/
 - top: http://www.unixtop.org/
 - oshi: https://github.com/oshi/oshi
+- netdata: https://github.com/netdata/netdata
