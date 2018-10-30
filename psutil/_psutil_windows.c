@@ -2431,7 +2431,8 @@ error:
 
 
 /*
- * Return a Python dict of tuples for disk I/O information
+ * Return a Python dict of tuples for disk I/O information. This may
+ * require running "diskperf -y" command first.
  */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {

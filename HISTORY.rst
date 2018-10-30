@@ -3,7 +3,7 @@
 5.4.8
 =====
 
-XXXX-XX-XX
+2018-10-30
 
 **Enhancements**
 

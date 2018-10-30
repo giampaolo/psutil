@@ -702,7 +702,7 @@ Sensors
   See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux, macOS
+  Availability: Linux
 
   .. versionadded:: 5.1.0
 
@@ -2638,6 +2638,10 @@ take a look at the
 Timeline
 ========
 
+- 2018-10-30:
+  `5.4.8 <https://pypi.org/project/psutil/5.4.8/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#548>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.4.7...release-5.4.8#files_bucket>`__
 - 2018-08-14:
   `5.4.7 <https://pypi.org/project/psutil/5.4.7/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#547>`__ -
