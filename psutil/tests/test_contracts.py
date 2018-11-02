@@ -119,7 +119,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_sensors_temperatures(self):
         self.assertEqual(
-            hasattr(psutil, "sensors_temperatures"), LINUX)
+            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD)
 
     def test_sensors_fans(self):
         self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)
@@ -337,7 +337,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                             self.assertEqual(err.name, p.name())
                         assert str(err)
                         assert err.msg
-                    except Exception as err:
+                    except Exception:
                         s = '\n' + '=' * 70 + '\n'
                         s += "FAIL: test_%s (proc=%s" % (name, p)
                         if ret != default:

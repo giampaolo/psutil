@@ -981,8 +981,8 @@ PsutilMethods[] = {
 #if defined(PSUTIL_FREEBSD)
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
-    {"sensors_temperatures", psutil_sensors_temperatures, METH_VARARGS,
-     "Return temperatures information."},
+    {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
+     "Return temperature information for a given CPU core number."},
 #endif
 
     // --- others

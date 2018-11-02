@@ -427,6 +427,23 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             sysctl("hw.acpi.acline")
         self.assertIsNone(psutil.sensors_battery())
 
+    # --- sensors_temperatures
+
+    def test_sensors_temperatures_against_sysctl(self):
+        num_cpus = psutil.cpu_count(True)
+        for cpu in range(num_cpus):
+            sensor = "dev.cpu.%s.temperature" % cpu
+            # sysctl returns a string in the format 46.0C
+            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            self.assertAlmostEqual(
+                psutil.sensors_temperatures()["coretemp"][cpu].current,
+                sysctl_result, delta=10)
+
+            sensor = "dev.cpu.%s.coretemp.tjmax" % cpu
+            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            self.assertEqual(
+                psutil.sensors_temperatures()["coretemp"][cpu].high,
+                sysctl_result)
 
 # =====================================================================
 # --- OpenBSD

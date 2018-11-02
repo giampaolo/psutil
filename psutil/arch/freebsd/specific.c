@@ -31,7 +31,7 @@
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
         (bt.frac >> 32) ) >> 32 ) / 1000000)
-#define SYSCTLTEMP(t) ((int)((t + 270)) - 3000) / 10
+#define DECIKELVIN_2_CELCIUS(t) (t - 2731) / 10
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
 #endif
@@ -1014,10 +1014,10 @@ error:
 
 
 /*
- * Return temperature information.
+ * Return temperature information for a given CPU core number.
  */
 PyObject *
-psutil_sensors_temperatures(PyObject *self, PyObject *args) {
+psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
     int current;
     int tjmax;
     int core;
@@ -1029,13 +1029,13 @@ psutil_sensors_temperatures(PyObject *self, PyObject *args) {
     sprintf(sensor, "dev.cpu.%d.temperature", core);
     if (sysctlbyname(sensor, &current, &size, NULL, 0))
         goto error;
-    current = SYSCTLTEMP(current);
+    current = DECIKELVIN_2_CELCIUS(current);
 
+    // Return -273 in case of faliure.
     sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
     if (sysctlbyname(sensor, &tjmax, &size, NULL, 0))
-        goto error;
-    tjmax = SYSCTLTEMP(tjmax);
-
+        tjmax = 0;
+    tjmax = DECIKELVIN_2_CELCIUS(tjmax);
 
     return Py_BuildValue("ii", current, tjmax);
 
