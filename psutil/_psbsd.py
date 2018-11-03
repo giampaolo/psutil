@@ -11,6 +11,7 @@ import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 from socket import AF_INET
+from collections import defaultdict
 
 from . import _common
 from . import _psposix
@@ -436,6 +437,23 @@ if FREEBSD:
         else:
             secsleft = minsleft * 60
         return _common.sbattery(percent, secsleft, power_plugged)
+
+    def sensors_temperatures():
+        "Return CPU cores temperatures if available, else an empty dict."
+        ret = defaultdict(list)
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, high = cext.sensors_cpu_temperature(cpu)
+                if high <= 0:
+                    high = None
+                name = "Core %s" % cpu
+                ret["coretemp"].append(
+                    _common.shwtemp(name, current, high, high))
+            except NotImplementedError:
+                pass
+
+        return ret
 
 
 # =====================================================================
