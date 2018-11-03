@@ -702,14 +702,11 @@ Sensors
   See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
   for an example application.
 
-  Availability: Linux
+  Availability: Linux, FreeBSD
 
   .. versionadded:: 5.1.0
 
-  .. warning::
-
-    this API is experimental. Backward incompatible changes may occur if
-    deemed necessary.
+  .. versionchanged:: 5.5.0 added FreeBSD support
 
 .. function:: sensors_fans()
 
@@ -729,11 +726,6 @@ Sensors
   Availability: Linux, macOS
 
   .. versionadded:: 5.2.0
-
-  .. warning::
-
-    this API is experimental. Backward incompatible changes may occur if
-    deemed necessary.
 
 .. function:: sensors_battery()
 
@@ -773,11 +765,6 @@ Sensors
   .. versionadded:: 5.1.0
 
   .. versionchanged:: 5.4.2 added macOS support
-
-  .. warning::
-
-    this API is experimental. Backward incompatible changes may occur if
-    deemed necessary.
 
 Other system info
 -----------------

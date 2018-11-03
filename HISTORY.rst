@@ -1,5 +1,12 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.5.0
+=====
+
+**Enhancements**
+
+- 1350_: [FreeBSD] added support for sensors_temperatures().
+
 5.4.8
 =====
 
