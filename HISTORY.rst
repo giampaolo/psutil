@@ -7,6 +7,10 @@
 
 - 1350_: [FreeBSD] added support for sensors_temperatures().
 
+**Bug fixes**
+
+- 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
+
 5.4.8
 =====
 
