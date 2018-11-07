@@ -524,6 +524,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     # --- net
 
+    @unittest.skipIf(TRAVIS and MACOS, "false positive on travis")
     @skip_if_linux()
     def test_net_io_counters(self):
         self.execute(psutil.net_io_counters, nowrap=False)
