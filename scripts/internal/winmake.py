@@ -495,7 +495,7 @@ def set_python(s):
                 '26-64', '27-64', '34-64', '35-64', '36-64', '37-64')
         for v in vers:
             if s == v:
-                path = 'C:\\python%s\python.exe' % s
+                path = r'C:\\python%s\python.exe' % s
                 if os.path.isfile(path):
                     print(path)
                     PYTHON = path

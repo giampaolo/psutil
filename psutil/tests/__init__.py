@@ -602,7 +602,7 @@ class retry(object):
                  timeout=None,
                  retries=None,
                  interval=0.001,
-                 logfun=lambda s: print(s, file=sys.stderr),
+                 logfun=print,
                  ):
         if timeout and retries:
             raise ValueError("timeout and retries args are mutually exclusive")
