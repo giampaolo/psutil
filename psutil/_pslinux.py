@@ -1099,8 +1099,13 @@ def disk_io_counters(perdisk=False):
                 with open_text(os.path.join(root, 'stat')) as f:
                     fields = f.read().strip().split()
                 name = os.path.basename(root)
-                (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                    wbytes, wtime, _, busy_time, _) = map(int, fields)
+                if len(fields) == 11:
+                    (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                     wbytes, wtime, _, busy_time, _) = map(int, fields)
+                else:  # Linux 4.18+ adds for fields for discard
+                    (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                     wbytes, wtime, _, busy_time, _, _, _, _, _) = map(int,
+                                                                       fields)
                 yield (name, reads, writes, rbytes, wbytes, rtime,
                        wtime, reads_merged, writes_merged, busy_time)
 
