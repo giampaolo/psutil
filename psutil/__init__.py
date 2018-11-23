@@ -212,8 +212,8 @@ __all__ = [
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats",  # "cpu_freq",
-    "net_io_counters", "net_connections", "net_if_addrs",           # network
-    "net_if_stats",
+    "net_io_counters", "connections", "net_connections",            # network
+    "net_if_addrs", "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
