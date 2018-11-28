@@ -2098,7 +2098,7 @@ static PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
-    PULONG IoPriority;
+    DWORD IoPriority;
 
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
@@ -2114,7 +2114,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
         hProcess,
         ProcessIoPriority,
         &IoPriority,
-        sizeof(ULONG),
+        sizeof(DWORD),
         NULL
     );
     CloseHandle(hProcess);
@@ -2128,7 +2128,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     long pid;
-    int prio;
+    DWORD prio;
     HANDLE hProcess;
 
     _NtSetInformationProcess NtSetInformationProcess =
@@ -2143,7 +2143,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
-    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
+    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_SET_INFORMATION);
     if (hProcess == NULL)
         return NULL;
 
@@ -2151,7 +2151,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
         hProcess,
         ProcessIoPriority,
         (PVOID)&prio,
-        sizeof((PVOID)prio)
+        sizeof(DWORD)
     );
 
     CloseHandle(hProcess);
