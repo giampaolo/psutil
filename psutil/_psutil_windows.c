@@ -2130,6 +2130,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     long pid;
     DWORD prio;
     HANDLE hProcess;
+    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
     _NtSetInformationProcess NtSetInformationProcess =
         (_NtSetInformationProcess)GetProcAddress(
@@ -2143,7 +2144,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
-    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_SET_INFORMATION);
+    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
     if (hProcess == NULL)
         return NULL;
 
