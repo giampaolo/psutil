@@ -455,6 +455,28 @@ if FREEBSD:
 
         return ret
 
+    def cpu_freq():
+        ret = []
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, available = cext.cpu_frequency(cpu)
+                low = None
+                high = None
+                if available:
+                    try:
+                        low = available.split(" ")[-1].split("/")[0]
+                    except IndexError:
+                        pass
+                    try:
+                        high = available.split(" ")[0].split("/")[0]
+                    except IndexError:
+                        pass
+                ret.append(_common.scpufreq(current, low, high))
+            except NotImplementedError:
+                pass
+        return ret
+
 
 # =====================================================================
 #  --- other system functions
