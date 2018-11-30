@@ -465,12 +465,12 @@ if FREEBSD:
                 high = None
                 if available:
                     try:
-                        low = available.split(" ")[-1].split("/")[0]
-                    except IndexError:
+                        low = int(available.split(" ")[-1].split("/")[0])
+                    except(IndexError, ValueError):
                         pass
                     try:
-                        high = available.split(" ")[0].split("/")[0]
-                    except IndexError:
+                        high = int(available.split(" ")[0].split("/")[0])
+                    except(IndexError, ValueError):
                         pass
                 ret.append(_common.scpufreq(current, low, high))
             except NotImplementedError:
