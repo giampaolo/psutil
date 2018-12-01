@@ -1046,3 +1046,36 @@ error:
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+/*
+ * Return frequency information of a given CPU
+ */
+PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int current;
+    int core;
+    char sensor[26];
+    char available_freq_levels[1000];
+    size_t size = sizeof(current);
+
+    if (! PyArg_ParseTuple(args, "i", &core))
+        return NULL;
+    sprintf(sensor, "dev.cpu.%d.freq", core);
+    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+        goto error;
+
+    size = sizeof(available_freq_levels);
+    // In case of failure, an empty string is returned
+    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
+    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+
+    return Py_BuildValue("is", current, available_freq_levels);
+
+error:
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "Unable to read frequency");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}

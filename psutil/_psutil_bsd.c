@@ -983,6 +983,8 @@ PsutilMethods[] = {
      "Return battery information."},
     {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
      "Return temperature information for a given CPU core number."},
+    {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
+     "Return frequency of a given CPU"},
 #endif
 
     // --- others
