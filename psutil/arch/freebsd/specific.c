@@ -1049,7 +1049,9 @@ error:
 
 
 /*
- * Return frequency information of a given CPU
+ * Return frequency information of a given CPU.
+ * As of Dec 2018 only CPU 0 appears to be supported and all other
+ * cores match the frequency of CPU 0.
  */
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
@@ -1061,12 +1063,14 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "i", &core))
         return NULL;
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
     sprintf(sensor, "dev.cpu.%d.freq", core);
     if (sysctlbyname(sensor, &current, &size, NULL, 0))
         goto error;
 
     size = sizeof(available_freq_levels);
-    // In case of failure, an empty string is returned
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    // In case of failure, an empty string is returned.
     sprintf(sensor, "dev.cpu.%d.freq_levels", core);
     sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
 
@@ -1074,7 +1078,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
 error:
     if (errno == ENOENT)
-        PyErr_SetString(PyExc_NotImplementedError, "Unable to read frequency");
+        PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
     else
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
