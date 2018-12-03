@@ -7,6 +7,11 @@
 
 - 1352_: [FreeBSD] added support for CPU frequency.  (patch by Alex Manuskin)
 
+**Bug fixes**
+
+- 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
+  EccoTheFlintstone)
+
 5.5.0
 =====
 
