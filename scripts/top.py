@@ -169,9 +169,12 @@ def print_header(procs_status, num_procs):
     # load average, uptime
     uptime = datetime.datetime.now() - \
         datetime.datetime.fromtimestamp(psutil.boot_time())
-    av1, av2, av3 = os.getloadavg()
-    line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
-        % (av1, av2, av3, str(uptime).split('.')[0])
+    if 'getloadavg' in dir(os):
+        av1, av2, av3 = os.getloadavg()
+        line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
+            % (av1, av2, av3, str(uptime).split('.')[0])
+    else:
+        line = " Uptime: %s" % (str(uptime).split('.')[0])
     print_line(line)
 
 
