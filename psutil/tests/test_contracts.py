@@ -115,7 +115,7 @@ class TestAvailability(unittest.TestCase):
                  (os.path.exists("/sys/devices/system/cpu/cpufreq") or
                   os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
         self.assertEqual(hasattr(psutil, "cpu_freq"),
-                         linux or MACOS or WINDOWS)
+                         linux or MACOS or WINDOWS or FREEBSD)
 
     def test_sensors_temperatures(self):
         self.assertEqual(

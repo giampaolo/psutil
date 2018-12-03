@@ -1,5 +1,12 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.5.1
+=====
+
+**Enhancements**
+
+- 1352_: [FreeBSD] added support for CPU frequency.  (patch by Alex Manuskin)
+
 5.5.0
 =====
 

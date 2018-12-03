@@ -250,6 +250,23 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
 
+    def test_cpu_frequency_against_sysctl(self):
+        # Currently only cpu 0 is frequency is supported in FreeBSD
+        # All other cores use the same frequency.
+        sensor = "dev.cpu.0.freq"
+        sysctl_result = int(sysctl(sensor))
+        self.assertEqual(psutil.cpu_freq().current, sysctl_result)
+
+        sensor = "dev.cpu.0.freq_levels"
+        sysctl_result = sysctl(sensor)
+        # sysctl returns a string of the format:
+        # <freq_level_1>/<voltage_level_1> <freq_level_2>/<voltage_level_2>...
+        # Ordered highest available to lowest available.
+        max_freq = int(sysctl_result.split()[0].split("/")[0])
+        min_freq = int(sysctl_result.split()[-1].split("/")[0])
+        self.assertEqual(psutil.cpu_freq().max, max_freq)
+        self.assertEqual(psutil.cpu_freq().min, min_freq)
+
     # --- virtual_memory(); tests against sysctl
 
     @retry_before_failing()

@@ -235,10 +235,11 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, macOS, Windows
+    Availability: Linux, macOS, Windows, FreeBSD
 
     .. versionadded:: 5.1.0
 
+    .. versionchanged:: 5.5.1 added FreeBSD support.
 
 Memory
 ------

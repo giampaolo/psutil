@@ -639,6 +639,16 @@ class TestSystemCPU(unittest.TestCase):
         num = len([x for x in out.split('\n') if not x.startswith('#')])
         self.assertEqual(psutil.cpu_count(logical=True), num)
 
+    @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
+    def test_cpu_count_physical_w_lscpu(self):
+        out = sh("lscpu -p")
+        core_ids = set()
+        for line in out.split('\n'):
+            if not line.startswith('#'):
+                fields = line.split(',')
+                core_ids.add(fields[1])
+        self.assertEqual(psutil.cpu_count(logical=False), len(core_ids))
+
     def test_cpu_count_logical_mocked(self):
         import psutil._pslinux
         original = psutil._pslinux.cpu_count_logical()

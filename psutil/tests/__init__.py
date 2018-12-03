@@ -635,8 +635,8 @@ class retry(object):
             for _ in self:
                 try:
                     return fun(*args, **kwargs)
-                except self.exception as e:
-                    exc = e
+                except self.exception as _:  # NOQA
+                    exc = _
                     if self.logfun is not None:
                         self.logfun(exc)
                     self.sleep()

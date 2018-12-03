@@ -455,6 +455,30 @@ if FREEBSD:
 
         return ret
 
+    def cpu_freq():
+        """Return frequency metrics for CPUs. As of Dec 2018 only
+        CPU 0 appears to be supported by FreeBSD and all other cores
+        match the frequency of CPU 0.
+        """
+        ret = []
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, available_freq = cext.cpu_frequency(cpu)
+            except NotImplementedError:
+                continue
+            if available_freq:
+                try:
+                    min_freq = int(available_freq.split(" ")[-1].split("/")[0])
+                except(IndexError, ValueError):
+                    min_freq = None
+                try:
+                    max_freq = int(available_freq.split(" ")[0].split("/")[0])
+                except(IndexError, ValueError):
+                    max_freq = None
+            ret.append(_common.scpufreq(current, min_freq, max_freq))
+        return ret
+
 
 # =====================================================================
 #  --- other system functions
