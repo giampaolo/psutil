@@ -243,7 +243,7 @@ def refresh_window(procs, procs_status):
         win.refresh()
 
 
-class InterruptThread(threading.Thread):
+class InterruptWatcher(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -268,17 +268,17 @@ class InterruptThread(threading.Thread):
 
 
 def main():
-    interrupt_thread = InterruptThread()
-    interrupt_thread.setDaemon(True)
-    interrupt_thread.start()
+    interrupt_watcher = InterruptWatcher()
+    interrupt_watcher.setDaemon(True)
+    interrupt_watcher.start()
     try:
         interval = 0
-        while interrupt_thread.isAlive():
+        while interrupt_watcher.isAlive():
             args = poll(interval)
             refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
-        interrupt_thread.stop()
+        interrupt_watcher.stop()
         sys.exit(0)
 
 
