@@ -39,6 +39,7 @@ import datetime
 import os
 import sys
 import time
+import threading
 try:
     import curses
 except ImportError:
@@ -242,15 +243,43 @@ def refresh_window(procs, procs_status):
         win.refresh()
 
 
+class InterruptThread(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+    def run(self):
+        if hasattr(sys.stdin, "buffer"):
+            stdin = sys.stdin.buffer.raw
+        else:
+            stdin = sys.stdin
+        try:
+            while not self.stopped:
+                input = stdin.read(1)
+                if input == b'q' or input == b'\x03':
+                    raise(KeyboardInterrupt)
+        except:
+            if os.name == 'nt':
+                os._exit(0)
+
+
 def main():
+    interrupt_thread = InterruptThread()
+    interrupt_thread.setDaemon(True)
+    interrupt_thread.start()
     try:
         interval = 0
-        while True:
+        while interrupt_thread.isAlive():
             args = poll(interval)
             refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
-        pass
+        interrupt_thread.stop()
+        sys.exit(0)
 
 
 if __name__ == '__main__':
