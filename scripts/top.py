@@ -99,6 +99,18 @@ def bytes2human(n):
     return "%sB" % n
 
 
+def niceness2priority(niceness):
+    if not niceness:
+        niceness == 'None'
+    elif str(niceness) == 'Priority.HIGH_PRIORITY_CLASS':
+        niceness = 'High'
+    elif str(niceness) == 'Priority.NORMAL_PRIORITY_CLASS':
+        niceness = 'Normal'
+    elif str(niceness) == 'Priority.IDLE_PRIORITY_CLASS':
+        niceness = 'Idle'
+    return niceness
+
+
 def poll(interval):
     # sleep some time
     time.sleep(interval)
@@ -181,10 +193,15 @@ def print_header(procs_status, num_procs):
 def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
     curses.endwin()
-    templ = "%-6s %-8s %4s %5s %5s %6s %4s %9s  %2s"
+    if os.name == 'nt':
+        templ = "%-6s %-8s %-7s %5s %5s %6s %4s %9s  %2s"
+        header = templ % ("PID", "USER", "PRI", "VIRT", "RES", "CPU%", "MEM%",
+                          "TIME+", "NAME")
+    else:
+        templ = "%-6s %-8s %4s %5s %5s %6s %4s %9s  %2s"
+        header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
+                          "TIME+", "NAME")
     win.erase()
-    header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
-                      "TIME+", "NAME")
     print_header(procs_status, len(procs))
     print_line("")
     print_line(header, highlight=True)
@@ -210,7 +227,7 @@ def refresh_window(procs, procs_status):
             username = ""
         line = templ % (p.pid,
                         username,
-                        p.dict['nice'],
+                        niceness2priority(p.dict['nice']),
                         bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
                         bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
                         p.dict['cpu_percent'],
