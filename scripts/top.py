@@ -262,7 +262,7 @@ class InterruptWatcher(threading.Thread):
                 input = stdin.read(1)
                 if input == b'q' or input == b'\x03':
                     raise(KeyboardInterrupt)
-        except:
+        except KeyboardInterrupt:
             if os.name == 'nt':
                 os._exit(0)
 
