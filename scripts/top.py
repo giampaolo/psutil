@@ -48,6 +48,64 @@ except ImportError:
 import psutil
 
 
+class _Getch:
+    """Gets a single character from standard input. Does not echo to the
+    screen."""
+    def __init__(self):
+        try:
+            self.impl = _GetchWindows()
+        except ImportError:
+            self.impl = _GetchUnix()
+
+    def __call__(self): return self.impl()
+
+
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return msvcrt.getch()
+
+
+class InterruptWatcher(threading.Thread):
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.stopped = False
+        self.getch = _Getch()
+
+    def stop(self):
+        self.stopped = True
+
+    def run(self):
+        try:
+            while not self.stopped:
+                input = self.getch()
+                if input == b'q' or input == b'\x03' or input == 'q':
+                    raise(KeyboardInterrupt)
+        except KeyboardInterrupt:
+            if platformIsWindows():
+                os._exit(0)
+                
+
 # --- curses stuff
 
 def tear_down():
@@ -110,6 +168,13 @@ def niceness2priority(niceness):
     elif str(niceness) == 'Priority.IDLE_PRIORITY_CLASS':
         niceness = 'Idle'
     return niceness
+
+
+def platformIsWindows():
+    if os.name == 'nt':
+        return True
+    else:
+        return False
 
 
 def poll(interval):
@@ -194,7 +259,7 @@ def print_header(procs_status, num_procs):
 def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
     curses.endwin()
-    if os.name == 'nt':
+    if platformIsWindows():
         templ = "%-6s %-8s %-7s %5s %5s %6s %4s %9s  %2s"
         header = templ % ("PID", "USER", "PRI", "VIRT", "RES", "CPU%", "MEM%",
                           "TIME+", "NAME")
@@ -241,30 +306,6 @@ def refresh_window(procs, procs_status):
         except curses.error:
             break
         win.refresh()
-
-
-class InterruptWatcher(threading.Thread):
-
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.stopped = False
-
-    def stop(self):
-        self.stopped = True
-
-    def run(self):
-        if hasattr(sys.stdin, "buffer"):
-            stdin = sys.stdin.buffer.raw
-        else:
-            stdin = sys.stdin
-        try:
-            while not self.stopped:
-                input = stdin.read(1)
-                if input == b'q' or input == b'\x03':
-                    raise(KeyboardInterrupt)
-        except KeyboardInterrupt:
-            if os.name == 'nt':
-                os._exit(0)
 
 
 def main():
