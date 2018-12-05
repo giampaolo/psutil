@@ -1,27 +1,21 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.5.1
+5.5.0
 =====
+
+XXXX-XX-XX
 
 **Enhancements**
 
+- 1350_: [FreeBSD] added support for sensors_temperatures().  (patch by Alex
+  Manuskin)
 - 1352_: [FreeBSD] added support for CPU frequency.  (patch by Alex Manuskin)
 
 **Bug fixes**
 
+- 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 - 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
   EccoTheFlintstone)
-
-5.5.0
-=====
-
-**Enhancements**
-
-- 1350_: [FreeBSD] added support for sensors_temperatures().
-
-**Bug fixes**
-
-- 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 
 5.4.8
 =====
