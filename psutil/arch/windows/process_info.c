@@ -269,8 +269,11 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
  * no longer exists.
  * "pid" is the process pid, "dwDesiredAccess" is the first argument
  * expected by OpenProcess.
- * Starting from windows 8, certain processes are ProtectedProcesses and PROCESS_QUERY_INFORMATION rights are refused,
- * PROCESS_QUERY_LIMITED_INFORMATION must be used. This way, we can still get a handle with certain rights and succeed in some operations (OpenProcessToken w/ TOKEN_QUERY..)
+ * Starting from windows 8, certain processes are ProtectedProcesses and
+ *   PROCESS_QUERY_INFORMATION rights are refused,
+ *   PROCESS_QUERY_LIMITED_INFORMATION must be used.
+ * This way, we can still get a handle with certain rights and
+ *   succeed in some operations (OpenProcessToken w/ TOKEN_QUERY..)
  * Return a process handle or NULL.
  */
 HANDLE
@@ -283,16 +286,27 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     }
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
-    // if ACCESS_DENIED, retry with PROCESS_QUERY_LIMITED_INFORMATION instead of PROCESS_QUERY_INFORMATION
+    /*
+     * if ACCESS_DENIED, retry with PROCESS_QUERY_LIMITED_INFORMATION
+     * instead of PROCESS_QUERY_INFORMATION
+     */
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
     /*
-     * If OpenProcess fails and multiple flags were requested, swapping PROCESS_QUERY_INFORMATION with PROCESS_QUERY_LIMITED_INFORMATION wouldn't help
-     * for instance PROCESS_QUERY_INFORMATION | PROCESS_VM_READ will fail for Protected Processes due to both flags
+     * If OpenProcess fails and multiple flags were requested, swapping
+     * PROCESS_QUERY_INFORMATION with PROCESS_QUERY_LIMITED_INFORMATION
+     *  wouldn't help
+     *
+     * for instance PROCESS_QUERY_INFORMATION | PROCESS_VM_READ will fail
+     * for Protected Processes due to both flags
+     *
      * so we retry ONLY if PROCESS_QUERY_INFORMATION was requested alone
-     * this way we can still use psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION) which works for win XP+
-     * and have an automatic fallback with PROCESS_QUERY_LIMITED_INFORMATION (for win 7/8 +)
-    */
-        if (dwDesiredAccess == PROCESS_QUERY_INFORMATION) { // check PROCESS_QUERY_INFORMATION was requested as the sole flag
+     * this way we can still use
+     * psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION)
+     * which works for win XP+ and have an automatic fallback with
+     * PROCESS_QUERY_LIMITED_INFORMATION (for win 7/8 +)
+     */
+        if (dwDesiredAccess == PROCESS_QUERY_INFORMATION) {
+          // check PROCESS_QUERY_INFORMATION was requested as the sole flag
             dwDesiredAccess = PROCESS_QUERY_LIMITED_INFORMATION;
             hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
         }
