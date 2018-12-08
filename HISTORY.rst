@@ -13,6 +13,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1111_: Process.oneshot() is now thread safe.
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 - 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
   EccoTheFlintstone)
