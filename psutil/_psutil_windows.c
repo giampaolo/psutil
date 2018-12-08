@@ -897,6 +897,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     size_t private_pages;
     size_t i;
     DWORD info_array_size;
+    // needed by QueryWorkingSet
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     PSAPI_WORKING_SET_INFORMATION* info_array;
     SYSTEM_INFO system_info;
     PyObject* py_result = NULL;
@@ -906,8 +908,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
         return NULL;
 
 
-    proc = psutil_handle_from_pid_waccess(
-        pid, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    proc = psutil_handle_from_pid_waccess(pid, access);
     if (proc == NULL)
         return NULL;
 
@@ -2114,7 +2115,8 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
 
@@ -2138,7 +2140,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     long pid;
     DWORD prio;
     HANDLE hProcess;
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
     _NtSetInformationProcess NtSetInformationProcess =
         (_NtSetInformationProcess)GetProcAddress(
@@ -2152,7 +2154,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
-    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
+    hProcess = psutil_handle_from_pid_waccess(pid, access);
     if (hProcess == NULL)
         return NULL;
 
@@ -2237,8 +2239,7 @@ static PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
-    DWORD dwDesiredAccess = \
-        PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
 #ifdef _WIN64
@@ -2249,7 +2250,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     {
         return NULL;
     }
-    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
+    hProcess = psutil_handle_from_pid_waccess(pid, access);
     if (hProcess == NULL)
         return NULL;
 
@@ -3036,6 +3037,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     WCHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
+    // required by GetMappedFileNameW
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_str = NULL;
@@ -3044,7 +3047,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(pid, access);
     if (NULL == hProcess)
         goto error;
 
