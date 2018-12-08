@@ -272,7 +272,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
  * Return a process handle or NULL.
  */
 HANDLE
-psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
+psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess) {
     HANDLE hProcess;
 
     if (pid == 0) {
@@ -282,18 +282,6 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     return psutil_check_phandle(hProcess, pid);
-}
-
-
-/*
- * Same as psutil_handle_from_pid_waccess but implicitly uses
- * PROCESS_QUERY_INFORMATION | PROCESS_VM_READ as dwDesiredAccess
- * parameter for OpenProcess.
- */
-HANDLE
-psutil_handle_from_pid(DWORD pid) {
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-    return psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
 }
 
 
@@ -553,9 +541,9 @@ static int psutil_get_process_data(long pid,
     BOOL weAreWow64;
     BOOL theyAreWow64;
 #endif
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
 
-    hProcess = psutil_handle_from_pid_waccess(
-        pid, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return -1;
 
