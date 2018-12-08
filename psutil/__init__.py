@@ -31,7 +31,6 @@ import os
 import signal
 import subprocess
 import sys
-import threading
 import time
 try:
     import pwd
@@ -361,7 +360,6 @@ class Process(object):
         self._proc = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
-        self._lock = threading.RLock()
         # cache creation time for later use in is_running() method
         try:
             self.create_time()
@@ -458,41 +456,40 @@ class Process(object):
         ...
         >>>
         """
-        with self._lock:
-            if self._oneshot_inctx:
-                # NOOP: this covers the use case where the user enters the
-                # context twice. Since as_dict() internally uses oneshot()
-                # I expect that the code below will be a pretty common
-                # "mistake" that the user will make, so let's guard
-                # against that:
-                #
-                # >>> with p.oneshot():
-                # ...    p.as_dict()
-                # ...
+        if self._oneshot_inctx:
+            # NOOP: this covers the use case where the user enters the
+            # context twice. Since as_dict() internally uses oneshot()
+            # I expect that the code below will be a pretty common
+            # "mistake" that the user will make, so let's guard
+            # against that:
+            #
+            # >>> with p.oneshot():
+            # ...    p.as_dict()
+            # ...
+            yield
+        else:
+            self._oneshot_inctx = True
+            try:
+                # cached in case cpu_percent() is used
+                self.cpu_times.cache_activate()
+                # cached in case memory_percent() is used
+                self.memory_info.cache_activate()
+                # cached in case parent() is used
+                self.ppid.cache_activate()
+                # cached in case username() is used
+                if POSIX:
+                    self.uids.cache_activate()
+                # specific implementation cache
+                self._proc.oneshot_enter()
                 yield
-            else:
-                self._oneshot_inctx = True
-                try:
-                    # cached in case cpu_percent() is used
-                    self.cpu_times.cache_activate()
-                    # cached in case memory_percent() is used
-                    self.memory_info.cache_activate()
-                    # cached in case parent() is used
-                    self.ppid.cache_activate()
-                    # cached in case username() is used
-                    if POSIX:
-                        self.uids.cache_activate()
-                    # specific implementation cache
-                    self._proc.oneshot_enter()
-                    yield
-                finally:
-                    self.cpu_times.cache_deactivate()
-                    self.memory_info.cache_deactivate()
-                    self.ppid.cache_deactivate()
-                    if POSIX:
-                        self.uids.cache_deactivate()
-                    self._proc.oneshot_exit()
-                    self._oneshot_inctx = False
+            finally:
+                self.cpu_times.cache_deactivate()
+                self.memory_info.cache_deactivate()
+                self.ppid.cache_deactivate()
+                if POSIX:
+                    self.uids.cache_deactivate()
+                self._proc.oneshot_exit()
+                self._oneshot_inctx = False
 
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
