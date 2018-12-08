@@ -109,11 +109,10 @@ if WINDOWS:
         return '0x0%s' % ((maj * 100) + min)
 
     if sys.getwindowsversion()[0] < 6:
-        msg = "warning: Windows versions < Vista are no longer supported or "
-        msg = "maintained; latest official supported version is psutil 3.4.2; "
-        msg += "psutil may still be installed from sources if you have "
-        msg += "Visual Studio and may also (kind of) work though"
-        warnings.warn(msg, UserWarning)
+        msg = "this Windows version is too old (< Windows Vista); "
+        msg += "psutil 3.4.2 is the latest version which supports Windows "
+        msg += "2000, XP and 2003 server"
+        raise RuntimeError(msg)
 
     macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
