@@ -16,6 +16,8 @@ XXXX-XX-XX
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 - 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
   EccoTheFlintstone)
+- 1370_: [Windows] improper usage of CloseHandle() may lead to override the
+  original error code when raising an exception.
 - 1376_: [Windows] OpenProcess() now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less AccessDenied exceptions
   being thrown for system processes.

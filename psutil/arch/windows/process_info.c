@@ -422,7 +422,7 @@ psutil_pid_is_running(DWORD pid) {
             return 1;
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(err);
             return -1;
         }
     }

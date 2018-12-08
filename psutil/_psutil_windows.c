@@ -399,8 +399,8 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         err = GetLastError();
         // See: https://github.com/giampaolo/psutil/issues/1099
         if (err != ERROR_ACCESS_DENIED) {
-            CloseHandle(hProcess);
             PyErr_SetFromWindowsErr(err);
+            CloseHandle(hProcess);
             return NULL;
         }
     }
@@ -445,21 +445,21 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     // handle return code
     if (retVal == WAIT_FAILED) {
-        CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
         return NULL;
     }
     if (retVal == WAIT_TIMEOUT) {
-        CloseHandle(hProcess);
         PyErr_SetString(TimeoutExpired,
                         "WaitForSingleObject() returned WAIT_TIMEOUT");
+        CloseHandle(hProcess);
         return NULL;
     }
     if (retVal == WAIT_ABANDONED) {
         psutil_debug("WaitForSingleObject() -> WAIT_ABANDONED");
-        CloseHandle(hProcess);
         PyErr_SetString(TimeoutAbandoned,
                         "WaitForSingleObject() returned WAIT_ABANDONED");
+        CloseHandle(hProcess);
         return NULL;
     }
 
@@ -467,9 +467,11 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     // process is gone so we can get its process exit code. The PID
     // may still stick around though but we'll handle that from Python.
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(GetLastError());
+        return NULL;
     }
+
     CloseHandle(hProcess);
 
 #if PY_MAJOR_VERSION >= 3
@@ -497,15 +499,16 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            return NoSuchProcess("");
+            NoSuchProcess("");
         }
         else {
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
         }
+        CloseHandle(hProcess);
+        return NULL;
     }
 
     CloseHandle(hProcess);
@@ -551,15 +554,16 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a
             // NoSuchProcess here
-            return NoSuchProcess("");
+            NoSuchProcess("");
         }
         else {
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
         }
+        CloseHandle(hProcess);
+        return NULL;
     }
 
     CloseHandle(hProcess);
@@ -761,8 +765,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         return NULL;
     if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
     CloseHandle(hProcess);
     return PyUnicode_FromWideChar(exe, wcslen(exe));
@@ -790,8 +795,9 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     pentry.dwSize = sizeof(PROCESSENTRY32W);
     ok = Process32FirstW(hSnapShot, &pentry);
     if (! ok) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hSnapShot);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
     while (ok) {
         if (pentry.th32ProcessID == pid) {
@@ -831,8 +837,9 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     if (! GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt,
                                sizeof(cnt))) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
@@ -1357,10 +1364,15 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     processHandle = psutil_handle_from_pid(pid, access);
     if (processHandle == NULL)
         return NULL;
+
     py_retlist = psutil_get_open_files(pid, processHandle);
+    if (py_retlist == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(processHandle);
+        return NULL;
+    }
+
     CloseHandle(processHandle);
-    if (py_retlist == NULL)
-        return PyErr_SetFromWindowsErr(0);
     return py_retlist;
 }
 
@@ -2058,13 +2070,18 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
+
     priority = GetPriorityClass(hProcess);
+    if (priority == 0) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
+        return NULL;
+    }
     CloseHandle(hProcess);
-    if (priority == 0)
-        return PyErr_SetFromWindowsErr(0);
     return Py_BuildValue("i", priority);
 }
 
@@ -2085,10 +2102,15 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
+
     retval = SetPriorityClass(hProcess, priority);
+    if (retval == 0) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
+        return NULL;
+    }
+
     CloseHandle(hProcess);
-    if (retval == 0)
-        return PyErr_SetFromWindowsErr(0);
     Py_RETURN_NONE;
 }
 
@@ -2178,10 +2200,13 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
+
     if (! GetProcessIoCounters(hProcess, &IoCounters)) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
+
     CloseHandle(hProcess);
     return Py_BuildValue("(KKKKKK)",
                          IoCounters.ReadOperationCount,
@@ -2210,8 +2235,9 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     CloseHandle(hProcess);
@@ -2246,8 +2272,9 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         return NULL;
 
     if (SetProcessAffinityMask(hProcess, mask) == 0) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     CloseHandle(hProcess);
@@ -2883,8 +2910,9 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         return NULL;
     if (! GetProcessHandleCount(hProcess, &handleCount)) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
     CloseHandle(hProcess);
     return Py_BuildValue("k", handleCount);
