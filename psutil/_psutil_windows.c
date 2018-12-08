@@ -492,7 +492,9 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
+
     if (hProcess == NULL)
         return NULL;
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -546,7 +548,8 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     if (0 == pid || 4 == pid)
         return psutil_boot_time(NULL, NULL);
 
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -756,7 +759,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
     if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
@@ -824,7 +828,8 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
 
@@ -900,7 +905,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    proc = psutil_handle_from_pid(pid);
+
+    proc = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
     if (proc == NULL)
         return NULL;
 
@@ -2055,7 +2062,8 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
     priority = GetPriorityClass(hProcess);
@@ -2172,7 +2180,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
     if (! GetProcessIoCounters(hProcess, &IoCounters)) {
@@ -2202,7 +2211,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -2877,7 +2887,8 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
     if (! GetProcessHandleCount(hProcess, &handleCount)) {

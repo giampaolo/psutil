@@ -554,7 +554,8 @@ static int psutil_get_process_data(long pid,
     BOOL theyAreWow64;
 #endif
 
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
     if (hProcess == NULL)
         return -1;
 
