@@ -1538,11 +1538,11 @@ class Process(object):
 
     @memoize_when_activated
     def _parse_stat_file(self):
-        """Parse /proc/{pid}/stat file. Return a list of fields where
-        process name is in position 0.
+        """Parse /proc/{pid}/stat file and return a dict with various
+        process info.
         Using "man proc" as a reference: where "man proc" refers to
-        position N, always substract 2 (e.g starttime pos 22 in
-        'man proc' == pos 20 in the list returned here).
+        position N always substract 3 (e.g ppid position 4 in
+        'man proc' == position 1 in here).
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
@@ -1553,8 +1553,21 @@ class Process(object):
         # the first occurrence of "(" and the last occurence of ")".
         rpar = data.rfind(b')')
         name = data[data.find(b'(') + 1:rpar]
-        others = data[rpar + 2:].split()
-        return [name] + others
+        fields = data[rpar + 2:].split()
+
+        ret = {}
+        ret['name'] = name
+        ret['status'] = fields[0]
+        ret['ppid'] = fields[1]
+        ret['ttynr'] = fields[4]
+        ret['utime'] = fields[11]
+        ret['stime'] = fields[12]
+        ret['children_utime'] = fields[13]
+        ret['children_stime'] = fields[14]
+        ret['create_time'] = fields[19]
+        ret['cpu_num'] = fields[36]
+
+        return ret
 
     @memoize_when_activated
     def _read_status_file(self):
@@ -1583,7 +1596,7 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        name = self._parse_stat_file()[0]
+        name = self._parse_stat_file()['name']
         if PY3:
             name = decode(name)
         # XXX - gets changed later and probably needs refactoring
@@ -1635,7 +1648,7 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = int(self._parse_stat_file()[5])
+        tty_nr = int(self._parse_stat_file()['ttynr'])
         tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -1678,16 +1691,16 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         values = self._parse_stat_file()
-        utime = float(values[12]) / CLOCK_TICKS
-        stime = float(values[13]) / CLOCK_TICKS
-        children_utime = float(values[14]) / CLOCK_TICKS
-        children_stime = float(values[15]) / CLOCK_TICKS
+        utime = float(values['utime']) / CLOCK_TICKS
+        stime = float(values['stime']) / CLOCK_TICKS
+        children_utime = float(values['children_utime']) / CLOCK_TICKS
+        children_stime = float(values['children_stime']) / CLOCK_TICKS
         return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
     def cpu_num(self):
         """What CPU the process is on."""
-        return int(self._parse_stat_file()[37])
+        return int(self._parse_stat_file()['cpu_num'])
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -1695,14 +1708,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        values = self._parse_stat_file()
+        ctime = float(self._parse_stat_file()['create_time'])
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
         # Also use cached value if available.
         bt = BOOT_TIME or boot_time()
-        return (float(values[20]) / CLOCK_TICKS) + bt
+        return (ctime / CLOCK_TICKS) + bt
 
     @wrap_exceptions
     def memory_info(self):
@@ -2013,7 +2026,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        letter = self._parse_stat_file()[1]
+        letter = self._parse_stat_file()['status']
         if PY3:
             letter = letter.decode()
         # XXX is '?' legit? (we're not supposed to return it anyway)
@@ -2082,7 +2095,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return int(self._parse_stat_file()[2])
+        return int(self._parse_stat_file()['ppid'])
 
     @wrap_exceptions
     def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):
