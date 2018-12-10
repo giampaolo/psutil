@@ -14,6 +14,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
+- 1357_: [Linux] Process' memory_maps() and io_counters() method are no longer
+  exposed if not supported by the kernel.
 - 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
   EccoTheFlintstone)
 - 1370_: [Windows] improper usage of CloseHandle() may lead to override the

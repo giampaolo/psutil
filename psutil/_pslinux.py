@@ -1642,6 +1642,7 @@ class Process(object):
         except KeyError:
             return None
 
+    # May not be available on old kernels.
     if os.path.exists('/proc/%s/io' % os.getpid()):
         @wrap_exceptions
         def io_counters(self):
@@ -1673,10 +1674,6 @@ class Process(object):
             except KeyError as err:
                 raise ValueError("%r field was not found in %s; found fields "
                                  "are %r" % (err[0], fname, fields))
-    else:
-        def io_counters(self):
-            raise NotImplementedError("couldn't find /proc/%s/io (kernel "
-                                      "too old?)" % self.pid)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -1767,6 +1764,9 @@ class Process(object):
             """Return process's mapped memory regions as a list of named
             tuples. Fields are explained in 'man proc'; here is an updated
             (Apr 2012) version: http://goo.gl/fmebo
+
+            /proc/{PID}/smaps does not exist on kernels < 2.6.14 or if
+            CONFIG_MMU kernel configuration option is not enabled.
             """
             def get_blocks(lines, current_block):
                 data = {}
@@ -1826,13 +1826,6 @@ class Process(object):
                     data.get(b'Swap:', 0)
                 ))
             return ls
-
-    else:  # pragma: no cover
-        def memory_maps(self):
-            raise NotImplementedError(
-                "/proc/%s/smaps does not exist on kernels < 2.6.14 or "
-                "if CONFIG_MMU kernel configuration option is not "
-                "enabled." % self.pid)
 
     @wrap_exceptions
     def cwd(self):
