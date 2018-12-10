@@ -302,7 +302,8 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
     do {
         procArraySz += 1024;
-        free(procArray);
+        if (procArray != NULL)
+            free(procArray);
         procArrayByteSz = procArraySz * sizeof(DWORD);
         procArray = malloc(procArrayByteSz);
         if (procArray == NULL) {
@@ -833,7 +834,8 @@ psutil_get_cmdline(long pid) {
 
 out:
     LocalFree(szArglist);
-    free(data);
+    if (data != NULL)
+        free(data);
     Py_XDECREF(py_unicode);
     Py_XDECREF(py_retlist);
 
@@ -852,7 +854,8 @@ PyObject *psutil_get_cwd(long pid) {
     ret = PyUnicode_FromWideChar(data, wcslen(data));
 
 out:
-    free(data);
+    if (data != NULL)
+        free(data);
 
     return ret;
 }
@@ -873,8 +876,8 @@ PyObject *psutil_get_environ(long pid) {
     ret = PyUnicode_FromWideChar(data, size / 2);
 
 out:
-    free(data);
-
+    if (data != NULL)
+        free(data);
     return ret;
 }
 

@@ -21,6 +21,8 @@ XXXX-XX-XX
 - 1376_: [Windows] OpenProcess() now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less AccessDenied exceptions
   being thrown for system processes.
+- 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
+  EccoTheFlintstone)
 
 5.4.8
 =====
