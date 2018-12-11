@@ -1428,7 +1428,8 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    processHandle = psutil_handle_from_pid(pid, PROCESS_QUERY_INFORMATION);
+    processHandle = psutil_handle_from_pid(
+        pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (processHandle == NULL)
         return NULL;
 
