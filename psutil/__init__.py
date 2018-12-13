@@ -31,6 +31,7 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 try:
     import pwd
@@ -352,7 +353,7 @@ class Process(object):
         self._create_time = None
         self._gone = False
         self._hash = None
-        self._oneshot_inctx = False
+        self._lock = threading.RLock()
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -456,40 +457,45 @@ class Process(object):
         ...
         >>>
         """
-        if self._oneshot_inctx:
-            # NOOP: this covers the use case where the user enters the
-            # context twice. Since as_dict() internally uses oneshot()
-            # I expect that the code below will be a pretty common
-            # "mistake" that the user will make, so let's guard
-            # against that:
-            #
-            # >>> with p.oneshot():
-            # ...    p.as_dict()
-            # ...
-            yield
-        else:
-            self._oneshot_inctx = True
-            try:
-                # cached in case cpu_percent() is used
-                self.cpu_times.cache_activate(self)
-                # cached in case memory_percent() is used
-                self.memory_info.cache_activate(self)
-                # cached in case parent() is used
-                self.ppid.cache_activate(self)
-                # cached in case username() is used
-                if POSIX:
-                    self.uids.cache_activate(self)
-                # specific implementation cache
-                self._proc.oneshot_enter()
+        with self._lock:
+            if hasattr(self, "_cache"):
+                # NOOP: this covers the use case where the user enters the
+                # context twice:
+                #
+                # >>> with p.oneshot():
+                # ...    with p.oneshot():
+                # ...
+                #
+                # Also, since as_dict() internally uses oneshot()
+                # I expect that the code below will be a pretty common
+                # "mistake" that the user will make, so let's guard
+                # against that:
+                #
+                # >>> with p.oneshot():
+                # ...    p.as_dict()
+                # ...
                 yield
-            finally:
-                self.cpu_times.cache_deactivate(self)
-                self.memory_info.cache_deactivate(self)
-                self.ppid.cache_deactivate(self)
-                if POSIX:
-                    self.uids.cache_deactivate(self)
-                self._proc.oneshot_exit()
-                self._oneshot_inctx = False
+            else:
+                try:
+                    # cached in case cpu_percent() is used
+                    self.cpu_times.cache_activate(self)
+                    # cached in case memory_percent() is used
+                    self.memory_info.cache_activate(self)
+                    # cached in case parent() is used
+                    self.ppid.cache_activate(self)
+                    # cached in case username() is used
+                    if POSIX:
+                        self.uids.cache_activate(self)
+                    # specific implementation cache
+                    self._proc.oneshot_enter()
+                    yield
+                finally:
+                    self.cpu_times.cache_deactivate(self)
+                    self.memory_info.cache_deactivate(self)
+                    self.ppid.cache_deactivate(self)
+                    if POSIX:
+                        self.uids.cache_deactivate(self)
+                    self._proc.oneshot_exit()
 
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a

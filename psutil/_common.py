@@ -336,14 +336,17 @@ def memoize_when_activated(fun):
     """
     @functools.wraps(fun)
     def wrapper(self):
-        if not hasattr(self, "_cache"):
+        try:
+            # case 1: we previously entered oneshot() ctx
+            ret = self._cache[fun]
+        except AttributeError:
+            # case 2: we never entered oneshot() ctx
             return fun(self)
-        else:
-            try:
-                ret = self._cache[fun]
-            except KeyError:
-                ret = self._cache[fun] = fun(self)
-            return ret
+        except KeyError:
+            # case 3: we entered oneshot() ctx but there's no cache
+            # for this entry yet
+            ret = self._cache[fun] = fun(self)
+        return ret
 
     def cache_activate(proc):
         """Activate cache. Expects a Process instance. Cache will be
