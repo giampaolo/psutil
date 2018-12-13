@@ -1528,7 +1528,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -1585,14 +1585,14 @@ class Process(object):
             return f.read().strip()
 
     def oneshot_enter(self):
-        self._parse_stat_file.cache_activate()
-        self._read_status_file.cache_activate()
-        self._read_smaps_file.cache_activate()
+        self._parse_stat_file.cache_activate(self)
+        self._read_status_file.cache_activate(self)
+        self._read_smaps_file.cache_activate(self)
 
     def oneshot_exit(self):
-        self._parse_stat_file.cache_deactivate()
-        self._read_status_file.cache_deactivate()
-        self._read_smaps_file.cache_deactivate()
+        self._parse_stat_file.cache_deactivate(self)
+        self._read_status_file.cache_deactivate(self)
+        self._read_smaps_file.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

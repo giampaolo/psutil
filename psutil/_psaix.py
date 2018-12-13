@@ -354,7 +354,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -363,14 +363,14 @@ class Process(object):
         self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
-        self._proc_name_and_args.cache_activate()
-        self._proc_basic_info.cache_activate()
-        self._proc_cred.cache_activate()
+        self._proc_name_and_args.cache_activate(self)
+        self._proc_basic_info.cache_activate(self)
+        self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_name_and_args.cache_deactivate()
-        self._proc_basic_info.cache_deactivate()
-        self._proc_cred.cache_deactivate()
+        self._proc_name_and_args.cache_deactivate(self)
+        self._proc_basic_info.cache_deactivate(self)
+        self._proc_cred.cache_deactivate(self)
 
     @memoize_when_activated
     def _proc_name_and_args(self):

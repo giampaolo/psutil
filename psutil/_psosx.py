@@ -380,7 +380,7 @@ def catch_zombie(proc):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -403,12 +403,12 @@ class Process(object):
         return ret
 
     def oneshot_enter(self):
-        self._get_kinfo_proc.cache_activate()
-        self._get_pidtaskinfo.cache_activate()
+        self._get_kinfo_proc.cache_activate(self)
+        self._get_pidtaskinfo.cache_activate(self)
 
     def oneshot_exit(self):
-        self._get_kinfo_proc.cache_deactivate()
-        self._get_pidtaskinfo.cache_deactivate()
+        self._get_kinfo_proc.cache_deactivate(self)
+        self._get_pidtaskinfo.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

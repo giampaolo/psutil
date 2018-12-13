@@ -471,23 +471,23 @@ class Process(object):
             self._oneshot_inctx = True
             try:
                 # cached in case cpu_percent() is used
-                self.cpu_times.cache_activate()
+                self.cpu_times.cache_activate(self)
                 # cached in case memory_percent() is used
-                self.memory_info.cache_activate()
+                self.memory_info.cache_activate(self)
                 # cached in case parent() is used
-                self.ppid.cache_activate()
+                self.ppid.cache_activate(self)
                 # cached in case username() is used
                 if POSIX:
-                    self.uids.cache_activate()
+                    self.uids.cache_activate(self)
                 # specific implementation cache
                 self._proc.oneshot_enter()
                 yield
             finally:
-                self.cpu_times.cache_deactivate()
-                self.memory_info.cache_deactivate()
-                self.ppid.cache_deactivate()
+                self.cpu_times.cache_deactivate(self)
+                self.memory_info.cache_deactivate(self)
+                self.ppid.cache_deactivate(self)
                 if POSIX:
-                    self.uids.cache_deactivate()
+                    self.uids.cache_deactivate(self)
                 self._proc.oneshot_exit()
                 self._oneshot_inctx = False
 

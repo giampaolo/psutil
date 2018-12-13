@@ -327,7 +327,7 @@ def memoize_when_activated(fun):
     1
     >>>
     >>> # activated
-    >>> foo.cache_activate()
+    >>> foo.cache_activate(self)
     >>> foo()
     1
     >>> foo()
@@ -336,26 +336,27 @@ def memoize_when_activated(fun):
     """
     @functools.wraps(fun)
     def wrapper(self):
-        if not wrapper.cache_activated:
+        if not hasattr(self, "_cache"):
             return fun(self)
         else:
             try:
-                ret = cache[fun]
+                ret = self._cache[fun]
             except KeyError:
-                ret = cache[fun] = fun(self)
+                ret = self._cache[fun] = fun(self)
             return ret
 
-    def cache_activate():
-        """Activate cache."""
-        wrapper.cache_activated = True
+    def cache_activate(proc):
+        """Activate cache. Expects a Process instance. Cache will be
+        stored as a "_cache" instance attribute."""
+        proc._cache = {}
 
-    def cache_deactivate():
+    def cache_deactivate(proc):
         """Deactivate and clear cache."""
-        wrapper.cache_activated = False
-        cache.clear()
+        try:
+            del proc._cache
+        except AttributeError:
+            pass
 
-    cache = {}
-    wrapper.cache_activated = False
     wrapper.cache_activate = cache_activate
     wrapper.cache_deactivate = cache_deactivate
     return wrapper

@@ -261,14 +261,14 @@ class TestMisc(unittest.TestCase):
 
         # activate
         calls = []
-        f.foo.cache_activate()
+        f.foo.cache_activate(f)
         f.foo()
         f.foo()
         self.assertEqual(len(calls), 1)
 
         # deactivate
         calls = []
-        f.foo.cache_deactivate()
+        f.foo.cache_deactivate(f)
         f.foo()
         f.foo()
         self.assertEqual(len(calls), 2)

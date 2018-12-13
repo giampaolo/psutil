@@ -594,7 +594,7 @@ def wrap_exceptions_procfs(inst):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -609,10 +609,10 @@ class Process(object):
         return ret
 
     def oneshot_enter(self):
-        self.oneshot.cache_activate()
+        self.oneshot.cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot.cache_deactivate()
+        self.oneshot.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):

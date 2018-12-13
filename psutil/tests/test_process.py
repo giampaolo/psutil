@@ -1195,6 +1195,21 @@ class TestProcess(unittest.TestCase):
             p.cpu_times()
         self.assertEqual(m.call_count, 2)
 
+    def test_oneshot_cache(self):
+        # Make sure oneshot() cache is nonglobal. Instead it's
+        # supposed to be bound to the Process instance, see:
+        # https://github.com/giampaolo/psutil/issues/1373
+        p1, p2 = create_proc_children_pair()
+        p1_ppid = p1.ppid()
+        p2_ppid = p2.ppid()
+        self.assertNotEqual(p1_ppid, p2_ppid)
+        with p1.oneshot():
+            self.assertEqual(p1.ppid(), p1_ppid)
+            self.assertEqual(p2.ppid(), p2_ppid)
+        with p2.oneshot():
+            self.assertEqual(p1.ppid(), p1_ppid)
+            self.assertEqual(p2.ppid(), p2_ppid)
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
