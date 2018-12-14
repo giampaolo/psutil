@@ -1225,16 +1225,16 @@ int psutil_proc_suspend_or_resume(DWORD pid, int suspend)
 {
     HANDLE hProcess = NULL;
 
-	typedef LONG (NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle);
-	typedef LONG (NTAPI *NtResumeProcess)(IN HANDLE ProcessHandle);
-	NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess)GetProcAddress(GetModuleHandle("ntdll"), "NtSuspendProcess");
+    typedef LONG (NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle);
+    typedef LONG (NTAPI *NtResumeProcess)(IN HANDLE ProcessHandle);
+    NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess)GetProcAddress(GetModuleHandle("ntdll"), "NtSuspendProcess");
     NtResumeProcess pfnNtResumeProcess = (NtResumeProcess)GetProcAddress(GetModuleHandle("ntdll"), "NtResumeProcess");
     if (!pfnNtSuspendProcess || !pfnNtResumeProcess) {
-        PyErr_SetFromWindowsErr(0);
-        return FALSE;
+        // Use alternate method
+        return psutil_proc_suspend_or_resume_threads(pid, suspend);
     }
 
-	if (pid == 0) {
+    if (pid == 0) {
         AccessDenied("");
         return FALSE;
     }
@@ -1248,13 +1248,13 @@ int psutil_proc_suspend_or_resume(DWORD pid, int suspend)
     if (suspend == 1) {
         if (pfnNtSuspendProcess(hProcess) == (DWORD) - 1) {
             PyErr_SetFromWindowsErr(0);
-			CloseHandle(hProcess);
+            CloseHandle(hProcess);
             return FALSE;
         }
     } else {
         if (pfnNtResumeProcess(hProcess) == (DWORD) - 1) {
             PyErr_SetFromWindowsErr(0);
-			CloseHandle(hProcess);
+            CloseHandle(hProcess);
             return FALSE;
         }
     }
