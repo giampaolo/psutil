@@ -1144,7 +1144,8 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 /*
  * Resume or suspends a process
  */
-// [POSSIBLE BUG]: Thread suspending is bad, 'cause programs can use their own thread suspending as a part of internal logic
+// [POSSIBLE BUG]: Thread suspending is bad, 'cause programs can use their
+// own thread suspending as a part of internal logic
 // And it's slow: https://github.com/mridgers/clink/issues/420
 int psutil_proc_suspend_or_resume_threads(DWORD pid, int suspend) {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
@@ -1216,10 +1217,20 @@ int psutil_proc_suspend_or_resume(DWORD pid, int suspend)
 
     typedef LONG (NTAPI *NtSuspendProcess)(IN HANDLE ProcessHandle);
     typedef LONG (NTAPI *NtResumeProcess)(IN HANDLE ProcessHandle);
-    NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess)GetProcAddress(GetModuleHandle("ntdll"), "NtSuspendProcess");
-    NtResumeProcess pfnNtResumeProcess = (NtResumeProcess)GetProcAddress(GetModuleHandle("ntdll"), "NtResumeProcess");
+
+    NtSuspendProcess pfnNtSuspendProcess = (NtSuspendProcess)GetProcAddress(
+        GetModuleHandle("ntdll"), "NtSuspendProcess"
+    );
+    NtResumeProcess pfnNtResumeProcess = (NtResumeProcess)GetProcAddress(
+        GetModuleHandle("ntdll"), "NtResumeProcess"
+    );
+
     if (!pfnNtSuspendProcess || !pfnNtResumeProcess) {
         // Use alternate method
+        psutil_debug(
+            "process suspend/resume: "
+            "use alternate method operating on process threads"
+        );
         return psutil_proc_suspend_or_resume_threads(pid, suspend);
     }
 
@@ -1228,20 +1239,18 @@ int psutil_proc_suspend_or_resume(DWORD pid, int suspend)
         return FALSE;
     }
 
-    hProcess = OpenProcess(PROCESS_SUSPEND_RESUME, FALSE, pid);
-    if (hProcess == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromWindowsErr(0);
+    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_SUSPEND_RESUME);
+    if (hProcess == NULL)
         return FALSE;
-    }
 
     if (suspend == 1) {
-        if (pfnNtSuspendProcess(hProcess) == (DWORD) - 1) {
+        if (pfnNtSuspendProcess(hProcess) == 0) {
             PyErr_SetFromWindowsErr(0);
             CloseHandle(hProcess);
             return FALSE;
         }
     } else {
-        if (pfnNtResumeProcess(hProcess) == (DWORD) - 1) {
+        if (pfnNtResumeProcess(hProcess) == 0) {
             PyErr_SetFromWindowsErr(0);
             CloseHandle(hProcess);
             return FALSE;

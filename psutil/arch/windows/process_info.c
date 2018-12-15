@@ -280,6 +280,13 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
         return AccessDenied("");
     }
 
+    // Ensure this flag as it's required by psutil_check_phandle
+    #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+        dwDesiredAccess |= PROCESS_QUERY_LIMITED_INFORMATION
+    #else
+        dwDesiredAccess |= PROCESS_QUERY_INFORMATION;
+    #endif
+
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     return psutil_check_phandle(hProcess, pid);
 }
