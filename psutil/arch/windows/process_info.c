@@ -282,7 +282,7 @@ psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess) {
 
     // Ensure this flag as it's required by psutil_check_phandle
     #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
-        dwDesiredAccess |= PROCESS_QUERY_LIMITED_INFORMATION
+        dwDesiredAccess |= PROCESS_QUERY_LIMITED_INFORMATION;
     #else
         dwDesiredAccess |= PROCESS_QUERY_INFORMATION;
     #endif

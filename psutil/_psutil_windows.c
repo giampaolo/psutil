@@ -1250,18 +1250,18 @@ int psutil_proc_suspend_or_resume(DWORD pid, int suspend)
         return FALSE;
     }
 
-    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_SUSPEND_RESUME);
+    hProcess = psutil_handle_from_pid(pid, PROCESS_SUSPEND_RESUME);
     if (hProcess == NULL)
         return FALSE;
 
     if (suspend == 1) {
-        if (pfnNtSuspendProcess(hProcess) == 0) {
+        if (pfnNtSuspendProcess(hProcess) != 0) {
             PyErr_SetFromWindowsErr(0);
             CloseHandle(hProcess);
             return FALSE;
         }
     } else {
-        if (pfnNtResumeProcess(hProcess) == 0) {
+        if (pfnNtResumeProcess(hProcess) != 0) {
             PyErr_SetFromWindowsErr(0);
             CloseHandle(hProcess);
             return FALSE;
