@@ -19,6 +19,8 @@ PLATFORMS
 FEATURES
 ========
 
+- set process name/title
+
 - #1115: users() idle time.
 
 - #1102: Process.is64bit().
@@ -150,6 +152,8 @@ FEATURES
 - round Process.memory_percent() result?
 
 - #550: number of threads per core.
+
+- cpu_percent() and cpu_times_percent() use global vars so are not thread safe.
 
 BUGFIXES
 ========

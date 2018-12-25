@@ -1,5 +1,5 @@
-.. image:: http://pepy.tech/badge/psutil
-    :target: http://pepy.tech/project/psutil
+.. image:: https://pepy.tech/badge/psutil/month
+    :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
 .. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
