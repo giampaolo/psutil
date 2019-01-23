@@ -518,15 +518,15 @@ class TestProcess(unittest.TestCase):
         import ctypes.wintypes
         PROCESS_QUERY_INFORMATION = 0x400
         handle = ctypes.windll.kernel32.OpenProcess(
-            PROCESS_QUERY_INFORMATION, 0, os.getpid())
+            PROCESS_QUERY_INFORMATION, 0, self.pid)
         self.addCleanup(ctypes.windll.kernel32.CloseHandle, handle)
+
         hndcnt = ctypes.wintypes.DWORD()
         ctypes.windll.kernel32.GetProcessHandleCount(
             handle, ctypes.byref(hndcnt))
         sys_value = hndcnt.value
-        psutil_value = psutil.Process().num_handles()
-        ctypes.windll.kernel32.CloseHandle(handle)
-        self.assertEqual(psutil_value, sys_value + 1)
+        psutil_value = psutil.Process(self.pid).num_handles()
+        self.assertEqual(psutil_value, sys_value)
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
