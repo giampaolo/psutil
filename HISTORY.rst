@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.5.1
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
+  successfully" when Python process runs in "Virtual Secure Mode".
+
 5.5.0
 =====
 

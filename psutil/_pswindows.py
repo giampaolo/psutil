@@ -698,7 +698,9 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
+        exe = cext.proc_exe(self.pid)
+        exe = convert_dos_path(exe)
+        return py2_strencode(exe)
 
     @wrap_exceptions
     def cmdline(self):

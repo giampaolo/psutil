@@ -211,6 +211,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     file = setmntent(mtab_path, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
+        psutil_debug("setmntent() failed");
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, mtab_path);
         goto error;
     }
@@ -298,8 +299,10 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     while (1) {
         setsize = CPU_ALLOC_SIZE(ncpus);
         mask = CPU_ALLOC(ncpus);
-        if (mask == NULL)
+        if (mask == NULL) {
+            psutil_debug("CPU_ALLOC() failed");
             return PyErr_NoMemory();
+        }
         if (sched_getaffinity(pid, setsize, mask) == 0)
             break;
         CPU_FREE(mask);
