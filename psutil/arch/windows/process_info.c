@@ -162,6 +162,72 @@ const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
+
+#define WINDOWS_UNITIALIZED 0
+#define WINDOWS_XP 51
+#define WINDOWS_VISTA 60
+#define WINDOWS_7 61
+#define WINDOWS_8 62
+#define WINDOWS_81 63
+#define WINDOWS_10 100
+
+
+int get_windows_version() {
+    OSVERSIONINFO ver_info;
+    BOOL result;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    static int windows_version = WINDOWS_UNITIALIZED;
+    // didn't get version yet
+    if (windows_version == WINDOWS_UNITIALIZED) {
+        memset(&ver_info, 0, sizeof(ver_info));
+        ver_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+        result = GetVersionEx(&ver_info);
+        if (result != FALSE) {
+            dwMajorVersion = ver_info.dwMajorVersion;
+            dwMinorVersion = ver_info.dwMinorVersion;
+            dwBuildNumber = ver_info.dwBuildNumber;
+            // Windows XP, Windows server 2003
+            if (dwMajorVersion == 5 && dwMinorVersion == 1) {
+                windows_version = WINDOWS_XP;
+            }
+            // Windows Vista
+            else if (dwMajorVersion == 6 && dwMinorVersion == 0) {
+                windows_version = WINDOWS_VISTA;
+            }
+            // Windows 7, Windows Server 2008 R2
+            else if (dwMajorVersion == 6 && dwMinorVersion == 1) {
+                windows_version = WINDOWS_7;
+            }
+            // Windows 8, Windows Server 2012
+            else if (dwMajorVersion == 6 && dwMinorVersion == 2) {
+                windows_version = WINDOWS_8;
+            }
+            // Windows 8.1, Windows Server 2012 R2
+            else if (dwMajorVersion == 6 && dwMinorVersion == 3)
+            {
+                windows_version = WINDOWS_81;
+            }
+            // Windows 10, Windows Server 2016
+            else if (dwMajorVersion == 10) {
+                windows_version = WINDOWS_10;
+            }
+        }
+    }
+    return windows_version;
+}
+
+_NtQueryInformationProcess get_NtQueryInformationProcess() {
+    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    if (NtQueryInformationProcess == NULL) {
+        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
+            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+    }
+    return NtQueryInformationProcess;
+}
+
+
 // ====================================================================
 // Process and PIDs utiilties.
 // ====================================================================
@@ -804,10 +870,70 @@ psutil_get_cmdline(long pid) {
     PyObject *py_unicode = NULL;
     LPWSTR *szArglist = NULL;
     int nArgs, i;
+    HANDLE hProcess;
+    int windows_version;
+    ULONG ret_length = 4096;
+    NTSTATUS status;
+    char * cmdline_buffer = NULL;
+    WCHAR * cmdline_buffer_wchar = NULL;
+    PUNICODE_STRING tmp = NULL;
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 
-    if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0)
-        goto out;
+    windows_version = get_windows_version();
+    if (windows_version >= WINDOWS_81) {
+        NtQueryInformationProcess = get_NtQueryInformationProcess();
+        if (NtQueryInformationProcess != NULL) {
 
+            cmdline_buffer = calloc(4096, 1);
+            if (cmdline_buffer == NULL) {
+                PyErr_NoMemory();
+                goto out;
+            }
+
+            hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+            if (hProcess != NULL) {
+                status = NtQueryInformationProcess(
+                    hProcess,
+                    60, // ProcessCommandLineInformation
+                    cmdline_buffer,
+                    ret_length,
+                    &ret_length
+                );
+                CloseHandle(hProcess);
+                if (NT_SUCCESS(status)) {
+                    tmp = (PUNICODE_STRING)cmdline_buffer;
+                    cmdline_buffer_wchar = (WCHAR *)calloc(wcslen(tmp->Buffer) + 1, sizeof(WCHAR));
+                    if (cmdline_buffer_wchar != NULL) {
+                        wcscpy_s(cmdline_buffer_wchar, wcslen(tmp->Buffer) + 1, tmp->Buffer);
+                        data = cmdline_buffer_wchar;
+                        size = ret_length;
+                    }
+                    else {
+                        PyErr_SetFromWindowsErr(0);
+                        goto out;
+                    }
+                    free(cmdline_buffer);
+                }
+                else {
+                    PyErr_SetFromWindowsErr(0);
+                    goto out;
+                }
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+                goto out;
+            }
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+            goto out;
+        }
+    }
+    // legacy version that reads data from PEB
+    else {
+        if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0)
+            goto out;
+    }
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
@@ -822,7 +948,7 @@ psutil_get_cmdline(long pid) {
         goto out;
     for (i = 0; i < nArgs; i++) {
         py_unicode = PyUnicode_FromWideChar(szArglist[i],
-                                            wcslen(szArglist[i]));
+            wcslen(szArglist[i]));
         if (py_unicode == NULL)
             goto out;
         PyList_SET_ITEM(py_retlist, i, py_unicode);
@@ -833,7 +959,8 @@ psutil_get_cmdline(long pid) {
     py_retlist = NULL;
 
 out:
-    LocalFree(szArglist);
+    if (szArglist != NULL)
+        LocalFree(szArglist);
     if (data != NULL)
         free(data);
     Py_XDECREF(py_unicode);
