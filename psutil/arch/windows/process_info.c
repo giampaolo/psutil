@@ -906,7 +906,7 @@ psutil_get_cmdline(long pid) {
                     string_size = wcslen(tmp->Buffer) + 1;
                     cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
                     if (cmdline_buffer_wchar != NULL) {
-                        wcscpy_s(cmdline_buffer_wchar, wcslen(string_size, tmp->Buffer);
+                        wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
                         data = cmdline_buffer_wchar;
                         size = string_size * sizeof(WCHAR);
                     }
