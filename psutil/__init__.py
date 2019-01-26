@@ -557,6 +557,18 @@ class Process(object):
             except NoSuchProcess:
                 pass
 
+    def parents(self):
+        """Return the parents process as a list of Process
+        instances, pre-emptively checking whether PID has been reused.
+        """
+        process = self.parent()
+        parents = []
+
+        while process.ppid() != 0:
+            process = process.parent()
+            parents.append(process)
+        return parents
+
     def is_running(self):
         """Return whether this process is running.
         It also checks if PID has been reused by another process in
