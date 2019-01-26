@@ -877,6 +877,7 @@ psutil_get_cmdline(long pid) {
     char * cmdline_buffer = NULL;
     WCHAR * cmdline_buffer_wchar = NULL;
     PUNICODE_STRING tmp = NULL;
+    DWORD string_size;
     _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 
     windows_version = get_windows_version();
@@ -902,13 +903,15 @@ psutil_get_cmdline(long pid) {
                 CloseHandle(hProcess);
                 if (NT_SUCCESS(status)) {
                     tmp = (PUNICODE_STRING)cmdline_buffer;
-                    cmdline_buffer_wchar = (WCHAR *)calloc(wcslen(tmp->Buffer) + 1, sizeof(WCHAR));
+                    string_size = wcslen(tmp->Buffer) + 1;
+                    cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
                     if (cmdline_buffer_wchar != NULL) {
-                        wcscpy_s(cmdline_buffer_wchar, wcslen(tmp->Buffer) + 1, tmp->Buffer);
+                        wcscpy_s(cmdline_buffer_wchar, wcslen(string_size, tmp->Buffer);
                         data = cmdline_buffer_wchar;
-                        size = ret_length;
+                        size = string_size * sizeof(WCHAR);
                     }
                     else {
+                        free(cmdline_buffer);
                         PyErr_SetFromWindowsErr(0);
                         goto out;
                     }
