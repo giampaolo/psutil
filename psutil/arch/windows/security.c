@@ -34,7 +34,7 @@ psutil_token_from_handle(HANDLE hProcess) {
  * constant, we pass through the TOKEN_PRIVILEGES constant. This value returns
  * an array of privileges that the account has in the environment. Iterating
  * through the array, we call the function LookupPrivilegeName looking for the
- * string “SeTcbPrivilege. If the function returns this string, then this
+ * string â€œSeTcbPrivilege. If the function returns this string, then this
  * account has Local System privileges
  */
 int
@@ -159,7 +159,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
 int
 psutil_set_se_debug() {
     HANDLE hToken;
-	if (!OpenProcessToken(GetCurrentProcess(),
+    if (!OpenProcessToken(GetCurrentProcess(),
                           TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                           &hToken)
        ) {
@@ -168,7 +168,7 @@ psutil_set_se_debug() {
                 CloseHandle(hToken);
                 return 0;
             }
-			if (!OpenProcessToken(GetCurrentProcess(),
+            if (!OpenProcessToken(GetCurrentProcess(),
                                  TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                                  &hToken)
                ) {
@@ -195,14 +195,14 @@ psutil_set_se_debug() {
 int
 psutil_unset_se_debug() {
     HANDLE hToken;
-	if (!OpenProcessToken(GetCurrentProcess(),
+    if (!OpenProcessToken(GetCurrentProcess(),
                           TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                           &hToken)
        ) {
         if (GetLastError() == ERROR_NO_TOKEN) {
             if (! ImpersonateSelf(SecurityImpersonation))
                 return 0;
-			if (!OpenProcessToken(GetCurrentProcess(),
+            if (!OpenProcessToken(GetCurrentProcess(),
                                  TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                                  &hToken))
             {
@@ -218,3 +218,4 @@ psutil_unset_se_debug() {
     CloseHandle(hToken);
     return 1;
 }
+
