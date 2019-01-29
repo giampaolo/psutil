@@ -163,7 +163,7 @@ const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
 
-#define WINDOWS_UNITIALIZED 0
+#define WINDOWS_UNINITIALIZED 0
 #define WINDOWS_XP 51
 #define WINDOWS_VISTA 60
 #define WINDOWS_7 61
@@ -178,9 +178,9 @@ int get_windows_version() {
     DWORD dwMajorVersion;
     DWORD dwMinorVersion;
     DWORD dwBuildNumber;
-    static int windows_version = WINDOWS_UNITIALIZED;
+    static int windows_version = WINDOWS_UNINITIALIZED;
     // didn't get version yet
-    if (windows_version == WINDOWS_UNITIALIZED) {
+    if (windows_version == WINDOWS_UNINITIALIZED) {
         memset(&ver_info, 0, sizeof(ver_info));
         ver_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
         result = GetVersionEx(&ver_info);
@@ -218,7 +218,7 @@ int get_windows_version() {
     return windows_version;
 }
 
-_NtQueryInformationProcess get_NtQueryInformationProcess() {
+_NtQueryInformationProcess psutil_NtQueryInformationProcess() {
     static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
     if (NtQueryInformationProcess == NULL) {
         NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
@@ -592,7 +592,7 @@ static int psutil_get_process_data(long pid,
          http://stackoverflow.com/a/14012919
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
-    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 #ifndef _WIN64
     static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
@@ -614,10 +614,7 @@ static int psutil_get_process_data(long pid,
     if (hProcess == NULL)
         return -1;
 
-    if (NtQueryInformationProcess == NULL) {
-        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
-                GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-    }
+    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
 
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
@@ -886,7 +883,7 @@ psutil_get_cmdline(long pid) {
         if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0) {
             PyErr_Clear(); // reset that we had an error, and retry with NtQueryInformationProcess
             // if it fails, fallback to NtQueryInformationProcess (for protected processes)
-            NtQueryInformationProcess = get_NtQueryInformationProcess();
+            NtQueryInformationProcess = psutil_NtQueryInformationProcess();
             if (NtQueryInformationProcess == NULL) {
                 PyErr_SetFromWindowsErr(0);
                 goto out;
@@ -900,7 +897,7 @@ psutil_get_cmdline(long pid) {
 
             hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
             if (hProcess == NULL) {
-                PyErr_SetFromWindowsErr(0);
+                // psutil_handle_from_pid sets errorcode/exception, don't need to do it it
                 goto out;
             }
             status = NtQueryInformationProcess(
@@ -910,11 +907,14 @@ psutil_get_cmdline(long pid) {
                 ret_length,
                 &ret_length
             );
-            CloseHandle(hProcess);
             if (!NT_SUCCESS(status)) {
+                // set error before closing handle to keep original error
+                // CloseHandle might fail and set a new errno/GetLastError
                 PyErr_SetFromWindowsErr(0);
+                CloseHandle(hProcess);
                 goto out;
             }
+            CloseHandle(hProcess);
             tmp = (PUNICODE_STRING)cmdline_buffer;
             string_size = wcslen(tmp->Buffer) + 1;
             cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
