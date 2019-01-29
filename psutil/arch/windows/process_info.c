@@ -882,40 +882,49 @@ psutil_get_cmdline(long pid) {
 
     windows_version = get_windows_version();
     if (windows_version >= WINDOWS_81) {
-        NtQueryInformationProcess = get_NtQueryInformationProcess();
-        if (NtQueryInformationProcess != NULL) {
+        // by defaut, still use PEB (if command line params have been patched in PEB, we will get the actual ones)
+        if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0) {
+            PyErr_Clear(); // reset that we had an error, and retry with NtQueryInformationProcess
+            // if it fails, fallback to NtQueryInformationProcess (for protected processes)
+            NtQueryInformationProcess = get_NtQueryInformationProcess();
+            if (NtQueryInformationProcess != NULL) {
 
-            cmdline_buffer = calloc(4096, 1);
-            if (cmdline_buffer == NULL) {
-                PyErr_NoMemory();
-                goto out;
-            }
+                cmdline_buffer = calloc(4096, 1);
+                if (cmdline_buffer == NULL) {
+                    PyErr_NoMemory();
+                    goto out;
+                }
 
-            hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-            if (hProcess != NULL) {
-                status = NtQueryInformationProcess(
-                    hProcess,
-                    60, // ProcessCommandLineInformation
-                    cmdline_buffer,
-                    ret_length,
-                    &ret_length
-                );
-                CloseHandle(hProcess);
-                if (NT_SUCCESS(status)) {
-                    tmp = (PUNICODE_STRING)cmdline_buffer;
-                    string_size = wcslen(tmp->Buffer) + 1;
-                    cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
-                    if (cmdline_buffer_wchar != NULL) {
-                        wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
-                        data = cmdline_buffer_wchar;
-                        size = string_size * sizeof(WCHAR);
+                hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+                if (hProcess != NULL) {
+                    status = NtQueryInformationProcess(
+                        hProcess,
+                        60, // ProcessCommandLineInformation
+                        cmdline_buffer,
+                        ret_length,
+                        &ret_length
+                    );
+                    CloseHandle(hProcess);
+                    if (NT_SUCCESS(status)) {
+                        tmp = (PUNICODE_STRING)cmdline_buffer;
+                        string_size = wcslen(tmp->Buffer) + 1;
+                        cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
+                        if (cmdline_buffer_wchar != NULL) {
+                            wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
+                            data = cmdline_buffer_wchar;
+                            size = string_size * sizeof(WCHAR);
+                        }
+                        else {
+                            free(cmdline_buffer);
+                            PyErr_SetFromWindowsErr(0);
+                            goto out;
+                        }
+                        free(cmdline_buffer);
                     }
                     else {
-                        free(cmdline_buffer);
                         PyErr_SetFromWindowsErr(0);
                         goto out;
                     }
-                    free(cmdline_buffer);
                 }
                 else {
                     PyErr_SetFromWindowsErr(0);
@@ -926,10 +935,6 @@ psutil_get_cmdline(long pid) {
                 PyErr_SetFromWindowsErr(0);
                 goto out;
             }
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-            goto out;
         }
     }
     // legacy version that reads data from PEB
@@ -1090,3 +1095,4 @@ error:
         free(buffer);
     return 0;
 }
+
