@@ -179,7 +179,8 @@ int get_windows_version() {
     DWORD dwMinorVersion;
     DWORD dwBuildNumber;
     static int windows_version = WINDOWS_UNINITIALIZED;
-    // didn't get version yet
+    // windows_version is static
+    // and equal to WINDOWS_UNINITIALIZED only on first call
     if (windows_version == WINDOWS_UNINITIALIZED) {
         memset(&ver_info, 0, sizeof(ver_info));
         ver_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
