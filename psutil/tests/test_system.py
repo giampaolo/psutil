@@ -23,9 +23,9 @@ from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -268,8 +268,11 @@ class TestSystemAPIs(unittest.TestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
-        self.assertGreaterEqual(physical, 1)
-        self.assertGreaterEqual(logical, physical)
+        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
+            self.assertIsNone(physical)
+        else:
+            self.assertGreaterEqual(physical, 1)
+            self.assertGreaterEqual(logical, physical)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -315,11 +318,12 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        time.sleep(0.1)
-        t2 = sum(psutil.cpu_times())
-        difference = t2 - t1
-        if not difference >= 0.05:
-            self.fail("difference %s" % difference)
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            t2 = sum(psutil.cpu_times())
+            if t2 > t1:
+                return
+        self.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
@@ -511,18 +515,14 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and OSX and err.errno == errno.EIO:
+                    if TRAVIS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
-                    if SUNOS or TRAVIS:
-                        # on solaris apparently mount points can also be files
-                        assert os.path.exists(disk.mountpoint), disk
-                    else:
-                        assert os.path.isdir(disk.mountpoint), disk
+                    assert os.path.exists(disk.mountpoint), disk
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
@@ -627,7 +627,7 @@ class TestSystemAPIs(unittest.TestCase):
                 elif addr.ptp:
                     self.assertIsNone(addr.broadcast)
 
-        if BSD or OSX or SUNOS:
+        if BSD or MACOS or SUNOS:
             if hasattr(socket, "AF_LINK"):
                 self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
         elif LINUX:
@@ -668,6 +668,16 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
 
+    @unittest.skipIf(not (LINUX or BSD or MACOS),
+                     "LINUX or BSD or MACOS specific")
+    def test_net_if_stats_enodev(self):
+        # See: https://github.com/giampaolo/psutil/issues/1279
+        with mock.patch('psutil._psutil_posix.net_if_mtu',
+                        side_effect=OSError(errno.ENODEV, "")) as m:
+            ret = psutil.net_if_stats()
+            self.assertEqual(ret, {})
+            assert m.called
+
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     @unittest.skipIf(APPVEYOR and psutil.disk_io_counters() is None,
@@ -699,12 +709,6 @@ class TestSystemAPIs(unittest.TestCase):
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
-            if LINUX and key[-1].isdigit():
-                # if 'sda1' is listed 'sda' shouldn't, see:
-                # https://github.com/giampaolo/psutil/issues/338
-                while key[-1].isdigit():
-                    key = key[:-1]
-                self.assertNotIn(key, ret.keys())
 
     def test_disk_io_counters_no_disks(self):
         # Emulate a case where no disks are installed, see:
@@ -771,7 +775,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(ls), psutil.cpu_count())
 
     def test_os_constants(self):
-        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+        names = ["POSIX", "WINDOWS", "LINUX", "MACOS", "FREEBSD", "OPENBSD",
                  "NETBSD", "BSD", "SUNOS"]
         for name in names:
             self.assertIsInstance(getattr(psutil, name), bool, msg=name)
@@ -796,8 +800,8 @@ class TestSystemAPIs(unittest.TestCase):
                 assert psutil.SUNOS
                 names.remove("SUNOS")
             elif "darwin" in sys.platform.lower():
-                assert psutil.OSX
-                names.remove("OSX")
+                assert psutil.MACOS
+                names.remove("MACOS")
         else:
             assert psutil.WINDOWS
             assert not psutil.POSIX

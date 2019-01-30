@@ -12,13 +12,20 @@ PLATFORMS
 - #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
 - #693: Windows Nano
+- #1251: Windows bash
 - DragonFlyBSD
 - HP-UX
 
 FEATURES
 ========
 
-- #371: sensors_temperatures() at least for OSX.
+- set process name/title
+
+- #1115: users() idle time.
+
+- #1102: Process.is64bit().
+
+- #371: sensors_temperatures() at least for macOS.
 
 - #669: Windows / net_if_addrs(): return broadcast addr.
 
@@ -27,7 +34,7 @@ FEATURES
 
 - #772: extended net_io_counters() metrics.
 
-- #900: wheels for OSX and Linux.
+- #900: wheels for macOS and Linux.
 
 - #922: extended net_io_stats() info.
 
@@ -51,7 +58,7 @@ FEATURES
   Linux: yes
   Others: ?
 
-- Process.threads(): thread names; patch for OSX available at:
+- Process.threads(): thread names; patch for macOS available at:
   https://code.google.com/p/plcrashreporter/issues/detail?id=65
   Sample code:
   https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
@@ -146,6 +153,8 @@ FEATURES
 
 - #550: number of threads per core.
 
+- cpu_percent() and cpu_times_percent() use global vars so are not thread safe.
+
 BUGFIXES
 ========
 
@@ -163,3 +172,5 @@ RESOURCES
 - zabbix: https://zabbix.org/wiki/Get_Zabbix
 - libstatgrab: http://www.i-scream.org/libstatgrab/
 - top: http://www.unixtop.org/
+- oshi: https://github.com/oshi/oshi
+- netdata: https://github.com/netdata/netdata

@@ -272,7 +272,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
  * Return a process handle or NULL.
  */
 HANDLE
-psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
+psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess) {
     HANDLE hProcess;
 
     if (pid == 0) {
@@ -282,18 +282,6 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     return psutil_check_phandle(hProcess, pid);
-}
-
-
-/*
- * Same as psutil_handle_from_pid_waccess but implicitly uses
- * PROCESS_QUERY_INFORMATION | PROCESS_VM_READ as dwDesiredAccess
- * parameter for OpenProcess.
- */
-HANDLE
-psutil_handle_from_pid(DWORD pid) {
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-    return psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
 }
 
 
@@ -314,7 +302,8 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
     do {
         procArraySz += 1024;
-        free(procArray);
+        if (procArray != NULL)
+            free(procArray);
         procArrayByteSz = procArraySz * sizeof(DWORD);
         procArray = malloc(procArrayByteSz);
         if (procArray == NULL) {
@@ -434,7 +423,7 @@ psutil_pid_is_running(DWORD pid) {
             return 1;
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(err);
             return -1;
         }
     }
@@ -553,8 +542,9 @@ static int psutil_get_process_data(long pid,
     BOOL weAreWow64;
     BOOL theyAreWow64;
 #endif
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
 
-    hProcess = psutil_handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return -1;
 
@@ -844,7 +834,8 @@ psutil_get_cmdline(long pid) {
 
 out:
     LocalFree(szArglist);
-    free(data);
+    if (data != NULL)
+        free(data);
     Py_XDECREF(py_unicode);
     Py_XDECREF(py_retlist);
 
@@ -863,7 +854,8 @@ PyObject *psutil_get_cwd(long pid) {
     ret = PyUnicode_FromWideChar(data, wcslen(data));
 
 out:
-    free(data);
+    if (data != NULL)
+        free(data);
 
     return ret;
 }
@@ -884,8 +876,8 @@ PyObject *psutil_get_environ(long pid) {
     ret = PyUnicode_FromWideChar(data, size / 2);
 
 out:
-    free(data);
-
+    if (data != NULL)
+        free(data);
     return ret;
 }
 

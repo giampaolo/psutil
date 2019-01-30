@@ -58,8 +58,8 @@ import warnings
 from contextlib import closing
 
 from psutil import BSD
+from psutil import MACOS
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -75,6 +75,7 @@ from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import mock
+from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
@@ -87,7 +88,6 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 import psutil
-import psutil.tests
 
 
 def safe_rmpath(path):
@@ -286,7 +286,9 @@ class _BaseFSAPIsTests(object):
                 self.assertIsInstance(path, str)
 
 
-@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
+# https://travis-ci.org/giampaolo/psutil/jobs/440073249
+@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
+@unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
                  "subprocess can't deal with unicode")
@@ -307,7 +309,8 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
                 return cls.funky_name in os.listdir(here)
 
 
-@unittest.skipIf(OSX and TRAVIS, "unreliable on TRAVIS")  # TODO
+@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
+@unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):

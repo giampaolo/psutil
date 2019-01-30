@@ -1,4 +1,8 @@
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
+.. image:: https://pepy.tech/badge/psutil/month
+    :target: https://pepy.tech/project/psutil
+    :alt: Downloads
+
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
 
@@ -15,7 +19,7 @@
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: Latest version
 
 .. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
@@ -23,7 +27,7 @@
     :alt: Github stars
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: License
 
 ===========
@@ -33,8 +37,9 @@ Quick links
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
+- `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
+- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
@@ -55,14 +60,13 @@ psutil currently supports the following platforms:
 
 - **Linux**
 - **Windows**
-- **OSX**,
+- **macOS**,
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.6**.
-`PyPy <http://pypy.org/>`__ is also known to work.
+...both **32-bit** and **64-bit** architectures, with Python versions **2.6,
+2.7, and 3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
 ====================
 Example applications
@@ -86,7 +90,7 @@ Projects using psutil
 At the time of writing psutil has roughly
 `2.9 milion downloads <https://github.com/giampaolo/psutil/issues/1053#issuecomment-340166262>`__
 per month and there are over
-`6000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`8000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
@@ -201,12 +205,12 @@ Network
      ...]
     >>>
     >>> psutil.net_if_addrs()
-    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
-            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
-            snic(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
-     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
-               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
-               snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
+    {'lo': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
+            snicaddr(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
+            snicaddr(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
+     'wlan0': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
+               snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
+               snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
     >>> psutil.net_if_stats()
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
@@ -307,7 +311,7 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
-    >>> p.memory_full_info()  # "real" USS memory usage (Linux, OSX, Win only)
+    >>> p.memory_full_info()  # "real" USS memory usage (Linux, macOS, Win only)
     pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
     >>> p.memory_percent()
     0.7823

@@ -31,6 +31,7 @@
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
         (bt.frac >> 32) ) >> 32 ) / 1000000)
+#define DECIKELVIN_2_CELCIUS(t) (t - 2731) / 10
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
 #endif
@@ -273,7 +274,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int mib[4];
     int ret;
     size_t size;
-    const char *encoding_errs;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -516,12 +516,17 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
         goto error;
 
-    return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+    int pagesize = getpagesize();
+
+    return Py_BuildValue(
+        "(KKKII)",
+        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
+        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
+        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
+                                kvmsw[0].ksw_used * pagesize,
+        swapin + swapout,  // swap in
+        nodein + nodeout  // swap out
+    );
 
 error:
     return PyErr_SetFromErrno(PyExc_OSError);
@@ -535,7 +540,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
-    const char *encoding_errs;
     PyObject *py_path = NULL;
 
     int i, cnt;
@@ -1003,6 +1007,78 @@ error:
     // see: https://github.com/giampaolo/psutil/issues/1074
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "no battery");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Return temperature information for a given CPU core number.
+ */
+PyObject *
+psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
+    int current;
+    int tjmax;
+    int core;
+    char sensor[26];
+    size_t size = sizeof(current);
+
+    if (! PyArg_ParseTuple(args, "i", &core))
+        return NULL;
+    sprintf(sensor, "dev.cpu.%d.temperature", core);
+    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+        goto error;
+    current = DECIKELVIN_2_CELCIUS(current);
+
+    // Return -273 in case of faliure.
+    sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
+    if (sysctlbyname(sensor, &tjmax, &size, NULL, 0))
+        tjmax = 0;
+    tjmax = DECIKELVIN_2_CELCIUS(tjmax);
+
+    return Py_BuildValue("ii", current, tjmax);
+
+error:
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "no temperature sensors");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Return frequency information of a given CPU.
+ * As of Dec 2018 only CPU 0 appears to be supported and all other
+ * cores match the frequency of CPU 0.
+ */
+PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int current;
+    int core;
+    char sensor[26];
+    char available_freq_levels[1000];
+    size_t size = sizeof(current);
+
+    if (! PyArg_ParseTuple(args, "i", &core))
+        return NULL;
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    sprintf(sensor, "dev.cpu.%d.freq", core);
+    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+        goto error;
+
+    size = sizeof(available_freq_levels);
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    // In case of failure, an empty string is returned.
+    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
+    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+
+    return Py_BuildValue("is", current, available_freq_levels);
+
+error:
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
     else
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;

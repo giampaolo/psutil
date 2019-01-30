@@ -34,7 +34,7 @@ Github usernames of people to CC on github when in need of help.
     - glebius, Gleb Smirnoff (#1013)
     - sunpoet, Po-Chuan Hsieh (pkg maintainer, #1105)
     - kostikbel, Konstantin Belousov (#1105)
-- OSX:
+- macOS:
     - whitlockjc, Jeremy Whitlock
 - Windows:
     - mrjefftang, Jeff Tang
@@ -57,7 +57,7 @@ W: http://www.jayloden.com
 
 N: Arnon Yaari (wiggin15)
 W: https://github.com/wiggin15
-I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177
+I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177, 1210, 1214
 
 N: Jeff Tang
 W: https://github.com/mrjefftang
@@ -65,7 +65,7 @@ I: 340, 529, 616, 653, 654, 648, 641
 
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
-D: great help with OSX C development.
+D: great help with macOS C development.
 I: 125, 150, 174, 206
 
 N: Landry Breuil
@@ -486,7 +486,7 @@ I: 1042, 1079
 
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
-I: 1077, 1093, 1091
+I: 1077, 1093, 1091, 1220, 1346
 
 N: Prodesire
 W: https://github.com/Prodesire
@@ -515,3 +515,59 @@ I: 1167
 N: janderbrain
 W: https://github.com/janderbrain
 I: 1169
+
+N: Dan Vinakovsky
+W: https://github.com/hexaclock
+I: 1216
+
+N: stswandering
+W: https://github.com/stswandering
+I: 1243
+
+N: Georg Sauthoff
+W: https://github.com/gsauthof
+I: 1193, 1194
+
+N: Maxime Mouial
+W: https://github.com/hush-hush
+I: 1239
+
+N: Denis Krienbühl
+W: https://github.com/href
+I: 1260
+
+N: Jean-Luc Migot
+W: https://github.com/jmigot-tehtris
+I: 1258, 1289
+
+N: Nikhil Marathe
+W: https://github.com/nikhilm
+I: 1278
+
+N: Alex Manuskin
+W: https://github.com/amanusk
+I: 1284, 1345, 1350, 1352
+
+N: Sylvain Duchesne
+W: https://github.com/sylvainduchesne
+I: 1294
+
+N: Lawrence Ye
+W: https://github.com/LEAFERx
+I: 1321
+
+N: Ilya Yanok
+W: https://github.com/yanok
+I: 1332
+
+N: Jaime Fullaondo
+W: https://github.com/truthbk
+I: 1320
+
+N: Koen Kooi
+W: https://github.com/koenkooi
+I: 1360
+
+N: EccoTheFlintstone
+W: https://github.com/EccoTheFlintstone
+I: 1368

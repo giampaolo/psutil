@@ -36,7 +36,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
-from psutil import OSX
+from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -54,7 +54,9 @@ else:
 try:
     from unittest import mock  # py3
 except ImportError:
-    import mock  # NOQA - requires "pip install mock"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import mock  # NOQA - requires "pip install mock"
 
 if sys.version_info >= (3, 4):
     import enum
@@ -115,6 +117,7 @@ TRAVIS = bool(os.environ.get('TRAVIS'))
 # whether we're running this test suite on Appveyor for Windows
 # (http://www.appveyor.com/)
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
+PYPY = '__pypy__' in sys.builtin_module_names
 
 # --- configurable defaults
 
@@ -123,7 +126,7 @@ NO_RETRIES = 10
 # bytes tolerance for system-wide memory related tests
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
-GLOBAL_TIMEOUT = 3
+GLOBAL_TIMEOUT = 3 if TRAVIS or APPVEYOR else 0.5
 # test output verbosity
 VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 # be more tolerant if we're on travis / appveyor in order to avoid
@@ -135,7 +138,16 @@ if TRAVIS or APPVEYOR:
 # --- files
 
 TESTFILE_PREFIX = '$testfn'
+if os.name == 'java':
+    # Jython disallows @ in module names
+    TESTFILE_PREFIX = '$psutil-test-'
+else:
+    TESTFILE_PREFIX = '@psutil-test-'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
+# Disambiguate TESTFN for parallel testing, while letting it remain a valid
+# module name.
+TESTFN = TESTFN + str(os.getpid())
+
 _TESTFN = TESTFN + '-internal'
 TESTFN_UNICODE = TESTFN + u("-ƒőő")
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
@@ -160,7 +172,7 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_THREADS = hasattr(psutil.Process, "threads")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
-HAS_BATTERY = HAS_SENSORS_BATTERY and psutil.sensors_battery()
+HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 
@@ -177,7 +189,7 @@ def _get_py_exe():
         else:
             return exe
 
-    if OSX:
+    if MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -205,7 +217,7 @@ _testfiles_created = set()
 
 
 @atexit.register
-def _cleanup_files():
+def cleanup_test_files():
     DEVNULL.close()
     for name in os.listdir(u('.')):
         if isinstance(name, unicode):
@@ -226,7 +238,7 @@ def _cleanup_files():
 
 # this is executed first
 @atexit.register
-def _cleanup_procs():
+def cleanup_test_procs():
     reap_children(recursive=True)
 
 
@@ -283,7 +295,7 @@ class ThreadTask(threading.Thread):
 # ===================================================================
 
 
-def _cleanup_on_err(fun):
+def _reap_children_on_err(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         try:
@@ -294,7 +306,7 @@ def _cleanup_on_err(fun):
     return wrapper
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as subprocess.Popen instance.
@@ -327,7 +339,7 @@ def get_test_subprocess(cmd=None, **kwds):
     return sproc
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def create_proc_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
@@ -355,7 +367,7 @@ def create_proc_children_pair():
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
     data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    os.remove(_TESTFN2)
+    safe_rmpath(_TESTFN2)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
@@ -365,7 +377,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
+    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if MACOS else TESTFN
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -399,7 +411,7 @@ def create_zombie_proc():
             conn.close()
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
     Returns a subprocess.Popen instance.
@@ -416,7 +428,7 @@ def pyrun(src, **kwds):
     return subp
 
 
-@_cleanup_on_err
+@_reap_children_on_err
 def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
@@ -480,7 +492,9 @@ def reap_children(recursive=False):
         try:
             subp.terminate()
         except OSError as err:
-            if err.errno != errno.ESRCH:
+            if WINDOWS and err.errno == 6:  # "invalid handle"
+                pass
+            elif err.errno != errno.ESRCH:
                 raise
         if subp.stdout:
             subp.stdout.close()
@@ -588,7 +602,7 @@ class retry(object):
                  timeout=None,
                  retries=None,
                  interval=0.001,
-                 logfun=lambda s: print(s, file=sys.stderr),
+                 logfun=print,
                  ):
         if timeout and retries:
             raise ValueError("timeout and retries args are mutually exclusive")
@@ -621,7 +635,7 @@ class retry(object):
             for _ in self:
                 try:
                     return fun(*args, **kwargs)
-                except self.exception as _:
+                except self.exception as _:  # NOQA
                     exc = _
                     if self.logfun is not None:
                         self.logfun(exc)
@@ -659,7 +673,7 @@ def wait_for_file(fname, delete=True, empty=False):
     if not empty:
         assert data
     if delete:
-        os.remove(fname)
+        safe_rmpath(fname)
     return data
 
 
@@ -681,12 +695,34 @@ def call_until(fun, expr):
 
 def safe_rmpath(path):
     "Convenience function for removing temporary test files or dirs"
+    def retry_fun(fun):
+        # On Windows it could happen that the file or directory has
+        # open handles or references preventing the delete operation
+        # to succeed immediately, so we retry for a while. See:
+        # https://bugs.python.org/issue33240
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            try:
+                return fun()
+            except WindowsError as _:
+                err = _
+                if err.errno != errno.ENOENT:
+                    raise
+                else:
+                    warn("ignoring %s" % (str(err)))
+                    time.sleep(0.01)
+        raise err
+
     try:
         st = os.stat(path)
         if stat.S_ISDIR(st.st_mode):
-            os.rmdir(path)
+            fun = functools.partial(shutil.rmtree, path)
         else:
-            os.remove(path)
+            fun = functools.partial(os.remove, path)
+        if POSIX:
+            fun()
+        else:
+            retry_fun(fun)
     except OSError as err:
         if err.errno != errno.ENOENT:
             raise
@@ -1149,11 +1185,12 @@ if POSIX:
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
         """
+        exe = 'pypy' if PYPY else 'python'
         ext = ".so"
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 os.path.splitext(x.path)[1] == ext and
-                'python' in x.path.lower()]
+                exe in x.path.lower()]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
         try:

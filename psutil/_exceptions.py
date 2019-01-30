@@ -39,7 +39,7 @@ class NoSuchProcess(Error):
 
 class ZombieProcess(NoSuchProcess):
     """Exception raised when querying a zombie process. This is
-    raised on OSX, BSD and Solaris only, and not always: depending
+    raised on macOS, BSD and Solaris only, and not always: depending
     on the query the OS may be able to succeed anyway.
     On Linux all zombie processes are querable (hence this is never
     raised). Windows doesn't have zombie processes.

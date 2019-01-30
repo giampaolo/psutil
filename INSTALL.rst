@@ -10,7 +10,7 @@ On Linux or via wget:
 
     wget https://bootstrap.pypa.io/get-pip.py -O - | python
 
-On OSX or via curl:
+On macOS or via curl:
 
 .. code-block:: bash
 
@@ -61,8 +61,8 @@ RedHat / CentOS:
 
 If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
 
-OSX
-===
+macOS
+=====
 
 Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__
 first, then:
@@ -76,20 +76,20 @@ Windows
 
 The easiest way to install psutil on Windows is to just use the pre-compiled
 exe/wheel installers hosted on
-`PYPI <https://pypi.python.org/pypi/psutil/#downloads>`__ via pip:
+`PyPI <https://pypi.org/project/psutil/#files>`__ via pip:
 
 .. code-block:: bat
 
     C:\Python27\python.exe -m pip install psutil
 
 If you want to compile psutil from sources you'll need **Visual Studio**
-(Mingw32 is no longer supported), which really is a mess. 
-The VS versions are the onle listed below. 
+(Mingw32 is no longer supported), which really is a mess.
+The VS versions are the onle listed below.
 This  `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
 provides numerous info on how to properly set up VS (good luck with that).
 
 * Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
-* Python 3.3, 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
+* Python 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
 * Python 3.5+: `VS-2015 <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__
 
 Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires

@@ -21,13 +21,13 @@ from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import callable
 from psutil._compat import long
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
@@ -114,21 +114,23 @@ class TestAvailability(unittest.TestCase):
         linux = (LINUX and
                  (os.path.exists("/sys/devices/system/cpu/cpufreq") or
                   os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
-        self.assertEqual(hasattr(psutil, "cpu_freq"), linux or OSX or WINDOWS)
+        self.assertEqual(hasattr(psutil, "cpu_freq"),
+                         linux or MACOS or WINDOWS or FREEBSD)
 
     def test_sensors_temperatures(self):
-        self.assertEqual(hasattr(psutil, "sensors_temperatures"), LINUX)
+        self.assertEqual(
+            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD)
 
     def test_sensors_fans(self):
         self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)
 
     def test_battery(self):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
-                         LINUX or WINDOWS or FREEBSD or OSX)
+                         LINUX or WINDOWS or FREEBSD or MACOS)
 
     def test_proc_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
-                         LINUX or OSX or WINDOWS)
+                         LINUX or MACOS or WINDOWS)
 
     def test_proc_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
@@ -147,7 +149,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
-        self.assertEqual(hasit, False if OSX or SUNOS else True)
+        self.assertEqual(hasit, False if MACOS or SUNOS else True)
 
     def test_proc_num_fds(self):
         self.assertEqual(hasattr(psutil.Process, "num_fds"), POSIX)
@@ -225,7 +227,7 @@ class TestSystem(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
-    @skip_on_access_denied(only_if=OSX)
+    @skip_on_access_denied(only_if=MACOS)
     def test_net_connections(self):
         with unix_socket_path() as name:
             with closing(bind_unix_socket(name)):
@@ -288,16 +290,6 @@ class TestFetchAllProcesses(unittest.TestCase):
     some sanity checks against Process API's returned values.
     """
 
-    def setUp(self):
-        if POSIX:
-            import pwd
-            import grp
-            users = pwd.getpwall()
-            groups = grp.getgrall()
-            self.all_uids = set([x.pw_uid for x in users])
-            self.all_usernames = set([x.pw_name for x in users])
-            self.all_gids = set([x.gr_gid for x in groups])
-
     def test_fetch_all(self):
         valid_procs = 0
         excluded_names = set([
@@ -345,7 +337,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                             self.assertEqual(err.name, p.name())
                         assert str(err)
                         assert err.msg
-                    except Exception as err:
+                    except Exception:
                         s = '\n' + '=' * 70 + '\n'
                         s += "FAIL: test_%s (proc=%s" % (name, p)
                         if ret != default:
@@ -386,7 +378,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
             if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                    # XXX may fail on OSX
+                    # XXX may fail on MACOS
                     assert os.access(ret, os.X_OK)
 
     def pid(self, ret, proc):
@@ -424,7 +416,6 @@ class TestFetchAllProcesses(unittest.TestCase):
         for uid in ret:
             self.assertIsInstance(uid, int)
             self.assertGreaterEqual(uid, 0)
-            self.assertIn(uid, self.all_uids)
 
     def gids(self, ret, proc):
         assert is_namedtuple(ret)
@@ -432,15 +423,12 @@ class TestFetchAllProcesses(unittest.TestCase):
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
             self.assertIsInstance(gid, int)
-            if not OSX and not NETBSD:
+            if not MACOS and not NETBSD:
                 self.assertGreaterEqual(gid, 0)
-                self.assertIn(gid, self.all_gids)
 
     def username(self, ret, proc):
         self.assertIsInstance(ret, str)
         assert ret
-        if POSIX:
-            self.assertIn(ret, self.all_usernames)
 
     def status(self, ret, proc):
         self.assertIsInstance(ret, str)
@@ -525,6 +513,10 @@ class TestFetchAllProcesses(unittest.TestCase):
             value = getattr(ret, name)
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0, msg=(name, value))
+            if LINUX or OSX and name in ('vms', 'data'):
+                # On Linux there are processes (e.g. 'goa-daemon') whose
+                # VMS is incredibly high for some reason.
+                continue
             self.assertLessEqual(value, total, msg=(name, value, total))
 
         if LINUX:

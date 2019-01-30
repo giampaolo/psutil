@@ -13,7 +13,6 @@ $ python -m psutil.tests
 import contextlib
 import optparse
 import os
-import ssl
 import sys
 import tempfile
 try:
@@ -32,14 +31,13 @@ if sys.version_info[:2] == (2, 6):
     TEST_DEPS.extend(["ipaddress", "unittest2", "argparse", "mock==1.0.1"])
 elif sys.version_info[:2] == (2, 7) or sys.version_info[:2] <= (3, 2):
     TEST_DEPS.extend(["ipaddress", "mock"])
-elif sys.version_info[:2] == (3, 3):
-    TEST_DEPS.extend(["ipaddress"])
 
 
 def install_pip():
     try:
         import pip  # NOQA
     except ImportError:
+        import ssl
         f = tempfile.NamedTemporaryFile(suffix='.py')
         with contextlib.closing(f):
             print("downloading %s to %s" % (GET_PIP_URL, f.name))

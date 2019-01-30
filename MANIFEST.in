@@ -67,7 +67,6 @@ include psutil/arch/solaris/environ.c
 include psutil/arch/solaris/environ.h
 include psutil/arch/solaris/v10/ifaddrs.c
 include psutil/arch/solaris/v10/ifaddrs.h
-include psutil/arch/windows/glpi.h
 include psutil/arch/windows/inet_ntop.c
 include psutil/arch/windows/inet_ntop.h
 include psutil/arch/windows/ntextapi.h
@@ -110,6 +109,7 @@ include scripts/internal/download_exes.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_timeline.py
+include scripts/internal/purge_installation.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

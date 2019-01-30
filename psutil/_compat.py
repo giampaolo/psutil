@@ -10,7 +10,7 @@ import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "callable", "lru_cache", "which"]
+           "lru_cache", "which"]
 
 PY3 = sys.version_info[0] == 3
 
@@ -36,14 +36,6 @@ else:
 
     def b(s):
         return s
-
-
-# removed in 3.0, reintroduced in 3.2
-try:
-    callable = callable
-except NameError:
-    def callable(obj):
-        return any("__call__" in klass.__dict__ for klass in type(obj).__mro__)
 
 
 # --- stdlib additions

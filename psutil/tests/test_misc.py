@@ -26,6 +26,8 @@ from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
+from psutil._common import open_text
+from psutil._common import open_binary
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import bind_socket
@@ -54,6 +56,7 @@ from psutil.tests import reload_module
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
@@ -258,14 +261,14 @@ class TestMisc(unittest.TestCase):
 
         # activate
         calls = []
-        f.foo.cache_activate()
+        f.foo.cache_activate(f)
         f.foo()
         f.foo()
         self.assertEqual(len(calls), 1)
 
         # deactivate
         calls = []
-        f.foo.cache_deactivate()
+        f.foo.cache_deactivate(f)
         f.foo()
         f.foo()
         self.assertEqual(len(calls), 2)
@@ -894,6 +897,20 @@ class TestFSTestUtils(unittest.TestCase):
         safe_rmpath(TESTFN)
 
     tearDown = setUp
+
+    def test_open_text(self):
+        with open_text(__file__) as f:
+            self.assertEqual(f.mode, 'rt')
+
+    def test_open_binary(self):
+        with open_binary(__file__) as f:
+            self.assertEqual(f.mode, 'rb')
+
+    def test_safe_mkdir(self):
+        safe_mkdir(TESTFN)
+        assert os.path.isdir(TESTFN)
+        safe_mkdir(TESTFN)
+        assert os.path.isdir(TESTFN)
 
     def test_safe_rmpath(self):
         # test file is removed

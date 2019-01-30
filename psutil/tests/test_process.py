@@ -25,12 +25,14 @@ import psutil
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import open_text
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
@@ -238,10 +240,6 @@ class TestProcess(unittest.TestCase):
             percent = p.cpu_percent(interval=None)
             self.assertIsInstance(percent, float)
             self.assertGreaterEqual(percent, 0.0)
-            if not POSIX:
-                self.assertLessEqual(percent, 100.0)
-            else:
-                self.assertGreaterEqual(percent, 0.0)
         with self.assertRaises(ValueError):
             p.cpu_percent(interval=-1)
 
@@ -508,7 +506,7 @@ class TestProcess(unittest.TestCase):
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
-        # but this does not apply across all platforms (OSX, Windows)
+        # but this does not apply across all platforms (MACOS, Windows)
         p = psutil.Process()
         if OPENBSD:
             try:
@@ -542,9 +540,6 @@ class TestProcess(unittest.TestCase):
         with ThreadTask():
             step2 = p.threads()
             self.assertEqual(len(step2), len(step1) + 1)
-            # on Linux, first thread id is supposed to be this process
-            if LINUX:
-                self.assertEqual(step2[0].id, os.getpid())
             athread = step2[0]
             # test named tuple
             self.assertEqual(athread.id, athread[0])
@@ -552,7 +547,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.system_time, athread[2])
 
     @retry_before_failing()
-    @skip_on_access_denied(only_if=OSX)
+    @skip_on_access_denied(only_if=MACOS)
     @unittest.skipIf(not HAS_THREADS, 'not supported')
     def test_threads_2(self):
         sproc = get_test_subprocess()
@@ -606,8 +601,10 @@ class TestProcess(unittest.TestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             self.assertGreaterEqual(value, 0, msg=(name, value))
+            if name == 'vms' and OSX or LINUX:
+                continue
             self.assertLessEqual(value, total, msg=(name, value, total))
-        if LINUX or WINDOWS or OSX:
+        if LINUX or WINDOWS or MACOS:
             self.assertGreaterEqual(mem.uss, 0)
         if LINUX:
             self.assertGreaterEqual(mem.pss, 0)
@@ -633,7 +630,7 @@ class TestProcess(unittest.TestCase):
                             raise
                         else:
                             # https://github.com/giampaolo/psutil/issues/759
-                            with open('/proc/self/smaps') as f:
+                            with open_text('/proc/self/smaps') as f:
                                 data = f.read()
                             if "%s (deleted)" % nt.path not in data:
                                 raise
@@ -666,16 +663,10 @@ class TestProcess(unittest.TestCase):
 
     def test_memory_percent(self):
         p = psutil.Process()
-        ret = p.memory_percent()
-        assert 0 <= ret <= 100, ret
-        ret = p.memory_percent(memtype='vms')
-        assert 0 <= ret <= 100, ret
-        assert 0 <= ret <= 100, ret
+        p.memory_percent()
         self.assertRaises(ValueError, p.memory_percent, memtype="?!?")
-        if LINUX or OSX or WINDOWS:
-            ret = p.memory_percent(memtype='uss')
-            assert 0 <= ret <= 100, ret
-            assert 0 <= ret <= 100, ret
+        if LINUX or MACOS or WINDOWS:
+            p.memory_percent(memtype='uss')
 
     def test_is_running(self):
         sproc = get_test_subprocess()
@@ -709,7 +700,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(exe.replace(ver, ''),
                                      PYTHON_EXE.replace(ver, ''))
                 except AssertionError:
-                    # Tipically OSX. Really not sure what to do here.
+                    # Tipically MACOS. Really not sure what to do here.
                     pass
 
         out = sh([exe, "-c", "import os; print('hey')"])
@@ -829,8 +820,8 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(
                         os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
                 # XXX - going back to previous nice value raises
-                # AccessDenied on OSX
-                if not OSX:
+                # AccessDenied on MACOS
+                if not MACOS:
                     p.nice(0)
                     self.assertEqual(p.nice(), 0)
             except psutil.AccessDenied:
@@ -908,8 +899,9 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
         # it should work with all iterables, not only lists
-        p.cpu_affinity(set(all_cpus))
-        p.cpu_affinity(tuple(all_cpus))
+        if not TRAVIS:
+            p.cpu_affinity(set(all_cpus))
+            p.cpu_affinity(tuple(all_cpus))
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
@@ -1063,6 +1055,7 @@ class TestProcess(unittest.TestCase):
             self.assertIsNone(p.parent())
 
     def test_children(self):
+        reap_children(recursive=True)
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
@@ -1202,13 +1195,28 @@ class TestProcess(unittest.TestCase):
             p.cpu_times()
         self.assertEqual(m.call_count, 2)
 
+    def test_oneshot_cache(self):
+        # Make sure oneshot() cache is nonglobal. Instead it's
+        # supposed to be bound to the Process instance, see:
+        # https://github.com/giampaolo/psutil/issues/1373
+        p1, p2 = create_proc_children_pair()
+        p1_ppid = p1.ppid()
+        p2_ppid = p2.ppid()
+        self.assertNotEqual(p1_ppid, p2_ppid)
+        with p1.oneshot():
+            self.assertEqual(p1.ppid(), p1_ppid)
+            self.assertEqual(p2.ppid(), p2_ppid)
+        with p2.oneshot():
+            self.assertEqual(p1.ppid(), p1_ppid)
+            self.assertEqual(p2.ppid(), p2_ppid)
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
         # Example:
-        #  >>> proc = Process(1234)
+        # >>> proc = Process(1234)
         # >>> time.sleep(2)  # time-consuming task, process dies in meantime
-        #  >>> proc.name()
+        # >>> proc.name()
         # Refers to Issue #15
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -1320,7 +1328,7 @@ class TestProcess(unittest.TestCase):
         succeed_or_zombie_p_exc(zproc.kill)
 
         # ...its parent should 'see' it
-        # edit: not true on BSD and OSX
+        # edit: not true on BSD and MACOS
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
         # self.assertIn(zpid, descendants)
@@ -1330,9 +1338,9 @@ class TestProcess(unittest.TestCase):
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
         self.assertTrue(psutil.pid_exists(zpid))
-        if not TRAVIS and OSX:
+        if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
-            # Maybe they upgraded OSX version?
+            # Maybe they upgraded MACOS version?
             # https://travis-ci.org/giampaolo/psutil/jobs/310896404
             self.assertIn(zpid, psutil.pids())
             self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
@@ -1405,12 +1413,14 @@ class TestProcess(unittest.TestCase):
             d.pop("PSUTIL_TESTING", None)
             d.pop("PLAT", None)
             d.pop("HOME", None)
-            if OSX:
+            if MACOS:
                 d.pop("__CF_USER_TEXT_ENCODING", None)
                 d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
                 d.pop("VERSIONER_PYTHON_VERSION", None)
             return dict(
-                [(k.rstrip("\r\n"), v.rstrip("\r\n")) for k, v in d.items()])
+                [(k.replace("\r", "").replace("\n", ""),
+                  v.replace("\r", "").replace("\n", ""))
+                 for k, v in d.items()])
 
         self.maxDiff = None
         p = psutil.Process()

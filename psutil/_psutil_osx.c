@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * OS X platform-specific module methods for _psutil_osx
+ * macOS platform-specific module methods.
  */
 
 #include <Python.h>
@@ -48,6 +48,8 @@
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
+static PyObject *ZombieProcessError;
+
 
 /*
  * A wrapper around host_statistics() invoked with HOST_VM_INFO.
@@ -68,6 +70,59 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
     }
     mach_port_deallocate(mach_task_self(), mport);
     return 1;
+}
+
+
+/*
+ * Return 1 if pid refers to a zombie process else 0.
+ */
+int
+psutil_is_zombie(long pid)
+{
+    struct kinfo_proc kp;
+
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return 0;
+    return (kp.kp_proc.p_stat == SZOMB) ? 1 : 0;
+}
+
+
+/*
+ * A wrapper around task_for_pid() which sucks big time:
+ * - it's not documented
+ * - errno is set only sometimes
+ * - sometimes errno is ENOENT (?!?)
+ * - for PIDs != getpid() or PIDs which are not members of the procmod
+ *   it requires root
+ * As such we can only guess what the heck went wrong and fail either
+ * with NoSuchProcess, ZombieProcessError or giveup with AccessDenied.
+ * Here's some history:
+ * https://github.com/giampaolo/psutil/issues/1181
+ * https://github.com/giampaolo/psutil/issues/1209
+ * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
+ */
+int
+psutil_task_for_pid(long pid, mach_port_t *task)
+{
+    // See: https://github.com/giampaolo/psutil/issues/1181
+    kern_return_t err = KERN_SUCCESS;
+
+    err = task_for_pid(mach_task_self(), (pid_t)pid, task);
+    if (err != KERN_SUCCESS) {
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess("task_for_pid() failed");
+        else if (psutil_is_zombie(pid) == 1)
+            PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
+        else {
+            psutil_debug(
+                "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
+                "setting AccessDenied()",
+                pid, err, errno, mach_error_string(err));
+            AccessDenied("task_for_pid() failed");
+        }
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -195,7 +250,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
         "(ddKKkkkk)",
         (float)pti.pti_total_user / 1000000000.0,     // (float) cpu user time
         (float)pti.pti_total_system / 1000000000.0,   // (float) cpu sys time
-        // Note about memory: determining other mem stats on OSX is a mess:
+        // Note about memory: determining other mem stats on macOS is a mess:
         // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
         // I just give up.
         // struct proc_regioninfo pri;
@@ -336,20 +391,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if ((err == 5) && (errno == ENOENT)) {
-            // See: https://github.com/giampaolo/psutil/issues/1181
-            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
-                         "errno=%i, msg='%s'\n", err, errno,
-                         mach_error_string(err));
-            AccessDenied("");
-        }
-        else {
-            psutil_raise_for_pid(pid, "task_for_pid(MACH_PORT_NULL)");
-        }
+    if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
-    }
 
     while (1) {
         py_tuple = NULL;
@@ -560,7 +603,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     long pid;
-    int err;
     size_t len;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
@@ -576,14 +618,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("");
-        else
-            AccessDenied("");
+    if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
-    }
 
     len = sizeof(cpu_type);
     if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
@@ -646,8 +682,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 /*
  * Return system virtual memory stats.
  * See:
- * http://opensource.apple.com/source/system_cmds/system_cmds-498.2/
- *     vm_stat.tproj/vm_stat.c
+ * https://opensource.apple.com/source/system_cmds/system_cmds-790/
+ *     vm_stat.tproj/vm_stat.c.auto.html
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
@@ -675,13 +711,13 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
 
     return Py_BuildValue(
-        "KKKKK",
+        "KKKKKK",
         total,
-        (unsigned long long) vm.active_count * pagesize,
-        (unsigned long long) vm.inactive_count * pagesize,
-        (unsigned long long) vm.wire_count * pagesize,
-        // this is how vm_stat cmd does it
-        (unsigned long long) (vm.free_count - vm.speculative_count) * pagesize
+        (unsigned long long) vm.active_count * pagesize,  // active
+        (unsigned long long) vm.inactive_count * pagesize,  // inactive
+        (unsigned long long) vm.wire_count * pagesize,  // wired
+        (unsigned long long) vm.free_count * pagesize,  // free
+        (unsigned long long) vm.speculative_count * pagesize  // speculative
     );
 }
 
@@ -1018,19 +1054,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // the argument passed should be a process id
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    // task_for_pid() requires root privileges
-    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
-    if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("");
-        else
-            AccessDenied("");
+    if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
-    }
 
     info_count = TASK_BASIC_INFO_COUNT;
     err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
@@ -1069,8 +1097,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         py_tuple = Py_BuildValue(
             "Iff",
             j + 1,
-            (float)basic_info_th->user_time.microseconds / 1000000.0,
-            (float)basic_info_th->system_time.microseconds / 1000000.0
+            basic_info_th->user_time.seconds + \
+                (float)basic_info_th->user_time.microseconds / 1000000.0,
+            basic_info_th->system_time.seconds + \
+                (float)basic_info_th->system_time.microseconds / 1000000.0
         );
         if (!py_tuple)
             goto error;
@@ -1672,7 +1702,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
             }
 
-            // Read/Write time on OS X comes back in nanoseconds and in psutil
+            // Read/Write time on macOS comes back in nanoseconds and in psutil
             // we've standardized on milliseconds so do the conversion.
             py_disk_info = Py_BuildValue(
                 "(KKKKKK)",
@@ -2035,6 +2065,12 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    // Exception.
+    ZombieProcessError = PyErr_NewException(
+        "_psutil_osx.ZombieProcessError", NULL, NULL);
+    Py_INCREF(ZombieProcessError);
+    PyModule_AddObject(module, "ZombieProcessError", ZombieProcessError);
 
     psutil_setup();
 

@@ -139,10 +139,10 @@ All of the services listed below are automatically run on ``git push``.
 Unit tests
 ----------
 
-Tests are automatically run for every GIT push on **Linux**, **OSX** and
+Tests are automatically run for every GIT push on **Linux**, **macOS** and
 **Windows** by using:
 
-- `Travis <https://travis-ci.org/giampaolo/psutil>`_ (Linux, OSX)
+- `Travis <https://travis-ci.org/giampaolo/psutil>`_ (Linux, macOS)
 - `Appveyor <https://ci.appveyor.com/project/giampaolo/psutil>`_ (Windows)
 
 Test files controlling these are
@@ -153,15 +153,15 @@ Both services run psutil test suite against all supported python version
 (2.6 - 3.6).
 Two icons in the home page (README) always show the build status:
 
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
     :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Linux tests (Travis)
+    :alt: Linux and macOS tests (Travis)
 
 .. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-OSX, BSD, AIX and Solaris are currently tested manually (sigh!).
+BSD, AIX and Solaris are currently tested manually.
 
 Test coverage
 -------------

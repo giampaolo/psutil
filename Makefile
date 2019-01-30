@@ -76,7 +76,8 @@ install:  ## Install this package as current user in "edit" mode.
 	rm -rf tmp
 
 uninstall:  ## Uninstall this package via pip.
-	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
+	cd ..; $(PYTHON) -m pip uninstall -y -v psutil || true
+	$(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
 	$(PYTHON) -c \
@@ -205,11 +206,11 @@ win-download-wheels:  ## Download wheels hosted on appveyor.
 
 # --- upload
 
-upload-src:  ## Upload source tarball on https://pypi.python.org/pypi/psutil.
+upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
 
-upload-win-wheels:  ## Upload wheels in dist/* directory on PYPI.
+upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
 # --- others
@@ -232,7 +233,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
-	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PYPI
+	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
 print-announce:  ## Print announce of new release.
@@ -263,7 +264,7 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
 check-broken-links:  ## Look for broken links in source files.
-		git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
+	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

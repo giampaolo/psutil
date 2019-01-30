@@ -40,7 +40,7 @@ PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
  * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-NoSuchProcess(char *msg) {
+NoSuchProcess(const char *msg) {
     PyObject *exc;
     exc = PyObject_CallFunction(
         PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
@@ -55,7 +55,7 @@ NoSuchProcess(char *msg) {
  * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-AccessDenied(char *msg) {
+AccessDenied(const char *msg) {
     PyObject *exc;
     exc = PyObject_CallFunction(
         PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
@@ -84,11 +84,13 @@ psutil_set_testing(PyObject *self, PyObject *args) {
 void
 psutil_debug(const char* format, ...) {
     va_list argptr;
-    va_start(argptr, format);
-    fprintf(stderr, "psutil-dubug> ");
-    vfprintf(stderr, format, argptr);
-    fprintf(stderr, "\n");
-    va_end(argptr);
+    if (PSUTIL_DEBUG) {
+        va_start(argptr, format);
+        fprintf(stderr, "psutil-debug> ");
+        vfprintf(stderr, format, argptr);
+        fprintf(stderr, "\n");
+        va_end(argptr);
+    }
 }
 
 

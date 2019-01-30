@@ -33,6 +33,8 @@ from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import open_binary
+from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
@@ -71,6 +73,7 @@ __extra__all__ = [
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
+HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 _DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -88,7 +91,20 @@ BOOT_TIME = None  # set later
 # speedup, see: https://github.com/giampaolo/psutil/issues/708
 BIGFILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
-SECTOR_SIZE_FALLBACK = 512
+
+# "man iostat" states that sectors are equivalent with blocks and have
+# a size of 512 bytes. Despite this value can be queried at runtime
+# via /sys/block/{DISK}/queue/hw_sector_size and results may vary
+# between 1k, 2k, or 4k... 512 appears to be a magic constant used
+# throughout Linux source code:
+# * https://stackoverflow.com/a/38136179/376587
+# * https://lists.gt.net/linux/kernel/2241060
+# * https://github.com/giampaolo/psutil/issues/1305
+# * https://github.com/torvalds/linux/blob/
+#     4f671fe2f9523a1ea206f63fe60a7c7b3a56d5c7/include/linux/bio.h#L99
+# * https://lkml.org/lkml/2015/8/17/234
+DISK_SECTOR_SIZE = 512
+
 if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
@@ -111,7 +127,10 @@ else:
 
     globals().update(IOPriority.__members__)
 
-# taken from /fs/proc/array.c
+# See:
+# https://github.com/torvalds/linux/blame/master/fs/proc/array.c
+# ...and (TASK_* constants):
+# https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
     "R": _common.STATUS_RUNNING,
     "S": _common.STATUS_SLEEPING,
@@ -122,7 +141,9 @@ PROC_STATUSES = {
     "X": _common.STATUS_DEAD,
     "x": _common.STATUS_DEAD,
     "K": _common.STATUS_WAKE_KILL,
-    "W": _common.STATUS_WAKING
+    "W": _common.STATUS_WAKING,
+    "I": _common.STATUS_IDLE,
+    "P": _common.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
@@ -149,7 +170,7 @@ TCP_STATUSES = {
 # psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared'])
+              'active', 'inactive', 'buffers', 'cached', 'shared', 'slab'])
 # psutil.disk_io_counters()
 sdiskio = namedtuple(
     'sdiskio', ['read_count', 'write_count',
@@ -181,24 +202,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-def open_binary(fname, **kwargs):
-    return open(fname, "rb", **kwargs)
-
-
-def open_text(fname, **kwargs):
-    """On Python 3 opens a file in text mode by using fs encoding and
-    a proper en/decoding errors handler.
-    On Python 2 this is just an alias for open(name, 'rt').
-    """
-    if PY3:
-        # See:
-        # https://github.com/giampaolo/psutil/issues/675
-        # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRS)
-    return open(fname, "rt", **kwargs)
 
 
 if PY3:
@@ -247,17 +250,23 @@ def file_flags_to_mode(flags):
     return mode
 
 
-def get_sector_size(partition):
-    """Return the sector size of a partition.
-    Used by disk_io_counters().
+def is_storage_device(name):
+    """Return True if the given name refers to a root device (e.g.
+    "sda", "nvme0n1") as opposed to a logical partition (e.g.  "sda1",
+    "nvme0n1p1"). If name is a virtual device (e.g. "loop1", "ram")
+    return True.
     """
-    try:
-        with open("/sys/block/%s/queue/hw_sector_size" % partition, "rt") as f:
-            return int(f.read())
-    except (IOError, ValueError):
-        # man iostat states that sectors are equivalent with blocks and
-        # have a size of 512 bytes since 2.4 kernels.
-        return SECTOR_SIZE_FALLBACK
+    # Readapted from iostat source code, see:
+    # https://github.com/sysstat/sysstat/blob/
+    #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
+    # Some devices may have a slash in their name (e.g. cciss/c0d0...).
+    name = name.replace('/', '!')
+    including_virtual = True
+    if including_virtual:
+        path = "/sys/block/%s" % name
+    else:
+        path = "/sys/block/%s/device" % name
+    return os.access(path, os.F_OK)
 
 
 @memoize
@@ -294,7 +303,7 @@ def cat(fname, fallback=_DEFAULT, binary=True):
     try:
         with open_binary(fname) if binary else open_text(fname) as f:
             return f.read().strip()
-    except IOError:
+    except (IOError, OSError):
         if fallback is not _DEFAULT:
             return fallback
         else:
@@ -441,6 +450,11 @@ def virtual_memory():
             inactive = 0
             missing_fields.append('inactive')
 
+    try:
+        slab = mems[b"Slab:"]
+    except KeyError:
+        slab = 0
+
     used = total - free - cached - buffers
     if used < 0:
         # May be symptomatic of running within a LCX container where such
@@ -471,7 +485,7 @@ def virtual_memory():
     if avail > total:
         avail = free
 
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
 
     # Warn about missing metrics which are set to 0.
     if missing_fields:
@@ -481,7 +495,7 @@ def virtual_memory():
         warnings.warn(msg, RuntimeWarning)
 
     return svmem(total, avail, percent, used, free,
-                 active, inactive, buffers, cached, shared)
+                 active, inactive, buffers, cached, shared, slab)
 
 
 def swap_memory():
@@ -504,7 +518,7 @@ def swap_memory():
         free *= unit_multiplier
 
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     # get pgin/pgouts
     try:
         f = open_binary("%s/vmstat" % get_procfs_path())
@@ -689,6 +703,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
             max_ = int(cat(pjoin(path, "scaling_max_freq"))) / 1000
             min_ = int(cat(pjoin(path, "scaling_min_freq"))) / 1000
             ret.append(_common.scpufreq(curr, min_, max_))
+        return ret
+
+elif os.path.exists("/proc/cpuinfo"):
+    def cpu_freq():
+        """Alternate implementation using /proc/cpuinfo.
+        min and max frequencies are not available and are set to None.
+        """
+        ret = []
+        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+            for line in f:
+                if line.lower().startswith(b'cpu mhz'):
+                    key, value = line.split(b'\t:', 1)
+                    ret.append(_common.scpufreq(float(value), None, None))
         return ret
 
 
@@ -997,10 +1024,16 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        mtu = cext_posix.net_if_mtu(name)
-        isup = cext_posix.net_if_flags(name)
-        duplex, speed = cext.net_if_duplex_speed(name)
-        ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
+        try:
+            mtu = cext_posix.net_if_mtu(name)
+            isup = cext_posix.net_if_flags(name)
+            duplex, speed = cext.net_if_duplex_speed(name)
+        except OSError as err:
+            # https://github.com/giampaolo/psutil/issues/1279
+            if err.errno != errno.ENODEV:
+                raise
+        else:
+            ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
 
 
@@ -1012,35 +1045,11 @@ def net_if_stats():
 disk_usage = _psposix.disk_usage
 
 
-def disk_io_counters():
+def disk_io_counters(perdisk=False):
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    # determine partitions we want to look for
-    def get_partitions():
-        partitions = []
-        with open_text("%s/partitions" % get_procfs_path()) as f:
-            lines = f.readlines()[2:]
-        for line in reversed(lines):
-            _, _, _, name = line.split()
-            if name[-1].isdigit():
-                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-                # also be around but we want to omit it
-                partitions.append(name)
-            else:
-                if not partitions or not partitions[-1].startswith(name):
-                    # we're dealing with a disk entity for which no
-                    # partitions have been defined (e.g. 'sda' but
-                    # 'sda1' was not around), see:
-                    # https://github.com/giampaolo/psutil/issues/338
-                    partitions.append(name)
-        return partitions
-
-    retdict = {}
-    partitions = get_partitions()
-    with open_text("%s/diskstats" % get_procfs_path()) as f:
-        lines = f.readlines()
-    for line in lines:
+    def read_procfs():
         # OK, this is a bit confusing. The format of /proc/diskstats can
         # have 3 variations.
         # On Linux 2.4 each line has always 15 fields, e.g.:
@@ -1051,43 +1060,90 @@ def disk_io_counters():
         # ...unless (Linux 2.6) the line refers to a partition instead
         # of a disk, in which case the line has less fields (7):
         # "3    1   hda1 8 8 8 8"
+        # 4.18+ has 4 fields added:
+        # "3    0   hda 8 8 8 8 8 8 8 8 8 8 8 0 0 0 0"
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-        fields = line.split()
-        fields_len = len(fields)
-        if fields_len == 15:
-            # Linux 2.4
-            name = fields[3]
-            reads = int(fields[2])
-            (reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
-        elif fields_len == 14:
-            # Linux 2.6+, line referring to a disk
-            name = fields[2]
-            (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
-        elif fields_len == 7:
-            # Linux 2.6+, line referring to a partition
-            name = fields[2]
-            reads, rbytes, writes, wbytes = map(int, fields[3:])
-            rtime = wtime = reads_merged = writes_merged = busy_time = 0
-        else:
-            raise ValueError("not sure how to interpret line %r" % line)
+        with open_text("%s/diskstats" % get_procfs_path()) as f:
+            lines = f.readlines()
+        for line in lines:
+            fields = line.split()
+            flen = len(fields)
+            if flen == 15:
+                # Linux 2.4
+                name = fields[3]
+                reads = int(fields[2])
+                (reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
+            elif flen == 14 or flen == 18:
+                # Linux 2.6+, line referring to a disk
+                name = fields[2]
+                (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
+            elif flen == 7:
+                # Linux 2.6+, line referring to a partition
+                name = fields[2]
+                reads, rbytes, writes, wbytes = map(int, fields[3:])
+                rtime = wtime = reads_merged = writes_merged = busy_time = 0
+            else:
+                raise ValueError("not sure how to interpret line %r" % line)
+            yield (name, reads, writes, rbytes, wbytes, rtime, wtime,
+                   reads_merged, writes_merged, busy_time)
 
-        if name in partitions:
-            ssize = get_sector_size(name)
-            rbytes *= ssize
-            wbytes *= ssize
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
-                             reads_merged, writes_merged, busy_time)
+    def read_sysfs():
+        for block in os.listdir('/sys/block'):
+            for root, _, files in os.walk(os.path.join('/sys/block', block)):
+                if 'stat' not in files:
+                    continue
+                with open_text(os.path.join(root, 'stat')) as f:
+                    fields = f.read().strip().split()
+                name = os.path.basename(root)
+                (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                    wbytes, wtime, _, busy_time, _) = map(int, fields)
+                yield (name, reads, writes, rbytes, wbytes, rtime,
+                       wtime, reads_merged, writes_merged, busy_time)
+
+    if os.path.exists('%s/diskstats' % get_procfs_path()):
+        gen = read_procfs()
+    elif os.path.exists('/sys/block'):
+        gen = read_sysfs()
+    else:
+        raise NotImplementedError(
+            "%s/diskstats nor /sys/block filesystem are available on this "
+            "system" % get_procfs_path())
+
+    retdict = {}
+    for entry in gen:
+        (name, reads, writes, rbytes, wbytes, rtime, wtime, reads_merged,
+            writes_merged, busy_time) = entry
+        if not perdisk and not is_storage_device(name):
+            # perdisk=False means we want to calculate totals so we skip
+            # partitions (e.g. 'sda1', 'nvme0n1p1') and only include
+            # base disk devices (e.g. 'sda', 'nvme0n1'). Base disks
+            # include a total of all their partitions + some extra size
+            # of their own:
+            #     $ cat /proc/diskstats
+            #     259       0 sda 10485760 ...
+            #     259       1 sda1 5186039 ...
+            #     259       1 sda2 5082039 ...
+            # See:
+            # https://github.com/giampaolo/psutil/pull/1313
+            continue
+
+        rbytes *= DISK_SECTOR_SIZE
+        wbytes *= DISK_SECTOR_SIZE
+        retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                         reads_merged, writes_merged, busy_time)
+
     return retdict
 
 
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
-    with open_text("%s/filesystems" % get_procfs_path()) as f:
+    procfs_path = get_procfs_path()
+    with open_text("%s/filesystems" % procfs_path) as f:
         for line in f:
             line = line.strip()
             if not line.startswith("nodev"):
@@ -1098,8 +1154,14 @@ def disk_partitions(all=False):
                 if fstype == "zfs":
                     fstypes.add("zfs")
 
+    # See: https://github.com/giampaolo/psutil/issues/1307
+    if procfs_path == "/proc":
+        mtab_path = os.path.realpath("/etc/mtab")
+    else:
+        mtab_path = os.path.realpath("%s/self/mounts" % procfs_path)
+
     retlist = []
-    partitions = cext.disk_partitions()
+    partitions = cext.disk_partitions(mtab_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -1140,30 +1202,85 @@ def sensors_temperatures():
 
     for base in basenames:
         try:
-            current = float(cat(base + '_input')) / 1000.0
-        except (IOError, OSError) as err:
+            path = base + '_input'
+            current = float(cat(path)) / 1000.0
+            path = os.path.join(os.path.dirname(base), 'name')
+            unit_name = cat(path, binary=False)
+        except (IOError, OSError, ValueError) as err:
             # A lot of things can go wrong here, so let's just skip the
-            # whole entry.
+            # whole entry. Sure thing is Linux's /sys/class/hwmon really
+            # is a stinky broken mess.
             # https://github.com/giampaolo/psutil/issues/1009
             # https://github.com/giampaolo/psutil/issues/1101
             # https://github.com/giampaolo/psutil/issues/1129
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            # https://github.com/giampaolo/psutil/issues/1245
+            # https://github.com/giampaolo/psutil/issues/1323
+            warnings.warn("ignoring %r for file %r" % (err, path),
+                          RuntimeWarning)
             continue
 
-        unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
-                        binary=False)
         high = cat(base + '_max', fallback=None)
         critical = cat(base + '_crit', fallback=None)
         label = cat(base + '_label', fallback='', binary=False)
 
         if high is not None:
-            high = float(high) / 1000.0
+            try:
+                high = float(high) / 1000.0
+            except ValueError:
+                high = None
         if critical is not None:
-            critical = float(critical) / 1000.0
+            try:
+                critical = float(critical) / 1000.0
+            except ValueError:
+                critical = None
 
         ret[unit_name].append((label, current, high, critical))
 
-    return ret
+    # Indication that no sensors were detected in /sys/class/hwmon/
+    if not basenames:
+        basenames = glob.glob('/sys/class/thermal/thermal_zone*')
+        basenames = sorted(set(basenames))
+
+        for base in basenames:
+            try:
+                path = os.path.join(base, 'temp')
+                current = float(cat(path)) / 1000.0
+                path = os.path.join(base, 'type')
+                unit_name = cat(path, binary=False)
+            except (IOError, OSError, ValueError) as err:
+                warnings.warn("ignoring %r for file %r" % (err, path),
+                              RuntimeWarning)
+                continue
+
+            trip_paths = glob.glob(base + '/trip_point*')
+            trip_points = set(['_'.join(
+                os.path.basename(p).split('_')[0:3]) for p in trip_paths])
+            critical = None
+            high = None
+            for trip_point in trip_points:
+                path = os.path.join(base, trip_point + "_type")
+                trip_type = cat(path, fallback='', binary=False)
+                if trip_type == 'critical':
+                    critical = cat(os.path.join(base, trip_point + "_temp"),
+                                   fallback=None)
+                elif trip_type == 'high':
+                    high = cat(os.path.join(base, trip_point + "_temp"),
+                               fallback=None)
+
+                if high is not None:
+                    try:
+                        high = float(high) / 1000.0
+                    except ValueError:
+                        high = None
+                if critical is not None:
+                    try:
+                        critical = float(critical) / 1000.0
+                    except ValueError:
+                        critical = None
+
+            ret[unit_name].append(('', current, high, critical))
+
+    return dict(ret)
 
 
 def sensors_fans():
@@ -1217,9 +1334,13 @@ def sensors_battery():
                 return int(ret) if ret.isdigit() else ret
         return None
 
-    root = os.path.join(POWER_SUPPLY_PATH, "BAT0")
-    if not os.path.exists(root):
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT')]
+    if not bats:
         return None
+    # Get the first available battery. Usually this is "BAT0", except
+    # some rare exceptions:
+    # https://github.com/giampaolo/psutil/issues/1238
+    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
 
     # Base metrics.
     energy_now = multi_cat(
@@ -1368,9 +1489,8 @@ def ppid_map():
                 data = f.read()
         except EnvironmentError as err:
             # Note: we should be able to access /stat for all processes
-            # so we won't bump into EPERM, which is good.
-            if err.errno not in (errno.ENOENT, errno.ESRCH,
-                                 errno.EPERM, errno.EACCES):
+            # aka it's unlikely we'll bump into EPERM, which is good.
+            if err.errno not in (errno.ENOENT, errno.ESRCH):
                 raise
         else:
             rpar = data.rfind(b')')
@@ -1408,7 +1528,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -1418,11 +1538,11 @@ class Process(object):
 
     @memoize_when_activated
     def _parse_stat_file(self):
-        """Parse /proc/{pid}/stat file. Return a list of fields where
-        process name is in position 0.
+        """Parse /proc/{pid}/stat file and return a dict with various
+        process info.
         Using "man proc" as a reference: where "man proc" refers to
-        position N, always substract 2 (e.g starttime pos 22 in
-        'man proc' == pos 20 in the list returned here).
+        position N always substract 3 (e.g ppid position 4 in
+        'man proc' == position 1 in here).
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
@@ -1433,8 +1553,21 @@ class Process(object):
         # the first occurrence of "(" and the last occurence of ")".
         rpar = data.rfind(b')')
         name = data[data.find(b'(') + 1:rpar]
-        others = data[rpar + 2:].split()
-        return [name] + others
+        fields = data[rpar + 2:].split()
+
+        ret = {}
+        ret['name'] = name
+        ret['status'] = fields[0]
+        ret['ppid'] = fields[1]
+        ret['ttynr'] = fields[4]
+        ret['utime'] = fields[11]
+        ret['stime'] = fields[12]
+        ret['children_utime'] = fields[13]
+        ret['children_stime'] = fields[14]
+        ret['create_time'] = fields[19]
+        ret['cpu_num'] = fields[36]
+
+        return ret
 
     @memoize_when_activated
     def _read_status_file(self):
@@ -1452,18 +1585,18 @@ class Process(object):
             return f.read().strip()
 
     def oneshot_enter(self):
-        self._parse_stat_file.cache_activate()
-        self._read_status_file.cache_activate()
-        self._read_smaps_file.cache_activate()
+        self._parse_stat_file.cache_activate(self)
+        self._read_status_file.cache_activate(self)
+        self._read_smaps_file.cache_activate(self)
 
     def oneshot_exit(self):
-        self._parse_stat_file.cache_deactivate()
-        self._read_status_file.cache_deactivate()
-        self._read_smaps_file.cache_deactivate()
+        self._parse_stat_file.cache_deactivate(self)
+        self._read_status_file.cache_deactivate(self)
+        self._read_smaps_file.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):
-        name = self._parse_stat_file()[0]
+        name = self._parse_stat_file()['name']
         if PY3:
             name = decode(name)
         # XXX - gets changed later and probably needs refactoring
@@ -1515,13 +1648,14 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = int(self._parse_stat_file()[5])
+        tty_nr = int(self._parse_stat_file()['ttynr'])
         tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
         except KeyError:
             return None
 
+    # May not be available on old kernels.
     if os.path.exists('/proc/%s/io' % os.getpid()):
         @wrap_exceptions
         def io_counters(self):
@@ -1532,36 +1666,41 @@ class Process(object):
                     # https://github.com/giampaolo/psutil/issues/1004
                     line = line.strip()
                     if line:
-                        name, value = line.split(b': ')
-                        fields[name] = int(value)
+                        try:
+                            name, value = line.split(b': ')
+                        except ValueError:
+                            # https://github.com/giampaolo/psutil/issues/1004
+                            continue
+                        else:
+                            fields[name] = int(value)
             if not fields:
                 raise RuntimeError("%s file was empty" % fname)
-            return pio(
-                fields[b'syscr'],  # read syscalls
-                fields[b'syscw'],  # write syscalls
-                fields[b'read_bytes'],  # read bytes
-                fields[b'write_bytes'],  # write bytes
-                fields[b'rchar'],  # read chars
-                fields[b'wchar'],  # write chars
-            )
-    else:
-        def io_counters(self):
-            raise NotImplementedError("couldn't find /proc/%s/io (kernel "
-                                      "too old?)" % self.pid)
+            try:
+                return pio(
+                    fields[b'syscr'],  # read syscalls
+                    fields[b'syscw'],  # write syscalls
+                    fields[b'read_bytes'],  # read bytes
+                    fields[b'write_bytes'],  # write bytes
+                    fields[b'rchar'],  # read chars
+                    fields[b'wchar'],  # write chars
+                )
+            except KeyError as err:
+                raise ValueError("%r field was not found in %s; found fields "
+                                 "are %r" % (err[0], fname, fields))
 
     @wrap_exceptions
     def cpu_times(self):
         values = self._parse_stat_file()
-        utime = float(values[12]) / CLOCK_TICKS
-        stime = float(values[13]) / CLOCK_TICKS
-        children_utime = float(values[14]) / CLOCK_TICKS
-        children_stime = float(values[15]) / CLOCK_TICKS
+        utime = float(values['utime']) / CLOCK_TICKS
+        stime = float(values['stime']) / CLOCK_TICKS
+        children_utime = float(values['children_utime']) / CLOCK_TICKS
+        children_stime = float(values['children_stime']) / CLOCK_TICKS
         return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
     def cpu_num(self):
         """What CPU the process is on."""
-        return int(self._parse_stat_file()[37])
+        return int(self._parse_stat_file()['cpu_num'])
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -1569,14 +1708,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        values = self._parse_stat_file()
+        ctime = float(self._parse_stat_file()['create_time'])
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
         # Also use cached value if available.
         bt = BOOT_TIME or boot_time()
-        return (float(values[20]) / CLOCK_TICKS) + bt
+        return (ctime / CLOCK_TICKS) + bt
 
     @wrap_exceptions
     def memory_info(self):
@@ -1603,9 +1742,10 @@ class Process(object):
         @wrap_exceptions
         def memory_full_info(
                 self,
-                _private_re=re.compile(br"Private.*:\s+(\d+)"),
-                _pss_re=re.compile(br"Pss.*:\s+(\d+)"),
-                _swap_re=re.compile(br"Swap.*:\s+(\d+)")):
+                # Gets Private_Clean, Private_Dirty, Private_Hugetlb.
+                _private_re=re.compile(br"\nPrivate.*:\s+(\d+)"),
+                _pss_re=re.compile(br"\nPss\:\s+(\d+)"),
+                _swap_re=re.compile(br"\nSwap\:\s+(\d+)")):
             basic_mem = self.memory_info()
             # Note: using 3 regexes is faster than reading the file
             # line by line.
@@ -1637,6 +1777,9 @@ class Process(object):
             """Return process's mapped memory regions as a list of named
             tuples. Fields are explained in 'man proc'; here is an updated
             (Apr 2012) version: http://goo.gl/fmebo
+
+            /proc/{PID}/smaps does not exist on kernels < 2.6.14 or if
+            CONFIG_MMU kernel configuration option is not enabled.
             """
             def get_blocks(lines, current_block):
                 data = {}
@@ -1696,13 +1839,6 @@ class Process(object):
                     data.get(b'Swap:', 0)
                 ))
             return ls
-
-    else:  # pragma: no cover
-        def memory_maps(self):
-            raise NotImplementedError(
-                "/proc/%s/smaps does not exist on kernels < 2.6.14 or "
-                "if CONFIG_MMU kernel configuration option is not "
-                "enabled." % self.pid)
 
     @wrap_exceptions
     def cwd(self):
@@ -1817,7 +1953,7 @@ class Process(object):
             raise
 
     # only starting from kernel 2.6.13
-    if hasattr(cext, "proc_ioprio_get"):
+    if HAS_PROC_IO_PRIORITY:
 
         @wrap_exceptions
         def ionice_get(self):
@@ -1860,6 +1996,7 @@ class Process(object):
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
+
         @wrap_exceptions
         def rlimit(self, resource, limits=None):
             # If pid is 0 prlimit() applies to the calling process and
@@ -1889,7 +2026,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        letter = self._parse_stat_file()[1]
+        letter = self._parse_stat_file()['status']
         if PY3:
             letter = letter.decode()
         # XXX is '?' legit? (we're not supposed to return it anyway)
@@ -1958,7 +2095,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return int(self._parse_stat_file()[2])
+        return int(self._parse_stat_file()['ppid'])
 
     @wrap_exceptions
     def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):

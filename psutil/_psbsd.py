@@ -11,6 +11,7 @@ import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 from socket import AF_INET
+from collections import defaultdict
 
 from . import _common
 from . import _psposix
@@ -103,6 +104,11 @@ else:
     PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
 
+HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
+HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
+HAS_PROC_OPEN_FILES = hasattr(cext, 'proc_open_files')
+HAS_PROC_NUM_FDS = hasattr(cext, 'proc_num_fds')
+
 kinfo_proc_map = dict(
     ppid=0,
     status=1,
@@ -188,7 +194,7 @@ def virtual_memory():
                     shared = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared, wired)
 
@@ -196,7 +202,7 @@ def virtual_memory():
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = cext.swap_mem()
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
 
@@ -211,7 +217,7 @@ def cpu_times():
     return scputimes(user, nice, system, idle, irq)
 
 
-if hasattr(cext, "per_cpu_times"):
+if HAS_PER_CPU_TIMES:
     def per_cpu_times():
         """Return system CPU times as a namedtuple"""
         ret = []
@@ -345,12 +351,18 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        mtu = cext_posix.net_if_mtu(name)
-        isup = cext_posix.net_if_flags(name)
-        duplex, speed = cext_posix.net_if_duplex_speed(name)
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        try:
+            mtu = cext_posix.net_if_mtu(name)
+            isup = cext_posix.net_if_flags(name)
+            duplex, speed = cext_posix.net_if_duplex_speed(name)
+        except OSError as err:
+            # https://github.com/giampaolo/psutil/issues/1279
+            if err.errno != errno.ENODEV:
+                raise
+        else:
+            if hasattr(_common, 'NicDuplex'):
+                duplex = _common.NicDuplex(duplex)
+            ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     return ret
 
 
@@ -425,6 +437,47 @@ if FREEBSD:
         else:
             secsleft = minsleft * 60
         return _common.sbattery(percent, secsleft, power_plugged)
+
+    def sensors_temperatures():
+        "Return CPU cores temperatures if available, else an empty dict."
+        ret = defaultdict(list)
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, high = cext.sensors_cpu_temperature(cpu)
+                if high <= 0:
+                    high = None
+                name = "Core %s" % cpu
+                ret["coretemp"].append(
+                    _common.shwtemp(name, current, high, high))
+            except NotImplementedError:
+                pass
+
+        return ret
+
+    def cpu_freq():
+        """Return frequency metrics for CPUs. As of Dec 2018 only
+        CPU 0 appears to be supported by FreeBSD and all other cores
+        match the frequency of CPU 0.
+        """
+        ret = []
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, available_freq = cext.cpu_frequency(cpu)
+            except NotImplementedError:
+                continue
+            if available_freq:
+                try:
+                    min_freq = int(available_freq.split(" ")[-1].split("/")[0])
+                except(IndexError, ValueError):
+                    min_freq = None
+                try:
+                    max_freq = int(available_freq.split(" ")[0].split("/")[0])
+                except(IndexError, ValueError):
+                    max_freq = None
+            ret.append(_common.scpufreq(current, min_freq, max_freq))
+        return ret
 
 
 # =====================================================================
@@ -541,7 +594,7 @@ def wrap_exceptions_procfs(inst):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -556,10 +609,10 @@ class Process(object):
         return ret
 
     def oneshot_enter(self):
-        self.oneshot.cache_activate()
+        self.oneshot.cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot.cache_deactivate()
+        self.oneshot.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):
@@ -672,7 +725,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        if hasattr(cext, "proc_num_threads"):
+        if HAS_PROC_NUM_THREADS:
             # FreeBSD
             return cext.proc_num_threads(self.pid)
         else:
@@ -792,7 +845,7 @@ class Process(object):
         elif NETBSD:
             with wrap_exceptions_procfs(self):
                 return os.readlink("/proc/%s/cwd" % self.pid)
-        elif hasattr(cext, 'proc_open_files'):
+        elif HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
             return cext.proc_cwd(self.pid) or None
@@ -811,7 +864,7 @@ class Process(object):
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
-    if hasattr(cext, 'proc_open_files'):
+    if HAS_PROC_OPEN_FILES:
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
@@ -822,7 +875,7 @@ class Process(object):
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
-    if hasattr(cext, 'proc_num_fds'):
+    if HAS_PROC_NUM_FDS:
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""

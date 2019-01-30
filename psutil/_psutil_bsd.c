@@ -393,7 +393,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 /*
  * Return the number of logical CPUs in the system.
- * XXX this could be shared with OSX
+ * XXX this could be shared with macOS
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
@@ -981,6 +981,10 @@ PsutilMethods[] = {
 #if defined(PSUTIL_FREEBSD)
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
+    {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
+     "Return temperature information for a given CPU core number."},
+    {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
+     "Return frequency of a given CPU"},
 #endif
 
     // --- others

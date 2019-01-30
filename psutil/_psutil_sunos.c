@@ -46,6 +46,7 @@
 #include <inet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <math.h> // fabs()
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
@@ -58,10 +59,10 @@
 /*
  * Read a file content and fills a C structure with it.
  */
-int
+static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
-    size_t nbytes;
+    ssize_t nbytes;
     fd = open(path, O_RDONLY);
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
@@ -73,7 +74,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
     }
-    if (nbytes != size) {
+    if (nbytes != (ssize_t) size) {
         close(fd);
         PyErr_SetString(
             PyExc_RuntimeError, "read() file structure size mismatch");
@@ -102,20 +103,74 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
-        "ikkdiiik",
+        "ikkdiiikiiii",
         info.pr_ppid,              // parent pid
         info.pr_rssize,            // rss
         info.pr_size,              // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        // XXX - niceness is wrong (20 instead of 0), see:
-        // https://github.com/giampaolo/psutil/issues/1082
         info.pr_lwp.pr_nice,       // nice
         info.pr_nlwp,              // no. of threads
         info.pr_lwp.pr_state,      // status code
-        info.pr_ttydev             // tty nr
+        info.pr_ttydev,            // tty nr
+        (int)info.pr_uid,          // real user id
+        (int)info.pr_euid,         // effective user id
+        (int)info.pr_gid,          // real group id
+        (int)info.pr_egid          // effective group id
         );
 }
 
+/*
+ * Join array of C strings to C string with delemiter dm.
+ * Omit empty records.
+ */
+static int
+cstrings_array_to_string(char **joined, char ** array, size_t count, char dm) {
+    int i;
+    size_t total_length = 0;
+    size_t item_length = 0;
+    char *result = NULL;
+    char *last = NULL;
+
+    if (!array || !joined)
+        return 0;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]) + 1;
+        total_length += item_length;
+    }
+
+    if (!total_length) {
+        return 0;
+    }
+
+    result = malloc(total_length);
+    if (!result) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    result[0] = '\0';
+    last = result;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]);
+        memcpy(last, array[i], item_length);
+        last[item_length] = dm;
+
+        last += item_length + 1;
+    }
+
+    result[total_length-1] = '\0';
+    *joined = result;
+
+    return total_length;
+}
 
 /*
  * Return process name and args as a Python tuple.
@@ -125,6 +180,10 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     psinfo_t info;
+    size_t argc;
+    int joined;
+    char **argv;
+    char *argv_plain;
     const char *procfs_path;
     PyObject *py_name = NULL;
     PyObject *py_args = NULL;
@@ -139,12 +198,37 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
         goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+
+    /* SunOS truncates arguments to length PRARGSZ, very likely args are truncated.
+     * The only way to retrieve full command line is to parse process memory */
+    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
+        argv = psutil_read_raw_args(info, procfs_path, &argc);
+        if (argv) {
+            joined = cstrings_array_to_string(&argv_plain, argv, argc, ' ');
+            if (joined > 0) {
+                py_args = PyUnicode_DecodeFSDefault(argv_plain);
+                free(argv_plain);
+            } else if (joined < 0) {
+                goto error;
+            }
+
+            psutil_free_cstrings_array(argv, argc);
+        }
+    }
+
+    /* If we can't read process memory or can't decode the result
+     * then return args from /proc. */
+    if (!py_args)
+        py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+
+    /* Both methods has been failed. */
     if (!py_args)
         goto error;
+
     py_retlist = Py_BuildValue("OO", py_name, py_args);
     if (!py_retlist)
         goto error;
+
     Py_DECREF(py_name);
     Py_DECREF(py_args);
     return py_retlist;
@@ -267,13 +351,11 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     struct prheader header;
-    struct lwpsinfo *lwp;
-    char *lpsinfo = NULL;
-    char *ptr = NULL;
+    struct lwpsinfo *lwp = NULL;
     int nent;
     int size;
     int proc_num;
-    size_t nbytes;
+    ssize_t nbytes;
     const char *procfs_path;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
@@ -301,14 +383,14 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     // malloc
     nent = header.pr_nent;
     size = header.pr_entsize * nent;
-    ptr = lpsinfo = malloc(size);
-    if (lpsinfo == NULL) {
+    lwp = malloc(size);
+    if (lwp == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     // read the rest
-    nbytes = pread(fd, lpsinfo, size, sizeof(header));
+    nbytes = pread(fd, lwp, size, sizeof(header));
     if (nbytes == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -320,20 +402,15 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
 
     // done
-    lwp = (lwpsinfo_t *)ptr;
     proc_num = lwp->pr_onpro;
     close(fd);
-    free(ptr);
-    free(lpsinfo);
+    free(lwp);
     return Py_BuildValue("i", proc_num);
 
 error:
     if (fd != -1)
         close(fd);
-    if (ptr != NULL)
-        free(ptr);
-    if (lpsinfo != NULL)
-        free(lpsinfo);
+    free(lwp);
     return NULL;
 }
 
@@ -772,7 +849,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int fd = -1;
     char path[1000];
     char perms[10];
-    char *name;
+    const char *name;
     struct stat st;
     pstatus_t status;
 
@@ -1034,11 +1111,11 @@ static PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     long pid;
     int sd = 0;
-    mib2_tcpConnEntry_t *tp = NULL;
-    mib2_udpEntry_t     *ude;
+    mib2_tcpConnEntry_t tp;
+    mib2_udpEntry_t     ude;
 #if defined(AF_INET6)
-    mib2_tcp6ConnEntry_t *tp6;
-    mib2_udp6Entry_t     *ude6;
+    mib2_tcp6ConnEntry_t tp6;
+    mib2_udp6Entry_t     ude6;
 #endif
     char buf[512];
     int i, flags, getcode, num_ent, state;
@@ -1047,10 +1124,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int processed_pid;
     int databuf_init = 0;
     struct strbuf ctlbuf, databuf;
-    struct T_optmgmt_req *tor = (struct T_optmgmt_req *)buf;
-    struct T_optmgmt_ack *toa = (struct T_optmgmt_ack *)buf;
-    struct T_error_ack   *tea = (struct T_error_ack *)buf;
-    struct opthdr        *mibhdr;
+    struct T_optmgmt_req tor = {0};
+    struct T_optmgmt_ack toa = {0};
+    struct T_error_ack   tea = {0};
+    struct opthdr        mibhdr = {0};
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
@@ -1083,22 +1160,23 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     // which copied and pasted it from netstat source code, mibget()
     // function.  Also see:
     // http://stackoverflow.com/questions/8723598/
-    tor->PRIM_type = T_SVR4_OPTMGMT_REQ;
-    tor->OPT_offset = sizeof (struct T_optmgmt_req);
-    tor->OPT_length = sizeof (struct opthdr);
-    tor->MGMT_flags = T_CURRENT;
-    mibhdr = (struct opthdr *)&tor[1];
-    mibhdr->level = MIB2_IP;
-    mibhdr->name  = 0;
+    tor.PRIM_type = T_SVR4_OPTMGMT_REQ;
+    tor.OPT_offset = sizeof (struct T_optmgmt_req);
+    tor.OPT_length = sizeof (struct opthdr);
+    tor.MGMT_flags = T_CURRENT;
+    mibhdr.level = MIB2_IP;
+    mibhdr.name  = 0;
 
 #ifdef NEW_MIB_COMPLIANT
-    mibhdr->len   = 1;
+    mibhdr.len   = 1;
 #else
-    mibhdr->len   = 0;
+    mibhdr.len   = 0;
 #endif
+    memcpy(buf, &tor, sizeof tor);
+    memcpy(buf + tor.OPT_offset, &mibhdr, sizeof mibhdr);
 
     ctlbuf.buf = buf;
-    ctlbuf.len = tor->OPT_offset + tor->OPT_length;
+    ctlbuf.len = tor.OPT_offset + tor.OPT_length;
     flags = 0;  // request to be sent in non-priority
 
     if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
@@ -1106,37 +1184,41 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    mibhdr = (struct opthdr *)&toa[1];
     ctlbuf.maxlen = sizeof (buf);
     for (;;) {
         flags = 0;
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
+        memcpy(&toa, buf, sizeof toa);
+        memcpy(&tea, buf, sizeof tea);
 
         if (getcode != MOREDATA ||
-                ctlbuf.len < sizeof (struct T_optmgmt_ack) ||
-                toa->PRIM_type != T_OPTMGMT_ACK ||
-                toa->MGMT_flags != T_SUCCESS)
+                ctlbuf.len < (int)sizeof (struct T_optmgmt_ack) ||
+                toa.PRIM_type != T_OPTMGMT_ACK ||
+                toa.MGMT_flags != T_SUCCESS)
         {
             break;
         }
-        if (ctlbuf.len >= sizeof (struct T_error_ack) &&
-                tea->PRIM_type == T_ERROR_ACK)
+        if (ctlbuf.len >= (int)sizeof (struct T_error_ack) &&
+                tea.PRIM_type == T_ERROR_ACK)
         {
             PyErr_SetString(PyExc_RuntimeError, "ERROR_ACK");
             goto error;
         }
         if (getcode == 0 &&
-                ctlbuf.len >= sizeof (struct T_optmgmt_ack) &&
-                toa->PRIM_type == T_OPTMGMT_ACK &&
-                toa->MGMT_flags == T_SUCCESS)
+                ctlbuf.len >= (int)sizeof (struct T_optmgmt_ack) &&
+                toa.PRIM_type == T_OPTMGMT_ACK &&
+                toa.MGMT_flags == T_SUCCESS)
         {
             PyErr_SetString(PyExc_RuntimeError, "ERROR_T_OPTMGMT_ACK");
             goto error;
         }
 
-        databuf.maxlen = mibhdr->len;
+        memset(&mibhdr, 0x0, sizeof(mibhdr));
+        memcpy(&mibhdr, buf + toa.OPT_offset, toa.OPT_length);
+
+        databuf.maxlen = mibhdr.len;
         databuf.len = 0;
-        databuf.buf = (char *)malloc((int)mibhdr->len);
+        databuf.buf = (char *)malloc((int)mibhdr.len);
         if (!databuf.buf) {
             PyErr_NoMemory();
             goto error;
@@ -1151,22 +1233,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 
         // TCPv4
-        if (mibhdr->level == MIB2_TCP && mibhdr->name == MIB2_TCP_13) {
-            tp = (mib2_tcpConnEntry_t *)databuf.buf;
-            num_ent = mibhdr->len / sizeof(mib2_tcpConnEntry_t);
-            for (i = 0; i < num_ent; i++, tp++) {
+        if (mibhdr.level == MIB2_TCP && mibhdr.name == MIB2_TCP_13) {
+            num_ent = mibhdr.len / sizeof(mib2_tcpConnEntry_t);
+            for (i = 0; i < num_ent; i++) {
+                memcpy(&tp, databuf.buf + i * sizeof tp, sizeof tp);
 #ifdef NEW_MIB_COMPLIANT
-                processed_pid = tp->tcpConnCreationProcess;
+                processed_pid = tp.tcpConnCreationProcess;
 #else
                 processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
-                inet_ntop(AF_INET, &tp->tcpConnLocalAddress, lip, sizeof(lip));
-                inet_ntop(AF_INET, &tp->tcpConnRemAddress, rip, sizeof(rip));
-                lport = tp->tcpConnLocalPort;
-                rport = tp->tcpConnRemPort;
+                inet_ntop(AF_INET, &tp.tcpConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(AF_INET, &tp.tcpConnRemAddress, rip, sizeof(rip));
+                lport = tp.tcpConnLocalPort;
+                rport = tp.tcpConnRemPort;
 
                 // contruct python tuple/list
                 py_laddr = Py_BuildValue("(si)", lip, lport);
@@ -1179,7 +1261,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 }
                 if (!py_raddr)
                     goto error;
-                state = tp->tcpConnEntryInfo.ce_state;
+                state = tp.tcpConnEntryInfo.ce_state;
 
                 // add item
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_STREAM,
@@ -1194,24 +1276,24 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #if defined(AF_INET6)
         // TCPv6
-        else if (mibhdr->level == MIB2_TCP6 && mibhdr->name == MIB2_TCP6_CONN)
+        else if (mibhdr.level == MIB2_TCP6 && mibhdr.name == MIB2_TCP6_CONN)
         {
-            tp6 = (mib2_tcp6ConnEntry_t *)databuf.buf;
-            num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
+            num_ent = mibhdr.len / sizeof(mib2_tcp6ConnEntry_t);
 
-            for (i = 0; i < num_ent; i++, tp6++) {
+            for (i = 0; i < num_ent; i++) {
+                memcpy(&tp6, databuf.buf + i * sizeof tp6, sizeof tp6);
 #ifdef NEW_MIB_COMPLIANT
-                processed_pid = tp6->tcp6ConnCreationProcess;
+                processed_pid = tp6.tcp6ConnCreationProcess;
 #else
         		processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
-                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip, sizeof(lip));
-                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip, sizeof(rip));
-                lport = tp6->tcp6ConnLocalPort;
-                rport = tp6->tcp6ConnRemPort;
+                inet_ntop(AF_INET6, &tp6.tcp6ConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(AF_INET6, &tp6.tcp6ConnRemAddress, rip, sizeof(rip));
+                lport = tp6.tcp6ConnLocalPort;
+                rport = tp6.tcp6ConnRemPort;
 
                 // contruct python tuple/list
                 py_laddr = Py_BuildValue("(si)", lip, lport);
@@ -1223,7 +1305,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                state = tp6->tcp6ConnEntryInfo.ce_state;
+                state = tp6.tcp6ConnEntryInfo.ce_state;
 
                 // add item
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_STREAM,
@@ -1237,13 +1319,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #endif
         // UDPv4
-        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
-            ude = (mib2_udpEntry_t *)databuf.buf;
-            num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
-	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr->len);
-            for (i = 0; i < num_ent; i++, ude++) {
+        else if (mibhdr.level == MIB2_UDP || mibhdr.level == MIB2_UDP_ENTRY) {
+            num_ent = mibhdr.len / sizeof(mib2_udpEntry_t);
+	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr.len);
+            for (i = 0; i < num_ent; i++) {
+                memcpy(&ude, databuf.buf + i * sizeof ude, sizeof ude);
 #ifdef NEW_MIB_COMPLIANT
-                processed_pid = ude->udpCreationProcess;
+                processed_pid = ude.udpCreationProcess;
 #else
                 processed_pid = 0;
 #endif
@@ -1256,8 +1338,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 // to do other than skipping.
                 if (processed_pid > 131072)
                     continue;
-                inet_ntop(AF_INET, &ude->udpLocalAddress, lip, sizeof(lip));
-                lport = ude->udpLocalPort;
+                inet_ntop(AF_INET, &ude.udpLocalAddress, lip, sizeof(lip));
+                lport = ude.udpLocalPort;
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;
@@ -1276,21 +1358,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #if defined(AF_INET6)
         // UDPv6
-        else if (mibhdr->level == MIB2_UDP6 ||
-                    mibhdr->level == MIB2_UDP6_ENTRY)
+        else if (mibhdr.level == MIB2_UDP6 ||
+                    mibhdr.level == MIB2_UDP6_ENTRY)
             {
-            ude6 = (mib2_udp6Entry_t *)databuf.buf;
-            num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
-            for (i = 0; i < num_ent; i++, ude6++) {
+            num_ent = mibhdr.len / sizeof(mib2_udp6Entry_t);
+            for (i = 0; i < num_ent; i++) {
+                memcpy(&ude6, databuf.buf + i * sizeof ude6, sizeof ude6);
 #ifdef NEW_MIB_COMPLIANT
-                processed_pid = ude6->udp6CreationProcess;
+                processed_pid = ude6.udp6CreationProcess;
 #else
                 processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
-                inet_ntop(AF_INET6, &ude6->udp6LocalAddress, lip, sizeof(lip));
-                lport = ude6->udp6LocalPort;
+                inet_ntop(AF_INET6, &ude6.udp6LocalAddress, lip, sizeof(lip));
+                lport = ude6.udp6LocalPort;
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;
@@ -1340,7 +1422,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         }
     }
     endutxent();
-    if (boot_time == 0.0) {
+    if (fabs(boot_time) < 0.000001) {
         /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
         return NULL;
