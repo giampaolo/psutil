@@ -38,8 +38,11 @@
 #include <IOKit/storage/IOBlockStorageDriver.h>
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
+#include <IOKit/ps/IOPowerSources.h>
+#include <IOKit/ps/IOPSKeys.h>
 
 #include "_psutil_common.h"
+#include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
 
 
@@ -124,6 +127,8 @@ error:
  * using sysctl() and filling up a kinfo_proc struct.
  * It should be possible to do this for all processes without
  * incurring into permission (EPERM) errors.
+ * This will also succeed for zombie processes returning correct
+ * information.
  */
 static PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
@@ -137,11 +142,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    py_name = Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -176,8 +177,9 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
  * Return multiple process info as a Python tuple in one shot by
  * using proc_pidinfo(PROC_PIDTASKINFO) and filling a proc_taskinfo
  * struct.
- * Contrarily from proc_kinfo above this function will return EACCES
- * for PIDs owned by another user.
+ * Contrarily from proc_kinfo above this function will fail with
+ * EACCES for PIDs owned by another user and with ESRCH for zombie
+ * processes.
  */
 static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
@@ -223,16 +225,13 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
-#else
-    return Py_BuildValue("s", kp.kp_proc.p_comm);
-#endif
 }
 
 
 /*
  * Return process current working directory.
+ * Raises NSP in case of zombie process.
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
@@ -248,11 +247,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
-#else
-    return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
-#endif
 }
 
 
@@ -271,16 +266,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0)
-            AccessDenied();
+            AccessDenied("");
         else
-            psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
+            psutil_raise_for_pid(pid, "proc_pidpath()");
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(buf);
-#else
-    return Py_BuildValue("s", buf);
-#endif
 }
 
 
@@ -336,6 +327,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     vm_size_t size = 0;
 
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_list = PyList_New(0);
 
     if (py_list == NULL)
@@ -346,10 +338,16 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
-        else
-            AccessDenied();
+        if ((err == 5) && (errno == ENOENT)) {
+            // See: https://github.com/giampaolo/psutil/issues/1181
+            psutil_debug("task_for_pid(MACH_PORT_NULL) failed; err=%i, "
+                         "errno=%i, msg='%s'\n", err, errno,
+                         mach_error_string(err));
+            AccessDenied("");
+        }
+        else {
+            psutil_raise_for_pid(pid, "task_for_pid(MACH_PORT_NULL)");
+        }
         goto error;
     }
 
@@ -360,8 +358,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
         err = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS)
+        if (err == KERN_INVALID_ADDRESS) {
+            // TODO temporary
+            psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
             break;
+        }
+        if (err != KERN_SUCCESS) {
+            psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
+        }
+
         if (info.is_submap) {
             depth++;
         }
@@ -389,8 +394,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             errno = 0;
             proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
             if ((errno != 0) || ((sizeof(buf)) <= 0)) {
-                psutil_raise_for_pid(
-                    pid, "proc_regionfilename() syscall failed");
+                // TODO temporary
+                psutil_debug("proc_regionfilename() failed");
+                psutil_raise_for_pid(pid, "proc_regionfilename()");
                 goto error;
             }
 
@@ -430,11 +436,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 }
             }
 
+            py_path = PyUnicode_DecodeFSDefault(buf);
+            if (! py_path)
+                goto error;
             py_tuple = Py_BuildValue(
-                "sssIIIIIH",
+                "ssOIIIIIH",
                 addr_str,                                 // "start-end"address
                 perms,                                    // "rwx" permissions
-                buf,                                      // path
+                py_path,                                  // path
                 info.pages_resident * pagesize,           // rss
                 info.pages_shared_now_private * pagesize, // private
                 info.pages_swapped_out * pagesize,        // swapped
@@ -447,6 +456,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             if (PyList_Append(py_list, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            Py_DECREF(py_path);
         }
 
         // increment address for the next map/file
@@ -462,6 +472,7 @@ error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_list);
     return NULL;
 }
@@ -568,17 +579,15 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         return NULL;
     }
 
     len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
@@ -809,6 +818,31 @@ error:
 
 
 /*
+ * Retrieve CPU frequency.
+ */
+static PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int64_t curr;
+    int64_t min;
+    int64_t max;
+    size_t size = sizeof(int64_t);
+
+    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0))
+        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
+        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    return Py_BuildValue(
+        "KKK",
+        curr / 1000 / 1000,
+        min / 1000 / 1000,
+        max / 1000 / 1000);
+}
+
+
+/*
  * Return a Python float indicating the system boot time expressed in
  * seconds since the epoch.
  */
@@ -820,10 +854,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     size_t result_len = sizeof result;
     time_t boot_time = 0;
 
-    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     boot_time = result.tv_sec;
     return Py_BuildValue("f", (float)boot_time);
 }
@@ -841,8 +873,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     uint64_t flags;
     char opts[400];
     struct statfs *fs = NULL;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -927,15 +961,24 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_CMDFLAGS)
             strlcat(opts, ",cmdflags", sizeof(opts));
 
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        if (! py_mountp)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(ssss)", fs[i].f_mntfromname,  // device
-            fs[i].f_mntonname,    // mount point
+            "(OOss)",
+            py_dev,               // device
+            py_mountp,            // mount point
             fs[i].f_fstypename,   // fs type
             opts);                // options
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
 
@@ -943,6 +986,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
@@ -977,13 +1022,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    // task_for_pid() requires special privileges
+    // task_for_pid() requires root privileges
     err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess();
+            NoSuchProcess("");
         else
-            AccessDenied();
+            AccessDenied("");
         goto error;
     }
 
@@ -993,7 +1038,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied();
+            AccessDenied("");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
@@ -1103,7 +1148,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
-        py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -1122,18 +1166,15 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDVNODEPATHINFO)");
                     goto error;
                 }
             }
             // --- /errors checking
 
             // --- construct python list
-#if PY_MAJOR_VERSION >= 3
             py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
-#else
-            py_path = Py_BuildValue("s", vi.pvip.vip_path);
-#endif
             if (! py_path)
                 goto error;
             py_tuple = Py_BuildValue(
@@ -1145,7 +1186,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            py_tuple = NULL;
             Py_DECREF(py_path);
+            py_path = NULL;
             // --- /construct python list
         }
     }
@@ -1163,11 +1206,9 @@ error:
 }
 
 
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
-
 /*
  * Return process TCP and UDP connections as a list of tuples.
+ * Raises NSP in case of zombie process.
  * References:
  * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
  * - /usr/include/sys/proc_info.h
@@ -1238,7 +1279,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     continue;
                 }
                 else {
-                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    psutil_raise_for_pid(
+                        pid, "proc_pidinfo(PROC_PIDFDSOCKETINFO)");
                     goto error;
                 }
             }
@@ -1329,18 +1371,28 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             else if (family == AF_UNIX) {
+                py_laddr = PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path);
+                if (!py_laddr)
+                    goto error;
+                py_raddr = PyUnicode_DecodeFSDefault(
+                    si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
+                if (!py_raddr)
+                    goto error;
                 // construct the python list
                 py_tuple = Py_BuildValue(
-                    "(iiissi)",
+                    "(iiiOOi)",
                     fd, family, type,
-                    si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
-                    si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
+                    py_laddr,
+                    py_raddr,
                     PSUTIL_CONN_NONE);
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
+                Py_DECREF(py_laddr);
+                Py_DECREF(py_raddr);
             }
         }
     }
@@ -1361,6 +1413,7 @@ error:
 
 /*
  * Return number of file descriptors opened by process.
+ * Raises NSP in case of zombie process.
  */
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
@@ -1659,20 +1712,33 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *utx;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
+        py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssf)",
-            utx->ut_user,             // username
-            utx->ut_line,             // tty
-            utx->ut_host,             // hostname
-            (float)utx->ut_tv.tv_sec  // start time
+            "(OOOfi)",
+            py_username,              // username
+            py_tty,                   // tty
+            py_hostname,              // hostname
+            (float)utx->ut_tv.tv_sec, // start time
+            utx->ut_pid               // process id
         );
         if (!py_tuple) {
             endutxent();
@@ -1682,6 +1748,9 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
@@ -1689,6 +1758,9 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
@@ -1726,13 +1798,98 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return battery information.
+ */
+static PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    PyObject *py_tuple = NULL;
+    CFTypeRef power_info = NULL;
+    CFArrayRef power_sources_list = NULL;
+    CFDictionaryRef power_sources_information = NULL;
+    CFNumberRef capacity_ref = NULL;
+    CFNumberRef time_to_empty_ref = NULL;
+    CFStringRef ps_state_ref = NULL;
+    uint32_t capacity;     /* units are percent */
+    int time_to_empty;     /* units are minutes */
+    int is_power_plugged;
+
+    power_info = IOPSCopyPowerSourcesInfo();
+
+    if (!power_info) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "IOPSCopyPowerSourcesInfo() syscall failed");
+        goto error;
+    }
+
+    power_sources_list = IOPSCopyPowerSourcesList(power_info);
+    if (!power_sources_list) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "IOPSCopyPowerSourcesList() syscall failed");
+        goto error;
+    }
+
+    /* Should only get one source. But in practice, check for > 0 sources */
+    if (!CFArrayGetCount(power_sources_list)) {
+        PyErr_SetString(PyExc_NotImplementedError, "no battery");
+        goto error;
+    }
+
+    power_sources_information = IOPSGetPowerSourceDescription(
+        power_info, CFArrayGetValueAtIndex(power_sources_list, 0));
+
+    capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
+    if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "No battery capacity infomration in power sources info");
+        goto error;
+    }
+
+    ps_state_ref = (CFStringRef) CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSPowerSourceStateKey));
+    is_power_plugged = CFStringCompare(
+        ps_state_ref, CFSTR(kIOPSACPowerValue), 0)
+        == kCFCompareEqualTo;
+
+    time_to_empty_ref = (CFNumberRef) CFDictionaryGetValue(
+        power_sources_information, CFSTR(kIOPSTimeToEmptyKey));
+    if (!CFNumberGetValue(time_to_empty_ref,
+                          kCFNumberIntType, &time_to_empty)) {
+        /* This value is recommended for non-Apple power sources, so it's not
+         * an error if it doesn't exist. We'll return -1 for "unknown" */
+        /* A value of -1 indicates "Still Calculating the Time" also for
+         * apple power source */
+        time_to_empty = -1;
+    }
+
+    py_tuple = Py_BuildValue("Iii",
+        capacity, time_to_empty, is_power_plugged);
+    if (!py_tuple) {
+        goto error;
+    }
+
+    CFRelease(power_info);
+    CFRelease(power_sources_list);
+    /* Caller should NOT release power_sources_information */
+
+    return py_tuple;
+
+error:
+    if (power_info)
+        CFRelease(power_info);
+    if (power_sources_list)
+        CFRelease(power_sources_list);
+    Py_XDECREF(py_tuple);
+    return NULL;
+}
+
 
 /*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
@@ -1778,6 +1935,8 @@ PsutilMethods[] = {
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return cpu current frequency"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
@@ -1791,6 +1950,12 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery information."},
+
+    // --- others
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1870,6 +2035,8 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

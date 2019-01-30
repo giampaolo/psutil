@@ -8,21 +8,17 @@ https://github.com/giampaolo/psutil/issues
 PLATFORMS
 =========
 
-- #355 (patch): Android
-- #605 (branch): AIX
+- #355: Android (with patch)
+- #82: Cygwin (PR at #998)
 - #276: GNU/Hurd
+- #693: Windows Nano
 - DragonFlyBSD
 - HP-UX
 
-
-APIS
-====
-
-- cpu_info() (#550)
-
-
 FEATURES
 ========
+
+- #371: sensors_temperatures() at least for OSX.
 
 - #669: Windows / net_if_addrs(): return broadcast addr.
 
@@ -50,9 +46,6 @@ FEATURES
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
 
-- #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
-  lm-sensors lib).
-
 - #269: NIC rx/tx queue. This should probably go into net_if_stats().
   Figure out on what platforms this is supported:
   Linux: yes
@@ -78,8 +71,6 @@ FEATURES
 
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
-
-- #357: what CPU a process is on.
 
 - Doc / wiki which compares similarities between UNIX cli tools and psutil.
   Example:
@@ -155,20 +146,15 @@ FEATURES
 
 - #550: number of threads per core.
 
-- Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
-
-
 BUGFIXES
 ========
 
 - #600: windows / open_files(): support network file handles.
 
-
 REJECTED
 ========
 
 - #550: threads per core
-
 
 RESOURCES
 =========

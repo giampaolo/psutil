@@ -21,8 +21,9 @@
 #include <sys/un.h>
 #include <sys/file.h>
 
-// a signaler for connections without an actual status
-int PSUTIL_CONN_NONE = 128;
+#include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
+
 
 // address family filter
 enum af_filter {
@@ -109,10 +110,10 @@ psutil_kpcblist_clear(void) {
 static int
 psutil_get_files(void) {
     size_t len;
+    size_t j;
     int mib[6];
     char *buf;
     off_t offset;
-    int j;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE2;
@@ -166,9 +167,9 @@ static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
-    int ret, j;
     struct kinfo_pcb *pcb;
     size_t len;
+    size_t j;
 
     memset(mib, 0, sizeof(mib));
 
@@ -309,11 +310,16 @@ psutil_get_info(int aff) {
  */
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
-    PyObject *py_retlist = PyList_New(0);
+    char laddr[PATH_MAX];
+    char raddr[PATH_MAX];
+    int32_t lport;
+    int32_t rport;
+    int32_t status;
+    pid_t pid;
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
-    pid_t pid;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -331,16 +337,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
         struct kpcb *kp;
-        if ((pid != -1) && (k->kif->ki_pid != pid))
+        if ((pid != -1) && (k->kif->ki_pid != (unsigned int)pid))
             continue;
         SLIST_FOREACH(kp, &kpcbhead, kpcbs) {
             if (k->kif->ki_fdata != kp->kpcb->ki_sockaddr)
                 continue;
-            char laddr[PATH_MAX];
-            char raddr[PATH_MAX];
-            int32_t lport;
-            int32_t rport;
-            int32_t status;
 
             // IPv4 or IPv6
             if ((kp->kpcb->ki_family == AF_INET) ||
@@ -403,19 +404,20 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 strcpy(laddr, sun_src->sun_path);
                 strcpy(raddr, sun_dst->sun_path);
                 status = PSUTIL_CONN_NONE;
-                // TODO: handle unicode
-                py_laddr = Py_BuildValue("s", laddr);
+                py_laddr = PyUnicode_DecodeFSDefault(laddr);
                 if (! py_laddr)
                     goto error;
-                // TODO: handle unicode
-                py_raddr = Py_BuildValue("s", raddr);
+                py_raddr = PyUnicode_DecodeFSDefault(raddr);
                 if (! py_raddr)
                     goto error;
+            }
+            else {
+                continue;
             }
 
             // append tuple to list
             py_tuple = Py_BuildValue(
-                "(iiiNNii)",
+                "(iiiOOii)",
                 k->kif->ki_fd,
                 kp->kpcb->ki_family,
                 kp->kpcb->ki_type,
@@ -427,6 +429,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+            Py_DECREF(py_laddr);
+            Py_DECREF(py_raddr);
             Py_DECREF(py_tuple);
         }
     }

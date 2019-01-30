@@ -1,9 +1,334 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.4.3
+=====
+
+*2018-01-01*
+
+**Enhancements**
+
+- 775_: disk_partitions() on Windows return mount points.
+
+**Bug fixes**
+
+- 1193_: pids() may return False on OSX.
+
+5.4.2
+=====
+
+*2017-12-07*
+
+**Enhancements**
+
+- 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
+  to print useful debug messages on stderr (useful in case of nasty errors).
+- 1177_: added support for sensors_battery() on OSX.  (patch by Arnon Yaari)
+- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
+- 1188_: deprecated method Process.memory_info_ex() now warns by using
+  FutureWarning instead of DeprecationWarning.
+
+**Bug fixes**
+
+- 1152_: [Windows] disk_io_counters() may return an empty dict.
+- 1169_: [Linux] users() "hostname" returns username instead.  (patch by
+  janderbrain)
+- 1172_: [Windows] `make test` does not work.
+- 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
+  misbehaving processes which overwrite /proc/pid/cmdline and use spaces
+  instead of null bytes as args separator.
+- 1181_: [OSX] Process.memory_maps() may raise ENOENT.
+- 1187_: [OSX] pids() does not return PID 0 on recent OSX versions.
+
+5.4.1
+=====
+
+*2017-11-08*
+
+**Enhancements**
+
+- 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
+  Yaari)
+- 1053_: abandon Python 3.3 support (psutil still works but it's no longer
+  tested).
+
+**Bug fixes**
+
+- 1150_: [Windows] when a process is terminate()d now the exit code is set to
+  SIGTERM instead of 0.  (patch by Akos Kiss)
+- 1151_: python -m psutil.tests fail
+- 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
+- 1167_: [Windows] net_io_counter() packets count now include also non-unicast
+  packets.  (patch by Matthew Long)
+
+5.4.0
+=====
+
+*2017-10-12*
+
+**Enhancements**
+
+- 1123_: [AIX] added support for AIX platform.  (patch by Arnon Yaari)
+
+**Bug fixes**
+
+- 1009_: [Linux] sensors_temperatures() may crash with IOError.
+- 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
+  in tens of micro seconds instead of milliseconds.
+- 1127_: [OSX] invalid reference counting in Process.open_files() may lead to
+  segfault.  (patch by Jakub Bacic)
+- 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
+  Saip)
+- 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
+- 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
+  (patch by Max Bélanger)
+- 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
+  (patch by Prodesire)
+
+5.3.1
+=====
+
+*2017-09-10*
+
+**Enhancements**
+
+- 1124_: documentation moved to http://psutil.readthedocs.io
+
+**Bug fixes**
+
+- 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
+- 1125_: [BSD] net_connections() raises TypeError.
+
+**Compatibility notes**
+
+- 1120_: .exe files for Windows are no longer uploaded on PYPI as per PEP-527;
+  only wheels are provided.
+
+5.3.0
+=====
+
+*2017-09-01*
+
+**Enhancements**
+
+- 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
+  (restart from 0). Introduced a new "nowrap" argument.
+- 928_: psutil.net_connections() and psutil.Process.connections() "laddr" and
+  "raddr" are now named tuples.
+- 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
+  so that it can be used in conjunction with PROCFS_PATH in order to retrieve
+  memory info about Linux containers such as Docker and Heroku.
+- 1022_: psutil.users() provides a new "pid" field.
+- 1025_: process_iter() accepts two new parameters in order to invoke
+  Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
+  processes in one shot without needing to catch NoSuchProcess and do list/dict
+  comprehensions.
+- 1040_: implemented full unicode support.
+- 1051_: disk_usage() on Python 3 is now able to accept bytes.
+- 1058_: test suite now enables all warnings by default.
+- 1060_: source distribution is dynamically generated so that it only includes
+  relevant files.
+- 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
+  (instead of -1).  (patch by Gleb Smirnoff)
+- 1091_: [SunOS] implemented Process.environ().  (patch by Oleksii Shevchuk)
+
+**Bug fixes**
+
+- 989_: [Windows] boot_time() may return a negative value.
+- 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
+  value of the first call is now cached so that boot_time() always returns the
+  same value if fluctuation is <= 1 second.
+- 1013_: [FreeBSD] psutil.net_connections() may return incorrect PID.  (patch
+  by Gleb Smirnoff)
+- 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
+  NoSuchProcess.
+- 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
+- 1017_: net_io_counters() raises RuntimeError on a system with no network
+  cards installed.
+- 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
+  skipping a file which gets deleted while open files are retrieved.
+- 1029_: [OSX, FreeBSD] Process.connections('unix') on Python 3 doesn't
+  properly handle unicode paths and may raise UnicodeDecodeError.
+- 1033_: [OSX, FreeBSD] memory leak for net_connections() and
+  Process.connections() when retrieving UNIX sockets (kind='unix').
+- 1040_: fixed many unicode related issues such as UnicodeDecodeError on
+  Python 3 + UNIX and invalid encoded data on Windows.
+- 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
+- 1044_: [OSX] different Process methods incorrectly raise AccessDenied for
+  zombie processes.
+- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
+- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1048_: [Windows] users()'s host field report an invalid IP address.
+- 1050_: [Windows] Process.memory_maps memory() leaks memory.
+- 1055_: cpu_count() is no longer cached; this is useful on systems such as
+  Linux where CPUs can be disabled at runtime. This also reflects on
+  Process.cpu_percent() which no longer uses the cache.
+- 1058_: fixed Python warnings.
+- 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
+  or NICs are installed on the system.
+- 1063_: [NetBSD] net_connections() may list incorrect sockets.
+- 1064_: [NetBSD] swap_memory() may segfault in case of error.
+- 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
+- 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
+- 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
+  processes.
+- 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
+- 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
+- 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
+- 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
+  (patch by Oleksii Shevchuk)
+- 1077_: [SunOS] net_connections() does not work on SunOS 5.10. (patch by
+  Oleksii Shevchuk)
+- 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
+  (patch by Gleb Smirnoff)
+- 1085_: cpu_count() return value is now checked and forced to None if <= 1.
+- 1087_: Process.cpu_percent() guard against cpu_count() returning None and
+  assumes 1 instead.
+- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
+- 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
+  on OpenProcess Windows API now check whether the PID is actually running.
+- 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
+  is still alive.
+- 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
+  process already died.
+- 1101_: [Linux] sensors_temperatures() may raise ENODEV.
+
+**Porting notes**
+
+- 1039_: returned types consolidation:
+  - Windows / Process.cpu_times(): fields #3 and #4 were int instead of float
+  - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
+    None
+  - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
+    None
+- 1040_: all strings are encoded by using OS fs encoding.
+- 1040_: the following Windows APIs on Python 2 now return a string instead of
+  unicode:
+  - Process.memory_maps().path
+  - WindowsService.bin_path()
+  - WindowsService.description()
+  - WindowsService.display_name()
+  - WindowsService.username()
+
+5.2.2
+=====
+
+*2017-04-10*
+
+**Bug fixes**
+
+- 1000_: fixed some setup.py warnings.
+- 1002_: [SunOS] remove C macro which will not be available on new Solaris
+  versions. (patch by Danek Duvall)
+- 1004_: [Linux] Process.io_counters() may raise ValueError.
+- 1006_: [Linux] cpu_freq() may return None on some Linux versions does not
+  support the function; now the function is not declared instead.
+- 1009_: [Linux] sensors_temperatures() may raise OSError.
+- 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
+
+5.2.1
+=====
+
+*2017-03-24*
+
+**Bug fixes**
+
+- 981_: [Linux] cpu_freq() may return an empty list.
+- 993_: [Windows] Process.memory_maps() on Python 3 may raise
+  UnicodeDecodeError.
+- 996_: [Linux] sensors_temperatures() may not show all temperatures.
+- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
+  FreeBSD 12.
+
+5.2.0
+=====
+
+*2017-03-05*
+
+**Enhancements**
+
+- 971_: [Linux] Add psutil.sensors_fans() function.  (patch by Nicolas Hennion)
+- 976_: [Windows] Process.io_counters() has 2 new fields: *other_count* and
+  *other_bytes*.
+- 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
+  *write_chars*.
+
+**Bug fixes**
+
+- 872_: [Linux] can now compile on Linux by using MUSL C library.
+- 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread for `NtQueryObject` times out.
+- 986_: [Linux] Process.cwd() may raise NoSuchProcess instead of ZombieProcess.
+
+5.1.3
+=====
+
+**Bug fixes**
+
+- 971_: [Linux] sensors_temperatures() didn't work on CentOS 7.
+- 973_: cpu_percent() may raise ZeroDivisionError.
+
+5.1.2
+=====
+
+*2017-02-03*
+
+**Bug fixes**
+
+- 966_: [Linux] sensors_battery().power_plugged may erroneously return None on
+  Python 3.
+- 968_: [Linux] disk_io_counters() raises TypeError on python 3.
+- 970_: [Linux] sensors_battery()'s name and label fields on Python 3 are bytes
+  instead of str.
+
+5.1.1
+=====
+
+*2017-02-03*
+
+**Enhancements**
+
+- 966_: [Linux] sensors_battery().percent is a float and is more precise.
+
+**Bug fixes**
+
+- 964_: [Windows] Process.username() and psutil.users() may return badly
+  decoding character on Python 3.
+- 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
+  wrong number of bytes read and written.
+- 966_: [Linux] sensors_battery() may fail with "no such file error".
+- 966_: [Linux] sensors_battery().power_plugged may lie.
+
+5.1.0
+=====
+
+*2017-02-01*
+
+**Enhancements**
+
+- 357_: added psutil.Process.cpu_num() (what CPU a process is on).
+- 371_: added psutil.sensors_temperatures() (Linux only).
+- 941_: added psutil.cpu_freq() (CPU frequency).
+- 955_: added psutil.sensors_battery() (Linux, Windows, only).
+- 956_: cpu_affinity([]) can now be used as an alias to set affinity against
+  all eligible CPUs.
+
+**Bug fixes**
+
+- 687_: [Linux] pid_exists() no longer returns True if passed a process thread
+  ID.
+- 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+  higher number than real usage.
+- 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
+- 959_: psutil exception objects could not be pickled.
+- 960_: Popen.wait() did not return the correct negative exit status if process
+  is ``kill()``ed by a signal.
+- 961_: [Windows] WindowsService.description() may fail with
+  ERROR_MUI_FILE_NOT_FOUND.
+
 5.0.1
 =====
 
-*XXXX-XX-XX*
+*2016-12-21*
 
 **Enhancements**
 
@@ -13,8 +338,12 @@
 
 **Bug fixes**
 
+- 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
-
+- 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
+  incorrectly as "iowait", "guest" and "guest_nice" times were not properly
+  taken into account.
+- 944_: [OpenBSD] psutil.pids() was omitting PID 0.
 
 5.0.0
 =====
@@ -33,7 +362,6 @@
   raising an exception.
 - 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
 
-
 4.4.2
 =====
 
@@ -43,7 +371,6 @@
 
 - 931_: psutil no longer compiles on Solaris.
 
-
 4.4.1
 =====
 
@@ -52,7 +379,6 @@
 **Bug fixes**
 
 - 927_: ``Popen.__del__`` may cause maximum recursion depth error.
-
 
 4.4.0
 =====
@@ -90,7 +416,6 @@
   OSError with no exception set if process is gone.
 - 916_: [OSX] fix many compilation warnings.
 
-
 4.3.1
 =====
 
@@ -115,7 +440,6 @@
   unit (ms instead of sec).
 - 870_: [Windows] Handle leak inside psutil_get_process_data.
 
-
 4.3.0
 =====
 
@@ -139,7 +463,6 @@
 - 816_: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
-
 4.2.0
 =====
 
@@ -161,7 +484,6 @@
 - 797_: [Linux] net_if_stats() may raise OSError for certain NIC cards.
 - 813_: Process.as_dict() should ignore extraneous attribute names which gets
   attached to the Process instance.
-
 
 4.1.0
 =====
@@ -189,7 +511,6 @@
 - 786_: net_if_addrs() may report incomplete MAC addresses.
 - 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
 - 790_: [OSX] psutil won't compile on OSX 10.4.
-
 
 4.0.0
 =====
@@ -234,7 +555,6 @@
   broken on 2.4 kernels.
 - 770_: [NetBSD] disk_io_counters() metrics didn't update.
 
-
 3.4.2
 =====
 
@@ -249,7 +569,6 @@
 
 - 724_: [FreeBSD] psutil.virtual_memory().total is incorrect.
 - 730_: [FreeBSD] psutil.virtual_memory() crashes.
-
 
 3.4.1
 =====
@@ -274,7 +593,6 @@
   due to missing /proc/vmstat.
 - 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
 
-
 3.3.0
 =====
 
@@ -289,7 +607,6 @@
 **Bug fixes**
 
 - 692_: [UNIX] Process.name() is no longer cached as it may change.
-
 
 3.2.2
 =====
@@ -309,7 +626,6 @@
 - 688_: [Windows] compilation fails with MSVC 2015, Python 3.5. (patch by
   Mike Sarahan)
 
-
 3.2.1
 =====
 
@@ -318,7 +634,6 @@
 **Bug fixes**
 
 - 677_: [Linux] can't install psutil due to bug in setup.py.
-
 
 3.2.0
 =====
@@ -359,7 +674,6 @@
 - 675_: [Linux] net_connections(); UnicodeDecodeError may occur when listing
   UNIX sockets.
 
-
 3.1.1
 =====
 
@@ -370,7 +684,6 @@
 - 603_: [Linux] ionice_set value range is incorrect.  (patch by spacewander)
 - 645_: [Linux] psutil.cpu_times_percent() may produce negative results.
 - 656_: 'from psutil import *' does not work.
-
 
 3.1.0
 =====
@@ -384,8 +697,7 @@
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
   https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
-- 651_: continuous code quality test integration with
-  https://scrutinizer-ci.com/g/giampaolo/psutil/
+- 651_: continuous code quality test integration with scrutinizer-ci.com
 
 **Bug fixes**
 
@@ -404,7 +716,6 @@
 - 653_: [Windows] Add inet_ntop function for Windows XP to support IPv6.
 - 641_: [Windows] Replace deprecated string functions with safe equivalents.
 
-
 3.0.1
 =====
 
@@ -416,7 +727,6 @@
 - 634_: [Linux] Proces.cmdline() does not include empty string arguments.
 - 635_: [UNIX] crash on module import if 'enum' package is installed on python
   < 3.4.
-
 
 3.0.0
 =====
@@ -465,7 +775,6 @@
 - 628_: [Linux] Process.name() truncates process name in case it contains
   spaces or parentheses.
 
-
 2.2.1
 =====
 
@@ -475,7 +784,6 @@
 
 - 496_: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
   (patch by Bruno Binet)
-
 
 2.2.0
 =====
@@ -507,14 +815,12 @@
 - 571_: [Linux] Process.open_files() might swallow AccessDenied exceptions and
   return an incomplete list of open files.
 
-
 2.1.3
 =====
 
 *2014-09-26*
 
 - 536_: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
-
 
 2.1.2
 =====
@@ -546,7 +852,6 @@
   (< 2.6.5)  (patch by Yaolong Huang)
 - 533_: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
 
-
 2.1.1
 =====
 
@@ -558,7 +863,6 @@
   (patch by Szigeti Gabor Niif)
 - 460_: [Windows] net_io_counters() wraps after 4G.
 - 491_: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
-
 
 2.1.0
 =====
@@ -574,7 +878,6 @@
 - 421_: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
   Roudsari)
 - 489_: [Linux] psutil.disk_partitions() return an empty list.
-
 
 2.0.0
 =====
@@ -744,7 +1047,6 @@ DeprecationWarning.
 - Process instances' "retcode" attribute returned by psutil.wait_procs() has
   been renamed to "returncode" for consistency with subprocess.Popen.
 
-
 1.2.1
 =====
 
@@ -756,7 +1058,6 @@ DeprecationWarning.
   import.
 - 425_: [Solaris] crash on import due to failure at determining BOOT_TIME.
 - 443_: [Linux] can't set CPU affinity on systems with more than 64 cores.
-
 
 1.2.0
 =====
@@ -775,7 +1076,6 @@ DeprecationWarning.
 - 348_: [Windows XP/Vista] fix "ImportError: DLL load failed" occurring on
   module import.
 
-
 1.1.3
 =====
 
@@ -785,7 +1085,6 @@ DeprecationWarning.
 
 - 442_: [Linux] psutil won't compile on certain version of Linux because of
   missing prlimit(2) syscall.
-
 
 1.1.2
 =====
@@ -797,7 +1096,6 @@ DeprecationWarning.
 - 442_: [Linux] psutil won't compile on Debian 6.0 because of missing
   prlimit(2) syscall.
 
-
 1.1.1
 =====
 
@@ -807,7 +1105,6 @@ DeprecationWarning.
 
 - 442_: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
   prlimit(2) syscall.
-
 
 1.1.0
 =====
@@ -839,7 +1136,6 @@ DeprecationWarning.
 
 - 408_: turn STATUS_* and CONN_* constants into plain Python strings.
 
-
 1.0.1
 =====
 
@@ -848,7 +1144,6 @@ DeprecationWarning.
 **Bug fixes**
 
 - 405_: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
-
 
 1.0.0
 =====
@@ -879,7 +1174,6 @@ DeprecationWarning.
   renamed to 'laddr' and 'raddr'.
 - psutil.network_io_counters() renamed to psutil.net_io_counters().
 
-
 0.7.1
 =====
 
@@ -892,7 +1186,6 @@ DeprecationWarning.
 - 370_: [BSD] Process.get_connections() requires root.  (patch by John Baldwin)
 - 372_: [BSD] different process methods raise NoSuchProcess instead of
   AccessDenied.
-
 
 0.7.0
 =====
@@ -957,7 +1250,6 @@ DeprecationWarning.
   will raise NotImplementedError instead of RuntimeError.
 - psutil.error module is deprecated and scheduled for removal.
 
-
 0.6.1
 =====
 
@@ -977,7 +1269,6 @@ DeprecationWarning.
 
 - process exe can now return an empty string instead of raising AccessDenied.
 - process exe is no longer resolved in case it's a symlink.
-
 
 0.6.0
 =====
@@ -1068,7 +1359,6 @@ DeprecationWarning.
 - [Windows and BSD] psutil.virtmem_usage() now returns information about swap
   memory instead of virtual memory.
 
-
 0.5.1
 =====
 
@@ -1083,7 +1373,6 @@ DeprecationWarning.
 
 - 292_: [Linux] race condition in process files/threads/connections.
 - 294_: [Windows] Process CPU affinity is only able to set CPU #0.
-
 
 0.5.0
 =====
@@ -1155,7 +1444,6 @@ DeprecationWarning.
 - psutil.STATUS_* constants can now be compared by using their string
   representation.
 
-
 0.4.1
 =====
 
@@ -1169,7 +1457,6 @@ DeprecationWarning.
   different than "free" command.
 - 236_: [Windows] memory/handle leak in Process's get_memory_info(),
   suspend() and resume() methods.
-
 
 0.4.0
 =====
@@ -1211,7 +1498,6 @@ DeprecationWarning.
   line in /proc/meminfo.
 - 226_: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
-
 0.3.0
 =====
 
@@ -1240,7 +1526,6 @@ DeprecationWarning.
 - 178_: OSX - Process.get_threads() leaks memory
 - 180_: [Windows] Process's get_num_threads() and get_threads() methods can
   raise NoSuchProcess exception while process still exists.
-
 
 0.2.1
 =====
@@ -1283,7 +1568,6 @@ DeprecationWarning.
 
 - Process "uid" and "gid" properties are deprecated in favor of "uids" and
   "gids" properties.
-
 
 0.2.0
 =====
@@ -1346,7 +1630,6 @@ DeprecationWarning.
 - psutil.Process.get_cpu_percent() and psutil.cpu_percent() no longer returns
   immediately by default (see issue 123).
 
-
 0.1.3
 =====
 
@@ -1377,7 +1660,6 @@ DeprecationWarning.
 - 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
   used first.
 
-
 0.1.2
 =====
 
@@ -1400,7 +1682,6 @@ DeprecationWarning.
 - 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
 - 40_: test_get_cpu_times() failing on FreeBSD and OS X.
 - 42_: [Windows] get_memory_percent() raises AccessDenied.
-
 
 0.1.1
 =====
@@ -2436,3 +2717,504 @@ DeprecationWarning.
 .. _997: https://github.com/giampaolo/psutil/issues/997
 .. _998: https://github.com/giampaolo/psutil/issues/998
 .. _999: https://github.com/giampaolo/psutil/issues/999
+.. _1000: https://github.com/giampaolo/psutil/issues/1000
+.. _1001: https://github.com/giampaolo/psutil/issues/1001
+.. _1002: https://github.com/giampaolo/psutil/issues/1002
+.. _1003: https://github.com/giampaolo/psutil/issues/1003
+.. _1004: https://github.com/giampaolo/psutil/issues/1004
+.. _1005: https://github.com/giampaolo/psutil/issues/1005
+.. _1006: https://github.com/giampaolo/psutil/issues/1006
+.. _1007: https://github.com/giampaolo/psutil/issues/1007
+.. _1008: https://github.com/giampaolo/psutil/issues/1008
+.. _1009: https://github.com/giampaolo/psutil/issues/1009
+.. _1010: https://github.com/giampaolo/psutil/issues/1010
+.. _1011: https://github.com/giampaolo/psutil/issues/1011
+.. _1012: https://github.com/giampaolo/psutil/issues/1012
+.. _1013: https://github.com/giampaolo/psutil/issues/1013
+.. _1014: https://github.com/giampaolo/psutil/issues/1014
+.. _1015: https://github.com/giampaolo/psutil/issues/1015
+.. _1016: https://github.com/giampaolo/psutil/issues/1016
+.. _1017: https://github.com/giampaolo/psutil/issues/1017
+.. _1018: https://github.com/giampaolo/psutil/issues/1018
+.. _1019: https://github.com/giampaolo/psutil/issues/1019
+.. _1020: https://github.com/giampaolo/psutil/issues/1020
+.. _1021: https://github.com/giampaolo/psutil/issues/1021
+.. _1022: https://github.com/giampaolo/psutil/issues/1022
+.. _1023: https://github.com/giampaolo/psutil/issues/1023
+.. _1024: https://github.com/giampaolo/psutil/issues/1024
+.. _1025: https://github.com/giampaolo/psutil/issues/1025
+.. _1026: https://github.com/giampaolo/psutil/issues/1026
+.. _1027: https://github.com/giampaolo/psutil/issues/1027
+.. _1028: https://github.com/giampaolo/psutil/issues/1028
+.. _1029: https://github.com/giampaolo/psutil/issues/1029
+.. _1030: https://github.com/giampaolo/psutil/issues/1030
+.. _1031: https://github.com/giampaolo/psutil/issues/1031
+.. _1032: https://github.com/giampaolo/psutil/issues/1032
+.. _1033: https://github.com/giampaolo/psutil/issues/1033
+.. _1034: https://github.com/giampaolo/psutil/issues/1034
+.. _1035: https://github.com/giampaolo/psutil/issues/1035
+.. _1036: https://github.com/giampaolo/psutil/issues/1036
+.. _1037: https://github.com/giampaolo/psutil/issues/1037
+.. _1038: https://github.com/giampaolo/psutil/issues/1038
+.. _1039: https://github.com/giampaolo/psutil/issues/1039
+.. _1040: https://github.com/giampaolo/psutil/issues/1040
+.. _1041: https://github.com/giampaolo/psutil/issues/1041
+.. _1042: https://github.com/giampaolo/psutil/issues/1042
+.. _1043: https://github.com/giampaolo/psutil/issues/1043
+.. _1044: https://github.com/giampaolo/psutil/issues/1044
+.. _1045: https://github.com/giampaolo/psutil/issues/1045
+.. _1046: https://github.com/giampaolo/psutil/issues/1046
+.. _1047: https://github.com/giampaolo/psutil/issues/1047
+.. _1048: https://github.com/giampaolo/psutil/issues/1048
+.. _1049: https://github.com/giampaolo/psutil/issues/1049
+.. _1050: https://github.com/giampaolo/psutil/issues/1050
+.. _1051: https://github.com/giampaolo/psutil/issues/1051
+.. _1052: https://github.com/giampaolo/psutil/issues/1052
+.. _1053: https://github.com/giampaolo/psutil/issues/1053
+.. _1054: https://github.com/giampaolo/psutil/issues/1054
+.. _1055: https://github.com/giampaolo/psutil/issues/1055
+.. _1056: https://github.com/giampaolo/psutil/issues/1056
+.. _1057: https://github.com/giampaolo/psutil/issues/1057
+.. _1058: https://github.com/giampaolo/psutil/issues/1058
+.. _1059: https://github.com/giampaolo/psutil/issues/1059
+.. _1060: https://github.com/giampaolo/psutil/issues/1060
+.. _1061: https://github.com/giampaolo/psutil/issues/1061
+.. _1062: https://github.com/giampaolo/psutil/issues/1062
+.. _1063: https://github.com/giampaolo/psutil/issues/1063
+.. _1064: https://github.com/giampaolo/psutil/issues/1064
+.. _1065: https://github.com/giampaolo/psutil/issues/1065
+.. _1066: https://github.com/giampaolo/psutil/issues/1066
+.. _1067: https://github.com/giampaolo/psutil/issues/1067
+.. _1068: https://github.com/giampaolo/psutil/issues/1068
+.. _1069: https://github.com/giampaolo/psutil/issues/1069
+.. _1070: https://github.com/giampaolo/psutil/issues/1070
+.. _1071: https://github.com/giampaolo/psutil/issues/1071
+.. _1072: https://github.com/giampaolo/psutil/issues/1072
+.. _1073: https://github.com/giampaolo/psutil/issues/1073
+.. _1074: https://github.com/giampaolo/psutil/issues/1074
+.. _1075: https://github.com/giampaolo/psutil/issues/1075
+.. _1076: https://github.com/giampaolo/psutil/issues/1076
+.. _1077: https://github.com/giampaolo/psutil/issues/1077
+.. _1078: https://github.com/giampaolo/psutil/issues/1078
+.. _1079: https://github.com/giampaolo/psutil/issues/1079
+.. _1080: https://github.com/giampaolo/psutil/issues/1080
+.. _1081: https://github.com/giampaolo/psutil/issues/1081
+.. _1082: https://github.com/giampaolo/psutil/issues/1082
+.. _1083: https://github.com/giampaolo/psutil/issues/1083
+.. _1084: https://github.com/giampaolo/psutil/issues/1084
+.. _1085: https://github.com/giampaolo/psutil/issues/1085
+.. _1086: https://github.com/giampaolo/psutil/issues/1086
+.. _1087: https://github.com/giampaolo/psutil/issues/1087
+.. _1088: https://github.com/giampaolo/psutil/issues/1088
+.. _1089: https://github.com/giampaolo/psutil/issues/1089
+.. _1090: https://github.com/giampaolo/psutil/issues/1090
+.. _1091: https://github.com/giampaolo/psutil/issues/1091
+.. _1092: https://github.com/giampaolo/psutil/issues/1092
+.. _1093: https://github.com/giampaolo/psutil/issues/1093
+.. _1094: https://github.com/giampaolo/psutil/issues/1094
+.. _1095: https://github.com/giampaolo/psutil/issues/1095
+.. _1096: https://github.com/giampaolo/psutil/issues/1096
+.. _1097: https://github.com/giampaolo/psutil/issues/1097
+.. _1098: https://github.com/giampaolo/psutil/issues/1098
+.. _1099: https://github.com/giampaolo/psutil/issues/1099
+.. _1100: https://github.com/giampaolo/psutil/issues/1100
+.. _1101: https://github.com/giampaolo/psutil/issues/1101
+.. _1102: https://github.com/giampaolo/psutil/issues/1102
+.. _1103: https://github.com/giampaolo/psutil/issues/1103
+.. _1104: https://github.com/giampaolo/psutil/issues/1104
+.. _1105: https://github.com/giampaolo/psutil/issues/1105
+.. _1106: https://github.com/giampaolo/psutil/issues/1106
+.. _1107: https://github.com/giampaolo/psutil/issues/1107
+.. _1108: https://github.com/giampaolo/psutil/issues/1108
+.. _1109: https://github.com/giampaolo/psutil/issues/1109
+.. _1110: https://github.com/giampaolo/psutil/issues/1110
+.. _1111: https://github.com/giampaolo/psutil/issues/1111
+.. _1112: https://github.com/giampaolo/psutil/issues/1112
+.. _1113: https://github.com/giampaolo/psutil/issues/1113
+.. _1114: https://github.com/giampaolo/psutil/issues/1114
+.. _1115: https://github.com/giampaolo/psutil/issues/1115
+.. _1116: https://github.com/giampaolo/psutil/issues/1116
+.. _1117: https://github.com/giampaolo/psutil/issues/1117
+.. _1118: https://github.com/giampaolo/psutil/issues/1118
+.. _1119: https://github.com/giampaolo/psutil/issues/1119
+.. _1120: https://github.com/giampaolo/psutil/issues/1120
+.. _1121: https://github.com/giampaolo/psutil/issues/1121
+.. _1122: https://github.com/giampaolo/psutil/issues/1122
+.. _1123: https://github.com/giampaolo/psutil/issues/1123
+.. _1124: https://github.com/giampaolo/psutil/issues/1124
+.. _1125: https://github.com/giampaolo/psutil/issues/1125
+.. _1126: https://github.com/giampaolo/psutil/issues/1126
+.. _1127: https://github.com/giampaolo/psutil/issues/1127
+.. _1128: https://github.com/giampaolo/psutil/issues/1128
+.. _1129: https://github.com/giampaolo/psutil/issues/1129
+.. _1130: https://github.com/giampaolo/psutil/issues/1130
+.. _1131: https://github.com/giampaolo/psutil/issues/1131
+.. _1132: https://github.com/giampaolo/psutil/issues/1132
+.. _1133: https://github.com/giampaolo/psutil/issues/1133
+.. _1134: https://github.com/giampaolo/psutil/issues/1134
+.. _1135: https://github.com/giampaolo/psutil/issues/1135
+.. _1136: https://github.com/giampaolo/psutil/issues/1136
+.. _1137: https://github.com/giampaolo/psutil/issues/1137
+.. _1138: https://github.com/giampaolo/psutil/issues/1138
+.. _1139: https://github.com/giampaolo/psutil/issues/1139
+.. _1140: https://github.com/giampaolo/psutil/issues/1140
+.. _1141: https://github.com/giampaolo/psutil/issues/1141
+.. _1142: https://github.com/giampaolo/psutil/issues/1142
+.. _1143: https://github.com/giampaolo/psutil/issues/1143
+.. _1144: https://github.com/giampaolo/psutil/issues/1144
+.. _1145: https://github.com/giampaolo/psutil/issues/1145
+.. _1146: https://github.com/giampaolo/psutil/issues/1146
+.. _1147: https://github.com/giampaolo/psutil/issues/1147
+.. _1148: https://github.com/giampaolo/psutil/issues/1148
+.. _1149: https://github.com/giampaolo/psutil/issues/1149
+.. _1150: https://github.com/giampaolo/psutil/issues/1150
+.. _1151: https://github.com/giampaolo/psutil/issues/1151
+.. _1152: https://github.com/giampaolo/psutil/issues/1152
+.. _1153: https://github.com/giampaolo/psutil/issues/1153
+.. _1154: https://github.com/giampaolo/psutil/issues/1154
+.. _1155: https://github.com/giampaolo/psutil/issues/1155
+.. _1156: https://github.com/giampaolo/psutil/issues/1156
+.. _1157: https://github.com/giampaolo/psutil/issues/1157
+.. _1158: https://github.com/giampaolo/psutil/issues/1158
+.. _1159: https://github.com/giampaolo/psutil/issues/1159
+.. _1160: https://github.com/giampaolo/psutil/issues/1160
+.. _1161: https://github.com/giampaolo/psutil/issues/1161
+.. _1162: https://github.com/giampaolo/psutil/issues/1162
+.. _1163: https://github.com/giampaolo/psutil/issues/1163
+.. _1164: https://github.com/giampaolo/psutil/issues/1164
+.. _1165: https://github.com/giampaolo/psutil/issues/1165
+.. _1166: https://github.com/giampaolo/psutil/issues/1166
+.. _1167: https://github.com/giampaolo/psutil/issues/1167
+.. _1168: https://github.com/giampaolo/psutil/issues/1168
+.. _1169: https://github.com/giampaolo/psutil/issues/1169
+.. _1170: https://github.com/giampaolo/psutil/issues/1170
+.. _1171: https://github.com/giampaolo/psutil/issues/1171
+.. _1172: https://github.com/giampaolo/psutil/issues/1172
+.. _1173: https://github.com/giampaolo/psutil/issues/1173
+.. _1174: https://github.com/giampaolo/psutil/issues/1174
+.. _1175: https://github.com/giampaolo/psutil/issues/1175
+.. _1176: https://github.com/giampaolo/psutil/issues/1176
+.. _1177: https://github.com/giampaolo/psutil/issues/1177
+.. _1178: https://github.com/giampaolo/psutil/issues/1178
+.. _1179: https://github.com/giampaolo/psutil/issues/1179
+.. _1180: https://github.com/giampaolo/psutil/issues/1180
+.. _1181: https://github.com/giampaolo/psutil/issues/1181
+.. _1182: https://github.com/giampaolo/psutil/issues/1182
+.. _1183: https://github.com/giampaolo/psutil/issues/1183
+.. _1184: https://github.com/giampaolo/psutil/issues/1184
+.. _1185: https://github.com/giampaolo/psutil/issues/1185
+.. _1186: https://github.com/giampaolo/psutil/issues/1186
+.. _1187: https://github.com/giampaolo/psutil/issues/1187
+.. _1188: https://github.com/giampaolo/psutil/issues/1188
+.. _1189: https://github.com/giampaolo/psutil/issues/1189
+.. _1190: https://github.com/giampaolo/psutil/issues/1190
+.. _1191: https://github.com/giampaolo/psutil/issues/1191
+.. _1192: https://github.com/giampaolo/psutil/issues/1192
+.. _1193: https://github.com/giampaolo/psutil/issues/1193
+.. _1194: https://github.com/giampaolo/psutil/issues/1194
+.. _1195: https://github.com/giampaolo/psutil/issues/1195
+.. _1196: https://github.com/giampaolo/psutil/issues/1196
+.. _1197: https://github.com/giampaolo/psutil/issues/1197
+.. _1198: https://github.com/giampaolo/psutil/issues/1198
+.. _1199: https://github.com/giampaolo/psutil/issues/1199
+.. _1200: https://github.com/giampaolo/psutil/issues/1200
+.. _1201: https://github.com/giampaolo/psutil/issues/1201
+.. _1202: https://github.com/giampaolo/psutil/issues/1202
+.. _1203: https://github.com/giampaolo/psutil/issues/1203
+.. _1204: https://github.com/giampaolo/psutil/issues/1204
+.. _1205: https://github.com/giampaolo/psutil/issues/1205
+.. _1206: https://github.com/giampaolo/psutil/issues/1206
+.. _1207: https://github.com/giampaolo/psutil/issues/1207
+.. _1208: https://github.com/giampaolo/psutil/issues/1208
+.. _1209: https://github.com/giampaolo/psutil/issues/1209
+.. _1210: https://github.com/giampaolo/psutil/issues/1210
+.. _1211: https://github.com/giampaolo/psutil/issues/1211
+.. _1212: https://github.com/giampaolo/psutil/issues/1212
+.. _1213: https://github.com/giampaolo/psutil/issues/1213
+.. _1214: https://github.com/giampaolo/psutil/issues/1214
+.. _1215: https://github.com/giampaolo/psutil/issues/1215
+.. _1216: https://github.com/giampaolo/psutil/issues/1216
+.. _1217: https://github.com/giampaolo/psutil/issues/1217
+.. _1218: https://github.com/giampaolo/psutil/issues/1218
+.. _1219: https://github.com/giampaolo/psutil/issues/1219
+.. _1220: https://github.com/giampaolo/psutil/issues/1220
+.. _1221: https://github.com/giampaolo/psutil/issues/1221
+.. _1222: https://github.com/giampaolo/psutil/issues/1222
+.. _1223: https://github.com/giampaolo/psutil/issues/1223
+.. _1224: https://github.com/giampaolo/psutil/issues/1224
+.. _1225: https://github.com/giampaolo/psutil/issues/1225
+.. _1226: https://github.com/giampaolo/psutil/issues/1226
+.. _1227: https://github.com/giampaolo/psutil/issues/1227
+.. _1228: https://github.com/giampaolo/psutil/issues/1228
+.. _1229: https://github.com/giampaolo/psutil/issues/1229
+.. _1230: https://github.com/giampaolo/psutil/issues/1230
+.. _1231: https://github.com/giampaolo/psutil/issues/1231
+.. _1232: https://github.com/giampaolo/psutil/issues/1232
+.. _1233: https://github.com/giampaolo/psutil/issues/1233
+.. _1234: https://github.com/giampaolo/psutil/issues/1234
+.. _1235: https://github.com/giampaolo/psutil/issues/1235
+.. _1236: https://github.com/giampaolo/psutil/issues/1236
+.. _1237: https://github.com/giampaolo/psutil/issues/1237
+.. _1238: https://github.com/giampaolo/psutil/issues/1238
+.. _1239: https://github.com/giampaolo/psutil/issues/1239
+.. _1240: https://github.com/giampaolo/psutil/issues/1240
+.. _1241: https://github.com/giampaolo/psutil/issues/1241
+.. _1242: https://github.com/giampaolo/psutil/issues/1242
+.. _1243: https://github.com/giampaolo/psutil/issues/1243
+.. _1244: https://github.com/giampaolo/psutil/issues/1244
+.. _1245: https://github.com/giampaolo/psutil/issues/1245
+.. _1246: https://github.com/giampaolo/psutil/issues/1246
+.. _1247: https://github.com/giampaolo/psutil/issues/1247
+.. _1248: https://github.com/giampaolo/psutil/issues/1248
+.. _1249: https://github.com/giampaolo/psutil/issues/1249
+.. _1250: https://github.com/giampaolo/psutil/issues/1250
+.. _1251: https://github.com/giampaolo/psutil/issues/1251
+.. _1252: https://github.com/giampaolo/psutil/issues/1252
+.. _1253: https://github.com/giampaolo/psutil/issues/1253
+.. _1254: https://github.com/giampaolo/psutil/issues/1254
+.. _1255: https://github.com/giampaolo/psutil/issues/1255
+.. _1256: https://github.com/giampaolo/psutil/issues/1256
+.. _1257: https://github.com/giampaolo/psutil/issues/1257
+.. _1258: https://github.com/giampaolo/psutil/issues/1258
+.. _1259: https://github.com/giampaolo/psutil/issues/1259
+.. _1260: https://github.com/giampaolo/psutil/issues/1260
+.. _1261: https://github.com/giampaolo/psutil/issues/1261
+.. _1262: https://github.com/giampaolo/psutil/issues/1262
+.. _1263: https://github.com/giampaolo/psutil/issues/1263
+.. _1264: https://github.com/giampaolo/psutil/issues/1264
+.. _1265: https://github.com/giampaolo/psutil/issues/1265
+.. _1266: https://github.com/giampaolo/psutil/issues/1266
+.. _1267: https://github.com/giampaolo/psutil/issues/1267
+.. _1268: https://github.com/giampaolo/psutil/issues/1268
+.. _1269: https://github.com/giampaolo/psutil/issues/1269
+.. _1270: https://github.com/giampaolo/psutil/issues/1270
+.. _1271: https://github.com/giampaolo/psutil/issues/1271
+.. _1272: https://github.com/giampaolo/psutil/issues/1272
+.. _1273: https://github.com/giampaolo/psutil/issues/1273
+.. _1274: https://github.com/giampaolo/psutil/issues/1274
+.. _1275: https://github.com/giampaolo/psutil/issues/1275
+.. _1276: https://github.com/giampaolo/psutil/issues/1276
+.. _1277: https://github.com/giampaolo/psutil/issues/1277
+.. _1278: https://github.com/giampaolo/psutil/issues/1278
+.. _1279: https://github.com/giampaolo/psutil/issues/1279
+.. _1280: https://github.com/giampaolo/psutil/issues/1280
+.. _1281: https://github.com/giampaolo/psutil/issues/1281
+.. _1282: https://github.com/giampaolo/psutil/issues/1282
+.. _1283: https://github.com/giampaolo/psutil/issues/1283
+.. _1284: https://github.com/giampaolo/psutil/issues/1284
+.. _1285: https://github.com/giampaolo/psutil/issues/1285
+.. _1286: https://github.com/giampaolo/psutil/issues/1286
+.. _1287: https://github.com/giampaolo/psutil/issues/1287
+.. _1288: https://github.com/giampaolo/psutil/issues/1288
+.. _1289: https://github.com/giampaolo/psutil/issues/1289
+.. _1290: https://github.com/giampaolo/psutil/issues/1290
+.. _1291: https://github.com/giampaolo/psutil/issues/1291
+.. _1292: https://github.com/giampaolo/psutil/issues/1292
+.. _1293: https://github.com/giampaolo/psutil/issues/1293
+.. _1294: https://github.com/giampaolo/psutil/issues/1294
+.. _1295: https://github.com/giampaolo/psutil/issues/1295
+.. _1296: https://github.com/giampaolo/psutil/issues/1296
+.. _1297: https://github.com/giampaolo/psutil/issues/1297
+.. _1298: https://github.com/giampaolo/psutil/issues/1298
+.. _1299: https://github.com/giampaolo/psutil/issues/1299
+.. _1300: https://github.com/giampaolo/psutil/issues/1300
+.. _1301: https://github.com/giampaolo/psutil/issues/1301
+.. _1302: https://github.com/giampaolo/psutil/issues/1302
+.. _1303: https://github.com/giampaolo/psutil/issues/1303
+.. _1304: https://github.com/giampaolo/psutil/issues/1304
+.. _1305: https://github.com/giampaolo/psutil/issues/1305
+.. _1306: https://github.com/giampaolo/psutil/issues/1306
+.. _1307: https://github.com/giampaolo/psutil/issues/1307
+.. _1308: https://github.com/giampaolo/psutil/issues/1308
+.. _1309: https://github.com/giampaolo/psutil/issues/1309
+.. _1310: https://github.com/giampaolo/psutil/issues/1310
+.. _1311: https://github.com/giampaolo/psutil/issues/1311
+.. _1312: https://github.com/giampaolo/psutil/issues/1312
+.. _1313: https://github.com/giampaolo/psutil/issues/1313
+.. _1314: https://github.com/giampaolo/psutil/issues/1314
+.. _1315: https://github.com/giampaolo/psutil/issues/1315
+.. _1316: https://github.com/giampaolo/psutil/issues/1316
+.. _1317: https://github.com/giampaolo/psutil/issues/1317
+.. _1318: https://github.com/giampaolo/psutil/issues/1318
+.. _1319: https://github.com/giampaolo/psutil/issues/1319
+.. _1320: https://github.com/giampaolo/psutil/issues/1320
+.. _1321: https://github.com/giampaolo/psutil/issues/1321
+.. _1322: https://github.com/giampaolo/psutil/issues/1322
+.. _1323: https://github.com/giampaolo/psutil/issues/1323
+.. _1324: https://github.com/giampaolo/psutil/issues/1324
+.. _1325: https://github.com/giampaolo/psutil/issues/1325
+.. _1326: https://github.com/giampaolo/psutil/issues/1326
+.. _1327: https://github.com/giampaolo/psutil/issues/1327
+.. _1328: https://github.com/giampaolo/psutil/issues/1328
+.. _1329: https://github.com/giampaolo/psutil/issues/1329
+.. _1330: https://github.com/giampaolo/psutil/issues/1330
+.. _1331: https://github.com/giampaolo/psutil/issues/1331
+.. _1332: https://github.com/giampaolo/psutil/issues/1332
+.. _1333: https://github.com/giampaolo/psutil/issues/1333
+.. _1334: https://github.com/giampaolo/psutil/issues/1334
+.. _1335: https://github.com/giampaolo/psutil/issues/1335
+.. _1336: https://github.com/giampaolo/psutil/issues/1336
+.. _1337: https://github.com/giampaolo/psutil/issues/1337
+.. _1338: https://github.com/giampaolo/psutil/issues/1338
+.. _1339: https://github.com/giampaolo/psutil/issues/1339
+.. _1340: https://github.com/giampaolo/psutil/issues/1340
+.. _1341: https://github.com/giampaolo/psutil/issues/1341
+.. _1342: https://github.com/giampaolo/psutil/issues/1342
+.. _1343: https://github.com/giampaolo/psutil/issues/1343
+.. _1344: https://github.com/giampaolo/psutil/issues/1344
+.. _1345: https://github.com/giampaolo/psutil/issues/1345
+.. _1346: https://github.com/giampaolo/psutil/issues/1346
+.. _1347: https://github.com/giampaolo/psutil/issues/1347
+.. _1348: https://github.com/giampaolo/psutil/issues/1348
+.. _1349: https://github.com/giampaolo/psutil/issues/1349
+.. _1350: https://github.com/giampaolo/psutil/issues/1350
+.. _1351: https://github.com/giampaolo/psutil/issues/1351
+.. _1352: https://github.com/giampaolo/psutil/issues/1352
+.. _1353: https://github.com/giampaolo/psutil/issues/1353
+.. _1354: https://github.com/giampaolo/psutil/issues/1354
+.. _1355: https://github.com/giampaolo/psutil/issues/1355
+.. _1356: https://github.com/giampaolo/psutil/issues/1356
+.. _1357: https://github.com/giampaolo/psutil/issues/1357
+.. _1358: https://github.com/giampaolo/psutil/issues/1358
+.. _1359: https://github.com/giampaolo/psutil/issues/1359
+.. _1360: https://github.com/giampaolo/psutil/issues/1360
+.. _1361: https://github.com/giampaolo/psutil/issues/1361
+.. _1362: https://github.com/giampaolo/psutil/issues/1362
+.. _1363: https://github.com/giampaolo/psutil/issues/1363
+.. _1364: https://github.com/giampaolo/psutil/issues/1364
+.. _1365: https://github.com/giampaolo/psutil/issues/1365
+.. _1366: https://github.com/giampaolo/psutil/issues/1366
+.. _1367: https://github.com/giampaolo/psutil/issues/1367
+.. _1368: https://github.com/giampaolo/psutil/issues/1368
+.. _1369: https://github.com/giampaolo/psutil/issues/1369
+.. _1370: https://github.com/giampaolo/psutil/issues/1370
+.. _1371: https://github.com/giampaolo/psutil/issues/1371
+.. _1372: https://github.com/giampaolo/psutil/issues/1372
+.. _1373: https://github.com/giampaolo/psutil/issues/1373
+.. _1374: https://github.com/giampaolo/psutil/issues/1374
+.. _1375: https://github.com/giampaolo/psutil/issues/1375
+.. _1376: https://github.com/giampaolo/psutil/issues/1376
+.. _1377: https://github.com/giampaolo/psutil/issues/1377
+.. _1378: https://github.com/giampaolo/psutil/issues/1378
+.. _1379: https://github.com/giampaolo/psutil/issues/1379
+.. _1380: https://github.com/giampaolo/psutil/issues/1380
+.. _1381: https://github.com/giampaolo/psutil/issues/1381
+.. _1382: https://github.com/giampaolo/psutil/issues/1382
+.. _1383: https://github.com/giampaolo/psutil/issues/1383
+.. _1384: https://github.com/giampaolo/psutil/issues/1384
+.. _1385: https://github.com/giampaolo/psutil/issues/1385
+.. _1386: https://github.com/giampaolo/psutil/issues/1386
+.. _1387: https://github.com/giampaolo/psutil/issues/1387
+.. _1388: https://github.com/giampaolo/psutil/issues/1388
+.. _1389: https://github.com/giampaolo/psutil/issues/1389
+.. _1390: https://github.com/giampaolo/psutil/issues/1390
+.. _1391: https://github.com/giampaolo/psutil/issues/1391
+.. _1392: https://github.com/giampaolo/psutil/issues/1392
+.. _1393: https://github.com/giampaolo/psutil/issues/1393
+.. _1394: https://github.com/giampaolo/psutil/issues/1394
+.. _1395: https://github.com/giampaolo/psutil/issues/1395
+.. _1396: https://github.com/giampaolo/psutil/issues/1396
+.. _1397: https://github.com/giampaolo/psutil/issues/1397
+.. _1398: https://github.com/giampaolo/psutil/issues/1398
+.. _1399: https://github.com/giampaolo/psutil/issues/1399
+.. _1400: https://github.com/giampaolo/psutil/issues/1400
+.. _1401: https://github.com/giampaolo/psutil/issues/1401
+.. _1402: https://github.com/giampaolo/psutil/issues/1402
+.. _1403: https://github.com/giampaolo/psutil/issues/1403
+.. _1404: https://github.com/giampaolo/psutil/issues/1404
+.. _1405: https://github.com/giampaolo/psutil/issues/1405
+.. _1406: https://github.com/giampaolo/psutil/issues/1406
+.. _1407: https://github.com/giampaolo/psutil/issues/1407
+.. _1408: https://github.com/giampaolo/psutil/issues/1408
+.. _1409: https://github.com/giampaolo/psutil/issues/1409
+.. _1410: https://github.com/giampaolo/psutil/issues/1410
+.. _1411: https://github.com/giampaolo/psutil/issues/1411
+.. _1412: https://github.com/giampaolo/psutil/issues/1412
+.. _1413: https://github.com/giampaolo/psutil/issues/1413
+.. _1414: https://github.com/giampaolo/psutil/issues/1414
+.. _1415: https://github.com/giampaolo/psutil/issues/1415
+.. _1416: https://github.com/giampaolo/psutil/issues/1416
+.. _1417: https://github.com/giampaolo/psutil/issues/1417
+.. _1418: https://github.com/giampaolo/psutil/issues/1418
+.. _1419: https://github.com/giampaolo/psutil/issues/1419
+.. _1420: https://github.com/giampaolo/psutil/issues/1420
+.. _1421: https://github.com/giampaolo/psutil/issues/1421
+.. _1422: https://github.com/giampaolo/psutil/issues/1422
+.. _1423: https://github.com/giampaolo/psutil/issues/1423
+.. _1424: https://github.com/giampaolo/psutil/issues/1424
+.. _1425: https://github.com/giampaolo/psutil/issues/1425
+.. _1426: https://github.com/giampaolo/psutil/issues/1426
+.. _1427: https://github.com/giampaolo/psutil/issues/1427
+.. _1428: https://github.com/giampaolo/psutil/issues/1428
+.. _1429: https://github.com/giampaolo/psutil/issues/1429
+.. _1430: https://github.com/giampaolo/psutil/issues/1430
+.. _1431: https://github.com/giampaolo/psutil/issues/1431
+.. _1432: https://github.com/giampaolo/psutil/issues/1432
+.. _1433: https://github.com/giampaolo/psutil/issues/1433
+.. _1434: https://github.com/giampaolo/psutil/issues/1434
+.. _1435: https://github.com/giampaolo/psutil/issues/1435
+.. _1436: https://github.com/giampaolo/psutil/issues/1436
+.. _1437: https://github.com/giampaolo/psutil/issues/1437
+.. _1438: https://github.com/giampaolo/psutil/issues/1438
+.. _1439: https://github.com/giampaolo/psutil/issues/1439
+.. _1440: https://github.com/giampaolo/psutil/issues/1440
+.. _1441: https://github.com/giampaolo/psutil/issues/1441
+.. _1442: https://github.com/giampaolo/psutil/issues/1442
+.. _1443: https://github.com/giampaolo/psutil/issues/1443
+.. _1444: https://github.com/giampaolo/psutil/issues/1444
+.. _1445: https://github.com/giampaolo/psutil/issues/1445
+.. _1446: https://github.com/giampaolo/psutil/issues/1446
+.. _1447: https://github.com/giampaolo/psutil/issues/1447
+.. _1448: https://github.com/giampaolo/psutil/issues/1448
+.. _1449: https://github.com/giampaolo/psutil/issues/1449
+.. _1450: https://github.com/giampaolo/psutil/issues/1450
+.. _1451: https://github.com/giampaolo/psutil/issues/1451
+.. _1452: https://github.com/giampaolo/psutil/issues/1452
+.. _1453: https://github.com/giampaolo/psutil/issues/1453
+.. _1454: https://github.com/giampaolo/psutil/issues/1454
+.. _1455: https://github.com/giampaolo/psutil/issues/1455
+.. _1456: https://github.com/giampaolo/psutil/issues/1456
+.. _1457: https://github.com/giampaolo/psutil/issues/1457
+.. _1458: https://github.com/giampaolo/psutil/issues/1458
+.. _1459: https://github.com/giampaolo/psutil/issues/1459
+.. _1460: https://github.com/giampaolo/psutil/issues/1460
+.. _1461: https://github.com/giampaolo/psutil/issues/1461
+.. _1462: https://github.com/giampaolo/psutil/issues/1462
+.. _1463: https://github.com/giampaolo/psutil/issues/1463
+.. _1464: https://github.com/giampaolo/psutil/issues/1464
+.. _1465: https://github.com/giampaolo/psutil/issues/1465
+.. _1466: https://github.com/giampaolo/psutil/issues/1466
+.. _1467: https://github.com/giampaolo/psutil/issues/1467
+.. _1468: https://github.com/giampaolo/psutil/issues/1468
+.. _1469: https://github.com/giampaolo/psutil/issues/1469
+.. _1470: https://github.com/giampaolo/psutil/issues/1470
+.. _1471: https://github.com/giampaolo/psutil/issues/1471
+.. _1472: https://github.com/giampaolo/psutil/issues/1472
+.. _1473: https://github.com/giampaolo/psutil/issues/1473
+.. _1474: https://github.com/giampaolo/psutil/issues/1474
+.. _1475: https://github.com/giampaolo/psutil/issues/1475
+.. _1476: https://github.com/giampaolo/psutil/issues/1476
+.. _1477: https://github.com/giampaolo/psutil/issues/1477
+.. _1478: https://github.com/giampaolo/psutil/issues/1478
+.. _1479: https://github.com/giampaolo/psutil/issues/1479
+.. _1480: https://github.com/giampaolo/psutil/issues/1480
+.. _1481: https://github.com/giampaolo/psutil/issues/1481
+.. _1482: https://github.com/giampaolo/psutil/issues/1482
+.. _1483: https://github.com/giampaolo/psutil/issues/1483
+.. _1484: https://github.com/giampaolo/psutil/issues/1484
+.. _1485: https://github.com/giampaolo/psutil/issues/1485
+.. _1486: https://github.com/giampaolo/psutil/issues/1486
+.. _1487: https://github.com/giampaolo/psutil/issues/1487
+.. _1488: https://github.com/giampaolo/psutil/issues/1488
+.. _1489: https://github.com/giampaolo/psutil/issues/1489
+.. _1490: https://github.com/giampaolo/psutil/issues/1490
+.. _1491: https://github.com/giampaolo/psutil/issues/1491
+.. _1492: https://github.com/giampaolo/psutil/issues/1492
+.. _1493: https://github.com/giampaolo/psutil/issues/1493
+.. _1494: https://github.com/giampaolo/psutil/issues/1494
+.. _1495: https://github.com/giampaolo/psutil/issues/1495
+.. _1496: https://github.com/giampaolo/psutil/issues/1496
+.. _1497: https://github.com/giampaolo/psutil/issues/1497
+.. _1498: https://github.com/giampaolo/psutil/issues/1498
+.. _1499: https://github.com/giampaolo/psutil/issues/1499
+.. _1500: https://github.com/giampaolo/psutil/issues/1500

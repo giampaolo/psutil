@@ -21,7 +21,7 @@
 
 #include "process_info.h"
 #include "../../_psutil_common.h"
-
+#include "../../_psutil_posix.h"
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -141,13 +141,12 @@ psutil_get_cmdline(long pid) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) {
-            // EINVAL == access denied OR nonexistent PID
-            if (psutil_pid_exists(pid))
-                AccessDenied();
-            else
-                NoSuchProcess();
-        }
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -177,12 +176,8 @@ psutil_get_cmdline(long pid) {
         goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(curr_arg);
-#else
-            py_arg = Py_BuildValue("s", curr_arg);
-#endif
-            if (!py_arg)
+            if (! py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
@@ -240,13 +235,12 @@ psutil_get_environ(long pid) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) {
-            // EINVAL == access denied OR nonexistent PID
-            if (psutil_pid_exists(pid))
-                AccessDenied();
-            else
-                NoSuchProcess();
-        }
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -293,13 +287,8 @@ psutil_get_environ(long pid) {
         arg_ptr = s + 1;
     }
 
-#if PY_MAJOR_VERSION >= 3
     py_ret = PyUnicode_DecodeFSDefaultAndSize(
         procenv, arg_ptr - env_start + 1);
-#else
-    py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
-#endif
-
     if (!py_ret) {
         // XXX: don't want to free() this as per:
         // https://github.com/giampaolo/psutil/issues/926
@@ -349,7 +338,7 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -365,7 +354,7 @@ psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
     int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
     if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
-        psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+        psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
     return ret;

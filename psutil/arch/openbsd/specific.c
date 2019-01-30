@@ -35,14 +35,11 @@
 #include <arpa/inet.h> // for inet_ntoa()
 #include <err.h> // for warn() & err()
 
-
 #include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 // #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-
-// a signaler for connections without an actual status
-int PSUTIL_CONN_NONE = 128;
 
 
 // ============================================================================
@@ -70,7 +67,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -102,6 +99,7 @@ kinfo_getfile(long pid, int* cnt) {
     }
     mib[5] = (int)(len / sizeof(struct kinfo_file));
     if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
+        free(kf);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -170,18 +168,21 @@ _psutil_get_argv(long pid) {
     static char **argv;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
     size_t argv_size = 128;
-    /* Loop and reallocate until we have enough space to fit argv. */
+    // Loop and reallocate until we have enough space to fit argv.
     for (;; argv_size *= 2) {
-        if ((argv = realloc(argv, argv_size)) == NULL)
-            err(1, NULL);
-        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
-            return argv;
-        if (errno == ESRCH) {
-            PyErr_SetFromErrno(PyExc_OSError);
+        if (argv_size >= 8192) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "can't allocate enough space for KERN_PROC_ARGV");
             return NULL;
         }
-        if (errno != ENOMEM)
-            err(1, NULL);
+        if ((argv = realloc(argv, argv_size)) == NULL)
+            continue;
+        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
+            return argv;
+        if (errno == ENOMEM)
+            continue;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
     }
 }
 
@@ -203,11 +204,7 @@ psutil_get_cmdline(long pid) {
         goto error;
 
     for (p = argv; *p != NULL; p++) {
-#if PY_MAJOR_VERSION >= 3
         py_arg = PyUnicode_DecodeFSDefault(*p);
-#else
-        py_arg = Py_BuildValue("s", *p);
-#endif
         if (!py_arg)
             goto error;
         if (PyList_Append(py_retlist, py_arg))
@@ -245,7 +242,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
     if (! kd) {
         if (strstr(errbuf, "Permission denied") != NULL)
-            AccessDenied();
+            AccessDenied("");
         else
             PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() syscall failed");
         goto error;
@@ -256,7 +253,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         sizeof(*kp), &nentries);
     if (! kp) {
         if (strstr(errbuf, "Permission denied") != NULL)
-            AccessDenied();
+            AccessDenied("");
         else
             PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() syscall failed");
         goto error;
@@ -407,7 +404,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         return NULL;
     }
     free(freep);
@@ -419,7 +416,8 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     // Reference:
-    // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n179
+    // https://github.com/openbsd/src/blob/
+    //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L191
     long pid;
     struct kinfo_proc kp;
     char path[MAXPATHLEN];
@@ -435,11 +433,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(path);
-#else
-    return Py_BuildValue("s", path);
-#endif
 }
 
 
@@ -479,15 +473,21 @@ psutil_inet6_addrstr(struct in6_addr *p)
 }
 
 
+/*
+ * List process connections.
+ * Note: there is no net_connections() on OpenBSD. The Python
+ * implementation will iterate over all processes and use this
+ * function.
+ * Note: local and remote paths cannot be determined for UNIX sockets.
+ */
 PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     long pid;
-    int i, cnt;
-
+    int i;
+    int cnt;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     char *tcplist = NULL;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -509,7 +509,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
@@ -608,15 +608,18 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
             }
-            // UNIX socket
+            // UNIX socket.
+            // XXX: local addr is supposed to be in "unp_path" but it
+            // always empty; also "fstat" command is not able to show
+            // UNIX socket paths.
             else if (kif->so_family == AF_UNIX) {
                 py_tuple = Py_BuildValue(
-                    "(iiisOi)",
+                    "(iiissi)",
                     kif->fd_fd,
                     kif->so_family,
                     kif->so_type,
-                    kif->unp_path,
-                    Py_None,
+                    "",  // laddr (kif->unp_path is empty)
+                    "",  // raddr
                     PSUTIL_CONN_NONE);
                 if (!py_tuple)
                     goto error;
@@ -707,7 +710,7 @@ PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i, dk_ndrive, mib[3];
     size_t len;
-    struct diskstats *stats;
+    struct diskstats *stats = NULL;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;

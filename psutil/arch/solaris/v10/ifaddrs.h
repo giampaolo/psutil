@@ -1,8 +1,8 @@
 /* Reference: https://lists.samba.org/archive/samba-technical/2009-February/063079.html */
 
 
-#ifndef __IFADDRS_H___
-#define __IFADDRS_H___
+#ifndef __IFADDRS_H__
+#define __IFADDRS_H__
 
 #include <sys/socket.h>
 #include <net/if.h>

@@ -10,13 +10,16 @@
 import datetime
 import errno
 import os
+import re
 import subprocess
 import sys
 import time
 
 import psutil
+from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
+from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
@@ -26,7 +29,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
-from psutil.tests import PYTHON
+from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
@@ -35,6 +38,7 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
+from psutil.tests import which
 
 
 def ps(cmd):
@@ -44,12 +48,10 @@ def ps(cmd):
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
     if SUNOS:
-        cmd = cmd.replace("-o command", "-o comm")
         cmd = cmd.replace("-o start", "-o stime")
-    p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
-    output = p.communicate()[0].strip()
-    if PY3:
-        output = str(output, sys.stdout.encoding)
+    if AIX:
+        cmd = cmd.replace("-o rss", "-o rssize")
+    output = sh(cmd)
     if not LINUX:
         output = output.split('\n')[1].strip()
     try:
@@ -57,22 +59,45 @@ def ps(cmd):
     except ValueError:
         return output
 
+# ps "-o" field names differ wildly between platforms.
+# "comm" means "only executable name" but is not available on BSD platforms.
+# "args" means "command with all its arguments", and is also not available
+# on BSD platforms.
+# "command" is like "args" on most platforms, but like "comm" on AIX,
+# and not available on SUNOS.
+# so for the executable name we can use "comm" on Solaris and split "command"
+# on other platforms.
+# to get the cmdline (with args) we have to use "args" on AIX and
+# Solaris, and can use "command" on all others.
 
-@unittest.skipUnless(POSIX, "POSIX only")
+
+def ps_name(pid):
+    field = "command"
+    if SUNOS:
+        field = "comm"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid)).split(' ')[0]
+
+
+def ps_args(pid):
+    field = "command"
+    if AIX or SUNOS:
+        field = "args"
+    return ps("ps --no-headers -o %s -p %s" % (field, pid))
+
+
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess([PYTHON, "-E", "-O"],
+        cls.pid = get_test_subprocess([PYTHON_EXE, "-E", "-O"],
                                       stdin=subprocess.PIPE).pid
         wait_for_pid(cls.pid)
 
     @classmethod
     def tearDownClass(cls):
         reap_children()
-
-    # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def test_ppid(self):
         ppid_ps = ps("ps --no-headers -o ppid -p %s" % self.pid)
@@ -93,6 +118,15 @@ class TestProcess(unittest.TestCase):
         username_ps = ps("ps --no-headers -o user -p %s" % self.pid)
         username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
+
+    def test_username_no_resolution(self):
+        # Emulate a case where the system can't resolve the uid to
+        # a username in which case psutil is supposed to return
+        # the stringified uid.
+        p = psutil.Process()
+        with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
+            self.assertEqual(p.username(), str(p.uids().real))
+            assert fun.called
 
     @skip_on_access_denied()
     @retry_before_failing()
@@ -115,13 +149,51 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_name(self):
-        # use command + arg since "comm" keyword not supported on all platforms
-        name_ps = ps("ps --no-headers -o command -p %s" % (
-            self.pid)).split(' ')[0]
+        name_ps = ps_name(self.pid)
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
+        # ...because of how we calculate PYTHON_EXE; on OSX this may
+        # be "pythonX.Y".
+        name_ps = re.sub(r"\d.\d", "", name_ps)
+        name_psutil = re.sub(r"\d.\d", "", name_psutil)
         self.assertEqual(name_ps, name_psutil)
+
+    def test_name_long(self):
+        # On UNIX the kernel truncates the name to the first 15
+        # characters. In such a case psutil tries to determine the
+        # full name from the cmdline.
+        name = "long-program-name"
+        cmdline = ["long-program-name-extended", "foo", "bar"]
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            return_value=cmdline):
+                p = psutil.Process()
+                self.assertEqual(p.name(), "long-program-name-extended")
+
+    def test_name_long_cmdline_ad_exc(self):
+        # Same as above but emulates a case where cmdline() raises
+        # AccessDenied in which case psutil is supposed to return
+        # the truncated name instead of crashing.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            side_effect=psutil.AccessDenied(0, "")):
+                p = psutil.Process()
+                self.assertEqual(p.name(), "long-program-name")
+
+    def test_name_long_cmdline_nsp_exc(self):
+        # Same as above but emulates a case where cmdline() raises NSP
+        # which is supposed to propagate.
+        name = "long-program-name"
+        with mock.patch("psutil._psplatform.Process.name",
+                        return_value=name):
+            with mock.patch("psutil._psplatform.Process.cmdline",
+                            side_effect=psutil.NoSuchProcess(0, "")):
+                p = psutil.Process()
+                self.assertRaises(psutil.NoSuchProcess, p.name)
 
     @unittest.skipIf(OSX or BSD, 'ps -o start not available')
     def test_create_time(self):
@@ -137,8 +209,7 @@ class TestProcess(unittest.TestCase):
         self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
     def test_exe(self):
-        ps_pathname = ps("ps --no-headers -o command -p %s" %
-                         self.pid).split(' ')[0]
+        ps_pathname = ps_name(self.pid)
         psutil_pathname = psutil.Process(self.pid).exe()
         try:
             self.assertEqual(ps_pathname, psutil_pathname)
@@ -153,13 +224,17 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
     def test_cmdline(self):
-        ps_cmdline = ps("ps --no-headers -o command -p %s" % self.pid)
+        ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        if SUNOS:
-            # ps on Solaris only shows the first part of the cmdline
-            psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
+    # incorrect value (20); the real deal is getpriority(2) which
+    # returns 0; psutil relies on it, see:
+    # https://github.com/giampaolo/psutil/issues/1082
+    # AIX has the same issue
+    @unittest.skipIf(SUNOS, "not reliable on SUNOS")
+    @unittest.skipIf(AIX, "not reliable on AIX")
     def test_nice(self):
         ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
         psutil_nice = psutil.Process().nice()
@@ -181,7 +256,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(os.getpid())
         failures = []
         ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'children', 'as_dict']
+                         'send_signal', 'wait', 'children', 'as_dict',
+                         'memory_info_ex']
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
         if LINUX and get_kernel_version() < (2, 6, 23):
@@ -205,14 +281,8 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    @unittest.skipUnless(os.path.islink("/proc/%s/cwd" % os.getpid()),
-                         "/proc fs not available")
-    def test_cwd(self):
-        self.assertEqual(os.readlink("/proc/%s/cwd" % os.getpid()),
-                         psutil.Process().cwd())
 
-
-@unittest.skipUnless(POSIX, "POSIX only")
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestSystemAPIs(unittest.TestCase):
     """Test some system APIs."""
 
@@ -220,7 +290,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        if SUNOS:
+        if SUNOS or AIX:
             cmd = ["ps", "-A", "-o", "pid"]
         else:
             cmd = ["ps", "ax", "-o", "pid"]
@@ -240,26 +310,18 @@ class TestSystemAPIs(unittest.TestCase):
         pids_ps.sort()
         pids_psutil.sort()
 
-        # on OSX ps doesn't show pid 0
-        if OSX and 0 not in pids_ps:
+        # on OSX and OPENBSD ps doesn't show pid 0
+        if OSX or OPENBSD and 0 not in pids_ps:
             pids_ps.insert(0, 0)
-
-        if pids_ps != pids_psutil:
-            difference = [x for x in pids_psutil if x not in pids_ps] + \
-                         [x for x in pids_ps if x not in pids_psutil]
-            self.fail("difference: " + str(difference))
+        self.assertEqual(pids_ps, pids_psutil)
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
+    @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
     def test_nic_names(self):
-        p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0].strip()
-        if p.returncode != 0:
-            raise unittest.SkipTest('ifconfig returned no output')
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True).keys():
             for line in output.split():
                 if line.startswith(nic):
@@ -277,11 +339,11 @@ class TestSystemAPIs(unittest.TestCase):
         out = sh("who")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
-        self.assertEqual(len(users), len(psutil.users()))
         terminals = [x.split()[1] for x in lines]
+        self.assertEqual(len(users), len(psutil.users()))
         for u in psutil.users():
-            self.assertTrue(u.name in users, u.name)
-            self.assertTrue(u.terminal in terminals, u.terminal)
+            self.assertIn(u.name, users)
+            self.assertIn(u.terminal, terminals)
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
@@ -317,6 +379,8 @@ class TestSystemAPIs(unittest.TestCase):
                               psutil._psposix.wait_pid, os.getpid())
             assert m.called
 
+    # AIX can return '-' in df output instead of numbers, e.g. for /proc
+    @unittest.skipIf(AIX, "unreliable on AIX")
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()
@@ -337,8 +401,10 @@ class TestSystemAPIs(unittest.TestCase):
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
                 # https://travis-ci.org/giampaolo/psutil/jobs/138343361
-                if "no such file or directory" in str(err).lower() or \
-                        "raw devices not supported" in str(err).lower():
+                err = str(err).lower()
+                if "no such file or directory" in err or \
+                        "raw devices not supported" in err or \
+                        "permission denied" in err:
                     continue
                 else:
                     raise

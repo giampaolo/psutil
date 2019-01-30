@@ -10,13 +10,16 @@ import functools
 import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
+from socket import AF_INET
 
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
+from ._common import AF_INET6
 from ._common import conn_tmap
 from ._common import FREEBSD
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NETBSD
 from ._common import OPENBSD
@@ -24,12 +27,15 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import which
+from ._exceptions import AccessDenied
+from ._exceptions import NoSuchProcess
+from ._exceptions import ZombieProcess
 
 __extra__all__ = []
 
 
 # =====================================================================
-# --- constants
+# --- globals
 # =====================================================================
 
 
@@ -121,7 +127,8 @@ kinfo_proc_map = dict(
     memtext=20,
     memdata=21,
     memstack=22,
-    name=23,
+    cpunum=23,
+    name=24,
 )
 
 
@@ -130,20 +137,27 @@ kinfo_proc_map = dict(
 # =====================================================================
 
 
-# extend base mem ntuple with BSD-specific memory metrics
+# psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
+# psutil.cpu_times()
 scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+# psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
+# psutil.Process.memory_full_info()
 pfullmem = pmem
+# psutil.Process.cpu_times()
 pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system'])
+# psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
+# psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
+# psutil.disk_io_counters()
 if FREEBSD:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes',
@@ -152,18 +166,6 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
-
-
-# =====================================================================
-# --- exceptions
-# =====================================================================
-
-
-# these get overwritten on "import psutil" from the __init__.py file
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
@@ -227,6 +229,7 @@ else:
     # crash at psutil import time.
     # Next calls will fail with NotImplementedError
     def per_cpu_times():
+        """Return system CPU times as a namedtuple"""
         if cpu_count_logical() == 1:
             return [cpu_times()]
         if per_cpu_times.__called__:
@@ -276,6 +279,7 @@ else:
 
 
 def cpu_stats():
+    """Return various CPU stats as a named tuple."""
     if FREEBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
@@ -351,6 +355,7 @@ def net_if_stats():
 
 
 def net_connections(kind):
+    """System-wide network connections."""
     if OPENBSD:
         ret = []
         for pid in pids():
@@ -386,11 +391,40 @@ def net_connections(kind):
                 # have a very short lifetime so maybe the kernel
                 # can't initialize their status?
                 status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+            if fam in (AF_INET, AF_INET6):
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
     return list(ret)
+
+
+# =====================================================================
+#  --- sensors
+# =====================================================================
+
+
+if FREEBSD:
+
+    def sensors_battery():
+        """Return battery info."""
+        try:
+            percent, minsleft, power_plugged = cext.sensors_battery()
+        except NotImplementedError:
+            # See: https://github.com/giampaolo/psutil/issues/1074
+            return None
+        power_plugged = power_plugged == 1
+        if power_plugged:
+            secsleft = _common.POWER_TIME_UNLIMITED
+        elif minsleft == -1:
+            secsleft = _common.POWER_TIME_UNKNOWN
+        else:
+            secsleft = minsleft * 60
+        return _common.sbattery(percent, secsleft, power_plugged)
 
 
 # =====================================================================
@@ -404,13 +438,17 @@ def boot_time():
 
 
 def users():
+    """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
-        user, tty, hostname, tstamp = item
+        user, tty, hostname, tstamp, pid = item
+        if pid == -1:
+            assert OPENBSD
+            pid = None
         if tty == '~':
             continue  # reboot or shutdown
-        nt = _common.suser(user, tty or None, hostname, tstamp)
+        nt = _common.suser(user, tty or None, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -420,10 +458,31 @@ def users():
 # =====================================================================
 
 
-pids = cext.pids
+@memoize
+def _pid_0_exists():
+    try:
+        Process(0).name()
+    except NoSuchProcess:
+        return False
+    except AccessDenied:
+        return True
+    else:
+        return True
+
+
+def pids():
+    """Returns a list of PIDs currently running on the system."""
+    ret = cext.pids()
+    if OPENBSD and (0 not in ret) and _pid_0_exists():
+        # On OpenBSD the kernel does not return PID 0 (neither does
+        # ps) but it's actually querable (Process(0) will succeed).
+        ret.insert(0, 0)
+    return ret
+
 
 if OPENBSD or NETBSD:
     def pid_exists(pid):
+        """Return True if pid exists."""
         exists = _psposix.pid_exists(pid)
         if not exists:
             # We do this because _psposix.pid_exists() lies in case of
@@ -462,6 +521,7 @@ def wrap_exceptions(fun):
 
 @contextlib.contextmanager
 def wrap_exceptions_procfs(inst):
+    """Same as above, for routines relying on reading /proc fs."""
     try:
         yield
     except EnvironmentError as err:
@@ -589,6 +649,11 @@ class Process(object):
             rawtuple[kinfo_proc_map['ch_user_time']],
             rawtuple[kinfo_proc_map['ch_sys_time']])
 
+    if FREEBSD:
+        @wrap_exceptions
+        def cpu_num(self):
+            return self.oneshot()[kinfo_proc_map['cpunum']]
+
     @wrap_exceptions
     def memory_info(self):
         rawtuple = self.oneshot()
@@ -653,6 +718,11 @@ class Process(object):
                         status = TCP_STATUSES[status]
                     except KeyError:
                         status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+                    if fam in (AF_INET, AF_INET6):
+                        if laddr:
+                            laddr = _common.addr(*laddr)
+                        if raddr:
+                            raddr = _common.addr(*raddr)
                     fam = sockfam_to_enum(fam)
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
@@ -668,6 +738,11 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            if fam in (AF_INET, AF_INET6):
+                if laddr:
+                    laddr = _common.addr(*laddr)
+                if raddr:
+                    raddr = _common.addr(*raddr)
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
@@ -682,10 +757,7 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        try:
-            return _psposix.wait_pid(self.pid, timeout)
-        except _psposix.TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._name)
+        return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def nice_get(self):

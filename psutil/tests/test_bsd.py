@@ -13,8 +13,6 @@
 import datetime
 import os
 import re
-import subprocess
-import sys
 import time
 
 import psutil
@@ -22,8 +20,8 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil._compat import PY3
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -74,7 +72,7 @@ def muse(field):
 # =====================================================================
 
 
-@unittest.skipUnless(BSD, "BSD only")
+@unittest.skipIf(not BSD, "BSD only")
 class BSDSpecificTestCase(unittest.TestCase):
     """Generic tests common to all BSD variants."""
 
@@ -86,12 +84,9 @@ class BSDSpecificTestCase(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
+    @unittest.skipIf(NETBSD, "-o lstart doesn't work on NETBSD")
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" % self.pid
-        p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0]
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time()
         start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
@@ -143,8 +138,9 @@ class BSDSpecificTestCase(unittest.TestCase):
                 pass
             else:
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
-                self.assertEqual(stats.mtu,
-                                 int(re.findall('mtu (\d+)', out)[0]))
+                if "mtu" in out:
+                    self.assertEqual(stats.mtu,
+                                     int(re.findall(r'mtu (\d+)', out)[0]))
 
 
 # =====================================================================
@@ -152,7 +148,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(FREEBSD, "FREEBSD only")
+@unittest.skipIf(not FREEBSD, "FREEBSD only")
 class FreeBSDSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -281,47 +277,47 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- virtual_memory(); tests against muse
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     def test_muse_vmem_total(self):
         num = muse('Total')
         self.assertEqual(psutil.virtual_memory().total, num)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_active(self):
         num = muse('Active')
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_wired(self):
         num = muse('Wired')
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_cached(self):
         num = muse('Cache')
         self.assertAlmostEqual(psutil.virtual_memory().cached, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_free(self):
         num = muse('Free')
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
                                delta=MEMORY_TOLERANCE)
 
-    @unittest.skipUnless(MUSE_AVAILABLE, "muse not installed")
+    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_before_failing()
     def test_muse_vmem_buffers(self):
         num = muse('Buffer')
@@ -357,13 +353,57 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         btime = int(s)
         self.assertEqual(btime, psutil.boot_time())
 
+    # --- sensors_battery
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_sensors_battery(self):
+        def secs2hours(secs):
+            m, s = divmod(secs, 60)
+            h, m = divmod(m, 60)
+            return "%d:%02d" % (h, m)
+
+        out = sh("acpiconf -i 0")
+        fields = dict([(x.split('\t')[0], x.split('\t')[-1])
+                       for x in out.split("\n")])
+        metrics = psutil.sensors_battery()
+        percent = int(fields['Remaining capacity:'].replace('%', ''))
+        remaining_time = fields['Remaining time:']
+        self.assertEqual(metrics.percent, percent)
+        if remaining_time == 'unknown':
+            self.assertEqual(metrics.secsleft, psutil.POWER_TIME_UNLIMITED)
+        else:
+            self.assertEqual(secs2hours(metrics.secsleft), remaining_time)
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_sensors_battery_against_sysctl(self):
+        self.assertEqual(psutil.sensors_battery().percent,
+                         sysctl("hw.acpi.battery.life"))
+        self.assertEqual(psutil.sensors_battery().power_plugged,
+                         sysctl("hw.acpi.acline") == 1)
+        secsleft = psutil.sensors_battery().secsleft
+        if secsleft < 0:
+            self.assertEqual(sysctl("hw.acpi.battery.time"), -1)
+        else:
+            self.assertEqual(secsleft, sysctl("hw.acpi.battery.time") * 60)
+
+    @unittest.skipIf(HAS_BATTERY, "has battery")
+    def test_sensors_battery_no_battery(self):
+        # If no battery is present one of these calls is supposed
+        # to fail, see:
+        # https://github.com/giampaolo/psutil/issues/1074
+        with self.assertRaises(RuntimeError):
+            sysctl("hw.acpi.battery.life")
+            sysctl("hw.acpi.battery.time")
+            sysctl("hw.acpi.acline")
+        self.assertIsNone(psutil.sensors_battery())
+
 
 # =====================================================================
 # --- OpenBSD
 # =====================================================================
 
 
-@unittest.skipUnless(OPENBSD, "OPENBSD only")
+@unittest.skipIf(not OPENBSD, "OPENBSD only")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
     def test_boot_time(self):
@@ -378,10 +418,11 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(NETBSD, "NETBSD only")
+@unittest.skipIf(not NETBSD, "NETBSD only")
 class NetBSDSpecificTestCase(unittest.TestCase):
 
-    def parse_meminfo(self, look_for):
+    @staticmethod
+    def parse_meminfo(look_for):
         with open('/proc/meminfo', 'rb') as f:
             for line in f:
                 if line.startswith(look_for):

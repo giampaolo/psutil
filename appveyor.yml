@@ -1,3 +1,5 @@
+# Build: 1 (bump this up by 1 to force an appveyor run)
+
 os: Visual Studio 2015
 
 environment:
@@ -18,10 +20,6 @@ environment:
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python33"
-      PYTHON_VERSION: "3.3.x"
-      PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python34"
       PYTHON_VERSION: "3.4.x"
       PYTHON_ARCH: "32"
@@ -30,14 +28,14 @@ environment:
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python36"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "32"
+
     # 64 bits
 
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python33-x64"
-      PYTHON_VERSION: "3.3.x"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python34-x64"
@@ -46,6 +44,13 @@ environment:
 
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+      ARCH: x86_64
+      VS_VER: "2015"
+      INSTANCENAME: "SQL2012SP1"
+
+    - PYTHON: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
       ARCH: x86_64
       VS_VER: "2015"
@@ -67,6 +72,7 @@ install:
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py clean"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
@@ -77,11 +83,10 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
+  - "set PYTHONWARNINGS=all && set PSUTIL_TESTING=1 && set PSUTIL_DEBUG=1 && %WITH_COMPILER% %PYTHON%/python psutil/tests/__main__.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
-  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wininst"
 
 artifacts:
   - path: dist\*
@@ -105,7 +110,7 @@ only_commits:
     psutil/_pswindows.py
     psutil/arch/windows/*
     psutil/tests/__init__.py
-    psutil/tests/runner.py
+    psutil/tests/__main__.py
     psutil/tests/test_memory_leaks.py
     psutil/tests/test_misc.py
     psutil/tests/test_process.py
@@ -113,4 +118,3 @@ only_commits:
     psutil/tests/test_windows.py
     scripts/*
     setup.py
-

@@ -14,19 +14,20 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
 fi
 
 # install psutil
+make clean
 python setup.py build
 python setup.py develop
 
 # run tests (with coverage)
-if [[ "$(uname -s)" != 'Darwin' ]]; then
-    coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
+if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
+    PSUTIL_TESTING=1 python -Wa -m coverage run psutil/tests/__main__.py
 else
-    python psutil/tests/runner.py
+    PSUTIL_TESTING=1 python -Wa psutil/tests/__main__.py
 fi
 
-if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.5" ]; then
+if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
     # run mem leaks test
-    python psutil/tests/test_memory_leaks.py
+    PSUTIL_TESTING=1 python -Wa psutil/tests/test_memory_leaks.py
     # run linter (on Linux only)
     if [[ "$(uname -s)" != 'Darwin' ]]; then
         python -m flake8

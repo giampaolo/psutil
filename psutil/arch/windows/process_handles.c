@@ -5,6 +5,7 @@
  *
  */
 #include "process_handles.h"
+#include "../../_psutil_common.h"
 
 static _NtQuerySystemInformation __NtQuerySystemInformation = NULL;
 static _NtQueryObject __NtQueryObject = NULL;
@@ -19,7 +20,6 @@ HANDLE g_hThread = NULL;
 PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
-PVOID g_fiber = NULL;
 
 
 PVOID
@@ -280,7 +280,7 @@ psutil_NtQueryObject() {
         g_hThread = CreateThread(
             NULL,
             0,
-            (LPTHREAD_START_ROUTINE)psutil_NtQueryObjectThread,
+            psutil_NtQueryObjectThread,
             NULL,
             0,
             NULL);
@@ -300,11 +300,6 @@ psutil_NtQueryObject() {
         WaitForSingleObject(g_hThread, INFINITE);
         CloseHandle(g_hThread);
 
-        // Cleanup Fiber
-        if (g_fiber != NULL)
-            DeleteFiber(g_fiber);
-        g_fiber = NULL;
-
         g_hThread = NULL;
     }
 
@@ -312,12 +307,8 @@ psutil_NtQueryObject() {
 }
 
 
-void
-psutil_NtQueryObjectThread() {
-    // Prevent the thread stack from leaking when this
-    // thread gets terminated due to NTQueryObject hanging
-    g_fiber = ConvertThreadToFiber(NULL);
-
+DWORD WINAPI
+psutil_NtQueryObjectThread(LPVOID lpvParam) {
     // Loop infinitely waiting for work
     while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);

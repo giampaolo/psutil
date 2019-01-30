@@ -7,7 +7,7 @@
  * Platform-specific module methods for FreeBSD and OpenBSD.
 
  * OpenBSD references:
- * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
+ * - OpenBSD source code: https://github.com/openbsd/src
  *
  * OpenBSD / NetBSD: missing APIs compared to FreeBSD implementation:
  * - psutil.net_connections()
@@ -15,8 +15,8 @@
  * - psutil.Process.memory_maps()
  */
 
-#if defined(__NetBSD__)
-#define _KMEMUSER
+#if defined(PSUTIL_NETBSD)
+    #define _KMEMUSER
 #endif
 
 #include <Python.h>
@@ -60,18 +60,13 @@
 #include <sys/un.h>
 
 #include "_psutil_common.h"
+#include "_psutil_posix.h"
 
-#ifdef __FreeBSD__
-    #include "arch/bsd/freebsd.h"
-    #include "arch/bsd/freebsd_socks.h"
-#elif __OpenBSD__
-    #include "arch/bsd/openbsd.h"
-#elif __NetBSD__
-    #include "arch/bsd/netbsd.h"
-    #include "arch/bsd/netbsd_socks.h"
-#endif
+#ifdef PSUTIL_FREEBSD
+    #include "arch/freebsd/specific.h"
+    #include "arch/freebsd/sys_socks.h"
+    #include "arch/freebsd/proc_socks.h"
 
-#ifdef __FreeBSD__
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
     #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap)
@@ -80,37 +75,39 @@
     #else
         #include <utmpx.h>
     #endif
-#endif
+#elif PSUTIL_OPENBSD
+    #include "arch/openbsd/specific.h"
 
-#ifdef __OpenBSD__
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
     #define _KERNEL  // for DTYPE_VNODE
     #include <sys/file.h>
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
-#endif
+#elif PSUTIL_NETBSD
+    #include "arch/netbsd/specific.h"
+    #include "arch/netbsd/socks.h"
 
-#if defined(__NetBSD__)
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
     #ifndef DTYPE_VNODE
-    #define DTYPE_VNODE 1
+        #define DTYPE_VNODE 1
     #endif
 #endif
+
 
 
 // convert a timeval struct to a double
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
     // convert a bintime struct to milliseconds
     #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * \
                            (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
 #endif
 
-#if defined(__OpenBSD__) || defined (__NetBSD__)
+#if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
     #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #endif
 
@@ -146,9 +143,9 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (num_processes > 0) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
             py_pid = Py_BuildValue("i", proclist->ki_pid);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
             py_pid = Py_BuildValue("i", proclist->p_pid);
 #endif
             if (!py_pid)
@@ -183,10 +180,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     struct timeval boottime;
     size_t len = sizeof(boottime);
 
-    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("d", (double)boottime.tv_sec);
 }
 
@@ -203,6 +198,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
+    int oncpu;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
@@ -215,16 +211,12 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         return NULL;
 
     // Process
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
     sprintf(str, "%s", kp.ki_comm);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-#if PY_MAJOR_VERSION >= 3
     py_name = PyUnicode_DecodeFSDefault(str);
-#else
-    py_name = Py_BuildValue("s", str);
-#endif
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -233,7 +225,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     }
 
     // Calculate memory.
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
     rss = (long)kp.ki_rssize * pagesize;
     vms = (long)kp.ki_size;
     memtext = (long)kp.ki_tsize * pagesize;
@@ -241,15 +233,15 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memstack = (long)kp.ki_ssize * pagesize;
 #else
     rss = (long)kp.p_vm_rssize * pagesize;
-    #ifdef __OpenBSD__
+    #ifdef PSUTIL_OPENBSD
         // VMS, this is how ps determines it on OpenBSD:
-        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        // vms
+        // https://github.com/openbsd/src/blob/
+        //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L505
         vms = (long)(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize;
-    #elif __NetBSD__
+    #elif PSUTIL_NETBSD
         // VMS, this is how top determines it on NetBSD:
-        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
-        //     top/dist/machine/m_netbsd.c
+        // https://github.com/IIJ-NetBSD/netbsd-src/blob/master/external/
+        //     bsd/top/dist/machine/m_netbsd.c
         vms = (long)kp.p_vm_msize * pagesize;
     #endif
         memtext = (long)kp.p_vm_tsize * pagesize;
@@ -257,10 +249,27 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
 
+#ifdef PSUTIL_FREEBSD
+    // what CPU we're on; top was used as an example:
+    // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
+    //     view=markup&pathrev=273835
+    // XXX - note: for "intr" PID this is -1.
+    if (kp.ki_stat == SRUN && kp.ki_oncpu != NOCPU)
+        oncpu = kp.ki_oncpu;
+    else
+        oncpu = kp.ki_lastcpu;
+#else
+    // On Net/OpenBSD we have kp.p_cpuid but it appears it's always
+    // set to KI_NOCPU. Even if it's not, ki_lastcpu does not exist
+    // so there's no way to determine where "sleeping" processes
+    // were. Not supported.
+    oncpu = -1;
+#endif
+
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
-        "(lillllllidllllddddlllllO)",
-#ifdef __FreeBSD__
+        "(lillllllidllllddddlllllbO)",
+#ifdef PSUTIL_FREEBSD
         //
         (long)kp.ki_ppid,                // (long) ppid
         (int)kp.ki_stat,                 // (int) status
@@ -292,7 +301,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+        // others
+        oncpu,                            // (int) the CPU we are on
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
         //
         (long)kp.p_ppid,                 // (long) ppid
         (int)kp.p_stat,                  // (int) status
@@ -326,6 +337,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
         memstack,                         // (long) mem stack
+        // others
+        oncpu,                            // (int) the CPU we are on
 #endif
         py_name                           // (pystr) name
     );
@@ -352,17 +365,12 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
     sprintf(str, "%s", kp.ki_comm);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     sprintf(str, "%s", kp.p_comm);
 #endif
-
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(str);
-#else
-    return Py_BuildValue("s", str);
-#endif
 }
 
 
@@ -376,12 +384,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-
     py_retlist = psutil_get_cmdline(pid);
-    // psutil_get_cmdline() returns NULL only if psutil_cmd_args
-    // failed with ESRCH (no process with that PID)
-    if (NULL == py_retlist)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (py_retlist == NULL)
+        return NULL;
     return Py_BuildValue("N", py_retlist);
 }
 
@@ -412,7 +417,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
-#if defined(__NetBSD__)
+#ifdef PSUTIL_NETBSD
     u_int64_t cpu_time[CPUSTATES];
 #else
     long cpu_time[CPUSTATES];
@@ -420,17 +425,14 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     size_t size = sizeof(cpu_time);
     int ret;
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     ret = sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0);
-#elif __OpenBSD__
+#elif PSUTIL_OPENBSD
     int mib[] = {CTL_KERN, KERN_CPTIME};
     ret = sysctl(mib, 2, &cpu_time, &size, NULL, 0);
 #endif
-    if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("(ddddd)",
                          (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
                          (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
@@ -447,16 +449,21 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
  * utility has the same problem see:
  * https://github.com/giampaolo/psutil/issues/595
  */
-#if (defined(__FreeBSD_version) && __FreeBSD_version >= 800000) || __OpenBSD__ || defined(__NetBSD__)
+#if (defined(__FreeBSD_version) && __FreeBSD_version >= 800000) || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
-    int i, cnt;
+    int i;
+    int cnt;
+    int regular;
+    int fd;
+    char *path;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     kinfo_proc kipp;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
@@ -468,32 +475,39 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
-#ifdef __FreeBSD__
-        if ((kif->kf_type == KF_TYPE_VNODE) &&
-                (kif->kf_vnode_type == KF_VTYPE_VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
-#elif defined(__OpenBSD__)
-        if ((kif->f_type == DTYPE_VNODE) &&
-                (kif->v_type == VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", "", kif->fd_fd);
-#elif defined(__NetBSD__)
-        if ((kif->ki_ftype == DTYPE_VNODE) &&
-                (kif->ki_vtype == VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", "", kif->ki_fd);
+
+#ifdef PSUTIL_FREEBSD
+        regular = (kif->kf_type == KF_TYPE_VNODE) && \
+            (kif->kf_vnode_type == KF_VTYPE_VREG);
+        fd = kif->kf_fd;
+        path = kif->kf_path;
+#elif PSUTIL_OPENBSD
+        regular = (kif->f_type == DTYPE_VNODE) && (kif->v_type == VREG);
+        fd = kif->fd_fd;
+        // XXX - it appears path is not exposed in the kinfo_file struct.
+        path = "";
+#elif PSUTIL_NETBSD
+        regular = (kif->ki_ftype == DTYPE_VNODE) && (kif->ki_vtype == VREG);
+        fd = kif->ki_fd;
+        // XXX - it appears path is not exposed in the kinfo_file struct.
+        path = "";
 #endif
+        if (regular == 1) {
+            py_path = PyUnicode_DecodeFSDefault(path);
+            if (! py_path)
+                goto error;
+            py_tuple = Py_BuildValue("(Oi)", py_path, fd);
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+            Py_DECREF(py_path);
             Py_DECREF(py_tuple);
         }
     }
@@ -521,12 +535,14 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     long len;
     uint64_t flags;
     char opts[200];
-#if defined(__NetBSD__)
+#ifdef PSUTIL_NETBSD
     struct statvfs *fs = NULL;
 #else
     struct statfs *fs = NULL;
 #endif
     PyObject *py_retlist = PyList_New(0);
+    PyObject *py_dev = NULL;
+    PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
@@ -534,7 +550,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
-#if defined(__NetBSD__)
+#ifdef PSUTIL_NETBSD
     num = getvfsstat(NULL, 0, MNT_NOWAIT);
 #else
     num = getfsstat(NULL, 0, MNT_NOWAIT);
@@ -553,7 +569,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     Py_BEGIN_ALLOW_THREADS
-#if defined(__NetBSD__)
+#ifdef PSUTIL_NETBSD
     num = getvfsstat(fs, len, MNT_NOWAIT);
 #else
     num = getfsstat(fs, len, MNT_NOWAIT);
@@ -567,7 +583,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     for (i = 0; i < num; i++) {
         py_tuple = NULL;
         opts[0] = 0;
-#if defined(__NetBSD__)
+#ifdef PSUTIL_NETBSD
         flags = fs[i].f_flag;
 #else
         flags = fs[i].f_flags;
@@ -590,7 +606,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",noatime", sizeof(opts));
         if (flags & MNT_SOFTDEP)
             strlcat(opts, ",softdep", sizeof(opts));
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
         if (flags & MNT_UNION)
             strlcat(opts, ",union", sizeof(opts));
         if (flags & MNT_SUIDDIR)
@@ -611,24 +627,24 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",noclusterw", sizeof(opts));
         if (flags & MNT_NFS4ACLS)
             strlcat(opts, ",nfs4acls", sizeof(opts));
-#elif __NetBSD__
+#elif PSUTIL_NETBSD
         if (flags & MNT_NODEV)
             strlcat(opts, ",nodev", sizeof(opts));
         if (flags & MNT_UNION)
             strlcat(opts, ",union", sizeof(opts));
         if (flags & MNT_NOCOREDUMP)
             strlcat(opts, ",nocoredump", sizeof(opts));
-#if defined(MNT_RELATIME)
+#ifdef MNT_RELATIME
         if (flags & MNT_RELATIME)
             strlcat(opts, ",relatime", sizeof(opts));
 #endif
         if (flags & MNT_IGNORE)
             strlcat(opts, ",ignore", sizeof(opts));
-#if defined(MNT_DISCARD)
+#ifdef MNT_DISCARD
         if (flags & MNT_DISCARD)
             strlcat(opts, ",discard", sizeof(opts));
 #endif
-#if defined(MNT_EXTATTR)
+#ifdef MNT_EXTATTR
         if (flags & MNT_EXTATTR)
             strlcat(opts, ",extattr", sizeof(opts));
 #endif
@@ -639,15 +655,23 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         if (flags & MNT_NODEVMTIME)
             strlcat(opts, ",nodevmtime", sizeof(opts));
 #endif
-        py_tuple = Py_BuildValue("(ssss)",
-                                 fs[i].f_mntfromname,  // device
-                                 fs[i].f_mntonname,    // mount point
+        py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
+        if (! py_dev)
+            goto error;
+        py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
+        if (! py_mountp)
+            goto error;
+        py_tuple = Py_BuildValue("(OOss)",
+                                 py_dev,               // device
+                                 py_mountp,            // mount point
                                  fs[i].f_fstypename,   // fs type
                                  opts);                // options
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_dev);
+        Py_DECREF(py_mountp);
         Py_DECREF(py_tuple);
     }
 
@@ -655,6 +679,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_dev);
+    Py_XDECREF(py_mountp);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
@@ -764,12 +790,15 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
+    PyObject *py_username = NULL;
+    PyObject *py_tty = NULL;
+    PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
-#if (defined(__FreeBSD_version) && (__FreeBSD_version < 900000)) || __OpenBSD__
+#if (defined(__FreeBSD_version) && (__FreeBSD_version < 900000)) || PSUTIL_OPENBSD
     struct utmp ut;
     FILE *fp;
 
@@ -782,12 +811,27 @@ psutil_users(PyObject *self, PyObject *args) {
     while (fread(&ut, sizeof(ut), 1, fp) == 1) {
         if (*ut.ut_name == '\0')
             continue;
+        py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssf)",
-            ut.ut_name,         // username
-            ut.ut_line,         // tty
-            ut.ut_host,         // hostname
-           (float)ut.ut_time);  // start time
+            "(OOOfi)",
+            py_username,        // username
+            py_tty,             // tty
+            py_hostname,        // hostname
+            (float)ut.ut_time,  // start time
+#ifdef PSUTIL_OPENBSD
+            -1                  // process id (set to None later)
+#else
+            ut.ut_pid           // process id
+#endif
+        );
         if (!py_tuple) {
             fclose(fp);
             goto error;
@@ -796,23 +840,39 @@ psutil_users(PyObject *self, PyObject *args) {
             fclose(fp);
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
     fclose(fp);
 #else
     struct utmpx *utx;
-
     setutxent();
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
+        py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
+        if (! py_username)
+            goto error;
+        py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
+        if (! py_tty)
+            goto error;
+        py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
+        if (! py_hostname)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(sssf)",
-            utx->ut_user,  // username
-            utx->ut_line,  // tty
-            utx->ut_host,  // hostname
-            (float)utx->ut_tv.tv_sec  // start time
+            "(OOOfi)",
+            py_username,   // username
+            py_tty,        // tty
+            py_hostname,   // hostname
+            (float)utx->ut_tv.tv_sec,  // start time
+#ifdef PSUTIL_OPENBSD
+            -1             // process id (set to None later)
+#else
+            utx->ut_pid    // process id
+#endif
         );
 
         if (!py_tuple) {
@@ -823,6 +883,9 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
+        Py_DECREF(py_username);
+        Py_DECREF(py_tty);
+        Py_DECREF(py_hostname);
         Py_DECREF(py_tuple);
     }
 
@@ -831,6 +894,9 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_username);
+    Py_XDECREF(py_tty);
+    Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
@@ -842,40 +908,35 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
-
     // --- per-process functions
 
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS,
      "Return multiple info about a process"},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
-#if !defined(__NetBSD__)
-    {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Return connections opened by process"},
-#endif
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
+    {"proc_connections", psutil_proc_connections, METH_VARARGS,
+     "Return connections opened by process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
 #endif
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__ || defined(__NetBSD__)
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
-#endif
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__ || defined(__NetBSD__)
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
 #endif
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-    {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return process pathname executable"},
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
-#if defined(__FreeBSD__)
+#endif
+#if defined(PSUTIL_FREEBSD)
+    {"proc_exe", psutil_proc_exe, METH_VARARGS,
+     "Return process pathname executable"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
@@ -884,7 +945,6 @@ PsutilMethods[] = {
      "Set process CPU affinity."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
-#endif
 #endif
 
     // --- system-related functions
@@ -914,10 +974,19 @@ PsutilMethods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},
 #endif
+#if defined(PSUTIL_FREEBSD)
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
+     "Return battery information."},
+#endif
+
+    // --- others
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
+
     {NULL, NULL, 0, NULL}
 };
 
@@ -976,7 +1045,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants
 
-#ifdef __FreeBSD__
+#ifdef PSUTIL_FREEBSD
     PyModule_AddIntConstant(module, "SIDL", SIDL);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
@@ -984,7 +1053,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
     PyModule_AddIntConstant(module, "SWAIT", SWAIT);
     PyModule_AddIntConstant(module, "SLOCK", SLOCK);
-#elif  __OpenBSD__
+#elif  PSUTIL_OPENBSD
     PyModule_AddIntConstant(module, "SIDL", SIDL);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
@@ -992,7 +1061,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);  // unused
     PyModule_AddIntConstant(module, "SDEAD", SDEAD);
     PyModule_AddIntConstant(module, "SONPROC", SONPROC);
-#elif defined(__NetBSD__)
+#elif defined(PSUTIL_NETBSD)
     PyModule_AddIntConstant(module, "SIDL", LSIDL);
     PyModule_AddIntConstant(module, "SRUN", LSRUN);
     PyModule_AddIntConstant(module, "SSLEEP", LSSLEEP);
@@ -1018,6 +1087,8 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     // PSUTIL_CONN_NONE
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128);
+
+    psutil_setup();
 
     if (module == NULL)
         INITERROR;

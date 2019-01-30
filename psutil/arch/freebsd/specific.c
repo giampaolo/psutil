@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Helper functions related to fetching process information.
+ * Helper functions specific to FreeBSD.
  * Used by _psutil_bsd module methods.
  */
 
@@ -26,7 +26,7 @@
 #include <sys/cpuset.h>
 
 #include "../../_psutil_common.h"
-
+#include "../../_psutil_posix.h"
 
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
@@ -59,7 +59,7 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
 
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -179,7 +179,8 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  */
 static char
 *psutil_get_cmd_args(long pid, size_t *argsize) {
-    int mib[4], argmax;
+    int mib[4];
+    int argmax;
     size_t size = sizeof(argmax);
     char *procargs = NULL;
 
@@ -198,9 +199,7 @@ static char
         return NULL;
     }
 
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
+    // Make a sysctl() call to get the raw argument space of the process.
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ARGS;
@@ -209,7 +208,8 @@ static char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        return NULL;       // Insufficient privileges
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
     }
 
     // return string and set the length of arguments
@@ -222,7 +222,7 @@ static char
 PyObject *
 psutil_get_cmdline(long pid) {
     char *argstr = NULL;
-    int pos = 0;
+    size_t pos = 0;
     size_t argsize = 0;
     PyObject *py_retlist = Py_BuildValue("[]");
     PyObject *py_arg = NULL;
@@ -238,11 +238,7 @@ psutil_get_cmdline(long pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
-#else
-            py_arg = Py_BuildValue("s", &argstr[pos]);
-#endif
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
@@ -290,31 +286,23 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size = sizeof(pathname);
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        if (errno == ENOENT) {
-            // see: https://github.com/giampaolo/psutil/issues/907
-            return Py_BuildValue("s", "");
-        }
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
+        // see: https://github.com/giampaolo/psutil/issues/907
+        if (errno == ENOENT)
+            return PyUnicode_DecodeFSDefault("");
+        else
+            return PyErr_SetFromErrno(PyExc_OSError);
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess();
+            return NoSuchProcess("");
         else
             strcpy(pathname, "");
     }
 
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", pathname);
-#endif
-
 }
 
 
@@ -336,8 +324,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // Retrieves all threads used by process returning a list of tuples
     // including thread id, user time and system time.
     // Thanks to Robert N. M. Watson:
-    // http://fxr.googlebit.com/source/usr.bin/procstat/
-    //     procstat_threads.c?v=8-CURRENT
+    // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/
+    //     procstat_threads.c
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
@@ -366,7 +354,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
 
@@ -382,7 +370,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
 
@@ -468,8 +456,9 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         goto error;
     if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
         goto error;
+    // https://github.com/giampaolo/psutil/issues/997
     if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
-        goto error;
+        cached = 0;
     if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
         goto error;
     if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
@@ -491,8 +480,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     );
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -520,13 +508,13 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     kvm_close(kd);
 
     if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
-        goto sbn_error;
+        goto error;
 
     return Py_BuildValue("(iiiII)",
                          kvmsw[0].ksw_total,                     // total
@@ -535,9 +523,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          swapin + swapout,                       // swap in
                          nodein + nodeout);                      // swap out
 
-sbn_error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+error:
+    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -561,18 +548,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
         if (kif->kf_fd == KF_FD_TYPE_CWD) {
-#if PY_MAJOR_VERSION >= 3
             py_path = PyUnicode_DecodeFSDefault(kif->kf_path);
-#else
-            py_path = Py_BuildValue("s", kif->kf_path);
-#endif
             if (!py_path)
                 goto error;
             break;
@@ -584,7 +567,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
      * as root we return an empty string instead of AccessDenied.
      */
     if (py_path == NULL)
-        py_path = Py_BuildValue("s", "");
+        py_path = PyUnicode_DecodeFSDefault("");
     free(freep);
     return py_path;
 
@@ -614,7 +597,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         return NULL;
     }
     free(freep);
@@ -642,8 +625,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
         Py_DECREF(py_retlist);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
     long cpu_time[maxcpus][CPUSTATES];
 
@@ -764,12 +746,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int i, cnt;
     char addr[1000];
     char perms[4];
-    const char *path;
+    char *path;
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
     ptrwidth = 2 * sizeof(void *);
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -782,7 +765,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getvmmap() failed");
+        psutil_raise_for_pid(pid, "kinfo_getvmmap()");
         goto error;
     }
     for (i = 0; i < cnt; i++) {
@@ -838,10 +821,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             path = kve->kve_path;
         }
 
-        py_tuple = Py_BuildValue("sssiiii",
+        py_path = PyUnicode_DecodeFSDefault(path);
+        if (! py_path)
+            goto error;
+        py_tuple = Py_BuildValue("ssOiiii",
             addr,                       // "start-end" address
             perms,                      // "rwx" permissions
-            path,                       // path
+            py_path,                    // path
             kve->kve_resident,          // rss
             kve->kve_private_resident,  // private
             kve->kve_ref_count,         // ref count
@@ -850,6 +836,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_DECREF(py_path);
         Py_DECREF(py_tuple);
     }
     free(freep);
@@ -857,6 +844,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);
@@ -880,10 +868,8 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
         return NULL;
     ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
                              sizeof(mask), &mask);
-    if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
+    if (ret != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -991,6 +977,33 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
+    return PyErr_SetFromErrno(PyExc_OSError);
+}
+
+
+/*
+ * Return battery information.
+ */
+PyObject *
+psutil_sensors_battery(PyObject *self, PyObject *args) {
+    int percent;
+    int minsleft;
+    int power_plugged;
+    size_t size = sizeof(percent);
+
+    if (sysctlbyname("hw.acpi.battery.life", &percent, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.acpi.battery.time", &minsleft, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("hw.acpi.acline", &power_plugged, &size, NULL, 0))
+        goto error;
+    return Py_BuildValue("iii", percent, minsleft, power_plugged);
+
+error:
+    // see: https://github.com/giampaolo/psutil/issues/1074
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "no battery");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }

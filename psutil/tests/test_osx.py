@@ -8,14 +8,13 @@
 
 import os
 import re
-import subprocess
-import sys
 import time
 
 import psutil
 from psutil import OSX
-from psutil._compat import PY3
+from psutil.tests import create_zombie_proc
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -31,10 +30,8 @@ def sysctl(cmdline):
     """Expects a sysctl command with an argument and parse the result
     returning only the value of interest.
     """
-    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-    result = p.communicate()[0].strip().split()[1]
-    if PY3:
-        result = str(result, sys.stdout.encoding)
+    out = sh(cmdline)
+    result = out.split()[1]
     try:
         return int(result)
     except ValueError:
@@ -49,7 +46,7 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return int(re.search('\d+', line).group(0)) * PAGESIZE
+    return int(re.search(r'\d+', line).group(0)) * PAGESIZE
 
 
 # http://code.activestate.com/recipes/578019/
@@ -79,7 +76,7 @@ def human2bytes(s):
     return int(num * prefix[letter])
 
 
-@unittest.skipUnless(OSX, "OSX only")
+@unittest.skipIf(not OSX, "OSX only")
 class TestProcess(unittest.TestCase):
 
     @classmethod
@@ -91,11 +88,7 @@ class TestProcess(unittest.TestCase):
         reap_children()
 
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" % self.pid
-        p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0]
-        if PY3:
-            output = str(output, sys.stdout.encoding)
+        output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()
         hhmmss = start_ps.split(' ')[-2]
         year = start_ps.split(' ')[-1]
@@ -108,8 +101,71 @@ class TestProcess(unittest.TestCase):
             time.strftime("%Y", time.localtime(start_psutil)))
 
 
-@unittest.skipUnless(OSX, "OSX only")
+@unittest.skipIf(not OSX, "OSX only")
+class TestZombieProcessAPIs(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        zpid = create_zombie_proc()
+        cls.p = psutil.Process(zpid)
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children(recursive=True)
+
+    def test_pidtask_info(self):
+        self.assertEqual(self.p.status(), psutil.STATUS_ZOMBIE)
+        self.p.ppid()
+        self.p.uids()
+        self.p.gids()
+        self.p.terminal()
+        self.p.create_time()
+
+    def test_exe(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.exe)
+
+    def test_cmdline(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cmdline)
+
+    def test_environ(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.environ)
+
+    def test_cwd(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cwd)
+
+    def test_memory_full_info(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.memory_full_info)
+
+    def test_cpu_times(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.cpu_times)
+
+    def test_num_ctx_switches(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_ctx_switches)
+
+    def test_num_threads(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_threads)
+
+    def test_open_files(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.open_files)
+
+    def test_connections(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.connections)
+
+    def test_num_fds(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.num_fds)
+
+    def test_threads(self):
+        self.assertRaises((psutil.ZombieProcess, psutil.AccessDenied),
+                          self.p.threads)
+
+    def test_memory_maps(self):
+        self.assertRaises(psutil.ZombieProcess, self.p.memory_maps)
+
+
+@unittest.skipIf(not OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
+
+    # --- disk
 
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -138,6 +194,8 @@ class TestSystemAPIs(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % usage.used, used)
 
+    # --- cpu
+
     def test_cpu_count_logical(self):
         num = sysctl("sysctl hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
@@ -145,6 +203,15 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_count_physical(self):
         num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
+
+    def test_cpu_freq(self):
+        freq = psutil.cpu_freq()
+        self.assertEqual(
+            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+        self.assertEqual(
+            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
+        self.assertEqual(
+            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
 
     # --- virtual mem
 
@@ -206,6 +273,8 @@ class TestSystemAPIs(unittest.TestCase):
     #     self.assertEqual(psutil_smem.used, human2bytes(used))
     #     self.assertEqual(psutil_smem.free, human2bytes(free))
 
+    # --- network
+
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -215,7 +284,19 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
-                                 int(re.findall('mtu (\d+)', out)[0]))
+                                 int(re.findall(r'mtu (\d+)', out)[0]))
+
+    # --- sensors_battery
+
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    def test_sensors_battery(self):
+        out = sh("pmset -g batt")
+        percent = re.search("(\d+)%", out).group(1)
+        drawing_from = re.search("Now drawing from '([^']+)'", out).group(1)
+        power_plugged = drawing_from == "AC Power"
+        psutil_result = psutil.sensors_battery()
+        self.assertEqual(psutil_result.power_plugged, power_plugged)
+        self.assertEqual(psutil_result.percent, int(percent))
 
 
 if __name__ == '__main__':

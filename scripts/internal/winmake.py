@@ -11,19 +11,21 @@ This was originally written as a bat file but they suck so much
 that they should be deemed illegal!
 """
 
+from __future__ import print_function
 import errno
 import fnmatch
 import functools
 import os
 import shutil
+import site
 import ssl
 import subprocess
 import sys
 import tempfile
 
 
-PYTHON = sys.executable
-TSCRIPT = os.environ['TSCRIPT']
+PYTHON = os.getenv('PYTHON', sys.executable)
+TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 DEPS = [
@@ -36,24 +38,49 @@ DEPS = [
     "perf",
     "pip",
     "pypiwin32",
+    "pyreadline",
     "setuptools",
     "unittest2",
     "wheel",
     "wmi",
+    "requests"
 ]
 _cmds = {}
-
+if PY3:
+    basestring = str
 
 # ===================================================================
 # utils
 # ===================================================================
 
 
-def sh(cmd):
-    print("cmd: " + cmd)
-    code = os.system(cmd)
-    if code:
-        raise SystemExit
+def safe_print(text, file=sys.stdout, flush=False):
+    """Prints a (unicode) string to the console, encoded depending on
+    the stdout/file encoding (eg. cp437 on Windows). This is to avoid
+    encoding errors in case of funky path names.
+    Works with Python 2 and 3.
+    """
+    if not isinstance(text, basestring):
+        return print(text, file=file)
+    try:
+        file.write(text)
+    except UnicodeEncodeError:
+        bytes_string = text.encode(file.encoding, 'backslashreplace')
+        if hasattr(file, 'buffer'):
+            file.buffer.write(bytes_string)
+        else:
+            text = bytes_string.decode(file.encoding, 'strict')
+            file.write(text)
+    file.write("\n")
+
+
+def sh(cmd, nolog=False):
+    if not nolog:
+        safe_print("cmd: " + cmd)
+    p = subprocess.Popen(cmd, shell=True, env=os.environ, cwd=os.getcwd())
+    p.communicate()
+    if p.returncode != 0:
+        sys.exit(p.returncode)
 
 
 def cmd(fun):
@@ -74,7 +101,7 @@ def rm(pattern, directory=False):
             if err.errno != errno.ENOENT:
                 raise
         else:
-            print("rm %s" % path)
+            safe_print("rm %s" % path)
 
     def safe_rmtree(path):
         def onerror(fun, path, excinfo):
@@ -85,7 +112,7 @@ def rm(pattern, directory=False):
         existed = os.path.isdir(path)
         shutil.rmtree(path, onerror=onerror)
         if existed:
-            print("rmdir -f %s" % path)
+            safe_print("rmdir -f %s" % path)
 
     if "*" not in pattern:
         if directory:
@@ -102,10 +129,10 @@ def rm(pattern, directory=False):
         for name in found:
             path = os.path.join(root, name)
             if directory:
-                print("rmdir -f %s" % path)
+                safe_print("rmdir -f %s" % path)
                 safe_rmtree(path)
             else:
-                print("rm %s" % path)
+                safe_print("rm %s" % path)
                 safe_remove(path)
 
 
@@ -116,7 +143,7 @@ def safe_remove(path):
         if err.errno != errno.ENOENT:
             raise
     else:
-        print("rm %s" % path)
+        safe_print("rm %s" % path)
 
 
 def safe_rmtree(path):
@@ -128,12 +155,12 @@ def safe_rmtree(path):
     existed = os.path.isdir(path)
     shutil.rmtree(path, onerror=onerror)
     if existed:
-        print("rmdir -f %s" % path)
+        safe_print("rmdir -f %s" % path)
 
 
 def recursive_rm(*patterns):
     """Recursively remove a file or matching a list of patterns."""
-    for root, subdirs, subfiles in os.walk('.'):
+    for root, subdirs, subfiles in os.walk(u'.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
@@ -147,6 +174,12 @@ def recursive_rm(*patterns):
                     safe_rmtree(os.path.join(root, dir))
 
 
+def test_setup():
+    os.environ['PYTHONWARNINGS'] = 'all'
+    os.environ['PSUTIL_TESTING'] = '1'
+    os.environ['PSUTIL_DEBUG'] = '1'
+
+
 # ===================================================================
 # commands
 # ===================================================================
@@ -155,19 +188,33 @@ def recursive_rm(*patterns):
 @cmd
 def help():
     """Print this help"""
-    print('Run "make <target>" where <target> is one of:')
+    safe_print('Run "make [-p <PYTHON>] <target>" where <target> is one of:')
     for name in sorted(_cmds):
-        print("    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
+        safe_print(
+            "    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
+    sys.exit(1)
 
 
 @cmd
 def build():
     """Build / compile"""
+    # Make sure setuptools is installed (needed for 'develop' /
+    # edit mode).
+    sh('%s -c "import setuptools"' % PYTHON)
     sh("%s setup.py build" % PYTHON)
-    # copies compiled *.pyd files in ./psutil directory in order to
+    # Copies compiled *.pyd files in ./psutil directory in order to
     # allow "import psutil" when using the interactive interpreter
     # from within this directory.
     sh("%s setup.py build_ext -i" % PYTHON)
+    # Make sure it actually worked.
+    sh('%s -c "import psutil"' % PYTHON)
+
+
+@cmd
+def build_wheel():
+    """Create wheel file."""
+    build()
+    sh("%s setup.py bdist_wheel" % PYTHON)
 
 
 @cmd
@@ -186,7 +233,7 @@ def install_pip():
         else:
             ctx = None
         kw = dict(context=ctx) if ctx else {}
-        print("downloading %s" % GET_PIP_URL)
+        safe_print("downloading %s" % GET_PIP_URL)
         req = urlopen(GET_PIP_URL, **kw)
         data = req.read()
 
@@ -211,18 +258,13 @@ def install():
 @cmd
 def uninstall():
     """Uninstall psutil"""
+    # Uninstalling psutil on Windows seems to be tricky.
+    # On "import psutil" tests may import a psutil version living in
+    # C:\PythonXY\Lib\site-packages which is not what we want, so
+    # we try both "pip uninstall psutil" and manually remove stuff
+    # from site-packages.
     clean()
-    try:
-        import psutil
-    except ImportError:
-        return
     install_pip()
-    sh("%s -m pip uninstall -y psutil" % PYTHON)
-
-    # Uninstalling psutil on Windows seems to be tricky as we may have
-    # different versions os psutil installed. Also we don't want to be
-    # in the main psutil source dir as "import psutil" will always
-    # succeed so this really removes files from site-packages dir.
     here = os.getcwd()
     try:
         os.chdir('C:\\')
@@ -230,10 +272,16 @@ def uninstall():
             try:
                 import psutil  # NOQA
             except ImportError:
-                return
-            sh("%s -m pip uninstall -y psutil" % PYTHON)
+                break
+            else:
+                sh("%s -m pip uninstall -y psutil" % PYTHON)
     finally:
         os.chdir(here)
+
+    for dir in site.getsitepackages():
+        for name in os.listdir(dir):
+            if name.startswith('psutil'):
+                rm(os.path.join(dir, name))
 
 
 @cmd
@@ -279,13 +327,14 @@ def flake8():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files))
+    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
 @cmd
 def test():
     """Run tests"""
     install()
+    test_setup()
     sh("%s %s" % (PYTHON, TSCRIPT))
 
 
@@ -294,6 +343,7 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     install()
+    test_setup()
     sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
@@ -304,6 +354,7 @@ def coverage():
 def test_process():
     """Run process tests"""
     install()
+    test_setup()
     sh("%s -m unittest -v psutil.tests.test_process" % PYTHON)
 
 
@@ -311,6 +362,7 @@ def test_process():
 def test_system():
     """Run system tests"""
     install()
+    test_setup()
     sh("%s -m unittest -v psutil.tests.test_system" % PYTHON)
 
 
@@ -318,6 +370,7 @@ def test_system():
 def test_platform():
     """Run windows only tests"""
     install()
+    test_setup()
     sh("%s -m unittest -v psutil.tests.test_windows" % PYTHON)
 
 
@@ -325,25 +378,65 @@ def test_platform():
 def test_misc():
     """Run misc tests"""
     install()
+    test_setup()
     sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
+
+
+@cmd
+def test_unicode():
+    """Run unicode tests"""
+    install()
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_unicode" % PYTHON)
+
+
+@cmd
+def test_connections():
+    """Run connections tests"""
+    install()
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_connections" % PYTHON)
+
+
+@cmd
+def test_contracts():
+    """Run contracts tests"""
+    install()
+    test_setup()
+    sh("%s -m unittest -v psutil.tests.test_contracts" % PYTHON)
 
 
 @cmd
 def test_by_name():
     """Run test by name"""
     try:
-        print(sys.argv)
+        safe_print(sys.argv)
         name = sys.argv[2]
     except IndexError:
         sys.exit('second arg missing')
     install()
+    test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
+
+
+@cmd
+def test_script():
+    """Quick way to test a script"""
+    try:
+        safe_print(sys.argv)
+        name = sys.argv[2]
+    except IndexError:
+        sys.exit('second arg missing')
+    install()
+    test_setup()
+    sh("%s %s" % (PYTHON, name))
 
 
 @cmd
 def test_memleaks():
     """Run memory leaks tests"""
     install()
+    test_setup()
     sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
@@ -356,21 +449,54 @@ def install_git_hooks():
 @cmd
 def bench_oneshot():
     install()
-    sh("%s scripts\\internal\\bench_oneshot.py" % PYTHON)
+    sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
     install()
-    sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+    sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+
+
+def set_python(s):
+    global PYTHON
+    if os.path.isabs(s):
+        PYTHON = s
+    else:
+        # try to look for a python installation
+        orig = s
+        s = s.replace('.', '')
+        vers = ('26', '27', '34', '35', '36', '37',
+                '26-64', '27-64', '34-64', '35-64', '36-64', '37-64')
+        for v in vers:
+            if s == v:
+                path = 'C:\\python%s\python.exe' % s
+                if os.path.isfile(path):
+                    print(path)
+                    PYTHON = path
+                    os.putenv('PYTHON', path)
+                    return
+        return sys.exit(
+            "can't find any python installation matching %r" % orig)
+
+
+def parse_cmdline():
+    if '-p' in sys.argv:
+        try:
+            pos = sys.argv.index('-p')
+            sys.argv.pop(pos)
+            py = sys.argv.pop(pos)
+        except IndexError:
+            return help()
+        set_python(py)
 
 
 def main():
+    parse_cmdline()
     try:
         cmd = sys.argv[1].replace('-', '_')
     except IndexError:
         return help()
-
     if cmd in _cmds:
         fun = getattr(sys.modules[__name__], cmd)
         fun()

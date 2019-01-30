@@ -6,22 +6,44 @@
  * Routines common to all platforms.
  */
 
-#ifdef PSUTIL_POSIX
-#include <sys/types.h>
-#include <signal.h>
-#endif
-
 #include <Python.h>
+#include <stdio.h>
+
+
+// Global vars.
+int PSUTIL_DEBUG = 0;
+int PSUTIL_TESTING = 0;
+
+
+/*
+ * Backport of unicode FS APIs from Python 3.
+ * On Python 2 we just return a plain byte string
+ * which is never supposed to raise decoding errors.
+ * See: https://github.com/giampaolo/psutil/issues/1040
+ */
+#if PY_MAJOR_VERSION < 3
+PyObject *
+PyUnicode_DecodeFSDefault(char *s) {
+    return PyString_FromString(s);
+}
+
+
+PyObject *
+PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
+    return PyString_FromStringAndSize(s, size);
+}
+#endif
 
 
 /*
  * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
+ * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-NoSuchProcess(void) {
+NoSuchProcess(char *msg) {
     PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
@@ -30,97 +52,53 @@ NoSuchProcess(void) {
 
 /*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
+ * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-AccessDenied(void) {
+AccessDenied(char *msg) {
     PyObject *exc;
-    char *msg = strerror(EACCES);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
 }
 
 
-#ifdef PSUTIL_POSIX
 /*
- * Check if PID exists. Return values:
- * 1: exists
- * 0: does not exist
- * -1: error (Python exception is set)
+ * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
+ * env var. This dual method exists because updating os.environ on
+ * Windows has no effect. Called on unit tests setup.
  */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-
-    // No negative PID exists, plus -1 is an alias for sending signal
-    // too all processes except system ones. Not what we want.
-    if (pid < 0)
-        return 0;
-
-    // As per "man 2 kill" PID 0 is an alias for sending the signal to
-    // every process in the process group of the calling process.
-    // Not what we want. Some platforms have PID 0, some do not.
-    // We decide that at runtime.
-    if (pid == 0) {
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-        return 0;
-#else
-        return 1;
-#endif
-    }
-
-#if defined(PSUTIL_OSX)
-    ret = kill((pid_t)pid , 0);
-#else
-    ret = kill(pid , 0);
-#endif
-
-    if (ret == 0)
-        return 1;
-    else {
-        if (errno == ESRCH) {
-            // ESRCH == No such process
-            return 0;
-        }
-        else if (errno == EPERM) {
-            // EPERM clearly indicates there's a process to deny
-            // access to.
-            return 1;
-        }
-        else {
-            // According to "man 2 kill" possible error values are
-            // (EINVAL, EPERM, ESRCH) therefore we should never get
-            // here. If we do let's be explicit in considering this
-            // an error.
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
+PyObject *
+psutil_set_testing(PyObject *self, PyObject *args) {
+    PSUTIL_TESTING = 1;
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 
 /*
- * Utility used for those syscalls which do not return a meaningful
- * error that we can translate into an exception which makes sense.
- * As such, we'll have to guess.
- * On UNIX, if errno is set, we return that one (OSError).
- * Else, if PID does not exist we assume the syscall failed because
- * of that so we raise NoSuchProcess.
- * If none of this is true we giveup and raise RuntimeError(msg).
- * This will always set a Python exception and return NULL.
+ * Print a debug message on stderr. No-op if PSUTIL_DEBUG env var is not set.
  */
-int
-psutil_raise_for_pid(long pid, char *msg) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (errno != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
-    }
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        PyErr_SetString(PyExc_RuntimeError, msg);
-    return 0;
+void
+psutil_debug(const char* format, ...) {
+    va_list argptr;
+    va_start(argptr, format);
+    fprintf(stderr, "psutil-dubug> ");
+    vfprintf(stderr, format, argptr);
+    fprintf(stderr, "\n");
+    va_end(argptr);
 }
-#endif
+
+
+/*
+ * Called on module import on all platforms.
+ */
+void
+psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
+    if (getenv("PSUTIL_TESTING") != NULL)
+        PSUTIL_TESTING = 1;
+}

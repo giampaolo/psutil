@@ -190,6 +190,8 @@ def run(pid, verbose=False):
     print_('cpu-times', str_ntuple(pinfo['cpu_times']))
     if hasattr(proc, "cpu_affinity"):
         print_("cpu-affinity", pinfo["cpu_affinity"])
+    if hasattr(proc, "cpu_num"):
+        print_("cpu-num", pinfo["cpu_num"])
 
     print_('memory', str_ntuple(pinfo['memory_info'], bytes2human=True))
     print_('memory %', round(pinfo['memory_percent'], 2))
@@ -223,7 +225,8 @@ def run(pid, verbose=False):
 
     if 'io_counters' in pinfo:
         print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
-    print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
+    if 'num_ctx_switches' in pinfo:
+        print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if pinfo['children']:
         template = "%-6s %s"
         print_("children", template % ("PID", "NAME"))

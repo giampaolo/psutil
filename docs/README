@@ -3,7 +3,7 @@ About
 
 This directory contains the reStructuredText (reST) sources to the psutil
 documentation.  You don't need to build them yourself, prebuilt versions are
-available at https://pythonhosted.org/psutil/.
+available at http://psutil.readthedocs.io.
 In case you want, you need to install sphinx first:
 
     $ pip install sphinx

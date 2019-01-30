@@ -13,30 +13,41 @@ Note that this may produce false positives (especially on Windows
 for some reason).
 """
 
+from __future__ import print_function
 import errno
 import functools
 import gc
 import os
-import socket
+import sys
 import threading
 import time
 
 import psutil
 import psutil._common
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import supports_ipv6
 from psutil._compat import xrange
+from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_CPU_AFFINITY
+from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_ENVIRON
+from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_PROC_CPU_NUM
+from psutil.tests import HAS_PROC_IO_COUNTERS
+from psutil.tests import HAS_RLIMIT
+from psutil.tests import HAS_SENSORS_BATTERY
+from psutil.tests import HAS_SENSORS_FANS
+from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import reap_children
-from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
+from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -49,6 +60,7 @@ RETRY_FOR = 3
 SKIP_PYTHON_IMPL = True if TRAVIS else False
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
+SKIP_PYTHON_IMPL = True if TRAVIS else False
 
 
 # ===================================================================
@@ -104,9 +116,12 @@ class TestMemLeak(unittest.TestCase):
         loops = kwargs.pop('loops_', None) or self.loops
         retry_for = kwargs.pop('retry_for_', None) or self.retry_for
 
-        self._call(fun, *args, **kwargs)
+        # warm up
+        for x in range(10):
+            self._call(fun, *args, **kwargs)
         self.assertEqual(gc.garbage, [])
         self.assertEqual(threading.active_count(), 1)
+        self.assertEqual(thisproc.children(), [])
 
         # Get 2 distinct memory samples, before and after having
         # called fun repeadetly.
@@ -139,12 +154,14 @@ class TestMemLeak(unittest.TestCase):
 
             if mem3 > mem2:
                 # failure
-                self.fail("+%s after %s calls, +%s after another %s calls" % (
-                    bytes2human(diff1),
-                    loops,
-                    bytes2human(diff2),
-                    ncalls
-                ))
+                extra_proc_mem = bytes2human(diff1 + diff2)
+                print("exta proc mem: %s" % extra_proc_mem, file=sys.stderr)
+                msg = "+%s after %s calls, +%s after another %s calls, "
+                msg += "+%s extra proc mem"
+                msg = msg % (
+                    bytes2human(diff1), loops, bytes2human(diff2), ncalls,
+                    extra_proc_mem)
+                self.fail(msg)
 
     def execute_w_exc(self, exc, fun, *args, **kwargs):
         """Convenience function which tests a callable raising
@@ -179,6 +196,19 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     proc = thisproc
 
+    def test_coverage(self):
+        skip = set((
+            "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
+            "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
+            "nice", "oneshot", "parent", "rlimit", "send_signal", "suspend",
+            "terminate", "wait"))
+        for name in dir(psutil.Process):
+            if name.startswith('_'):
+                continue
+            if name in skip:
+                continue
+            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+
     @skip_if_linux()
     def test_name(self):
         self.execute(self.proc.name)
@@ -195,12 +225,12 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_ppid(self):
         self.execute(self.proc.ppid)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_uids(self):
         self.execute(self.proc.uids)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_gids(self):
         self.execute(self.proc.gids)
@@ -216,13 +246,11 @@ class TestProcessObjectLeaks(TestMemLeak):
         niceness = thisproc.nice()
         self.execute(self.proc.nice, niceness)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "platform not supported")
+    @unittest.skipIf(not HAS_IONICE, "not supported")
     def test_ionice_get(self):
         self.execute(self.proc.ionice)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "platform not supported")
+    @unittest.skipIf(not HAS_IONICE, "not supported")
     def test_ionice_set(self):
         if WINDOWS:
             value = thisproc.ionice()
@@ -232,7 +260,7 @@ class TestProcessObjectLeaks(TestMemLeak):
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
 
-    @unittest.skipIf(OSX or SUNOS, "platform not supported")
+    @unittest.skipIf(not HAS_PROC_IO_COUNTERS, "not supported")
     @skip_if_linux()
     def test_io_counters(self):
         self.execute(self.proc.io_counters)
@@ -246,19 +274,25 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.create_time)
 
     @skip_if_linux()
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_num_threads(self):
         self.execute(self.proc.num_threads)
 
-    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_num_handles(self):
         self.execute(self.proc.num_handles)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
 
     @skip_if_linux()
+    def test_num_ctx_switches(self):
+        self.execute(self.proc.num_ctx_switches)
+
+    @skip_if_linux()
+    @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
         self.execute(self.proc.threads)
 
@@ -267,16 +301,19 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(self.proc.cpu_times)
 
     @skip_if_linux()
+    @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
+    def test_cpu_num(self):
+        self.execute(self.proc.cpu_num)
+
+    @skip_if_linux()
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    # also available on Linux but it's pure python
-    @unittest.skipUnless(OSX or WINDOWS,
-                         "platform not supported")
+    @skip_if_linux()
     def test_memory_full_info(self):
         self.execute(self.proc.memory_full_info)
 
-    @unittest.skipUnless(POSIX, "POSIX only")
+    @unittest.skipIf(not POSIX, "POSIX only")
     @skip_if_linux()
     def test_terminal(self):
         self.execute(self.proc.terminal)
@@ -290,13 +327,11 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_cwd(self):
         self.execute(self.proc.cwd)
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "platform not supported")
+    @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
     def test_cpu_affinity_get(self):
         self.execute(self.proc.cpu_affinity)
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "platform not supported")
+    @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
         self.execute(self.proc.cpu_affinity, affinity)
@@ -311,18 +346,18 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "too slow on OSX")
-    @unittest.skipIf(OPENBSD, "platform not supported")
+    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @skip_if_linux()
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps)
 
-    @unittest.skipUnless(LINUX, "LINUX only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not LINUX, "LINUX only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE)
 
-    @unittest.skipUnless(LINUX, "LINUX only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
+    @unittest.skipIf(not LINUX, "LINUX only")
+    @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)
@@ -333,43 +368,18 @@ class TestProcessObjectLeaks(TestMemLeak):
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
     def test_connections(self):
-        def create_socket(family, type):
-            sock = socket.socket(family, type)
-            sock.bind(('', 0))
-            if type == socket.SOCK_STREAM:
-                sock.listen(1)
-            return sock
-
-        socks = []
-        socks.append(create_socket(socket.AF_INET, socket.SOCK_STREAM))
-        socks.append(create_socket(socket.AF_INET, socket.SOCK_DGRAM))
-        if supports_ipv6():
-            socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
-            socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if hasattr(socket, 'AF_UNIX'):
-            safe_rmpath(TESTFN)
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.bind(TESTFN)
-            s.listen(1)
-            socks.append(s)
-        kind = 'all'
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
         # be executed.
-        if SUNOS:
-            kind = 'inet'
-        try:
+        with create_sockets():
+            kind = 'inet' if SUNOS else 'all'
             self.execute(self.proc.connections, kind)
-        finally:
-            for s in socks:
-                s.close()
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
-                         "platform not supported")
+    @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
         self.execute(self.proc.environ)
 
-    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_proc_info(self):
         self.execute(cext.proc_info, os.getpid())
 
@@ -437,6 +447,17 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 class TestModuleFunctionsLeaks(TestMemLeak):
     """Test leaks of psutil module functions."""
 
+    def test_coverage(self):
+        skip = set((
+            "version_info", "__version__", "process_iter", "wait_procs",
+            "cpu_percent", "cpu_times_percent", "cpu_count"))
+        for name in psutil.__all__:
+            if not name.islower():
+                continue
+            if name in skip:
+                continue
+            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+
     # --- cpu
 
     @skip_if_linux()
@@ -457,6 +478,11 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
+
+    @skip_if_linux()
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    def test_cpu_freq(self):
+        self.execute(psutil.cpu_freq)
 
     # --- mem
 
@@ -488,19 +514,26 @@ class TestModuleFunctionsLeaks(TestMemLeak):
                      '/proc/diskstats not available on this Linux version')
     @skip_if_linux()
     def test_disk_io_counters(self):
-        self.execute(psutil.disk_io_counters)
+        self.execute(psutil.disk_io_counters, nowrap=False)
+
+    # --- proc
+
+    @skip_if_linux()
+    def test_pids(self):
+        self.execute(psutil.pids)
 
     # --- net
 
     @skip_if_linux()
     def test_net_io_counters(self):
-        self.execute(psutil.net_io_counters)
+        self.execute(psutil.net_io_counters, nowrap=False)
 
     @unittest.skipIf(LINUX,
                      "worthless on Linux (pure python)")
     @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
-        self.execute(psutil.net_connections)
+        with create_sockets():
+            self.execute(psutil.net_connections)
 
     def test_net_if_addrs(self):
         # Note: verified that on Windows this was a false positive.
@@ -510,6 +543,23 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
+
+    # --- sensors
+
+    @skip_if_linux()
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    def test_sensors_battery(self):
+        self.execute(psutil.sensors_battery)
+
+    @skip_if_linux()
+    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
+    def test_sensors_temperatures(self):
+        self.execute(psutil.sensors_temperatures)
+
+    @skip_if_linux()
+    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
+    def test_sensors_fans(self):
+        self.execute(psutil.sensors_fans)
 
     # --- others
 
@@ -528,6 +578,9 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
         def test_win_service_iter(self):
             self.execute(cext.winservice_enumerate)
+
+        def test_win_service_get(self):
+            pass
 
         def test_win_service_get_config(self):
             name = next(psutil.win_service_iter()).name()

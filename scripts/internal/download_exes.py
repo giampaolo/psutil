@@ -7,31 +7,32 @@
 """
 Script which downloads exe and wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
-Copied and readapted from the original recipe of Ibarra Corretge'
+Readapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
 http://code.saghul.net/index.php/2015/09/09/
 """
 
 from __future__ import print_function
 import argparse
+import concurrent.futures
 import errno
-import multiprocessing
 import os
 import requests
 import shutil
 import sys
 
-from concurrent.futures import ThreadPoolExecutor
-
 from psutil import __version__ as PSUTIL_VERSION
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5']
+PY_VERSIONS = ['2.7', '3.4', '3.5', '3.6']
+TIMEOUT = 30
+COLORS = True
 
 
-def exit(msg):
-    print(hilite(msg, ok=False), file=sys.stderr)
+def exit(msg=""):
+    if msg:
+        print(hilite(msg, ok=False), file=sys.stderr)
     sys.exit(1)
 
 
@@ -47,22 +48,23 @@ def term_supports_colors(file=sys.stdout):
         return True
 
 
-if term_supports_colors():
-    def hilite(s, ok=True, bold=False):
-        """Return an highlighted version of 'string'."""
-        attr = []
-        if ok is None:  # no color
-            pass
-        elif ok:   # green
-            attr.append('32')
-        else:   # red
-            attr.append('31')
-        if bold:
-            attr.append('1')
-        return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
-else:
-    def hilite(s, *a, **k):
+COLORS = term_supports_colors()
+
+
+def hilite(s, ok=True, bold=False):
+    """Return an highlighted version of 'string'."""
+    if not COLORS:
         return s
+    attr = []
+    if ok is None:  # no color
+        pass
+    elif ok:   # green
+        attr.append('32')
+    else:   # red
+        attr.append('31')
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
 def safe_makedirs(path):
@@ -85,29 +87,49 @@ def safe_rmtree(path):
     shutil.rmtree(path, onerror=onerror)
 
 
+def bytes2human(n):
+    """
+    >>> bytes2human(10000)
+    '9.8 K'
+    >>> bytes2human(100001221)
+    '95.4 M'
+    """
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
+    for s in reversed(symbols):
+        if n >= prefix[s]:
+            value = float(n) / prefix[s]
+            return '%.2f %s' % (value, s)
+    return '%.2f B' % (n)
+
+
 def download_file(url):
     local_fname = url.split('/')[-1]
     local_fname = os.path.join('dist', local_fname)
-    print(local_fname)
     safe_makedirs('dist')
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, timeout=TIMEOUT)
+    tot_bytes = 0
     with open(local_fname, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
+        for chunk in r.iter_content(chunk_size=16384):
             if chunk:    # filter out keep-alive new chunks
                 f.write(chunk)
+                tot_bytes += len(chunk)
     return local_fname
 
 
 def get_file_urls(options):
     session = requests.Session()
     data = session.get(
-        BASE_URL + '/projects/' + options.user + '/' + options.project)
+        BASE_URL + '/projects/' + options.user + '/' + options.project,
+        timeout=TIMEOUT)
     data = data.json()
 
     urls = []
     for job in (job['jobId'] for job in data['build']['jobs']):
         job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
-        data = session.get(job_url)
+        data = session.get(job_url, timeout=TIMEOUT)
         data = data.json()
         for item in data:
             file_url = job_url + '/' + item['fileName']
@@ -131,17 +153,29 @@ def rename_27_wheels():
 
 
 def main(options):
-    files = []
     safe_rmtree('dist')
-    with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as e:
-        for url in get_file_urls(options):
-            fut = e.submit(download_file, url)
-            files.append(fut.result())
-    # 2 exes (32 and 64 bit) and 2 wheels (32 and 64 bit) for each ver.
-    expected = len(PY_VERSIONS) * 4
-    got = len(files)
-    if expected != got:
-        return exit("expected %s files, got %s" % (expected, got))
+    urls = get_file_urls(options)
+    completed = 0
+    exc = None
+    with concurrent.futures.ThreadPoolExecutor() as e:
+        fut_to_url = {e.submit(download_file, url): url for url in urls}
+        for fut in concurrent.futures.as_completed(fut_to_url):
+            url = fut_to_url[fut]
+            try:
+                local_fname = fut.result()
+            except Exception as _:
+                exc = _
+                print("error while downloading %s: %s" % (url, exc))
+            else:
+                completed += 1
+                print("downloaded %-45s %s" % (
+                    local_fname, bytes2human(os.path.getsize(local_fname))))
+    # 2 wheels (32 and 64 bit) per supported python version
+    expected = len(PY_VERSIONS) * 2
+    if expected != completed:
+        return exit("expected %s files, got %s" % (expected, completed))
+    if exc:
+        return exit()
     rename_27_wheels()
 
 

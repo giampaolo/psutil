@@ -7,8 +7,8 @@
  * Platform-specific module methods for NetBSD.
  */
 
-#if defined(__NetBSD__)
-#define _KMEMUSER
+#if defined(PSUTIL_NETBSD)
+    #define _KMEMUSER
 #endif
 
 #include <Python.h>
@@ -38,10 +38,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
-#include "netbsd_socks.h"
-#include "netbsd.h"
+#include "specific.h"
 #include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -73,7 +72,7 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         return -1;
     }
     return 0;
@@ -118,6 +117,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
 // https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
 // Current implementation uses /proc instead.
 // Left here just in case.
+/*
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
 #if __NetBSD_Version__ >= 799000000
@@ -157,21 +157,17 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess();
+            return NoSuchProcess("");
         else
             strcpy(pathname, "");
     }
 
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathname);
-#else
-    return Py_BuildValue("s", pathname);
-#endif
-
 #else
     return Py_BuildValue("s", "");
 #endif
 }
+*/
 
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
@@ -213,7 +209,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
 
@@ -230,7 +226,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess();
+        NoSuchProcess("");
         goto error;
     }
 
@@ -271,13 +267,9 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     // On success, the function returns 0.
     // On error, the function returns a BSD errno value.
     kinfo_proc *result;
-    int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
-    size_t length;
     char errbuf[_POSIX2_LINE_MAX];
-    kinfo_proc *x;
     int cnt;
     kvm_t *kd;
 
@@ -332,7 +324,6 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     size = sizeof(argmax);
     st = sysctl(mib, 2, &argmax, &size, NULL, 0);
     if (st == -1) {
-        warn("failed to get kern.argmax");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -350,7 +341,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 
     st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
     if (st == -1) {
-        warn("failed to get kern.procargs");
+        free(procargs);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -359,6 +350,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     return procargs;
 }
 
+
 // Return the command line as a python list object.
 // XXX - most of the times sysctl() returns a truncated string.
 // Also /proc/pid/cmdline behaves the same so it looks like this
@@ -366,7 +358,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 PyObject *
 psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;
-    int pos = 0;
+    size_t pos = 0;
     size_t argsize = 0;
     PyObject *py_arg = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -385,11 +377,7 @@ psutil_get_cmdline(pid_t pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-#if PY_MAJOR_VERSION >= 3
             py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
-#else
-            py_arg = Py_BuildValue("s", &argstr[pos]);
-#endif
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
@@ -497,6 +485,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
 error:
     free(swdev);
+    return NULL;
 }
 
 
@@ -513,7 +502,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
+        psutil_raise_for_pid(pid, "kinfo_getfile()");
         return NULL;
     }
     free(freep);
@@ -525,7 +514,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // XXX: why static?
-    static int maxcpus;
     int mib[3];
     int ncpu;
     size_t len;
@@ -585,7 +573,7 @@ PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i, dk_ndrive, mib[3];
     size_t len;
-    struct io_sysctl *stats;
+    struct io_sysctl *stats = NULL;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
