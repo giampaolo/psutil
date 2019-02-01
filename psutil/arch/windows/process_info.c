@@ -948,22 +948,23 @@ psutil_get_cmdline(long pid) {
     (see here : https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/)
     */
     func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
-    if ((ret != 0) &&
-        (GetLastError() == ERROR_ACCESS_DENIED) &&
-        (windows_version >= WINDOWS_81))
-    {
-        // reset that we had an error
-        // and retry with NtQueryInformationProcess
-        // (for protected processes)
-        PyErr_Clear();
+    if (ret != 0) {
+        if ((GetLastError() == ERROR_ACCESS_DENIED) &&
+            (windows_version >= WINDOWS_81))
+        {
+            // reset that we had an error
+            // and retry with NtQueryInformationProcess
+            // (for protected processes)
+            PyErr_Clear();
 
-        func_ret = psutil_get_cmdline_data(pid, &data, &size);
-        if (func_ret != 0) {
+            func_ret = psutil_get_cmdline_data(pid, &data, &size);
+            if (func_ret != 0) {
+                goto out;
+            }
+        }
+        else {
             goto out;
         }
-    }
-    else {
-        goto out;
     }
    
     // attempt to parse the command line using Win32 API
@@ -986,7 +987,6 @@ psutil_get_cmdline(long pid) {
         PyList_SET_ITEM(py_retlist, i, py_unicode);
         py_unicode = NULL;
     }
-
     ret = py_retlist;
     py_retlist = NULL;
 
