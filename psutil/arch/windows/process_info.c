@@ -855,10 +855,70 @@ error:
     return -1;
 }
 
+int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
+    HANDLE hProcess;
+    ULONG ret_length = 4096;
+    NTSTATUS status;
+    char * cmdline_buffer = NULL;
+    WCHAR * cmdline_buffer_wchar = NULL;
+    PUNICODE_STRING tmp = NULL;
+    DWORD string_size;
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+
+    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
+    if (NtQueryInformationProcess == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    cmdline_buffer = calloc(ret_length, 1);
+    if (cmdline_buffer == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL) {
+        // psutil_handle_from_pid sets errorcode/exception, don't need to do it it
+        return -1;
+    }
+    status = NtQueryInformationProcess(
+        hProcess,
+        60, // ProcessCommandLineInformation
+        cmdline_buffer,
+        ret_length,
+        &ret_length
+    );
+    if (!NT_SUCCESS(status)) {
+        // set error before closing handle to keep original error
+        // CloseHandle might fail and set a new errno/GetLastError
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
+        return -1;
+    }
+    CloseHandle(hProcess);
+    tmp = (PUNICODE_STRING)cmdline_buffer;
+    string_size = wcslen(tmp->Buffer) + 1;
+    cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
+
+    if (cmdline_buffer_wchar == NULL) {
+        free(cmdline_buffer);
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
+    *pdata = cmdline_buffer_wchar;
+    *psize = string_size * sizeof(WCHAR);
+    free(cmdline_buffer);
+
+    return 0;
+}
+
 /*
- * returns a Python list representing the arguments for the process
- * with given pid or NULL on error.
- */
+* returns a Python list representing the arguments for the process
+* with given pid or NULL on error.
+*/
 PyObject *
 psutil_get_cmdline(long pid) {
     PyObject *ret = NULL;
@@ -870,73 +930,42 @@ psutil_get_cmdline(long pid) {
     int nArgs, i;
     HANDLE hProcess;
     int windows_version;
-    ULONG ret_length = 4096;
-    NTSTATUS status;
-    char * cmdline_buffer = NULL;
-    WCHAR * cmdline_buffer_wchar = NULL;
-    PUNICODE_STRING tmp = NULL;
-    DWORD string_size;
-    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    int func_ret;
+
 
     windows_version = get_windows_version();
-    if (windows_version >= WINDOWS_81) {
-        // by defaut, still use PEB (if command line params have been patched in PEB, we will get the actual ones)
-        if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0) {
-            PyErr_Clear(); // reset that we had an error, and retry with NtQueryInformationProcess
-            // if it fails, fallback to NtQueryInformationProcess (for protected processes)
-            NtQueryInformationProcess = psutil_NtQueryInformationProcess();
-            if (NtQueryInformationProcess == NULL) {
-                PyErr_SetFromWindowsErr(0);
-                goto out;
-            }
 
-            cmdline_buffer = calloc(4096, 1);
-            if (cmdline_buffer == NULL) {
-                PyErr_NoMemory();
-                goto out;
-            }
+    /*
+    by defaut, still use PEB (if command line params have been patched in
+    the PEB, we will get the actual ones)
+    Reading the PEB to get the command line parameters still seem to be
+    the best method if somebody has tampered with the parameters after
+    creating the process.
+    For instance, create a process as suspended, patch the command line
+    in its PEB and unfreeze it.
+    The process will use the "new" parameters whereas the system
+    (with NtQueryInformationProcess) will give you the "old" ones
+    (see here : https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/)
+    */
+    func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
+    if ((ret != 0) &&
+        (GetLastError() == ERROR_ACCESS_DENIED) &&
+        (windows_version >= WINDOWS_81))
+    {
+        // reset that we had an error
+        // and retry with NtQueryInformationProcess
+        // (for protected processes)
+        PyErr_Clear();
 
-            hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-            if (hProcess == NULL) {
-                // psutil_handle_from_pid sets errorcode/exception, don't need to do it it
-                goto out;
-            }
-            status = NtQueryInformationProcess(
-                hProcess,
-                60, // ProcessCommandLineInformation
-                cmdline_buffer,
-                ret_length,
-                &ret_length
-            );
-            if (!NT_SUCCESS(status)) {
-                // set error before closing handle to keep original error
-                // CloseHandle might fail and set a new errno/GetLastError
-                PyErr_SetFromWindowsErr(0);
-                CloseHandle(hProcess);
-                goto out;
-            }
-            CloseHandle(hProcess);
-            tmp = (PUNICODE_STRING)cmdline_buffer;
-            string_size = wcslen(tmp->Buffer) + 1;
-            cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
-
-            if (cmdline_buffer_wchar == NULL) {
-                free(cmdline_buffer);
-                PyErr_NoMemory();
-                goto out;
-            }
-
-            wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
-            data = cmdline_buffer_wchar;
-            size = string_size * sizeof(WCHAR);
-            free(cmdline_buffer);
+        func_ret = psutil_get_cmdline_data(pid, &data, &size);
+        if (func_ret != 0) {
+            goto out;
         }
     }
-    // legacy version that reads data from PEB
     else {
-        if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0)
-            goto out;
+        goto out;
     }
+   
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
