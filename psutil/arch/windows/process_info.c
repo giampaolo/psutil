@@ -928,7 +928,6 @@ psutil_get_cmdline(long pid) {
     PyObject *py_unicode = NULL;
     LPWSTR *szArglist = NULL;
     int nArgs, i;
-    HANDLE hProcess;
     int windows_version;
     int func_ret;
 
@@ -948,7 +947,7 @@ psutil_get_cmdline(long pid) {
     (see here : https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/)
     */
     func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
-    if (ret != 0) {
+    if (func_ret != 0) {
         if ((GetLastError() == ERROR_ACCESS_DENIED) &&
             (windows_version >= WINDOWS_81))
         {
