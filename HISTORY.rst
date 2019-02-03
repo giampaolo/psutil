@@ -5,6 +5,12 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1348_: [Windows] on Windows >= 8.1 if Process.cmdline() fails due to
+  ERROR_ACCESS_DENIED attempt using NtQueryInformationProcess +
+  ProcessCommandLineInformation. (patch by EccoTheFlintstone)
+
 **Bug fixes**
 
 - 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed

@@ -161,8 +161,6 @@ typedef struct {
 const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
-
-
 #define WINDOWS_UNINITIALIZED 0
 #define WINDOWS_XP 51
 #define WINDOWS_VISTA 60
@@ -218,6 +216,7 @@ int get_windows_version() {
     }
     return windows_version;
 }
+
 
 _NtQueryInformationProcess psutil_NtQueryInformationProcess() {
     static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
@@ -499,9 +498,8 @@ psutil_pid_is_running(DWORD pid) {
 
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */
-static int psutil_get_process_region_size(HANDLE hProcess,
-                                          LPCVOID src,
-                                          SIZE_T *psize) {
+static int
+psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
@@ -517,9 +515,10 @@ static int psutil_get_process_region_size(HANDLE hProcess,
 #ifndef _WIN64
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */
-static int psutil_get_process_region_size64(HANDLE hProcess,
-                                           const PVOID64 src64,
-                                           PULONG64 psize) {
+static int
+psutil_get_process_region_size64(HANDLE hProcess,
+                                 const PVOID64 src64,
+                                 PULONG64 psize) {
     static _NtWow64QueryVirtualMemory64 NtWow64QueryVirtualMemory64 = NULL;
     MEMORY_BASIC_INFORMATION64 info64;
 
@@ -565,10 +564,11 @@ enum psutil_process_data_kind {
 
    On success 0 is returned.  On error the output parameter is not touched, -1
    is returned, and an appropriate Python exception is set. */
-static int psutil_get_process_data(long pid,
-                                   enum psutil_process_data_kind kind,
-                                   WCHAR **pdata,
-                                   SIZE_T *psize) {
+static int
+psutil_get_process_data(long pid,
+                        enum psutil_process_data_kind kind,
+                        WCHAR **pdata,
+                        SIZE_T *psize) {
     /* This function is quite complex because there are several cases to be
        considered:
 
@@ -855,7 +855,9 @@ error:
     return -1;
 }
 
-int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
+
+static int
+psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess;
     ULONG ret_length = 4096;
     NTSTATUS status;
@@ -864,7 +866,6 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     PUNICODE_STRING tmp = NULL;
     DWORD string_size;
     _NtQueryInformationProcess NtQueryInformationProcess = NULL;
-    int ret = -1;
 
     NtQueryInformationProcess = psutil_NtQueryInformationProcess();
     if (NtQueryInformationProcess == NULL) {
@@ -907,16 +908,16 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
     *pdata = cmdline_buffer_wchar;
     *psize = string_size * sizeof(WCHAR);
-    ret = 0;
+    return 0;
 
 error:
     if (cmdline_buffer != NULL)
         free(cmdline_buffer);
     if (hProcess != NULL)
         CloseHandle(hProcess);
-
-    return ret;
+    return -1;
 }
+
 
 /*
 * returns a Python list representing the arguments for the process
@@ -934,20 +935,19 @@ psutil_get_cmdline(long pid) {
     int windows_version;
     int func_ret;
 
-
     windows_version = get_windows_version();
-
     /*
-    by defaut, still use PEB (if command line params have been patched in
-    the PEB, we will get the actual ones)
-    Reading the PEB to get the command line parameters still seem to be
-    the best method if somebody has tampered with the parameters after
-    creating the process.
+    By defaut, still use PEB (if command line params have been patched in
+    the PEB, we will get the actual ones). Reading the PEB to get the
+    command line parameters still seem to be the best method if somebody
+    has tampered with the parameters after creating the process.
     For instance, create a process as suspended, patch the command line
     in its PEB and unfreeze it.
     The process will use the "new" parameters whereas the system
     (with NtQueryInformationProcess) will give you the "old" ones
-    (see here : https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/)
+    See:
+    - https://github.com/giampaolo/psutil/pull/1398
+    - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     */
     func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
     if (func_ret != 0) {
@@ -968,7 +968,7 @@ psutil_get_cmdline(long pid) {
             goto out;
         }
     }
-   
+
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
@@ -999,11 +999,12 @@ out:
         free(data);
     Py_XDECREF(py_unicode);
     Py_XDECREF(py_retlist);
-
     return ret;
 }
 
-PyObject *psutil_get_cwd(long pid) {
+
+PyObject *
+psutil_get_cwd(long pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -1021,11 +1022,13 @@ out:
     return ret;
 }
 
+
 /*
  * returns a Python string containing the environment variable data for the
  * process with given pid or NULL on error.
  */
-PyObject *psutil_get_environ(long pid) {
+PyObject *
+psutil_get_environ(long pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -1121,4 +1124,3 @@ error:
         free(buffer);
     return 0;
 }
-
