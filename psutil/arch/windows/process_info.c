@@ -864,23 +864,25 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     PUNICODE_STRING tmp = NULL;
     DWORD string_size;
     _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    int ret = -1;
 
     NtQueryInformationProcess = psutil_NtQueryInformationProcess();
     if (NtQueryInformationProcess == NULL) {
         PyErr_SetFromWindowsErr(0);
-        return -1;
+        goto error;
     }
 
     cmdline_buffer = calloc(ret_length, 1);
     if (cmdline_buffer == NULL) {
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL) {
         // psutil_handle_from_pid sets errorcode/exception, don't need to do it it
-        return -1;
+        PyErr_SetFromWindowsErr(0);
+        goto error;
     }
     status = NtQueryInformationProcess(
         hProcess,
@@ -893,26 +895,30 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
         // set error before closing handle to keep original error
         // CloseHandle might fail and set a new errno/GetLastError
         PyErr_SetFromWindowsErr(0);
-        CloseHandle(hProcess);
-        return -1;
+        goto error;
     }
-    CloseHandle(hProcess);
+
     tmp = (PUNICODE_STRING)cmdline_buffer;
     string_size = wcslen(tmp->Buffer) + 1;
     cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
 
     if (cmdline_buffer_wchar == NULL) {
-        free(cmdline_buffer);
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
 
     wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
     *pdata = cmdline_buffer_wchar;
     *psize = string_size * sizeof(WCHAR);
-    free(cmdline_buffer);
+    ret = 0;
 
-    return 0;
+error:
+    if (cmdline_buffer != NULL)
+        free(cmdline_buffer);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+
+    return ret;
 }
 
 /*
