@@ -880,7 +880,6 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL) {
-        // psutil_handle_from_pid sets errorcode/exception, don't need to do it it
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
@@ -892,8 +891,6 @@ int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
         &ret_length
     );
     if (!NT_SUCCESS(status)) {
-        // set error before closing handle to keep original error
-        // CloseHandle might fail and set a new errno/GetLastError
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
