@@ -162,6 +162,73 @@ const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
+
+#define WINDOWS_UNINITIALIZED 0
+#define WINDOWS_XP 51
+#define WINDOWS_VISTA 60
+#define WINDOWS_7 61
+#define WINDOWS_8 62
+#define WINDOWS_81 63
+#define WINDOWS_10 100
+
+
+int get_windows_version() {
+    OSVERSIONINFO ver_info;
+    BOOL result;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    static int windows_version = WINDOWS_UNINITIALIZED;
+    // windows_version is static
+    // and equal to WINDOWS_UNINITIALIZED only on first call
+    if (windows_version == WINDOWS_UNINITIALIZED) {
+        memset(&ver_info, 0, sizeof(ver_info));
+        ver_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+        result = GetVersionEx(&ver_info);
+        if (result != FALSE) {
+            dwMajorVersion = ver_info.dwMajorVersion;
+            dwMinorVersion = ver_info.dwMinorVersion;
+            dwBuildNumber = ver_info.dwBuildNumber;
+            // Windows XP, Windows server 2003
+            if (dwMajorVersion == 5 && dwMinorVersion == 1) {
+                windows_version = WINDOWS_XP;
+            }
+            // Windows Vista
+            else if (dwMajorVersion == 6 && dwMinorVersion == 0) {
+                windows_version = WINDOWS_VISTA;
+            }
+            // Windows 7, Windows Server 2008 R2
+            else if (dwMajorVersion == 6 && dwMinorVersion == 1) {
+                windows_version = WINDOWS_7;
+            }
+            // Windows 8, Windows Server 2012
+            else if (dwMajorVersion == 6 && dwMinorVersion == 2) {
+                windows_version = WINDOWS_8;
+            }
+            // Windows 8.1, Windows Server 2012 R2
+            else if (dwMajorVersion == 6 && dwMinorVersion == 3)
+            {
+                windows_version = WINDOWS_81;
+            }
+            // Windows 10, Windows Server 2016
+            else if (dwMajorVersion == 10) {
+                windows_version = WINDOWS_10;
+            }
+        }
+    }
+    return windows_version;
+}
+
+_NtQueryInformationProcess psutil_NtQueryInformationProcess() {
+    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    if (NtQueryInformationProcess == NULL) {
+        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
+            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+    }
+    return NtQueryInformationProcess;
+}
+
+
 // ====================================================================
 // Process and PIDs utiilties.
 // ====================================================================
@@ -526,7 +593,7 @@ static int psutil_get_process_data(long pid,
          http://stackoverflow.com/a/14012919
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
-    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 #ifndef _WIN64
     static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
@@ -548,10 +615,7 @@ static int psutil_get_process_data(long pid,
     if (hProcess == NULL)
         return -1;
 
-    if (NtQueryInformationProcess == NULL) {
-        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
-                GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-    }
+    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
 
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
@@ -791,10 +855,73 @@ error:
     return -1;
 }
 
+int psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
+    HANDLE hProcess;
+    ULONG ret_length = 4096;
+    NTSTATUS status;
+    char * cmdline_buffer = NULL;
+    WCHAR * cmdline_buffer_wchar = NULL;
+    PUNICODE_STRING tmp = NULL;
+    DWORD string_size;
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    int ret = -1;
+
+    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
+    if (NtQueryInformationProcess == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    cmdline_buffer = calloc(ret_length, 1);
+    if (cmdline_buffer == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    status = NtQueryInformationProcess(
+        hProcess,
+        60, // ProcessCommandLineInformation
+        cmdline_buffer,
+        ret_length,
+        &ret_length
+    );
+    if (!NT_SUCCESS(status)) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    tmp = (PUNICODE_STRING)cmdline_buffer;
+    string_size = wcslen(tmp->Buffer) + 1;
+    cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
+
+    if (cmdline_buffer_wchar == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
+    *pdata = cmdline_buffer_wchar;
+    *psize = string_size * sizeof(WCHAR);
+    ret = 0;
+
+error:
+    if (cmdline_buffer != NULL)
+        free(cmdline_buffer);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+
+    return ret;
+}
+
 /*
- * returns a Python list representing the arguments for the process
- * with given pid or NULL on error.
- */
+* returns a Python list representing the arguments for the process
+* with given pid or NULL on error.
+*/
 PyObject *
 psutil_get_cmdline(long pid) {
     PyObject *ret = NULL;
@@ -804,10 +931,44 @@ psutil_get_cmdline(long pid) {
     PyObject *py_unicode = NULL;
     LPWSTR *szArglist = NULL;
     int nArgs, i;
+    int windows_version;
+    int func_ret;
 
-    if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0)
-        goto out;
 
+    windows_version = get_windows_version();
+
+    /*
+    by defaut, still use PEB (if command line params have been patched in
+    the PEB, we will get the actual ones)
+    Reading the PEB to get the command line parameters still seem to be
+    the best method if somebody has tampered with the parameters after
+    creating the process.
+    For instance, create a process as suspended, patch the command line
+    in its PEB and unfreeze it.
+    The process will use the "new" parameters whereas the system
+    (with NtQueryInformationProcess) will give you the "old" ones
+    (see here : https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/)
+    */
+    func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
+    if (func_ret != 0) {
+        if ((GetLastError() == ERROR_ACCESS_DENIED) &&
+            (windows_version >= WINDOWS_81))
+        {
+            // reset that we had an error
+            // and retry with NtQueryInformationProcess
+            // (for protected processes)
+            PyErr_Clear();
+
+            func_ret = psutil_get_cmdline_data(pid, &data, &size);
+            if (func_ret != 0) {
+                goto out;
+            }
+        }
+        else {
+            goto out;
+        }
+    }
+   
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
@@ -822,18 +983,18 @@ psutil_get_cmdline(long pid) {
         goto out;
     for (i = 0; i < nArgs; i++) {
         py_unicode = PyUnicode_FromWideChar(szArglist[i],
-                                            wcslen(szArglist[i]));
+            wcslen(szArglist[i]));
         if (py_unicode == NULL)
             goto out;
         PyList_SET_ITEM(py_retlist, i, py_unicode);
         py_unicode = NULL;
     }
-
     ret = py_retlist;
     py_retlist = NULL;
 
 out:
-    LocalFree(szArglist);
+    if (szArglist != NULL)
+        LocalFree(szArglist);
     if (data != NULL)
         free(data);
     Py_XDECREF(py_unicode);
@@ -960,3 +1121,4 @@ error:
         free(buffer);
     return 0;
 }
+
