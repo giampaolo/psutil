@@ -856,6 +856,11 @@ error:
 }
 
 
+/*
+ * Get process cmdline() by using NtQueryInformationProcess. This is
+ * useful on Windows 8.1+ in order to get less ERROR_ACCESS_DENIED
+ * errors when querying privileged PIDs.
+ */
 static int
 psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess;
@@ -908,6 +913,8 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
     *pdata = cmdline_buffer_wchar;
     *psize = string_size * sizeof(WCHAR);
+    free(cmdline_buffer);
+    CloseHandle(hProcess);
     return 0;
 
 error:
@@ -920,9 +927,9 @@ error:
 
 
 /*
-* returns a Python list representing the arguments for the process
-* with given pid or NULL on error.
-*/
+ * Return a Python list representing the arguments for the process
+ * with given pid or NULL on error.
+ */
 PyObject *
 psutil_get_cmdline(long pid) {
     PyObject *ret = NULL;
