@@ -46,9 +46,6 @@ from ._compat import lru_cache
 from ._compat import PY3
 from ._compat import unicode
 from ._compat import xrange
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -142,6 +139,13 @@ pinfo_map = dict(
     peak_pagefile=20,
     mem_private=21,
 )
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================

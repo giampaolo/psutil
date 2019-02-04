@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions from 2.6 to 3.X.
+Works with Python versions from 2.6 to 3.4+.
 """
 
 from __future__ import division
@@ -86,12 +86,6 @@ from ._common import OSX  # deprecated alias
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
-
-from ._exceptions import AccessDenied
-from ._exceptions import Error
-from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
-from ._exceptions import ZombieProcess
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -229,7 +223,6 @@ POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
 _timer = getattr(time, 'monotonic', time.time)
 
-
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
 # up importing a python module using a C extension module which
@@ -250,6 +243,112 @@ if (int(__version__.replace('.', '')) !=
                 "the existing psutil install directory"))
     msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
+
+
+# =====================================================================
+# --- Exceptions
+# =====================================================================
+
+
+class Error(Exception):
+    """Base exception class. All other psutil exceptions inherit
+    from this one.
+    """
+
+    def __init__(self, msg=""):
+        Exception.__init__(self, msg)
+        self.msg = msg
+
+    def __repr__(self):
+        ret = "psutil.%s %s" % (self.__class__.__name__, self.msg)
+        return ret.strip()
+
+    __str__ = __repr__
+
+
+class NoSuchProcess(Error):
+    """Exception raised when a process with a certain PID doesn't
+    or no longer exists.
+    """
+
+    def __init__(self, pid, name=None, msg=None):
+        Error.__init__(self, msg)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if name:
+                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+            else:
+                details = "(pid=%s)" % self.pid
+            self.msg = "process no longer exists " + details
+
+
+class ZombieProcess(NoSuchProcess):
+    """Exception raised when querying a zombie process. This is
+    raised on macOS, BSD and Solaris only, and not always: depending
+    on the query the OS may be able to succeed anyway.
+    On Linux all zombie processes are querable (hence this is never
+    raised). Windows doesn't have zombie processes.
+    """
+
+    def __init__(self, pid, name=None, ppid=None, msg=None):
+        NoSuchProcess.__init__(self, msg)
+        self.pid = pid
+        self.ppid = ppid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            args = ["pid=%s" % pid]
+            if name:
+                args.append("name=%s" % repr(self.name))
+            if ppid:
+                args.append("ppid=%s" % self.ppid)
+            details = "(%s)" % ", ".join(args)
+            self.msg = "process still exists but it's a zombie " + details
+
+
+class AccessDenied(Error):
+    """Exception raised when permission to perform an action is denied."""
+
+    def __init__(self, pid=None, name=None, msg=None):
+        Error.__init__(self, msg)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if (pid is not None) and (name is not None):
+                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+            elif (pid is not None):
+                self.msg = "(pid=%s)" % self.pid
+            else:
+                self.msg = ""
+
+
+class TimeoutExpired(Error):
+    """Raised on Process.wait(timeout) if timeout expires and process
+    is still alive.
+    """
+
+    def __init__(self, seconds, pid=None, name=None):
+        Error.__init__(self, "timeout after %s seconds" % seconds)
+        self.seconds = seconds
+        self.pid = pid
+        self.name = name
+        if (pid is not None) and (name is not None):
+            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
+        elif (pid is not None):
+            self.msg += " (pid=%s)" % self.pid
+
+
+# Push exception classes into platform specific module namespace.
+_psplatform.NoSuchProcess = NoSuchProcess
+_psplatform.ZombieProcess = ZombieProcess
+_psplatform.AccessDenied = AccessDenied
+_psplatform.TimeoutExpired = TimeoutExpired
+if POSIX:
+    from . import _psposix
+    _psposix.TimeoutExpired = TimeoutExpired
 
 
 # =====================================================================

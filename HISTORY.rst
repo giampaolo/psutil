@@ -15,11 +15,12 @@ XXXX-XX-XX
 
 - 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
+- 1402_: psutil exceptions' repr() show the internal private module path.
 
 5.5.0
 =====
 
-2019-0-23
+2019-01-23
 
 **Enhancements**
 

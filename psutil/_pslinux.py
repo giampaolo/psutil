@@ -43,9 +43,6 @@ from ._compat import b
 from ._compat import basestring
 from ._compat import long
 from ._compat import PY3
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 if sys.version_info >= (3, 4):
     import enum
@@ -160,6 +157,13 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================

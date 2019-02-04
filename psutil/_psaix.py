@@ -28,9 +28,6 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 
 __extra__all__ = ["PROCFS_PATH"]
@@ -78,6 +75,13 @@ proc_info_map = dict(
     num_threads=5,
     status=6,
     ttynr=7)
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================
