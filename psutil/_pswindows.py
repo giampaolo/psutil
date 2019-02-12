@@ -642,6 +642,29 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def retry_error_partial_copy(fun):
+    """
+    Workaround for https://github.com/giampaolo/psutil/issues/875#issuecomment-298758923
+    Sleeping reduces the chance of getting ERROR_PARTIAL_COPY. For more details:
+    https://stackoverflow.com/questions/4457171/why-does-readprocessmemory-have-lpnumberofbytesread/4457745#4457745
+    """
+
+    @functools.wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        for idx in range(10):
+            try:
+                return fun(self, *args, **kwargs)
+            except WindowsError as err:
+                ERROR_PARTIAL_COPY = 299
+                if idx < 9 and err.winerror == ERROR_PARTIAL_COPY:
+                    # first retry immediately
+                    if 0 < idx:
+                        time.sleep(0.1)
+                    continue
+                raise
+    return wrapper
+
+
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
@@ -701,6 +724,7 @@ class Process(object):
         return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def cmdline(self):
         ret = cext.proc_cmdline(self.pid)
         if PY3:
@@ -709,6 +733,7 @@ class Process(object):
             return [py2_strencode(s) for s in ret]
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def environ(self):
         ustr = cext.proc_environ(self.pid)
         if ustr and not PY3:
@@ -885,6 +910,7 @@ class Process(object):
         return cext.proc_resume(self.pid)
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def cwd(self):
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
