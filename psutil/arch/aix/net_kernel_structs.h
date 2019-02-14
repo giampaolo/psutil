@@ -18,6 +18,7 @@
 #include <sys/protosw.h>
 #include <sys/unpcb.h>
 #include <sys/mbuf_base.h>
+#include <sys/mbuf_macro.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
@@ -30,7 +31,7 @@
 #define tcpcb64 tcpcb
 #define unpcb64 unpcb
 #define mbuf64 mbuf
-#else
+#else       /* __64BIT__ */
   struct file64 {
     int f_flag;
     int f_count;
@@ -107,4 +108,4 @@ struct mbuf64
 
 #define m_len               m_hdr.mh_len
 
-#endif
+#endif      /* __64BIT__ */
