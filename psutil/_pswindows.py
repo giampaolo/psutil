@@ -708,7 +708,13 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        ret = cext.proc_cmdline(self.pid)
+        try:
+            ret = cext.proc_cmdline(self.pid, use_peb=True)
+        except OSError as err:
+            if err.errno in ACCESS_DENIED_ERRSET:
+                ret = cext.proc_cmdline(self.pid, use_peb=False)
+            else:
+                raise
         if PY3:
             return ret
         else:

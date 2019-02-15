@@ -708,22 +708,28 @@ return_none:
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args) {
+psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     long pid;
     int pid_return;
+    int use_peb;
+    PyObject *py_usepeb = Py_True;
+    static char *keywords[] = {"pid", "use_peb", NULL};
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "i|O",
+                                     keywords, &pid, &py_usepeb)) {
         return NULL;
+    }
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("[]");
 
+    use_peb = (py_usepeb == Py_True);
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
         return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
-    return psutil_get_cmdline(pid);
+    return psutil_get_cmdline(pid, use_peb);
 }
 
 
@@ -3688,8 +3694,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 static PyMethodDef
 PsutilMethods[] = {
     // --- per-process functions
-
-    {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
+    {"proc_cmdline", (PyCFunction)(void(*)(void))psutil_proc_cmdline, METH_VARARGS | METH_KEYWORDS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment data"},

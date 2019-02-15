@@ -384,6 +384,16 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(cext.proc_info, os.getpid())
 
 
+class TestProcessDualImplementation(TestMemLeak):
+
+    if WINDOWS:
+        def test_cmdline_peb_true(self):
+            self.execute(cext.proc_cmdline, os.getpid(), use_peb=True)
+
+        def test_cmdline_peb_false(self):
+            self.execute(cext.proc_cmdline, os.getpid(), use_peb=False)
+
+
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     """Repeat the tests above looking for leaks occurring when dealing
     with terminated processes raising NoSuchProcess exception.

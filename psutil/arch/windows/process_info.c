@@ -931,7 +931,7 @@ error:
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_cmdline(long pid) {
+psutil_get_cmdline(long pid, int use_peb) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -956,25 +956,14 @@ psutil_get_cmdline(long pid) {
     - https://github.com/giampaolo/psutil/pull/1398
     - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     */
-    func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
-    if (func_ret != 0) {
-        if ((GetLastError() == ERROR_ACCESS_DENIED) &&
-            (windows_version >= WINDOWS_81))
-        {
-            // reset that we had an error
-            // and retry with NtQueryInformationProcess
-            // (for protected processes)
-            PyErr_Clear();
-
-            func_ret = psutil_get_cmdline_data(pid, &data, &size);
-            if (func_ret != 0) {
-                goto out;
-            }
-        }
-        else {
-            goto out;
-        }
+    if (use_peb == 1) {
+        func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
     }
+    else {
+        func_ret = psutil_get_cmdline_data(pid, &data, &size);
+    }
+    if (func_ret != 0)
+        goto out;
 
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);

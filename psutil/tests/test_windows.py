@@ -673,6 +673,22 @@ class TestDualProcessImplementation(unittest.TestCase):
                              num_handles)
             assert fun.called
 
+    def test_cmdline(self):
+        from psutil._pswindows import ACCESS_DENIED_ERRSET
+        for pid in psutil.pids():
+            try:
+                a = cext.proc_cmdline(pid, use_peb=True)
+                b = cext.proc_cmdline(pid, use_peb=False)
+            except OSError as err:
+                if err.errno in ACCESS_DENIED_ERRSET:
+                    pass
+                elif err.errno == errno.ESRCH:
+                    pass  # NSP
+                else:
+                    raise
+            else:
+                self.assertEqual(a, b)
+
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
