@@ -1,4 +1,4 @@
-# Build: 1 (bump this up by 1 to force an appveyor run)
+# Build: 2 (bump this up by 1 to force an appveyor run)
 
 os: Visual Studio 2015
 
