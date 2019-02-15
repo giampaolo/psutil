@@ -16,6 +16,8 @@ XXXX-XX-XX
 - 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
 - 1402_: psutil exceptions' repr() show the internal private module path.
+- 1408_: [AIX] psutil won't compile on AIX 7.1 due to missing header.  (patch
+  by Arnon Yaari)
 
 5.5.0
 =====
