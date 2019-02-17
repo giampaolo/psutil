@@ -694,7 +694,10 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        return cext.proc_exe(self.pid)
+        exe = cext.proc_exe(self.pid)
+        if not PY3:
+            exe = py2_strencode(exe)
+        return exe
 
     @wrap_exceptions
     def cmdline(self):
