@@ -788,7 +788,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 #else  // Windows XP
     if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
         // see: https://github.com/giampaolo/psutil/issues/1394
-        if (GetLastError() == 0) {
+        if (GetLastError() == 0)
             PyErr_SetFromWindowsErr(ERROR_ACCESS_DENIED);
         else
             PyErr_SetFromWindowsErr(0);
