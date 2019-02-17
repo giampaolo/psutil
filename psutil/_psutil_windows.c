@@ -764,14 +764,30 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
+#if (_WIN32_WINNT >= 0x0600)  // >= Vista
+    PDWORD size = MAX_PATH;
+#endif
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
+
+    // Here we differentiate between XP and Vista+ because
+    // QueryFullProcessImageNameW is better than GetProcessImageFileNameW
+    // (avoid using QueryDosDevice on the returned path), see:
+    // https://github.com/giampaolo/psutil/issues/1394
+#if (_WIN32_WINNT >= 0x0600)  // Windows >= Vista
+    memset(exe, 0, MAX_PATH);
+    if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
+        return NULL;
+    }
+#else  // Windows XP
     if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
-        // https://github.com/giampaolo/psutil/issues/1394
+        // see: https://github.com/giampaolo/psutil/issues/1394
         if (GetLastError() == 0)
             PyErr_SetFromWindowsErr(ERROR_ACCESS_DENIED);
         else
@@ -779,6 +795,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         CloseHandle(hProcess);
         return NULL;
     }
+#endif
     CloseHandle(hProcess);
     return PyUnicode_FromWideChar(exe, wcslen(exe));
 }

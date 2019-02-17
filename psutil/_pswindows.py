@@ -147,6 +147,28 @@ ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
+# More values at: https://stackoverflow.com/a/20804735/376587
+WIN_10 = (10, 0)
+WIN_8 = (6, 2)
+WIN_7 = (6, 1)
+WIN_SERVER_2008 = (6, 0)
+WIN_VISTA = (6, 0)
+WIN_SERVER_2003 = (5, 2)
+WIN_XP = (5, 1)
+
+
+@lru_cache()
+def get_winver():
+    """Usage:
+    >>> if get_winver() <= WIN_VISTA:
+    ...      ...
+    """
+    wv = sys.getwindowsversion()
+    return (wv.major, wv.minor)
+
+
+IS_WIN_XP = get_winver() < WIN_VISTA
+
 
 # =====================================================================
 # --- named tuples
@@ -694,16 +716,17 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        # Note: os.path.exists(path) may return False even if the file
-        # is there, see:
-        # http://stackoverflow.com/questions/3112546/os-path-exists-lies
-
-        # see https://github.com/giampaolo/psutil/issues/414
-        # see https://github.com/giampaolo/psutil/issues/528
-        if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._name)
-        exe = cext.proc_exe(self.pid)
-        exe = convert_dos_path(exe)
+        # Dual implementation, see:
+        # https://github.com/giampaolo/psutil/pull/1413
+        if not IS_WIN_XP:
+            exe = cext.proc_exe(self.pid)
+        else:
+            if self.pid in (0, 4):
+                # https://github.com/giampaolo/psutil/issues/414
+                # https://github.com/giampaolo/psutil/issues/528
+                raise AccessDenied(self.pid, self._name)
+            exe = cext.proc_exe(self.pid)
+            exe = convert_dos_path(exe)
         return py2_strencode(exe)
 
     @wrap_exceptions

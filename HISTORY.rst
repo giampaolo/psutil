@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.5.2
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1394_: [Windows] Process name() and exe() may erronously return "Registry".
+  QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
+  in order to prevent that.
+
 5.5.1
 =====
 
