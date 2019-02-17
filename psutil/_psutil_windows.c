@@ -763,6 +763,7 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
+    PDWORD size = MAX_PATH;
     wchar_t exe[MAX_PATH];
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -770,12 +771,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
-    if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
-        // https://github.com/giampaolo/psutil/issues/1394
-        if (GetLastError() == 0)
-            PyErr_SetFromWindowsErr(ERROR_ACCESS_DENIED);
-        else
-            PyErr_SetFromWindowsErr(0);
+    // before this was using GetProcessImageFileNameW see:
+    // https://github.com/giampaolo/psutil/issues/1394
+    memset(exe, 0, MAX_PATH);
+    if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
     }
