@@ -766,7 +766,9 @@ class TestSystemAPIs(unittest.TestCase):
 
         ls = psutil.cpu_freq(percpu=True)
         if TRAVIS and not ls:
-            return
+            raise self.skipTest("skipped on Travis")
+        if FREEBSD and not ls:
+            raise self.skipTest("returns empty list on FreeBSD")
 
         assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])
