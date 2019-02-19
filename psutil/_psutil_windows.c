@@ -37,6 +37,7 @@
 #include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "arch/windows/global.h"
 
 
 /*
@@ -2123,19 +2124,13 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
-    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    NtQueryInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
-    if (NtQueryInformationProcess == NULL)
-        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
-
-    NtQueryInformationProcess(
+    psutil_NtQueryInformationProcess(
         hProcess,
         ProcessIoPriority,
         &IoPriority,
@@ -3939,6 +3934,7 @@ void init_psutil_windows(void)
     // set SeDebug for the current process
     psutil_set_se_debug();
     psutil_setup();
+    psutil_load_globals();
 
 #if PY_MAJOR_VERSION >= 3
     return module;
