@@ -636,14 +636,10 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // it supports process groups, meaning this is able to report more
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    _GetLogicalProcessorInformationEx = \
-        (PFN_GETLOGICALPROCESSORINFORMATIONEX)GetProcAddress(
-            GetModuleHandle(TEXT("kernel32")),
-                            "GetLogicalProcessorInformationEx");
-    if (_GetLogicalProcessorInformationEx == NULL) {
-        psutil_debug("failed loading GetLogicalProcessorInformationEx()");
-        goto return_none;
-    }
+    _GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
+        "kernel32", "GetLogicalProcessorInformationEx");
+    if (_GetLogicalProcessorInformationEx == NULL)
+        return NULL;
 
     while (1) {
         rc = _GetLogicalProcessorInformationEx(
