@@ -205,15 +205,11 @@ unsigned int
 psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
-    static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
-
     // GetActiveProcessorCount is available only on 64 bit versions
     // of Windows from Windows 7 onward.
     // Windows Vista 64 bit and Windows XP don't have it.
-    _GetActiveProcessorCount = \
-        psutil_GetProcAddress("kernel32", "GetActiveProcessorCount");
-    if (_GetActiveProcessorCount != NULL) {
-        ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if (psutil_GetActiveProcessorCount != NULL) {
+        ncpus = psutil_GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetFromWindowsErr(0);
         }

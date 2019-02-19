@@ -51,6 +51,8 @@ ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 
 int
 psutil_load_globals() {
+    // Mandatory.
+
     psutil_NtQuerySystemInformation = ps_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
     if (psutil_NtQuerySystemInformation == NULL)
@@ -64,7 +66,7 @@ psutil_load_globals() {
     psutil_NtSetInformationProcess = ps_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
     if (! psutil_NtSetInformationProcess)
-        return NULL;
+        return 1;
 
     psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
@@ -75,6 +77,11 @@ psutil_load_globals() {
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
+
+    // Optionals.
+
+    psutil_GetActiveProcessorCount = ps_GetProcAddress(
+        "kernel32", "GetActiveProcessorCount");
 
     return 0;
 }

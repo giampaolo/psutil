@@ -10,6 +10,8 @@
 typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
 typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
 typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
+
 
 _RtlIpv4AddressToStringA \
     psutil_rtlIpv4AddressToStringA;
@@ -25,6 +27,9 @@ _NtSetInformationProcess
 
 NTQSI_PROC \
     psutil_NtQuerySystemInformation;
+
+_GetActiveProcessorCount \
+    psutil_GetActiveProcessorCount;
 
 
 int psutil_load_globals();
