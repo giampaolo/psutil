@@ -5,6 +5,7 @@
  *
  */
 #include "process_handles.h"
+#include "process_info.h"
 #include "../../_psutil_common.h"
 
 static _NtQuerySystemInformation __NtQuerySystemInformation = NULL;
@@ -20,12 +21,6 @@ HANDLE g_hThread = NULL;
 PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
-
-
-PVOID
-GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName) {
-    return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
-}
 
 
 PyObject *
@@ -50,9 +45,10 @@ psutil_get_open_files_init(BOOL threaded) {
         return;
 
     // Resolve the Windows API calls
-    __NtQuerySystemInformation =
-        GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
-    __NtQueryObject = GetLibraryProcAddress("ntdll.dll", "NtQueryObject");
+    __NtQuerySystemInformation = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "NtQuerySystemInformation");
+    __NtQueryObject = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "NtQueryObject");
 
     // Create events for signalling work between threads
     if (threaded == TRUE) {
