@@ -15,7 +15,6 @@
 #define HANDLE_TO_PYNUM(handle) PyLong_FromUnsignedLong((unsigned long) handle)
 #define PYNUM_TO_HANDLE(obj) ((HANDLE)PyLong_AsUnsignedLong(obj))
 
-
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
 HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
 int psutil_pid_is_running(DWORD pid);

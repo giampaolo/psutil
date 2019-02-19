@@ -1650,30 +1650,25 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     // Import some functions.
-    {
-        rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
-            "ntdll.dll", "RtlIpv4AddressToStringA");
-        if (rtlIpv4AddressToStringA == NULL)
-            goto error;
-        rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-            "ntdll.dll", "RtlIpv6AddressToStringA");
-        if (rtlIpv6AddressToStringA == NULL)
-            goto error;
-        getExtendedTcpTable = psutil_GetProcAddressFromLib(
-            "iphlpapi.dll", "GetExtendedTcpTable");
-        if (getExtendedTcpTable == NULL)
-            goto error;
-        getExtendedUdpTable = psutil_GetProcAddressFromLib(
-            "iphlpapi.dll", "GetExtendedUdpTable");
-        if (getExtendedUdpTable == NULL)
-            goto error;
-    }
+    rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv4AddressToStringA");
+    if (rtlIpv4AddressToStringA == NULL)
+        goto error;
+    rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv6AddressToStringA");
+    if (rtlIpv6AddressToStringA == NULL)
+        goto error;
+    getExtendedTcpTable = psutil_GetProcAddressFromLib(
+        "iphlpapi.dll", "GetExtendedTcpTable");
+    if (getExtendedTcpTable == NULL)
+        goto error;
+    getExtendedUdpTable = psutil_GetProcAddressFromLib(
+        "iphlpapi.dll", "GetExtendedUdpTable");
+    if (getExtendedUdpTable == NULL)
+        goto error;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
-    {
-        _psutil_conn_decref_objs();
-        return NULL;
-    }
+        goto error;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         _psutil_conn_decref_objs();
@@ -3101,7 +3096,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             Py_DECREF(py_tuple);
             Py_DECREF(py_str);
         }
-        previousAllocationBase = basicInfo.AllocationBase;
+        previousAllocationBase = (ULONGLONG)basicInfo.AllocationBase;
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
