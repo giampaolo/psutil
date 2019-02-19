@@ -3917,7 +3917,8 @@ void init_psutil_windows(void)
     // set SeDebug for the current process
     psutil_set_se_debug();
     psutil_setup();
-    psutil_load_globals();
+    if (psutil_load_globals() != 0)
+        return NULL;
 
 #if PY_MAJOR_VERSION >= 3
     return module;
