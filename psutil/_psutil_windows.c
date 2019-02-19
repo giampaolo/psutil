@@ -205,15 +205,12 @@ psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
     static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
-    HINSTANCE hKernel32;
 
     // GetActiveProcessorCount is available only on 64 bit versions
     // of Windows from Windows 7 onward.
-    // Windows Vista 64 bit and Windows XP doesn't have it.
-    hKernel32 = GetModuleHandleW(L"KERNEL32");
-    _GetActiveProcessorCount = (void*)GetProcAddress(
-        hKernel32, "GetActiveProcessorCount");
-
+    // Windows Vista 64 bit and Windows XP don't have it.
+    _GetActiveProcessorCount = \
+        psutil_GetProcAddress("kernel32", "GetActiveProcessorCount");
     if (_GetActiveProcessorCount != NULL) {
         ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
