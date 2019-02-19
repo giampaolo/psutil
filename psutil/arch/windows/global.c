@@ -68,6 +68,11 @@ psutil_load_globals() {
     if (! psutil_NtSetInformationProcess)
         return 1;
 
+    psutil_WinStationQueryInformationW = ps_GetProcAddressFromLib(
+        "winsta.dll", "WinStationQueryInformationW");
+    if (! psutil_WinStationQueryInformationW)
+        return 1;
+
     psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
     if (! psutil_rtlIpv4AddressToStringA)

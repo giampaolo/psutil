@@ -31,5 +31,7 @@ NTQSI_PROC \
 _GetActiveProcessorCount \
     psutil_GetActiveProcessorCount;
 
+PWINSTATIONQUERYINFORMATIONW \
+    psutil_WinStationQueryInformationW;
 
 int psutil_load_globals();
