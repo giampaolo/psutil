@@ -1024,14 +1024,13 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     PVOID buffer;
     ULONG bufferSize;
     PSYSTEM_PROCESS_INFORMATION process;
-
-    // get NtQuerySystemInformation
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
-    HINSTANCE hNtDll;
-    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-        hNtDll, "NtQuerySystemInformation");
+
+    NtQuerySystemInformation = \
+        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL)
+        goto error;
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
@@ -1043,7 +1042,6 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     while (TRUE) {
         status = NtQuerySystemInformation(SystemProcessInformation, buffer,
                                           bufferSize, &bufferSize);
-
         if (status == STATUS_BUFFER_TOO_SMALL ||
                 status == STATUS_INFO_LENGTH_MISMATCH)
         {
@@ -1081,7 +1079,6 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     goto error;
 
 error:
-    FreeLibrary(hNtDll);
     if (buffer != NULL)
         free(buffer);
     return 0;
