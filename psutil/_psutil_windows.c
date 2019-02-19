@@ -2135,8 +2135,10 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     DWORD IoPriority;
     _NtQueryInformationProcess NtQueryInformationProcess;
 
-    NtQueryInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtQueryInformationProcess");
+    NtQueryInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
+    if (NtQueryInformationProcess == NULL)
+        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -2166,8 +2168,8 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     _NtSetInformationProcess NtSetInformationProcess;
 
-    NtSetInformationProcess = psutil_GetProcAddress(
-        "ntdll.dll", "NtSetInformationProcess");
+    NtSetInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtSetInformationProcess");
     if (NtSetInformationProcess == NULL)
         return NULL;
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
@@ -3486,11 +3488,8 @@ error:
  */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    // NtQuerySystemInformation stuff
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
-    HINSTANCE hNtDll;
-
     NTSTATUS status;
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -3500,18 +3499,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
 
-    // obtain NtQuerySystemInformation
-    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    if (hNtDll == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-        hNtDll, "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
+    NtQuerySystemInformation = \
+        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL)
+        return NULL;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -3582,7 +3573,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     free(spi);
     free(InterruptInformation);
     free(sppi);
-    FreeLibrary(hNtDll);
     return Py_BuildValue(
         "kkkk",
         spi->ContextSwitches,
@@ -3598,8 +3588,6 @@ error:
         free(InterruptInformation);
     if (sppi)
         free(sppi);
-    if (hNtDll)
-        FreeLibrary(hNtDll);
     return NULL;
 }
 
