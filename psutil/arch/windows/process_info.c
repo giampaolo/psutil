@@ -495,11 +495,8 @@ psutil_get_process_region_size64(HANDLE hProcess,
     MEMORY_BASIC_INFORMATION64 info64;
 
     if (NtWow64QueryVirtualMemory64 == NULL) {
-        NtWow64QueryVirtualMemory64 =
-            (_NtWow64QueryVirtualMemory64)GetProcAddress(
-                    GetModuleHandleA("ntdll.dll"),
-                    "NtWow64QueryVirtualMemory64");
-
+        NtWow64QueryVirtualMemory64 = psutil_GetProcAddressFromLib(
+            "ntdll.dll", "NtWow64QueryVirtualMemory64");
         if (NtWow64QueryVirtualMemory64 == NULL) {
             PyErr_SetString(PyExc_NotImplementedError,
                     "NtWow64QueryVirtualMemory64 missing");
