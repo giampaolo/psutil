@@ -200,64 +200,6 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 }
 
 
-
-#define WINDOWS_UNINITIALIZED 0
-#define WINDOWS_XP 51
-#define WINDOWS_VISTA 60
-#define WINDOWS_7 61
-#define WINDOWS_8 62
-#define WINDOWS_81 63
-#define WINDOWS_10 100
-
-
-int get_windows_version() {
-    OSVERSIONINFO ver_info;
-    BOOL result;
-    DWORD dwMajorVersion;
-    DWORD dwMinorVersion;
-    DWORD dwBuildNumber;
-    static int windows_version = WINDOWS_UNINITIALIZED;
-    // windows_version is static
-    // and equal to WINDOWS_UNINITIALIZED only on first call
-    if (windows_version == WINDOWS_UNINITIALIZED) {
-        memset(&ver_info, 0, sizeof(ver_info));
-        ver_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-        result = GetVersionEx(&ver_info);
-        if (result != FALSE) {
-            dwMajorVersion = ver_info.dwMajorVersion;
-            dwMinorVersion = ver_info.dwMinorVersion;
-            dwBuildNumber = ver_info.dwBuildNumber;
-            // Windows XP, Windows server 2003
-            if (dwMajorVersion == 5 && dwMinorVersion == 1) {
-                windows_version = WINDOWS_XP;
-            }
-            // Windows Vista
-            else if (dwMajorVersion == 6 && dwMinorVersion == 0) {
-                windows_version = WINDOWS_VISTA;
-            }
-            // Windows 7, Windows Server 2008 R2
-            else if (dwMajorVersion == 6 && dwMinorVersion == 1) {
-                windows_version = WINDOWS_7;
-            }
-            // Windows 8, Windows Server 2012
-            else if (dwMajorVersion == 6 && dwMinorVersion == 2) {
-                windows_version = WINDOWS_8;
-            }
-            // Windows 8.1, Windows Server 2012 R2
-            else if (dwMajorVersion == 6 && dwMinorVersion == 3)
-            {
-                windows_version = WINDOWS_81;
-            }
-            // Windows 10, Windows Server 2016
-            else if (dwMajorVersion == 10) {
-                windows_version = WINDOWS_10;
-            }
-        }
-    }
-    return windows_version;
-}
-
-
 _NtQueryInformationProcess psutil_NtQueryInformationProcess() {
     static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
     if (NtQueryInformationProcess == NULL) {
@@ -979,10 +921,8 @@ psutil_get_cmdline(long pid, int use_peb) {
     PyObject *py_unicode = NULL;
     LPWSTR *szArglist = NULL;
     int nArgs, i;
-    int windows_version;
     int func_ret;
 
-    windows_version = get_windows_version();
     /*
     By defaut, still use PEB (if command line params have been patched in
     the PEB, we will get the actual ones). Reading the PEB to get the
