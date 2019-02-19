@@ -1649,6 +1649,26 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
+    // Import some functions.
+    {
+        rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
+            "ntdll.dll", "RtlIpv4AddressToStringA");
+        if (rtlIpv4AddressToStringA == NULL)
+            goto error;
+        rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+            "ntdll.dll", "RtlIpv6AddressToStringA");
+        if (rtlIpv6AddressToStringA == NULL)
+            goto error;
+        getExtendedTcpTable = psutil_GetProcAddressFromLib(
+            "iphlpapi.dll", "GetExtendedTcpTable");
+        if (getExtendedTcpTable == NULL)
+            goto error;
+        getExtendedUdpTable = psutil_GetProcAddressFromLib(
+            "iphlpapi.dll", "GetExtendedUdpTable");
+        if (getExtendedUdpTable == NULL)
+            goto error;
+    }
+
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
     {
         _psutil_conn_decref_objs();
@@ -1671,27 +1691,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             _psutil_conn_decref_objs();
             return NULL;
         }
-    }
-
-    // Import some functions.
-    {
-        HMODULE ntdll;
-        HMODULE iphlpapi;
-
-        ntdll = LoadLibrary(TEXT("ntdll.dll"));
-        rtlIpv4AddressToStringA = (_RtlIpv4AddressToStringA)GetProcAddress(
-                                   ntdll, "RtlIpv4AddressToStringA");
-        rtlIpv6AddressToStringA = (_RtlIpv6AddressToStringA)GetProcAddress(
-                                   ntdll, "RtlIpv6AddressToStringA");
-        /* TODO: Check these two function pointers */
-
-        iphlpapi = LoadLibrary(TEXT("iphlpapi.dll"));
-        getExtendedTcpTable = (_GetExtendedTcpTable)GetProcAddress(iphlpapi,
-                              "GetExtendedTcpTable");
-        getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi,
-                              "GetExtendedUdpTable");
-        FreeLibrary(ntdll);
-        FreeLibrary(iphlpapi);
     }
 
     if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
