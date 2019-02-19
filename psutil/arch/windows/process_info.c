@@ -867,10 +867,8 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     }
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (hProcess == NULL) {
-        PyErr_SetFromWindowsErr(0);
+    if (hProcess == NULL)
         goto error;
-    }
     status = NtQueryInformationProcess(
         hProcess,
         60, // ProcessCommandLineInformation
