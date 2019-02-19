@@ -1051,7 +1051,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // NtQuerySystemInformation stuff
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
-    HINSTANCE hNtDll;
 
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
@@ -1063,19 +1062,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-
-    // obtain NtQuerySystemInformation
-    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    if (hNtDll == NULL) {
-        PyErr_SetFromWindowsErr(0);
+    NtQuerySystemInformation = \
+        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL)
         goto error;
-    }
-    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-        hNtDll, "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -1138,7 +1128,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     free(sppi);
-    FreeLibrary(hNtDll);
     return py_retlist;
 
 error:
@@ -1146,8 +1135,6 @@ error:
     Py_DECREF(py_retlist);
     if (sppi)
         free(sppi);
-    if (hNtDll)
-        FreeLibrary(hNtDll);
     return NULL;
 }
 
