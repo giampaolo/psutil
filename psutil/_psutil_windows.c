@@ -765,7 +765,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
 #if (_WIN32_WINNT >= 0x0600)  // >= Vista
-    PDWORD size = MAX_PATH;
+    unsigned int size = sizeof(exe);
 #endif
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -3100,7 +3100,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     GetSystemInfo(&system_info);
     maxAddr = system_info.lpMaximumApplicationAddress;
     baseAddress = NULL;
-    previousAllocationBase = NULL;
 
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
