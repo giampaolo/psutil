@@ -9,7 +9,7 @@
 PCSTR WSAAPI
 inet_ntop(
     __in                                INT             Family,
-    __in                                PVOID           pAddr,
+    __in                                const VOID *    pAddr,
     __out_ecount(StringBufSize)         PSTR            pStringBuf,
     __in                                size_t          StringBufSize
 );

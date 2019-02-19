@@ -205,15 +205,12 @@ psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
     static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
-    HINSTANCE hKernel32;
 
     // GetActiveProcessorCount is available only on 64 bit versions
     // of Windows from Windows 7 onward.
-    // Windows Vista 64 bit and Windows XP doesn't have it.
-    hKernel32 = GetModuleHandleW(L"KERNEL32");
-    _GetActiveProcessorCount = (void*)GetProcAddress(
-        hKernel32, "GetActiveProcessorCount");
-
+    // Windows Vista 64 bit and Windows XP don't have it.
+    _GetActiveProcessorCount = \
+        psutil_GetProcAddress("kernel32", "GetActiveProcessorCount");
     if (_GetActiveProcessorCount != NULL) {
         ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
@@ -261,11 +258,9 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     time_t pt;
     FILETIME fileTime;
     long long ll;
-    HINSTANCE hKernel32;
-    psutil_GetTickCount64 = NULL;
+    psutil_GetTickCount64;
 
     GetSystemTimeAsFileTime(&fileTime);
-
     /*
     HUGE thanks to:
     http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
@@ -288,12 +283,11 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
     // GetTickCount64() is Windows Vista+ only. Dinamically load
-    // GetTickCount64() at runtime. We may have used
+    // it at runtime. We may have used
     // "#if (_WIN32_WINNT >= 0x0600)" pre-processor but that way
     // the produced exe/wheels cannot be used on Windows XP, see:
     // https://github.com/giampaolo/psutil/issues/811#issuecomment-230639178
-    hKernel32 = GetModuleHandleW(L"KERNEL32");
-    psutil_GetTickCount64 = (void*)GetProcAddress(hKernel32, "GetTickCount64");
+    psutil_GetTickCount64 = psutil_GetProcAddress("kernel32", "GetTickCount64");
     if (psutil_GetTickCount64 != NULL) {
         // Windows >= Vista
         uptime = psutil_GetTickCount64() / (ULONGLONG)1000.00f;
@@ -642,14 +636,10 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // it supports process groups, meaning this is able to report more
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    _GetLogicalProcessorInformationEx = \
-        (PFN_GETLOGICALPROCESSORINFORMATIONEX)GetProcAddress(
-            GetModuleHandle(TEXT("kernel32")),
-                            "GetLogicalProcessorInformationEx");
-    if (_GetLogicalProcessorInformationEx == NULL) {
-        psutil_debug("failed loading GetLogicalProcessorInformationEx()");
-        goto return_none;
-    }
+    _GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
+        "kernel32", "GetLogicalProcessorInformationEx");
+    if (_GetLogicalProcessorInformationEx == NULL)
+        return NULL;
 
     while (1) {
         rc = _GetLogicalProcessorInformationEx(
@@ -765,7 +755,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
 #if (_WIN32_WINNT >= 0x0600)  // >= Vista
-    PDWORD size = MAX_PATH;
+    unsigned int size = sizeof(exe);
 #endif
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -1057,7 +1047,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // NtQuerySystemInformation stuff
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
-    HINSTANCE hNtDll;
 
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
@@ -1069,19 +1058,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-
-    // obtain NtQuerySystemInformation
-    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    if (hNtDll == NULL) {
-        PyErr_SetFromWindowsErr(0);
+    NtQuerySystemInformation = \
+        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL)
         goto error;
-    }
-    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-        hNtDll, "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -1144,7 +1124,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     free(sppi);
-    FreeLibrary(hNtDll);
     return py_retlist;
 
 error:
@@ -1152,8 +1131,6 @@ error:
     Py_DECREF(py_retlist);
     if (sppi)
         free(sppi);
-    if (hNtDll)
-        FreeLibrary(hNtDll);
     return NULL;
 }
 
@@ -1672,11 +1649,26 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
+    // Import some functions.
+    rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv4AddressToStringA");
+    if (rtlIpv4AddressToStringA == NULL)
+        goto error;
+    rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv6AddressToStringA");
+    if (rtlIpv6AddressToStringA == NULL)
+        goto error;
+    getExtendedTcpTable = psutil_GetProcAddressFromLib(
+        "iphlpapi.dll", "GetExtendedTcpTable");
+    if (getExtendedTcpTable == NULL)
+        goto error;
+    getExtendedUdpTable = psutil_GetProcAddressFromLib(
+        "iphlpapi.dll", "GetExtendedUdpTable");
+    if (getExtendedUdpTable == NULL)
+        goto error;
+
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
-    {
-        _psutil_conn_decref_objs();
-        return NULL;
-    }
+        goto error;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         _psutil_conn_decref_objs();
@@ -1694,27 +1686,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             _psutil_conn_decref_objs();
             return NULL;
         }
-    }
-
-    // Import some functions.
-    {
-        HMODULE ntdll;
-        HMODULE iphlpapi;
-
-        ntdll = LoadLibrary(TEXT("ntdll.dll"));
-        rtlIpv4AddressToStringA = (_RtlIpv4AddressToStringA)GetProcAddress(
-                                   ntdll, "RtlIpv4AddressToStringA");
-        rtlIpv6AddressToStringA = (_RtlIpv6AddressToStringA)GetProcAddress(
-                                   ntdll, "RtlIpv6AddressToStringA");
-        /* TODO: Check these two function pointers */
-
-        iphlpapi = LoadLibrary(TEXT("iphlpapi.dll"));
-        getExtendedTcpTable = (_GetExtendedTcpTable)GetProcAddress(iphlpapi,
-                              "GetExtendedTcpTable");
-        getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi,
-                              "GetExtendedUdpTable");
-        FreeLibrary(ntdll);
-        FreeLibrary(iphlpapi);
     }
 
     if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
@@ -2152,11 +2123,12 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
+    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    _NtQueryInformationProcess NtQueryInformationProcess =
-        (_NtQueryInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-
+    NtQueryInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
+    if (NtQueryInformationProcess == NULL)
+        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -2184,17 +2156,12 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD prio;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    _NtSetInformationProcess NtSetInformationProcess;
 
-    _NtSetInformationProcess NtSetInformationProcess =
-        (_NtSetInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtSetInformationProcess");
-
-    if (NtSetInformationProcess == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "couldn't get NtSetInformationProcess syscall");
+    NtSetInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtSetInformationProcess");
+    if (NtSetInformationProcess == NULL)
         return NULL;
-    }
-
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, access);
@@ -2797,23 +2764,21 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     long long unix_time;
-
     PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
-    HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
-
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
 
-    hInstWinSta = LoadLibraryA("winsta.dll");
-    WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW) \
-        GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
+    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
+        "winsta.dll", "WinStationQueryInformationW");
+    if (WinStationQueryInformationW == NULL)
+        goto error;
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromWindowsErr(0);
@@ -2902,7 +2867,6 @@ psutil_users(PyObject *self, PyObject *args) {
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
-    FreeLibrary(hInstWinSta);
     return py_retlist;
 
 error:
@@ -2911,8 +2875,6 @@ error:
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 
-    if (hInstWinSta != NULL)
-        FreeLibrary(hInstWinSta);
     if (sessions != NULL)
         WTSFreeMemory(sessions);
     if (buffer_user != NULL)
@@ -3100,7 +3062,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     GetSystemInfo(&system_info);
     maxAddr = system_info.lpMaximumApplicationAddress;
     baseAddress = NULL;
-    previousAllocationBase = NULL;
 
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
@@ -3135,7 +3096,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             Py_DECREF(py_tuple);
             Py_DECREF(py_str);
         }
-        previousAllocationBase = basicInfo.AllocationBase;
+        previousAllocationBase = (ULONGLONG)basicInfo.AllocationBase;
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
@@ -3517,11 +3478,8 @@ error:
  */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    // NtQuerySystemInformation stuff
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
-    HINSTANCE hNtDll;
-
     NTSTATUS status;
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -3531,18 +3489,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
 
-    // obtain NtQuerySystemInformation
-    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    if (hNtDll == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-        hNtDll, "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
+    NtQuerySystemInformation = \
+        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL)
+        return NULL;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -3613,7 +3563,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     free(spi);
     free(InterruptInformation);
     free(sppi);
-    FreeLibrary(hNtDll);
     return Py_BuildValue(
         "kkkk",
         spi->ContextSwitches,
@@ -3629,8 +3578,6 @@ error:
         free(InterruptInformation);
     if (sppi)
         free(sppi);
-    if (hNtDll)
-        FreeLibrary(hNtDll);
     return NULL;
 }
 
