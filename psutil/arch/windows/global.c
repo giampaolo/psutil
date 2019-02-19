@@ -58,17 +58,17 @@ psutil_load_globals() {
 
     psutil_NtSetInformationProcess = ps_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
-    if (psutil_NtSetInformationProcess == NULL)
+    if (! psutil_NtSetInformationProcess)
         return NULL;
 
     psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
-    if (psutil_rtlIpv4AddressToStringA == NULL)
+    if (! psutil_rtlIpv4AddressToStringA)
         return 1;
 
     psutil_rtlIpv6AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA");
-    if (psutil_rtlIpv6AddressToStringA == NULL)
+    if (! psutil_rtlIpv6AddressToStringA)
         return 1;
 
     return 0;
