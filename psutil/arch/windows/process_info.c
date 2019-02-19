@@ -654,11 +654,9 @@ psutil_get_process_data(long pid,
         RTL_USER_PROCESS_PARAMETERS64 procParameters64;
 
         if (NtWow64QueryInformationProcess64 == NULL) {
-            NtWow64QueryInformationProcess64 =
-                (_NtQueryInformationProcess)GetProcAddress(
-                        GetModuleHandleA("ntdll.dll"),
-                        "NtWow64QueryInformationProcess64");
-
+            NtWow64QueryInformationProcess64 = \
+                psutil_GetProcAddressFromLib(
+                    "ntdll.dll", "NtWow64QueryInformationProcess64");
             if (NtWow64QueryInformationProcess64 == NULL) {
                 PyErr_SetString(PyExc_NotImplementedError,
                                 "NtWow64QueryInformationProcess64 missing");
@@ -678,11 +676,9 @@ psutil_get_process_data(long pid,
 
         // read peb
         if (NtWow64ReadVirtualMemory64 == NULL) {
-            NtWow64ReadVirtualMemory64 =
-                (_NtWow64ReadVirtualMemory64)GetProcAddress(
-                        GetModuleHandleA("ntdll.dll"),
-                        "NtWow64ReadVirtualMemory64");
-
+            NtWow64ReadVirtualMemory64 = \
+                psutil_GetProcAddressFromLib(
+                    "ntdll.dll", "NtWow64ReadVirtualMemory64");
             if (NtWow64ReadVirtualMemory64 == NULL) {
                 PyErr_SetString(PyExc_NotImplementedError,
                                 "NtWow64ReadVirtualMemory64 missing");
