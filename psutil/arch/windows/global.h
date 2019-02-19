@@ -19,5 +19,7 @@ _NtQueryInformationProcess \
 _RtlIpv6AddressToStringA \
     psutil_rtlIpv6AddressToStringA;
 
+_NtSetInformationProcess
+    psutil_NtSetInformationProcess;
 
 int psutil_load_globals();
