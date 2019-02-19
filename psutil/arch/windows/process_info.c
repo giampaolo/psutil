@@ -162,22 +162,43 @@ const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 
-// A wrapper on top of GetProcAddress.
+// A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
 psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
 
     if ((mod = GetModuleHandleA(libname)) == NULL) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
     if ((addr = GetProcAddress(mod, procname)) == NULL) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErrWithFilename(0, procname);
         return NULL;
     }
     return addr;
 }
+
+
+// A wrapper around LoadLibrary and GetProcAddress.
+PVOID
+psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
+    HMODULE mod;
+    FARPROC addr;
+
+    if ((mod = LoadLibraryA(libname)) == NULL) {
+        PyErr_SetFromWindowsErrWithFilename(0, libname);
+        return NULL;
+    }
+    if ((addr = GetProcAddress(mod, procname)) == NULL) {
+        PyErr_SetFromWindowsErrWithFilename(0, procname);
+        FreeLibrary(mod);
+        return NULL;
+    }
+    FreeLibrary(mod);
+    return addr;
+}
+
 
 
 #define WINDOWS_UNINITIALIZED 0

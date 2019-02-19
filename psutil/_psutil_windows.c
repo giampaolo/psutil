@@ -2790,7 +2790,6 @@ psutil_users(PyObject *self, PyObject *args) {
     long long unix_time;
     PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
-    HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
@@ -2799,7 +2798,8 @@ psutil_users(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    WinStationQueryInformationW = psutil_GetProcAddress(
+
+    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
         "winsta.dll", "WinStationQueryInformationW");
     if (WinStationQueryInformationW == NULL)
         goto error;
@@ -2891,7 +2891,6 @@ psutil_users(PyObject *self, PyObject *args) {
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
-    FreeLibrary(hInstWinSta);
     return py_retlist;
 
 error:
@@ -2900,8 +2899,6 @@ error:
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 
-    if (hInstWinSta != NULL)
-        FreeLibrary(hInstWinSta);
     if (sessions != NULL)
         WTSFreeMemory(sessions);
     if (buffer_user != NULL)

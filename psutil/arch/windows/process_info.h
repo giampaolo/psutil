@@ -24,7 +24,8 @@ int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
 
 int psutil_assert_pid_exists(DWORD pid, char *err);
 int psutil_assert_pid_not_exists(DWORD pid, char *err);
-PVOID psutil_GetProcAddress(LPCSTR LibraryName, LPCSTR ProcName);
+PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
+PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
 
 PyObject* psutil_get_cmdline(long pid, int use_peb);
 PyObject* psutil_get_cwd(long pid);
