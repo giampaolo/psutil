@@ -1622,8 +1622,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
     int pid_return;
-    typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
-    _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
     _GetExtendedTcpTable getExtendedTcpTable;
     _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
@@ -1649,10 +1647,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     // Import some functions.
-    rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA");
-    if (rtlIpv6AddressToStringA == NULL)
-        goto error;
     getExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (getExtendedTcpTable == NULL)
@@ -1829,7 +1823,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -1852,7 +1846,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferRemote);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferRemote);
                     py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
@@ -1999,7 +1993,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,

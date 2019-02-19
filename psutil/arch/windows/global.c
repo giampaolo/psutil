@@ -61,5 +61,10 @@ psutil_load_globals() {
     if (psutil_rtlIpv4AddressToStringA == NULL)
         return 1;
 
+    psutil_rtlIpv6AddressToStringA = ps_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv6AddressToStringA");
+    if (psutil_rtlIpv6AddressToStringA == NULL)
+        return 1;
+
     return 0;
 }
