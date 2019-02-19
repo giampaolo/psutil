@@ -51,6 +51,11 @@ ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 
 int
 psutil_load_globals() {
+    psutil_NtQuerySystemInformation = ps_GetProcAddressFromLib(
+        "ntdll.dll", "NtQuerySystemInformation");
+    if (psutil_NtQuerySystemInformation == NULL)
+        return 1;
+
     psutil_NtQueryInformationProcess = ps_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
     if (! psutil_NtQueryInformationProcess)
