@@ -161,6 +161,25 @@ typedef struct {
 const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
+
+// A wrapper on top of GetProcAddress.
+PVOID
+psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
+    HMODULE mod;
+    FARPROC addr;
+
+    if ((mod = GetModuleHandleA(libname)) == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    if ((addr = GetProcAddress(mod, procname)) == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return addr;
+}
+
+
 #define WINDOWS_UNINITIALIZED 0
 #define WINDOWS_XP 51
 #define WINDOWS_VISTA 60

@@ -2152,11 +2152,10 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
+    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    _NtQueryInformationProcess NtQueryInformationProcess =
-        (_NtQueryInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-
+    NtQueryInformationProcess = psutil_GetProcAddress(
+        "ntdll.dll", "NtQueryInformationProcess");
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -2184,17 +2183,12 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD prio;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    _NtSetInformationProcess NtSetInformationProcess;
 
-    _NtSetInformationProcess NtSetInformationProcess =
-        (_NtSetInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtSetInformationProcess");
-
-    if (NtSetInformationProcess == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "couldn't get NtSetInformationProcess syscall");
+    NtSetInformationProcess = psutil_GetProcAddress(
+        "ntdll.dll", "NtSetInformationProcess");
+    if (NtSetInformationProcess == NULL)
         return NULL;
-    }
-
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, access);
@@ -2797,23 +2791,21 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     long long unix_time;
-
     PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
     HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
-
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-
-    hInstWinSta = LoadLibraryA("winsta.dll");
-    WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW) \
-        GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
+    WinStationQueryInformationW = psutil_GetProcAddress(
+        "winsta.dll", "WinStationQueryInformationW");
+    if (WinStationQueryInformationW == NULL)
+        goto error;
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromWindowsErr(0);
