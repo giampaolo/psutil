@@ -200,16 +200,6 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 }
 
 
-_NtQueryInformationProcess psutil_NtQueryInformationProcess() {
-    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
-    if (NtQueryInformationProcess == NULL) {
-        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-    }
-    return NtQueryInformationProcess;
-}
-
-
 // ====================================================================
 // Process and PIDs utiilties.
 // ====================================================================
@@ -593,11 +583,14 @@ psutil_get_process_data(long pid,
 #endif
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
 
+    NtQueryInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
+    if (NtQueryInformationProcess == NULL)
+        return -1;
+
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return -1;
-
-    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
 
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
@@ -852,13 +845,12 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     WCHAR * cmdline_buffer_wchar = NULL;
     PUNICODE_STRING tmp = NULL;
     DWORD string_size;
-    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    NtQueryInformationProcess = psutil_NtQueryInformationProcess();
-    if (NtQueryInformationProcess == NULL) {
-        PyErr_SetFromWindowsErr(0);
+    NtQueryInformationProcess = \
+        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
+    if (NtQueryInformationProcess == NULL)
         goto error;
-    }
 
     cmdline_buffer = calloc(ret_length, 1);
     if (cmdline_buffer == NULL) {
