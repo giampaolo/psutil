@@ -6,6 +6,12 @@
 
 #include "ntextapi.h"
 
-_NtQueryInformationProcess psutil_NtQueryInformationProcess;
+
+typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
+
+_RtlIpv4AddressToStringA \
+    psutil_rtlIpv4AddressToStringA;
+_NtQueryInformationProcess \
+    psutil_NtQueryInformationProcess;
 
 int psutil_load_globals();

@@ -1622,8 +1622,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
     int pid_return;
-    typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
-    _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
     typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
     _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
     _GetExtendedTcpTable getExtendedTcpTable;
@@ -1651,10 +1649,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     // Import some functions.
-    rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv4AddressToStringA");
-    if (rtlIpv4AddressToStringA == NULL)
-        goto error;
     rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (rtlIpv6AddressToStringA == NULL)
@@ -1738,7 +1732,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -1760,7 +1754,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferRemote);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferRemote);
                     py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
@@ -1932,7 +1926,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,

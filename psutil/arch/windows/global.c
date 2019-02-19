@@ -29,6 +29,25 @@ ps_GetProcAddress(LPCSTR libname, LPCSTR procname) {
 }
 
 
+// A wrapper around LoadLibrary and GetProcAddress.
+static PVOID
+ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
+    HMODULE mod;
+    FARPROC addr;
+
+    if ((mod = LoadLibraryA(libname)) == NULL) {
+        PyErr_SetFromWindowsErrWithFilename(0, libname);
+        return NULL;
+    }
+    if ((addr = GetProcAddress(mod, procname)) == NULL) {
+        PyErr_SetFromWindowsErrWithFilename(0, procname);
+        FreeLibrary(mod);
+        return NULL;
+    }
+    FreeLibrary(mod);
+    return addr;
+}
+
 
 int
 psutil_load_globals() {
@@ -36,5 +55,11 @@ psutil_load_globals() {
         "ntdll.dll", "NtQueryInformationProcess");
     if (! psutil_NtQueryInformationProcess)
         return 1;
+
+    psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv4AddressToStringA");
+    if (psutil_rtlIpv4AddressToStringA == NULL)
+        return 1;
+
     return 0;
 }
