@@ -23,6 +23,7 @@
 #endif
 #include <iphlpapi.h>
 #include <iprtrmib.h>
+#include <udpmib.h>
 #include <wtsapi32.h>
 #include <Winsvc.h>
 #include <PowrProf.h>
@@ -83,10 +84,6 @@ typedef struct _MIB_UDPROW_OWNER_PID {
     DWORD dwOwningPid;
 } MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
 
-typedef struct _MIB_UDPTABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDPROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
 #endif
 
 #if (_WIN32_WINNT < 0x0600) // Windows XP
