@@ -56,11 +56,6 @@
 #ifndef AF_INET6
 #define AF_INET6 23
 #endif
-#define _psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET); \
-    Py_DECREF(_AF_INET6);\
-    Py_DECREF(_SOCK_STREAM);\
-    Py_DECREF(_SOCK_DGRAM);
 
 
 PIP_ADAPTER_ADDRESSES
@@ -1483,6 +1478,13 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
 }
 
 
+#define psutil_conn_decref_objs() \
+    Py_DECREF(_AF_INET); \
+    Py_DECREF(_AF_INET6);\
+    Py_DECREF(_SOCK_STREAM);\
+    Py_DECREF(_SOCK_DGRAM);
+
+
 /*
  * Return a list of network connections opened by a process
  */
@@ -1518,7 +1520,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        _psutil_conn_decref_objs();
+        psutil_conn_decref_objs();
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
@@ -1526,18 +1528,18 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (pid != -1) {
         pid_return = psutil_pid_is_running(pid);
         if (pid_return == 0) {
-            _psutil_conn_decref_objs();
+            psutil_conn_decref_objs();
             return NoSuchProcess("");
         }
         else if (pid_return == -1) {
-            _psutil_conn_decref_objs();
+            psutil_conn_decref_objs();
             return NULL;
         }
     }
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL) {
-        _psutil_conn_decref_objs();
+        psutil_conn_decref_objs();
         return NULL;
     }
 
@@ -1883,11 +1885,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         tableSize = 0;
     }
 
-    _psutil_conn_decref_objs();
+    psutil_conn_decref_objs();
     return py_retlist;
 
 error:
-    _psutil_conn_decref_objs();
+    psutil_conn_decref_objs();
     Py_XDECREF(py_conn_tuple);
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
