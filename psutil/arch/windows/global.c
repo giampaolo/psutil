@@ -73,8 +73,6 @@ psutil_load_globals() {
     if (! psutil_WinStationQueryInformationW)
         return 1;
 
-
-/*
     psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
     if (! psutil_rtlIpv4AddressToStringA)
@@ -84,6 +82,7 @@ psutil_load_globals() {
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
+/*
 
     psutil_GetExtendedTcpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
