@@ -206,9 +206,7 @@ psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
 
-    // GetActiveProcessorCount is available only on 64 bit versions
-    // of Windows from Windows 7 onward.
-    // Windows Vista 64 bit and Windows XP don't have it.
+    // Minimum requirement: Windows 7
     if (psutil_GetActiveProcessorCount != NULL) {
         ncpus = psutil_GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {

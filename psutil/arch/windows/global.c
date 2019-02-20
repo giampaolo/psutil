@@ -88,11 +88,13 @@ psutil_loadlibs() {
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
 
+    // minimum requirement: Win XP SP3
     psutil_GetExtendedTcpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (! psutil_GetExtendedTcpTable)
         return 1;
 
+    // minimum requirement: Win XP SP3
     psutil_GetExtendedUdpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
@@ -100,9 +102,11 @@ psutil_loadlibs() {
 
     // Optional.
 
+    // minimum requirement: Win Vista
     psutil_GetTickCount64 = ps_GetProcAddress(
         "kernel32", "GetTickCount64");
 
+    // minimum requirement: Win 7 64-bit
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
 
