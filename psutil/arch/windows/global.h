@@ -19,6 +19,8 @@ typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
 typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
                                               TCP_TABLE_CLASS, ULONG);
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
 
 
 _RtlIpv4AddressToStringA \
@@ -47,5 +49,9 @@ _GetTickCount64 \
 
 _GetExtendedTcpTable \
     psutil_GetExtendedTcpTable;
+
+_GetExtendedUdpTable \
+    psutil_GetExtendedUdpTable;
+
 
 int psutil_load_globals();

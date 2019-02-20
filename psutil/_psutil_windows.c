@@ -1556,13 +1556,8 @@ static DWORD __GetExtendedTcpTable(ULONG address_family,
 }
 
 
-typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              UDP_TABLE_CLASS, ULONG);
-
-
 // https://msdn.microsoft.com/library/aa365930.aspx
-static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
-                                   ULONG address_family,
+static DWORD __GetExtendedUdpTable(ULONG address_family,
                                    PVOID * data, DWORD * size)
 {
     // Due to other processes being active on the machine, it's possible
@@ -1574,8 +1569,8 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    error = call(NULL, size, FALSE, address_family,
-                 UDP_TABLE_OWNER_PID, 0);
+    error = psutil_GetExtendedUdpTable(
+        NULL, size, FALSE, address_family, UDP_TABLE_OWNER_PID, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
@@ -1583,8 +1578,8 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
             error = ERROR_NOT_ENOUGH_MEMORY;
             continue;
         }
-        error = call(*data, size, FALSE, address_family,
-                     UDP_TABLE_OWNER_PID, 0);
+        error = psutil_GetExtendedUdpTable(
+            *data, size, FALSE, address_family, UDP_TABLE_OWNER_PID, 0);
         if (error != NO_ERROR) {
             free(*data);
             *data = NULL;
@@ -1602,7 +1597,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
     int pid_return;
-    _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
     DWORD tableSize;
     DWORD error;
@@ -1625,12 +1619,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
-    // Import some functions.
-    getExtendedUdpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedUdpTable");
-    if (getExtendedUdpTable == NULL)
-        goto error;
-
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
 
@@ -1650,13 +1638,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             _psutil_conn_decref_objs();
             return NULL;
         }
-    }
-
-    if (getExtendedUdpTable == NULL) {
-        PyErr_SetString(PyExc_NotImplementedError,
-                        "feature not supported on this Windows version");
-        _psutil_conn_decref_objs();
-        return NULL;
     }
 
     py_retlist = PyList_New(0);
@@ -1868,8 +1849,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(getExtendedUdpTable,
-                                      AF_INET, &table, &tableSize);
+        error = __GetExtendedUdpTable(AF_INET, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
@@ -1942,8 +1922,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(getExtendedUdpTable,
-                                      AF_INET6, &table, &tableSize);
+        error = __GetExtendedUdpTable(AF_INET6, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
