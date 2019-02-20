@@ -68,26 +68,6 @@ typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
 static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
 #endif
 
-// Fix for mingw32, see:
-// https://github.com/giampaolo/psutil/issues/351#c2
-// This is actually a DISK_PERFORMANCE struct:
-// https://msdn.microsoft.com/en-us/library/windows/desktop/
-//     aa363991(v=vs.85).aspx
-typedef struct _DISK_PERFORMANCE_WIN_2008 {
-    LARGE_INTEGER BytesRead;
-    LARGE_INTEGER BytesWritten;
-    LARGE_INTEGER ReadTime;
-    LARGE_INTEGER WriteTime;
-    LARGE_INTEGER IdleTime;
-    DWORD         ReadCount;
-    DWORD         WriteCount;
-    DWORD         QueueDepth;
-    DWORD         SplitCount;
-    LARGE_INTEGER QueryTime;
-    DWORD         StorageDeviceNumber;
-    WCHAR         StorageManagerName[8];
-} DISK_PERFORMANCE_WIN_2008;
-
 // --- network connections mingw32 support
 #ifndef _IPRTRMIB_H
 #if (_WIN32_WINNT < 0x0600) // Windows XP
@@ -2388,7 +2368,7 @@ error:
  */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    DISK_PERFORMANCE_WIN_2008 diskPerformance;
+    DISK_PERFORMANCE diskPerformance;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
