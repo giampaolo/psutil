@@ -70,36 +70,6 @@ typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
 static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
 #endif
 
-#ifndef __IPHLPAPI_H__
-typedef struct in6_addr {
-    union {
-        UCHAR Byte[16];
-        USHORT Word[8];
-    } u;
-} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
-
-typedef struct _MIB_UDPROW_OWNER_PID {
-    DWORD dwLocalAddr;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
-
-#endif
-
-#if (_WIN32_WINNT < 0x0600) // Windows XP
-typedef struct _MIB_UDP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
-
-typedef struct _MIB_UDP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
-#endif
-
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with

@@ -329,6 +329,15 @@ typedef struct _PROCESSOR_POWER_INFORMATION {
    ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
+#ifndef __IPHLPAPI_H__
+typedef struct in6_addr {
+    union {
+        UCHAR Byte[16];
+        USHORT Word[8];
+    } u;
+} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
+#endif
+
 /*
  * ================================================================
  * Type defs.
