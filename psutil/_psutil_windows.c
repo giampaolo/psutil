@@ -1525,10 +1525,6 @@ error:
 }
 
 
-typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              TCP_TABLE_CLASS, ULONG);
-
-
 // https://msdn.microsoft.com/library/aa365928.aspx
 static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
                                    ULONG address_family,
