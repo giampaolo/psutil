@@ -14,6 +14,7 @@ typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
                                               TCP_TABLE_CLASS, ULONG);
 typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
                                               UDP_TABLE_CLASS, ULONG);
+typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 
 // probably unnecessary?
 /*
@@ -21,11 +22,7 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
 #define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
 #endif
 
-typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
-
-_GetActiveProcessorCount \
-    psutil_GetActiveProcessorCount;
 
 _GetTickCount64 \
     psutil_GetTickCount64;
@@ -55,6 +52,9 @@ _GetExtendedTcpTable \
 
 _GetExtendedUdpTable \
     psutil_GetExtendedUdpTable;
+
+_GetActiveProcessorCount \
+    psutil_GetActiveProcessorCount;
 
 
 int psutil_load_globals();

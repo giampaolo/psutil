@@ -92,13 +92,11 @@ psutil_load_globals() {
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
         return 1;
-/*
 
     // Optionals.
 
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
-*/
 
     return 0;
 }
