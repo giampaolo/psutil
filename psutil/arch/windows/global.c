@@ -11,7 +11,7 @@
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.
-static PVOID
+PVOID
 psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
@@ -29,7 +29,7 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
 
 
 // A wrapper around LoadLibrary and GetProcAddress.
-static PVOID
+PVOID
 psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
@@ -126,9 +126,6 @@ psutil_loadlibs() {
 
     psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64QueryInformationProcess64");
-
-    psutil_NtWow64ReadVirtualMemory64 = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtWow64ReadVirtualMemory64");
 
     PyErr_Clear();
     return 0;

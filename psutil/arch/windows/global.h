@@ -4,4 +4,8 @@
  * found in the LICENSE file.
  */
 
+#include <windows.h>
+
 int psutil_loadlibs();
+PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
+PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);

@@ -32,14 +32,14 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "_psutil_common.h"
+#include "arch/windows/ntextapi.h"
+#include "arch/windows/global.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
 #include "arch/windows/process_handles.h"
-#include "arch/windows/ntextapi.h"
-#include "arch/windows/global.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "_psutil_common.h"
 
 
 /*

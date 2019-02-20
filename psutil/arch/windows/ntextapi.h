@@ -457,13 +457,6 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     PULONG ReturnLength
 );
 
-typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
-    HANDLE ProcessHandle,
-    PVOID64 BaseAddress,
-    PVOID Buffer,
-    ULONG64 Size,
-    PULONG64 NumberOfBytesRead);
-
 /*
  * ================================================================
  * Custom psutil definitions for modules loaded at runtime.
@@ -506,9 +499,6 @@ _NtQueryObject \
 // XXX: just an alias; probably unnecessary
 _NtQueryInformationProcess \
     psutil_NtWow64QueryInformationProcess64;
-
-_NtWow64ReadVirtualMemory64 \
-    psutil_NtWow64ReadVirtualMemory64;
 
 _GetLogicalProcessorInformationEx \
     psutil_GetLogicalProcessorInformationEx;

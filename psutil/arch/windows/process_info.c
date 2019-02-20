@@ -12,10 +12,10 @@
 #include <Psapi.h>
 #include <tlhelp32.h>
 
-#include "security.h"
-#include "process_info.h"
 #include "ntextapi.h"
 #include "global.h"
+#include "security.h"
+#include "process_info.h"
 #include "../../_psutil_common.h"
 
 
@@ -77,6 +77,16 @@ typedef struct {
     /* More fields ...  */
 } PEB32;
 #else
+/* When we are a 32 bit (WoW64) process accessing a 64 bit process we need to
+   use the 64 bit structure layout and a special function to read its memory.
+   */
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+    HANDLE ProcessHandle,
+    PVOID64 BaseAddress,
+    PVOID Buffer,
+    ULONG64 Size,
+    PULONG64 NumberOfBytesRead);
+
 typedef struct {
     PVOID Reserved1[2];
     PVOID64 PebBaseAddress;
@@ -111,6 +121,7 @@ typedef struct {
     /* More fields ...  */
 } PEB64;
 #endif
+
 
 #define PSUTIL_FIRST_PROCESS(Processes) ( \
     (PSYSTEM_PROCESS_INFORMATION)(Processes))
@@ -445,6 +456,11 @@ psutil_get_process_data(long pid,
          http://stackoverflow.com/a/14012919
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
+    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+#ifndef _WIN64
+    static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
+    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
+#endif
     HANDLE hProcess = NULL;
     LPCVOID src;
     SIZE_T size;
@@ -525,13 +541,27 @@ psutil_get_process_data(long pid,
         PEB64 peb64;
         RTL_USER_PROCESS_PARAMETERS64 procParameters64;
 
-        if ((psutil_NtWow64QueryInformationProcess64 == NULL) ||
-                (psutil_NtWow64ReadVirtualMemory64 == NULL)) {
-            AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
-            goto error;
+        if (NtWow64QueryInformationProcess64 == NULL) {
+            NtWow64QueryInformationProcess64 = \
+                psutil_GetProcAddressFromLib(
+                    "ntdll.dll", "NtWow64QueryInformationProcess64");
+            if (NtWow64QueryInformationProcess64 == NULL) {
+                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+                goto error;
+            }
+        }
+        if (NtWow64ReadVirtualMemory64 == NULL) {
+            NtWow64ReadVirtualMemory64 = \
+                psutil_GetProcAddressFromLib(
+                    "ntdll.dll", "NtWow64ReadVirtualMemory64");
+            if (NtWow64ReadVirtualMemory64 == NULL) {
+                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+                goto error;
+            }
         }
 
-        if (! NT_SUCCESS(psutil_NtWow64QueryInformationProcess64(
+        if (! NT_SUCCESS(
+                NtWow64QueryInformationProcess64(
                 hProcess,
                 ProcessBasicInformation,
                 &pbi64,
@@ -543,19 +573,19 @@ psutil_get_process_data(long pid,
         }
 
         // read peb
-        if (! NT_SUCCESS(psutil_NtWow64ReadVirtualMemory64(
-                hProcess,
-                pbi64.PebBaseAddress,
-                &peb64,
-                sizeof(peb64),
-                NULL)))
+        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
+               hProcess,
+               pbi64.PebBaseAddress,
+               &peb64,
+               sizeof(peb64),
+               NULL)))
         {
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
         // read process parameters
-        if (! NT_SUCCESS(psutil_NtWow64ReadVirtualMemory64(
+        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
                 hProcess,
                 peb64.ProcessParameters,
                 &procParameters64,
@@ -581,7 +611,6 @@ psutil_get_process_data(long pid,
         }
     } else
 #endif
-
     /* Target process is of the same bitness as us. */
     {
         PROCESS_BASIC_INFORMATION pbi;
@@ -655,7 +684,7 @@ psutil_get_process_data(long pid,
 
 #ifndef _WIN64
     if (weAreWow64 && !theyAreWow64) {
-        if (! NT_SUCCESS(psutil_NtWow64ReadVirtualMemory64(
+        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
                 hProcess,
                 src64,
                 buffer,
