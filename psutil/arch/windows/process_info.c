@@ -77,10 +77,6 @@ typedef struct {
     /* More fields ...  */
 } PEB32;
 #else
-typedef enum {
-    MemoryInformationBasic
-} MEMORY_INFORMATION_CLASS;
-
 typedef struct {
     PVOID Reserved1[2];
     PVOID64 PebBaseAddress;
