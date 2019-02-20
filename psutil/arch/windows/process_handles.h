@@ -85,11 +85,6 @@ typedef struct _OBJECT_TYPE_INFORMATION {
     ULONG NonPagedPoolUsage;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
-PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName);
-VOID psutil_get_open_files_init(BOOL threaded);
 PyObject* psutil_get_open_files(long pid, HANDLE processHandle);
-PyObject* psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess);
-PyObject* psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess);
-DWORD WINAPI psutil_NtQueryObjectThread(LPVOID lpvParam);
 
 #endif // __PROCESS_HANDLES_H__

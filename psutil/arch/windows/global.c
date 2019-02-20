@@ -110,7 +110,7 @@ psutil_loadlibs() {
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
 
-    psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
+    psutil_NtWow64QueryInformationProcess64 = ps_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64QueryInformationProcess64");
 
     psutil_NtWow64ReadVirtualMemory64 = ps_GetProcAddressFromLib(
