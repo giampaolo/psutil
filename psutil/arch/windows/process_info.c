@@ -107,14 +107,6 @@ typedef enum {
     MemoryInformationBasic
 } MEMORY_INFORMATION_CLASS;
 
-typedef NTSTATUS (NTAPI *_NtWow64QueryVirtualMemory64)(
-    IN HANDLE ProcessHandle,
-    IN PVOID64 BaseAddress,
-    IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
-    OUT PMEMORY_BASIC_INFORMATION64 MemoryInformation,
-    IN ULONG64 Size,
-    OUT PULONG64 ReturnLength OPTIONAL);
-
 typedef struct {
     PVOID Reserved1[2];
     PVOID64 PebBaseAddress;
@@ -484,43 +476,6 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
 }
 
 
-#ifndef _WIN64
-/* Given a pointer into a process's memory, figure out how much data can be
- * read from it. */
-static int
-psutil_get_process_region_size64(HANDLE hProcess,
-                                 const PVOID64 src64,
-                                 PULONG64 psize) {
-    static _NtWow64QueryVirtualMemory64 NtWow64QueryVirtualMemory64 = NULL;
-    MEMORY_BASIC_INFORMATION64 info64;
-
-    if (NtWow64QueryVirtualMemory64 == NULL) {
-        NtWow64QueryVirtualMemory64 = psutil_GetProcAddressFromLib(
-            "ntdll.dll", "NtWow64QueryVirtualMemory64");
-        if (NtWow64QueryVirtualMemory64 == NULL) {
-            PyErr_SetString(PyExc_NotImplementedError,
-                    "NtWow64QueryVirtualMemory64 missing");
-            return -1;
-        }
-    }
-
-    if (!NT_SUCCESS(NtWow64QueryVirtualMemory64(
-                    hProcess,
-                    src64,
-                    0,
-                    &info64,
-                    sizeof(info64),
-                    NULL))) {
-        PyErr_SetFromWindowsErr(0);
-        return -1;
-    }
-
-    *psize = info64.RegionSize - ((char*)src64 - (char*)info64.BaseAddress);
-    return 0;
-}
-#endif
-
-
 enum psutil_process_data_kind {
     KIND_CMDLINE,
     KIND_CWD,
@@ -655,8 +610,18 @@ psutil_get_process_data(long pid,
                 psutil_GetProcAddressFromLib(
                     "ntdll.dll", "NtWow64QueryInformationProcess64");
             if (NtWow64QueryInformationProcess64 == NULL) {
-                PyErr_SetString(PyExc_NotImplementedError,
-                                "NtWow64QueryInformationProcess64 missing");
+                // Too complicated. Give up.
+                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+                goto error;
+            }
+        }
+        if (NtWow64ReadVirtualMemory64 == NULL) {
+            NtWow64ReadVirtualMemory64 = \
+                psutil_GetProcAddressFromLib(
+                    "ntdll.dll", "NtWow64ReadVirtualMemory64");
+            if (NtWow64ReadVirtualMemory64 == NULL) {
+                // Too complicated. Give up.
+                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
                 goto error;
             }
         }
@@ -672,17 +637,6 @@ psutil_get_process_data(long pid,
         }
 
         // read peb
-        if (NtWow64ReadVirtualMemory64 == NULL) {
-            NtWow64ReadVirtualMemory64 = \
-                psutil_GetProcAddressFromLib(
-                    "ntdll.dll", "NtWow64ReadVirtualMemory64");
-            if (NtWow64ReadVirtualMemory64 == NULL) {
-                PyErr_SetString(PyExc_NotImplementedError,
-                                "NtWow64ReadVirtualMemory64 missing");
-                goto error;
-            }
-        }
-
         if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(hProcess,
                                                    pbi64.PebBaseAddress,
                                                    &peb64,
@@ -771,12 +725,8 @@ psutil_get_process_data(long pid,
     if (kind == KIND_ENVIRON) {
 #ifndef _WIN64
         if (weAreWow64 && !theyAreWow64) {
-            ULONG64 size64;
-
-            if (psutil_get_process_region_size64(hProcess, src64, &size64) != 0)
-                goto error;
-
-            size = (SIZE_T)size64;
+            AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+            goto error;
         }
         else
 #endif

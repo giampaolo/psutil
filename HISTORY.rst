@@ -10,6 +10,8 @@ XXXX-XX-XX
 - 1394_: [Windows] Process name() and exe() may erronously return "Registry".
   QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
   in order to prevent that.
+- 1419_: [Windows] Process.environ() raises NotImplementedError when querying
+  a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 
 5.5.1
 =====
