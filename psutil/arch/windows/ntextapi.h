@@ -14,6 +14,68 @@ typedef LONG NTSTATUS;
 #define STATUS_BUFFER_TOO_SMALL 0xC0000023L
 #define SystemExtendedHandleInformation 64
 
+/*
+ * ================================================================
+ * Enums.
+ * ================================================================
+ */
+
+typedef enum _PROCESSINFOCLASS2 {
+    _ProcessBasicInformation,
+    ProcessQuotaLimits,
+    ProcessIoCounters,
+    ProcessVmCounters,
+    ProcessTimes,
+    ProcessBasePriority,
+    ProcessRaisePriority,
+    _ProcessDebugPort,
+    ProcessExceptionPort,
+    ProcessAccessToken,
+    ProcessLdtInformation,
+    ProcessLdtSize,
+    ProcessDefaultHardErrorMode,
+    ProcessIoPortHandlers,
+    ProcessPooledUsageAndLimits,
+    ProcessWorkingSetWatch,
+    ProcessUserModeIOPL,
+    ProcessEnableAlignmentFaultFixup,
+    ProcessPriorityClass,
+    ProcessWx86Information,
+    ProcessHandleCount,
+    ProcessAffinityMask,
+    ProcessPriorityBoost,
+    ProcessDeviceMap,
+    ProcessSessionInformation,
+    ProcessForegroundInformation,
+    _ProcessWow64Information,
+    /* added after XP+ */
+    _ProcessImageFileName,
+    ProcessLUIDDeviceMapsEnabled,
+    _ProcessBreakOnTermination,
+    ProcessDebugObjectHandle,
+    ProcessDebugFlags,
+    ProcessHandleTracing,
+    ProcessIoPriority,
+    ProcessExecuteFlags,
+    ProcessResourceManagement,
+    ProcessCookie,
+    ProcessImageInformation,
+    MaxProcessInfoClass
+} PROCESSINFOCLASS2;
+
+#define PROCESSINFOCLASS PROCESSINFOCLASS2
+#define ProcessBasicInformation _ProcessBasicInformation
+#define ProcessWow64Information _ProcessWow64Information
+#define ProcessDebugPort _ProcessDebugPort
+#define ProcessImageFileName _ProcessImageFileName
+#define ProcessBreakOnTermination _ProcessBreakOnTermination
+
+/*
+ * ================================================================
+ * Structs.
+ * ================================================================
+ */
+
 typedef struct {
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
@@ -268,7 +330,9 @@ typedef struct _PROCESSOR_POWER_INFORMATION {
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 /*
- * Type defs
+ * ================================================================
+ * Type defs.
+ * ================================================================
  */
 
 typedef struct _WINSTATION_INFO {
@@ -355,59 +419,11 @@ typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
     IN ULONG64 Size,
     OUT PULONG64 NumberOfBytesRead);
 
-typedef enum _PROCESSINFOCLASS2 {
-    _ProcessBasicInformation,
-    ProcessQuotaLimits,
-    ProcessIoCounters,
-    ProcessVmCounters,
-    ProcessTimes,
-    ProcessBasePriority,
-    ProcessRaisePriority,
-    _ProcessDebugPort,
-    ProcessExceptionPort,
-    ProcessAccessToken,
-    ProcessLdtInformation,
-    ProcessLdtSize,
-    ProcessDefaultHardErrorMode,
-    ProcessIoPortHandlers,
-    ProcessPooledUsageAndLimits,
-    ProcessWorkingSetWatch,
-    ProcessUserModeIOPL,
-    ProcessEnableAlignmentFaultFixup,
-    ProcessPriorityClass,
-    ProcessWx86Information,
-    ProcessHandleCount,
-    ProcessAffinityMask,
-    ProcessPriorityBoost,
-    ProcessDeviceMap,
-    ProcessSessionInformation,
-    ProcessForegroundInformation,
-    _ProcessWow64Information,
-    /* added after XP+ */
-    _ProcessImageFileName,
-    ProcessLUIDDeviceMapsEnabled,
-    _ProcessBreakOnTermination,
-    ProcessDebugObjectHandle,
-    ProcessDebugFlags,
-    ProcessHandleTracing,
-    ProcessIoPriority,
-    ProcessExecuteFlags,
-    ProcessResourceManagement,
-    ProcessCookie,
-    ProcessImageInformation,
-    MaxProcessInfoClass
-} PROCESSINFOCLASS2;
-
-#define PROCESSINFOCLASS PROCESSINFOCLASS2
-#define ProcessBasicInformation _ProcessBasicInformation
-#define ProcessWow64Information _ProcessWow64Information
-#define ProcessDebugPort _ProcessDebugPort
-#define ProcessImageFileName _ProcessImageFileName
-#define ProcessBreakOnTermination _ProcessBreakOnTermination
-
 /*
- * Custom psutil definitions. These are dynamically set in global.c
- * on module import.
+ * ================================================================
+ * Custom psutil definitions.
+ * These are dynamically set in global.c on module import.
+ * ================================================================
  */
 
 _NtQuerySystemInformation \
