@@ -109,5 +109,8 @@ psutil_load_globals() {
     psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64QueryInformationProcess64");
 
+    psutil_NtWow64ReadVirtualMemory64 = ps_GetProcAddressFromLib(
+        "ntdll.dll", "NtWow64ReadVirtualMemory64");
+
     return 0;
 }

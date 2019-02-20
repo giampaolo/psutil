@@ -23,6 +23,12 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     ULONG ObjectInformationLength,
     PULONG ReturnLength
 );
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+        IN HANDLE ProcessHandle,
+        IN PVOID64 BaseAddress,
+        OUT PVOID Buffer,
+        IN ULONG64 Size,
+        OUT PULONG64 NumberOfBytesRead);
 
 
 // probably unnecessary?
@@ -68,5 +74,8 @@ _NtQueryObject \
 // XXX: just an alias; probably unnecessary
 _NtQueryInformationProcess \
     psutil_NtWow64QueryInformationProcess64;
+
+_NtWow64ReadVirtualMemory64 \
+    psutil_NtWow64ReadVirtualMemory64;
 
 int psutil_load_globals();
