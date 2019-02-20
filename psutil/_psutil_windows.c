@@ -1614,7 +1614,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
     int pid_return;
-    _GetExtendedTcpTable getExtendedTcpTable;
     _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
     DWORD tableSize;
@@ -1639,10 +1638,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     // Import some functions.
-    getExtendedTcpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedTcpTable");
-    if (getExtendedTcpTable == NULL)
-        goto error;
     getExtendedUdpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (getExtendedUdpTable == NULL)
@@ -1669,7 +1664,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
     }
 
-    if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
+    if (getExtendedUdpTable == NULL) {
         PyErr_SetString(PyExc_NotImplementedError,
                         "feature not supported on this Windows version");
         _psutil_conn_decref_objs();
@@ -1693,7 +1688,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(getExtendedTcpTable,
+        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
@@ -1790,7 +1785,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(getExtendedTcpTable,
+        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET6, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();

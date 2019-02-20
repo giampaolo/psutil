@@ -82,13 +82,13 @@ psutil_load_globals() {
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
-/*
 
     psutil_GetExtendedTcpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (! psutil_GetExtendedTcpTable)
         return 1;
 
+/*
     psutil_GetExtendedUdpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
