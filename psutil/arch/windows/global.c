@@ -73,6 +73,11 @@ psutil_load_globals() {
     if (! psutil_WinStationQueryInformationW)
         return 1;
 
+    psutil_NtQueryObject = ps_GetProcAddressFromLib(
+        "ntdll.dll", "NtQueryObject");
+    if (! psutil_NtQueryObject)
+        return 1;
+
     psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
     if (! psutil_rtlIpv4AddressToStringA)
@@ -93,7 +98,8 @@ psutil_load_globals() {
     if (! psutil_GetExtendedUdpTable)
         return 1;
 
-    // Optionals.
+    // Optional.
+
     psutil_GetTickCount64 = ps_GetProcAddress(
         "kernel32", "GetTickCount64");
 

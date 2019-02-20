@@ -16,6 +16,14 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
                                               UDP_TABLE_CLASS, ULONG);
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
+typedef NTSTATUS (NTAPI *_NtQueryObject)(
+    HANDLE ObjectHandle,
+    ULONG ObjectInformationClass,
+    PVOID ObjectInformation,
+    ULONG ObjectInformationLength,
+    PULONG ReturnLength
+);
+
 
 // probably unnecessary?
 /*
@@ -54,5 +62,7 @@ _GetActiveProcessorCount \
 _GetTickCount64 \
     psutil_GetTickCount64;
 
+_NtQueryObject \
+    psutil_NtQueryObject;
 
 int psutil_load_globals();

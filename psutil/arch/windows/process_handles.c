@@ -10,8 +10,6 @@
 #include "global.h"
 #include "../../_psutil_common.h"
 
-static _NtQueryObject __NtQueryObject = NULL;
-
 CRITICAL_SECTION g_cs;
 BOOL g_initialized = FALSE;
 NTSTATUS g_status;
@@ -45,10 +43,6 @@ psutil_get_open_files_init(BOOL threaded) {
     if (g_initialized == TRUE)
         return;
 
-    // Resolve the Windows API calls
-    __NtQueryObject = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtQueryObject");
-
     // Create events for signalling work between threads
     if (threaded == TRUE) {
         g_hEvtStart = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -80,8 +74,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     // to psutil_get_open_files() is running
     EnterCriticalSection(&g_cs);
 
-    if (__NtQueryObject == NULL ||
-        g_hEvtStart == NULL ||
+    if (g_hEvtStart == NULL ||
         g_hEvtFinish == NULL)
 
     {
@@ -307,11 +300,12 @@ psutil_NtQueryObjectThread(LPVOID lpvParam) {
     while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
 
-        g_status = __NtQueryObject(g_hFile,
-                                   ObjectNameInformation,
-                                   g_pNameBuffer,
-                                   g_dwSize,
-                                   &g_dwLength);
+        g_status = psutil_NtQueryObject(
+            g_hFile,
+            ObjectNameInformation,
+            g_pNameBuffer,
+            g_dwSize,
+            &g_dwLength);
         SetEvent(g_hEvtFinish);
     }
 }
@@ -336,12 +330,6 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
-
-    if (__NtQueryObject == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        error = TRUE;
-        goto cleanup;
-    }
 
     // Py_BuildValue raises an exception if NULL is returned
     py_retlist = PyList_New(0);
