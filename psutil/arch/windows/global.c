@@ -58,12 +58,12 @@ psutil_load_globals() {
     if (psutil_NtQuerySystemInformation == NULL)
         return 1;
 
-/*
     psutil_NtQueryInformationProcess = ps_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
     if (! psutil_NtQueryInformationProcess)
         return 1;
 
+/*
     psutil_NtSetInformationProcess = ps_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
     if (! psutil_NtSetInformationProcess)

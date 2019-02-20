@@ -518,7 +518,6 @@ psutil_get_process_data(long pid,
          http://stackoverflow.com/a/14012919
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
-    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
 #ifndef _WIN64
     static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
@@ -536,11 +535,6 @@ psutil_get_process_data(long pid,
 #endif
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
 
-    NtQueryInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
-    if (NtQueryInformationProcess == NULL)
-        return -1;
-
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return -1;
@@ -548,11 +542,13 @@ psutil_get_process_data(long pid,
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
      * mode. */
-    if (!NT_SUCCESS(NtQueryInformationProcess(hProcess,
-                                              ProcessWow64Information,
-                                              &ppeb32,
-                                              sizeof(LPVOID),
-                                              NULL))) {
+    if (!NT_SUCCESS(psutil_NtQueryInformationProcess(
+            hProcess,
+            ProcessWow64Information,
+            &ppeb32,
+            sizeof(LPVOID),
+            NULL)))
+    {
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
@@ -679,11 +675,13 @@ psutil_get_process_data(long pid,
         PEB_ peb;
         RTL_USER_PROCESS_PARAMETERS_ procParameters;
 
-        if (!NT_SUCCESS(NtQueryInformationProcess(hProcess,
-                                                  ProcessBasicInformation,
-                                                  &pbi,
-                                                  sizeof(pbi),
-                                                  NULL))) {
+        if (!NT_SUCCESS(psutil_NtQueryInformationProcess(
+                hProcess,
+                ProcessBasicInformation,
+                &pbi,
+                sizeof(pbi),
+                NULL)))
+        {
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
@@ -789,12 +787,6 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     WCHAR * cmdline_buffer_wchar = NULL;
     PUNICODE_STRING tmp = NULL;
     DWORD string_size;
-    _NtQueryInformationProcess NtQueryInformationProcess;
-
-    NtQueryInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
-    if (NtQueryInformationProcess == NULL)
-        goto error;
 
     cmdline_buffer = calloc(ret_length, 1);
     if (cmdline_buffer == NULL) {
@@ -805,7 +797,7 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         goto error;
-    status = NtQueryInformationProcess(
+    status = psutil_NtQueryInformationProcess(
         hProcess,
         60, // ProcessCommandLineInformation
         cmdline_buffer,

@@ -2116,19 +2116,13 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
-    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    NtQueryInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
-    if (NtQueryInformationProcess == NULL)
-        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
-
-    NtQueryInformationProcess(
+    psutil_NtQueryInformationProcess(
         hProcess,
         ProcessIoPriority,
         &IoPriority,

@@ -28,9 +28,6 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
 _RtlIpv4AddressToStringA \
     psutil_rtlIpv4AddressToStringA;
 
-_NtQueryInformationProcess \
-    psutil_NtQueryInformationProcess;
-
 _RtlIpv6AddressToStringA \
     psutil_rtlIpv6AddressToStringA;
 
@@ -55,6 +52,9 @@ _GetExtendedUdpTable \
 
 NTQSI_PROC \
     psutil_NtQuerySystemInformation;
+
+_NtQueryInformationProcess \
+    psutil_NtQueryInformationProcess;
 
 
 int psutil_load_globals();
