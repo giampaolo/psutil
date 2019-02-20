@@ -134,6 +134,7 @@ if WINDOWS:
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
+            'psutil/arch/windows/global.c',
         ],
         define_macros=macros,
         libraries=[

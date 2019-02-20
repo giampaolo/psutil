@@ -37,6 +37,7 @@
 #include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "arch/windows/global.h"
 
 
 /*
@@ -1044,10 +1045,6 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    // NtQuerySystemInformation stuff
-    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-    NTQSI_PROC NtQuerySystemInformation;
-
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -1058,10 +1055,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    NtQuerySystemInformation = \
-        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL)
-        goto error;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -1078,7 +1071,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     // gets cpu time informations
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
@@ -3478,8 +3471,6 @@ error:
  */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-    NTQSI_PROC NtQuerySystemInformation;
     NTSTATUS status;
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -3488,11 +3479,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     UINT i;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
-
-    NtQuerySystemInformation = \
-        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL)
-        return NULL;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -3506,7 +3492,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
@@ -3524,7 +3510,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
@@ -3545,7 +3531,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
@@ -3939,6 +3925,8 @@ void init_psutil_windows(void)
     // set SeDebug for the current process
     psutil_set_se_debug();
     psutil_setup();
+    if (psutil_load_globals() != 0)
+        return NULL;
 
 #if PY_MAJOR_VERSION >= 3
     return module;
