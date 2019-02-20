@@ -519,7 +519,6 @@ psutil_get_process_data(long pid,
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
 #ifndef _WIN64
-    static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
 #endif
     HANDLE hProcess = NULL;
@@ -602,15 +601,9 @@ psutil_get_process_data(long pid,
         PEB64 peb64;
         RTL_USER_PROCESS_PARAMETERS64 procParameters64;
 
-        if (NtWow64QueryInformationProcess64 == NULL) {
-            NtWow64QueryInformationProcess64 = \
-                psutil_GetProcAddressFromLib(
-                    "ntdll.dll", "NtWow64QueryInformationProcess64");
-            if (NtWow64QueryInformationProcess64 == NULL) {
-                // Too complicated. Give up.
-                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
-                goto error;
-            }
+        if (psutil_NtWow64QueryInformationProcess64 == NULL) {
+            AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+            goto error;
         }
         if (NtWow64ReadVirtualMemory64 == NULL) {
             NtWow64ReadVirtualMemory64 = \
@@ -623,7 +616,7 @@ psutil_get_process_data(long pid,
             }
         }
 
-        if (!NT_SUCCESS(NtWow64QueryInformationProcess64(
+        if (!NT_SUCCESS(psutil_NtWow64QueryInformationProcess64(
                         hProcess,
                         ProcessBasicInformation,
                         &pbi64,

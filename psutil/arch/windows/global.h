@@ -65,4 +65,8 @@ _GetTickCount64 \
 _NtQueryObject \
     psutil_NtQueryObject;
 
+// XXX: just an alias; probably unnecessary
+_NtQueryInformationProcess \
+    psutil_NtWow64QueryInformationProcess64;
+
 int psutil_load_globals();

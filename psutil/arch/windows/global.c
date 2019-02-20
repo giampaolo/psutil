@@ -106,5 +106,8 @@ psutil_load_globals() {
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
 
+    psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "NtWow64QueryInformationProcess64");
+
     return 0;
 }
