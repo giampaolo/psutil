@@ -12,6 +12,8 @@ typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
 typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
 typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
                                               TCP_TABLE_CLASS, ULONG);
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
 
 // probably unnecessary?
 /*
@@ -21,9 +23,6 @@ typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
 
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
-typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              UDP_TABLE_CLASS, ULONG);
-
 
 _GetActiveProcessorCount \
     psutil_GetActiveProcessorCount;
@@ -31,8 +30,6 @@ _GetActiveProcessorCount \
 _GetTickCount64 \
     psutil_GetTickCount64;
 
-_GetExtendedUdpTable \
-    psutil_GetExtendedUdpTable;
 */
 
 NTQSI_PROC \
@@ -55,6 +52,9 @@ _RtlIpv6AddressToStringA \
 
 _GetExtendedTcpTable \
     psutil_GetExtendedTcpTable;
+
+_GetExtendedUdpTable \
+    psutil_GetExtendedUdpTable;
 
 
 int psutil_load_globals();

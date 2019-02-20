@@ -88,11 +88,11 @@ psutil_load_globals() {
     if (! psutil_GetExtendedTcpTable)
         return 1;
 
-/*
     psutil_GetExtendedUdpTable = ps_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
         return 1;
+/*
 
     // Optionals.
 
