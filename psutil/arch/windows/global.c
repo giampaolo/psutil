@@ -83,6 +83,11 @@ psutil_load_globals() {
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
 
+    psutil_GetExtendedTcpTable = ps_GetProcAddressFromLib(
+        "iphlpapi.dll", "GetExtendedTcpTable");
+    if (! psutil_GetExtendedTcpTable)
+        return 1;
+
     // Optionals.
 
     psutil_GetActiveProcessorCount = ps_GetProcAddress(

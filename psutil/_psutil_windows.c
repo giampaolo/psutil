@@ -1522,10 +1522,6 @@ error:
 }
 
 
-typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              TCP_TABLE_CLASS, ULONG);
-
-
 // https://msdn.microsoft.com/library/aa365928.aspx
 static DWORD __GetExtendedTcpTable(ULONG address_family,
                                    PVOID * data, DWORD * size)
@@ -1539,11 +1535,8 @@ static DWORD __GetExtendedTcpTable(ULONG address_family,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    _GetExtendedTcpTable getExtendedTcpTable;
 
-    getExtendedTcpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedTcpTable");
-    error = getExtendedTcpTable(
+    error = psutil_GetExtendedTcpTable(
         NULL, size, FALSE, address_family, TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
@@ -1552,8 +1545,8 @@ static DWORD __GetExtendedTcpTable(ULONG address_family,
             error = ERROR_NOT_ENOUGH_MEMORY;
             continue;
         }
-        error = getExtendedTcpTable(*data, size, FALSE, address_family,
-                     TCP_TABLE_OWNER_PID_ALL, 0);
+        error = psutil_GetExtendedTcpTable(
+            *data, size, FALSE, address_family, TCP_TABLE_OWNER_PID_ALL, 0);
         if (error != NO_ERROR) {
             free(*data);
             *data = NULL;

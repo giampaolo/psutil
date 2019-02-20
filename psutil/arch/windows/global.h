@@ -5,6 +5,7 @@
  */
 
 #include "ntextapi.h"
+#include <iphlpapi.h>
 
 // probably unnecessary?
 #ifndef NT_SUCCESS
@@ -16,6 +17,8 @@ typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
 typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
 typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              TCP_TABLE_CLASS, ULONG);
 
 
 _RtlIpv4AddressToStringA \
@@ -41,5 +44,8 @@ PWINSTATIONQUERYINFORMATIONW \
 
 _GetTickCount64 \
     psutil_GetTickCount64;
+
+_GetExtendedTcpTable \
+    psutil_GetExtendedTcpTable;
 
 int psutil_load_globals();
