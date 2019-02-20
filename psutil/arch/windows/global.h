@@ -34,9 +34,6 @@ _RtlIpv6AddressToStringA \
 _GetActiveProcessorCount \
     psutil_GetActiveProcessorCount;
 
-PWINSTATIONQUERYINFORMATIONW \
-    psutil_WinStationQueryInformationW;
-
 _GetTickCount64 \
     psutil_GetTickCount64;
 
@@ -55,6 +52,9 @@ _NtQueryInformationProcess \
 
 _NtSetInformationProcess
     psutil_NtSetInformationProcess;
+
+PWINSTATIONQUERYINFORMATIONW \
+    psutil_WinStationQueryInformationW;
 
 
 int psutil_load_globals();

@@ -2757,11 +2757,6 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
-        "winsta.dll", "WinStationQueryInformationW");
-    if (WinStationQueryInformationW == NULL)
-        goto error;
-
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromWindowsErr(0);
         goto error;
@@ -2815,12 +2810,13 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         // login time
-        if (!WinStationQueryInformationW(hServer,
-                                         sessionId,
-                                         WinStationInformation,
-                                         &station_info,
-                                         sizeof(station_info),
-                                         &returnLen))
+        if (! psutil_WinStationQueryInformationW(
+                hServer,
+                sessionId,
+                WinStationInformation,
+                &station_info,
+                sizeof(station_info),
+                &returnLen))
         {
             goto error;
         }
