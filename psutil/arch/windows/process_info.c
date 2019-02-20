@@ -25,18 +25,6 @@
 // but unfortunately not in a usable way.
 // ====================================================================
 
-// http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
-typedef struct {
-    BYTE Reserved1[16];
-    PVOID Reserved2[5];
-    UNICODE_STRING CurrentDirectoryPath;
-    PVOID CurrentDirectoryHandle;
-    UNICODE_STRING DllPath;
-    UNICODE_STRING ImagePathName;
-    UNICODE_STRING CommandLine;
-    LPCWSTR env;
-} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
-
 // https://msdn.microsoft.com/en-us/library/aa813706(v=vs.85).aspx
 #ifdef _WIN64
 typedef struct {
@@ -127,7 +115,6 @@ typedef struct {
     /* More fields ...  */
 } PEB64;
 #endif
-
 
 #define PSUTIL_FIRST_PROCESS(Processes) ( \
     (PSYSTEM_PROCESS_INFORMATION)(Processes))

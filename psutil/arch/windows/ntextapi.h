@@ -338,6 +338,19 @@ typedef struct in6_addr {
 } IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
 #endif
 
+// http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
+typedef struct {
+    BYTE Reserved1[16];
+    PVOID Reserved2[5];
+    UNICODE_STRING CurrentDirectoryPath;
+    PVOID CurrentDirectoryHandle;
+    UNICODE_STRING DllPath;
+    UNICODE_STRING ImagePathName;
+    UNICODE_STRING CommandLine;
+    LPCWSTR env;
+} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
+
+
 /*
  * ================================================================
  * Type defs.
