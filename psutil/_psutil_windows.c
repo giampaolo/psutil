@@ -2593,7 +2593,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     long long unix_time;
-    PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
     ULONG returnLen;
     PyObject *py_tuple = NULL;

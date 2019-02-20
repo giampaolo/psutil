@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdio.h>
 #include <windows.h>
 #include <Python.h>
 #include "ntextapi.h"
@@ -49,7 +48,10 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 }
 
 
-int
+/*
+ * This is executed on import and loads Windows APIs so that they
+ * are available globally.
+ */
 psutil_loadlibs() {
     /*
      * Mandatory.
