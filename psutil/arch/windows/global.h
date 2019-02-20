@@ -31,9 +31,6 @@ _RtlIpv4AddressToStringA \
 _RtlIpv6AddressToStringA \
     psutil_rtlIpv6AddressToStringA;
 
-_NtSetInformationProcess
-    psutil_NtSetInformationProcess;
-
 _GetActiveProcessorCount \
     psutil_GetActiveProcessorCount;
 
@@ -55,6 +52,9 @@ NTQSI_PROC \
 
 _NtQueryInformationProcess \
     psutil_NtQueryInformationProcess;
+
+_NtSetInformationProcess
+    psutil_NtSetInformationProcess;
 
 
 int psutil_load_globals();

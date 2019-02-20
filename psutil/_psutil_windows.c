@@ -2143,19 +2143,14 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD prio;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
-    _NtSetInformationProcess NtSetInformationProcess;
 
-    NtSetInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtSetInformationProcess");
-    if (NtSetInformationProcess == NULL)
-        return NULL;
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
 
-    NtSetInformationProcess(
+    psutil_NtSetInformationProcess(
         hProcess,
         ProcessIoPriority,
         (PVOID)&prio,
