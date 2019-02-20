@@ -5,6 +5,9 @@
  *
  */
 
+#include <windows.h>
+#include <Psapi.h>
+#include <Python.h>
 #include "process_handles.h"
 #include "process_info.h"
 #include "global.h"

@@ -12,6 +12,7 @@ typedef LONG NTSTATUS;
 
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 #define STATUS_BUFFER_TOO_SMALL 0xC0000023L
+#define SystemExtendedHandleInformation 64
 
 typedef struct {
     LARGE_INTEGER IdleTime;
