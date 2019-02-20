@@ -13,7 +13,7 @@
 
 // A wrapper around GetModuleHandle and GetProcAddress.
 static PVOID
-ps_GetProcAddress(LPCSTR libname, LPCSTR procname) {
+psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
 
@@ -31,7 +31,7 @@ ps_GetProcAddress(LPCSTR libname, LPCSTR procname) {
 
 // A wrapper around LoadLibrary and GetProcAddress.
 static PVOID
-ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
+psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
 
@@ -51,73 +51,77 @@ ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 
 int
 psutil_loadlibs() {
-    // Mandatory.
+    /*
+     * Mandatory.
+     */
 
-    psutil_NtQuerySystemInformation = ps_GetProcAddressFromLib(
+    psutil_NtQuerySystemInformation = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
     if (psutil_NtQuerySystemInformation == NULL)
         return 1;
 
-    psutil_NtQueryInformationProcess = ps_GetProcAddress(
+    psutil_NtQueryInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
     if (! psutil_NtQueryInformationProcess)
         return 1;
 
-    psutil_NtSetInformationProcess = ps_GetProcAddress(
+    psutil_NtSetInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
     if (! psutil_NtSetInformationProcess)
         return 1;
 
-    psutil_WinStationQueryInformationW = ps_GetProcAddressFromLib(
+    psutil_WinStationQueryInformationW = psutil_GetProcAddressFromLib(
         "winsta.dll", "WinStationQueryInformationW");
     if (! psutil_WinStationQueryInformationW)
         return 1;
 
-    psutil_NtQueryObject = ps_GetProcAddressFromLib(
+    psutil_NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
     if (! psutil_NtQueryObject)
         return 1;
 
-    psutil_rtlIpv4AddressToStringA = ps_GetProcAddressFromLib(
+    psutil_rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
     if (! psutil_rtlIpv4AddressToStringA)
         return 1;
 
-    psutil_rtlIpv6AddressToStringA = ps_GetProcAddressFromLib(
+    psutil_rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (! psutil_rtlIpv6AddressToStringA)
         return 1;
 
     // minimum requirement: Win XP SP3
-    psutil_GetExtendedTcpTable = ps_GetProcAddressFromLib(
+    psutil_GetExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (! psutil_GetExtendedTcpTable)
         return 1;
 
     // minimum requirement: Win XP SP3
-    psutil_GetExtendedUdpTable = ps_GetProcAddressFromLib(
+    psutil_GetExtendedUdpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
         return 1;
 
-    // Optional.
+    /*
+     * Optional.
+     */
 
     // minimum requirement: Win Vista
-    psutil_GetTickCount64 = ps_GetProcAddress(
+    psutil_GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
 
     // minimum requirement: Win 7
-    psutil_GetActiveProcessorCount = ps_GetProcAddress(
+    psutil_GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
 
     // minumum requirement: Win 7
-    psutil_GetLogicalProcessorInformationEx = ps_GetProcAddressFromLib(
+    psutil_GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
 
-    psutil_NtWow64QueryInformationProcess64 = ps_GetProcAddressFromLib(
+    psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64QueryInformationProcess64");
 
-    psutil_NtWow64ReadVirtualMemory64 = ps_GetProcAddressFromLib(
+    psutil_NtWow64ReadVirtualMemory64 = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64ReadVirtualMemory64");
 
     return 0;

@@ -503,7 +503,8 @@ _GetTickCount64 \
 _NtQueryObject \
     psutil_NtQueryObject;
 
-_NtQueryInformationProcess \  // XXX: just an alias; probably unnecessary
+// XXX: just an alias; probably unnecessary
+_NtQueryInformationProcess \
     psutil_NtWow64QueryInformationProcess64;
 
 _NtWow64ReadVirtualMemory64 \

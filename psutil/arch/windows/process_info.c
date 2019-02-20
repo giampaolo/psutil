@@ -123,43 +123,6 @@ typedef struct {
    (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
         ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
 
-// A wrapper around GetModuleHandle and GetProcAddress.
-PVOID
-psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
-    HMODULE mod;
-    FARPROC addr;
-
-    if ((mod = GetModuleHandleA(libname)) == NULL) {
-        PyErr_SetFromWindowsErrWithFilename(0, libname);
-        return NULL;
-    }
-    if ((addr = GetProcAddress(mod, procname)) == NULL) {
-        PyErr_SetFromWindowsErrWithFilename(0, procname);
-        return NULL;
-    }
-    return addr;
-}
-
-
-// A wrapper around LoadLibrary and GetProcAddress.
-PVOID
-psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
-    HMODULE mod;
-    FARPROC addr;
-
-    if ((mod = LoadLibraryA(libname)) == NULL) {
-        PyErr_SetFromWindowsErrWithFilename(0, libname);
-        return NULL;
-    }
-    if ((addr = GetProcAddress(mod, procname)) == NULL) {
-        PyErr_SetFromWindowsErrWithFilename(0, procname);
-        FreeLibrary(mod);
-        return NULL;
-    }
-    FreeLibrary(mod);
-    return addr;
-}
-
 
 // ====================================================================
 // Process and PIDs utiilties.
