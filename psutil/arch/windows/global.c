@@ -34,7 +34,10 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     HMODULE mod;
     FARPROC addr;
 
-    if ((mod = LoadLibraryA(libname)) == NULL) {
+    Py_BEGIN_ALLOW_THREADS
+    mod = LoadLibraryA(libname);
+    Py_END_ALLOW_THREADS
+    if (mod  == NULL) {
         PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
@@ -43,6 +46,7 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
         FreeLibrary(mod);
         return NULL;
     }
+    // Causes crash.
     // FreeLibrary(mod);
     return addr;
 }
@@ -126,5 +130,6 @@ psutil_loadlibs() {
     psutil_NtWow64ReadVirtualMemory64 = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64ReadVirtualMemory64");
 
+    PyErr_Clear();
     return 0;
 }
