@@ -259,7 +259,7 @@ cleanup:
 }
 
 
-DWORD
+static DWORD
 psutil_create_thread() {
     DWORD dwWait = 0;
 

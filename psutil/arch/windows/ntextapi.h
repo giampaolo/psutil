@@ -260,6 +260,13 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     PDWORD ReturnLength
 );
 
+typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
+    ULONG SystemInformationClass,
+    PVOID SystemInformation,
+    ULONG SystemInformationLength,
+    PULONG ReturnLength
+);
+
 typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
@@ -369,7 +376,7 @@ typedef enum _PROCESSINFOCLASS2 {
  * on module import.
  */
 
-NTQSI_PROC \
+_NtQuerySystemInformation \
     psutil_NtQuerySystemInformation;
 
 _NtQueryInformationProcess \

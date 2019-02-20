@@ -30,21 +30,6 @@
 #define HANDLE_TYPE_FILE 28
 #define NTQO_TIMEOUT 100
 
-typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
-    ULONG SystemInformationClass,
-    PVOID SystemInformation,
-    ULONG SystemInformationLength,
-    PULONG ReturnLength
-);
-
-typedef NTSTATUS (NTAPI *_NtQueryObject)(
-    HANDLE ObjectHandle,
-    ULONG ObjectInformationClass,
-    PVOID ObjectInformation,
-    ULONG ObjectInformationLength,
-    PULONG ReturnLength
-);
-
 // Undocumented FILE_INFORMATION_CLASS: FileNameInformation
 static const SYSTEM_INFORMATION_CLASS SystemExtendedHandleInformation = (SYSTEM_INFORMATION_CLASS)64;
 
