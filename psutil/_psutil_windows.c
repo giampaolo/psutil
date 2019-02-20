@@ -62,13 +62,6 @@
     Py_DECREF(_SOCK_STREAM);\
     Py_DECREF(_SOCK_DGRAM);
 
-#if (_WIN32_WINNT >= 0x0601)  // Windows  7
-typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
-    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
-    PDWORD ReturnLength);
-static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
-#endif
 
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
@@ -516,17 +509,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
  * Return the number of physical CPU cores (hyper-thread CPUs count
  * is excluded).
  */
-#if (_WIN32_WINNT < 0x0601)  // < Windows 7 (namely Vista and XP)
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    // Note: we may have used GetLogicalProcessorInformation()
-    // but I don't want to prolong support for Windows XP and Vista.
-    // On such old systems psutil will compile but this API will
-    // just return None.
-    psutil_debug("Win < 7; cpu_count_phys() forced to None");
-    Py_RETURN_NONE;
-}
-#else  // Windows >= 7
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
@@ -541,13 +523,13 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // it supports process groups, meaning this is able to report more
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    _GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
-        "kernel32", "GetLogicalProcessorInformationEx");
-    if (_GetLogicalProcessorInformationEx == NULL)
-        return NULL;
+    if (psutil_GetLogicalProcessorInformationEx == NULL) {
+        psutil_debug("Win < 7; cpu_count_phys() forced to None");
+        Py_RETURN_NONE;
+    }
 
     while (1) {
-        rc = _GetLogicalProcessorInformationEx(
+        rc = psutil_GetLogicalProcessorInformationEx(
             RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
@@ -596,7 +578,6 @@ return_none:
         free(buffer);
     Py_RETURN_NONE;
 }
-#endif
 
 
 /*

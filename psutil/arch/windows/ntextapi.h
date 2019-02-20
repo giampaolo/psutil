@@ -350,13 +350,6 @@ typedef struct {
     LPCWSTR env;
 } RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
 
-
-/*
- * ================================================================
- * Type defs.
- * ================================================================
- */
-
 typedef struct _WINSTATION_INFO {
     BYTE Reserved1[72];
     ULONG SessionId;
@@ -369,8 +362,33 @@ typedef struct _WINSTATION_INFO {
     FILETIME CurrentTime;
 } WINSTATION_INFO, *PWINSTATION_INFO;
 
-typedef BOOLEAN (WINAPI * PWINSTATIONQUERYINFORMATIONW)
-                 (HANDLE,ULONG,WINSTATIONINFOCLASS,PVOID,ULONG,PULONG);
+#if (_WIN32_WINNT < 0x0601)  // Windows < 7 (Vista and XP)
+typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
+    LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+    DWORD Size;
+    _ANONYMOUS_UNION
+    union {
+        PROCESSOR_RELATIONSHIP Processor;
+        NUMA_NODE_RELATIONSHIP NumaNode;
+        CACHE_RELATIONSHIP Cache;
+        GROUP_RELATIONSHIP Group;
+    } DUMMYUNIONNAME;
+} SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, *PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
+#endif
+
+/*
+ * ================================================================
+ * Type defs for modules loaded at runtime.
+ * ================================================================
+ */
+
+typedef BOOL (WINAPI *_GetLogicalProcessorInformationEx)(
+    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
+    PDWORD ReturnLength);
+
+typedef BOOLEAN (WINAPI * _WinStationQueryInformationW)(
+    HANDLE, ULONG, WINSTATIONINFOCLASS, PVOID, ULONG, PULONG);
 
 typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     HANDLE ProcessHandle,
@@ -443,8 +461,7 @@ typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
 
 /*
  * ================================================================
- * Custom psutil definitions.
- * These are dynamically set in global.c on module import.
+ * Custom psutil definitions for modules loaded at runtime.
  * ================================================================
  */
 
@@ -457,7 +474,7 @@ _NtQueryInformationProcess \
 _NtSetInformationProcess
     psutil_NtSetInformationProcess;
 
-PWINSTATIONQUERYINFORMATIONW \
+_WinStationQueryInformationW \
     psutil_WinStationQueryInformationW;
 
 _RtlIpv4AddressToStringA \
@@ -487,5 +504,8 @@ _NtQueryInformationProcess \
 
 _NtWow64ReadVirtualMemory64 \
     psutil_NtWow64ReadVirtualMemory64;
+
+_GetLogicalProcessorInformationEx \
+    psutil_GetLogicalProcessorInformationEx;
 
 #endif // __NTEXTAPI_H__

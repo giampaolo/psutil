@@ -106,9 +106,13 @@ psutil_loadlibs() {
     psutil_GetTickCount64 = ps_GetProcAddress(
         "kernel32", "GetTickCount64");
 
-    // minimum requirement: Win 7 64-bit
+    // minimum requirement: Win 7
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
+
+    // minumum requirement: Win 7
+    psutil_GetLogicalProcessorInformationEx = ps_GetProcAddressFromLib(
+        "kernel32", "GetLogicalProcessorInformationEx");
 
     psutil_NtWow64QueryInformationProcess64 = ps_GetProcAddressFromLib(
         "ntdll.dll", "NtWow64QueryInformationProcess64");
