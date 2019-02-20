@@ -29,9 +29,6 @@ apis = [
     'proc.ionice()',
     'proc.ionice(0)',
     # 'proc.open_files()',  # slow
-    'proc.cmdline()',
-    'proc.cwd()',
-    # 'proc.environ()',  # slow
 ]
 apis = sorted(set(apis))
 setup = "import psutil; proc = psutil.Process()"

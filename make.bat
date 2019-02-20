@@ -27,8 +27,6 @@ if "%PYTHON%" == "" (
     )
 )
 
-set PYTHON=C:\Python36-32\python.exe
-
 if "%TSCRIPT%" == "" (
     set TSCRIPT=psutil\tests\__main__.py
 )
