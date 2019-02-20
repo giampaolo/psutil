@@ -4,11 +4,12 @@
  * found in the LICENSE file.
  *
  */
+
 #include "process_handles.h"
 #include "process_info.h"
+#include "global.h"
 #include "../../_psutil_common.h"
 
-static _NtQuerySystemInformation __NtQuerySystemInformation = NULL;
 static _NtQueryObject __NtQueryObject = NULL;
 
 CRITICAL_SECTION g_cs;
@@ -45,8 +46,6 @@ psutil_get_open_files_init(BOOL threaded) {
         return;
 
     // Resolve the Windows API calls
-    __NtQuerySystemInformation = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtQuerySystemInformation");
     __NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
 
@@ -81,8 +80,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     // to psutil_get_open_files() is running
     EnterCriticalSection(&g_cs);
 
-    if (__NtQuerySystemInformation == NULL ||
-        __NtQueryObject == NULL ||
+    if (__NtQueryObject == NULL ||
         g_hEvtStart == NULL ||
         g_hEvtFinish == NULL)
 
@@ -117,7 +115,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = __NtQuerySystemInformation(
+    } while ((status = psutil_NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,
@@ -339,7 +337,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
 
-    if (__NtQuerySystemInformation == NULL || __NtQueryObject == NULL) {
+    if (__NtQueryObject == NULL) {
         PyErr_SetFromWindowsErr(0);
         error = TRUE;
         goto cleanup;
@@ -370,7 +368,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = __NtQuerySystemInformation(
+    } while ((status = psutil_NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,

@@ -35,9 +35,9 @@
 #include "arch/windows/process_info.h"
 #include "arch/windows/process_handles.h"
 #include "arch/windows/ntextapi.h"
+#include "arch/windows/global.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
-#include "arch/windows/global.h"
 
 
 /*

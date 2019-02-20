@@ -15,6 +15,7 @@
 #include "security.h"
 #include "process_info.h"
 #include "ntextapi.h"
+#include "global.h"
 #include "../../_psutil_common.h"
 
 
