@@ -6,6 +6,10 @@
 
 #include "ntextapi.h"
 
+// probably unnecessary?
+#ifndef NT_SUCCESS
+#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
+#endif
 
 typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
 typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);

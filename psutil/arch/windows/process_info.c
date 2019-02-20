@@ -24,11 +24,6 @@
 // but unfortunately not in a usable way.
 // ====================================================================
 
-// see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
-#ifndef NT_SUCCESS
-#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
-#endif
-
 // http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
 typedef struct {
     BYTE Reserved1[16];
