@@ -94,6 +94,8 @@ psutil_load_globals() {
         return 1;
 
     // Optionals.
+    psutil_GetTickCount64 = ps_GetProcAddress(
+        "kernel32", "GetTickCount64");
 
     psutil_GetActiveProcessorCount = ps_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
