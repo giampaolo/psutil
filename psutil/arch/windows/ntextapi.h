@@ -8,6 +8,8 @@
 #include <winternl.h>
 #include <iphlpapi.h>
 
+typedef LONG NTSTATUS;
+
 typedef struct {
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
@@ -16,7 +18,6 @@ typedef struct {
     LARGE_INTEGER InterruptTime;
     ULONG InterruptCount;
 } _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
-
 
 typedef struct {
     LARGE_INTEGER IdleProcessTime;
@@ -93,9 +94,7 @@ typedef struct {
     ULONG FirstLevelTbFills;
     ULONG SecondLevelTbFills;
     ULONG SystemCalls;
-
 } _SYSTEM_PERFORMANCE_INFORMATION;
-
 
 typedef struct {
     ULONG ContextSwitches;
@@ -105,7 +104,6 @@ typedef struct {
     ULONG DpcBypassCount;
     ULONG ApcBypassCount;
 } _SYSTEM_INTERRUPT_INFORMATION;
-
 
 typedef enum _KTHREAD_STATE {
     Initialized,
@@ -119,7 +117,6 @@ typedef enum _KTHREAD_STATE {
     GateWait,
     MaximumThreadState
 } KTHREAD_STATE, *PKTHREAD_STATE;
-
 
 typedef enum _KWAIT_REASON {
     Executive = 0,
@@ -162,7 +159,6 @@ typedef enum _KWAIT_REASON {
     MaximumWaitReason = 37
 } KWAIT_REASON, *PKWAIT_REASON;
 
-
 typedef struct _CLIENT_ID2 {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
@@ -190,8 +186,6 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
 
 typedef struct _TEB *PTEB;
 
-
-// private
 typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
     SYSTEM_THREAD_INFORMATION ThreadInfo;
     PVOID StackBase;
@@ -202,7 +196,6 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
     ULONG_PTR Reserved3;
     ULONG_PTR Reserved4;
 } SYSTEM_EXTENDED_THREAD_INFORMATION, *PSYSTEM_EXTENDED_THREAD_INFORMATION;
-
 
 typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     ULONG NextEntryOffset;
@@ -244,11 +237,6 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
 #define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
 #define PSYSTEM_PROCESS_INFORMATION PSYSTEM_PROCESS_INFORMATION2
 
-
-// ================================================
-// psutil.users() support
-// ================================================
-
 typedef struct _WINSTATION_INFO {
     BYTE Reserved1[72];
     ULONG SessionId;
@@ -261,18 +249,8 @@ typedef struct _WINSTATION_INFO {
     FILETIME CurrentTime;
 } WINSTATION_INFO, *PWINSTATION_INFO;
 
-
 typedef BOOLEAN (WINAPI * PWINSTATIONQUERYINFORMATIONW)
                  (HANDLE,ULONG,WINSTATIONINFOCLASS,PVOID,ULONG,PULONG);
-
-
-/*
- * NtQueryInformationProcess code taken from
- * http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
- * typedefs needed to compile against ntdll functions not exposted in the API
- */
-typedef LONG NTSTATUS;
-
 
 typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     HANDLE ProcessHandle,
@@ -282,7 +260,6 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     PDWORD ReturnLength
 );
 
-
 typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
@@ -290,6 +267,52 @@ typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     DWORD ProcessInformationLength
 );
 
+typedef DWORD (_stdcall * NTQSI_PROC)
+    (int, PVOID, ULONG, PULONG);
+
+typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)
+    (struct in_addr *, PSTR);
+
+typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)
+    (struct in6_addr *, PSTR);
+
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(
+    PVOID pTcpTable,
+    PDWORD pdwSize,
+    BOOL bOrder,
+    ULONG ulAf,
+    TCP_TABLE_CLASS TableClass,
+    ULONG Reserved
+);
+
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(
+    PVOID pUdpTable,
+    PDWORD pdwSize,
+    BOOL bOrder,
+    ULONG ulAf,
+    UDP_TABLE_CLASS TableClass,
+    ULONG Reserved
+);
+
+typedef DWORD (CALLBACK *_GetActiveProcessorCount)(
+    WORD GroupNumber);
+
+typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
+
+typedef NTSTATUS (NTAPI *_NtQueryObject)(
+    HANDLE Handle,
+    OBJECT_INFORMATION_CLASS ObjectInformationClass,
+    PVOID ObjectInformation,
+    ULONG ObjectInformationLength,
+    PULONG ReturnLength
+);
+
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+    IN HANDLE ProcessHandle,
+    IN PVOID64 BaseAddress,
+    OUT PVOID Buffer,
+    IN ULONG64 Size,
+    OUT PULONG64 NumberOfBytesRead);
 
 typedef enum _PROCESSINFOCLASS2 {
     _ProcessBasicInformation,
@@ -334,7 +357,6 @@ typedef enum _PROCESSINFOCLASS2 {
     MaxProcessInfoClass
 } PROCESSINFOCLASS2;
 
-
 #define PROCESSINFOCLASS PROCESSINFOCLASS2
 #define ProcessBasicInformation _ProcessBasicInformation
 #define ProcessWow64Information _ProcessWow64Information
@@ -342,28 +364,10 @@ typedef enum _PROCESSINFOCLASS2 {
 #define ProcessImageFileName _ProcessImageFileName
 #define ProcessBreakOnTermination _ProcessBreakOnTermination
 
-typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
-typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
-typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              TCP_TABLE_CLASS, ULONG);
-typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              UDP_TABLE_CLASS, ULONG);
-typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
-typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
-typedef NTSTATUS (NTAPI *_NtQueryObject)(
-    HANDLE ObjectHandle,
-    ULONG ObjectInformationClass,
-    PVOID ObjectInformation,
-    ULONG ObjectInformationLength,
-    PULONG ReturnLength
-);
-typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
-    IN HANDLE ProcessHandle,
-    IN PVOID64 BaseAddress,
-    OUT PVOID Buffer,
-    IN ULONG64 Size,
-    OUT PULONG64 NumberOfBytesRead);
+/*
+ * Custom psutil definitions. These are dynamically set in global.c
+ * on module import.
+ */
 
 NTQSI_PROC \
     psutil_NtQuerySystemInformation;
