@@ -178,7 +178,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
                     goto loop_cleanup;
             }
 
-            dwWait = psutil_NtQueryObject();
+            dwWait = psutil_create_thread();
 
             // If the call does not return, skip this handle
             if (dwWait != WAIT_OBJECT_0)
@@ -266,8 +266,8 @@ cleanup:
 }
 
 
-DWORD
-psutil_NtQueryObject() {
+static DWORD
+psutil_create_thread() {
     DWORD dwWait = 0;
 
     if (g_hThread == NULL)
