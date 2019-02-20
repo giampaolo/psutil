@@ -483,13 +483,6 @@ def bench_oneshot_2():
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
-@cmd
-def bench_loadlib():
-    """Benchmarks for oneshot() ctx manager (see #1422)."""
-    install()
-    sh("%s -Wa scripts\\internal\\bench_win_loadlib.py" % PYTHON)
-
-
 def set_python(s):
     global PYTHON
     if os.path.isabs(s):

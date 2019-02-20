@@ -778,10 +778,11 @@ class RemoteProcessTestCase(unittest.TestCase):
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
     def test_environ_64(self):
-        # Environ 32 is not supported.
         p = psutil.Process(self.proc64.pid)
-        with self.assertRaises(psutil.AccessDenied):
+        try:
             p.environ()
+        except psutil.AccessDenied:
+            pass
 
 
 # ===================================================================
