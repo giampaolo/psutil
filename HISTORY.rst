@@ -13,6 +13,11 @@ XXXX-XX-XX
 - 1419_: [Windows] Process.environ() raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 
+**Enhancements**
+
+- 1420_: [Windows] in case of exception disk_usage() now also shows the path
+  name.
+
 5.5.1
 =====
 

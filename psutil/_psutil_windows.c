@@ -2338,7 +2338,7 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
 
 return_:
     if (retval == 0)
-        return PyErr_SetFromWindowsErr(0);
+        return PyErr_SetFromWindowsErrWithFilename(0, path);
     else
         return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
 }
