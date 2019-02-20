@@ -417,14 +417,13 @@ typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     DWORD ProcessInformationLength
 );
 
-typedef DWORD (_stdcall * NTQSI_PROC)
-    (int, PVOID, ULONG, PULONG);
+typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(
+    struct in_addr *Addr,
+    PSTR S);
 
-typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)
-    (struct in_addr *, PSTR);
-
-typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)
-    (struct in6_addr *, PSTR);
+typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(
+    struct in6_addr *Addr,
+    PSTR P);
 
 typedef DWORD (WINAPI * _GetExtendedTcpTable)(
     PVOID pTcpTable,
@@ -447,7 +446,8 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(
     WORD GroupNumber);
 
-typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
+typedef ULONGLONG (CALLBACK *_GetTickCount64)(
+    void);
 
 typedef NTSTATUS (NTAPI *_NtQueryObject)(
     HANDLE Handle,
@@ -458,11 +458,11 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
 );
 
 typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
-    IN HANDLE ProcessHandle,
-    IN PVOID64 BaseAddress,
-    OUT PVOID Buffer,
-    IN ULONG64 Size,
-    OUT PULONG64 NumberOfBytesRead);
+    HANDLE ProcessHandle,
+    PVOID64 BaseAddress,
+    PVOID Buffer,
+    ULONG64 Size,
+    PULONG64 NumberOfBytesRead);
 
 /*
  * ================================================================
@@ -503,8 +503,7 @@ _GetTickCount64 \
 _NtQueryObject \
     psutil_NtQueryObject;
 
-// XXX: just an alias; probably unnecessary
-_NtQueryInformationProcess \
+_NtQueryInformationProcess \  // XXX: just an alias; probably unnecessary
     psutil_NtWow64QueryInformationProcess64;
 
 _NtWow64ReadVirtualMemory64 \
