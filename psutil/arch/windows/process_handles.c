@@ -22,6 +22,10 @@ ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
 
 
+#define ObjectNameInformation 1
+#define NTQO_TIMEOUT 100
+
+
 static VOID
 psutil_get_open_files_init(BOOL threaded) {
     if (g_initialized == TRUE)

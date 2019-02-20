@@ -136,10 +136,6 @@ typedef struct {
    (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
         ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
 
-const int STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
-const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
-
-
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
 psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {

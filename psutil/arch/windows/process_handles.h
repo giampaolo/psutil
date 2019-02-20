@@ -19,16 +19,6 @@
 #include <psapi.h>
 #include "ntextapi.h"
 
-#ifndef NT_SUCCESS
-#define NT_SUCCESS(x) ((x) >= 0)
-#endif
-
-#define ObjectBasicInformation 0
-#define ObjectNameInformation 1
-#define ObjectTypeInformation 2
-#define HANDLE_TYPE_FILE 28
-#define NTQO_TIMEOUT 100
-
 // Undocumented FILE_INFORMATION_CLASS: FileNameInformation
 static const SYSTEM_INFORMATION_CLASS SystemExtendedHandleInformation = (SYSTEM_INFORMATION_CLASS)64;
 
