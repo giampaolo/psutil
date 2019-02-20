@@ -149,16 +149,6 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 #endif
 
-typedef struct _PROCESSOR_POWER_INFORMATION {
-   ULONG Number;
-   ULONG MaxMhz;
-   ULONG CurrentMhz;
-   ULONG MhzLimit;
-   ULONG MaxIdleState;
-   ULONG CurrentIdleState;
-} PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
-
-
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
