@@ -388,7 +388,12 @@ typedef BOOL (WINAPI *_GetLogicalProcessorInformationEx)(
     PDWORD ReturnLength);
 
 typedef BOOLEAN (WINAPI * _WinStationQueryInformationW)(
-    HANDLE, ULONG, WINSTATIONINFOCLASS, PVOID, ULONG, PULONG);
+    HANDLE ServerHandle,
+    ULONG SessionId,
+    WINSTATIONINFOCLASS WinStationInformationClass,
+    PVOID pWinStationInformation,
+    ULONG WinStationInformationLength,
+    PULONG pReturnLength);
 
 typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     HANDLE ProcessHandle,
