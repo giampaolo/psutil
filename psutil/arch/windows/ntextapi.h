@@ -6,7 +6,7 @@
 #if !defined(__NTEXTAPI_H__)
 #define __NTEXTAPI_H__
 #include <winternl.h>
-
+#include <iphlpapi.h>
 
 typedef struct {
     LARGE_INTEGER IdleTime;
@@ -341,5 +341,68 @@ typedef enum _PROCESSINFOCLASS2 {
 #define ProcessDebugPort _ProcessDebugPort
 #define ProcessImageFileName _ProcessImageFileName
 #define ProcessBreakOnTermination _ProcessBreakOnTermination
+
+typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
+typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              TCP_TABLE_CLASS, ULONG);
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
+typedef DWORD (CALLBACK *_GetActiveProcessorCount)(WORD);
+typedef ULONGLONG (CALLBACK *_GetTickCount64)(void);
+typedef NTSTATUS (NTAPI *_NtQueryObject)(
+    HANDLE ObjectHandle,
+    ULONG ObjectInformationClass,
+    PVOID ObjectInformation,
+    ULONG ObjectInformationLength,
+    PULONG ReturnLength
+);
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+    IN HANDLE ProcessHandle,
+    IN PVOID64 BaseAddress,
+    OUT PVOID Buffer,
+    IN ULONG64 Size,
+    OUT PULONG64 NumberOfBytesRead);
+
+NTQSI_PROC \
+    psutil_NtQuerySystemInformation;
+
+_NtQueryInformationProcess \
+    psutil_NtQueryInformationProcess;
+
+_NtSetInformationProcess
+    psutil_NtSetInformationProcess;
+
+PWINSTATIONQUERYINFORMATIONW \
+    psutil_WinStationQueryInformationW;
+
+_RtlIpv4AddressToStringA \
+    psutil_rtlIpv4AddressToStringA;
+
+_RtlIpv6AddressToStringA \
+    psutil_rtlIpv6AddressToStringA;
+
+_GetExtendedTcpTable \
+    psutil_GetExtendedTcpTable;
+
+_GetExtendedUdpTable \
+    psutil_GetExtendedUdpTable;
+
+_GetActiveProcessorCount \
+    psutil_GetActiveProcessorCount;
+
+_GetTickCount64 \
+    psutil_GetTickCount64;
+
+_NtQueryObject \
+    psutil_NtQueryObject;
+
+// XXX: just an alias; probably unnecessary
+_NtQueryInformationProcess \
+    psutil_NtWow64QueryInformationProcess64;
+
+_NtWow64ReadVirtualMemory64 \
+    psutil_NtWow64ReadVirtualMemory64;
 
 #endif // __NTEXTAPI_H__

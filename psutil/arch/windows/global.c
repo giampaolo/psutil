@@ -50,7 +50,7 @@ ps_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 
 
 int
-psutil_load_globals() {
+psutil_loadlibs() {
     // Mandatory.
 
     psutil_NtQuerySystemInformation = ps_GetProcAddressFromLib(
