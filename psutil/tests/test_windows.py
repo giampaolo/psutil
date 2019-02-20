@@ -157,6 +157,8 @@ class TestSystemAPIs(unittest.TestCase):
                     if not ps_part.mountpoint:
                         # this is usually a CD-ROM with no disk inserted
                         break
+                    if 'cdrom' in ps_part.opts:
+                        break
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
                     except OSError as err:
@@ -178,6 +180,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage(self):
         for disk in psutil.disk_partitions():
+            if 'cdrom' in disk.opts:
+                continue
             sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
             psutil_value = psutil.disk_usage(disk.mountpoint)
             self.assertAlmostEqual(sys_value[0], psutil_value.free,
