@@ -400,22 +400,19 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
-    PDWORD ReturnLength
-);
+    PDWORD ReturnLength);
 
 typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
-    PULONG ReturnLength
-);
+    PULONG ReturnLength);
 
 typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
-    DWORD ProcessInformationLength
-);
+    DWORD ProcessInformationLength);
 
 typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(
     struct in_addr *Addr,
@@ -431,8 +428,7 @@ typedef DWORD (WINAPI * _GetExtendedTcpTable)(
     BOOL bOrder,
     ULONG ulAf,
     TCP_TABLE_CLASS TableClass,
-    ULONG Reserved
-);
+    ULONG Reserved);
 
 typedef DWORD (WINAPI * _GetExtendedUdpTable)(
     PVOID pUdpTable,
@@ -440,8 +436,7 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(
     BOOL bOrder,
     ULONG ulAf,
     UDP_TABLE_CLASS TableClass,
-    ULONG Reserved
-);
+    ULONG Reserved);
 
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(
     WORD GroupNumber);
@@ -454,7 +449,10 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
     PVOID ObjectInformation,
     ULONG ObjectInformationLength,
-    PULONG ReturnLength
+    PULONG ReturnLength);
+
+typedef NTSTATUS (WINAPI *_RtlGetVersion) (
+    PRTL_OSVERSIONINFOW lpVersionInformation
 );
 
 /*
@@ -498,5 +496,8 @@ _NtQueryObject \
 
 _GetLogicalProcessorInformationEx \
     psutil_GetLogicalProcessorInformationEx;
+
+_RtlGetVersion \
+    psutil_RtlGetVersion;
 
 #endif // __NTEXTAPI_H__
