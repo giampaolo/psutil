@@ -2556,31 +2556,30 @@ Bytes conversion
   100399730688
   93.5G
 
+Supported platforms
+===================
+
+These are the platforms I develop and test on:
+
+* Linux Ubuntu 16.04
+* MacOS 10.11 El Captain
+* Windows 10
+* Solaris 10
+* FreeBSD 11
+* OpenBSD 6.4
+* NetBSD 8.0
+* AIX 6.1 TL8 (maintainer `Arnon Yaari <https://github.com/wiggin15>`__)
+
+Earlier versions are supposed to work but are not tested.
+For Linux, Windows and MacOS we have continuos integration. Other platforms
+are tested manually from time to time.
+Oldest supported Windows version is Windows XP, which can be compiled from
+sources. Latest wheel supporting Windows XP is
+`psutil 2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__.
+Supported Python versions are 3.4+, 2.7 and 2.6.
+
 FAQs
 ====
-
-* Q: What Windows versions are supported?
-* A: From Windows **Vista** onwards, both 32 and 64 bit versions.
-  Latest binary (wheel / exe) release which supports Windows **2000**, **XP**
-  and **2003 server** is
-  `psutil 3.4.2 <https://pypi.org/project/psutil/3.4.2/#files>`__.
-  On such old systems psutil is no longer tested or maintained, but it can
-  still be compiled from sources (you'll need `Visual Studio <(https://github.com/giampaolo/psutil/blob/master/INSTALL.rst#windows>`__)
-  and it should "work" (more or less).
-
-----
-
-* Q: What Python versions are supported?
-* A: From 2.6 to 3.6, both 32 and 64 bit versions. Last version supporting
-  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__.
-  PyPy is also known to work.
-
-----
-
-* Q: What SunOS versions are supported?
-* A: From Solaris 10 onwards.
-
-----
 
 * Q: Why do I get :class:`AccessDenied` for certain processes?
 * A: This may happen when you query processess owned by another user,
