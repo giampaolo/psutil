@@ -546,6 +546,7 @@ psutil_get_process_data(long pid,
                 psutil_GetProcAddressFromLib(
                     "ntdll.dll", "NtWow64QueryInformationProcess64");
             if (NtWow64QueryInformationProcess64 == NULL) {
+                PyErr_Clear();
                 AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
                 goto error;
             }
@@ -555,6 +556,7 @@ psutil_get_process_data(long pid,
                 psutil_GetProcAddressFromLib(
                     "ntdll.dll", "NtWow64ReadVirtualMemory64");
             if (NtWow64ReadVirtualMemory64 == NULL) {
+                PyErr_Clear();
                 AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
                 goto error;
             }
