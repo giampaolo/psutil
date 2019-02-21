@@ -4,12 +4,15 @@
  * found in the LICENSE file.
  *
  */
+
+#include <windows.h>
+#include <Psapi.h>
+#include <Python.h>
+#include "ntextapi.h"
+#include "global.h"
 #include "process_handles.h"
 #include "process_info.h"
 #include "../../_psutil_common.h"
-
-static _NtQuerySystemInformation __NtQuerySystemInformation = NULL;
-static _NtQueryObject __NtQueryObject = NULL;
 
 CRITICAL_SECTION g_cs;
 BOOL g_initialized = FALSE;
@@ -23,32 +26,14 @@ ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
 
 
-PyObject *
-psutil_get_open_files(long dwPid, HANDLE hProcess) {
-    OSVERSIONINFO osvi;
-
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&osvi);
-
-    // Threaded version only works for Vista+
-    if (osvi.dwMajorVersion >= 6)
-        return psutil_get_open_files_ntqueryobject(dwPid, hProcess);
-    else
-        return psutil_get_open_files_getmappedfilename(dwPid, hProcess);
-}
+#define ObjectNameInformation 1
+#define NTQO_TIMEOUT 100
 
 
-VOID
+static VOID
 psutil_get_open_files_init(BOOL threaded) {
     if (g_initialized == TRUE)
         return;
-
-    // Resolve the Windows API calls
-    __NtQuerySystemInformation = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtQuerySystemInformation");
-    __NtQueryObject = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtQueryObject");
 
     // Create events for signalling work between threads
     if (threaded == TRUE) {
@@ -61,7 +46,59 @@ psutil_get_open_files_init(BOOL threaded) {
 }
 
 
-PyObject *
+static DWORD WINAPI
+psutil_wait_thread(LPVOID lpvParam) {
+    // Loop infinitely waiting for work
+    while (TRUE) {
+        WaitForSingleObject(g_hEvtStart, INFINITE);
+
+        g_status = psutil_NtQueryObject(
+            g_hFile,
+            ObjectNameInformation,
+            g_pNameBuffer,
+            g_dwSize,
+            &g_dwLength);
+        SetEvent(g_hEvtFinish);
+    }
+}
+
+
+static DWORD
+psutil_create_thread() {
+    DWORD dwWait = 0;
+
+    if (g_hThread == NULL)
+        g_hThread = CreateThread(
+            NULL,
+            0,
+            psutil_wait_thread,
+            NULL,
+            0,
+            NULL);
+    if (g_hThread == NULL)
+        return GetLastError();
+
+    // Signal the worker thread to start
+    SetEvent(g_hEvtStart);
+
+    // Wait for the worker thread to finish
+    dwWait = WaitForSingleObject(g_hEvtFinish, NTQO_TIMEOUT);
+
+    // If the thread hangs, kill it and cleanup
+    if (dwWait == WAIT_TIMEOUT) {
+        SuspendThread(g_hThread);
+        TerminateThread(g_hThread, 1);
+        WaitForSingleObject(g_hThread, INFINITE);
+        CloseHandle(g_hThread);
+
+        g_hThread = NULL;
+    }
+
+    return dwWait;
+}
+
+
+static PyObject *
 psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
@@ -81,9 +118,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     // to psutil_get_open_files() is running
     EnterCriticalSection(&g_cs);
 
-    if (__NtQuerySystemInformation == NULL ||
-        __NtQueryObject == NULL ||
-        g_hEvtStart == NULL ||
+    if (g_hEvtStart == NULL ||
         g_hEvtFinish == NULL)
 
     {
@@ -117,7 +152,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = __NtQuerySystemInformation(
+    } while ((status = psutil_NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,
@@ -180,7 +215,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
                     goto loop_cleanup;
             }
 
-            dwWait = psutil_NtQueryObject();
+            dwWait = psutil_create_thread();
 
             // If the call does not return, skip this handle
             if (dwWait != WAIT_OBJECT_0)
@@ -228,19 +263,19 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
         }
 
 loop_cleanup:
-        Py_XDECREF(py_path);
-        py_path = NULL;
+    Py_XDECREF(py_path);
+    py_path = NULL;
 
-        if (g_pNameBuffer != NULL)
-            HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
-        g_pNameBuffer = NULL;
-        g_dwSize = 0;
-        g_dwLength = 0;
+    if (g_pNameBuffer != NULL)
+        HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
+    g_pNameBuffer = NULL;
+    g_dwSize = 0;
+    g_dwLength = 0;
 
-        if (g_hFile != NULL)
-            CloseHandle(g_hFile);
-        g_hFile = NULL;
-    }
+    if (g_hFile != NULL)
+        CloseHandle(g_hFile);
+    g_hFile = NULL;
+}
 
 cleanup:
     if (g_pNameBuffer != NULL)
@@ -268,58 +303,7 @@ cleanup:
 }
 
 
-DWORD
-psutil_NtQueryObject() {
-    DWORD dwWait = 0;
-
-    if (g_hThread == NULL)
-        g_hThread = CreateThread(
-            NULL,
-            0,
-            psutil_NtQueryObjectThread,
-            NULL,
-            0,
-            NULL);
-    if (g_hThread == NULL)
-        return GetLastError();
-
-    // Signal the worker thread to start
-    SetEvent(g_hEvtStart);
-
-    // Wait for the worker thread to finish
-    dwWait = WaitForSingleObject(g_hEvtFinish, NTQO_TIMEOUT);
-
-    // If the thread hangs, kill it and cleanup
-    if (dwWait == WAIT_TIMEOUT) {
-        SuspendThread(g_hThread);
-        TerminateThread(g_hThread, 1);
-        WaitForSingleObject(g_hThread, INFINITE);
-        CloseHandle(g_hThread);
-
-        g_hThread = NULL;
-    }
-
-    return dwWait;
-}
-
-
-DWORD WINAPI
-psutil_NtQueryObjectThread(LPVOID lpvParam) {
-    // Loop infinitely waiting for work
-    while (TRUE) {
-        WaitForSingleObject(g_hEvtStart, INFINITE);
-
-        g_status = __NtQueryObject(g_hFile,
-                                   ObjectNameInformation,
-                                   g_pNameBuffer,
-                                   g_dwSize,
-                                   &g_dwLength);
-        SetEvent(g_hEvtFinish);
-    }
-}
-
-
-PyObject *
+static PyObject *
 psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
@@ -338,12 +322,6 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
-
-    if (__NtQuerySystemInformation == NULL || __NtQueryObject == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        error = TRUE;
-        goto cleanup;
-    }
 
     // Py_BuildValue raises an exception if NULL is returned
     py_retlist = PyList_New(0);
@@ -370,7 +348,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = __NtQuerySystemInformation(
+    } while ((status = psutil_NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,
@@ -517,3 +495,23 @@ cleanup:
 
     return py_retlist;
 }
+
+
+/*
+ * The public function.
+ */
+PyObject *
+psutil_get_open_files(long dwPid, HANDLE hProcess) {
+    OSVERSIONINFO osvi;
+
+    ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+    GetVersionEx(&osvi);
+
+    // Threaded version only works for Vista+
+    if (osvi.dwMajorVersion >= 6)
+        return psutil_get_open_files_ntqueryobject(dwPid, hProcess);
+    else
+        return psutil_get_open_files_getmappedfilename(dwPid, hProcess);
+}
+

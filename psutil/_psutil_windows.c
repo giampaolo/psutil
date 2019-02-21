@@ -22,6 +22,8 @@
 #include <ws2tcpip.h>
 #endif
 #include <iphlpapi.h>
+#include <iprtrmib.h>
+#include <udpmib.h>
 #include <wtsapi32.h>
 #include <Winsvc.h>
 #include <PowrProf.h>
@@ -30,13 +32,14 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "_psutil_common.h"
+#include "arch/windows/ntextapi.h"
+#include "arch/windows/global.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
 #include "arch/windows/process_handles.h"
-#include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "_psutil_common.h"
 
 
 /*
@@ -53,109 +56,6 @@
 #ifndef AF_INET6
 #define AF_INET6 23
 #endif
-#define _psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET); \
-    Py_DECREF(_AF_INET6);\
-    Py_DECREF(_SOCK_STREAM);\
-    Py_DECREF(_SOCK_DGRAM);
-
-#if (_WIN32_WINNT >= 0x0601)  // Windows  7
-typedef BOOL (WINAPI *PFN_GETLOGICALPROCESSORINFORMATIONEX)(
-    LOGICAL_PROCESSOR_RELATIONSHIP relationship,
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
-    PDWORD ReturnLength);
-static PFN_GETLOGICALPROCESSORINFORMATIONEX _GetLogicalProcessorInformationEx;
-#endif
-
-// Fix for mingw32, see:
-// https://github.com/giampaolo/psutil/issues/351#c2
-// This is actually a DISK_PERFORMANCE struct:
-// https://msdn.microsoft.com/en-us/library/windows/desktop/
-//     aa363991(v=vs.85).aspx
-typedef struct _DISK_PERFORMANCE_WIN_2008 {
-    LARGE_INTEGER BytesRead;
-    LARGE_INTEGER BytesWritten;
-    LARGE_INTEGER ReadTime;
-    LARGE_INTEGER WriteTime;
-    LARGE_INTEGER IdleTime;
-    DWORD         ReadCount;
-    DWORD         WriteCount;
-    DWORD         QueueDepth;
-    DWORD         SplitCount;
-    LARGE_INTEGER QueryTime;
-    DWORD         StorageDeviceNumber;
-    WCHAR         StorageManagerName[8];
-} DISK_PERFORMANCE_WIN_2008;
-
-// --- network connections mingw32 support
-#ifndef _IPRTRMIB_H
-#if (_WIN32_WINNT < 0x0600) // Windows XP
-typedef struct _MIB_TCP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    UCHAR ucRemoteAddr[16];
-    DWORD dwRemoteScopeId;
-    DWORD dwRemotePort;
-    DWORD dwState;
-    DWORD dwOwningPid;
-} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
-
-typedef struct _MIB_TCP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
-#endif
-#endif
-
-#ifndef __IPHLPAPI_H__
-typedef struct in6_addr {
-    union {
-        UCHAR Byte[16];
-        USHORT Word[8];
-    } u;
-} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
-
-typedef enum _UDP_TABLE_CLASS {
-    UDP_TABLE_BASIC,
-    UDP_TABLE_OWNER_PID,
-    UDP_TABLE_OWNER_MODULE
-} UDP_TABLE_CLASS, *PUDP_TABLE_CLASS;
-
-typedef struct _MIB_UDPROW_OWNER_PID {
-    DWORD dwLocalAddr;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
-
-typedef struct _MIB_UDPTABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDPROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
-#endif
-
-#if (_WIN32_WINNT < 0x0600) // Windows XP
-typedef struct _MIB_UDP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
-
-typedef struct _MIB_UDP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
-#endif
-
-typedef struct _PROCESSOR_POWER_INFORMATION {
-   ULONG Number;
-   ULONG MaxMhz;
-   ULONG CurrentMhz;
-   ULONG MhzLimit;
-   ULONG MaxIdleState;
-   ULONG CurrentIdleState;
-} PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 
 PIP_ADAPTER_ADDRESSES
@@ -204,15 +104,10 @@ unsigned int
 psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
     SYSTEM_INFO sysinfo;
-    static DWORD(CALLBACK *_GetActiveProcessorCount)(WORD) = NULL;
 
-    // GetActiveProcessorCount is available only on 64 bit versions
-    // of Windows from Windows 7 onward.
-    // Windows Vista 64 bit and Windows XP don't have it.
-    _GetActiveProcessorCount = \
-        psutil_GetProcAddress("kernel32", "GetActiveProcessorCount");
-    if (_GetActiveProcessorCount != NULL) {
-        ncpus = _GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    // Minimum requirement: Windows 7
+    if (psutil_GetActiveProcessorCount != NULL) {
+        ncpus = psutil_GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetFromWindowsErr(0);
         }
@@ -242,8 +137,6 @@ psutil_get_num_cpus(int fail_on_err) {
 static PyObject *TimeoutExpired;
 static PyObject *TimeoutAbandoned;
 
-static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
-
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
@@ -258,7 +151,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     time_t pt;
     FILETIME fileTime;
     long long ll;
-    psutil_GetTickCount64;
 
     GetSystemTimeAsFileTime(&fileTime);
     /*
@@ -287,7 +179,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     // "#if (_WIN32_WINNT >= 0x0600)" pre-processor but that way
     // the produced exe/wheels cannot be used on Windows XP, see:
     // https://github.com/giampaolo/psutil/issues/811#issuecomment-230639178
-    psutil_GetTickCount64 = psutil_GetProcAddress("kernel32", "GetTickCount64");
     if (psutil_GetTickCount64 != NULL) {
         // Windows >= Vista
         uptime = psutil_GetTickCount64() / (ULONGLONG)1000.00f;
@@ -297,6 +188,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         // Windows XP.
         // GetTickCount() time will wrap around to zero if the
         // system is run continuously for 49.7 days.
+        psutil_debug("Windows < Vista; using GetTickCount() instead of "
+                     "GetTickCount64()");
         uptime = GetTickCount() / (LONGLONG)1000.00f;
         return Py_BuildValue("L", pt - uptime);
     }
@@ -611,17 +504,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
  * Return the number of physical CPU cores (hyper-thread CPUs count
  * is excluded).
  */
-#if (_WIN32_WINNT < 0x0601)  // < Windows 7 (namely Vista and XP)
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    // Note: we may have used GetLogicalProcessorInformation()
-    // but I don't want to prolong support for Windows XP and Vista.
-    // On such old systems psutil will compile but this API will
-    // just return None.
-    psutil_debug("Win < 7; cpu_count_phys() forced to None");
-    Py_RETURN_NONE;
-}
-#else  // Windows >= 7
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD rc;
@@ -636,13 +518,13 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // it supports process groups, meaning this is able to report more
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    _GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
-        "kernel32", "GetLogicalProcessorInformationEx");
-    if (_GetLogicalProcessorInformationEx == NULL)
-        return NULL;
+    if (psutil_GetLogicalProcessorInformationEx == NULL) {
+        psutil_debug("Win < 7; cpu_count_phys() forced to None");
+        Py_RETURN_NONE;
+    }
 
     while (1) {
-        rc = _GetLogicalProcessorInformationEx(
+        rc = psutil_GetLogicalProcessorInformationEx(
             RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
@@ -691,7 +573,6 @@ return_none:
         free(buffer);
     Py_RETURN_NONE;
 }
-#endif
 
 
 /*
@@ -1044,10 +925,6 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    // NtQuerySystemInformation stuff
-    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-    NTQSI_PROC NtQuerySystemInformation;
-
     double idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -1058,10 +935,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    NtQuerySystemInformation = \
-        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL)
-        goto error;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -1078,7 +951,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     // gets cpu time informations
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
@@ -1537,10 +1410,6 @@ error:
 }
 
 
-typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              TCP_TABLE_CLASS, ULONG);
-
-
 // https://msdn.microsoft.com/library/aa365928.aspx
 static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
                                    ULONG address_family,
@@ -1573,10 +1442,6 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
     }
     return error;
 }
-
-
-typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                              UDP_TABLE_CLASS, ULONG);
 
 
 // https://msdn.microsoft.com/library/aa365930.aspx
@@ -1613,6 +1478,13 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
 }
 
 
+#define psutil_conn_decref_objs() \
+    Py_DECREF(_AF_INET); \
+    Py_DECREF(_AF_INET6);\
+    Py_DECREF(_SOCK_STREAM);\
+    Py_DECREF(_SOCK_DGRAM);
+
+
 /*
  * Return a list of network connections opened by a process
  */
@@ -1621,12 +1493,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
     unsigned long pid;
     int pid_return;
-    typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
-    _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
-    typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
-    _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
-    _GetExtendedTcpTable getExtendedTcpTable;
-    _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
     DWORD tableSize;
     DWORD error;
@@ -1650,28 +1516,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
     // Import some functions.
-    rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv4AddressToStringA");
-    if (rtlIpv4AddressToStringA == NULL)
-        goto error;
-    rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA");
-    if (rtlIpv6AddressToStringA == NULL)
-        goto error;
-    getExtendedTcpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedTcpTable");
-    if (getExtendedTcpTable == NULL)
-        goto error;
-    getExtendedUdpTable = psutil_GetProcAddressFromLib(
-        "iphlpapi.dll", "GetExtendedUdpTable");
-    if (getExtendedUdpTable == NULL)
-        goto error;
-
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        _psutil_conn_decref_objs();
+        psutil_conn_decref_objs();
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
@@ -1679,25 +1528,18 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (pid != -1) {
         pid_return = psutil_pid_is_running(pid);
         if (pid_return == 0) {
-            _psutil_conn_decref_objs();
+            psutil_conn_decref_objs();
             return NoSuchProcess("");
         }
         else if (pid_return == -1) {
-            _psutil_conn_decref_objs();
+            psutil_conn_decref_objs();
             return NULL;
         }
     }
 
-    if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
-        PyErr_SetString(PyExc_NotImplementedError,
-                        "feature not supported on this Windows version");
-        _psutil_conn_decref_objs();
-        return NULL;
-    }
-
     py_retlist = PyList_New(0);
     if (py_retlist == NULL) {
-        _psutil_conn_decref_objs();
+        psutil_conn_decref_objs();
         return NULL;
     }
 
@@ -1712,7 +1554,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(getExtendedTcpTable,
+        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
@@ -1737,7 +1579,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -1759,7 +1601,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferRemote);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferRemote);
                     py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
@@ -1809,7 +1651,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(getExtendedTcpTable,
+        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET6, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
@@ -1834,7 +1676,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -1857,7 +1699,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferRemote);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferRemote);
                     py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
@@ -1906,7 +1748,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(getExtendedUdpTable,
+        error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
                                       AF_INET, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
@@ -1931,7 +1773,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
-                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -1980,7 +1822,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(getExtendedUdpTable,
+        error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
                                       AF_INET6, &table, &tableSize);
         if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
@@ -2004,7 +1846,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     struct in6_addr addr;
 
                     memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
-                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
                     py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
@@ -2043,11 +1885,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         tableSize = 0;
     }
 
-    _psutil_conn_decref_objs();
+    psutil_conn_decref_objs();
     return py_retlist;
 
 error:
-    _psutil_conn_decref_objs();
+    psutil_conn_decref_objs();
     Py_XDECREF(py_conn_tuple);
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
@@ -2123,19 +1965,13 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
-    _NtQueryInformationProcess NtQueryInformationProcess;
 
-    NtQueryInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtQueryInformationProcess");
-    if (NtQueryInformationProcess == NULL)
-        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
-
-    NtQueryInformationProcess(
+    psutil_NtQueryInformationProcess(
         hProcess,
         ProcessIoPriority,
         &IoPriority,
@@ -2156,19 +1992,14 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD prio;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
-    _NtSetInformationProcess NtSetInformationProcess;
 
-    NtSetInformationProcess = \
-        psutil_GetProcAddress("ntdll.dll", "NtSetInformationProcess");
-    if (NtSetInformationProcess == NULL)
-        return NULL;
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
 
-    NtSetInformationProcess(
+    psutil_NtSetInformationProcess(
         hProcess,
         ProcessIoPriority,
         (PVOID)&prio,
@@ -2461,7 +2292,7 @@ error:
  */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    DISK_PERFORMANCE_WIN_2008 diskPerformance;
+    DISK_PERFORMANCE diskPerformance;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
@@ -2764,7 +2595,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     long long unix_time;
-    PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
     ULONG returnLen;
     PyObject *py_tuple = NULL;
@@ -2774,11 +2604,6 @@ psutil_users(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-
-    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
-        "winsta.dll", "WinStationQueryInformationW");
-    if (WinStationQueryInformationW == NULL)
-        goto error;
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromWindowsErr(0);
@@ -2833,12 +2658,13 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         // login time
-        if (!WinStationQueryInformationW(hServer,
-                                         sessionId,
-                                         WinStationInformation,
-                                         &station_info,
-                                         sizeof(station_info),
-                                         &returnLen))
+        if (! psutil_WinStationQueryInformationW(
+                hServer,
+                sessionId,
+                WinStationInformation,
+                &station_info,
+                sizeof(station_info),
+                &returnLen))
         {
             goto error;
         }
@@ -3478,8 +3304,6 @@ error:
  */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-    NTQSI_PROC NtQuerySystemInformation;
     NTSTATUS status;
     _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
     _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
@@ -3488,11 +3312,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     UINT i;
     ULONG64 dpcs = 0;
     ULONG interrupts = 0;
-
-    NtQuerySystemInformation = \
-        psutil_GetProcAddressFromLib("ntdll.dll", "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL)
-        return NULL;
 
     // retrieves number of processors
     ncpus = psutil_get_num_cpus(1);
@@ -3506,7 +3325,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
@@ -3524,7 +3343,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
@@ -3545,7 +3364,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = NtQuerySystemInformation(
+    status = psutil_NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
@@ -3939,6 +3758,8 @@ void init_psutil_windows(void)
     // set SeDebug for the current process
     psutil_set_se_debug();
     psutil_setup();
+    if (psutil_loadlibs() != 0)
+        return NULL;
 
 #if PY_MAJOR_VERSION >= 3
     return module;
