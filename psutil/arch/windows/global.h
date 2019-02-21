@@ -2,9 +2,12 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+
+ * List of constants and objects that are globally available.
  */
 
 #include <windows.h>
+#include "ntextapi.h"
 
 extern int PSUTIL_WINVER;
 #define PSUTIL_WINDOWS_XP 51
@@ -19,3 +22,42 @@ extern int PSUTIL_WINVER;
 int psutil_load_globals();
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
+
+_NtQuerySystemInformation \
+    psutil_NtQuerySystemInformation;
+
+_NtQueryInformationProcess \
+    psutil_NtQueryInformationProcess;
+
+_NtSetInformationProcess
+    psutil_NtSetInformationProcess;
+
+_WinStationQueryInformationW \
+    psutil_WinStationQueryInformationW;
+
+_RtlIpv4AddressToStringA \
+    psutil_rtlIpv4AddressToStringA;
+
+_RtlIpv6AddressToStringA \
+    psutil_rtlIpv6AddressToStringA;
+
+_GetExtendedTcpTable \
+    psutil_GetExtendedTcpTable;
+
+_GetExtendedUdpTable \
+    psutil_GetExtendedUdpTable;
+
+_GetActiveProcessorCount \
+    psutil_GetActiveProcessorCount;
+
+_GetTickCount64 \
+    psutil_GetTickCount64;
+
+_NtQueryObject \
+    psutil_NtQueryObject;
+
+_GetLogicalProcessorInformationEx \
+    psutil_GetLogicalProcessorInformationEx;
+
+_RtlGetVersion \
+    psutil_RtlGetVersion;

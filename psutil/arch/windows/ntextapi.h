@@ -455,49 +455,4 @@ typedef NTSTATUS (WINAPI *_RtlGetVersion) (
     PRTL_OSVERSIONINFOW lpVersionInformation
 );
 
-/*
- * ================================================================
- * Custom psutil definitions for modules loaded at runtime.
- * ================================================================
- */
-
-_NtQuerySystemInformation \
-    psutil_NtQuerySystemInformation;
-
-_NtQueryInformationProcess \
-    psutil_NtQueryInformationProcess;
-
-_NtSetInformationProcess
-    psutil_NtSetInformationProcess;
-
-_WinStationQueryInformationW \
-    psutil_WinStationQueryInformationW;
-
-_RtlIpv4AddressToStringA \
-    psutil_rtlIpv4AddressToStringA;
-
-_RtlIpv6AddressToStringA \
-    psutil_rtlIpv6AddressToStringA;
-
-_GetExtendedTcpTable \
-    psutil_GetExtendedTcpTable;
-
-_GetExtendedUdpTable \
-    psutil_GetExtendedUdpTable;
-
-_GetActiveProcessorCount \
-    psutil_GetActiveProcessorCount;
-
-_GetTickCount64 \
-    psutil_GetTickCount64;
-
-_NtQueryObject \
-    psutil_NtQueryObject;
-
-_GetLogicalProcessorInformationEx \
-    psutil_GetLogicalProcessorInformationEx;
-
-_RtlGetVersion \
-    psutil_RtlGetVersion;
-
 #endif // __NTEXTAPI_H__
