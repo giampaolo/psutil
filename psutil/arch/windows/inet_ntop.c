@@ -31,11 +31,11 @@ inet_ntop(INT family, PVOID pAddr, PSTR stringBuf, size_t strBufSize) {
         return NULL;
     }
 
-    if (WSAAddressToStringW(
+    if (WSAAddressToStringA(
             (LPSOCKADDR) &srcaddr,
             dwAddressLength,
             0,
-            (LPWSTR) stringBuf,
+            stringBuf,
             (LPDWORD) &strBufSize) != 0)
     {
         PyErr_SetExcFromWindowsErr(PyExc_OSError, WSAGetLastError());
