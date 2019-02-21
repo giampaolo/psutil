@@ -124,9 +124,6 @@ psutil_loadlibs() {
     psutil_GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
 
-    psutil_NtWow64QueryInformationProcess64 = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "NtWow64QueryInformationProcess64");
-
     PyErr_Clear();
     return 0;
 }
