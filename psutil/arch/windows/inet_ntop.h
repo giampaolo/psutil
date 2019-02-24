@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+// because of WSAAddressToStringA
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <ws2tcpip.h>
 
 PCSTR WSAAPI
