@@ -12,6 +12,8 @@ XXXX-XX-XX
   in order to prevent that.
 - 1419_: [Windows] Process.environ() raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
+- 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
+  on failed malloc().
 
 **Enhancements**
 

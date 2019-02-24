@@ -502,16 +502,9 @@ cleanup:
  */
 PyObject *
 psutil_get_open_files(long dwPid, HANDLE hProcess) {
-    OSVERSIONINFO osvi;
-
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&osvi);
-
     // Threaded version only works for Vista+
-    if (osvi.dwMajorVersion >= 6)
+    if (PSUTIL_WINVER >= PSUTIL_WINDOWS_VISTA)
         return psutil_get_open_files_ntqueryobject(dwPid, hProcess);
     else
         return psutil_get_open_files_getmappedfilename(dwPid, hProcess);
 }
-

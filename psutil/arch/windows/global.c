@@ -2,6 +2,10 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * This code is executed on import. It loads private/undocumented
+ * Windows APIs and sets Windows version constants so that they are
+ * available globally.
  */
 
 #include <windows.h>
@@ -9,6 +13,9 @@
 #include "ntextapi.h"
 #include "global.h"
 
+
+// Needed to make this globally visible.
+int PSUTIL_WINVER;
 
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
@@ -52,15 +59,11 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
 }
 
 
-/*
- * This is executed on import and loads Windows APIs so that they
- * are available globally.
- */
+static int
 psutil_loadlibs() {
     /*
      * Mandatory.
      */
-
     psutil_NtQuerySystemInformation = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
     if (psutil_NtQuerySystemInformation == NULL)
@@ -108,10 +111,14 @@ psutil_loadlibs() {
     if (! psutil_GetExtendedUdpTable)
         return 1;
 
+    psutil_RtlGetVersion = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlGetVersion");
+    if (! psutil_RtlGetVersion)
+        return 1;
+
     /*
      * Optional.
      */
-
     // minimum requirement: Win Vista
     psutil_GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
@@ -125,5 +132,46 @@ psutil_loadlibs() {
         "kernel32", "GetLogicalProcessorInformationEx");
 
     PyErr_Clear();
+    return 0;
+}
+
+
+static int
+psutil_set_winver() {
+    RTL_OSVERSIONINFOEXW versionInfo;
+    ULONG maj;
+    ULONG min;
+
+    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+    memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
+    psutil_RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    maj = versionInfo.dwMajorVersion;
+    min = versionInfo.dwMinorVersion;
+    if (maj == 5 && min == 1)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_XP;
+    else if (maj == 5 && min == 2)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_SERVER_2003;
+    else if (maj == 6 && min == 0)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_VISTA;  // or Server 2008
+    else if (maj == 6 && min == 1)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_7;
+    else if (maj == 6 && min == 2)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_8;
+    else if (maj == 6 && min == 3)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_8_1;
+    else if (maj == 10 && min == 0)
+        PSUTIL_WINVER = PSUTIL_WINDOWS_10;
+    else
+        PSUTIL_WINVER = PSUTIL_WINDOWS_NEW;
+    return 0;
+}
+
+
+int
+psutil_load_globals() {
+    if (psutil_loadlibs() != 0)
+        return 1;
+    if (psutil_set_winver() != 0)
+        return 1;
     return 0;
 }
