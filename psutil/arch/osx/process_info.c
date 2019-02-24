@@ -112,6 +112,7 @@ psutil_get_argmax() {
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
         return argmax;
+    PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
     return 0;
 }
 
@@ -137,10 +138,8 @@ psutil_get_cmdline(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (! argmax)
         goto error;
-    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
@@ -231,10 +230,8 @@ psutil_get_environ(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (! argmax)
         goto error;
-    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
