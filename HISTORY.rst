@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1420_: [Windows] in case of exception disk_usage() now also shows the path
+  name.
+
 **Bug fixes**
 
 - 1394_: [Windows] Process name() and exe() may erronously return "Registry".
@@ -14,11 +19,6 @@ XXXX-XX-XX
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 - 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
   on failed malloc().
-
-**Enhancements**
-
-- 1420_: [Windows] in case of exception disk_usage() now also shows the path
-  name.
 
 5.5.1
 =====

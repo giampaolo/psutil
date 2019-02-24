@@ -495,7 +495,7 @@ def reap_children(recursive=False):
         try:
             subp.terminate()
         except OSError as err:
-            if WINDOWS and err.errno == 6:  # "invalid handle"
+            if WINDOWS and err.winerror == 6:  # "invalid handle"
                 pass
             elif err.errno != errno.ESRCH:
                 raise
