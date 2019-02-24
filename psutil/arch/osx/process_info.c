@@ -59,8 +59,10 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
      */
     while (lim-- > 0) {
         size = 0;
-        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1)
-            return errno;
+        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1) {
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+            return 1;
+        }
         size2 = size + (size >> 3);  // add some
         if (size2 > size) {
             ptr = malloc(size2);
@@ -72,22 +74,32 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
         else {
             ptr = malloc(size);
         }
-        if (ptr == NULL)
-            return ENOMEM;
+        if (ptr == NULL) {
+            PyErr_NoMemory();
+            return 1;
+        }
 
         if (sysctl((int *)mib3, 3, ptr, &size, NULL, 0) == -1) {
             err = errno;
             free(ptr);
-            if (err != ENOMEM)
-                return err;
+            if (err != ENOMEM) {
+                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+                return 1;
+            }
         }
         else {
             *procList = (kinfo_proc *)ptr;
             *procCount = size / sizeof(kinfo_proc);
-            return 0;
+            if (procCount <= 0) {
+                PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+                return 1;
+            }
+            return 0;  // success
         }
     }
-    return ENOMEM;
+
+    PyErr_Format(PyExc_RuntimeError, "couldn't collect PIDs list");
+    return 1;
 }
 
 
