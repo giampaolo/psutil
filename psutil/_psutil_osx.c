@@ -622,8 +622,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         return NULL;
 
     len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('sysctl.proc_cputype')");
+    }
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
@@ -863,12 +865,18 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int64_t max;
     size_t size = sizeof(int64_t);
 
-    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency')");
+    }
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency_min')");
+    }
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency_max')");
+    }
 
     return Py_BuildValue(
         "KKK",
@@ -1370,7 +1378,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
                 // check for inet_ntop failures
                 if (errno != 0) {
-                    PyErr_SetFromErrno(PyExc_OSError);
+                    PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
                     goto error;
                 }
 
