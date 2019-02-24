@@ -361,7 +361,7 @@ psutil_pid_is_running(DWORD pid) {
         // Be strict and raise an exception; the caller is supposed
         // to take -1 into account.
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromOSErrnoWithSyscall("OpenProcess(PROCESS_VM_READ)");
             return -1;
         }
     }
@@ -395,7 +395,7 @@ psutil_pid_is_running(DWORD pid) {
             return 1;
         }
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
             return -1;
         }
     }
