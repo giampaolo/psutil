@@ -400,22 +400,19 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
-    PDWORD ReturnLength
-);
+    PDWORD ReturnLength);
 
 typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
-    PULONG ReturnLength
-);
+    PULONG ReturnLength);
 
 typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
-    DWORD ProcessInformationLength
-);
+    DWORD ProcessInformationLength);
 
 typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(
     struct in_addr *Addr,
@@ -431,8 +428,7 @@ typedef DWORD (WINAPI * _GetExtendedTcpTable)(
     BOOL bOrder,
     ULONG ulAf,
     TCP_TABLE_CLASS TableClass,
-    ULONG Reserved
-);
+    ULONG Reserved);
 
 typedef DWORD (WINAPI * _GetExtendedUdpTable)(
     PVOID pUdpTable,
@@ -440,8 +436,7 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(
     BOOL bOrder,
     ULONG ulAf,
     UDP_TABLE_CLASS TableClass,
-    ULONG Reserved
-);
+    ULONG Reserved);
 
 typedef DWORD (CALLBACK *_GetActiveProcessorCount)(
     WORD GroupNumber);
@@ -454,49 +449,10 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
     PVOID ObjectInformation,
     ULONG ObjectInformationLength,
-    PULONG ReturnLength
+    PULONG ReturnLength);
+
+typedef NTSTATUS (WINAPI *_RtlGetVersion) (
+    PRTL_OSVERSIONINFOW lpVersionInformation
 );
-
-/*
- * ================================================================
- * Custom psutil definitions for modules loaded at runtime.
- * ================================================================
- */
-
-_NtQuerySystemInformation \
-    psutil_NtQuerySystemInformation;
-
-_NtQueryInformationProcess \
-    psutil_NtQueryInformationProcess;
-
-_NtSetInformationProcess
-    psutil_NtSetInformationProcess;
-
-_WinStationQueryInformationW \
-    psutil_WinStationQueryInformationW;
-
-_RtlIpv4AddressToStringA \
-    psutil_rtlIpv4AddressToStringA;
-
-_RtlIpv6AddressToStringA \
-    psutil_rtlIpv6AddressToStringA;
-
-_GetExtendedTcpTable \
-    psutil_GetExtendedTcpTable;
-
-_GetExtendedUdpTable \
-    psutil_GetExtendedUdpTable;
-
-_GetActiveProcessorCount \
-    psutil_GetActiveProcessorCount;
-
-_GetTickCount64 \
-    psutil_GetTickCount64;
-
-_NtQueryObject \
-    psutil_NtQueryObject;
-
-_GetLogicalProcessorInformationEx \
-    psutil_GetLogicalProcessorInformationEx;
 
 #endif // __NTEXTAPI_H__

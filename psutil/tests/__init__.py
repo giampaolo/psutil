@@ -321,8 +321,11 @@ def get_test_subprocess(cmd=None, **kwds):
     kwds.setdefault("cwd", os.getcwd())
     kwds.setdefault("env", os.environ)
     if WINDOWS:
-        # Prevents the subprocess to open error dialogs.
-        kwds.setdefault("creationflags", 0x8000000)  # CREATE_NO_WINDOW
+        # Prevents the subprocess to open error dialogs. This will also
+        # cause stderr to be suppressed, which is suboptimal in order
+        # to debug broken tests.
+        CREATE_NO_WINDOW = 0x8000000
+        kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
         safe_rmpath(_TESTFN)
         pyline = "from time import sleep;" \

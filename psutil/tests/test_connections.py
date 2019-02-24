@@ -474,7 +474,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
                 import time, os
                 from psutil.tests import create_sockets
                 with create_sockets():
-                    with open('%s', 'w') as f:
+                    with open(r'%s', 'w') as f:
                         f.write(str(os.getpid()))
                     time.sleep(60)
                 """ % fname)

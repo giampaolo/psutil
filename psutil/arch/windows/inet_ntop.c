@@ -9,10 +9,7 @@
 
 // From: https://memset.wordpress.com/2010/10/09/inet_ntop-for-win32/
 PCSTR WSAAPI
-inet_ntop(__in INT family,
-          __in PVOID pAddr,
-          __out_ecount(StringBufSize) PSTR pStringBuf,
-          __in size_t StringBufSize) {
+inet_ntop(INT family, PVOID pAddr, PSTR stringBuf, size_t strBufSize) {
     DWORD dwAddressLength = 0;
     struct sockaddr_storage srcaddr;
     struct sockaddr_in *srcaddr4 = (struct sockaddr_in*) &srcaddr;
@@ -34,13 +31,15 @@ inet_ntop(__in INT family,
         return NULL;
     }
 
-    if (WSAAddressToString((LPSOCKADDR) &srcaddr,
-                           dwAddressLength,
-                           0,
-                           pStringBuf,
-                           (LPDWORD) &StringBufSize) != 0) {
+    if (WSAAddressToStringA(
+            (LPSOCKADDR) &srcaddr,
+            dwAddressLength,
+            0,
+            stringBuf,
+            (LPDWORD) &strBufSize) != 0)
+    {
         PyErr_SetExcFromWindowsErr(PyExc_OSError, WSAGetLastError());
         return NULL;
     }
-    return pStringBuf;
+    return stringBuf;
 }
