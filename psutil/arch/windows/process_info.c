@@ -227,7 +227,10 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     else if (ret == 0)
         return NoSuchProcess("");
     else if (ret == -1)
-        return PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_ACCESS_DENIED)
+            return PyErr_SetFromWindowsErr(0);
+        else
+            return PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
     else  // -2
         return NULL;
 }
@@ -358,7 +361,7 @@ psutil_pid_is_running(DWORD pid) {
         // Be strict and raise an exception; the caller is supposed
         // to take -1 into account.
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromOSErrnoWithSyscall("OpenProcess(PROCESS_VM_READ)");
             return -1;
         }
     }
@@ -392,7 +395,7 @@ psutil_pid_is_running(DWORD pid) {
             return 1;
         }
         else {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
             return -1;
         }
     }
@@ -406,7 +409,7 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("VirtualQueryEx");
         return -1;
     }
 
@@ -488,7 +491,8 @@ psutil_get_process_data(long pid,
             sizeof(LPVOID),
             NULL)))
     {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall(
+            "NtQueryInformationProcess(ProcessWow64Information)");
         goto error;
     }
 
@@ -499,7 +503,7 @@ psutil_get_process_data(long pid,
 
         // read PEB
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
             goto error;
         }
 
@@ -509,7 +513,8 @@ psutil_get_process_data(long pid,
                               &procParameters32,
                               sizeof(procParameters32),
                               NULL)) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall(
+                "ReadProcessMemory(ProcessParameters)");
             goto error;
         }
 
@@ -530,8 +535,8 @@ psutil_get_process_data(long pid,
 #else
     /* 32 bit case.  Check if the target is also 32 bit. */
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
-        !IsWow64Process(hProcess, &theyAreWow64)) {
-        PyErr_SetFromWindowsErr(0);
+            !IsWow64Process(hProcess, &theyAreWow64)) {
+        PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
         goto error;
     }
 
@@ -570,7 +575,8 @@ psutil_get_process_data(long pid,
                 sizeof(pbi64),
                 NULL)))
         {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall(
+                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             goto error;
         }
 
@@ -582,7 +588,7 @@ psutil_get_process_data(long pid,
                sizeof(peb64),
                NULL)))
         {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
             goto error;
         }
 
@@ -594,7 +600,8 @@ psutil_get_process_data(long pid,
                 sizeof(procParameters64),
                 NULL)))
         {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall(
+                "NtWow64ReadVirtualMemory64(ProcessParameters)");
             goto error;
         }
 
@@ -626,7 +633,8 @@ psutil_get_process_data(long pid,
                 sizeof(pbi),
                 NULL)))
         {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall(
+                "NtQueryInformationProcess(ProcessBasicInformation)");
             goto error;
         }
 
@@ -636,7 +644,7 @@ psutil_get_process_data(long pid,
                                &peb,
                                sizeof(peb),
                                NULL)) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
             goto error;
         }
 
@@ -646,7 +654,8 @@ psutil_get_process_data(long pid,
                                &procParameters,
                                sizeof(procParameters),
                                NULL)) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall(
+                "ReadProcessMemory(ProcessParameters)");
             goto error;
         }
 
@@ -678,7 +687,6 @@ psutil_get_process_data(long pid,
     }
 
     buffer = calloc(size + 2, 1);
-
     if (buffer == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -693,13 +701,13 @@ psutil_get_process_data(long pid,
                 size,
                 NULL)))
         {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else
 #endif
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
         goto error;
     }
 
@@ -751,7 +759,7 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
         &ret_length
     );
     if (! NT_SUCCESS(status)) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess");
         goto error;
     }
 
@@ -820,7 +828,7 @@ psutil_get_cmdline(long pid, int use_peb) {
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("CommandLineToArgvW");
         goto out;
     }
 
