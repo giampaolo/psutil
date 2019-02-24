@@ -1474,7 +1474,16 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
             *data = NULL;
         }
     }
-    return error;
+
+    if (error == ERROR_NOT_ENOUGH_MEMORY) {
+        PyErr_NoMemory();
+        return 1;
+    }
+    if (error != NO_ERROR) {
+        PyErr_SetFromWindowsErr(error);
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -1556,16 +1565,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET, &table, &tableSize);
-        if (error == ERROR_NOT_ENOUGH_MEMORY) {
-            PyErr_NoMemory();
+        if (error != 0)
             goto error;
-        }
-
-        if (error != NO_ERROR) {
-            PyErr_SetFromWindowsErr(error);
-            goto error;
-        }
-
         tcp4Table = table;
         for (i = 0; i < tcp4Table->dwNumEntries; i++) {
             if (pid != -1) {
@@ -1649,15 +1650,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
                                       AF_INET6, &table, &tableSize);
-        if (error == ERROR_NOT_ENOUGH_MEMORY) {
-            PyErr_NoMemory();
+        if (error != 0)
             goto error;
-        }
-        if (error != NO_ERROR) {
-            PyErr_SetFromWindowsErr(error);
-            goto error;
-        }
-
         tcp6Table = table;
         for (i = 0; i < tcp6Table->dwNumEntries; i++)
         {
@@ -1742,15 +1736,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         tableSize = 0;
         error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
                                       AF_INET, &table, &tableSize);
-        if (error == ERROR_NOT_ENOUGH_MEMORY) {
-            PyErr_NoMemory();
+        if (error != 0)
             goto error;
-        }
-        if (error != NO_ERROR) {
-            PyErr_SetFromWindowsErr(error);
-            goto error;
-        }
-
         udp4Table = table;
         for (i = 0; i < udp4Table->dwNumEntries; i++)
         {
@@ -1812,18 +1799,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         tableSize = 0;
         error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
                                       AF_INET6, &table, &tableSize);
-        if (error == ERROR_NOT_ENOUGH_MEMORY) {
-            PyErr_NoMemory();
+        if (error != 0)
             goto error;
-        }
-
-        if (error != NO_ERROR) {
-            PyErr_SetFromWindowsErr(error);
-            goto error;
-        }
-
         udp6Table = table;
-
         for (i = 0; i < udp6Table->dwNumEntries; i++) {
             if (pid != -1) {
                 if (udp6Table->table[i].dwOwningPid != pid) {
