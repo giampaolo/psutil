@@ -286,7 +286,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         err = GetLastError();
         // See: https://github.com/giampaolo/psutil/issues/1099
         if (err != ERROR_ACCESS_DENIED) {
-            PyErr_SetFromWindowsErr(err);
+            PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
             CloseHandle(hProcess);
             return NULL;
         }
@@ -332,7 +332,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     // handle return code
     if (retVal == WAIT_FAILED) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -354,7 +354,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     // process is gone so we can get its process exit code. The PID
     // may still stick around though but we'll handle that from Python.
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -652,7 +652,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 #if (_WIN32_WINNT >= 0x0600)  // Windows >= Vista
     memset(exe, 0, MAX_PATH);
     if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -662,7 +662,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (GetLastError() == 0)
             PyErr_SetFromWindowsErr(ERROR_ACCESS_DENIED);
         else
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("GetProcessImageFileNameW");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -689,11 +689,11 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
     if (hSnapShot == INVALID_HANDLE_VALUE)
-        return PyErr_SetFromWindowsErr(0);
+        return PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
     pentry.dwSize = sizeof(PROCESSENTRY32W);
     ok = Process32FirstW(hSnapShot, &pentry);
     if (! ok) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("Process32FirstW");
         CloseHandle(hSnapShot);
         return NULL;
     }
@@ -944,7 +944,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
     sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-           malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+        malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1046,7 +1046,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
         return FALSE;
     }
 
@@ -1054,7 +1054,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     te32.dwSize = sizeof(THREADENTRY32);
 
     if (! Thread32First(hThreadSnap, &te32)) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("Thread32First");
         CloseHandle(hThreadSnap);
         return FALSE;
     }
@@ -1067,14 +1067,14 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
             hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
                                  te32.th32ThreadID);
             if (hThread == NULL) {
-                PyErr_SetFromWindowsErr(0);
+                PyErr_SetFromOSErrnoWithSyscall("OpenThread");
                 CloseHandle(hThread);
                 CloseHandle(hThreadSnap);
                 return FALSE;
             }
             if (suspend == 1) {
                 if (SuspendThread(hThread) == (DWORD) - 1) {
-                    PyErr_SetFromWindowsErr(0);
+                    PyErr_SetFromOSErrnoWithSyscall("SuspendThread");
                     CloseHandle(hThread);
                     CloseHandle(hThreadSnap);
                     return FALSE;
@@ -1082,7 +1082,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
             }
             else {
                 if (ResumeThread(hThread) == (DWORD) - 1) {
-                    PyErr_SetFromWindowsErr(0);
+                    PyErr_SetFromOSErrnoWithSyscall("ResumeThread");
                     CloseHandle(hThread);
                     CloseHandle(hThreadSnap);
                     return FALSE;
@@ -1156,7 +1156,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
         goto error;
     }
 
@@ -1164,7 +1164,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     te32.dwSize = sizeof(THREADENTRY32);
 
     if (! Thread32First(hThreadSnap, &te32)) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("Thread32First");
         goto error;
     }
 
@@ -1184,7 +1184,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel,
                                 &ftUser);
             if (rc == 0) {
-                PyErr_SetFromWindowsErr(0);
+                PyErr_SetFromOSErrnoWithSyscall("GetThreadTimes");
                 goto error;
             }
 
@@ -1311,7 +1311,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         return NULL;
 
     if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
         goto error;
     }
 
@@ -1334,7 +1334,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 continue;
             }
             else {
-                PyErr_SetFromWindowsErr(0);
+                PyErr_SetFromOSErrnoWithSyscall("GetTokenInformation");
                 goto error;
             }
         }
@@ -1367,7 +1367,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 continue;
             }
             else {
-                PyErr_SetFromWindowsErr(0);
+                PyErr_SetFromOSErrnoWithSyscall("LookupAccountSidW");
                 goto error;
             }
         }
@@ -2606,7 +2606,7 @@ psutil_users(PyObject *self, PyObject *args) {
         return NULL;
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
         goto error;
     }
 
@@ -2626,7 +2626,7 @@ psutil_users(PyObject *self, PyObject *args) {
         bytes = 0;
         if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
         if (bytes <= 2)
@@ -2636,7 +2636,7 @@ psutil_users(PyObject *self, PyObject *args) {
         bytes = 0;
         if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
                                        &buffer_addr, &bytes) == 0) {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
             goto error;
         }
 
@@ -2666,6 +2666,7 @@ psutil_users(PyObject *self, PyObject *args) {
                 sizeof(station_info),
                 &returnLen))
         {
+            PyErr_SetFromOSErrnoWithSyscall("WinStationQueryInformationW");
             goto error;
         }
 
@@ -3331,7 +3332,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall(
+            "NtQuerySystemInformation(SYSTEM_PERFORMANCE_INFORMATION)");
         goto error;
     }
 
@@ -3349,7 +3351,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
         NULL);
     if (status != 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall(
+            "NtQuerySystemInformation(SYSTEM_INTERRUPT_INFORMATION)");
         goto error;
     }
     for (i = 0; i < ncpus; i++) {
@@ -3370,7 +3373,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall(
+            "NtQuerySystemInformation(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)");
         goto error;
     }
 

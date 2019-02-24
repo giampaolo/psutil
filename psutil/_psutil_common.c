@@ -7,8 +7,9 @@
  */
 
 #include <Python.h>
-#include <stdio.h>
-
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 // Global vars.
 int PSUTIL_DEBUG = 0;
@@ -56,13 +57,18 @@ NoSuchProcess(const char *msg) {
  */
 PyObject *
 PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
-    PyObject *exc;
-    char fullmsg[1000];
+    char fullmsg[1024];
 
+#ifdef _WIN32
+    sprintf(fullmsg, "originated from %s", syscall);
+    PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
+#else
+    PyObject *exc;
     sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
+#endif
     return NULL;
 }
 
