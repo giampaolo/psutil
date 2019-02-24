@@ -12,19 +12,6 @@
 
 
 /*
- * Convert a process handle to a process token handle.
- */
-HANDLE
-psutil_token_from_handle(HANDLE hProcess) {
-    HANDLE hToken = NULL;
-
-    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
-        return PyErr_SetFromWindowsErr(0);
-    return hToken;
-}
-
-
-/*
  * http://www.ddj.com/windows/184405986
  *
  * There's a way to determine whether we're running under the Local System
@@ -47,9 +34,9 @@ psutil_has_system_privilege(HANDLE hProcess) {
     // PTOKEN_PRIVILEGES tp = NULL;
     BYTE *pBuffer = NULL;
     TOKEN_PRIVILEGES *tp = NULL;
-    HANDLE hToken = psutil_token_from_handle(hProcess);
+    HANDLE hToken = NULL;
 
-    if (NULL == hToken)
+    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
         return -1;
     // call GetTokenInformation first to get the buffer size
     if (! GetTokenInformation(hToken, TokenPrivileges, NULL, 0, &dwSize)) {
