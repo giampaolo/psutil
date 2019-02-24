@@ -51,6 +51,23 @@ NoSuchProcess(const char *msg) {
 
 
 /*
+ * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
+ * message.
+ */
+PyObject *
+PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
+    PyObject *exc;
+    char fullmsg[1000];
+
+    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
+/*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
  * If msg != "" the exception message will change in accordance.
  */

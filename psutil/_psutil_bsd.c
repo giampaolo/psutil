@@ -804,7 +804,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
     fp = fopen(_PATH_UTMP, "r");
     if (fp == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMP);
         goto error;
     }
 
