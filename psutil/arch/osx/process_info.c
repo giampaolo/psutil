@@ -132,7 +132,7 @@ psutil_get_cmdline(long pid) {
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
@@ -226,7 +226,7 @@ psutil_get_environ(long pid) {
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
