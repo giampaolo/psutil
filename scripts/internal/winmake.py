@@ -483,6 +483,13 @@ def bench_oneshot_2():
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
+@cmd
+def print_access_denied():
+    """Benchmarks for oneshot() ctx manager (see #799)."""
+    install()
+    sh("%s -Wa scripts\\internal\\procs_access_denied.py" % PYTHON)
+
+
 def set_python(s):
     global PYTHON
     if os.path.isabs(s):
