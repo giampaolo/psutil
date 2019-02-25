@@ -74,20 +74,6 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
 
 /*
- * Return 1 if pid refers to a zombie process else 0.
- */
-int
-psutil_is_zombie(long pid)
-{
-    struct kinfo_proc kp;
-
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return 0;
-    return (kp.kp_proc.p_stat == SZOMB) ? 1 : 0;
-}
-
-
-/*
  * A wrapper around task_for_pid() which sucks big time:
  * - it's not documented
  * - errno is set only sometimes

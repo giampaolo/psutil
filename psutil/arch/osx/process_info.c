@@ -117,6 +117,18 @@ psutil_get_argmax() {
 }
 
 
+// Return 1 if pid refers to a zombie process else 0.
+int
+psutil_is_zombie(long pid) {
+    struct kinfo_proc kp;
+
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return 0;
+    return (kp.kp_proc.p_stat == SZOMB) ? 1 : 0;
+}
+
+
+
 // return process args as a python list
 PyObject *
 psutil_get_cmdline(long pid) {
