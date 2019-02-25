@@ -12,22 +12,15 @@
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
-#include <time.h>
-#include <lm.h>
-#include <WinIoCtl.h>
+#include <signal.h>
+#include <WinIoCtl.h>  // disk_io_counters()
 #include <tchar.h>
 #include <tlhelp32.h>
-#include <winsock2.h>
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
-#include <ws2tcpip.h>
+#include <wtsapi32.h>  // users()
+#include <PowrProf.h>  // cpu_freq()
+#if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
+#include <ws2tcpip.h>  // net_connections()
 #endif
-#include <iphlpapi.h>
-#include <iprtrmib.h>
-#include <udpmib.h>
-#include <wtsapi32.h>
-#include <Winsvc.h>
-#include <PowrProf.h>
-#include <signal.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
