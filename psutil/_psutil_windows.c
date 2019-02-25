@@ -103,7 +103,6 @@ psutil_get_nic_addresses() {
 unsigned int
 psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
-    SYSTEM_INFO sysinfo;
 
     // Minimum requirement: Windows 7
     if (psutil_GetActiveProcessorCount != NULL) {
@@ -115,8 +114,7 @@ psutil_get_num_cpus(int fail_on_err) {
     else {
         psutil_debug("GetActiveProcessorCount() not available; "
                      "using GetNativeSystemInfo()");
-        GetNativeSystemInfo(&sysinfo);
-        ncpus = (unsigned int)sysinfo.dwNumberOfProcessors;
+        ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetString(
                 PyExc_RuntimeError,
@@ -801,14 +799,12 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     // needed by QueryWorkingSet
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     PSAPI_WORKING_SET_INFORMATION* info_array;
-    SYSTEM_INFO system_info;
     PyObject* py_result = NULL;
     unsigned long long total = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    GetNativeSystemInfo(&system_info);
     proc = psutil_handle_from_pid(pid, access);
     if (proc == NULL)
         return NULL;
@@ -854,7 +850,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
         }
     }
 
-    total = private_pages * system_info.dwPageSize;
+    total = private_pages * PSUTIL_SYSTEM_INFO.dwPageSize;
     py_result = Py_BuildValue("K", total);
 
 done:
@@ -2832,7 +2828,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     PVOID baseAddress;
     ULONGLONG previousAllocationBase;
     WCHAR mappedFileName[MAX_PATH];
-    SYSTEM_INFO system_info;
     LPVOID maxAddr;
     // required by GetMappedFileNameW
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
@@ -2848,8 +2843,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         goto error;
 
-    GetNativeSystemInfo(&system_info);
-    maxAddr = system_info.lpMaximumApplicationAddress;
+    maxAddr = PSUTIL_SYSTEM_INFO.lpMaximumApplicationAddress;
     baseAddress = NULL;
 
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,

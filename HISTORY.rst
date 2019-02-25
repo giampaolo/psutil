@@ -9,6 +9,11 @@ XXXX-XX-XX
 
 - 1420_: [Windows] in case of exception disk_usage() now also shows the path
   name.
+- 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
+  libraries are now loaded only once on startup (instead of on per function
+  call) significantly speeding up different functions and methods.
+- 1426_: [Windows] PAGESIZE and number of processors is now calculated on
+  startup.
 
 **Bug fixes**
 
