@@ -12,22 +12,15 @@
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
-#include <time.h>
-#include <lm.h>
-#include <WinIoCtl.h>
+#include <signal.h>
+#include <WinIoCtl.h>  // disk_io_counters()
 #include <tchar.h>
 #include <tlhelp32.h>
-#include <winsock2.h>
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
-#include <ws2tcpip.h>
+#include <wtsapi32.h>  // users()
+#include <PowrProf.h>  // cpu_freq()
+#if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
+#include <ws2tcpip.h>  // net_connections()
 #endif
-#include <iphlpapi.h>
-#include <iprtrmib.h>
-#include <udpmib.h>
-#include <wtsapi32.h>
-#include <Winsvc.h>
-#include <PowrProf.h>
-#include <signal.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -3615,10 +3608,15 @@ void init_psutil_windows(void)
 #else
     PyObject *module = Py_InitModule("_psutil_windows", PsutilMethods);
 #endif
-
-    if (module == NULL) {
+    if (module == NULL)
         INITERROR;
-    }
+
+    if (psutil_setup() != 0)
+        INITERROR;
+    if (psutil_load_globals() != 0)
+        INITERROR;
+    if (psutil_set_se_debug() != 0)
+        INITERROR;
 
     st = GETSTATE(module);
     st->error = PyErr_NewException("_psutil_windows.Error", NULL, NULL);
@@ -3715,13 +3713,22 @@ void init_psutil_windows(void)
     PyModule_AddIntConstant(
         module, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST);
 
-    // set SeDebug for the current process
-    if (psutil_set_se_debug() != 0)
-        return NULL;
-
-    psutil_setup();
-    if (psutil_load_globals() != 0)
-        return NULL;
+    PyModule_AddIntConstant(
+        module, "WINVER", PSUTIL_WINVER);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_XP", PSUTIL_WINDOWS_XP);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_SERVER_2003", PSUTIL_WINDOWS_SERVER_2003);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_7", PSUTIL_WINDOWS_7);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_8", PSUTIL_WINDOWS_8);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_8_1", PSUTIL_WINDOWS_8_1);
+    PyModule_AddIntConstant(
+        module, "WINDOWS_10", PSUTIL_WINDOWS_10);
 
 #if PY_MAJOR_VERSION >= 3
     return module;

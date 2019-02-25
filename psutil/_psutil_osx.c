@@ -2028,6 +2028,12 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
+
+    if (psutil_setup() != 0)
+        INITERROR;
+
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
@@ -2055,8 +2061,6 @@ init_psutil_osx(void)
         "_psutil_osx.ZombieProcessError", NULL, NULL);
     Py_INCREF(ZombieProcessError);
     PyModule_AddObject(module, "ZombieProcessError", ZombieProcessError);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;

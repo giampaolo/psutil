@@ -1732,6 +1732,12 @@ void init_psutil_sunos(void)
 #else
     PyObject *module = Py_InitModule("_psutil_sunos", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
+
+    if (psutil_setup() != 0)
+        INITERROR;
+
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
@@ -1760,8 +1766,6 @@ void init_psutil_sunos(void)
     // sunos specific
     PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;
