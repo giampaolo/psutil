@@ -9,6 +9,11 @@ XXXX-XX-XX
 
 - 1420_: [Windows] in case of exception disk_usage() now also shows the path
   name.
+- 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
+  libraries are now loaded only once on startup (instead of on per function
+  call) significantly speeding up different functions and methods.
+- 1426_: [Windows] PAGESIZE and number of processors is now calculated on
+  startup.
 
 **Bug fixes**
 
@@ -19,6 +24,11 @@ XXXX-XX-XX
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 - 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
   on failed malloc().
+- 1431_: [Windows] GetNativeSystemInfo is not used instead of GetSystemInfo in
+  order to support WoW64 processes. Affected APIs are psutil.cpu_count(),
+  and Process memory_maps() and memory_info_exe() ("uss" field).
+- 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
+  because we're not using the actual system PAGESIZE.
 
 5.5.1
 =====

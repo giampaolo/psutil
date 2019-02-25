@@ -14,8 +14,9 @@
 #include "global.h"
 
 
-// Needed to make this globally visible.
+// Needed to make these globally visible.
 int PSUTIL_WINVER;
+SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
@@ -167,11 +168,20 @@ psutil_set_winver() {
 }
 
 
+static int
+psutil_load_sysinfo() {
+    GetNativeSystemInfo(&PSUTIL_SYSTEM_INFO);
+    return 0;
+}
+
+
 int
 psutil_load_globals() {
     if (psutil_loadlibs() != 0)
         return 1;
     if (psutil_set_winver() != 0)
+        return 1;
+    if (psutil_load_sysinfo() != 0)
         return 1;
     return 0;
 }

@@ -10,6 +10,7 @@
 #include "ntextapi.h"
 
 extern int PSUTIL_WINVER;
+extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 #define PSUTIL_WINDOWS_XP 51
 #define PSUTIL_WINDOWS_SERVER_2003 52
 #define PSUTIL_WINDOWS_VISTA 60
