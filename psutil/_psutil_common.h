@@ -26,6 +26,6 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
-int psutil_setup();
+int psutil_setup(void);
 
 #endif // PSUTIL_PSUTIL_COMMON_H
