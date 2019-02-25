@@ -7,6 +7,9 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 1379_: [Windows] Process suspend() and resume() now use NtSuspendProcess
+  and NtResumeProcess instead of stopping/resuming all threads of a process.
+  This is faster and more reliable (aka this is what ProcessHacker does).
 - 1420_: [Windows] in case of exception disk_usage() now also shows the path
   name.
 - 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
