@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  *
  * Security related functions for Windows platform (Set privileges such as
- * SeDebug), as well as security helper functions.
+ * SE DEBUG).
  */
 
 #include <windows.h>
@@ -98,25 +98,41 @@ psutil_get_thisproc_token() {
 }
 
 
+static void
+psutil_handle_error() {
+    char *msg = "psutil module couldn't set SE DEBUG mode for this process; " \
+        "please file an issue against psutil bug tracker";
+    if (PSUTIL_DEBUG)
+        psutil_debug(msg);
+    if (GetLastError() != ERROR_ACCESS_DENIED)
+        PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
+    PyErr_Clear();
+}
+
+
 /*
  * Set this process in SE DEBUG mode so that we have more chances of
  * querying processes owned by other users, including many owned by
  * Administrator and Local System.
  * https://docs.microsoft.com/windows-hardware/drivers/debugger/debug-privilege
+ * This is executed on module import and we don't crash on error.
  */
 int
 psutil_set_se_debug() {
     HANDLE hToken;
     int err = 1;
 
-    if ((hToken = psutil_get_thisproc_token()) == NULL)
-        return 1;
+    if ((hToken = psutil_get_thisproc_token()) == NULL) {
+        psutil_handle_error();
+        return 0;
+    }
 
     // enable SeDebugPrivilege (open any process)
-    if (psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE) == 0)
-        err = 0;
+    if (psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE) != 0) {
+        psutil_handle_error();
+    }
 
     RevertToSelf();
     CloseHandle(hToken);
-    return err;
+    return 0;
 }

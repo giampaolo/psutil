@@ -3724,11 +3724,8 @@ void init_psutil_windows(void)
         module, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST);
 
     // set SeDebug for the current process
-    if (psutil_set_se_debug() != 0) {
-        PyErr_Clear();
-        if (PSUTIL_DEBUG)
-            psutil_debug("SE DEBUG process mode not set");
-    }
+    if (psutil_set_se_debug() != 0)
+        return NULL;
 
     psutil_setup();
     if (psutil_load_globals() != 0)
