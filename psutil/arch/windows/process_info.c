@@ -222,17 +222,21 @@ psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
 HANDLE
 psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     int ret = psutil_is_phandle_running(hProcess, pid);
-    if (ret == 1)
+    if (ret == 1) {
         return hProcess;
-    else if (ret == 0)
+    }
+    else if (ret == 0) {
         return NoSuchProcess("");
-    else if (ret == -1)
+    }
+    else if (ret == -1) {
         if (GetLastError() == ERROR_ACCESS_DENIED)
             return PyErr_SetFromWindowsErr(0);
         else
             return PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
-    else  // -2
+    }
+    else {
         return NULL;
+    }
 }
 
 
