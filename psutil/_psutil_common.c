@@ -120,10 +120,11 @@ psutil_debug(const char* format, ...) {
 /*
  * Called on module import on all platforms.
  */
-void
-psutil_setup(void) {
+int
+psutil_setup() {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
+    return 0;
 }

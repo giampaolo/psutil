@@ -673,6 +673,8 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
@@ -719,8 +721,6 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;
