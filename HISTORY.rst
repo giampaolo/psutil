@@ -22,6 +22,8 @@ XXXX-XX-XX
 - 1431_: [Windows] GetNativeSystemInfo is not used instead of GetSystemInfo in
   order to support WoW64 processes. Affected APIs are psutil.cpu_count(),
   and Process memory_maps() and memory_info_exe() ("uss" field).
+- 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
+  because we're not using the actual system PAGESIZE.
 
 5.5.1
 =====

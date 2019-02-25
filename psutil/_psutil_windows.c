@@ -808,7 +808,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-
+    GetNativeSystemInfo(&system_info);
     proc = psutil_handle_from_pid(pid, access);
     if (proc == NULL)
         return NULL;
