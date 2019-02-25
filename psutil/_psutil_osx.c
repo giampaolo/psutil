@@ -546,7 +546,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */
-bool
+static bool
 psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
     mach_vm_address_t size;
@@ -1468,19 +1468,18 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
-    size_t len;
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_ifc_info = NULL;
-
-    if (py_retdict == NULL)
-        return NULL;
-
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
     mib[2] = 0;                // protocol (IPPROTO_xxx)
     mib[3] = 0;                // address family
     mib[4] = NET_RT_IFLIST2;   // operation
     mib[5] = 0;
+    size_t len;
+    PyObject *py_ifc_info = NULL;
+    PyObject *py_retdict = PyDict_New();
+
+    if (py_retdict == NULL)
+        return NULL;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -1558,8 +1557,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     io_registry_entry_t parent;
     io_registry_entry_t disk;
     io_iterator_t disk_list;
-    PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+    PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
