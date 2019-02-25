@@ -2,23 +2,23 @@ Intro
 =====
 
 I would like to recognize some of the people who have been instrumental in the
-development of psutil.
-I'm sure I'm forgetting some people (feel free to email me), but here is a
-short list.
-It's modeled after the Linux CREDITS file where the fields are:
-name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
-(issue tracker is at https://github.com/giampaolo/psutil/issues).
-Really thanks to all of you.
+development of psutil. I'm sure I'm forgetting somebody (feel free to email me)
+but here is a short list. It's modeled after the Linux CREDITS file where the
+fields are: name (N), e-mail (E), website (W), country (C), description (D),
+(I) issues. Issue tracker is at https://github.com/giampaolo/psutil/issues).
+A big thanks to all of you.
 
 - Giampaolo
+
 
 Author
 ======
 
-N: Giampaolo Rodola'
+N: Giampaolo Rodola
 C: Italy
 E: g.rodola@gmail.com
 W: http://grodola.blogspot.com/
+
 
 Experts
 =======
@@ -46,8 +46,9 @@ Github usernames of people to CC on github when in need of help.
 - AIX:
     - wiggin15, Arnon Yaari (maintainer)
 
-Contributors
-============
+
+Top contributors
+================
 
 N: Jay Loden
 C: NJ, USA
@@ -57,7 +58,13 @@ W: http://www.jayloden.com
 
 N: Arnon Yaari (wiggin15)
 W: https://github.com/wiggin15
+D: AIX implementation, expert on multiple fronts
 I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177, 1210, 1214, 1408
+
+N: Alex Manuskin
+W: https://github.com/amanusk
+D: FreeBSD cpu_freq(), OSX temperatures, support for Linux temperatures
+I: 1284, 1345, 1350, 1352
 
 N: Jeff Tang
 W: https://github.com/mrjefftang
@@ -73,6 +80,25 @@ W: https://github.com/landryb
 D: OpenBSD implementation.
 I: 615
 
+N: Justin Venus
+E: justin.venus@gmail.com
+D: Solaris support
+I: 18
+
+N: Thomas Klausner
+W: https://github.com/0-wiz-0
+D: NetBSD implementation (co-author).
+I: 557
+
+N: Ryo Onodera
+W: https://github.com/ryoon
+D: NetBSD implementation (co-author).
+I: 557
+
+
+Contributors
+============
+
 N: wj32
 E: wj32.64@gmail.com
 D: process username() and get_connections() on Windows
@@ -83,11 +109,6 @@ C: Bologna, Italy
 E: yanraber@gmail.com
 D: help on Windows development (initial version of Process.username())
 
-N: Justin Venus
-E: justin.venus@gmail.com
-D: Solaris support
-I: 18
-
 N: Dave Daeschler
 C: USA
 E: david.daeschler@gmail.com
@@ -95,18 +116,24 @@ W: http://daviddaeschler.com
 D: some contributions to initial design/bootstrap plus occasional bug fixing
 I: 522, 536
 
-N: Thomas Klausner
-W: https://github.com/0-wiz-0
-I: #557
-
-N: Ryo Onodera
-W: https://github.com/ryoon
-I: #557
-
 N: cjgohlke
 E: cjgohlke@gmail.com
 D: Windows 64 bit support
 I: 107
+
+N: Frank Benkstein
+D: process environ()
+W: https://github.com/fbenkstein
+I: 732, 733
+
+N: Mozilla Foundation
+D: sample code for process USS memory.
+
+N: EccoTheFlintstone
+W: https://github.com/EccoTheFlintstone
+I: 1368, 1348
+
+----
 
 N: Jeffery Kline
 E: jeffery.kline@gmail.com
@@ -381,10 +408,6 @@ N: Syohei YOSHIDA
 W: https://github.com/syohex
 I: 730
 
-N: Frank Benkstein
-W: https://github.com/fbenkstein
-I: 732, 733
-
 N: Visa Hankala
 E: visa@openbsd.org
 I: 741
@@ -401,9 +424,6 @@ I: 751
 N: mpderbec
 W: https://github.com/mpderbec
 I: 660
-
-N: Mozilla Foundation
-D: sample code for process USS memory.
 
 N: wxwright
 W: https://github.com/wxwright
@@ -482,7 +502,8 @@ I: 1057
 
 N: Gleb Smirnoff
 W: https://github.com/glebius
-I: 1042, 1079
+D: good help with FreeBSD
+I: 1042, 1079, 1070
 
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
@@ -544,10 +565,6 @@ N: Nikhil Marathe
 W: https://github.com/nikhilm
 I: 1278
 
-N: Alex Manuskin
-W: https://github.com/amanusk
-I: 1284, 1345, 1350, 1352
-
 N: Sylvain Duchesne
 W: https://github.com/sylvainduchesne
 I: 1294
@@ -562,15 +579,12 @@ I: 1332
 
 N: Jaime Fullaondo
 W: https://github.com/truthbk
+D: AIX support
 I: 1320
 
 N: Koen Kooi
 W: https://github.com/koenkooi
 I: 1360
-
-N: EccoTheFlintstone
-W: https://github.com/EccoTheFlintstone
-I: 1368, 1348
 
 N: Ghislain Le Meur
 W: https://github.com/gigi206

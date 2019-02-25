@@ -200,8 +200,8 @@ class TestProcessObjectLeaks(TestMemLeak):
         skip = set((
             "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
             "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
-            "nice", "oneshot", "parent", "rlimit", "send_signal", "suspend",
-            "terminate", "wait"))
+            "nice", "oneshot", "parent", "parents", "rlimit", "send_signal",
+            "suspend", "terminate", "wait"))
         for name in dir(psutil.Process):
             if name.startswith('_'):
                 continue
