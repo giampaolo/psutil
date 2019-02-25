@@ -1194,6 +1194,13 @@ Process class
     PID is known return ``None``.
     See also :meth:`ppid` method.
 
+  .. method:: parents()
+
+    Utility method which return the parents of this process as a list of
+    :class:`Process` instances. If no parents are known return an empty list.
+
+    .. versionadded:: 5.6.0
+
   .. method:: status()
 
     The current process status as a string. The returned string is one of the

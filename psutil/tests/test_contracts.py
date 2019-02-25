@@ -294,7 +294,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-            'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
+            'as_dict', 'parent', 'parents', 'children', 'memory_info_ex',
+            'oneshot',
         ])
         if LINUX and not HAS_RLIMIT:
             excluded_names.add('rlimit')

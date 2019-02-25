@@ -1046,6 +1046,11 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.parent().pid, this_parent)
 
+    def test_parent_multi(self):
+        p1, p2 = create_proc_children_pair()
+        self.assertEqual(p2.parent(), p1)
+        self.assertEqual(p1.parent(), psutil.Process())
+
     def test_parent_disappeared(self):
         # Emulate a case where the parent process disappeared.
         sproc = get_test_subprocess()
@@ -1053,6 +1058,12 @@ class TestProcess(unittest.TestCase):
         with mock.patch("psutil.Process",
                         side_effect=psutil.NoSuchProcess(0, 'foo')):
             self.assertIsNone(p.parent())
+
+    def test_parents(self):
+        assert psutil.Process().parents()
+        p1, p2 = create_proc_children_pair()
+        self.assertEqual(p2.parents()[0], p1)
+        self.assertEqual(p2.parents()[1], psutil.Process())
 
     def test_children(self):
         reap_children(recursive=True)

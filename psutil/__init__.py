@@ -215,7 +215,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.5.2"
+__version__ = "5.6.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
@@ -655,6 +655,17 @@ class Process(object):
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
                 pass
+
+    def parents(self):
+        """Return the parents of this process as a list of Process
+        instances. If no parents are known return an empty list.
+        """
+        parents = []
+        proc = self.parent()
+        while proc is not None:
+            parents.append(proc)
+            proc = proc.parent()
+        return parents
 
     def is_running(self):
         """Return whether this process is running.
@@ -1459,7 +1470,7 @@ class Popen(Process):
 _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-      'is_running', 'as_dict', 'parent', 'children', 'rlimit',
+      'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
       'memory_info_ex', 'oneshot']])
 
 
