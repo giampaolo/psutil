@@ -41,7 +41,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
         return 1;
     }
 
-    // second pass. set privilege based on previous setting
+    // Second pass. Set privilege based on previous setting.
     tpPrevious.PrivilegeCount = 1;
     tpPrevious.Privileges[0].Luid = luid;
 
@@ -99,11 +99,10 @@ psutil_get_thisproc_token() {
 
 
 static void
-psutil_handle_error() {
+psutil_print_err() {
     char *msg = "psutil module couldn't set SE DEBUG mode for this process; " \
         "please file an issue against psutil bug tracker";
-    if (PSUTIL_DEBUG)
-        psutil_debug(msg);
+    psutil_debug(msg);
     if (GetLastError() != ERROR_ACCESS_DENIED)
         PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
     PyErr_Clear();
@@ -123,13 +122,14 @@ psutil_set_se_debug() {
     int err = 1;
 
     if ((hToken = psutil_get_thisproc_token()) == NULL) {
-        psutil_handle_error();
+        // "return 1;" to get an exception
+        psutil_print_err();
         return 0;
     }
 
-    // enable SeDebugPrivilege (open any process)
     if (psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE) != 0) {
-        psutil_handle_error();
+        // "return 1;" to get an exception
+        psutil_print_err();
     }
 
     RevertToSelf();
