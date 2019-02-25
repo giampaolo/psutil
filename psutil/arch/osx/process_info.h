@@ -9,6 +9,7 @@
 typedef struct kinfo_proc kinfo_proc;
 
 int psutil_get_argmax(void);
+int psutil_is_zombie(long pid);
 int psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp);
 int psutil_get_proc_list(kinfo_proc **procList, size_t *procCount);
 int psutil_proc_pidinfo(

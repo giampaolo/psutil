@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.5.2
+5.6.0
 =====
 
 XXXX-XX-XX
@@ -14,6 +14,7 @@ XXXX-XX-XX
   call) significantly speeding up different functions and methods.
 - 1426_: [Windows] PAGESIZE and number of processors is now calculated on
   startup.
+- 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
 
 **Bug fixes**
 

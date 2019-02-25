@@ -571,3 +571,8 @@ I: 1360
 N: EccoTheFlintstone
 W: https://github.com/EccoTheFlintstone
 I: 1368, 1348
+
+N: Ghislain Le Meur
+W: https://github.com/gigi206
+D: Process.parents() method
+I: 1379

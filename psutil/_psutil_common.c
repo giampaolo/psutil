@@ -11,6 +11,8 @@
 #include <windows.h>
 #endif
 
+#include "_psutil_common.h"
+
 // Global vars.
 int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
@@ -121,7 +123,7 @@ psutil_debug(const char* format, ...) {
  * Called on module import on all platforms.
  */
 int
-psutil_setup() {
+psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
