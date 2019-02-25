@@ -854,8 +854,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
         }
     }
 
-    // GetSystemInfo has no return value.
-    GetSystemInfo(&system_info);
     total = private_pages * system_info.dwPageSize;
     py_result = Py_BuildValue("K", total);
 
@@ -2850,7 +2848,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         goto error;
 
-    GetSystemInfo(&system_info);
+    GetNativeSystemInfo(&system_info);
     maxAddr = system_info.lpMaximumApplicationAddress;
     baseAddress = NULL;
 

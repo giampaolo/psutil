@@ -82,7 +82,7 @@ class TestCpuAPIs(unittest.TestCase):
     def test_cpu_count_vs_GetSystemInfo(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
-        sys_value = win32api.GetSystemInfo()[5]
+        sys_value = win32api.GetNativeSystemInfo()[5]
         psutil_value = psutil.cpu_count()
         self.assertEqual(sys_value, psutil_value)
 
