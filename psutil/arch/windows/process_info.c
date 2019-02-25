@@ -244,15 +244,16 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
  * Return a process handle or NULL.
  */
 HANDLE
-psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess) {
+psutil_handle_from_pid(DWORD pid, DWORD access) {
     HANDLE hProcess;
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
         return AccessDenied("");
     }
-
-    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
+    // needed for GetExitCodeProcess
+    access |= PROCESS_QUERY_LIMITED_INFORMATION;
+    hProcess = OpenProcess(access, FALSE, pid);
     return psutil_check_phandle(hProcess, pid);
 }
 

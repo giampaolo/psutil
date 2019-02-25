@@ -1019,93 +1019,31 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 /*
  * Resume or suspends a process
  */
-int
-psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
-    // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
-    HANDLE hThreadSnap = NULL;
-    HANDLE hThread;
-    THREADENTRY32  te32 = {0};
-
-    if (pid == 0) {
-        AccessDenied("");
-        return FALSE;
-    }
-
-    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
-        return FALSE;
-    }
-
-    // Fill in the size of the structure before using it
-    te32.dwSize = sizeof(THREADENTRY32);
-
-    if (! Thread32First(hThreadSnap, &te32)) {
-        PyErr_SetFromOSErrnoWithSyscall("Thread32First");
-        CloseHandle(hThreadSnap);
-        return FALSE;
-    }
-
-    // Walk the thread snapshot to find all threads of the process.
-    // If the thread belongs to the process, add its information
-    // to the display list.
-    do {
-        if (te32.th32OwnerProcessID == pid) {
-            hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
-                                 te32.th32ThreadID);
-            if (hThread == NULL) {
-                PyErr_SetFromOSErrnoWithSyscall("OpenThread");
-                CloseHandle(hThread);
-                CloseHandle(hThreadSnap);
-                return FALSE;
-            }
-            if (suspend == 1) {
-                if (SuspendThread(hThread) == (DWORD) - 1) {
-                    PyErr_SetFromOSErrnoWithSyscall("SuspendThread");
-                    CloseHandle(hThread);
-                    CloseHandle(hThreadSnap);
-                    return FALSE;
-                }
-            }
-            else {
-                if (ResumeThread(hThread) == (DWORD) - 1) {
-                    PyErr_SetFromOSErrnoWithSyscall("ResumeThread");
-                    CloseHandle(hThread);
-                    CloseHandle(hThreadSnap);
-                    return FALSE;
-                }
-            }
-            CloseHandle(hThread);
-        }
-    } while (Thread32Next(hThreadSnap, &te32));
-
-    CloseHandle(hThreadSnap);
-    return TRUE;
-}
-
-
 static PyObject *
-psutil_proc_suspend(PyObject *self, PyObject *args) {
+psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     long pid;
-    int suspend = 1;
+    int ret;
+    HANDLE hProcess;
+    PyObject* suspend;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lO", &pid, &suspend))
         return NULL;
-    if (! psutil_proc_suspend_or_resume(pid, suspend))
-        return NULL;
-    Py_RETURN_NONE;
-}
 
-
-static PyObject *
-psutil_proc_resume(PyObject *self, PyObject *args) {
-    long pid;
-    int suspend = 0;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    hProcess = psutil_handle_from_pid(pid, PROCESS_SUSPEND_RESUME);
+    if (hProcess == NULL)
         return NULL;
-    if (! psutil_proc_suspend_or_resume(pid, suspend))
+
+    if (PyObject_IsTrue(suspend))
+        ret = psutil_NtSuspendProcess(hProcess);
+    else
+        ret = psutil_NtResumeProcess(hProcess);
+
+    if (ret != 0) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
         return NULL;
+    }
+    CloseHandle(hProcess);
     Py_RETURN_NONE;
 }
 
@@ -3430,7 +3368,8 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 static PyMethodDef
 PsutilMethods[] = {
     // --- per-process functions
-    {"proc_cmdline", (PyCFunction)(void(*)(void))psutil_proc_cmdline, METH_VARARGS | METH_KEYWORDS,
+    {"proc_cmdline", (PyCFunction)(void(*)(void))psutil_proc_cmdline,
+        METH_VARARGS | METH_KEYWORDS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment data"},
@@ -3451,10 +3390,8 @@ PsutilMethods[] = {
      "Return the USS of the process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
-    {"proc_suspend", psutil_proc_suspend, METH_VARARGS,
-     "Suspend a process"},
-    {"proc_resume", psutil_proc_resume, METH_VARARGS,
-     "Resume a process"},
+    {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS,
+     "Suspend or resume a process"},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process"},
     {"proc_username", psutil_proc_username, METH_VARARGS,

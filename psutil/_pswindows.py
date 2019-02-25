@@ -913,11 +913,11 @@ class Process(object):
 
     @wrap_exceptions
     def suspend(self):
-        return cext.proc_suspend(self.pid)
+        cext.proc_suspend_or_resume(self.pid, True)
 
     @wrap_exceptions
     def resume(self):
-        return cext.proc_resume(self.pid)
+        cext.proc_suspend_or_resume(self.pid, False)
 
     @wrap_exceptions
     def cwd(self):

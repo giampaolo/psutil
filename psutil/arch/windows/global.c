@@ -117,6 +117,16 @@ psutil_loadlibs() {
     if (! psutil_RtlGetVersion)
         return 1;
 
+    psutil_NtSuspendProcess = psutil_GetProcAddressFromLib(
+        "ntdll", "NtSuspendProcess");
+    if (! psutil_NtSuspendProcess)
+        return 1;
+
+    psutil_NtResumeProcess = psutil_GetProcAddressFromLib(
+        "ntdll", "NtResumeProcess");
+    if (! psutil_NtResumeProcess)
+        return 1;
+
     /*
      * Optional.
      */

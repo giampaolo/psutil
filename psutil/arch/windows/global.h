@@ -62,3 +62,9 @@ _GetLogicalProcessorInformationEx \
 
 _RtlGetVersion \
     psutil_RtlGetVersion;
+
+_NtSuspendProcess \
+    psutil_NtSuspendProcess;
+
+_NtResumeProcess \
+    psutil_NtResumeProcess;

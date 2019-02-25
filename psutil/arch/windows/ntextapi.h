@@ -455,4 +455,12 @@ typedef NTSTATUS (WINAPI *_RtlGetVersion) (
     PRTL_OSVERSIONINFOW lpVersionInformation
 );
 
+typedef NTSTATUS (WINAPI *_NtResumeProcess) (
+    HANDLE hProcess
+);
+
+typedef NTSTATUS (WINAPI *_NtSuspendProcess) (
+    HANDLE hProcess
+);
+
 #endif // __NTEXTAPI_H__
