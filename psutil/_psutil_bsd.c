@@ -223,6 +223,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         PyErr_Clear();
         py_name = Py_None;
     }
+    // Py_INCREF(py_name);
 
     // Calculate memory.
 #ifdef PSUTIL_FREEBSD
@@ -343,10 +344,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         py_name                           // (pystr) name
     );
 
-    if (py_retlist != NULL) {
-        // XXX shall we decref() also in case of Py_BuildValue() error?
-        Py_DECREF(py_name);
-    }
+    Py_DECREF(py_name);
     return py_retlist;
 }
 
