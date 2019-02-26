@@ -681,7 +681,7 @@ class Process(object):
                 par = proc.parent()
                 if par is None:
                     break
-                assert par.pid <= proc.pid, (par.pid, proc.pid)
+                assert par.pid < proc.pid, (par.pid, proc.pid)
                 parents.append(proc)
                 proc = par
         return parents
