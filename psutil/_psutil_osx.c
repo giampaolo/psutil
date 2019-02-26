@@ -352,7 +352,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     char perms[8];
     int pagesize = getpagesize();
     long pid;
-    kern_return_t err = KERN_SUCCESS;
+    kern_return_t kr;
     mach_port_t task = MACH_PORT_NULL;
     uint32_t depth = 1;
     vm_address_t address = 0;
@@ -376,14 +376,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         struct vm_region_submap_info_64 info;
         mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
 
-        err = vm_region_recurse_64(task, &address, &size, &depth,
+        kr = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS) {
+        if (kr == KERN_INVALID_ADDRESS) {
             // TODO temporary
             psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
             break;
         }
-        if (err != KERN_SUCCESS) {
+        if (kr != KERN_SUCCESS) {
             psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
         }
 
