@@ -21,6 +21,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1353_: process_iter() is now thread safe (it rarely raised TypeError).
 - 1394_: [Windows] Process name() and exe() may erronously return "Registry".
   QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
   in order to prevent that.

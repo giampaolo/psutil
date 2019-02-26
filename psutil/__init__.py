@@ -1503,6 +1503,7 @@ def pid_exists(pid):
 
 
 _pmap = {}
+_lock = threading.Lock()
 
 
 def process_iter(attrs=None, ad_value=None):
@@ -1530,21 +1531,26 @@ def process_iter(attrs=None, ad_value=None):
         proc = Process(pid)
         if attrs is not None:
             proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
-        _pmap[proc.pid] = proc
+        with _lock:
+            _pmap[proc.pid] = proc
         return proc
 
     def remove(pid):
-        _pmap.pop(pid, None)
+        with _lock:
+            _pmap.pop(pid, None)
 
     a = set(pids())
     b = set(_pmap.keys())
     new_pids = a - b
     gone_pids = b - a
-
     for pid in gone_pids:
         remove(pid)
-    for pid, proc in sorted(list(_pmap.items()) +
-                            list(dict.fromkeys(new_pids).items())):
+
+    with _lock:
+        ls = sorted(list(_pmap.items()) +
+                    list(dict.fromkeys(new_pids).items()))
+
+    for pid, proc in ls:
         try:
             if proc is None:  # new process
                 yield add(pid)
