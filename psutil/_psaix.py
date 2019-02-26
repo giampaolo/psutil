@@ -103,6 +103,12 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
+# =====================================================================
+# --- IBM i runs an AIX variant but a number of things are unsupported
+# =====================================================================
+def _not_supported(*args, **kw):
+    raise NotImplementedError("not supported on this platform")
+
 
 # =====================================================================
 # --- utils
@@ -120,12 +126,16 @@ def get_procfs_path():
 
 
 def virtual_memory():
+    if not hasattr(cext, 'virtual_mem'):
+        _not_supported
     total, avail, free, pinned, inuse = cext.virtual_mem()
     percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 
 
 def swap_memory():
+    if not hasattr(cext, 'swap_mem'):
+        _not_supported
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, free, sin, sout = cext.swap_mem()
     used = total - free
@@ -145,6 +155,8 @@ def cpu_times():
 
 
 def per_cpu_times():
+    if not hasattr(cext, 'per_cpu_times'):
+        _not_supported
     """Return system per-CPU times as a list of named tuples"""
     ret = cext.per_cpu_times()
     return [scputimes(*x) for x in ret]
@@ -174,6 +186,8 @@ def cpu_count_physical():
 
 
 def cpu_stats():
+    if not hasattr(cext, 'cpu_stats'):
+        _not_supported
     """Return various CPU stats as a named tuple."""
     ctx_switches, interrupts, soft_interrupts, syscalls = cext.cpu_stats()
     return _common.scpustats(
@@ -185,7 +199,10 @@ def cpu_stats():
 # =====================================================================
 
 
-disk_io_counters = cext.disk_io_counters
+if hasattr(cext, 'disk_io_counters'):
+    disk_io_counters = cext.disk_io_counters
+else:
+    disk_io_counters = _not_supported
 disk_usage = _psposix.disk_usage
 
 
@@ -216,8 +233,10 @@ def disk_partitions(all=False):
 
 
 net_if_addrs = cext_posix.net_if_addrs
-net_io_counters = cext.net_io_counters
-
+if hasattr(cext, 'net_io_counters'):
+    net_io_counters = cext.net_io_counters
+else:
+    net_io_counters = _not_supported
 
 def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
@@ -253,6 +272,8 @@ def net_connections(kind, _pid=-1):
 
 
 def net_if_stats():
+    if not hasattr(cext, 'net_if_stats'):
+        _not_supported
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {"Full": NIC_DUPLEX_FULL,
                   "Half": NIC_DUPLEX_HALF}
@@ -290,6 +311,8 @@ def net_if_stats():
 
 
 def boot_time():
+    if not hasattr(cext, 'boot_time'):
+        _not_supported
     """The system boot time expressed in seconds since the epoch."""
     return cext.boot_time()
 
@@ -567,6 +590,8 @@ class Process(object):
 
     @wrap_exceptions
     def io_counters(self):
+        if not hasattr(cext, 'proc_io_counters'):
+            _not_supported
         try:
             rc, wc, rb, wb = cext.proc_io_counters(self.pid)
         except OSError:
