@@ -203,6 +203,9 @@ def _get_py_exe():
         return exe
     else:
         exe = os.path.realpath(sys.executable)
+        if WINDOWS:
+            # avoid subprocess warnings
+            exe = exe.replace('\\', '\\\\')
         assert os.path.exists(exe), exe
         return exe
 
