@@ -342,11 +342,15 @@ def users():
 
 
 def pids():
+    if hasattr(cext, 'list_pids'):
+        return cext.list_pids()
     """Returns a list of PIDs currently running on the system."""
     return [int(x) for x in os.listdir(get_procfs_path()) if x.isdigit()]
 
 
 def pid_exists(pid):
+    if hasattr(cext, 'list_pids'):
+        return pid in cext.list_pids()
     """Check for the existence of a unix pid."""
     return os.path.exists(os.path.join(get_procfs_path(), str(pid), "psinfo"))
 

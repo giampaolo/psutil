@@ -45,7 +45,10 @@
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#ifndef __PASE__
+#ifdef __PASE__
+#include <procinfo.h>
+#include <sys/types.h>
+#else
 #include <libperfstat.h>
 #endif
 #include <unistd.h>
@@ -93,6 +96,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
  */
 static PyObject *
 psutil_proc_basic_info(PyObject *self, PyObject *args) {
+
     int pid;
     char path[100];
     psinfo_t info;
@@ -101,7 +105,28 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-
+#ifdef __PASE__
+    struct procentry64 proc_info;
+    struct fdsinfo64 fd_info[10];
+    int rtv = getprocs64(&proc_info, 
+                        sizeof(struct procentry64),
+                        NULL,
+                        0,//struct fdsinfo64), 
+                        &pid,
+                        1);
+    if(0 > rtv) 
+        return NULL;
+    return Py_BuildValue("KKKdiiiK",
+        (unsigned long long) proc_info.pi_ppid, // parent pid
+        (unsigned long long) proc_info.pi_drss, // rss
+        (unsigned long long) proc_info.pi_dvm,  // vms
+        proc_info.pi_start,                     // create time
+        (int) proc_info.pi_nice,                // nice
+        (int) proc_info.pi_thcount,             // no. of threads
+        (int) 0,                                // status code TODO
+        (unsigned long long)info.pr_ttydev      // tty nr
+        );
+#else
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
@@ -130,6 +155,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         (int) status.pr_stat,                   // status code
         (unsigned long long)info.pr_ttydev      // tty nr
         );
+#endif
 }
 
 
@@ -863,6 +889,28 @@ error:
 }
 #endif
 
+#ifdef __PASE__
+/*
+ * Return disk IO statistics.
+ */
+static PyObject *
+psutil_list_pids(PyObject *self, PyObject *args) {
+    PyObject *py_retdict = PyTuple_New(0);
+    struct procentry64 proc_info[128];
+    int rtv = 0;
+    pid_t pid_idx = 0;
+    int tuple_idx = 0;
+    while(0 < (rtv = getprocs64(&proc_info, sizeof(struct procentry64), NULL, 0,&pid_idx, 5))) {
+        _PyTuple_Resize(&py_retdict, PyTuple_Size(py_retdict)+rtv);
+        for(int i = 0; i < rtv; i++) {
+            pid_t cur_pid = proc_info[i].pi_pid;
+            pid_idx = 1 + cur_pid;
+            PyTuple_SetItem(py_retdict, tuple_idx++, Py_BuildValue("K",cur_pid));
+        }
+    }
+    return py_retdict;
+}
+#endif
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -921,6 +969,10 @@ PsutilMethods[] =
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
 
+#ifdef __PASE__
+    {"list_pids", psutil_list_pids, METH_NOARGS,
+    "Get a tuple of all running process identifiers"},
+#endif
     {NULL, NULL, 0, NULL}
 };
 
