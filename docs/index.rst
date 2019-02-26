@@ -1205,6 +1205,9 @@ Process class
 
     .. versionadded:: 5.6.0
 
+    .. warning::
+      this API is experimental and may be removed if deemed necessary.
+
   .. method:: status()
 
     The current process status as a string. The returned string is one of the

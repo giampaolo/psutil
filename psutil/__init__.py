@@ -398,7 +398,7 @@ def _pprint_secs(secs):
 
 
 @lru_cache()
-def _first_pid():
+def _lowest_pid():
     return pids()[0]
 
 
@@ -666,13 +666,13 @@ class Process(object):
         """Return the parents of this process as a list of Process
         instances. If no parents are known return an empty list.
         """
-        first_pid = _first_pid()
+        lowest = _lowest_pid()  # 1 if LINUX else 0
         parents = []
         proc = self.parent()
         while True:
             if proc is None:
                 break
-            elif proc.pid == first_pid:
+            elif proc.pid == lowest:
                 # Needed because on certain systems such as macOS
                 # Process(0).ppid() returns 0.
                 parents.append(proc)
@@ -681,7 +681,6 @@ class Process(object):
                 par = proc.parent()
                 if par is None:
                     break
-                assert par.pid < proc.pid, (par.pid, proc.pid)
                 parents.append(proc)
                 proc = par
         return parents
