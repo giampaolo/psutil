@@ -1072,9 +1072,6 @@ class TestProcess(unittest.TestCase):
             lowest_pid = psutil.pids()[0]
             self.assertEqual(p1.parents()[-1].pid, lowest_pid)
             self.assertEqual(p2.parents()[-1].pid, lowest_pid)
-        else:
-            self.assertEqual(p1.parents()[-1].name(), "explorer.exe")
-            self.assertEqual(p2.parents()[-1].name(), "explorer.exe")
 
     def test_children(self):
         reap_children(recursive=True)
