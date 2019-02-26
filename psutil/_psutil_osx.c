@@ -357,34 +357,33 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     uint32_t depth = 1;
     vm_address_t address = 0;
     vm_size_t size = 0;
-
+    struct vm_region_submap_info_64 info;
+    mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
     PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_list = PyList_New(0);
 
     if (py_list == NULL)
         return NULL;
-
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-
     if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
 
     while (1) {
         py_tuple = NULL;
-        struct vm_region_submap_info_64 info;
-        mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
-
         kr = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
-        if (kr == KERN_INVALID_ADDRESS) {
-            // TODO temporary
-            psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
-            break;
-        }
         if (kr != KERN_SUCCESS) {
-            psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
+            if (kr == KERN_INVALID_ADDRESS) {
+                break;  // end of the address region reached
+            }
+            else {
+                PyErr_Format(PyExc_RuntimeError,
+                             "vm_region_recurse_64() failed: %s",
+                             mach_error_string(kr));
+                goto error;
+            }
         }
 
         if (info.is_submap) {
@@ -408,14 +407,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                     (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
                     (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
 
-            // proc_regionfilename() return value seems meaningless
-            // so we do what we can in order to not continue in case
-            // of error.
+            // proc_regionfilename() is undocumented but from its source
+            // code we can determine that it sets errno on error and
+            // return length of path.
             errno = 0;
             proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
-            if ((errno != 0) || ((sizeof(buf)) <= 0)) {
-                // TODO temporary
-                psutil_debug("proc_regionfilename() failed");
+            if (errno != 0) {
+                psutil_debug("proc_regionfilename() failed errno=%i", errno);
                 psutil_raise_for_pid(pid, "proc_regionfilename()");
                 goto error;
             }
@@ -477,10 +475,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 goto error;
             Py_DECREF(py_tuple);
             Py_DECREF(py_path);
-        }
 
-        // increment address for the next map/file
-        address += size;
+            // increment address for the next map/file
+            address += size;
+        }
     }
 
     if (task != MACH_PORT_NULL)
