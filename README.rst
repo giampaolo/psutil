@@ -30,7 +30,7 @@
     :target: https://pypi.org/project/psutil
     :alt: License
 
-===========
+
 Quick links
 ===========
 
@@ -44,7 +44,7 @@ Quick links
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
-=======
+
 Summary
 =======
 
@@ -67,7 +67,25 @@ psutil currently supports the following platforms:
 
 ...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and 3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
-====================
+
+Author
+======
+
+psutil was created and is maintained by
+`Giampaolo Rodola <http://grodola.blogspot.com/p/about.html>`__ and it
+received many useful `contributions <https://github.com/giampaolo/psutil/blob/master/CREDITS>`__
+over the years.
+A lot of time and effort went into making psutil as it is right now.
+If you feel psutil is useful to you or your business and want to support its
+future development consider making a small donation:
+
+.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
+    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+    :alt: Donate via PayPal
+
+Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
+
+
 Example applications
 ====================
 
@@ -82,7 +100,6 @@ Example applications
 Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
 and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
 
-=====================
 Projects using psutil
 =====================
 
@@ -93,18 +110,18 @@ psutil has roughly the following monthly downloads:
     :alt: Downloads
 
 There are over
-`10000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+`10.000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
+- https://github.com/google/grr
 - https://github.com/facebook/osquery/
 - https://github.com/nicolargo/glances
-- https://github.com/google/grr
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
 - https://github.com/home-assistant/home-assistant/
 
-========
+
 Portings
 ========
 
@@ -115,9 +132,11 @@ Portings
 - Ruby: https://github.com/spacewander/posixpsutil
 - Nim: https://github.com/johnscillieri/psutil-nim
 
-==============
+
 Example usages
 ==============
+
+This represents pretty much the whole psutil API.
 
 CPU
 ===
@@ -262,6 +281,8 @@ Process management
      5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
     >>>
     >>> p = psutil.Process(7055)
+    >>> p
+    psutil.Process(pid=7055, name='python', started='09:04:44')
     >>> p.name()
     'python'
     >>> p.exe()
@@ -449,21 +470,5 @@ Windows services
 Other samples
 =============
 
-See `doc recipes <http://psutil.readthedocs.io/#recipes>`__.
-
-======
-Author
-======
-
-psutil was created and is maintained by
-`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`__.
-A lot of time and effort went into making psutil as it is right now.
-If you feel psutil is useful to you or your business and want to support its
-future development please consider donating me
-(`Giampaolo <http://grodola.blogspot.com/p/about.html>`__) some money.
-
-.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
-    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-    :alt: Donate via PayPal
-
-Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
+See `doc recipes <http://psutil.readthedocs.io/#recipes>`__ and
+`demo scritps <https://github.com/giampaolo/psutil/tree/master/scripts>`__.
