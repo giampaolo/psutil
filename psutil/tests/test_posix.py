@@ -321,10 +321,8 @@ class TestSystemAPIs(unittest.TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        pids_ps = ps("pid")
+        pids_ps = sorted(ps("pid"))
         pids_psutil = psutil.pids()
-        pids_ps.sort()
-        pids_psutil.sort()
 
         # on MACOS and OPENBSD ps doesn't show pid 0
         if MACOS or OPENBSD and 0 not in pids_ps:

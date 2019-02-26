@@ -817,12 +817,16 @@ Functions
 
 .. function:: pids()
 
-  Return a list of current running PIDs. To iterate over all processes
-  and avoid race conditions :func:`process_iter()` should be preferred.
+  Return a sorted list of current running PIDs.
+  To iterate over all processes and avoid race conditions :func:`process_iter()`
+  should be preferred.
 
   >>> import psutil
   >>> psutil.pids()
   [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
+
+  .. versionchanged::
+    5.6.0 PIDs are returned in sorted order
 
 .. function:: process_iter(attrs=None, ad_value=None)
 

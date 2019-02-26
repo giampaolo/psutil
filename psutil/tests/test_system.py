@@ -242,11 +242,11 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
     def test_pids(self):
-        plist = [x.pid for x in psutil.process_iter()]
-        pidlist = psutil.pids()
-        self.assertEqual(plist.sort(), pidlist.sort())
+        pidslist = psutil.pids()
+        procslist = [x.pid for x in psutil.process_iter()]
         # make sure every pid is unique
-        self.assertEqual(len(pidlist), len(set(pidlist)))
+        self.assertEqual(sorted(set(pidslist)), pidslist)
+        self.assertEqual(pidslist, procslist)
 
     def test_test(self):
         # test for psutil.test() function

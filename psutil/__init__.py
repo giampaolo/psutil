@@ -399,7 +399,7 @@ def _pprint_secs(secs):
 
 @lru_cache()
 def _first_pid():
-    return sorted(pids())[0]
+    return pids()[0]
 
 
 # =====================================================================
@@ -1500,7 +1500,7 @@ _as_dict_attrnames = set(
 
 def pids():
     """Return a list of current running PIDs."""
-    return _psplatform.pids()
+    return sorted(_psplatform.pids())
 
 
 def pid_exists(pid):

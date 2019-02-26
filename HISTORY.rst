@@ -18,6 +18,7 @@ XXXX-XX-XX
 - 1426_: [Windows] PAGESIZE and number of processors is now calculated on
   startup.
 - 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
+- 1437_: pids() are returned in sorted order.
 
 **Bug fixes**
 
