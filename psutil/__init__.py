@@ -45,7 +45,6 @@ from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._compat import long
 from ._compat import PY3 as _PY3
-from ._compat import lru_cache
 
 from ._common import STATUS_DEAD
 from ._common import STATUS_DISK_SLEEP
@@ -214,15 +213,19 @@ __all__ = [
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
+
+
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "5.6.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
+
+_timer = getattr(time, 'monotonic', time.time)
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
 POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
-_timer = getattr(time, 'monotonic', time.time)
+_LOWEST_PID = None
 
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
@@ -395,11 +398,6 @@ def _pprint_secs(secs):
     else:
         fmt = "%Y-%m-%d %H:%M:%S"
     return datetime.datetime.fromtimestamp(secs).strftime(fmt)
-
-
-@lru_cache()
-def _lowest_pid():
-    return pids()[0]
 
 
 # =====================================================================
@@ -651,6 +649,9 @@ class Process(object):
         checking whether PID has been reused.
         If no parent is known return None.
         """
+        lowest_pid = _LOWEST_PID if _LOWEST_PID is not None else pids()[0]
+        if self.pid == lowest_pid:
+            return None
         ppid = self.ppid()
         if ppid is not None:
             ctime = self.create_time()
@@ -666,23 +667,11 @@ class Process(object):
         """Return the parents of this process as a list of Process
         instances. If no parents are known return an empty list.
         """
-        lowest = _lowest_pid()  # 1 if LINUX else 0
         parents = []
         proc = self.parent()
-        while True:
-            if proc is None:
-                break
-            elif proc.pid == lowest:
-                # Needed because on certain systems such as macOS
-                # Process(0).ppid() returns 0.
-                parents.append(proc)
-                break
-            else:
-                par = proc.parent()
-                if par is None:
-                    break
-                parents.append(proc)
-                proc = par
+        while proc is not None:
+            parents.append(proc)
+            proc = proc.parent()
         return parents
 
     def is_running(self):
@@ -1499,7 +1488,10 @@ _as_dict_attrnames = set(
 
 def pids():
     """Return a list of current running PIDs."""
-    return sorted(_psplatform.pids())
+    global _LOWEST_PID
+    ret = sorted(_psplatform.pids())
+    _LOWEST_PID = ret[0]
+    return ret
 
 
 def pid_exists(pid):
@@ -2493,7 +2485,7 @@ def test():  # pragma: no cover
             p.info['name'].strip() or '?'))
 
 
-del memoize, memoize_when_activated, division, deprecated_method, lru_cache
+del memoize, memoize_when_activated, division, deprecated_method
 if sys.version_info[0] < 3:
     del num, x
 

@@ -982,19 +982,18 @@ Process class
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
   When accessing methods of this class always be  prepared to catch
-  :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
-  exceptions.
+  :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
   `hash() <https://docs.python.org/3/library/functions.html#hash>`__ builtin can
   be used against instances of this class in order to identify a process
   univocally over time (the hash is determined by mixing process PID
-  and creation time). As such it can also be used with
+  + creation time). As such it can also be used with
   `set()s <https://docs.python.org/3/library/stdtypes.html#types-set>`__.
 
   .. note::
 
     In order to efficiently fetch more than one information about the process
-    at the same time, make sure to use either :meth:`as_dict` or
-    :meth:`oneshot` context manager.
+    at the same time, make sure to use either :meth:`oneshot` context manager
+    or :meth:`as_dict` utility method.
 
   .. note::
 
@@ -1009,6 +1008,7 @@ Process class
     :meth:`rlimit` (set),
     :meth:`children`,
     :meth:`parent`,
+    :meth:`parents`,
     :meth:`suspend`
     :meth:`resume`,
     :meth:`send_signal`,
@@ -1108,7 +1108,7 @@ Process class
     call. Not on POSIX because
     `ppid may change <https://github.com/giampaolo/psutil/issues/321>`__
     if process becomes a zombie.
-    See also :meth:`parent` method.
+    See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
 
@@ -1194,19 +1194,17 @@ Process class
   .. method:: parent()
 
     Utility method which returns the parent process as a :class:`Process`
-    object preemptively checking whether PID has been reused. If no parent
+    object, preemptively checking whether PID has been reused. If no parent
     PID is known return ``None``.
-    See also :meth:`ppid` method.
+    See also :meth:`ppid` and :meth:`parents` methods.
 
   .. method:: parents()
 
     Utility method which return the parents of this process as a list of
     :class:`Process` instances. If no parents are known return an empty list.
+    See also :meth:`ppid` and :meth:`parent` methods.
 
     .. versionadded:: 5.6.0
-
-    .. warning::
-      this API is experimental and may be removed if deemed necessary.
 
   .. method:: status()
 

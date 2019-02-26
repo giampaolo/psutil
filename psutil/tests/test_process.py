@@ -1046,6 +1046,9 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.parent().pid, this_parent)
 
+        lowest_pid = psutil.pids()[0]
+        self.assertIsNone(psutil.Process(lowest_pid).parent())
+
     def test_parent_multi(self):
         p1, p2 = create_proc_children_pair()
         self.assertEqual(p2.parent(), p1)
@@ -1062,8 +1065,13 @@ class TestProcess(unittest.TestCase):
     def test_parents(self):
         assert psutil.Process().parents()
         p1, p2 = create_proc_children_pair()
+        self.assertEqual(p1.parents()[0], psutil.Process())
         self.assertEqual(p2.parents()[0], p1)
         self.assertEqual(p2.parents()[1], psutil.Process())
+
+        lowest_pid = psutil.pids()[0]
+        self.assertEqual(p1.parents()[-1].pid, lowest_pid)
+        self.assertEqual(p2.parents()[-1].pid, lowest_pid)
 
     def test_children(self):
         reap_children(recursive=True)
@@ -1111,6 +1119,19 @@ class TestProcess(unittest.TestCase):
             pass
         else:
             self.assertEqual(len(c), len(set(c)))
+
+    def test_parents_and_children(self):
+        p1, p2 = create_proc_children_pair()
+        me = psutil.Process()
+        # forward
+        children = me.children(recursive=True)
+        self.assertEqual(len(children), 2)
+        self.assertEqual(children[0], p1)
+        self.assertEqual(children[1], p2)
+        # backward
+        parents = p2.parents()
+        self.assertEqual(parents[0], p1)
+        self.assertEqual(parents[1], me)
 
     def test_suspend_resume(self):
         sproc = get_test_subprocess()
