@@ -248,7 +248,7 @@ elif AIX:
             'psutil/arch/aix/net_connections.c',
             'psutil/arch/aix/common.c',
             'psutil/arch/aix/ifaddrs.c'],
-        libraries=['perfstat'],
+        libraries=['util'] if os.uname().sysname == 'OS400' else ['perfstat'],
         define_macros=macros)
 
 else:

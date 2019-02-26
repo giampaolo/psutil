@@ -45,7 +45,9 @@
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#ifndef __PASE__
 #include <libperfstat.h>
+#endif
 #include <unistd.h>
 
 #include "arch/aix/ifaddrs.h"
@@ -239,7 +241,7 @@ error:
 }
 #endif
 
-
+#ifndef __PASE__
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     long pid;
@@ -262,6 +264,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
                          procinfo.inBytes,    // XXX always 0
                          procinfo.outBytes);
 }
+#endif
 
 
 /*
@@ -468,6 +471,7 @@ error:
     return NULL;
 }
 
+#ifndef __PASE__
 
 /*
  * Return a list of tuples for network I/O statistics.
@@ -857,6 +861,7 @@ error:
         free(cpu);
     return NULL;
 }
+#endif
 
 
 /*
@@ -878,8 +883,10 @@ PsutilMethods[] =
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
 #endif
+#ifndef __PASE__
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
+#endif
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Get process I/O counters."},
 
@@ -888,6 +895,7 @@ PsutilMethods[] =
      "Return currently connected users."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
+#ifndef __PASE__
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return system boot time in seconds since the EPOCH."},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
@@ -900,13 +908,15 @@ PsutilMethods[] =
      "Return stats about swap memory, in bytes"},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for network I/O statistics."},
+#endif
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide connections"},
+#ifndef __PASE__
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats (isup, mtu)"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
-
+#endif
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
