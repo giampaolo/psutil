@@ -45,6 +45,7 @@ from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._compat import long
 from ._compat import PY3 as _PY3
+from ._compat import lru_cache
 
 from ._common import STATUS_DEAD
 from ._common import STATUS_DISK_SLEEP
@@ -396,6 +397,11 @@ def _pprint_secs(secs):
     return datetime.datetime.fromtimestamp(secs).strftime(fmt)
 
 
+@lru_cache()
+def _first_pid():
+    return sorted(pids())[0]
+
+
 # =====================================================================
 # --- Process class
 # =====================================================================
@@ -660,11 +666,24 @@ class Process(object):
         """Return the parents of this process as a list of Process
         instances. If no parents are known return an empty list.
         """
+        first_pid = _first_pid()
         parents = []
         proc = self.parent()
-        while proc is not None:
-            parents.append(proc)
-            proc = proc.parent()
+        while True:
+            if proc is None:
+                break
+            elif proc.pid == first_pid:
+                # Needed because on certain systems such as macOS
+                # Process(0).ppid() returns 0.
+                parents.append(proc)
+                break
+            else:
+                par = proc.parent()
+                if par is None:
+                    break
+                assert par.pid <= proc.pid, (par.pid, proc.pid)
+                parents.append(proc)
+                proc = par
         return parents
 
     def is_running(self):
@@ -2475,7 +2494,7 @@ def test():  # pragma: no cover
             p.info['name'].strip() or '?'))
 
 
-del memoize, memoize_when_activated, division, deprecated_method
+del memoize, memoize_when_activated, division, deprecated_method, lru_cache
 if sys.version_info[0] < 3:
     del num, x
 
