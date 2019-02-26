@@ -344,6 +344,8 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 /*
  * Return a list of tuples for every process memory maps.
  * 'procstat' cmdline utility has been used as an example.
+ * This will fail for all processes except os.getpid(),
+ * even as root.
  */
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
@@ -351,6 +353,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     char addr_str[34];
     char perms[8];
     int pagesize = getpagesize();
+    int iteration = 0;
     long pid;
     kern_return_t kr;
     mach_port_t task = MACH_PORT_NULL;
@@ -371,19 +374,19 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
 
     while (1) {
+        iteration += 1;
         py_tuple = NULL;
         kr = vm_region_recurse_64(task, &address, &size, &depth,
                                    (vm_region_info_64_t)&info, &count);
         if (kr != KERN_SUCCESS) {
-            if (kr == KERN_INVALID_ADDRESS) {
-                break;  // end of the address region reached
+            if ((kr == KERN_INVALID_ADDRESS) && (iteration > 1)) {
+                break;  // no more regions to read
             }
-            else {
-                PyErr_Format(PyExc_RuntimeError,
-                             "vm_region_recurse_64() failed: %s",
-                             mach_error_string(kr));
-                goto error;
-            }
+            PyErr_Format(
+                PyExc_RuntimeError,
+                "vm_region_recurse_64() failed: %s",
+                mach_error_string(kr));
+            goto error;
         }
 
         if (info.is_submap) {
