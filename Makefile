@@ -236,17 +236,25 @@ release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
+check-manifest:  ## Inspect MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v $(ARGS)
+
+generate-manifest:  ## Generates MANIFEST.in file.
+	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+# ===================================================================
+# Printers
+# ===================================================================
+
 print-announce:  ## Print announce of new release.
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_announce.py
 
 print-timeline:  ## Print releases' timeline.
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_timeline.py
 
-check-manifest:  ## Inspect MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
-
-generate-manifest:  ## Generates MANIFEST.in file.
-	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+print-access-denied:
+#	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) scripts/internal/procs_access_denied.py
 
 # ===================================================================
 # Misc
@@ -265,10 +273,6 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 
 check-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
-
-print-access-denied:
-#	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) scripts/internal/procs_access_denied.py
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
