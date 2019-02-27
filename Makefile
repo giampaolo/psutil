@@ -256,7 +256,7 @@ print-access-denied: ## Print AD exceptions
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py
+	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 # ===================================================================
 # Misc

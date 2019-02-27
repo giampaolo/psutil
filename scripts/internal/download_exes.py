@@ -122,7 +122,7 @@ def rename_27_wheels():
     os.rename(src, dst)
 
 
-def main(options):
+def run(options):
     safe_rmtree('dist')
     urls = get_file_urls(options)
     completed = 0
@@ -149,10 +149,14 @@ def main(options):
     rename_27_wheels()
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='AppVeyor artifact downloader')
     parser.add_argument('--user', required=True)
     parser.add_argument('--project', required=True)
     args = parser.parse_args()
-    main(args)
+    run(args)
+
+
+if __name__ == '__main__':
+    main()

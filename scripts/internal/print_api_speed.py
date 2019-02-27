@@ -25,18 +25,19 @@ PROCESS APIS
 
 from __future__ import print_function, division
 from timeit import default_timer as timer
+import argparse
 import inspect
 import os
 
 import psutil
 
 
-SORT_BY_NAME = 0  # <- toggle this
+SORT_BY_TIME = False
 timings = []
 
 
 def print_timings():
-    timings.sort(key=lambda x: x[0 if SORT_BY_NAME else 1])
+    timings.sort(key=lambda x: x[1 if SORT_BY_TIME else 0])
     while timings[:]:
         title, elapsed = timings.pop(0)
         print("%-30s %f secs" % (title, elapsed))
@@ -49,7 +50,7 @@ def timecall(title, fun, *args, **kw):
     timings.append((title, elapsed))
 
 
-def main():
+def run():
     # --- system
 
     public_apis = []
@@ -84,6 +85,16 @@ def main():
             fun = getattr(p, name)
             timecall(name, fun)
     print_timings()
+
+
+def main():
+    global SORT_BY_TIME
+    parser = argparse.ArgumentParser(description='Benchmark all API calls')
+    parser.add_argument('-t', '--time', required=False, default=False,
+                        action='store_true', help="sort by timings")
+    args = parser.parse_args()
+    SORT_BY_TIME = bool(args.time)
+    run()
 
 
 if __name__ == '__main__':
