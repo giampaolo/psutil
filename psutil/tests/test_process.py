@@ -1256,12 +1256,16 @@ class TestProcess(unittest.TestCase):
         p.wait()
         if WINDOWS:
             call_until(psutil.pids, "%s not in ret" % p.pid)
-        self.assertFalse(p.is_running())
-        # self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" %
-        #   retcode)
+        assert not p.is_running()
+
+        if WINDOWS:
+            with self.assertRaises(psutil.NoSuchProcess):
+                p.send_signal(signal.CTRL_C_EVENT)
+            with self.assertRaises(psutil.NoSuchProcess):
+                p.send_signal(signal.CTRL_BREAK_EVENT)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'oneshot', 'memory_info_ex']
+                          'oneshot']
         if LINUX and not HAS_RLIMIT:
             excluded_names.append('rlimit')
         for name in dir(p):
