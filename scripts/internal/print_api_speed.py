@@ -7,20 +7,26 @@
 """Benchmark all API calls.
 
 $ python scripts/internal/print_api_speed.py
-SYSTEM APIS
-    boot_time                      0.000127 secs
-    cpu_count                      0.000034 secs
-    cpu_count (cores)              0.000279 secs
-    cpu_freq                       0.000438 secs
-    ...
+SYSTEM APIS               SECONDS
+----------------------------------
+boot_time                 0.000140
+cpu_count                 0.000016
+cpu_count (cores)         0.000312
+cpu_freq                  0.000811
+cpu_percent               0.000138
+cpu_stats                 0.000165
+cpu_times                 0.000140
+...
 
-PROCESS APIS
-    cmdline                        0.000027 secs
-    connections                    0.000056 secs
-    cpu_affinity                   0.000014 secs
-    cpu_num                        0.000054 secs
-    cpu_percent                    0.000077 secs
-    ...
+PROCESS APIS              SECONDS
+----------------------------------
+children                  0.007246
+cmdline                   0.000069
+connections               0.000072
+cpu_affinity              0.000012
+cpu_num                   0.000035
+cpu_percent               0.000042
+cpu_times                 0.000031
 """
 
 from __future__ import print_function, division
@@ -36,6 +42,7 @@ from scriptutils import hilite
 SORT_BY_TIME = False if psutil.POSIX else True
 TOP_SLOWEST = 7
 timings = []
+templ = "%-25s %s"
 
 
 def print_timings():
@@ -45,7 +52,7 @@ def print_timings():
         slower.append(x[0])
     while timings[:]:
         title, elapsed = timings.pop(0)
-        s = "    %-30s %f secs" % (title, elapsed)
+        s = templ % (title, "%f" % elapsed)
         if title in slower:
             s = hilite(s, ok=False)
         print(s)
@@ -76,7 +83,8 @@ def run():
             if name not in ignore:
                 public_apis.append(name)
 
-    print(titlestr("SYSTEM APIS"))
+    print(titlestr(templ % ("SYSTEM APIS", "SECONDS")))
+    print("-" * 34)
     for name in public_apis:
         fun = getattr(psutil, name)
         args = ()
@@ -90,7 +98,9 @@ def run():
     print_timings()
 
     # --- process
-    print(titlestr("\nPROCESS APIS"))
+    print("")
+    print(titlestr(templ % ("PROCESS APIS", "SECONDS")))
+    print("-" * 34)
     ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
               'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
               'pid', 'rlimit']
