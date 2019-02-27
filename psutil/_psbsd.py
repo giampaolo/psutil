@@ -605,6 +605,12 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        cext.proc_name(self.pid)
+
     @memoize_when_activated
     def oneshot(self):
         """Retrieves multiple process info in one shot as a raw tuple."""
@@ -751,10 +757,7 @@ class Process(object):
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         if OPENBSD:
-            # On OpenBSD the underlying C function does not raise NSP
-            # in case the process is gone (and the returned list may
-            # incomplete).
-            self.name()  # raise NSP if the process disappeared on us
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
@@ -784,10 +787,7 @@ class Process(object):
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
                     ret.add(nt)
-            # On NetBSD the underlying C function does not raise NSP
-            # in case the process is gone (and the returned list may
-            # incomplete).
-            self.name()  # raise NSP if the process disappeared on us
+            self._assert_alive()
             return list(ret)
 
         families, types = conn_tmap[kind]
@@ -806,10 +806,7 @@ class Process(object):
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         if OPENBSD:
-            # On OpenBSD the underlying C function does not raise NSP
-            # in case the process is gone (and the returned list may be
-            # incomplete). Raise NSP if the process disappeared on us.
-            cext.proc_name(self.pid)
+            self._assert_alive()
         return ret
 
     @wrap_exceptions
@@ -885,9 +882,7 @@ class Process(object):
             """Return the number of file descriptors opened by this process."""
             ret = cext.proc_num_fds(self.pid)
             if NETBSD:
-                # On NetBSD the underlying C function does not raise NSP
-                # in case the process is gone.
-                self.name()  # raise NSP if the process disappeared on us
+                self._assert_alive()
             return ret
     else:
         num_fds = _not_implemented
