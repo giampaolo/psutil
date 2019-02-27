@@ -40,7 +40,7 @@ cwd                  237  70.5%   ACCESS DENIED
 io_counters          237  70.5%   ACCESS DENIED
 open_files           237  70.5%   ACCESS DENIED
 environ              237  70.5%   ACCESS DENIED
---------------------------
+-----------------------------------------------
 total:                1736 (336 total processes)
 """
 
@@ -75,7 +75,7 @@ def main():
             s += "ACCESS DENIED"
             s = hilite(s, ok=False)
         print(s)
-    print("--------------------------")
+    print("-----------------------------------------------")
     print("total: %19s (%s total processes)" % (tot_ads, tot_procs))
 
 

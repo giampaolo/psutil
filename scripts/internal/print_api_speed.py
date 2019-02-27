@@ -30,17 +30,25 @@ import inspect
 import os
 
 import psutil
+from scriptutils import hilite
 
 
 SORT_BY_TIME = False
+TOP_SLOWEST = 7
 timings = []
 
 
 def print_timings():
+    slower = []
     timings.sort(key=lambda x: x[1 if SORT_BY_TIME else 0])
+    for x in sorted(timings, key=lambda x: x[1], reverse=1)[:TOP_SLOWEST]:
+        slower.append(x[0])
     while timings[:]:
         title, elapsed = timings.pop(0)
-        print("%-30s %f secs" % (title, elapsed))
+        s = "    %-30s %f secs" % (title, elapsed)
+        if title in slower:
+            s = hilite(s, ok=False)
+        print(s)
 
 
 def timecall(title, fun, *args, **kw):
@@ -48,6 +56,10 @@ def timecall(title, fun, *args, **kw):
     fun(*args, **kw)
     elapsed = timer() - t
     timings.append((title, elapsed))
+
+
+def titlestr(s):
+    return hilite(s, ok=None, bold=True)
 
 
 def run():
@@ -60,7 +72,7 @@ def run():
             if name not in ('wait_procs', 'process_iter'):
                 public_apis.append(name)
 
-    print("SYSTEM APIS")
+    print(titlestr("SYSTEM APIS"))
     for name in public_apis:
         fun = getattr(psutil, name)
         args = ()
@@ -75,7 +87,7 @@ def run():
 
     # --- process
 
-    print("\nPROCESS APIS")
+    print(titlestr("\nPROCESS APIS"))
     ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
               'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
               'pid', 'rlimit']
@@ -88,12 +100,15 @@ def run():
 
 
 def main():
-    global SORT_BY_TIME
+    global SORT_BY_TIME, TOP_SLOWEST
     parser = argparse.ArgumentParser(description='Benchmark all API calls')
     parser.add_argument('-t', '--time', required=False, default=False,
                         action='store_true', help="sort by timings")
+    parser.add_argument('-s', '--slowest', required=False, default=TOP_SLOWEST,
+                        help="highlight the top N slowest APIs")
     args = parser.parse_args()
     SORT_BY_TIME = bool(args.time)
+    TOP_SLOWEST = int(args.slowest)
     run()
 
 
