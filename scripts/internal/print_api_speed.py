@@ -33,7 +33,7 @@ import psutil
 from scriptutils import hilite
 
 
-SORT_BY_TIME = False
+SORT_BY_TIME = False if psutil.POSIX else True
 TOP_SLOWEST = 7
 timings = []
 
@@ -66,10 +66,12 @@ def run():
     # --- system
 
     public_apis = []
+    ignore = ('wait_procs', 'process_iter', 'win_service_get',
+              'win_service_iter')
     for name in psutil.__all__:
         obj = getattr(psutil, name, None)
         if inspect.isfunction(obj):
-            if name not in ('wait_procs', 'process_iter'):
+            if name not in ignore:
                 public_apis.append(name)
 
     print(titlestr("SYSTEM APIS"))
@@ -102,7 +104,7 @@ def run():
 def main():
     global SORT_BY_TIME, TOP_SLOWEST
     parser = argparse.ArgumentParser(description='Benchmark all API calls')
-    parser.add_argument('-t', '--time', required=False, default=False,
+    parser.add_argument('-t', '--time', required=False, default=SORT_BY_TIME,
                         action='store_true', help="sort by timings")
     parser.add_argument('-s', '--slowest', required=False, default=TOP_SLOWEST,
                         help="highlight the top N slowest APIs")
