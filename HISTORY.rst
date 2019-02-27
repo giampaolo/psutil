@@ -40,6 +40,11 @@ XXXX-XX-XX
 - 1439_: [NetBSD] Process.connections() may return incomplete results if using
   oneshot()
 
+**API changes**
+
+- 1291_: [OSX] Process.memory_maps() is deprecated and will always raise
+  AccessDenied. It will be removed in psutil 6.0.0.
+
 5.5.1
 =====
 

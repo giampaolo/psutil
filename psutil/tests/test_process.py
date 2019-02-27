@@ -1265,7 +1265,7 @@ class TestProcess(unittest.TestCase):
                 p.send_signal(signal.CTRL_BREAK_EVENT)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'oneshot']
+                          'oneshot', 'memory_info_ex']
         if LINUX and not HAS_RLIMIT:
             excluded_names.append('rlimit')
         for name in dir(p):
@@ -1291,6 +1291,8 @@ class TestProcess(unittest.TestCase):
                     ret = meth([0])
                 elif name == 'send_signal':
                     ret = meth(signal.SIGTERM)
+                elif MACOS and name == 'memory_maps':
+                    continue  # XXX
                 else:
                     ret = meth()
             except psutil.ZombieProcess:

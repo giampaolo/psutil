@@ -8,6 +8,7 @@ import contextlib
 import errno
 import functools
 import os
+import warnings
 from socket import AF_INET
 from collections import namedtuple
 
@@ -107,13 +108,6 @@ svmem = namedtuple(
 pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 # psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped',
-    'path rss private swapped dirtied ref_count shadow_depth')
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================
@@ -582,6 +576,7 @@ class Process(object):
             retlist.append(ntuple)
         return retlist
 
-    @wrap_exceptions
     def memory_maps(self):
-        return cext.proc_memory_maps(self.pid)
+        msg = "memory_maps() on OSX is deprecated and will be removed in 6.0.0"
+        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        raise AccessDenied(self.pid, msg=msg)

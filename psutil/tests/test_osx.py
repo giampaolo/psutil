@@ -158,9 +158,6 @@ class TestZombieProcessAPIs(unittest.TestCase):
         self.assertRaises((psutil.ZombieProcess, psutil.AccessDenied),
                           self.p.threads)
 
-    def test_memory_maps(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.memory_maps)
-
 
 @unittest.skipIf(not MACOS, "MACOS only")
 class TestSystemAPIs(unittest.TestCase):

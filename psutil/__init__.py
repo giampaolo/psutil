@@ -1218,7 +1218,6 @@ class Process(object):
         return (value / float(total_phymem)) * 100
 
     if hasattr(_psplatform.Process, "memory_maps"):
-        # Available everywhere except OpenBSD and NetBSD.
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.

@@ -1675,48 +1675,47 @@ Process class
     See `pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
     for an example application.
 
-    +---------------+--------------+---------+-----------+--------------+
-    | Linux         |  macOS       | Windows | Solaris   | FreeBSD      |
-    +===============+==============+=========+===========+==============+
-    | rss           | rss          | rss     | rss       | rss          |
-    +---------------+--------------+---------+-----------+--------------+
-    | size          | private      |         | anonymous | private      |
-    +---------------+--------------+---------+-----------+--------------+
-    | pss           | swapped      |         | locked    | ref_count    |
-    +---------------+--------------+---------+-----------+--------------+
-    | shared_clean  | dirtied      |         |           | shadow_count |
-    +---------------+--------------+---------+-----------+--------------+
-    | shared_dirty  | ref_count    |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | private_clean | shadow_depth |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | private_dirty |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | referenced    |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | anonymous     |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | swap          |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
+    +---------------+---------+--------------+-----------+
+    | Linux         | Windows | FreeBSD      | Solaris   |
+    +===============+=========+==============+===========+
+    | rss           | rss     | rss          | rss       |
+    +---------------+---------+--------------+-----------+
+    | size          |         | private      | anonymous |
+    +---------------+---------+--------------+-----------+
+    | pss           |         | ref_count    | locked    |
+    +---------------+---------+--------------+-----------+
+    | shared_clean  |         | shadow_count |           |
+    +---------------+---------+--------------+-----------+
+    | shared_dirty  |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | private_clean |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | private_dirty |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | referenced    |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | anonymous     |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | swap          |         |              |           |
+    +---------------+---------+--------------+-----------+
 
       >>> import psutil
       >>> p = psutil.Process()
       >>> p.memory_maps()
       [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
        pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
-       pmmap_grouped(path='/lib/x8664-linux-gnu/libcrypto.so.0.1', rss=34124, rss=32768, size=2134016, pss=15360, shared_clean=24576, shared_dirty=0, private_clean=0, private_dirty=8192, referenced=24576, anonymous=8192, swap=0),
-       pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
-       pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
-       ...]
-      >>> p.memory_maps(grouped=False)
-      [pmmap_ext(addr='00400000-006ea000', perms='r-xp', path='/usr/bin/python2.7', rss=2293760, size=3055616, pss=1157120, shared_clean=2273280, shared_dirty=0, private_clean=20480, private_dirty=0, referenced=2293760, anonymous=0, swap=0),
-       pmmap_ext(addr='008e9000-008eb000', perms='r--p', path='/usr/bin/python2.7', rss=8192, size=8192, pss=6144, shared_clean=4096, shared_dirty=0, private_clean=0, private_dirty=4096, referenced=8192, anonymous=4096, swap=0),
-       pmmap_ext(addr='008eb000-00962000', perms='rw-p', path='/usr/bin/python2.7', rss=417792, size=487424, pss=317440, shared_clean=200704, shared_dirty=0, private_clean=16384, private_dirty=200704, referenced=417792, anonymous=200704, swap=0),
-       pmmap_ext(addr='00962000-00985000', perms='rw-p', path='[anon]', rss=139264, size=143360, pss=139264, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=139264, referenced=139264, anonymous=139264, swap=0),
-       pmmap_ext(addr='02829000-02ccf000', perms='rw-p', path='[heap]', rss=4743168, size=4874240, pss=4743168, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=4743168, referenced=4718592, anonymous=4743168, swap=0),
        ...]
 
-    Availability: All platforms except OpenBSD, NetBSD and AIX.
+    Availability: Linux, Windows, FreeBSD, SunOS
+
+    .. warning::
+      on macOS, starting from version 5.6.0, this function is deprecated and
+      will always raise :class:`psutil.AccessDenied`. It is scheduled for
+      removal in 6.0.0
+      (see `issue 1020 <https://github.com/giampaolo/psutil/issues/1291#issuecomment-467828376>`_).
+
+    .. versionchanged::
+      5.6.0 deprecated on macOS, always raise AccessDenied
 
   .. method:: children(recursive=False)
 

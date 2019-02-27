@@ -475,7 +475,7 @@ def deprecated_method(replacement):
 
         @functools.wraps(fun)
         def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=FutureWarning, stacklevel=2)
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer

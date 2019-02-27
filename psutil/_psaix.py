@@ -97,11 +97,6 @@ pfullmem = pmem
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================
