@@ -1540,6 +1540,12 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        os.stat('%s/%s' % (self._procfs_path, self.pid))
+
     @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file and return a dict with various
@@ -1906,8 +1912,7 @@ class Process(object):
             ntuple = _common.pthread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (self._procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
@@ -2070,9 +2075,8 @@ class Process(object):
                             flags = int(f.readline().split()[1], 8)
                     except IOError as err:
                         if err.errno == errno.ENOENT:
-                            # fd gone in the meantime; does not
-                            # necessarily mean the process disappeared
-                            # on us.
+                            # fd gone in the meantime; process may
+                            # still be alive
                             hit_enoent = True
                         else:
                             raise
@@ -2082,15 +2086,13 @@ class Process(object):
                             path, int(fd), int(pos), mode, flags)
                         retlist.append(ntuple)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (self._procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
     def connections(self, kind='inet'):
         ret = _connections.retrieve(kind, self.pid)
-        # raise NSP if the process disappeared on us
-        os.stat('%s/%s' % (self._procfs_path, self.pid))
+        self._assert_alive()
         return ret
 
     @wrap_exceptions

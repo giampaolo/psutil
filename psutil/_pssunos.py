@@ -380,6 +380,12 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        os.stat('%s/%s' % (self._procfs_path, self.pid))
+
     def oneshot_enter(self):
         self._proc_name_and_args.cache_activate(self)
         self._proc_basic_info.cache_activate(self)
@@ -522,8 +528,7 @@ class Process(object):
                         continue
                     raise
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
 
     @wrap_exceptions
     def cwd(self):
@@ -585,8 +590,7 @@ class Process(object):
                 nt = _common.pthread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return ret
 
     @wrap_exceptions
@@ -610,8 +614,7 @@ class Process(object):
                     if isfile_strict(file):
                         retlist.append(_common.popenfile(file, int(fd)))
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     def _get_unix_sockets(self, pid):
@@ -711,8 +714,7 @@ class Process(object):
                         raise
             retlist.append((addr, perm, name, rss, anon, locked))
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
