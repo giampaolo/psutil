@@ -191,7 +191,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     }
     return Py_BuildValue("ss",
         proc_info.pi_comm, // name
-        "unknown"proc_info.pi_comm);
+        proc_info.pi_comm);
 #endif
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
