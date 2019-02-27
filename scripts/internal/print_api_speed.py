@@ -25,6 +25,7 @@ PROCESS APIS
 
 from __future__ import print_function, division
 from timeit import default_timer as timer
+import inspect
 import os
 
 import psutil
@@ -38,7 +39,7 @@ def print_timings():
     timings.sort(key=lambda x: x[0 if SORT_BY_NAME else 1])
     while timings[:]:
         title, elapsed = timings.pop(0)
-        print("    %-30s %f secs" % (title, elapsed))
+        print("%-30s %f secs" % (title, elapsed))
 
 
 def timecall(title, fun, *args, **kw):
@@ -49,32 +50,29 @@ def timecall(title, fun, *args, **kw):
 
 
 def main():
+    # --- system
+
+    public_apis = []
+    for name in psutil.__all__:
+        obj = getattr(psutil, name, None)
+        if inspect.isfunction(obj):
+            if name not in ('wait_procs', 'process_iter'):
+                public_apis.append(name)
+
     print("SYSTEM APIS")
-    timecall('cpu_count', psutil.cpu_count)
+    for name in public_apis:
+        fun = getattr(psutil, name)
+        args = ()
+        if name == 'pid_exists':
+            args = (os.getpid(), )
+        elif name == 'disk_usage':
+            args = (os.getcwd(), )
+        timecall(name, fun, *args)
     timecall('cpu_count (cores)', psutil.cpu_count, logical=False)
-    timecall('cpu_times', psutil.cpu_times)
-    timecall('cpu_percent', psutil.cpu_percent, interval=0)
-    timecall('cpu_times_percent', psutil.cpu_times_percent, interval=0)
-    timecall('cpu_stats', psutil.cpu_stats)
-    timecall('cpu_freq', psutil.cpu_freq)
-    timecall('virtual_memory', psutil.virtual_memory)
-    timecall('swap_memory', psutil.swap_memory)
-    timecall('disk_partitions', psutil.disk_partitions)
-    timecall('disk_usage', psutil.disk_usage, os.getcwd())
-    timecall('disk_io_counters', psutil.disk_io_counters)
-    timecall('net_io_counters', psutil.net_io_counters)
-    timecall('net_connections', psutil.net_connections)
-    timecall('net_if_addrs', psutil.net_if_addrs)
-    timecall('net_if_stats', psutil.net_if_stats)
-    timecall('sensors_temperatures', psutil.sensors_temperatures)
-    timecall('sensors_fans', psutil.sensors_fans)
-    timecall('sensors_battery', psutil.sensors_battery)
-    timecall('boot_time', psutil.boot_time)
-    timecall('users', psutil.users)
-    timecall('pids', psutil.pids)
-    timecall('pid_exists', psutil.pid_exists, os.getpid())
     timecall('process_iter (all)', lambda: list(psutil.process_iter()))
     print_timings()
+
+    # --- process
 
     print("\nPROCESS APIS")
     ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
