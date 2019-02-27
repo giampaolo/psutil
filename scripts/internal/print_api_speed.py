@@ -6,7 +6,7 @@
 
 """Benchmark all API calls.
 
-$ python scripts/internal/print_api_speed.py
+$ make print_api_speed
 SYSTEM APIS               SECONDS
 ----------------------------------
 boot_time                 0.000140

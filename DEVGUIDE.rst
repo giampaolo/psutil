@@ -1,4 +1,3 @@
-=======================
 Setup and running tests
 =======================
 
@@ -31,7 +30,6 @@ If you plan on hacking on psutil this is what you're supposed to do first:
   "edit" mode; also ``make setup-dev-env`` installs deps as a limited user.
 - use `make help` to see the list of available commands.
 
-============
 Coding style
 ============
 
@@ -40,7 +38,6 @@ Coding style
 - C code strictly follows `PEP 7 <https://www.python.org/dev/peps/pep-0007/>`_
   styling guides.
 
-========
 Makefile
 ========
 
@@ -87,7 +84,6 @@ On Windows:
 
     set TSCRIPT=foo.py && make test
 
-====================
 Adding a new feature
 ====================
 
@@ -120,7 +116,6 @@ Typical process occurring when adding a new functionality (API):
 - update ``README.rst`` (if necessary).
 - make a pull request.
 
-===================
 Make a pull request
 ===================
 
@@ -130,7 +125,6 @@ Make a pull request
 - push to the branch (``git push origin my-new-feature``)
 - create a new pull request
 
-======================
 Continuous integration
 ======================
 
@@ -175,7 +169,6 @@ An icon in the home page (README) always shows the last coverage percentage:
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-=============
 Documentation
 =============
 
@@ -185,7 +178,6 @@ Documentation
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
 - public doc is hosted on http://psutil.readthedocs.io/
 
-=======================
 Releasing a new version
 =======================
 
@@ -194,16 +186,3 @@ These are notes for myself (Giampaolo):
 - ``make release``
 - post announce (``make print-announce``) on psutil and python-announce mailing
   lists, twitter, g+, blog.
-
-=============
-FreeBSD notes
-=============
-
-- setup:
-
-.. code-block:: bash
-
-    pkg install python python3 gcc git vim screen bash
-    chsh -s /usr/local/bin/bash user  # set bash as default shell
-
-- ``/usr/src`` contains the source codes for all installed CLI tools (grep in it).

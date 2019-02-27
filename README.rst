@@ -60,7 +60,7 @@ psutil currently supports the following platforms:
 
 - **Linux**
 - **Windows**
-- **macOS**,
+- **macOS**
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
@@ -139,7 +139,7 @@ Example usages
 This represents pretty much the whole psutil API.
 
 CPU
-===
+---
 
 .. code-block:: python
 
@@ -182,7 +182,7 @@ CPU
     >>>
 
 Memory
-======
+------
 
 .. code-block:: python
 
@@ -193,7 +193,7 @@ Memory
     >>>
 
 Disks
-=====
+-----
 
 .. code-block:: python
 
@@ -209,7 +209,7 @@ Disks
     >>>
 
 Network
-=======
+-------
 
 .. code-block:: python
 
@@ -236,7 +236,7 @@ Network
     >>>
 
 Sensors
-=======
+-------
 
 .. code-block:: python
 
@@ -255,7 +255,7 @@ Sensors
     >>>
 
 Other system info
-=================
+-----------------
 
 .. code-block:: python
 
@@ -269,7 +269,7 @@ Other system info
     >>>
 
 Process management
-==================
+------------------
 
 .. code-block:: python
 
@@ -405,7 +405,7 @@ Process management
     >>>
 
 Further process APIs
-====================
+--------------------
 
 .. code-block:: python
 
@@ -446,7 +446,7 @@ Popen wrapper:
     >>>
 
 Windows services
-================
+----------------
 
 .. code-block:: python
 
@@ -466,9 +466,3 @@ Windows services
      'start_type': 'manual',
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
-
-Other samples
-=============
-
-See `doc recipes <http://psutil.readthedocs.io/#recipes>`__ and
-`demo scritps <https://github.com/giampaolo/psutil/tree/master/scripts>`__.

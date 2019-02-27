@@ -80,8 +80,6 @@ def main():
         s = hilite(s, ok=not ads)
         print(s)
     print("-" * 50)
-    # print("total: %s AccessDenied errors (%s total processes)" % (
-    #     tot_ads, tot_procs))
     print("Totals: access-denied=%s, calls=%s, processes=%s" % (
         tot_ads, tot_calls, tot_procs))
 

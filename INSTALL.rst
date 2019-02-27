@@ -1,9 +1,8 @@
 Install pip
 ===========
 
-pip is the easiest way to install psutil.
-It is shipped by default with Python 2.7.9+ and 3.4+. For other Python versions
-you can install it manually.
+pip is the easiest way to install psutil. It is shipped by default with Python
+2.7.9+ and 3.4+. For other Python versions you can install it manually.
 On Linux or via wget:
 
 .. code-block:: bash
@@ -74,19 +73,19 @@ first, then:
 Windows
 =======
 
-The easiest way to install psutil on Windows is to just use the pre-compiled
-exe/wheel installers hosted on
-`PyPI <https://pypi.org/project/psutil/#files>`__ via pip:
+Open a cmd.exe shell and run:
 
-.. code-block:: bat
+.. code-block::
 
-    C:\Python27\python.exe -m pip install psutil
+    python -m pip install psutil
 
-If you want to compile psutil from sources you'll need **Visual Studio**
-(Mingw32 is no longer supported), which really is a mess.
-The VS versions are the onle listed below.
+This assumes "python" is in your PATH. If not, specify the full python.exe
+path.
+
+In order to compile psutil from sources you'll need **Visual Studio** (Mingw32
+is not supported).
 This  `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
-provides numerous info on how to properly set up VS (good luck with that).
+provides numerous info on how to properly set up VS. The needed VS versions are:
 
 * Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
 * Python 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
@@ -94,14 +93,14 @@ provides numerous info on how to properly set up VS (good luck with that).
 
 Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires
 `Windows SDK and .NET Framework 3.5 SP1 <https://www.microsoft.com/en-us/download/details.aspx?id=3138>`__.
-Once installed run vcvars64.bat, then you can finally compile (see
-`here <http://stackoverflow.com/questions/11072521/>`__).
-To compile / install psutil from sources on Windows run:
+Once installed run `vcvars64.bat`
+(see `here <http://stackoverflow.com/questions/11072521/>`__).
+Once VS is setup open a cmd.exe shell, cd into psutil directory and run:
 
 .. code-block:: bat
 
-    make.bat build
-    make.bat install
+    python setup.py build
+    python setup.py install
 
 FreeBSD
 =======
