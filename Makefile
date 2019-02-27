@@ -252,9 +252,11 @@ print-announce:  ## Print announce of new release.
 print-timeline:  ## Print releases' timeline.
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_timeline.py
 
-print-access-denied:
-#	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) scripts/internal/procs_access_denied.py
+print-access-denied: ## Print AD exceptions
+	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_access_denied.py
+
+print-api-speed:  ## Benchmark all API calls
+	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py
 
 # ===================================================================
 # Misc
