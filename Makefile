@@ -2,7 +2,7 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-PYTHON = python
+PYTHON = python3
 TSCRIPT = psutil/tests/__main__.py
 ARGS =
 # List of nice-to-have dev libs.
@@ -14,9 +14,7 @@ DEPS = \
 	futures \
 	ipaddress \
 	mock==1.0.1 \
-	pep8 \
 	perf \
-	pyflakes \
 	requests \
 	setuptools \
 	sphinx \
@@ -166,13 +164,6 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-pep8:  ## PEP8 linter.
-	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
-
-pyflakes:  ## Pyflakes linter.
-	@export PYFLAKES_NODOCTEST=1 && \
-		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
-
 flake8:  ## flake8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
@@ -247,16 +238,16 @@ generate-manifest:  ## Generates MANIFEST.in file.
 # ===================================================================
 
 print-announce:  ## Print announce of new release.
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_announce.py
+	@$(PYTHON) scripts/internal/print_announce.py
 
 print-timeline:  ## Print releases' timeline.
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_timeline.py
+	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_access_denied.py
+	@$(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+	@$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 # ===================================================================
 # Misc

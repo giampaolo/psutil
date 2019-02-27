@@ -66,8 +66,10 @@ def run():
     # --- system
 
     public_apis = []
-    ignore = ('wait_procs', 'process_iter', 'win_service_get',
-              'win_service_iter')
+    ignore = ['wait_procs', 'process_iter', 'win_service_get',
+              'win_service_iter']
+    if psutil.MACOS:
+        ignore.append('net_connections')  # raises AD
     for name in psutil.__all__:
         obj = getattr(psutil, name, None)
         if inspect.isfunction(obj):
@@ -88,11 +90,12 @@ def run():
     print_timings()
 
     # --- process
-
     print(titlestr("\nPROCESS APIS"))
     ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
               'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
               'pid', 'rlimit']
+    if psutil.MACOS:
+        ignore.append('memory_maps')  # XXX
     p = psutil.Process()
     for name in sorted(dir(p)):
         if not name.startswith('_') and name not in ignore:

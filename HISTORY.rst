@@ -19,6 +19,7 @@ XXXX-XX-XX
   startup.
 - 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
 - 1437_: pids() are returned in sorted order.
+- 1442_: python3 is now the default interpreter used by Makefile.
 
 **Bug fixes**
 

@@ -49,7 +49,7 @@ Some useful make commands:
 .. code-block:: bash
 
     make install        # install
-    make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
+    make setup-dev-env  # install useful dev libs (fkale8, unittest2, etc.)
     make test           # run unit tests
     make test-memleaks  # run memory leak tests
     make test-coverage  # run test coverage
