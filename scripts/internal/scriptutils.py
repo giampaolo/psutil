@@ -6,11 +6,13 @@
 
 """Utils shared by all files in scripts/internal."""
 
+from __future__ import print_function
 import sys
 
 from psutil._compat import lru_cache
 
-__all__ = ['hilite']
+
+__all__ = ['hilite', 'printerr', 'exit']
 
 
 @lru_cache()
@@ -40,3 +42,13 @@ def hilite(s, ok=True, bold=False):
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+
+
+def printerr(s):
+    print(hilite(s, ok=False), file=sys.stderr)
+
+
+def exit(msg=""):
+    if msg:
+        printerr(msg)
+    sys.exit(1)

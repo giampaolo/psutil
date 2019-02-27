@@ -19,22 +19,15 @@ import errno
 import os
 import requests
 import shutil
-import sys
 
 from psutil import __version__ as PSUTIL_VERSION
-from scriptutils import hilite
+from scriptutils import printerr, exit
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.5', '3.6', '3.7']
 TIMEOUT = 30
 COLORS = True
-
-
-def exit(msg=""):
-    if msg:
-        print(hilite(msg, ok=False), file=sys.stderr)
-    sys.exit(1)
 
 
 def safe_makedirs(path):
@@ -106,8 +99,9 @@ def get_file_urls(options):
             urls.append(file_url)
     if not urls:
         exit("no artifacts found")
-    for url in sorted(urls, key=lambda x: os.path.basename(x)):
-        yield url
+    else:
+        for url in sorted(urls, key=lambda x: os.path.basename(x)):
+            yield url
 
 
 def rename_27_wheels():
@@ -133,9 +127,9 @@ def run(options):
             url = fut_to_url[fut]
             try:
                 local_fname = fut.result()
-            except Exception as _:
-                exc = _
-                print("error while downloading %s: %s" % (url, exc))
+            except Exception:
+                printerr("error while downloading %s" % (url))
+                raise
             else:
                 completed += 1
                 print("downloaded %-45s %s" % (
