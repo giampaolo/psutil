@@ -37,6 +37,8 @@ XXXX-XX-XX
   and Process memory_maps() and memory_info_exe() ("uss" field).
 - 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
+- 1439_: [NetBSD] Process.connections() may return incomplete results if using
+  oneshot()
 
 5.5.1
 =====

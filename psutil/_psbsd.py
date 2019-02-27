@@ -807,9 +807,9 @@ class Process(object):
             ret.append(nt)
         if OPENBSD:
             # On OpenBSD the underlying C function does not raise NSP
-            # in case the process is gone (and the returned list may
-            # incomplete).
-            self.name()  # raise NSP if the process disappeared on us
+            # in case the process is gone (and the returned list may be
+            # incomplete). Raise NSP if the process disappeared on us.
+            cext.proc_name(self.pid)
         return ret
 
     @wrap_exceptions
