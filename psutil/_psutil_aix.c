@@ -48,6 +48,9 @@
 #ifdef __PASE__
 #include <procinfo.h>
 #include <sys/types.h>
+#ifdef HAVE_IBMIPERFSTAT
+#include <ibmiperfstat.h>
+#endif
 #else
 #include <libperfstat.h>
 #endif
@@ -107,20 +110,21 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         return NULL;
 #ifdef __PASE__
     struct procentry64 proc_info;
-    struct fdsinfo64 fd_info[10];
     int rtv = getprocs64(&proc_info, 
                         sizeof(struct procentry64),
                         NULL,
-                        0,//struct fdsinfo64), 
+                        0,
                         &pid,
                         1);
-    if(0 > rtv) 
+    if(0 > rtv) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
-    return Py_BuildValue("KKKdiiiK",
+    }
+    return Py_BuildValue("KKKKiiiK",
         (unsigned long long) proc_info.pi_ppid, // parent pid
         (unsigned long long) proc_info.pi_drss, // rss
         (unsigned long long) proc_info.pi_dvm,  // vms
-        proc_info.pi_start,                     // create time
+        (unsigned long long)proc_info.pi_start, // create time
         (int) proc_info.pi_nice,                // nice
         (int) proc_info.pi_thcount,             // no. of threads
         (int) 0,                                // status code TODO
@@ -171,9 +175,24 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     PyObject *py_name = NULL;
     PyObject *py_args = NULL;
     PyObject *py_retlist = NULL;
-
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+#ifdef __PASE__
+    struct procentry64 proc_info;
+    int rtv = getprocs64(&proc_info,
+                        sizeof(struct procentry64),
+                        NULL,
+                        0,
+                        &pid,
+                        1);
+    if(0 > rtv) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return Py_BuildValue("ss",
+        proc_info.pi_comm, // name
+        "unknown"proc_info.pi_comm);
+#endif
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
@@ -891,7 +910,7 @@ error:
 
 #ifdef __PASE__
 /*
- * Return disk IO statistics.
+ * Return a list of process identifiers
  */
 static PyObject *
 psutil_list_pids(PyObject *self, PyObject *args) {
@@ -910,6 +929,28 @@ psutil_list_pids(PyObject *self, PyObject *args) {
     }
     return py_retdict;
 }
+#ifdef HAVE_IBMIPERFSTAT
+/*
+ * Return total number of CPUs
+ */
+static PyObject *
+psutil_cpu_count(PyObject *self, PyObject *args) {
+    struct iperfstat_cpu_number_t cpus;
+    memset(&cpus, 0x00, sizeof(cpus));
+    iperfstat_cpu_get_number(&cpus);
+    return Py_BuildValue("i",cpus.ncpus_configured);
+}
+/*
+ * Return number of current CPUs online
+ */
+static PyObject *
+psutil_cpu_count_online(PyObject *self, PyObject *args) {
+    struct iperfstat_cpu_number_t cpus;
+    memset(&cpus, 0x00, sizeof(cpus));
+    iperfstat_cpu_get_number(&cpus);
+    return Py_BuildValue("i",cpus.ncpus_online);
+}
+#endif
 #endif
 
 /*
@@ -972,6 +1013,12 @@ PsutilMethods[] =
 #ifdef __PASE__
     {"list_pids", psutil_list_pids, METH_NOARGS,
     "Get a tuple of all running process identifiers"},
+#ifdef HAVE_IBMIPERFSTAT
+    {"cpu_count", psutil_cpu_count, METH_NOARGS,
+    "Get a count of total CPUs"},
+    {"cpu_count_online", psutil_cpu_count, METH_NOARGS,
+    "Get a count of the number of online CPUs"},
+#endif
 #endif
     {NULL, NULL, 0, NULL}
 };

@@ -103,6 +103,7 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
+
 # =====================================================================
 # --- IBM i runs an AIX variant but a number of things are unsupported
 # =====================================================================
@@ -163,6 +164,8 @@ def per_cpu_times():
 
 
 def cpu_count_logical():
+    if hasattr(cext, 'cpu_count_online'):
+        return cext.cpu_count_online()
     """Return the number of logical CPUs in the system."""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
@@ -172,6 +175,8 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
+    if hasattr(cext, 'cpu_count'):
+        return cext.cpu_count()
     cmd = "lsdev -Cc processor"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -237,6 +242,7 @@ if hasattr(cext, 'net_io_counters'):
     net_io_counters = cext.net_io_counters
 else:
     net_io_counters = _not_supported
+
 
 def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
