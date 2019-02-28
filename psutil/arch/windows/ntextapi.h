@@ -160,6 +160,10 @@ typedef struct {
     ULONG FirstLevelTbFills;
     ULONG SecondLevelTbFills;
     ULONG SystemCalls;
+    ULONGLONG CcTotalDirtyPages;  // since THRESHOLD
+    ULONGLONG CcDirtyPageThreshold;  // since THRESHOLD
+    LONGLONG ResidentAvailablePages;  // since THRESHOLD
+    ULONGLONG SharedCommittedPages;  // since THRESHOLD
 } _SYSTEM_PERFORMANCE_INFORMATION;
 
 typedef struct {
@@ -180,49 +184,52 @@ typedef enum _KTHREAD_STATE {
     Waiting,
     Transition,
     DeferredReady,
-    GateWait,
+    GateWaitObsolete,
+    WaitingForProcessInSwap,
     MaximumThreadState
 } KTHREAD_STATE, *PKTHREAD_STATE;
 
 typedef enum _KWAIT_REASON {
-    Executive = 0,
-    FreePage = 1,
-    PageIn = 2,
-    PoolAllocation = 3,
-    DelayExecution = 4,
-    Suspended = 5,
-    UserRequest = 6,
-    WrExecutive = 7,
-    WrFreePage = 8,
-    WrPageIn = 9,
-    WrPoolAllocation = 10,
-    WrDelayExecution = 11,
-    WrSuspended = 12,
-    WrUserRequest = 13,
-    WrEventPair = 14,
-    WrQueue = 15,
-    WrLpcReceive = 16,
-    WrLpcReply = 17,
-    WrVirtualMemory = 18,
-    WrPageOut = 19,
-    WrRendezvous = 20,
-    Spare2 = 21,
-    Spare3 = 22,
-    Spare4 = 23,
-    Spare5 = 24,
-    WrCalloutStack = 25,
-    WrKernel = 26,
-    WrResource = 27,
-    WrPushLock = 28,
-    WrMutex = 29,
-    WrQuantumEnd = 30,
-    WrDispatchInt = 31,
-    WrPreempted = 32,
-    WrYieldExecution = 33,
-    WrFastMutex = 34,
-    WrGuardedMutex = 35,
-    WrRundown = 36,
-    MaximumWaitReason = 37
+    Executive,
+    FreePage,
+    PageIn,
+    PoolAllocation,
+    DelayExecution,
+    Suspended,
+    UserRequest,
+    WrExecutive,
+    WrFreePage,
+    WrPageIn,
+    WrPoolAllocation,
+    WrDelayExecution,
+    WrSuspended,
+    WrUserRequest,
+    WrEventPair,
+    WrQueue,
+    WrLpcReceive,
+    WrLpcReply,
+    WrVirtualMemory,
+    WrPageOut,
+    WrRendezvous,
+    WrKeyedEvent,
+    WrTerminated,
+    WrProcessInSwap,
+    WrCpuRateControl,
+    WrCalloutStack,
+    WrKernel,
+    WrResource,
+    WrPushLock,
+    WrMutex,
+    WrQuantumEnd,
+    WrDispatchInt,
+    WrPreempted,
+    WrYieldExecution,
+    WrFastMutex,
+    WrGuardedMutex,
+    WrRundown,
+    WrAlertByThreadId,
+    WrDeferredPreempt,
+    MaximumWaitReason
 } KWAIT_REASON, *PKWAIT_REASON;
 
 typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX {
@@ -257,7 +264,7 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
     ULONG WaitTime;
     PVOID StartAddress;
     CLIENT_ID ClientId;
-    LONG Priority;
+    KPRIORITY Priority;
     LONG BasePriority;
     ULONG ContextSwitches;
     ULONG ThreadState;
@@ -274,7 +281,7 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
     PVOID StackBase;
     PVOID StackLimit;
     PVOID Win32StartAddress;
-    PTEB TebBase;
+    PTEB TebBase;  // since VISTA
     ULONG_PTR Reserved2;
     ULONG_PTR Reserved3;
     ULONG_PTR Reserved4;
