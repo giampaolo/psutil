@@ -3293,7 +3293,7 @@ static PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     PROCESSOR_POWER_INFORMATION *ppi;
     NTSTATUS ret;
-    size_t size;
+    ULONG size;
     LPBYTE pBuffer = NULL;
     ULONG current;
     ULONG max;
