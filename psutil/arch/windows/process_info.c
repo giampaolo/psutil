@@ -747,7 +747,7 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     char * cmdline_buffer = NULL;
     WCHAR * cmdline_buffer_wchar = NULL;
     PUNICODE_STRING tmp = NULL;
-    DWORD string_size;
+    size_t string_size;
     int ProcessCommandLineInformation = 60;
 
     cmdline_buffer = calloc(ret_length, 1);
