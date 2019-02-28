@@ -1077,6 +1077,7 @@ void init_psutil_ibmi(void)
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
+    PyObject *module = Py_InitModule("_psutil_ibmi", PsutilMethods);
 #endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
