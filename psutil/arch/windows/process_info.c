@@ -750,6 +750,12 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     size_t string_size;
     int ProcessCommandLineInformation = 60;
 
+    if (PSUTIL_WINVER < PSUTIL_WINDOWS_8_1) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "requires Windows 8.1+");
+        goto error;
+    }
+
     cmdline_buffer = calloc(ret_length, 1);
     if (cmdline_buffer == NULL) {
         PyErr_NoMemory();
