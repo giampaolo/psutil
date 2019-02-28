@@ -735,30 +735,24 @@ error:
 
 
 /*
- * Get process cmdline() by using NtQueryInformationProcess. This is
- * useful on Windows 8.1+ in order to get less ERROR_ACCESS_DENIED
- * errors when querying privileged PIDs.
+ * Get process cmdline by using NtQueryInformationProcess. This is a
+ * method alternative to PEB which is less likely to result in
+ * AccessDenied. Requires Windows 8.1+.
  */
 static int
-psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
+psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess;
-    ULONG ret_length = 4096;
+    ULONG bufLen = 0;
     NTSTATUS status;
-    char * cmdline_buffer = NULL;
-    WCHAR * cmdline_buffer_wchar = NULL;
+    char * buffer = NULL;
+    WCHAR * bufWchar = NULL;
     PUNICODE_STRING tmp = NULL;
-    size_t string_size;
+    size_t size;
     int ProcessCommandLineInformation = 60;
 
     if (PSUTIL_WINVER < PSUTIL_WINDOWS_8_1) {
         PyErr_SetString(
             PyExc_RuntimeError, "requires Windows 8.1+");
-        goto error;
-    }
-
-    cmdline_buffer = calloc(ret_length, 1);
-    if (cmdline_buffer == NULL) {
-        PyErr_NoMemory();
         goto error;
     }
 
@@ -772,7 +766,7 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
         ProcessCommandLineInformation,
         NULL,
         0,
-        &ret_length);
+        &bufLen);
     if (status != STATUS_BUFFER_OVERFLOW && \
             status != STATUS_BUFFER_TOO_SMALL && \
             status != STATUS_INFO_LENGTH_MISMATCH) {
@@ -780,13 +774,20 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
         goto error;
     }
 
+    // allocate memory
+    buffer = calloc(bufLen, 1);
+    if (buffer == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     // get the cmdline
     status = psutil_NtQueryInformationProcess(
         hProcess,
         ProcessCommandLineInformation,
-        cmdline_buffer,
-        ret_length,
-        &ret_length
+        buffer,
+        bufLen,
+        &bufLen
     );
     if (! NT_SUCCESS(status)) {
         PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess(withlen)");
@@ -794,23 +795,23 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     }
 
     // build the string
-    tmp = (PUNICODE_STRING)cmdline_buffer;
-    string_size = wcslen(tmp->Buffer) + 1;
-    cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
-    if (cmdline_buffer_wchar == NULL) {
+    tmp = (PUNICODE_STRING)buffer;
+    size = wcslen(tmp->Buffer) + 1;
+    bufWchar = (WCHAR *)calloc(size, sizeof(WCHAR));
+    if (bufWchar == NULL) {
         PyErr_NoMemory();
         goto error;
     }
-    wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
-    *pdata = cmdline_buffer_wchar;
-    *psize = string_size * sizeof(WCHAR);
-    free(cmdline_buffer);
+    wcscpy_s(bufWchar, size, tmp->Buffer);
+    *pdata = bufWchar;
+    *psize = size * sizeof(WCHAR);
+    free(buffer);
     CloseHandle(hProcess);
     return 0;
 
 error:
-    if (cmdline_buffer != NULL)
-        free(cmdline_buffer);
+    if (buffer != NULL)
+        free(buffer);
     if (hProcess != NULL)
         CloseHandle(hProcess);
     return -1;
@@ -833,22 +834,18 @@ psutil_get_cmdline(long pid, int use_peb) {
     int func_ret;
 
     /*
-    By defaut, still use PEB (if command line params have been patched in
-    the PEB, we will get the actual ones). Reading the PEB to get the
-    command line parameters still seem to be the best method if somebody
-    has tampered with the parameters after creating the process.
-    For instance, create a process as suspended, patch the command line
-    in its PEB and unfreeze it.
-    The process will use the "new" parameters whereas the system
-    (with NtQueryInformationProcess) will give you the "old" ones
-    See:
+    Reading the PEB to get the command line parameters still seem to be
+    the best method if somebody has tampered with the parameters after
+    creating the process. For instance, create a process as suspended,
+    patch the command line in its PEB and unfreeze it. Also, it's subject
+    to less AccessDenied errors. See:
     - https://github.com/giampaolo/psutil/pull/1398
     - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     */
     if (use_peb == 1)
         func_ret = psutil_get_process_data(pid, KIND_CMDLINE, &data, &size);
     else
-        func_ret = psutil_get_cmdline_data(pid, &data, &size);
+        func_ret = psutil_cmdline_query_proc(pid, &data, &size);
     if (func_ret != 0)
         goto out;
 
