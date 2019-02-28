@@ -180,7 +180,7 @@ psutil_set_winver() {
 
 static int
 psutil_load_sysinfo() {
-    GetNativeSystemInfo(&PSUTIL_SYSTEM_INFO);
+    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     return 0;
 }
 

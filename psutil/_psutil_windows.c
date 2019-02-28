@@ -106,12 +106,12 @@ psutil_get_num_cpus(int fail_on_err) {
     }
     else {
         psutil_debug("GetActiveProcessorCount() not available; "
-                     "using GetNativeSystemInfo()");
+                     "using GetSystemInfo()");
         ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus == 0) && (fail_on_err == 1)) {
+        if ((ncpus <= 0) && (fail_on_err == 1)) {
             PyErr_SetString(
                 PyExc_RuntimeError,
-                "GetNativeSystemInfo() failed to retrieve CPU count");
+                "GetSystemInfo() failed to retrieve CPU count");
         }
     }
     return ncpus;
