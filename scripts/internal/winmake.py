@@ -29,7 +29,7 @@ if APPVEYOR:
     PYTHON = sys.executable
 else:
     PYTHON = os.getenv('PYTHON', sys.executable)
-TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
+TEST_SCRIPT = 'psutil\\tests\\__main__.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -350,9 +350,16 @@ def flake8():
 @cmd
 def test():
     """Run tests"""
+    try:
+        arg = sys.argv[2]
+    except IndexError:
+        arg = TEST_SCRIPT
+
     install()
     test_setup()
-    sh("%s %s" % (PYTHON, TSCRIPT))
+    cmdline = "%s %s" % (PYTHON, arg)
+    safe_print(cmdline)
+    sh(cmdline)
 
 
 @cmd
@@ -361,7 +368,7 @@ def coverage():
     # Note: coverage options are controlled by .coveragerc file
     install()
     test_setup()
-    sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
+    sh("%s -m coverage run %s" % (PYTHON, TEST_SCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -426,11 +433,7 @@ def test_contracts():
 @cmd
 def test_by_name():
     """Run test by name"""
-    try:
-        safe_print(sys.argv)
-        name = sys.argv[2]
-    except IndexError:
-        sys.exit('second arg missing')
+    name = sys.argv[2]
     install()
     test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
