@@ -369,7 +369,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
             goto loop_cleanup;
 
         if (!DuplicateHandle(hProcess,
-                             hHandle->HandleValue,
+                             (HANDLE)hHandle->HandleValue,
                              GetCurrentProcess(),
                              &hFile,
                              0,
