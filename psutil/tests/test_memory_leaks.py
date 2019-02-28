@@ -344,8 +344,6 @@ class TestProcessObjectLeaks(TestMemLeak):
         with open(TESTFN, 'w'):
             self.execute(self.proc.open_files)
 
-    # MACOS implementation is unbelievably slow
-    @unittest.skipIf(MACOS, "too slow on MACOS")
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @skip_if_linux()
     def test_memory_maps(self):

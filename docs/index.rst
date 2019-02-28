@@ -1708,14 +1708,9 @@ Process class
 
     Availability: Linux, Windows, FreeBSD, SunOS
 
-    .. warning::
-      on macOS, starting from version 5.6.0, this function is deprecated and
-      will always raise :class:`psutil.AccessDenied`. It is scheduled for
-      removal in 6.0.0
-      (see `issue 1020 <https://github.com/giampaolo/psutil/issues/1291#issuecomment-467828376>`_).
-
     .. versionchanged::
-      5.6.0 deprecated on macOS, always raise AccessDenied
+      5.6.0 removed macOS support because inherently broken (see
+      issue `#1291 <https://github.com/giampaolo/psutil/issues/1291>`__)
 
   .. method:: children(recursive=False)
 

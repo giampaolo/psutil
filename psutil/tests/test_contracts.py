@@ -167,7 +167,8 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(hasit, False if OPENBSD or NETBSD or AIX else True)
+        self.assertEqual(
+            hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
 
 
 # ===================================================================
@@ -184,14 +185,6 @@ class TestDeprecations(unittest.TestCase):
         self.assertIsInstance(w.category(), DeprecationWarning)
         self.assertIn("memory_info_ex() is deprecated", str(w.message))
         self.assertIn("use memory_info() instead", str(w.message))
-
-    @unittest.skipIf(not MACOS, "deprecated on macOS")
-    def test_memory_maps_osx(self):
-        with warnings.catch_warnings(record=True) as ws:
-            with self.assertRaises(psutil.AccessDenied):
-                psutil.Process().memory_maps()
-        w = ws[0]
-        self.assertIsInstance(w.category(), DeprecationWarning)
 
 
 # ===================================================================

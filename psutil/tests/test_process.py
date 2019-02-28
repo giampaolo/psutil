@@ -1291,8 +1291,6 @@ class TestProcess(unittest.TestCase):
                     ret = meth([0])
                 elif name == 'send_signal':
                     ret = meth(signal.SIGTERM)
-                elif MACOS and name == 'memory_maps':
-                    continue  # XXX
                 else:
                     ret = meth()
             except psutil.ZombieProcess:

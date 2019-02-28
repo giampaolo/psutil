@@ -8,7 +8,6 @@ import contextlib
 import errno
 import functools
 import os
-import warnings
 from socket import AF_INET
 from collections import namedtuple
 
@@ -575,8 +574,3 @@ class Process(object):
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
-
-    def memory_maps(self):
-        msg = "memory_maps() on OSX is deprecated and will be removed in 6.0.0"
-        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-        raise AccessDenied(self.pid, msg=msg)
