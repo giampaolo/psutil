@@ -106,12 +106,12 @@ psutil_get_num_cpus(int fail_on_err) {
     }
     else {
         psutil_debug("GetActiveProcessorCount() not available; "
-                     "using GetNativeSystemInfo()");
+                     "using GetSystemInfo()");
         ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus == 0) && (fail_on_err == 1)) {
+        if ((ncpus <= 0) && (fail_on_err == 1)) {
             PyErr_SetString(
                 PyExc_RuntimeError,
-                "GetNativeSystemInfo() failed to retrieve CPU count");
+                "GetSystemInfo() failed to retrieve CPU count");
         }
     }
     return ncpus;
@@ -584,13 +584,13 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("[]");
 
-    use_peb = (py_usepeb == Py_True);
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
         return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
+    use_peb = (py_usepeb == Py_True) ? 1 : 0;
     return psutil_get_cmdline(pid, use_peb);
 }
 
@@ -2186,7 +2186,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDeviceDisplay[MAX_PATH];
     int devNum;
     int i;
-    size_t ioctrlSize;
+    DWORD ioctrlSize;
     BOOL ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
@@ -2747,11 +2747,7 @@ static char *get_region_protection_string(ULONG protection) {
  */
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
-#ifdef _WIN64
-    MEMORY_BASIC_INFORMATION64 basicInfo;
-#else
     MEMORY_BASIC_INFORMATION basicInfo;
-#endif
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
@@ -3297,7 +3293,7 @@ static PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     PROCESSOR_POWER_INFORMATION *ppi;
     NTSTATUS ret;
-    size_t size;
+    ULONG size;
     LPBYTE pBuffer = NULL;
     ULONG current;
     ULONG max;
