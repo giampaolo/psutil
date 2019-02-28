@@ -160,10 +160,6 @@ typedef struct {
     ULONG FirstLevelTbFills;
     ULONG SecondLevelTbFills;
     ULONG SystemCalls;
-    ULONGLONG CcTotalDirtyPages;  // since THRESHOLD
-    ULONGLONG CcDirtyPageThreshold;  // since THRESHOLD
-    LONGLONG ResidentAvailablePages;  // since THRESHOLD
-    ULONGLONG SharedCommittedPages;  // since THRESHOLD
 } _SYSTEM_PERFORMANCE_INFORMATION;
 
 typedef struct {
@@ -184,8 +180,7 @@ typedef enum _KTHREAD_STATE {
     Waiting,
     Transition,
     DeferredReady,
-    GateWaitObsolete,
-    WaitingForProcessInSwap,
+    GateWait,
     MaximumThreadState
 } KTHREAD_STATE, *PKTHREAD_STATE;
 
@@ -234,8 +229,8 @@ typedef enum _KWAIT_REASON {
 
 typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX {
     PVOID Object;
-    ULONG_PTR UniqueProcessId;
-    ULONG_PTR HandleValue;
+    HANDLE UniqueProcessId;
+    HANDLE HandleValue;
     ULONG GrantedAccess;
     USHORT CreatorBackTraceIndex;
     USHORT ObjectTypeIndex;
@@ -264,7 +259,7 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
     ULONG WaitTime;
     PVOID StartAddress;
     CLIENT_ID ClientId;
-    KPRIORITY Priority;
+    LONG Priority;
     LONG BasePriority;
     ULONG ContextSwitches;
     ULONG ThreadState;
@@ -281,7 +276,7 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
     PVOID StackBase;
     PVOID StackLimit;
     PVOID Win32StartAddress;
-    PTEB TebBase;  // since VISTA
+    PTEB TebBase;
     ULONG_PTR Reserved2;
     ULONG_PTR Reserved3;
     ULONG_PTR Reserved4;
@@ -321,7 +316,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     LARGE_INTEGER ReadTransferCount;
     LARGE_INTEGER WriteTransferCount;
     LARGE_INTEGER OtherTransferCount;
-SYSTEM_THREAD_INFORMATION Threads[1];
+    SYSTEM_THREAD_INFORMATION Threads[1];
 } SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
 
 #define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
