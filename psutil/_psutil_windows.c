@@ -2186,7 +2186,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDeviceDisplay[MAX_PATH];
     int devNum;
     int i;
-    size_t ioctrlSize;
+    DWORD ioctrlSize;
     BOOL ret;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_tuple = NULL;
