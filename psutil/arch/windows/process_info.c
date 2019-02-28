@@ -136,6 +136,8 @@ typedef struct {
 // ====================================================================
 
 
+#define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
+
 /*
  * Return 1 if PID exists, 0 if not, -1 on error.
  */
@@ -746,6 +748,7 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     WCHAR * cmdline_buffer_wchar = NULL;
     PUNICODE_STRING tmp = NULL;
     DWORD string_size;
+    int ProcessCommandLineInformation = 60;
 
     cmdline_buffer = calloc(ret_length, 1);
     if (cmdline_buffer == NULL) {
@@ -756,27 +759,42 @@ psutil_get_cmdline_data(long pid, WCHAR **pdata, SIZE_T *psize) {
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         goto error;
+
+    // get the right buf size
     status = psutil_NtQueryInformationProcess(
         hProcess,
-        60, // ProcessCommandLineInformation
+        ProcessCommandLineInformation,
+        NULL,
+        0,
+        &ret_length);
+    if (status != STATUS_BUFFER_OVERFLOW && \
+            status != STATUS_BUFFER_TOO_SMALL && \
+            status != STATUS_INFO_LENGTH_MISMATCH) {
+        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess(0)");
+        goto error;
+    }
+
+    // get the cmdline
+    status = psutil_NtQueryInformationProcess(
+        hProcess,
+        ProcessCommandLineInformation,
         cmdline_buffer,
         ret_length,
         &ret_length
     );
     if (! NT_SUCCESS(status)) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess");
+        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess(withlen)");
         goto error;
     }
 
+    // build the string
     tmp = (PUNICODE_STRING)cmdline_buffer;
     string_size = wcslen(tmp->Buffer) + 1;
     cmdline_buffer_wchar = (WCHAR *)calloc(string_size, sizeof(WCHAR));
-
     if (cmdline_buffer_wchar == NULL) {
         PyErr_NoMemory();
         goto error;
     }
-
     wcscpy_s(cmdline_buffer_wchar, string_size, tmp->Buffer);
     *pdata = cmdline_buffer_wchar;
     *psize = string_size * sizeof(WCHAR);
