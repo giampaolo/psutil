@@ -834,11 +834,11 @@ psutil_get_cmdline(long pid, int use_peb) {
     int func_ret;
 
     /*
-    Reading the PEB to get the command line parameters still seem to be
-    the best method if somebody has tampered with the parameters after
-    creating the process. For instance, create a process as suspended,
-    patch the command line in its PEB and unfreeze it. Also, it's subject
-    to less AccessDenied errors. See:
+    Reading the PEB to get the cmdline seem to be the best method if
+    somebody has tampered with the parameters after creating the process.
+    For instance, create a process as suspended, patch the command line
+    in its PEB and unfreeze it. It requires more privileges than
+    NtQueryInformationProcess though (the fallback):
     - https://github.com/giampaolo/psutil/pull/1398
     - https://blog.xpnsec.com/how-to-argue-like-cobalt-strike/
     */
