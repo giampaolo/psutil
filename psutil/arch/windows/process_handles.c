@@ -169,11 +169,11 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
-        if (hHandle->UniqueProcessId != (HANDLE)dwPid)
+        if (hHandle->UniqueProcessId != (ULONG_PTR)dwPid)
             goto loop_cleanup;
 
         if (!DuplicateHandle(hProcess,
-                             hHandle->HandleValue,
+                             (HANDLE)hHandle->HandleValue,
                              GetCurrentProcess(),
                              &g_hFile,
                              0,
@@ -365,7 +365,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
-        if (hHandle->UniqueProcessId != (HANDLE)dwPid)
+        if (hHandle->UniqueProcessId != (ULONG_PTR)dwPid)
             goto loop_cleanup;
 
         if (!DuplicateHandle(hProcess,

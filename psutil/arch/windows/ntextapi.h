@@ -227,8 +227,8 @@ typedef enum _KWAIT_REASON {
 
 typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX {
     PVOID Object;
-    HANDLE UniqueProcessId;
-    HANDLE HandleValue;
+    ULONG_PTR UniqueProcessId;
+    ULONG_PTR HandleValue;
     ULONG GrantedAccess;
     USHORT CreatorBackTraceIndex;
     USHORT ObjectTypeIndex;

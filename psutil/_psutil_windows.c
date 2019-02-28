@@ -2747,11 +2747,7 @@ static char *get_region_protection_string(ULONG protection) {
  */
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
-#ifdef _WIN64
-    MEMORY_BASIC_INFORMATION64 basicInfo;
-#else
     MEMORY_BASIC_INFORMATION basicInfo;
-#endif
     DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
