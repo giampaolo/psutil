@@ -82,7 +82,7 @@ On Windows:
 
 .. code-block:: bat
 
-    set TSCRIPT=foo.py && make test
+    make test foo.py
 
 Adding a new feature
 ====================

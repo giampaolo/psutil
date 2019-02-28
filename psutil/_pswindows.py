@@ -731,13 +731,18 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        try:
+        if cext.WINVER >= cext.WINDOWS_8_1:
+            # PEB method detects cmdline changes but requires more
+            # privileges: https://github.com/giampaolo/psutil/pull/1398
+            try:
+                ret = cext.proc_cmdline(self.pid, use_peb=True)
+            except OSError as err:
+                if err.errno in ACCESS_DENIED_ERRSET:
+                    ret = cext.proc_cmdline(self.pid, use_peb=False)
+                else:
+                    raise
+        else:
             ret = cext.proc_cmdline(self.pid, use_peb=True)
-        except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
-                ret = cext.proc_cmdline(self.pid, use_peb=False)
-            else:
-                raise
         if PY3:
             return ret
         else:
