@@ -318,7 +318,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
     PyObject*                           py_path = NULL;
     ULONG                               dwSize = 0;
     LPVOID                              pMem = NULL;
-    TCHAR                               pszFilename[MAX_PATH+1];
+    wchar_t                             pszFilename[MAX_PATH+1];
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
@@ -409,7 +409,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
         }
 
         dwSize = GetMappedFileName(
-            GetCurrentProcess(), pMem, pszFilename, MAX_PATH);
+            GetCurrentProcess(), pMem, (LPSTR)pszFilename, MAX_PATH);
         if (dwSize == 0) {
             /*
             printf("[%d] GetMappedFileName (%#x): %#x \n",
