@@ -25,12 +25,14 @@ include psutil/__init__.py
 include psutil/_common.py
 include psutil/_compat.py
 include psutil/_psaix.py
+include psutil/_psibmi.py
 include psutil/_psbsd.py
 include psutil/_pslinux.py
 include psutil/_psosx.py
 include psutil/_psposix.py
 include psutil/_pssunos.py
 include psutil/_psutil_aix.c
+include psutil/_psutil_ibmi.c
 include psutil/_psutil_bsd.c
 include psutil/_psutil_common.c
 include psutil/_psutil_common.h

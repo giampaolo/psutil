@@ -163,7 +163,10 @@ elif SUNOS:
     PROCFS_PATH = "/proc"
 
 elif AIX:
-    from . import _psaix as _psplatform
+    if os.uname().sysname == 'OS400':
+        from . import _psibmi as _psplatform
+    else:
+        from . import _psaix as _psplatform
 
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
