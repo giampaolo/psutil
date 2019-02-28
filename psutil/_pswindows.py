@@ -731,8 +731,9 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        # https://github.com/giampaolo/psutil/pull/1398
         if cext.WINVER >= cext.WINDOWS_8_1:
+            # PEB method detects cmdline changes but requires more
+            # privileges: https://github.com/giampaolo/psutil/pull/1398
             try:
                 ret = cext.proc_cmdline(self.pid, use_peb=True)
             except OSError as err:
