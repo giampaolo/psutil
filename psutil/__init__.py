@@ -1704,7 +1704,7 @@ def cpu_count(logical=True):
         ret = _psplatform.cpu_count_logical()
     else:
         ret = _psplatform.cpu_count_physical()
-    if ret is not None and ret < 1:
+    if ret is not None and ret < 1 and os.uname().sysname != 'OS400':
         ret = None
     return ret
 

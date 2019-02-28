@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import ibm_db_dbi as dbi
 from collections import namedtuple
 from socket import AF_INET
 
@@ -83,6 +84,7 @@ ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
+_conn = dbi.connect()
 
 # =====================================================================
 # --- named tuples
@@ -167,27 +169,21 @@ def cpu_count_logical():
     if hasattr(cext, 'cpu_count_online'):
         return cext.cpu_count_online()
     """Return the number of logical CPUs in the system."""
-    try:
-        return os.sysconf("SC_NPROCESSORS_ONLN")
-    except ValueError:
-        # mimic os.cpu_count() behavior
-        return None
+    cursor = _conn.cursor()
+    cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
+    ncpus = cursor.fetchone()[0]
+    cursor.close()
+    return ncpus
 
 
 def cpu_count_physical():
     if hasattr(cext, 'cpu_count'):
         return cext.cpu_count()
-    cmd = "lsdev -Cc processor"
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if PY3:
-        stdout, stderr = [x.decode(sys.stdout.encoding)
-                          for x in (stdout, stderr)]
-    if p.returncode != 0:
-        raise RuntimeError("%r command error\n%s" % (cmd, stderr))
-    processors = stdout.strip().splitlines()
-    return len(processors) or None
+    cursor = _conn.cursor()
+    cursor.execute("select CONFIGURED_CPUS from table (QSYS2.SYSTEM_STATUS()) x")
+    ncpus = cursor.fetchone()[0]
+    cursor.close()
+    return ncpus
 
 
 def cpu_stats():
@@ -391,7 +387,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache", "_conn"]
 
     def __init__(self, pid):
         self.pid = pid
