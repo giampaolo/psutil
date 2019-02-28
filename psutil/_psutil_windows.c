@@ -584,13 +584,13 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("[]");
 
-    use_peb = (py_usepeb == Py_True) ? 1 : 0;
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
         return NoSuchProcess("");
     if (pid_return == -1)
         return NULL;
 
+    use_peb = (py_usepeb == Py_True) ? 1 : 0;
     return psutil_get_cmdline(pid, use_peb);
 }
 
