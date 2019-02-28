@@ -290,24 +290,22 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
 typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     ULONG NextEntryOffset;
     ULONG NumberOfThreads;
-    LARGE_INTEGER WorkingSetPrivateSize; // since Vista
-    ULONG HardFaultCount; // since Win7
-    ULONG NumberOfThreadsHighWatermark; // since Win7
-    ULONGLONG CycleTime; // since Win7
+    LARGE_INTEGER SpareLi1;
+    LARGE_INTEGER SpareLi2;
+    LARGE_INTEGER SpareLi3;
     LARGE_INTEGER CreateTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER KernelTime;
     UNICODE_STRING ImageName;
-    KPRIORITY BasePriority;
+    LONG BasePriority;
     HANDLE UniqueProcessId;
     HANDLE InheritedFromUniqueProcessId;
     ULONG HandleCount;
     ULONG SessionId;
-    // since VISTA (requires SystemExtendedProcessInformation)
-    ULONG_PTR UniqueProcessKey;
+    ULONG_PTR PageDirectoryBase;
     SIZE_T PeakVirtualSize;
     SIZE_T VirtualSize;
-    ULONG PageFaultCount;
+    DWORD PageFaultCount;
     SIZE_T PeakWorkingSetSize;
     SIZE_T WorkingSetSize;
     SIZE_T QuotaPeakPagedPoolUsage;
@@ -323,7 +321,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     LARGE_INTEGER ReadTransferCount;
     LARGE_INTEGER WriteTransferCount;
     LARGE_INTEGER OtherTransferCount;
-    SYSTEM_THREAD_INFORMATION Threads[1]; // SystemProcessInformation
+SYSTEM_THREAD_INFORMATION Threads[1];
 } SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
 
 #define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
