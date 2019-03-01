@@ -184,8 +184,6 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Distribution
 # ===================================================================
 
-# --- create
-
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
@@ -196,8 +194,6 @@ wheel:  ## Generate wheel.
 win-download-wheels:  ## Download wheels hosted on appveyor.
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
-# --- upload
-
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
@@ -207,16 +203,17 @@ upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
 
 # --- others
 
-check-src-dist:  ## Make sure we can install from the (MANIFEST-based) tar.gz
+check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	rm -rf dist
-	$(PYTHON) -m virtualenv build/venv
+	${MAKE} clean
+	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
-	build/venv/bin/python -m pip install dist/*.tar.gz
-	build/venv/bin/python -c "import psutil"
+	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
+	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 
 pre-release:  ## Check if we're ready to produce a new release.
-	rm -rf dist
-	${MAKE} check-src-dist
+	${MAKE} check-sdist
+	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	${MAKE} win-download-wheels
