@@ -119,9 +119,12 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
                         1);
     if(proc_info.pi_pid != pid) {
         printf("process %d is gone\n", pid);
+        errno = ENOENT;
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     if(0 > rtv) {
+        errno = ENOENT;
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -189,11 +192,12 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
                         sizeof(struct procentry64),
                         NULL,
                         0,
-                        &pid,
+                        &pid_in_table,
                         1);
     if(proc_info.pi_pid != pid) {
         printf("process %d is gone\n", pid);
-       // PyErr_SetString(PyExc_RuntimeError, "Process does not exist");
+        errno = ENOENT;
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     if(0 > rtv) {
