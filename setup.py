@@ -240,16 +240,28 @@ elif SUNOS:
         libraries=['kstat', 'nsl', 'socket'])
 # AIX
 elif AIX:
-    macros.append(("PSUTIL_AIX", 1))
-    ext = Extension(
-        'psutil._psutil_aix',
-        sources=sources + [
-            'psutil/_psutil_aix.c',
-            'psutil/arch/aix/net_connections.c',
-            'psutil/arch/aix/common.c',
-            'psutil/arch/aix/ifaddrs.c'],
-        libraries=['perfstat'],
-        define_macros=macros)
+    if os.uname().sysname == 'OS400':
+        macros.append(("PSUTIL_AIX", 1))
+        ext = Extension(
+            'psutil._psutil_ibmi',
+            sources=sources + [
+                'psutil/_psutil_ibmi.c',
+                'psutil/arch/aix/common.c',
+                'psutil/arch/aix/net_connections.c',
+                'psutil/arch/aix/ifaddrs.c'],
+            libraries=['util'],
+            define_macros=macros)
+    else:
+        macros.append(("PSUTIL_AIX", 1))
+        ext = Extension(
+            'psutil._psutil_aix',
+            sources=sources + [
+                'psutil/_psutil_aix.c',
+                'psutil/arch/aix/net_connections.c',
+                'psutil/arch/aix/common.c',
+                'psutil/arch/aix/ifaddrs.c'],
+            libraries=['perfstat'],
+            define_macros=macros)
 
 else:
     sys.exit('platform %s is not supported' % sys.platform)

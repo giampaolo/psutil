@@ -163,7 +163,10 @@ elif SUNOS:
     PROCFS_PATH = "/proc"
 
 elif AIX:
-    from . import _psaix as _psplatform
+    if os.uname().sysname == 'OS400':
+        from . import _psibmi as _psplatform
+    else:
+        from . import _psaix as _psplatform
 
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
@@ -1675,7 +1678,7 @@ def cpu_count(logical=True):
         ret = _psplatform.cpu_count_logical()
     else:
         ret = _psplatform.cpu_count_physical()
-    if ret is not None and ret < 1:
+    if ret is not None and ret < 1 and os.uname().sysname != 'OS400':
         ret = None
     return ret
 
