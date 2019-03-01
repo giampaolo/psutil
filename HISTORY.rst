@@ -922,7 +922,7 @@ XXXX-XX-XX
 - 646_: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
-  https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
+  https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 - 651_: continuous code quality test integration with scrutinizer-ci.com
 
 **Bug fixes**

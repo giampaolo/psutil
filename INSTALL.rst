@@ -3,22 +3,16 @@ Install pip
 
 pip is the easiest way to install psutil. It is shipped by default with Python
 2.7.9+ and 3.4+. For other Python versions you can install it manually.
-On Linux or via wget:
-
-.. code-block:: bash
+On Linux or via wget::
 
     wget https://bootstrap.pypa.io/get-pip.py -O - | python
 
-On macOS or via curl:
-
-.. code-block:: bash
+On macOS or via curl::
 
     python < <(curl -s https://bootstrap.pypa.io/get-pip.py)
 
 On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`__, open
-cmd.exe and install it:
-
-.. code-block:: bat
+cmd.exe and install it::
 
     C:\Python27\python.exe get-pip.py
 
@@ -28,32 +22,25 @@ Permission issues (UNIX)
 The commands below assume you're running as root.
 If you're not or you bump into permission errors you can either:
 
-* prepend ``sudo``, e.g.:
+* install psutil for your user only::
 
-.. code-block:: bash
+    pip install --user psutil
+
+
+* prepend ``sudo``, e.g.::
 
     sudo pip install psutil
 
-* install psutil for your user only (not at system level):
-
-.. code-block:: bash
-
-    pip install --user psutil
 
 Linux
 =====
 
-Ubuntu / Debian:
-
-.. code-block:: bash
+Ubuntu / Debian::
 
     sudo apt-get install gcc python-dev python-pip
     pip install psutil
 
-RedHat / CentOS:
-
-
-.. code-block:: bash
+RedHat / CentOS::
 
     sudo yum install gcc python-devel python-pip
     pip install psutil
@@ -63,19 +50,16 @@ If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
 macOS
 =====
 
-Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__
-first, then:
+* install Xcode: https://developer.apple.com/downloads/?name=Xcode
 
-.. code-block:: bash
+* run::
 
     pip install psutil
 
 Windows
 =======
 
-Open a cmd.exe shell and run:
-
-.. code-block::
+Open a cmd.exe shell and run::
 
     python -m pip install psutil
 
@@ -95,9 +79,7 @@ Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires
 `Windows SDK and .NET Framework 3.5 SP1 <https://www.microsoft.com/en-us/download/details.aspx?id=3138>`__.
 Once installed run `vcvars64.bat`
 (see `here <http://stackoverflow.com/questions/11072521/>`__).
-Once VS is setup open a cmd.exe shell, cd into psutil directory and run:
-
-.. code-block:: bat
+Once VS is setup open a cmd.exe shell, cd into psutil directory and run::
 
     python setup.py build
     python setup.py install
@@ -105,16 +87,14 @@ Once VS is setup open a cmd.exe shell, cd into psutil directory and run:
 FreeBSD
 =======
 
-.. code-block:: bash
-
+::
     pkg install python gcc
     python -m pip install psutil
 
 OpenBSD
 =======
 
-.. code-block:: bash
-
+::
     export PKG_PATH="http://ftp.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`/"
     pkg_add -v python gcc
     python -m pip install psutil
@@ -122,8 +102,7 @@ OpenBSD
 NetBSD
 ======
 
-.. code-block:: bash
-
+::
     export PKG_PATH="ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
     pkgin install python gcc
@@ -134,29 +113,25 @@ Solaris
 
 If ``cc`` compiler is not installed create a symlink to ``gcc``:
 
-.. code-block:: bash
-
+::
     sudo ln -s /usr/bin/gcc /usr/local/bin/cc
 
 Install:
 
-.. code-block:: bash
-
+::
     pkg install gcc
     python -m pip install psutil
 
 Install from sources
 ====================
 
-.. code-block:: bash
-
+::
     git clone https://github.com/giampaolo/psutil.git
     cd psutil
     python setup.py install
 
-
 Dev Guide
 =========
 
-If you plan on hacking on psutil you may want to take a look at the
-`dev guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`__.
+If you plan on hacking on psutil you may want to take a look at the dev guide:
+https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst

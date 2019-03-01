@@ -41,7 +41,7 @@ Quick links
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
 
