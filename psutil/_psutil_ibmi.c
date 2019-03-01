@@ -109,13 +109,18 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 #ifdef __PASE__
+    int pid_in_table = pid;
     struct procentry64 proc_info;
     int rtv = getprocs64(&proc_info, 
                         sizeof(struct procentry64),
                         NULL,
                         0,
-                        &pid,
+                        &pid_in_table,
                         1);
+    if(proc_info.pi_pid != pid) {
+        printf("process %d is gone\n", pid);
+        return NULL;
+    }
     if(0 > rtv) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -179,12 +184,18 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
         return NULL;
 #ifdef __PASE__
     struct procentry64 proc_info;
+    int pid_in_table = pid;
     int rtv = getprocs64(&proc_info,
                         sizeof(struct procentry64),
                         NULL,
                         0,
                         &pid,
                         1);
+    if(proc_info.pi_pid != pid) {
+        printf("process %d is gone\n", pid);
+       // PyErr_SetString(PyExc_RuntimeError, "Process does not exist");
+        return NULL;
+    }
     if(0 > rtv) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -919,7 +930,7 @@ psutil_list_pids(PyObject *self, PyObject *args) {
     int rtv = 0;
     pid_t pid_idx = 0;
     int tuple_idx = 0;
-    while(0 < (rtv = getprocs64(&proc_info, sizeof(struct procentry64), NULL, 0,&pid_idx, 5))) {
+    while(0 < (rtv = getprocs64(&proc_info, sizeof(struct procentry64), NULL, 0,&pid_idx, 128))) {
         _PyTuple_Resize(&py_retdict, PyTuple_Size(py_retdict)+rtv);
         for(int i = 0; i < rtv; i++) {
             pid_t cur_pid = proc_info[i].pi_pid;
