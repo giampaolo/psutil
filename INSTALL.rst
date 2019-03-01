@@ -20,17 +20,14 @@ Permission issues (UNIX)
 ========================
 
 The commands below assume you're running as root.
-If you're not or you bump into permission errors you can either:
-
-* install psutil for your user only::
+If you're not or you bump into permission errors you can either install psutil
+for your user only::
 
     pip install --user psutil
 
-
-* prepend ``sudo``, e.g.::
+...or prepend ``sudo``, e.g.::
 
     sudo pip install psutil
-
 
 Linux
 =====
@@ -50,9 +47,7 @@ If you're on Python 3 use ``python3-dev`` and ``python3-pip`` instead.
 macOS
 =====
 
-* install Xcode: https://developer.apple.com/downloads/?name=Xcode
-
-* run::
+Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__ then run::
 
     pip install psutil
 
@@ -88,16 +83,20 @@ FreeBSD
 =======
 
 ::
+
     pkg install python gcc
     python -m pip install psutil
+
 
 OpenBSD
 =======
 
 ::
+
     export PKG_PATH="http://ftp.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`/"
     pkg_add -v python gcc
     python -m pip install psutil
+
 
 NetBSD
 ======
@@ -108,30 +107,36 @@ NetBSD
     pkgin install python gcc
     python -m pip install psutil
 
+
 Solaris
 =======
 
 If ``cc`` compiler is not installed create a symlink to ``gcc``:
 
 ::
+
     sudo ln -s /usr/bin/gcc /usr/local/bin/cc
 
 Install:
 
 ::
+
     pkg install gcc
     python -m pip install psutil
+
 
 Install from sources
 ====================
 
 ::
+
     git clone https://github.com/giampaolo/psutil.git
     cd psutil
     python setup.py install
 
+
 Dev Guide
 =========
 
-If you plan on hacking on psutil you may want to take a look at the dev guide:
-https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
+If you wan to hacking or contribute on psutil continue reading the
+`dev guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`__
