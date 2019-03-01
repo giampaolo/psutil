@@ -929,28 +929,20 @@ psutil_list_pids(PyObject *self, PyObject *args) {
     }
     return py_retdict;
 }
-#ifdef HAVE_IBMIPERFSTAT
 /*
  * Return total number of CPUs
  */
 static PyObject *
 psutil_cpu_count(PyObject *self, PyObject *args) {
-    struct iperfstat_cpu_number_t cpus;
-    memset(&cpus, 0x00, sizeof(cpus));
-    iperfstat_cpu_get_number(&cpus);
-    return Py_BuildValue("i",cpus.ncpus_configured);
+    return Py_BuildValue("i",sysconf(_SC_NPROCESSORS_CONF));
 }
 /*
  * Return number of current CPUs online
  */
 static PyObject *
 psutil_cpu_count_online(PyObject *self, PyObject *args) {
-    struct iperfstat_cpu_number_t cpus;
-    memset(&cpus, 0x00, sizeof(cpus));
-    iperfstat_cpu_get_number(&cpus);
-    return Py_BuildValue("i",cpus.ncpus_online);
+    return Py_BuildValue("i",sysconf(_SC_NPROCESSORS_ONLN));
 }
-#endif
 #endif
 
 /*
@@ -1013,12 +1005,10 @@ PsutilMethods[] =
 #ifdef __PASE__
     {"list_pids", psutil_list_pids, METH_NOARGS,
     "Get a tuple of all running process identifiers"},
-#ifdef HAVE_IBMIPERFSTAT
     {"cpu_count", psutil_cpu_count, METH_NOARGS,
     "Get a count of total CPUs"},
     {"cpu_count_online", psutil_cpu_count, METH_NOARGS,
     "Get a count of the number of online CPUs"},
-#endif
 #endif
     {NULL, NULL, 0, NULL}
 };

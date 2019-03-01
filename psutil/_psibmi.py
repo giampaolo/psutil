@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import ibm_db_dbi as dbi
+import traceback
 from collections import namedtuple
 from socket import AF_INET
 
@@ -176,7 +177,10 @@ def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     cursor = _conn.cursor()
     cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
-    ncpus = cursor.fetchone()[0]
+    print("Executed query for logical CPUs")
+    traceback.print_stack()
+    ncpus = int(cursor.fetchone()[0])
+    print("Determined logical CPU count to be ", ncpus)
     cursor.close()
     return ncpus
 
@@ -205,12 +209,15 @@ def cpu_stats():
 # =====================================================================
 
 
-if hasattr(cext, 'disk_io_counters'):
-    disk_io_counters = cext.disk_io_counters
-else:
-    disk_io_counters = _not_supported
-disk_usage = _psposix.disk_usage
-
+def disk_io_counters(all=False): #TODO
+    cursor = _conn.cursor()
+    cursor.execute("SELECT UNIT_NUMBER FROM QSYS2.SYSDISKSTAT")
+    counters = {}
+    for row in cursor:
+        print("adding ", row[0])
+        counters[row[0]] = (0,0,0,0,0,0)
+    cursor.close()
+    return counters
 
 def disk_partitions(all=False):
     """Return system disk partitions."""
@@ -239,10 +246,20 @@ def disk_partitions(all=False):
 
 
 net_if_addrs = cext_posix.net_if_addrs
-if hasattr(cext, 'net_io_counters'):
-    net_io_counters = cext.net_io_counters
-else:
-    net_io_counters = _not_supported
+
+def net_io_counters(pernic=True):
+    print("Hello")
+    if(True):
+        cursor = _conn.cursor()
+        cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
+        counters = {}
+        for row in cursor:
+            print("adding ", row[0])
+            counters[row[0]] = (0,0,0,0,0,0,0,0)
+        cursor.close()
+        return counters
+    else:
+        return (0,0,0,0,0)
 
 
 def net_connections(kind, _pid=-1):
