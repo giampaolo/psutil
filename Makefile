@@ -20,6 +20,7 @@ DEPS = \
 	sphinx \
 	twine \
 	unittest2 \
+	virtualenv \
 	wheel
 
 # In not in a virtualenv, add --user options for install commands.
@@ -206,9 +207,16 @@ upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
 
 # --- others
 
+check-src-dist:  ## Make sure we can install from the (MANIFEST-based) tar.gz
+	rm -rf dist
+	$(PYTHON) -m virtualenv build/venv
+	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+	build/venv/bin/python -m pip install dist/*.tar.gz
+	build/venv/bin/python -c "import psutil"
+
 pre-release:  ## Check if we're ready to produce a new release.
 	rm -rf dist
-	${MAKE} install
+	${MAKE} check-src-dist
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	${MAKE} win-download-wheels
