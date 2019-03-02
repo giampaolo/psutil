@@ -922,9 +922,6 @@ class Process(object):
             (and set).
             (Windows, Linux and BSD only).
             """
-            # Automatically remove duplicates both on get and
-            # set (for get it's not really necessary, it's
-            # just for extra safety).
             if cpus is None:
                 return list(set(self._proc.cpu_affinity_get()))
             else:

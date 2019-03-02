@@ -2313,7 +2313,7 @@ Constants
 Unicode
 =======
 
-Starting from version 5.3.0 psutil fully supports unicode, see
+Starting from version 5.3.0 psutil adds unicode support, see
 `issue #1040 <https://github.com/giampaolo/psutil/issues/1040>`__.
 The notes below apply to *any* API returning a string such as
 :meth:`Process.exe` or :meth:`Process.cwd`, including non-filesystem related
@@ -2351,9 +2351,6 @@ and 3::
 
 Recipes
 =======
-
-Follows a collection of utilities and examples which are common but not generic
-enough to be part of the public API.
 
 Find process by name
 --------------------
@@ -2406,8 +2403,7 @@ Kill process tree
       "on_terminate", if specified, is a callabck function which is
       called as soon as a child terminates.
       """
-      if pid == os.getpid():
-          raise RuntimeError("I refuse to kill myself")
+      assert pid != os.getpid(), "won't kill myself"
       parent = psutil.Process(pid)
       children = parent.children(recursive=True)
       if include_parent:
@@ -2437,13 +2433,19 @@ resources.
       procs = psutil.Process().children()
       # send SIGTERM
       for p in procs:
-          p.terminate()
+          try:
+              p.terminate()
+          except psutil.NoSuchProcess:
+              pass
       gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
       if alive:
           # send SIGKILL
           for p in alive:
               print("process {} survived SIGTERM; trying SIGKILL" % p)
-              p.kill()
+              try:
+                  p.kill()
+              except psutil.NoSuchProcess:
+                  pass
           gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
           if alive:
               # give up

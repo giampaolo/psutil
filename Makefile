@@ -177,7 +177,7 @@ git-tag-release:  ## Git-tag a new release.
 	git push --follow-tags
 
 install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
+	ln -sf ../../scripts/internal/.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================

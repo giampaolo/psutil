@@ -464,7 +464,7 @@ def test_memleaks():
 def install_git_hooks():
     """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
-        src = os.path.join(ROOT_DIR, ".git-pre-commit")
+        src = os.path.join(ROOT_DIR, "scripts", "internal", ".git-pre-commit")
         dst = os.path.realpath(
             os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
         with open(src, "rt") as s:
