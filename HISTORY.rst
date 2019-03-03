@@ -36,7 +36,9 @@ XXXX-XX-XX
 - 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
 - 1439_: [NetBSD] Process.connections() may return incomplete results if using
-  oneshot()
+  oneshot().
+- 1447_: original exception wasn't turned into NSP/AD exceptions when using
+  Process.oneshot() ctx manager.
 
 **Incompatible API changes**
 

@@ -1546,6 +1546,7 @@ class Process(object):
         # incorrect or incomplete result.
         os.stat('%s/%s' % (self._procfs_path, self.pid))
 
+    @wrap_exceptions
     @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file and return a dict with various
@@ -1579,6 +1580,7 @@ class Process(object):
 
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _read_status_file(self):
         """Read /proc/{pid}/stat file and return its content.
@@ -1588,6 +1590,7 @@ class Process(object):
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
 
+    @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),

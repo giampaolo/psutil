@@ -686,6 +686,7 @@ class Process(object):
     def oneshot_exit(self):
         self.oneshot_info.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def oneshot_info(self):
         """Return multiple information about this process as a

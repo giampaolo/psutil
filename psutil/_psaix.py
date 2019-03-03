@@ -371,14 +371,17 @@ class Process(object):
         self._proc_basic_info.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
         return cext.proc_name_and_args(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_basic_info(self):
         return cext.proc_basic_info(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
         return cext.proc_cred(self.pid, self._procfs_path)

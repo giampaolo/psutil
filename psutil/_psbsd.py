@@ -611,6 +611,7 @@ class Process(object):
         # incorrect or incomplete result.
         cext.proc_name(self.pid)
 
+    @wrap_exceptions
     @memoize_when_activated
     def oneshot(self):
         """Retrieves multiple process info in one shot as a raw tuple."""

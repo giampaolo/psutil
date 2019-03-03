@@ -384,6 +384,7 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    @wrap_exceptions
     @memoize_when_activated
     def _get_kinfo_proc(self):
         # Note: should work with all PIDs without permission issues.
@@ -391,6 +392,7 @@ class Process(object):
         assert len(ret) == len(kinfo_proc_map)
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _get_pidtaskinfo(self):
         # Note: should work for PIDs owned by user only.

@@ -396,22 +396,22 @@ class Process(object):
         self._proc_basic_info.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
         return cext.proc_name_and_args(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_basic_info(self):
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
         assert len(ret) == len(proc_info_map)
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
-        @wrap_exceptions
-        def proc_cred(self):
-            return cext.proc_cred(self.pid, self._procfs_path)
-        return proc_cred(self)
+        return cext.proc_cred(self.pid, self._procfs_path)
 
     @wrap_exceptions
     def name(self):
