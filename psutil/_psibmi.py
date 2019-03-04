@@ -229,7 +229,7 @@ def disk_partitions(all=False):
             unit_type = "not_solid_state"
         else:
             unit_type = "solid_state"
-        counters[row[0]] = ("unit"+row[0],row[1],unit_type, row[3])
+        counters[row[0]] = ("unit:"+str(row[0]),"asp:"+str(row[1]),unit_type, str(row[3]))
     cursor.close()
     return counters
 
