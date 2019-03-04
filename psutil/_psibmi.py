@@ -233,15 +233,15 @@ def disk_io_counters(all=False): #TODO
 def disk_partitions(all=False):
     cursor = _conn.cursor()
     cursor.execute("SELECT UNIT_NUMBER,ASP_NUMBER,UNIT_TYPE,DISK_TYPE FROM QSYS2.SYSDISKSTAT")
-    counters = {}
+    ret = []
     for row in cursor:
         if(row[2] == 0):
             unit_type = "not_solid_state"
         else:
             unit_type = "solid_state"
-        counters[row[0]] = ("unit:"+str(row[0]),"asp:"+str(row[1]),unit_type, str(row[3]))
+        ret.append(_common.sdiskpart("unit:"+str(row[0]),"asp:"+str(row[1]),unit_type, str(row[3])))
     cursor.close()
-    return counters
+    return ret
 
 
 # =====================================================================
