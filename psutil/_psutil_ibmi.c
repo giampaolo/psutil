@@ -205,7 +205,6 @@ error:
 }
 
 
-#ifdef CURR_VERSION_THREAD
 /*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
@@ -215,15 +214,36 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
-    perfstat_thread_t *threadt = NULL;
-    perfstat_id_t id;
-    int i, rc, thread_count;
 
     if (py_retlist == NULL)
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
+        return NULL;
+#ifdef __PASE__
+    struct thrdentry64 thd_buf[1024];
+    tid64_t start = 0;
+    int thread_count = getthrds64(   pid,
+                            &thd_buf,
+                            sizeof(struct thrdentry64),
+                            &start,
+                            102
+    );
+    if (thread_count <= 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    for (int i = 0; i < thread_count; i++) {
+        py_tuple = Py_BuildValue("Idd",
+                                 thd_buf[i].ti_tid,
+                                 thd_buf[i].ti_cpu,
+                                 0);
+        PyList_Append(py_retlist, py_tuple);
+        Py_DECREF(py_tuple);
+    }
 
+    return py_retlist;
+
+#else
     /* Get the count of threads */
     thread_count = perfstat_thread(NULL, NULL, sizeof(perfstat_thread_t), 0);
     if (thread_count <= 0) {
@@ -270,8 +290,8 @@ error:
     if (threadt != NULL)
         free(threadt);
     return NULL;
+#endif    
 }
-#endif
 
 #ifndef __PASE__
 static PyObject *
@@ -957,15 +977,13 @@ PsutilMethods[] =
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
-     "Return process uids/gids."},
-#ifdef CURR_VERSION_THREAD
-    {"proc_threads", psutil_proc_threads, METH_VARARGS,
-     "Return process threads"},
-#endif
+     "Return process uids/gids."}, 
 #ifndef __PASE__
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
 #endif
+    {"proc_threads", psutil_proc_threads, METH_VARARGS,
+     "Return process threads"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Get process I/O counters."},
 

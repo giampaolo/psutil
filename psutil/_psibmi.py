@@ -215,7 +215,7 @@ def disk_io_counters(all=False): #TODO
     counters = {}
     for row in cursor:
         print("adding ", row[0])
-        counters[row[0]] = (0,0,0,0,0,0)
+        counters["unit:"+str(row[0])] = (0,0,0,0,0,0)
     cursor.close()
     return counters
 
