@@ -36,6 +36,25 @@ psutil_kread(
     return 0;
 }
 
+
+struct procentry64 *
+psutil_get_proc(struct procentry64* dest, int pid) {
+    int pid_in_table = pid;
+    int rtv = getprocs64(dest, 
+                        sizeof(struct procentry64),
+                        NULL,
+                        0,
+                        &pid_in_table,
+                        1);
+    if( 0 >= rtv ||dest->pi_pid != pid) {
+        printf("process %d is gone\n", pid);
+        errno = ENOENT;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return dest;
+}
+
 struct procentry64 *
 psutil_read_process_table(int * num) {
     size_t msz;

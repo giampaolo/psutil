@@ -45,6 +45,7 @@
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#define __PASE__
 #ifdef __PASE__
 #include <procinfo.h>
 #include <sys/types.h>
@@ -109,23 +110,8 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 #ifdef __PASE__
-    int pid_in_table = pid;
     struct procentry64 proc_info;
-    int rtv = getprocs64(&proc_info, 
-                        sizeof(struct procentry64),
-                        NULL,
-                        0,
-                        &pid_in_table,
-                        1);
-    if(proc_info.pi_pid != pid) {
-        printf("process %d is gone\n", pid);
-        errno = ENOENT;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    if(0 > rtv) {
-        errno = ENOENT;
-        PyErr_SetFromErrno(PyExc_OSError);
+    if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
     }
     return Py_BuildValue("KKKKiiiK",
@@ -135,7 +121,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         (unsigned long long)proc_info.pi_start, // create time
         (int) proc_info.pi_nice,                // nice
         (int) proc_info.pi_thcount,             // no. of threads
-        (int) 0,                                // status code TODO
+        (int) proc_info.pi_state,                                // status code TODO
         (unsigned long long)info.pr_ttydev      // tty nr
         );
 #else
@@ -187,21 +173,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
         return NULL;
 #ifdef __PASE__
     struct procentry64 proc_info;
-    int pid_in_table = pid;
-    int rtv = getprocs64(&proc_info,
-                        sizeof(struct procentry64),
-                        NULL,
-                        0,
-                        &pid_in_table,
-                        1);
-    if(proc_info.pi_pid != pid) {
-        printf("process %d is gone\n", pid);
-        errno = ENOENT;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    if(0 > rtv) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
     }
     return Py_BuildValue("ss",
@@ -363,12 +335,23 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+#ifdef __PASE__
+    struct procentry64 proc_info;
+    if(NULL == psutil_get_proc(&proc_info, pid)) {
+        return NULL;
+    }
+    return Py_BuildValue("iiiiii",
+                         proc_info.pi_uid, proc_info.pi_uid, proc_info.pi_suid,
+                        0,0,0);
+#else
+
     sprintf(path, "%s/%i/cred", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("iiiiii",
                          info.pr_ruid, info.pr_euid, info.pr_suid,
                          info.pr_rgid, info.pr_egid, info.pr_sgid);
+#endif
 }
 
 

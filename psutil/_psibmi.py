@@ -172,8 +172,8 @@ def per_cpu_times():
 
 
 def cpu_count_logical():
-    if hasattr(cext, 'cpu_count_online'):
-        return cext.cpu_count_online()
+    # if hasattr(cext, 'cpu_count_online'):
+    #     return cext.cpu_count_online()
     """Return the number of logical CPUs in the system."""
     cursor = _conn.cursor()
     cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
@@ -220,24 +220,18 @@ def disk_io_counters(all=False): #TODO
     return counters
 
 def disk_partitions(all=False):
-    """Return system disk partitions."""
-    # TODO - the filtering logic should be better checked so that
-    # it tries to reflect 'df' as much as possible
-    retlist = []
-    partitions = cext.disk_partitions()
-    for partition in partitions:
-        device, mountpoint, fstype, opts = partition
-        if device == 'none':
-            device = ''
-        if not all:
-            # Differently from, say, Linux, we don't have a list of
-            # common fs types so the best we can do, AFAIK, is to
-            # filter by filesystem having a total size > 0.
-            if not disk_usage(mountpoint).total:
-                continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
-        retlist.append(ntuple)
-    return retlist
+    cursor = _conn.cursor()
+    cursor.execute("SELECT UNIT_NUMBER,ASP_NUMBER,UNIT_TYPE,DISK_TYPE FROM QSYS2.SYSDISKSTAT")
+    counters = {}
+    for row in cursor:
+        print("adding ", row[0])
+        if(row[2] == 0):
+            unit_type = "not_solid_state"
+        else:
+            unit_type = "solid_state"
+        counters[row[0]] = ("unit"+row[0],row[1],unit_type, row[3])
+    cursor.close()
+    return counters
 
 
 # =====================================================================
