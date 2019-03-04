@@ -108,7 +108,6 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
-
 # =====================================================================
 # --- IBM i runs an AIX variant but a number of things are unsupported
 # =====================================================================
@@ -209,6 +208,17 @@ def cpu_stats():
 # --- disks
 # =====================================================================
 
+def disk_usage(path='/'):
+    cursor = _conn.cursor()
+    cursor.execute("SELECT SUM(UNIT_STORAGE_CAPACITY) as TOTAL, SUM(UNIT_SPACE_AVAILABLE) as AVAIL FROM QSYS2.SYSDISKSTAT")
+    counters = {}
+    for row in cursor:
+        total = row[0]
+        avail = row[1]
+        used = total - avail
+        percent = (float(100.00*used)/float(total))
+        cursor.close()
+        return _common.sdiskusage(total, used, avail, percent)
 
 def disk_io_counters(all=False): #TODO
     cursor = _conn.cursor()
