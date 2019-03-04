@@ -428,6 +428,33 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+
+    struct procentry64 proc_info[128];
+    int rtv = 0;
+    pid_t pid_idx = 0;
+    int tuple_idx = 0;
+    // while(0 < (rtv = getprocs64(&proc_info, sizeof(struct procentry64), NULL, 0,&pid_idx, 128))) {
+    //     _PyTuple_Resize(&py_retdict, PyTuple_Size(py_retdict)+rtv);
+    //     for(int i = 0; i < rtv; i++) {
+    //         pid_t cur_pid = proc_info[i].pi_pid;
+    //         pid_idx = 1 + cur_pid;
+    //         PyTuple_SetItem(py_retdict, tuple_idx++, Py_BuildValue("K",cur_pid));
+
+    //         py_tuple = Py_BuildValue(
+    //             "(slsfOi)",
+    //             "tbd",              // username
+    //             proc_info[i].pi_ttyd,                   // tty
+    //             "unknown",              // hostname
+    //             (float)ut->ut_tv.tv_sec,  // tstamp
+    //             1,             // (bool) user process
+    //             proc_info[i].pi_pid                // process id
+    //         );
+    //         if (py_tuple == NULL)
+    //             goto error;
+    //         if (PyList_Append(py_retlist, py_tuple))
+    //             goto error;
+    //     }
+    // }
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)

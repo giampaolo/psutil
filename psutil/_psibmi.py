@@ -14,6 +14,7 @@ import subprocess
 import sys
 import ibm_db_dbi as dbi
 import traceback
+import math
 from collections import namedtuple
 from socket import AF_INET
 
@@ -178,10 +179,9 @@ def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     cursor = _conn.cursor()
     cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
-    print("Executed query for logical CPUs")
-    traceback.print_stack()
-    ncpus = int(cursor.fetchone()[0])
-    print("Determined logical CPU count to be ", ncpus)
+    #print("Executed query for logical CPUs")
+    ncpus = math.ceil(cursor.fetchone()[0])
+    #print("Determined logical CPU count to be ", ncpus)
     cursor.close()
     return ncpus
 
@@ -225,7 +225,6 @@ def disk_partitions(all=False):
     cursor.execute("SELECT UNIT_NUMBER,ASP_NUMBER,UNIT_TYPE,DISK_TYPE FROM QSYS2.SYSDISKSTAT")
     counters = {}
     for row in cursor:
-        print("adding ", row[0])
         if(row[2] == 0):
             unit_type = "not_solid_state"
         else:
