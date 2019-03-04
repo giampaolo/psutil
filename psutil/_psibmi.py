@@ -30,6 +30,7 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
+import datetime
 
 
 __extra__all__ = ["PROCFS_PATH"]
@@ -242,7 +243,6 @@ def disk_partitions(all=False):
 net_if_addrs = cext_posix.net_if_addrs
 
 def net_io_counters(pernic=True):
-    print("Hello")
     if(True):
         cursor = _conn.cursor()
         cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
@@ -329,10 +329,12 @@ def net_if_stats():
 
 
 def boot_time():
-    if not hasattr(cext, 'boot_time'):
-        _not_supported()
-    """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+    cursor = _conn.cursor()
+    cursor.execute("SELECT JOB_ACTIVE_TIME FROM TABLE(QSYS2.JOB_INFO(JOB_USER_FILTER => 'QSYS')) A WHERE JOB_NAME = '000000/QSYS/SCPF'")
+    for row in cursor:
+        ret = row[0].timestamp()
+        cursor.close()
+        return ret
 
 
 def users():
