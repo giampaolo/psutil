@@ -33,6 +33,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_kernel_version
 from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
@@ -251,6 +252,7 @@ class TestSystem(unittest.TestCase):
         for ifname, _ in psutil.net_if_stats().items():
             self.assertIsInstance(ifname, str)
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_io_counters(pernic=True).items():

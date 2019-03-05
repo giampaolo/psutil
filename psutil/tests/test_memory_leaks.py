@@ -38,6 +38,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
@@ -534,6 +535,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     @unittest.skipIf(TRAVIS and MACOS, "false positive on travis")
     @skip_if_linux()
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         self.execute(psutil.net_io_counters, nowrap=False)
 

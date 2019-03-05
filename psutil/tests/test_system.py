@@ -38,6 +38,7 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
@@ -538,6 +539,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
@@ -566,6 +568,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIsInstance(key, str)
             check_ntuple(ret[key])
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters_no_nics(self):
         # Emulate a case where no NICs are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
