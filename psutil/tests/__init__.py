@@ -364,8 +364,8 @@ def create_proc_children_pair():
         s += "f.write(str(os.getpid()));"
         s += "f.close();"
         s += "time.sleep(60);"
-        subprocess.Popen(['%s', '-c', s])
-        time.sleep(60)
+        p = subprocess.Popen(['%s', '-c', s])
+        p.wait()
         """ % (_TESTFN2, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
     # set (which is the default) a "conhost.exe" extra process will be
