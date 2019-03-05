@@ -3,7 +3,7 @@
 5.6.0
 =====
 
-XXXX-XX-XX
+2019-03-05
 
 **Enhancements**
 
@@ -24,7 +24,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1353_: process_iter() is now thread safe (it rarely raised TypeError).
-- 1394_: [Windows] Process name() and exe() may erronously return "Registry".
+- 1394_: [Windows] Process name() and exe() may erroneously return "Registry".
   QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
   in order to prevent that.
 - 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
@@ -33,6 +33,9 @@ XXXX-XX-XX
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 - 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
   on failed malloc().
+- 1429_: [Windows] SE DEBUG was not properly set for current process. It is
+  now, and it should result in less AccessDenied exceptions for low-pid
+  processes.
 - 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
 - 1439_: [NetBSD] Process.connections() may return incomplete results if using

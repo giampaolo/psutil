@@ -83,25 +83,25 @@ def download_file(url):
 
 
 def get_file_urls(options):
-    session = requests.Session()
-    data = session.get(
-        BASE_URL + '/projects/' + options.user + '/' + options.project,
-        timeout=TIMEOUT)
-    data = data.json()
-
-    urls = []
-    for job in (job['jobId'] for job in data['build']['jobs']):
-        job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
-        data = session.get(job_url, timeout=TIMEOUT)
+    with requests.Session() as session:
+        data = session.get(
+            BASE_URL + '/projects/' + options.user + '/' + options.project,
+            timeout=TIMEOUT)
         data = data.json()
-        for item in data:
-            file_url = job_url + '/' + item['fileName']
-            urls.append(file_url)
-    if not urls:
-        exit("no artifacts found")
-    else:
-        for url in sorted(urls, key=lambda x: os.path.basename(x)):
-            yield url
+
+        urls = []
+        for job in (job['jobId'] for job in data['build']['jobs']):
+            job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
+            data = session.get(job_url, timeout=TIMEOUT)
+            data = data.json()
+            for item in data:
+                file_url = job_url + '/' + item['fileName']
+                urls.append(file_url)
+        if not urls:
+            exit("no artifacts found")
+        else:
+            for url in sorted(urls, key=lambda x: os.path.basename(x)):
+                yield url
 
 
 def rename_27_wheels():

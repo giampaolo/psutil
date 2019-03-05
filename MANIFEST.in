@@ -1,5 +1,4 @@
 include .coveragerc
-include .git-pre-commit
 include .gitignore
 include CREDITS
 include HISTORY.rst
@@ -20,7 +19,6 @@ include docs/conf.py
 include docs/index.rst
 include docs/make.bat
 include make.bat
-include psutil/DEVNOTES
 include psutil/__init__.py
 include psutil/_common.py
 include psutil/_compat.py
@@ -102,6 +100,7 @@ include scripts/disk_usage.py
 include scripts/fans.py
 include scripts/free.py
 include scripts/ifconfig.py
+include scripts/internal/.git-pre-commit
 include scripts/internal/README
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
