@@ -1,5 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+
+5.6.1
+=====
+
+**Bug fixes**
+
+- 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
+
 5.6.0
 =====
 
