@@ -2633,11 +2633,11 @@ Timeline
 - 2019-03-05:
   `5.6.0 <https://pypi.org/project/psutil/5.6.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#560>`__ -
-  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.1...release-5.6.0#files_bucket>`
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.1...release-5.6.0#files_bucket>`__
 - 2019-02-15:
   `5.5.1 <https://pypi.org/project/psutil/5.5.1/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#551>`__ -
-  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.0...release-5.5.1#files_bucket>`
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.0...release-5.5.1#files_bucket>`__
 - 2019-01-23:
   `5.5.0 <https://pypi.org/project/psutil/5.5.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#550>`__ -

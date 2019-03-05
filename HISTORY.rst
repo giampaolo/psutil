@@ -17,6 +17,8 @@
   call) significantly speeding up different functions and methods.
 - 1426_: [Windows] PAGESIZE and number of processors is now calculated on
   startup.
+- 1428_: in case of error, the traceback message now shows the underlying C
+  function called which failed.
 - 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
 - 1437_: pids() are returned in sorted order.
 - 1442_: python3 is now the default interpreter used by Makefile.
