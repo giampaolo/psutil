@@ -7,6 +7,8 @@
 **Bug fixes**
 
 - 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
+- 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
+  on Wine.
 
 5.6.0
 =====

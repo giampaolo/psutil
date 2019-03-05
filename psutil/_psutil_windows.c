@@ -1565,7 +1565,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // TCP IPv6
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
-            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
+            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1) &&
+            (psutil_rtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
         py_conn_tuple = NULL;
@@ -1715,7 +1716,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     // UDP IPv6
 
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
-            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
+            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1) &&
+            (psutil_rtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
         py_conn_tuple = NULL;

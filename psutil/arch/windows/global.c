@@ -95,11 +95,6 @@ psutil_loadlibs() {
     if (! psutil_rtlIpv4AddressToStringA)
         return 1;
 
-    psutil_rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA");
-    if (! psutil_rtlIpv6AddressToStringA)
-        return 1;
-
     // minimum requirement: Win XP SP3
     psutil_GetExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
@@ -130,6 +125,10 @@ psutil_loadlibs() {
     /*
      * Optional.
      */
+    // not available on Wine
+    psutil_rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv6AddressToStringA");
+
     // minimum requirement: Win Vista
     psutil_GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
