@@ -111,11 +111,11 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
     }
-    return Py_BuildValue("KKKKiiiK",
+    return Py_BuildValue("KKKdiiiK",
         (unsigned long long) proc_info.pi_ppid, // parent pid
         (unsigned long long) proc_info.pi_drss + proc_info.pi_trss, // rss
         (unsigned long long) proc_info.pi_dvm,  // vms
-        (unsigned long long)proc_info.pi_start, // create time
+        (double)proc_info.pi_start, // create time
         (int) proc_info.pi_nice,                // nice
         (int) proc_info.pi_thcount,             // no. of threads
         (int) proc_info.pi_state,                                // status code TODO
