@@ -135,40 +135,30 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     const char *procfs_path;
     PyObject *py_name = NULL;
     PyObject *py_args = NULL;
-    PyObject *py_retlist = NULL;
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-#ifdef __PASE__
     struct procentry64 proc_info;
     if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
     }
-    return Py_BuildValue("ss",
-        proc_info.pi_comm, // name
-        proc_info.pi_comm);
-#endif
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    char arglist[1028*4];
+
+    int rc = getargs(&proc_info,
+                     sizeof(struct procentry64),
+                    &arglist,
+                    sizeof(arglist) );
+    if(rc != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
-
-    py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
-    if (!py_name)
-        goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
-    if (!py_args)
-        goto error;
-    py_retlist = Py_BuildValue("OO", py_name, py_args);
-    if (!py_retlist)
-        goto error;
-    Py_DECREF(py_name);
-    Py_DECREF(py_args);
+    }
+    PyObject *py_retlist = PyList_New(0);
+    char* cur = arglist;
+    int len = 0;
+    while(0 != (len = strlen(cur))) {
+        PyList_Append(py_retlist, Py_BuildValue("s", cur));
+        cur += (1+len);
+    }
     return py_retlist;
-
-error:
-    Py_XDECREF(py_name);
-    Py_XDECREF(py_args);
-    Py_XDECREF(py_retlist);
-    return NULL;
 }
 
 

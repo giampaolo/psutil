@@ -482,7 +482,7 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return self._proc_name_and_args()[1].split(' ')
+        return self._proc_name_and_args()
 
     @wrap_exceptions
     def create_time(self):
