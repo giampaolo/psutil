@@ -103,9 +103,8 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 
     int pid;
     psinfo_t info;
-    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (! PyArg_ParseTuple(args, "i", &pid))
         return NULL;
     struct procentry64 proc_info;
     if(NULL == psutil_get_proc(&proc_info, pid)) {
@@ -132,10 +131,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
-    const char *procfs_path;
     PyObject *py_name = NULL;
     PyObject *py_args = NULL;
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (! PyArg_ParseTuple(args, "i", &pid))
         return NULL;
     struct procentry64 proc_info;
     if(NULL == psutil_get_proc(&proc_info, pid)) {
@@ -284,14 +282,10 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     pstatus_t info;
-    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (! PyArg_ParseTuple(args, "i", &pid))
         return NULL;
-    sprintf(path, "%s/%i/status", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
-        return NULL;
-    // results are more precise than os.times()
+    memset(&info, 0x00, sizeof(pstatus_t)); // TODO
     return Py_BuildValue("dddd",
                          TV2DOUBLE(info.pr_utime),
                          TV2DOUBLE(info.pr_stime),
@@ -308,11 +302,9 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     prcred_t info;
-    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (! PyArg_ParseTuple(args, "i", &pid))
         return NULL;
-#ifdef __PASE__
     struct procentry64 proc_info;
     if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
@@ -320,15 +312,6 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     return Py_BuildValue("iiiiii",
                          proc_info.pi_uid, proc_info.pi_uid, proc_info.pi_suid,
                         0,0,0);
-#else
-
-    sprintf(path, "%s/%i/cred", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
-        return NULL;
-    return Py_BuildValue("iiiiii",
-                         info.pr_ruid, info.pr_euid, info.pr_suid,
-                         info.pr_rgid, info.pr_egid, info.pr_sgid);
-#endif
 }
 
 
