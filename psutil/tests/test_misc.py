@@ -42,7 +42,6 @@ from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -736,8 +735,9 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
-    @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
+        if 'uss' not in psutil.Process().memory_full_info()._fields:
+            raise self.skipTest("not supported")
         self.assert_stdout('procsmem.py', stderr=DEVNULL)
 
     def test_killall(self):

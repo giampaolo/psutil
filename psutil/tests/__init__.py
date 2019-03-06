@@ -165,7 +165,6 @@ HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
-HAS_MEMORY_FULL_INFO = 'uss' in psutil.Process().memory_full_info()._fields
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
