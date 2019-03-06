@@ -122,7 +122,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         (int) proc_info.pi_nice,                // nice
         (int) proc_info.pi_thcount,             // no. of threads
         (int) proc_info.pi_state,                                // status code TODO
-        (unsigned long long)info.pr_ttydev      // tty nr
+        (unsigned long long)info.pr_ttydev      // tty nr (always zero for some reason, should investigate)
         );
 #else
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
@@ -410,99 +410,6 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     free(processes);
     return NoSuchProcess("");
 }
-
-
-/*
- * Return users currently connected on the system.
- */
-static PyObject *
-psutil_users(PyObject *self, PyObject *args) {
-    struct utmpx *ut;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
-    PyObject *py_username = NULL;
-    PyObject *py_tty = NULL;
-    PyObject *py_hostname = NULL;
-    PyObject *py_user_proc = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-
-    struct procentry64 proc_info[128];
-    int rtv = 0;
-    pid_t pid_idx = 0;
-    int tuple_idx = 0;
-    // while(0 < (rtv = getprocs64(&proc_info, sizeof(struct procentry64), NULL, 0,&pid_idx, 128))) {
-    //     _PyTuple_Resize(&py_retdict, PyTuple_Size(py_retdict)+rtv);
-    //     for(int i = 0; i < rtv; i++) {
-    //         pid_t cur_pid = proc_info[i].pi_pid;
-    //         pid_idx = 1 + cur_pid;
-    //         PyTuple_SetItem(py_retdict, tuple_idx++, Py_BuildValue("K",cur_pid));
-
-    //         py_tuple = Py_BuildValue(
-    //             "(slsfOi)",
-    //             "tbd",              // username
-    //             proc_info[i].pi_ttyd,                   // tty
-    //             "unknown",              // hostname
-    //             (float)ut->ut_tv.tv_sec,  // tstamp
-    //             1,             // (bool) user process
-    //             proc_info[i].pi_pid                // process id
-    //         );
-    //         if (py_tuple == NULL)
-    //             goto error;
-    //         if (PyList_Append(py_retlist, py_tuple))
-    //             goto error;
-    //     }
-    // }
-    setutxent();
-    while (NULL != (ut = getutxent())) {
-        if (ut->ut_type == USER_PROCESS)
-            py_user_proc = Py_True;
-        else
-            py_user_proc = Py_False;
-        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
-        if (! py_username)
-            goto error;
-        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
-        if (! py_tty)
-            goto error;
-        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
-        if (! py_hostname)
-            goto error;
-        py_tuple = Py_BuildValue(
-            "(OOOfOi)",
-            py_username,              // username
-            py_tty,                   // tty
-            py_hostname,              // hostname
-            (float)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc,             // (bool) user process
-            ut->ut_pid                // process id
-        );
-        if (py_tuple == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
-    }
-    endutxent();
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_username);
-    Py_XDECREF(py_tty);
-    Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    if (ut != NULL)
-        endutxent();
-    return NULL;
-}
-
 
 /*
  * Return disk mounted partitions as a list of tuples including device,
@@ -1015,8 +922,6 @@ PsutilMethods[] =
      "Get process I/O counters."},
 
     // --- system-related functions
-    {"users", psutil_users, METH_VARARGS,
-     "Return currently connected users."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
 #ifndef __PASE__

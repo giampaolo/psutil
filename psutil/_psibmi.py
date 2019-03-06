@@ -349,19 +349,26 @@ def boot_time():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
-    localhost = (':0.0', ':0')
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process, pid = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
+    ttylist = []
+
+    p = subprocess.Popen(["/QOpenSys/usr/bin/ps", "-Af", "-o", "tty,pid,user"], stdout=subprocess.PIPE)
+    output = p.communicate()[0]
+    for line in output.decode("utf-8") .splitlines()[1:]:
+        tokens = line.split()
+        tty = tokens[0]
+        pid = int(tokens[1])
+        user = tokens[2] 
+        if(tty == "-"):
             continue
-        if hostname in localhost:
-            hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp, pid)
-        retlist.append(nt)
+        if(tty in ttylist):
+            continue
+        try:
+            nt = _common.suser(user, tty, "", Process(pid).create_time(), pid)
+            ttylist.append(tty)
+            retlist.append(nt)
+        except NoSuchProcess:
+            #expected 
+            continue
     return retlist
 
 
@@ -546,13 +553,18 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        ttydev = self._proc_basic_info()[proc_info_map['ttynr']]
-        # convert from 64-bit dev_t to 32-bit dev_t and then map the device
-        ttydev = (((ttydev & 0x0000FFFF00000000) >> 16) | (ttydev & 0xFFFF))
-        # try to match rdev of /dev/pts/* files ttydev
-        for dev in glob.glob("/dev/**/*"):
-            if os.stat(dev).st_rdev == ttydev:
-                return dev
+
+        p = subprocess.Popen(["/QOpenSys/usr/bin/ps", "-Af", "-o", "tty,pid,user", "-p", str(self.pid)], stdout=subprocess.PIPE)
+        output = p.communicate()[0]
+        for line in output.decode("utf-8") .splitlines()[1:]:
+            tokens = line.split()
+            tty = tokens[0]
+            pid = int(tokens[1])
+            user = tokens[2] 
+            if(tty == "-"):
+                continue
+            if(pid == int(self.pid)):
+                return tty
         return None
 
     @wrap_exceptions
