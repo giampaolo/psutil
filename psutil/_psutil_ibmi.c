@@ -102,21 +102,18 @@ static PyObject *
 psutil_proc_basic_info(PyObject *self, PyObject *args) {
 
     int pid;
-    char path[100];
     psinfo_t info;
-    pstatus_t status;
     const char *procfs_path;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-#ifdef __PASE__
     struct procentry64 proc_info;
     if(NULL == psutil_get_proc(&proc_info, pid)) {
         return NULL;
     }
     return Py_BuildValue("KKKKiiiK",
         (unsigned long long) proc_info.pi_ppid, // parent pid
-        (unsigned long long) proc_info.pi_drss, // rss
+        (unsigned long long) proc_info.pi_drss + proc_info.pi_trss, // rss
         (unsigned long long) proc_info.pi_dvm,  // vms
         (unsigned long long)proc_info.pi_start, // create time
         (int) proc_info.pi_nice,                // nice
@@ -124,36 +121,6 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         (int) proc_info.pi_state,                                // status code TODO
         (unsigned long long)info.pr_ttydev      // tty nr (always zero for some reason, should investigate)
         );
-#else
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
-        return NULL;
-
-    if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
-        // From the /proc docs: "If the process is a zombie, the pr_nlwp
-        // and pr_lwp.pr_lwpid flags are zero."
-        status.pr_stat = SZOMB;
-    } else if (info.pr_flag & SEXIT) {
-        // "exiting" processes don't have /proc/<pid>/status
-        // There are other "exiting" processes that 'ps' shows as "active"
-        status.pr_stat = SACTIVE;
-    } else {
-        sprintf(path, "%s/%i/status", procfs_path, pid);
-        if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
-            return NULL;
-    }
-
-    return Py_BuildValue("KKKdiiiK",
-        (unsigned long long) info.pr_ppid,      // parent pid
-        (unsigned long long) info.pr_rssize,    // rss
-        (unsigned long long) info.pr_size,      // vms
-        TV2DOUBLE(info.pr_start),               // create time
-        (int) info.pr_lwp.pr_nice,              // nice
-        (int) info.pr_nlwp,                     // no. of threads
-        (int) status.pr_stat,                   // status code
-        (unsigned long long)info.pr_ttydev      // tty nr
-        );
-#endif
 }
 
 
