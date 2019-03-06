@@ -239,7 +239,7 @@ def disk_partitions(all=False):
             unit_type = "not_solid_state"
         else:
             unit_type = "solid_state"
-        ret.append(_common.sdiskpart("unit:"+str(row[0]),"asp:"+str(row[1]),unit_type, str(row[3])))
+        ret.append(_common.sdiskpart("unit:"+str(row[0]),"/",unit_type, "asp:"+str(row[1])))
     cursor.close()
     return ret
 
@@ -564,7 +564,7 @@ class Process(object):
             if(tty == "-"):
                 continue
             if(pid == int(self.pid)):
-                return tty
+                return "/dev/"+tty
         return None
 
     @wrap_exceptions
