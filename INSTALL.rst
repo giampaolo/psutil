@@ -87,7 +87,6 @@ FreeBSD
     pkg install python3 gcc
     python -m pip3 install psutil
 
-
 OpenBSD
 =======
 
@@ -96,7 +95,6 @@ OpenBSD
     export PKG_PATH="http://ftp.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`/"
     pkg_add -v python3 gcc
     python3 -m pip install psutil
-
 
 NetBSD
 ======
@@ -107,7 +105,6 @@ NetBSD
     pkg_add -v pkgin
     pkgin install python3 gcc
     python3 -m pip install psutil
-
 
 Solaris
 =======
@@ -121,7 +118,6 @@ Install::
     pkg install gcc
     python3 -m pip install psutil
 
-
 Install from sources
 ====================
 
@@ -131,6 +127,12 @@ Install from sources
     cd psutil
     python3 setup.py install
 
+Testing installation
+====================
+
+::
+
+    python3 -m psutil.tests
 
 Dev Guide
 =========
