@@ -74,3 +74,6 @@ _RtlAllocateHeap \
 
 _RtlCreateHeap \
     psutil_RtlCreateHeap;
+
+_NtQueryVirtualMemory \
+    psutil_NtQueryVirtualMemory;

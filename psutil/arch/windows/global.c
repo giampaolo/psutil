@@ -132,6 +132,11 @@ psutil_loadlibs() {
     if (! psutil_RtlCreateHeap)
         return 1;
 
+    psutil_NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
+        "ntdll", "NtQueryVirtualMemory");
+    if (! psutil_NtQueryVirtualMemory)
+        return 1;
+
     /*
      * Optional.
      */

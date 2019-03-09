@@ -13,6 +13,7 @@ typedef LONG NTSTATUS;
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 #define STATUS_BUFFER_TOO_SMALL 0xC0000023L
 #define SystemExtendedHandleInformation 64
+#define MemoryWorkingSetInformation 0x1
 
 /*
  * ================================================================
@@ -378,6 +379,30 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 } SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, *PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
 #endif
 
+typedef struct _MEMORY_WORKING_SET_BLOCK {
+    ULONG_PTR Protection : 5;
+    ULONG_PTR ShareCount : 3;
+    ULONG_PTR Shared : 1;
+    ULONG_PTR Node : 3;
+#ifdef _WIN64
+    ULONG_PTR VirtualPage : 52;
+#else
+    ULONG VirtualPage : 20;
+#endif
+} MEMORY_WORKING_SET_BLOCK, *PMEMORY_WORKING_SET_BLOCK;
+
+typedef struct _MEMORY_WORKING_SET_INFORMATION {
+    ULONG_PTR NumberOfEntries;
+    MEMORY_WORKING_SET_BLOCK WorkingSetInfo[1];
+} MEMORY_WORKING_SET_INFORMATION, *PMEMORY_WORKING_SET_INFORMATION;
+
+typedef struct _PH_PROCESS_WS_COUNTERS {
+    SIZE_T NumberOfPages;
+    SIZE_T NumberOfPrivatePages;
+    SIZE_T NumberOfSharedPages;
+    SIZE_T NumberOfShareablePages;
+} PH_PROCESS_WS_COUNTERS, *PPH_PROCESS_WS_COUNTERS;
+
 /*
  * ================================================================
  * Type defs for modules loaded at runtime.
@@ -478,6 +503,15 @@ typedef NTSYSAPI HANDLE (NTAPI *_RtlCreateHeap) (
     ULONG Commit,
     ULONG Lock,
     PVOID RtlHeapParams
+);
+
+typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    int MemoryInformationClass,
+    PVOID MemoryInformation,
+    SIZE_T MemoryInformationLength,
+    PSIZE_T ReturnLength
 );
 
 #endif // __NTEXTAPI_H__
