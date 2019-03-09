@@ -122,6 +122,11 @@ psutil_loadlibs() {
     if (! psutil_NtResumeProcess)
         return 1;
 
+    psutil_RtlAllocateHeap = psutil_GetProcAddressFromLib(
+        "ntdll", "RtlAllocateHeap");
+    if (! psutil_RtlAllocateHeap)
+        return 1;
+
     /*
      * Optional.
      */

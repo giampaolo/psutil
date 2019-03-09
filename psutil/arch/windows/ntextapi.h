@@ -465,4 +465,10 @@ typedef NTSTATUS (WINAPI *_NtSuspendProcess) (
     HANDLE hProcess
 );
 
+typedef NTSTATUS (WINAPI *_RtlAllocateHeap) (
+    PVOID HeapHandle,
+    ULONG flags,
+    SIZE_T size
+);
+
 #endif // __NTEXTAPI_H__

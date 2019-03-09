@@ -68,3 +68,6 @@ _NtSuspendProcess \
 
 _NtResumeProcess \
     psutil_NtResumeProcess;
+
+_RtlAllocateHeap \
+    psutil_RtlAllocateHeap;
