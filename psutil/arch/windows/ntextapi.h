@@ -396,12 +396,12 @@ typedef struct _MEMORY_WORKING_SET_INFORMATION {
     MEMORY_WORKING_SET_BLOCK WorkingSetInfo[1];
 } MEMORY_WORKING_SET_INFORMATION, *PMEMORY_WORKING_SET_INFORMATION;
 
-typedef struct _PH_PROCESS_WS_COUNTERS {
+typedef struct _PSUTIL_PROCESS_WS_COUNTERS {
     SIZE_T NumberOfPages;
     SIZE_T NumberOfPrivatePages;
     SIZE_T NumberOfSharedPages;
     SIZE_T NumberOfShareablePages;
-} PH_PROCESS_WS_COUNTERS, *PPH_PROCESS_WS_COUNTERS;
+} PSUTIL_PROCESS_WS_COUNTERS, *PPSUTIL_PROCESS_WS_COUNTERS;
 
 /*
  * ================================================================
