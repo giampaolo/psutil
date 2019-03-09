@@ -69,11 +69,5 @@ _NtSuspendProcess \
 _NtResumeProcess \
     psutil_NtResumeProcess;
 
-_RtlAllocateHeap \
-    psutil_RtlAllocateHeap;
-
-_RtlCreateHeap \
-    psutil_RtlCreateHeap;
-
 _NtQueryVirtualMemory \
     psutil_NtQueryVirtualMemory;

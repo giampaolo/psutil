@@ -122,16 +122,6 @@ psutil_loadlibs() {
     if (! psutil_NtResumeProcess)
         return 1;
 
-    psutil_RtlAllocateHeap = psutil_GetProcAddressFromLib(
-        "ntdll", "RtlAllocateHeap");
-    if (! psutil_RtlAllocateHeap)
-        return 1;
-
-    psutil_RtlCreateHeap = psutil_GetProcAddressFromLib(
-        "ntdll", "RtlCreateHeap");
-    if (! psutil_RtlCreateHeap)
-        return 1;
-
     psutil_NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
         "ntdll", "NtQueryVirtualMemory");
     if (! psutil_NtQueryVirtualMemory)

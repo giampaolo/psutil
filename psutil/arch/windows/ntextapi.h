@@ -490,21 +490,6 @@ typedef NTSTATUS (WINAPI *_NtSuspendProcess) (
     HANDLE hProcess
 );
 
-typedef NTSTATUS (WINAPI *_RtlAllocateHeap) (
-    PVOID HeapHandle,
-    ULONG flags,
-    SIZE_T size
-);
-
-typedef NTSYSAPI HANDLE (NTAPI *_RtlCreateHeap) (
-    ULONG Flags,
-    PVOID Base,
-    ULONG Reserve,
-    ULONG Commit,
-    ULONG Lock,
-    PVOID RtlHeapParams
-);
-
 typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
     HANDLE ProcessHandle,
     PVOID BaseAddress,
