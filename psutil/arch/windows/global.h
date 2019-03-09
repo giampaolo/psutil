@@ -71,3 +71,6 @@ _NtResumeProcess \
 
 _RtlAllocateHeap \
     psutil_RtlAllocateHeap;
+
+_RtlCreateHeap \
+    psutil_RtlCreateHeap;

@@ -471,4 +471,13 @@ typedef NTSTATUS (WINAPI *_RtlAllocateHeap) (
     SIZE_T size
 );
 
+typedef NTSYSAPI HANDLE (NTAPI *_RtlCreateHeap) (
+    ULONG Flags,
+    PVOID Base,
+    ULONG Reserve,
+    ULONG Commit,
+    ULONG Lock,
+    PVOID RtlHeapParams
+);
+
 #endif // __NTEXTAPI_H__

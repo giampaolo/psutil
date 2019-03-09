@@ -127,6 +127,11 @@ psutil_loadlibs() {
     if (! psutil_RtlAllocateHeap)
         return 1;
 
+    psutil_RtlCreateHeap = psutil_GetProcAddressFromLib(
+        "ntdll", "RtlCreateHeap");
+    if (! psutil_RtlCreateHeap)
+        return 1;
+
     /*
      * Optional.
      */
