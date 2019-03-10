@@ -793,6 +793,7 @@ psutil_GetProcWsetInformation(
     {
         HeapFree(GetProcessHeap(), 0, buffer);
         bufferSize *= 2;
+        psutil_debug("NtQueryVirtualMemory increase bufsize %zd", bufferSize);
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
             PyErr_SetString(PyExc_RuntimeError,
