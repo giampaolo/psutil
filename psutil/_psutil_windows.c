@@ -874,10 +874,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     HeapFree(GetProcessHeap(), 0, wsInfo);
     CloseHandle(hProcess);
 
-    // XXX: shall we use GetNativeSystemInfo to get pagesize for
-    // WoW64 processes?
-    return Py_BuildValue(
-        "K", wsCounters.NumberOfPrivatePages * PSUTIL_SYSTEM_INFO.dwPageSize);
+    return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
 }
 
 
@@ -3381,6 +3378,17 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * System memory page size as an int.
+ */
+static PyObject *
+psutil_getpagesize(PyObject *self, PyObject *args) {
+    // XXX: we may want to use GetNativeSystemInfo to differentiate
+    // page size for WoW64 processes (but am not sure).
+    return Py_BuildValue("I", PSUTIL_SYSTEM_INFO.dwPageSize);
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3486,6 +3494,8 @@ PsutilMethods[] = {
      "Return CPU frequency."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery metrics usage."},
+    {"getpagesize", psutil_getpagesize, METH_VARARGS,
+     "Return system memory page size."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

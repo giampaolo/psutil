@@ -36,6 +36,7 @@ from ._common import conn_tmap
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import isfile_strict
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
@@ -227,6 +228,11 @@ def py2_strencode(s):
             return s
         else:
             return s.encode(ENCODING, ENCODING_ERRS)
+
+
+@memoize
+def getpagesize():
+    return cext.getpagesize()
 
 
 # =====================================================================
@@ -798,6 +804,7 @@ class Process(object):
     def memory_full_info(self):
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
+        uss *= getpagesize()
         return pfullmem(*basic_mem + (uss, ))
 
     def memory_maps(self):
