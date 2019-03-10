@@ -773,6 +773,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
 static int
 psutil_GetProcWsetInformation(
+        DWORD pid,
         HANDLE hProcess,
         PMEMORY_WORKING_SET_INFORMATION *wSetInfo)
 {
@@ -804,7 +805,17 @@ psutil_GetProcWsetInformation(
     }
 
     if (!NT_SUCCESS(status)) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQueryVirtualMemory");
+        if (status == STATUS_ACCESS_DENIED) {
+            AccessDenied("");
+        }
+        else if (psutil_pid_is_running(pid) == 0) {
+            NoSuchProcess("");
+        }
+        else {
+            PyErr_Clear();
+            psutil_debug("NtQueryVirtualMemory failed with %i", status);
+            PyErr_SetString(PyExc_RuntimeError, "NtQueryVirtualMemory failed");
+        }
         HeapFree(GetProcessHeap(), 0, buffer);
         return 1;
     }
@@ -834,7 +845,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    if (psutil_GetProcWsetInformation(hProcess, &wsInfo) != 0) {
+    if (psutil_GetProcWsetInformation(pid, hProcess, &wsInfo) != 0) {
         CloseHandle(hProcess);
         return NULL;
     }

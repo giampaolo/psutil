@@ -14,6 +14,7 @@ typedef LONG NTSTATUS;
 #define STATUS_BUFFER_TOO_SMALL 0xC0000023L
 #define SystemExtendedHandleInformation 64
 #define MemoryWorkingSetInformation 0x1
+#define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
 
 /*
  * ================================================================
