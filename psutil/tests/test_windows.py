@@ -332,12 +332,19 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_exe(self):
+    def test_exe_and_name(self):
         for p in psutil.process_iter():
+            # On Windows name() is never supposed to raise AccessDenied,
+            # see https://github.com/giampaolo/psutil/issues/627
             try:
-                self.assertEqual(os.path.basename(p.exe()), p.name())
-            except psutil.Error:
+                name = p.name()
+            except psutil.NoSuchProcess:
                 pass
+            else:
+                try:
+                    self.assertEqual(os.path.basename(p.exe()), name)
+                except psutil.Error:
+                    continue
 
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
@@ -385,15 +392,6 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    def test_name_always_available(self):
-        # On Windows name() is never supposed to raise AccessDenied,
-        # see https://github.com/giampaolo/psutil/issues/627
-        for p in psutil.process_iter():
-            try:
-                p.name()
-            except psutil.NoSuchProcess:
-                pass
-
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
@@ -406,16 +404,6 @@ class TestProcess(unittest.TestCase):
                           p.send_signal, signal.CTRL_C_EVENT)
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
-
-    def test_compare_name_exe(self):
-        for p in psutil.process_iter():
-            try:
-                a = os.path.basename(p.exe())
-                b = p.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                self.assertEqual(a, b)
 
     def test_username(self):
         self.assertEqual(psutil.Process().username(),
