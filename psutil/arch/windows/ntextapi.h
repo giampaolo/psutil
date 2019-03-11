@@ -13,6 +13,8 @@ typedef LONG NTSTATUS;
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 #define STATUS_BUFFER_TOO_SMALL 0xC0000023L
 #define SystemExtendedHandleInformation 64
+#define MemoryWorkingSetInformation 0x1
+#define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
 
 /*
  * ================================================================
@@ -378,6 +380,30 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 } SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, *PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
 #endif
 
+typedef struct _MEMORY_WORKING_SET_BLOCK {
+    ULONG_PTR Protection : 5;
+    ULONG_PTR ShareCount : 3;
+    ULONG_PTR Shared : 1;
+    ULONG_PTR Node : 3;
+#ifdef _WIN64
+    ULONG_PTR VirtualPage : 52;
+#else
+    ULONG VirtualPage : 20;
+#endif
+} MEMORY_WORKING_SET_BLOCK, *PMEMORY_WORKING_SET_BLOCK;
+
+typedef struct _MEMORY_WORKING_SET_INFORMATION {
+    ULONG_PTR NumberOfEntries;
+    MEMORY_WORKING_SET_BLOCK WorkingSetInfo[1];
+} MEMORY_WORKING_SET_INFORMATION, *PMEMORY_WORKING_SET_INFORMATION;
+
+typedef struct _PSUTIL_PROCESS_WS_COUNTERS {
+    SIZE_T NumberOfPages;
+    SIZE_T NumberOfPrivatePages;
+    SIZE_T NumberOfSharedPages;
+    SIZE_T NumberOfShareablePages;
+} PSUTIL_PROCESS_WS_COUNTERS, *PPSUTIL_PROCESS_WS_COUNTERS;
+
 /*
  * ================================================================
  * Type defs for modules loaded at runtime.
@@ -463,6 +489,15 @@ typedef NTSTATUS (WINAPI *_NtResumeProcess) (
 
 typedef NTSTATUS (WINAPI *_NtSuspendProcess) (
     HANDLE hProcess
+);
+
+typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    int MemoryInformationClass,
+    PVOID MemoryInformation,
+    SIZE_T MemoryInformationLength,
+    PSIZE_T ReturnLength
 );
 
 #endif // __NTEXTAPI_H__

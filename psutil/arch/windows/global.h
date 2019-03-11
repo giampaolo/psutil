@@ -68,3 +68,6 @@ _NtSuspendProcess \
 
 _NtResumeProcess \
     psutil_NtResumeProcess;
+
+_NtQueryVirtualMemory \
+    psutil_NtQueryVirtualMemory;

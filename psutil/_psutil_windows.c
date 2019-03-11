@@ -771,91 +771,110 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 }
 
 
+static int
+psutil_GetProcWsetInformation(
+        DWORD pid,
+        HANDLE hProcess,
+        PMEMORY_WORKING_SET_INFORMATION *wSetInfo)
+{
+    NTSTATUS status;
+    PVOID buffer;
+    SIZE_T bufferSize;
 
-/**
+    bufferSize = 0x8000;
+    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+
+    while ((status = psutil_NtQueryVirtualMemory(
+            hProcess,
+            NULL,
+            MemoryWorkingSetInformation,
+            buffer,
+            bufferSize,
+            NULL)) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        HeapFree(GetProcessHeap(), 0, buffer);
+        bufferSize *= 2;
+        psutil_debug("NtQueryVirtualMemory increase bufsize %zd", bufferSize);
+        // Fail if we're resizing the buffer to something very large.
+        if (bufferSize > 256 * 1024 * 1024) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "NtQueryVirtualMemory bufsize is too large");
+            return 1;
+        }
+        buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+    }
+
+    if (!NT_SUCCESS(status)) {
+        if (status == STATUS_ACCESS_DENIED) {
+            AccessDenied("");
+        }
+        else if (psutil_pid_is_running(pid) == 0) {
+            NoSuchProcess("");
+        }
+        else {
+            PyErr_Clear();
+            psutil_debug("NtQueryVirtualMemory failed with %i", status);
+            PyErr_SetString(PyExc_RuntimeError, "NtQueryVirtualMemory failed");
+        }
+        HeapFree(GetProcessHeap(), 0, buffer);
+        return 1;
+    }
+
+    *wSetInfo = (PMEMORY_WORKING_SET_INFORMATION)buffer;
+    return 0;
+}
+
+
+/*
  * Returns the USS of the process.
  * Reference:
  * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
  *     nsMemoryReporterManager.cpp
  */
 static PyObject *
-psutil_proc_memory_uss(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE proc;
-    PSAPI_WORKING_SET_INFORMATION tmp;
-    DWORD tmp_size = sizeof(tmp);
-    size_t entries;
-    size_t private_pages;
-    size_t i;
-    DWORD info_array_size;
-    // needed by QueryWorkingSet
-    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-    PSAPI_WORKING_SET_INFORMATION* info_array;
-    PyObject* py_result = NULL;
-    unsigned long long total = 0;
+    HANDLE hProcess;
+    PSUTIL_PROCESS_WS_COUNTERS wsCounters;
+    PMEMORY_WORKING_SET_INFORMATION wsInfo;
+    ULONG_PTR i;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-
-    proc = psutil_handle_from_pid(pid, access);
-    if (proc == NULL)
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL)
         return NULL;
 
-    // Determine how many entries we need.
-    memset(&tmp, 0, tmp_size);
-    if (!QueryWorkingSet(proc, &tmp, tmp_size)) {
-        // NB: QueryWorkingSet is expected to fail here due to the
-        // buffer being too small.
-        if (tmp.NumberOfEntries == 0) {
-            PyErr_SetFromWindowsErr(0);
-            goto done;
+    if (psutil_GetProcWsetInformation(pid, hProcess, &wsInfo) != 0) {
+        CloseHandle(hProcess);
+        return NULL;
+    }
+    memset(&wsCounters, 0, sizeof(PSUTIL_PROCESS_WS_COUNTERS));
+
+    for (i = 0; i < wsInfo->NumberOfEntries; i++) {
+        // This is what ProcessHacker does.
+        /*
+        wsCounters.NumberOfPages++;
+        if (wsInfo->WorkingSetInfo[i].ShareCount > 1)
+            wsCounters.NumberOfSharedPages++;
+        if (wsInfo->WorkingSetInfo[i].ShareCount == 0)
+            wsCounters.NumberOfPrivatePages++;
+        if (wsInfo->WorkingSetInfo[i].Shared)
+            wsCounters.NumberOfShareablePages++;
+        */
+
+        // This is what we do: count shared pages that only one process
+        // is using as private (USS).
+        if (!wsInfo->WorkingSetInfo[i].Shared ||
+                wsInfo->WorkingSetInfo[i].ShareCount <= 1) {
+            wsCounters.NumberOfPrivatePages++;
         }
     }
 
-    // Fudge the size in case new entries are added between calls.
-    entries = tmp.NumberOfEntries * 2;
+    HeapFree(GetProcessHeap(), 0, wsInfo);
+    CloseHandle(hProcess);
 
-    if (!entries) {
-        goto done;
-    }
-
-    info_array_size = tmp_size + \
-        ((DWORD)entries * sizeof(PSAPI_WORKING_SET_BLOCK));
-    info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
-    if (!info_array) {
-        PyErr_NoMemory();
-        goto done;
-    }
-
-    if (!QueryWorkingSet(proc, info_array, info_array_size)) {
-        PyErr_SetFromWindowsErr(0);
-        goto done;
-    }
-
-    entries = (size_t)info_array->NumberOfEntries;
-    private_pages = 0;
-    for (i = 0; i < entries; i++) {
-        // Count shared pages that only one process is using as private.
-        if (!info_array->WorkingSetInfo[i].Shared ||
-                info_array->WorkingSetInfo[i].ShareCount <= 1) {
-            private_pages++;
-        }
-    }
-
-    total = private_pages * PSUTIL_SYSTEM_INFO.dwPageSize;
-    py_result = Py_BuildValue("K", total);
-
-done:
-    if (proc) {
-        CloseHandle(proc);
-    }
-
-    if (info_array) {
-        free(info_array);
-    }
-
-    return py_result;
+    return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
 }
 
 
@@ -3359,6 +3378,17 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * System memory page size as an int.
+ */
+static PyObject *
+psutil_getpagesize(PyObject *self, PyObject *args) {
+    // XXX: we may want to use GetNativeSystemInfo to differentiate
+    // page size for WoW64 processes (but am not sure).
+    return Py_BuildValue("I", PSUTIL_SYSTEM_INFO.dwPageSize);
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3464,6 +3494,8 @@ PsutilMethods[] = {
      "Return CPU frequency."},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery metrics usage."},
+    {"getpagesize", psutil_getpagesize, METH_VARARGS,
+     "Return system memory page size."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,
