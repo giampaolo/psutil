@@ -4,11 +4,15 @@
 5.6.1
 =====
 
+2019-03-11
+
 **Bug fixes**
 
 - 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
 - 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
   on Wine.
+- 1451_: [Windows] Process.memory_full_info() segfaults. NtQueryVirtualMemory
+  is now used instead of QueryWorkingSet to calculate USS memory.
 
 5.6.0
 =====
