@@ -37,7 +37,7 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and 3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
+...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
