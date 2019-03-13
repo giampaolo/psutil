@@ -6,6 +6,7 @@
 **Enhancements**
 
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
+- 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 
 **Bug fixes**
 
