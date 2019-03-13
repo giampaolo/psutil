@@ -5,7 +5,8 @@
 # found in the LICENSE file.
 
 """
-Unit test runner, providing colourized output.
+Unit test runner, providing colourized output and printing failures
+on KeyboardInterrupt.
 """
 
 from __future__ import print_function
@@ -55,7 +56,7 @@ def hilite(s, color, bold=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
-class ColouredResult(unittest.TextTestResult):
+class ColouredResult(TextTestResult):
 
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)
@@ -74,7 +75,7 @@ class ColouredResult(unittest.TextTestResult):
         self.stream.writeln(hilite("skipped: %s" % reason, BROWN))
 
     def printErrorList(self, flavour, errors):
-        flavour = hilite(flavour, RED)
+        flavour = hilite(flavour, RED, bold=flavour == 'ERROR')
         TextTestResult.printErrorList(self, flavour, errors)
 
 
@@ -84,8 +85,7 @@ class ColouredRunner(TextTestRunner):
     def _makeResult(self):
         # Store result instance so that it can be accessed on
         # KeyboardInterrupt.
-        self.result = self.resultclass(
-            self.stream, self.descriptions, self.verbosity)
+        self.result = TextTestRunner._makeResult(self)
         return self.result
 
 
@@ -120,8 +120,8 @@ def run(name=None):
     runner = ColouredRunner(verbosity=VERBOSITY)
     try:
         result = runner.run(get_suite(name))
-    except (SystemExit, KeyboardInterrupt):
-        print("received KeyboardInterrupt", file=sys.stderr)
+    except (KeyboardInterrupt, SystemExit) as err:
+        print("received %s" % err.__class__.__name__, file=sys.stderr)
         runner.result.printErrors()
         sys.exit(1)
     else:

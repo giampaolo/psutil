@@ -44,7 +44,7 @@ from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -124,7 +124,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
@@ -143,7 +143,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)

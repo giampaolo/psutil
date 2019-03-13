@@ -56,7 +56,7 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
@@ -545,7 +545,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(athread.user_time, athread[1])
             self.assertEqual(athread.system_time, athread[2])
 
-    @retry_before_failing()
+    @retry_on_failure()
     @skip_on_access_denied(only_if=MACOS)
     @unittest.skipIf(not HAS_THREADS, 'not supported')
     def test_threads_2(self):

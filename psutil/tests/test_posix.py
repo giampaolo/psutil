@@ -29,7 +29,7 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TRAVIS
@@ -157,7 +157,7 @@ class TestProcess(unittest.TestCase):
             assert fun.called
 
     @skip_on_access_denied()
-    @retry_before_failing()
+    @retry_on_failure()
     def test_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -167,7 +167,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(rss_ps, rss_psutil)
 
     @skip_on_access_denied()
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -317,7 +317,7 @@ class TestProcess(unittest.TestCase):
 class TestSystemAPIs(unittest.TestCase):
     """Test some system APIs."""
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -354,7 +354,7 @@ class TestSystemAPIs(unittest.TestCase):
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
                      "unreliable on APPVEYOR or TRAVIS")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_users(self):
         out = sh("who")
         lines = out.split('\n')

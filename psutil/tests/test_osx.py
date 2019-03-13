@@ -17,7 +17,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
@@ -215,25 +215,25 @@ class TestSystemAPIs(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
         self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
         self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
         self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
@@ -241,13 +241,13 @@ class TestSystemAPIs(unittest.TestCase):
 
     # --- swap mem
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_swapmem_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
         self.assertEqual(psutil_val, vmstat_val)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_swapmem_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout

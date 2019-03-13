@@ -80,7 +80,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_before_failing',
+    'retry_on_failure',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -119,7 +119,7 @@ PYPY = '__pypy__' in sys.builtin_module_names
 
 # --- configurable defaults
 
-# how many times retry_before_failing() decorator will retry
+# how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
 # bytes tolerance for system-wide memory related tests
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
@@ -607,7 +607,7 @@ class retry(object):
                  timeout=None,
                  retries=None,
                  interval=0.001,
-                 logfun=print,
+                 logfun=None,
                  ):
         if timeout and retries:
             raise ValueError("timeout and retries args are mutually exclusive")
@@ -814,11 +814,15 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-def retry_before_failing(retries=NO_RETRIES):
+def retry_on_failure(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.
     """
-    return retry(exception=AssertionError, timeout=None, retries=retries)
+    def logfun(exc):
+        print("%r, retrying" % exc, file=sys.stderr)
+
+    return retry(exception=AssertionError, timeout=None, retries=retries,
+                 logfun=logfun)
 
 
 def skip_on_access_denied(only_if=None):

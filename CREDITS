@@ -587,3 +587,8 @@ N: Ghislain Le Meur
 W: https://github.com/gigi206
 D: idea for Process.parents()
 I: 1379
+
+N: Benjamin Drung
+D: make tests invariant to LANG setting
+W: https://github.com/bdrung
+I: 1462

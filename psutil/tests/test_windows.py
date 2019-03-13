@@ -26,7 +26,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
@@ -137,7 +137,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     # Note: this test is not very reliable
     @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -146,7 +146,7 @@ class TestSystemAPIs(unittest.TestCase):
         psutil_pids = set(psutil.pids())
         self.assertEqual(wmi_pids, psutil_pids)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()

@@ -1417,7 +1417,7 @@ class Popen(Process):
     http://bugs.python.org/issue6973.
 
     For a complete documentation refer to:
-    http://docs.python.org/library/subprocess.html
+    http://docs.python.org/3/library/subprocess.html
     """
 
     def __init__(self, *args, **kwargs):
