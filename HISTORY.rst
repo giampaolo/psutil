@@ -7,6 +7,11 @@
 
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 
+**Bug fixes**
+
+- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
+  Benjamin Drung)
+
 5.6.1
 =====
 
