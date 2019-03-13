@@ -96,7 +96,7 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    out = sh('free -b')
+    out = sh('free -b', env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
@@ -115,7 +115,7 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    out = sh('free -b')
+    out = sh('free -b', env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
@@ -129,7 +129,7 @@ def free_physmem():
 
 
 def vmstat(stat):
-    out = sh("vmstat -s")
+    out = sh("vmstat -s", env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
         line = line.strip()
         if stat in line:
