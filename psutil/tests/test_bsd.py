@@ -25,7 +25,6 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import unittest
 from psutil.tests import which
@@ -550,4 +549,5 @@ class NetBSDSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    from psutil.tests.runner import run_test_module_by_name
     run_test_module_by_name(__file__)
