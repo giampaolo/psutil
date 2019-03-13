@@ -799,9 +799,11 @@ class TestCase(unittest.TestCase):
     # Print a full path representation of the single unit tests
     # being run.
     def __str__(self):
+        fqmod = self.__class__.__module__
+        if not fqmod.startswith('psutil.'):
+            fqmod = 'psutil.tests.' + fqmod
         return "%s.%s.%s" % (
-            self.__class__.__module__, self.__class__.__name__,
-            self._testMethodName)
+            fqmod, self.__class__.__name__, self._testMethodName)
 
     # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
     # add support for the new name.
