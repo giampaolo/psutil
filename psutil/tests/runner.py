@@ -11,6 +11,9 @@ Unit test runner, providing colourized output.
 import os
 import sys
 import unittest
+from unittest import TestResult
+from unittest import TextTestResult
+from unittest import TextTestRunner
 
 import psutil
 from psutil.tests import TOX
@@ -18,6 +21,64 @@ from psutil.tests import TOX
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
+GREEN = 1
+RED = 2
+BROWN = 94
+
+
+def term_supports_colors(file=sys.stdout):
+    try:
+        import curses
+        assert file.isatty()
+        curses.setupterm()
+        assert curses.tigetnum("colors") > 0
+    except Exception:
+        return False
+    else:
+        return True
+
+
+def hilite(s, color, bold=False):
+    """Return an highlighted version of 'string'."""
+    attr = []
+    if color == GREEN:
+        attr.append('32')
+    elif color == RED:
+        attr.append('91')
+    elif color == BROWN:
+        attr.append('33')
+    else:
+        raise ValueError("unrecognized color")
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+
+
+class ColouredResult(unittest.TextTestResult):
+
+    def addSuccess(self, test):
+        TestResult.addSuccess(self, test)
+        self.stream.writeln(hilite("OK", GREEN))
+
+    def addError(self, test, err):
+        TestResult.addError(self, test, err)
+        self.stream.writeln(hilite("ERROR", RED, bold=True))
+
+    def addFailure(self, test, err):
+        TestResult.addFailure(self, test, err)
+        self.stream.writeln(hilite("FAIL", RED))
+
+    def addSkip(self, test, reason):
+        TestResult.addSkip(self, test, reason)
+        self.stream.writeln(hilite("skipped: %s" % reason, BROWN))
+
+    def printErrorList(self, flavour, errors):
+        flavour = hilite(flavour, RED)
+        TextTestResult.printErrorList(self, flavour, errors)
+
+
+class ColouredRunner(TextTestRunner):
+    resultclass = ColouredResult if term_supports_colors() else TextTestResult
 
 
 def setup_tests():
@@ -49,13 +110,13 @@ def run_test_module_by_name(name):
     name = os.path.splitext(os.path.basename(name))[0]
     suite = unittest.TestSuite()
     suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(suite)
+    result = ColouredRunner(verbosity=VERBOSITY).run(suite)
     success = result.wasSuccessful()
     sys.exit(0 if success else 1)
 
 
 def run_suite():
     setup_tests()
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
+    result = ColouredRunner(verbosity=VERBOSITY).run(get_suite())
     success = result.wasSuccessful()
     sys.exit(0 if success else 1)
