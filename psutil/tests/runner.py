@@ -88,35 +88,27 @@ def setup_tests():
     psutil._psplatform.cext.set_testing()
 
 
-def get_suite():
-    testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                if x.endswith('.py') and x.startswith('test_') and not
-                x.startswith('test_memory_leaks')]
-    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
-        testmods = [x for x in testmods if not x.endswith((
-                    "osx", "posix", "linux"))]
+def get_suite(name=None):
     suite = unittest.TestSuite()
-    for tm in testmods:
-        # ...so that the full test paths are printed on screen
-        tm = "psutil.tests.%s" % tm
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
+    if name is None:
+        testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
+                    if x.endswith('.py') and x.startswith('test_') and not
+                    x.startswith('test_memory_leaks')]
+        if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
+            testmods = [x for x in testmods if not x.endswith((
+                        "osx", "posix", "linux"))]
+        for tm in testmods:
+            # ...so that the full test paths are printed on screen
+            tm = "psutil.tests.%s" % tm
+            suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
+    else:
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
     return suite
 
 
-def run_test_module_by_name(name):
-    # testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-    #                if x.endswith('.py') and x.startswith('test_')]
+def run(name=None):
     setup_tests()
-    name = os.path.splitext(os.path.basename(name))[0]
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-    result = ColouredRunner(verbosity=VERBOSITY).run(suite)
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
-
-
-def run_suite():
-    setup_tests()
-    result = ColouredRunner(verbosity=VERBOSITY).run(get_suite())
+    result = ColouredRunner(verbosity=VERBOSITY).run(get_suite(name))
     success = result.wasSuccessful()
     sys.exit(0 if success else 1)

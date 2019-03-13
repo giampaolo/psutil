@@ -80,8 +80,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_before_failing', 'run_test_module_by_name', 'get_suite',
-    'run_suite',
+    'retry_before_failing',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils

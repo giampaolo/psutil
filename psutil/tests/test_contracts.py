@@ -653,5 +653,5 @@ class TestFetchAllProcesses(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run_test_module_by_name
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

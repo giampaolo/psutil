@@ -21,7 +21,7 @@ except ImportError:
     from urllib2 import urlopen
 
 from psutil.tests import PYTHON_EXE
-from psutil.tests.runner import run_suite
+from psutil.tests.runner import run
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -88,7 +88,7 @@ def main():
             except ImportError:
                 sys.exit("%r lib is not installed; run %s -m psutil.tests "
                          "--install-deps" % (dep, PYTHON_EXE))
-        run_suite()
+        run()
 
 
 main()
