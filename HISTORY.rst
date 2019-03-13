@@ -6,6 +6,12 @@
 **Enhancements**
 
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
+- 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+
+**Bug fixes**
+
+- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
+  Benjamin Drung)
 
 5.6.1
 =====
