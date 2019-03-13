@@ -46,7 +46,6 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import reap_children
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
@@ -607,4 +606,5 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
 
 if __name__ == '__main__':
+    from psutil.tests.runner import run_test_module_by_name
     run_test_module_by_name(__file__)

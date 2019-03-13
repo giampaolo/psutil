@@ -77,7 +77,6 @@ from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
@@ -367,4 +366,5 @@ class TestNonFSAPIS(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    from psutil.tests.runner import run_test_module_by_name
     run_test_module_by_name(__file__)

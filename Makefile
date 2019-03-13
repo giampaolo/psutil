@@ -113,11 +113,11 @@ test:  ## Run all tests.
 
 test-process:  ## Run process-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_process
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_process.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_system
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} install

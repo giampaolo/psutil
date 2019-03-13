@@ -38,7 +38,6 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import reload_module
 from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
@@ -2080,4 +2079,5 @@ class TestUtils(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    from psutil.tests.runner import run_test_module_by_name
     run_test_module_by_name(__file__)

@@ -21,7 +21,7 @@ except ImportError:
     from urllib2 import urlopen
 
 from psutil.tests import PYTHON_EXE
-from psutil.tests import run_suite
+from psutil.tests.runner import run_suite
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))

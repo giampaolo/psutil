@@ -69,7 +69,6 @@ __all__ = [
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
     'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
-    'VERBOSITY',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -127,8 +126,6 @@ NO_RETRIES = 10
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 3 if TRAVIS or APPVEYOR else 0.5
-# test output verbosity
-VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 # be more tolerant if we're on travis / appveyor in order to avoid
 # false positives
 if TRAVIS or APPVEYOR:
@@ -802,9 +799,11 @@ class TestCase(unittest.TestCase):
     # Print a full path representation of the single unit tests
     # being run.
     def __str__(self):
+        fqmod = self.__class__.__module__
+        if not fqmod.startswith('psutil.'):
+            fqmod = 'psutil.tests.' + fqmod
         return "%s.%s.%s" % (
-            self.__class__.__module__, self.__class__.__name__,
-            self._testMethodName)
+            fqmod, self.__class__.__name__, self._testMethodName)
 
     # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
     # add support for the new name.
@@ -814,47 +813,6 @@ class TestCase(unittest.TestCase):
 
 # override default unittest.TestCase
 unittest.TestCase = TestCase
-
-
-def _setup_tests():
-    if 'PSUTIL_TESTING' not in os.environ:
-        # This won't work on Windows but set_testing() below will do it.
-        os.environ['PSUTIL_TESTING'] = '1'
-    psutil._psplatform.cext.set_testing()
-
-
-def get_suite():
-    testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                if x.endswith('.py') and x.startswith('test_') and not
-                x.startswith('test_memory_leaks')]
-    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
-        testmods = [x for x in testmods if not x.endswith((
-                    "osx", "posix", "linux"))]
-    suite = unittest.TestSuite()
-    for tm in testmods:
-        # ...so that the full test paths are printed on screen
-        tm = "psutil.tests.%s" % tm
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
-    return suite
-
-
-def run_suite():
-    _setup_tests()
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(get_suite())
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
-
-
-def run_test_module_by_name(name):
-    # testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-    #                if x.endswith('.py') and x.startswith('test_')]
-    _setup_tests()
-    name = os.path.splitext(os.path.basename(name))[0]
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-    result = unittest.TextTestRunner(verbosity=VERBOSITY).run(suite)
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
 
 
 def retry_before_failing(retries=NO_RETRIES):
