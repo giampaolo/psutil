@@ -1,5 +1,11 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.2
+=====
+
+**Enhancements**
+
+- 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 
 5.6.1
 =====

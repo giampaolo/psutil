@@ -8,6 +8,7 @@
 Unit test runner, providing colourized output.
 """
 
+from __future__ import print_function
 import os
 import sys
 import unittest
@@ -80,6 +81,13 @@ class ColouredResult(unittest.TextTestResult):
 class ColouredRunner(TextTestRunner):
     resultclass = ColouredResult if term_supports_colors() else TextTestResult
 
+    def _makeResult(self):
+        # Store result instance so that it can be accessed on
+        # KeyboardInterrupt.
+        self.result = self.resultclass(
+            self.stream, self.descriptions, self.verbosity)
+        return self.result
+
 
 def setup_tests():
     if 'PSUTIL_TESTING' not in os.environ:
@@ -109,6 +117,13 @@ def get_suite(name=None):
 
 def run(name=None):
     setup_tests()
-    result = ColouredRunner(verbosity=VERBOSITY).run(get_suite(name))
-    success = result.wasSuccessful()
-    sys.exit(0 if success else 1)
+    runner = ColouredRunner(verbosity=VERBOSITY)
+    try:
+        result = runner.run(get_suite(name))
+    except (SystemExit, KeyboardInterrupt):
+        print("received KeyboardInterrupt", file=sys.stderr)
+        runner.result.printErrors()
+        sys.exit(1)
+    else:
+        success = result.wasSuccessful()
+        sys.exit(0 if success else 1)
