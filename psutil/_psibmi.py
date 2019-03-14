@@ -105,6 +105,8 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 # psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+#jobname to pid cache
+jobname_pid_cache = {}
 
 # =====================================================================
 # --- IBM i runs an AIX variant but a number of things are unsupported
@@ -117,8 +119,18 @@ def _not_supported(*args, **kw):
 def jobname_to_pid(_jobname=None):
     if _jobname is None:
         return -1
-    return 8888
-
+    if _jobname in jobname_pid_cache:
+        return jobname_pid_cache[_jobname]
+    p = subprocess.Popen(["/QOpenSys/usr/bin/getjobid", "-jv", _jobname], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = p.communicate()[0]
+    try:
+        line = output.decode("utf-8") .splitlines()[-1].strip()
+        pid = int(line.strip().split(" ")[0])
+        jobname_pid_cache[_jobname] = pid
+        return pid
+    except:
+        jobname_pid_cache[_jobname] = -1
+        return -1
 
 # =====================================================================
 # --- memory
@@ -266,7 +278,6 @@ def net_connections(kind, _pid=-1):
     """
     ret = set()
     cursor = _conn.cursor()
-    print("Getting net connections for pid ", _pid)
     querystring = """ 
                         SELECT j.CONNECTION_TYPE,j.LOCAL_ADDRESS,j.LOCAL_PORT,j.REMOTE_ADDRESS,j.REMOTE_PORT,j.JOB_NAME,i.TCP_STATE
                         FROM QSYS2.NETSTAT_INFO i
@@ -276,7 +287,6 @@ def net_connections(kind, _pid=-1):
                         ORDER BY i.TCP_STATE ASC, j.CONNECTION_TYPE DESC """
     cursor.execute(querystring)
     for row in cursor:
-        print("adding one that's' ", row[0])
         type_ = AF_INET6 if row[0] == "IPV6" else AF_INET
         laddr = _common.addr(row[1], row[2])
         raddr = _common.addr(row[3], row[4])
@@ -284,17 +294,16 @@ def net_connections(kind, _pid=-1):
         status = TCP_STATUSES[row[6]]
         fam = AF_INET
         fd = -1
-        pid = jobname_to_pid(jobname)
         if _pid == -1 and jobname is None:
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        elif _pid != -1 and _pid == pid:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         elif jobname is None:
             continue
-        elif pid is None:
-            nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        else:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
+        else: 
+            pid = jobname_to_pid(jobname)
+            if pid == -1:
+                nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
+            else: 
+                nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         ret.add(nt)
     cursor.close()
     return ret
