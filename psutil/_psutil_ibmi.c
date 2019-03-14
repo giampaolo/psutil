@@ -449,7 +449,6 @@ PsutilMethods[] =
     "Get a count of total CPUs"},
     {"cpu_count_online", psutil_cpu_count, METH_NOARGS,
     "Get a count of the number of online CPUs"},
-#endif
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
