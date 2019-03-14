@@ -203,13 +203,8 @@ def cpu_count_physical():
 
 
 def cpu_stats():
-    if not hasattr(cext, 'cpu_stats'):
-        _not_supported()
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, soft_interrupts, syscalls = cext.cpu_stats()
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls)
-
+    return _common.scpustats(0,0,0,0) #TODO: Any way to implement on IBM i?
 
 # =====================================================================
 # --- disks
@@ -218,7 +213,6 @@ def cpu_stats():
 def disk_usage(path='/'):
     cursor = _conn.cursor()
     cursor.execute("SELECT SUM(UNIT_STORAGE_CAPACITY) as TOTAL, SUM(UNIT_SPACE_AVAILABLE) as AVAIL FROM QSYS2.SYSDISKSTAT")
-    counters = {}
     for row in cursor:
         total = row[0]
         avail = row[1]
@@ -233,7 +227,7 @@ def disk_io_counters(all=False): #TODO
     counters = {}
     for row in cursor:
         print("adding ", row[0])
-        counters["unit:"+str(row[0])] = (0,0,0,0,0,0)
+        counters["unit:"+str(row[0])] = (0,0,0,0,0,0) #TODO: query system performance data to get this
     cursor.close()
     return counters
 
@@ -259,17 +253,14 @@ def disk_partitions(all=False):
 net_if_addrs = cext_posix.net_if_addrs
 
 def net_io_counters(pernic=True):
-    if(True):
-        cursor = _conn.cursor()
-        cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
-        counters = {}
-        for row in cursor:
-            print("adding ", row[0])
-            counters[row[0]] = (0,0,0,0,0,0,0,0)
-        cursor.close()
-        return counters
-    else:
-        return (0,0,0,0,0)
+    cursor = _conn.cursor()
+    cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
+    counters = {}
+    for row in cursor:
+        print("adding ", row[0])
+        counters[row[0]] = (0,0,0,0,0,0,0,0) #TODO: investigate ways to get proper data
+    cursor.close()
+    return counters
 
 
 def net_connections(kind, _pid=-1):
@@ -310,36 +301,19 @@ def net_connections(kind, _pid=-1):
 
 
 def net_if_stats():
-    if not hasattr(cext, 'net_if_stats'):
-        _not_supported()
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    duplex_map = {"Full": NIC_DUPLEX_FULL,
-                  "Half": NIC_DUPLEX_HALF}
-    names = set([x[0] for x in net_if_addrs()])
+    cursor = _conn.cursor()
+    cursor.execute("SELECT LINE_DESCRIPTION,INTERFACE_STATUS,MAXIMUM_TRANSMISSION_UNIT FROM QSYS2.NETSTAT_INTERFACE_INFO")
     ret = {}
-    for name in names:
-        isup, mtu = cext.net_if_stats(name)
-
-        # try to get speed and duplex
-        # TODO: rewrite this in C (entstat forks, so use truss -f to follow.
-        # looks like it is using an undocumented ioctl?)
-        duplex = ""
-        speed = 0
-        p = subprocess.Popen(["/usr/bin/entstat", "-d", name],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if PY3:
-            stdout, stderr = [x.decode(sys.stdout.encoding)
-                              for x in (stdout, stderr)]
-        if p.returncode == 0:
-            re_result = re.search(
-                r"Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
-            if re_result is not None:
-                speed = int(re_result.group(1))
-                duplex = re_result.group(2)
-
-        duplex = duplex_map.get(duplex, NIC_DUPLEX_UNKNOWN)
+    for row in cursor:
+        name = row[0]
+        isup = row[1] == "ACTIVE"
+        duplex = NIC_DUPLEX_FULL
+        mtu = row[2]
+        speed = 0 if name == "*LOOPBACK" else 100
+        print("adding ", name)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    cursor.close()
     return ret
 
 
@@ -468,6 +442,7 @@ class Process(object):
     def exe(self):
         # there is no way to get executable path in AIX other than to guess,
         # and guessing is more complex than what's in the wrapping class
+        #TODO: we can add logic here to use the target process's PATH rather than this one's
         exe = self.cmdline()[0]
         if os.path.sep in exe:
             # relative or absolute path
