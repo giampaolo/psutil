@@ -58,9 +58,6 @@
 #endif
 #include <unistd.h>
 
-#include "arch/aix/ifaddrs.h"
-#include "arch/aix/net_connections.h"
-#include "arch/aix/common.h"
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
@@ -84,6 +81,50 @@ psutil_get_proc(struct procentry64* dest, int pid) {
         return NULL;
     }
     return dest;
+}
+
+
+struct procentry64 *
+psutil_read_process_table_i(int * num) {
+    size_t msz;
+    pid32_t pid = 0;
+    int procinfo_incr = 256;
+    struct procentry64 *processes = (struct procentry64 *)NULL;
+    struct procentry64 *p;
+    int Np = 0;          /* number of processes allocated in 'processes' */
+    int np = 0;          /* number of processes read into 'processes' */
+    int i;               /* number of processes read in current iteration */
+
+    msz = (size_t)(sizeof(struct procentry64) * 256);
+    processes = (struct procentry64 *)malloc(msz);
+    if (!processes) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    Np = 256;
+    p = processes;
+    while ((i = getprocs64(p, sizeof(struct procentry64), (struct fdsinfo64 *)NULL, 0, &pid,
+                 procinfo_incr))
+    == procinfo_incr) {
+        np += procinfo_incr;
+        if (np >= Np) {
+            msz = (size_t)(sizeof(struct procentry64) * (Np + procinfo_incr));
+            processes = (struct procentry64 *)realloc((char *)processes, msz);
+            if (!processes) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+            Np += procinfo_incr;
+        }
+        p = (struct procentry64 *)((char *)processes + (np * sizeof(struct procentry64)));
+    }
+
+    /* add the number of processes read in the last iteration */
+    if (i > 0)
+        np += i;
+
+    *num = np;
+    return processes;
 }
 
 /*
@@ -350,7 +391,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "i", &requested_pid))
         return NULL;
 
-    processes = psutil_read_process_table(&np);
+    processes = psutil_read_process_table_i(&np);
     if (!processes)
         return NULL;
 

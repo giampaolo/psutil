@@ -246,10 +246,9 @@ elif AIX:
             'psutil._psutil_ibmi',
             sources=sources + [
                 'psutil/_psutil_ibmi.c',
-                'psutil/arch/aix/common.c',
-                'psutil/arch/aix/net_connections.c',
                 'psutil/arch/aix/ifaddrs.c'],
             libraries=['util'],
+            extra_compile_args=['-I/QOpenSys/pkgs/include'],
             define_macros=macros)
     else:
         macros.append(("PSUTIL_AIX", 1))
