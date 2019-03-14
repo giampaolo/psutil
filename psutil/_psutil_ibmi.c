@@ -45,17 +45,9 @@
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#define __PASE__
-#ifdef __PASE__
 #include <procinfo.h>
 #include <sys/types.h>
 #include <sys/core.h>
-#ifdef HAVE_IBMIPERFSTAT
-#include <ibmiperfstat.h>
-#endif
-#else
-#include <libperfstat.h>
-#endif
 #include <unistd.h>
 
 #include "_psutil_common.h"
@@ -235,7 +227,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-#ifdef __PASE__
     struct thrdentry64 thd_buf[1024];
     tid64_t start = 0;
     int thread_count = getthrds64(   pid,
@@ -258,82 +249,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     }
 
     return py_retlist;
-
-#else
-    /* Get the count of threads */
-    thread_count = perfstat_thread(NULL, NULL, sizeof(perfstat_thread_t), 0);
-    if (thread_count <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    /* Allocate enough memory */
-    threadt = (perfstat_thread_t *)calloc(thread_count,
-        sizeof(perfstat_thread_t));
-    if (threadt == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    strcpy(id.name, "");
-    rc = perfstat_thread(&id, threadt, sizeof(perfstat_thread_t),
-        thread_count);
-    if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < thread_count; i++) {
-        if (threadt[i].pid != pid)
-            continue;
-
-        py_tuple = Py_BuildValue("Idd",
-                                 threadt[i].tid,
-                                 threadt[i].ucpu_time,
-                                 threadt[i].scpu_time);
-        if (py_tuple == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
-    }
-    free(threadt);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    if (threadt != NULL)
-        free(threadt);
-    return NULL;
-#endif    
 }
-
-#ifndef __PASE__
-static PyObject *
-psutil_proc_io_counters(PyObject *self, PyObject *args) {
-    long pid;
-    int rc;
-    perfstat_process_t procinfo;
-    perfstat_id_t id;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-
-    snprintf(id.name, sizeof(id.name), "%ld", pid);
-    rc = perfstat_process(&id, &procinfo, sizeof(perfstat_process_t), 1);
-    if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("(KKKK)",
-                         procinfo.inOps,      // XXX always 0
-                         procinfo.outOps,
-                         procinfo.inBytes,    // XXX always 0
-                         procinfo.outBytes);
-}
-#endif
-
 
 /*
  * Return process user and system CPU times as a Python tuple.
@@ -469,399 +385,6 @@ error:
     return NULL;
 }
 
-#ifndef __PASE__
-
-/*
- * Return a list of tuples for network I/O statistics.
- */
-static PyObject *
-psutil_net_io_counters(PyObject *self, PyObject *args) {
-    perfstat_netinterface_t *statp = NULL;
-    int tot, i;
-    perfstat_id_t first;
-
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_ifc_info = NULL;
-
-    if (py_retdict == NULL)
-        return NULL;
-
-    /* check how many perfstat_netinterface_t structures are available */
-    tot = perfstat_netinterface(
-        NULL, NULL, sizeof(perfstat_netinterface_t), 0);
-    if (tot == 0) {
-        // no network interfaces - return empty dict
-        return py_retdict;
-    }
-    if (tot < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    statp = (perfstat_netinterface_t *)
-        malloc(tot * sizeof(perfstat_netinterface_t));
-    if (statp == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    strcpy(first.name, FIRST_NETINTERFACE);
-    tot = perfstat_netinterface(&first, statp,
-        sizeof(perfstat_netinterface_t), tot);
-    if (tot < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < tot; i++) {
-        py_ifc_info = Py_BuildValue("(KKKKKKKK)",
-            statp[i].obytes,      /* number of bytes sent on interface */
-            statp[i].ibytes,      /* number of bytes received on interface */
-            statp[i].opackets,    /* number of packets sent on interface */
-            statp[i].ipackets,    /* number of packets received on interface */
-            statp[i].ierrors,     /* number of input errors on interface */
-            statp[i].oerrors,     /* number of output errors on interface */
-            statp[i].if_iqdrops,  /* Dropped on input, this interface */
-            statp[i].xmitdrops    /* number of packets not transmitted */
-           );
-        if (!py_ifc_info)
-            goto error;
-        if (PyDict_SetItemString(py_retdict, statp[i].name, py_ifc_info))
-            goto error;
-        Py_DECREF(py_ifc_info);
-    }
-
-    free(statp);
-    return py_retdict;
-
-error:
-    if (statp != NULL)
-        free(statp);
-    Py_XDECREF(py_ifc_info);
-    Py_DECREF(py_retdict);
-    return NULL;
-}
-
-
-static PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args) {
-    char *nic_name;
-    int sock = 0;
-    int ret;
-    int mtu;
-    struct ifreq ifr;
-    PyObject *py_is_up = NULL;
-    PyObject *py_retlist = NULL;
-
-    if (! PyArg_ParseTuple(args, "s", &nic_name))
-        return NULL;
-
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1)
-        goto error;
-
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-
-    // is up?
-    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
-        goto error;
-    if ((ifr.ifr_flags & IFF_UP) != 0)
-        py_is_up = Py_True;
-    else
-        py_is_up = Py_False;
-    Py_INCREF(py_is_up);
-
-    // MTU
-    ret = ioctl(sock, SIOCGIFMTU, &ifr);
-    if (ret == -1)
-        goto error;
-    mtu = ifr.ifr_mtu;
-
-    close(sock);
-    py_retlist = Py_BuildValue("[Oi]", py_is_up, mtu);
-    if (!py_retlist)
-        goto error;
-    Py_DECREF(py_is_up);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_is_up);
-    if (sock != 0)
-        close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
-}
-
-
-static PyObject *
-psutil_boot_time(PyObject *self, PyObject *args) {
-    float boot_time = 0.0;
-    struct utmpx *ut;
-
-    setutxent();
-    while (NULL != (ut = getutxent())) {
-        if (ut->ut_type == BOOT_TIME) {
-            boot_time = (float)ut->ut_tv.tv_sec;
-            break;
-        }
-    }
-    endutxent();
-    if (boot_time == 0.0) {
-        /* could not find BOOT_TIME in getutxent loop */
-        PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
-        return NULL;
-    }
-    return Py_BuildValue("f", boot_time);
-}
-
-
-/*
- * Return a Python list of tuple representing per-cpu times
- */
-static PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    int ncpu, rc, i;
-    long ticks;
-    perfstat_cpu_t *cpu = NULL;
-    perfstat_id_t id;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    /* get the number of ticks per second */
-    ticks = sysconf(_SC_CLK_TCK);
-    if (ticks < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    /* get the number of cpus in ncpu */
-    ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
-    if (ncpu <= 0){
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    /* allocate enough memory to hold the ncpu structures */
-    cpu = (perfstat_cpu_t *) malloc(ncpu * sizeof(perfstat_cpu_t));
-    if (cpu == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    strcpy(id.name, "");
-    rc = perfstat_cpu(&id, cpu, sizeof(perfstat_cpu_t), ncpu);
-
-    if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < ncpu; i++) {
-        py_cputime = Py_BuildValue(
-            "(dddd)",
-            (double)cpu[i].user / ticks,
-            (double)cpu[i].sys / ticks,
-            (double)cpu[i].idle / ticks,
-            (double)cpu[i].wait / ticks);
-        if (!py_cputime)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
-    }
-    free(cpu);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cputime);
-    Py_DECREF(py_retlist);
-    if (cpu != NULL)
-        free(cpu);
-    return NULL;
-}
-
-
-/*
- * Return disk IO statistics.
- */
-static PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_disk_info = NULL;
-    perfstat_disk_t *diskt = NULL;
-    perfstat_id_t id;
-    int i, rc, disk_count;
-
-    if (py_retdict == NULL)
-        return NULL;
-
-    /* Get the count of disks */
-    disk_count = perfstat_disk(NULL, NULL, sizeof(perfstat_disk_t), 0);
-    if (disk_count <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    /* Allocate enough memory */
-    diskt = (perfstat_disk_t *)calloc(disk_count,
-        sizeof(perfstat_disk_t));
-    if (diskt == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    strcpy(id.name, FIRST_DISK);
-    rc = perfstat_disk(&id, diskt, sizeof(perfstat_disk_t),
-        disk_count);
-    if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < disk_count; i++) {
-        py_disk_info = Py_BuildValue(
-            "KKKKKK",
-            diskt[i].__rxfers,
-            diskt[i].xfers - diskt[i].__rxfers,
-            diskt[i].rblks * diskt[i].bsize,
-            diskt[i].wblks * diskt[i].bsize,
-            diskt[i].rserv / 1000 / 1000,  // from nano to milli secs
-            diskt[i].wserv / 1000 / 1000   // from nano to milli secs
-        );
-        if (py_disk_info == NULL)
-            goto error;
-        if (PyDict_SetItemString(py_retdict, diskt[i].name,
-                                 py_disk_info))
-            goto error;
-        Py_DECREF(py_disk_info);
-    }
-    free(diskt);
-    return py_retdict;
-
-error:
-    Py_XDECREF(py_disk_info);
-    Py_DECREF(py_retdict);
-    if (diskt != NULL)
-        free(diskt);
-    return NULL;
-}
-
-
-/*
- * Return virtual memory usage statistics.
- */
-static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    int rc;
-    int pagesize = getpagesize();
-    perfstat_memory_total_t memory;
-
-    rc = perfstat_memory_total(
-        NULL, &memory, sizeof(perfstat_memory_total_t), 1);
-    if (rc <= 0){
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("KKKKK",
-        (unsigned long long) memory.real_total * pagesize,
-        (unsigned long long) memory.real_avail * pagesize,
-        (unsigned long long) memory.real_free * pagesize,
-        (unsigned long long) memory.real_pinned * pagesize,
-        (unsigned long long) memory.real_inuse * pagesize
-    );
-}
-
-
-/*
- * Return stats about swap memory.
- */
-static PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    int rc;
-    int pagesize = getpagesize();
-    perfstat_memory_total_t memory;
-
-    rc = perfstat_memory_total(
-        NULL, &memory, sizeof(perfstat_memory_total_t), 1);
-    if (rc <= 0){
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("KKKK",
-        (unsigned long long) memory.pgsp_total * pagesize,
-        (unsigned long long) memory.pgsp_free * pagesize,
-        (unsigned long long) memory.pgins * pagesize,
-        (unsigned long long) memory.pgouts * pagesize
-    );
-}
-
-
-/*
- * Return CPU statistics.
- */
-static PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    int ncpu, rc, i;
-    // perfstat_cpu_total_t doesn't have invol/vol cswitch, only pswitch
-    // which is apparently something else. We have to sum over all cpus
-    perfstat_cpu_t *cpu = NULL;
-    perfstat_id_t id;
-    u_longlong_t cswitches = 0;
-    u_longlong_t devintrs = 0;
-    u_longlong_t softintrs = 0;
-    u_longlong_t syscall = 0;
-
-    /* get the number of cpus in ncpu */
-    ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
-    if (ncpu <= 0){
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    /* allocate enough memory to hold the ncpu structures */
-    cpu = (perfstat_cpu_t *) malloc(ncpu * sizeof(perfstat_cpu_t));
-    if (cpu == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    strcpy(id.name, "");
-    rc = perfstat_cpu(&id, cpu, sizeof(perfstat_cpu_t), ncpu);
-
-    if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < ncpu; i++) {
-        cswitches += cpu[i].invol_cswitch + cpu[i].vol_cswitch;
-        devintrs += cpu[i].devintrs;
-        softintrs += cpu[i].softintrs;
-        syscall += cpu[i].syscall;
-    }
-
-    free(cpu);
-
-    return Py_BuildValue(
-        "KKKK",
-        cswitches,
-        devintrs,
-        softintrs,
-        syscall
-    );
-
-error:
-    if (cpu != NULL)
-        free(cpu);
-    return NULL;
-}
-#endif
-
-#ifdef __PASE__
 /*
  * Return a list of process identifiers
  */
@@ -896,7 +419,6 @@ static PyObject *
 psutil_cpu_count_online(PyObject *self, PyObject *args) {
     return Py_BuildValue("i",sysconf(_SC_NPROCESSORS_ONLN));
 }
-#endif
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -913,10 +435,6 @@ PsutilMethods[] =
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
      "Return process uids/gids."}, 
-#ifndef __PASE__
-    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
-     "Get process I/O counters."},
-#endif
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
@@ -925,29 +443,6 @@ PsutilMethods[] =
     // --- system-related functions
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
-#ifndef __PASE__
-    {"boot_time", psutil_boot_time, METH_VARARGS,
-     "Return system boot time in seconds since the EPOCH."},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
-     "Return system per-cpu times as a list of tuples"},
-    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
-     "Return a Python dict of tuples for disk I/O statistics."},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
-     "Return system virtual memory usage statistics"},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS,
-     "Return stats about swap memory, in bytes"},
-    {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
-     "Return a Python dict of tuples for network I/O statistics."},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NIC stats (isup, mtu)"},
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
-     "Return CPU statistics"},
-#endif
-    // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
-
-#ifdef __PASE__
     {"list_pids", psutil_list_pids, METH_NOARGS,
     "Get a tuple of all running process identifiers"},
     {"cpu_count", psutil_cpu_count, METH_NOARGS,
@@ -955,6 +450,9 @@ PsutilMethods[] =
     {"cpu_count_online", psutil_cpu_count, METH_NOARGS,
     "Get a count of the number of online CPUs"},
 #endif
+    // --- others
+    {"set_testing", psutil_set_testing, METH_NOARGS,
+     "Set psutil in testing mode"},
     {NULL, NULL, 0, NULL}
 };
 
