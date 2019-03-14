@@ -5,6 +5,9 @@
 
 **Enhancements**
 
+- 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
+  `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
+  the number of physical CPUs in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 

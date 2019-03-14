@@ -685,10 +685,12 @@ class TestSystemCPUCountPhysical(unittest.TestCase):
                 core_ids.add(fields[1])
         self.assertEqual(psutil.cpu_count(logical=False), len(core_ids))
 
-    def test_emulate_empty_cpuinfo(self):
-        with mock.patch('psutil._common.open', create=True) as m:
-            self.assertIsNone(psutil._pslinux.cpu_count_physical())
-            assert m.called
+    def test_emulate_none(self):
+        with mock.patch('glob.glob', return_value=[]) as m1:
+            with mock.patch('psutil._common.open', create=True) as m2:
+                self.assertIsNone(psutil._pslinux.cpu_count_physical())
+        assert m1.called
+        assert m2.called
 
 
 @unittest.skipIf(not LINUX, "LINUX only")

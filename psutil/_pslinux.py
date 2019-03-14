@@ -627,6 +627,16 @@ def cpu_count_logical():
 
 def cpu_count_physical():
     """Return the number of physical cores in the system."""
+    # Method #1
+    core_ids = set()
+    for path in glob.glob("/sys/devices/system/cpu/cpu[0-9]/topology/core_id"):
+        with open_binary(path) as f:
+            core_ids.add(int(f.read()))
+    result = len(core_ids)
+    if result != 0:
+        return result
+
+    # Method #2
     mapping = {}
     current_info = {}
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
@@ -646,8 +656,8 @@ def cpu_count_physical():
                     key, value = line.split(b'\t:', 1)
                     current_info[key] = int(value)
 
-    # mimic os.cpu_count()
-    return sum(mapping.values()) or None
+    result = sum(mapping.values())
+    return result or None  # mimic os.cpu_count()
 
 
 def cpu_stats():
