@@ -6,21 +6,24 @@ labels: 'bug'
 assignees: 'giampaolo'
 
 ---
-
 **Platform**
-* { OS version }
-* { psutil version (use `pip show psutil`) }
+* { OS version }     (also add appropriate OS issue label (linux, windows, ...))
+* { psutil version }  (use "pip show psutil")
 
 **Bug description**
 { a clear and concise description of what the bug is }
+
 ```
 traceback message (if any)
 ```
 
+```python
+code to reproduce the problem (if any)
+```
+
 **Test results**
-{ This is an extra: you may want to run `python -c psutil.tests`. }
-{ If you have failures paste those only (not the full test output). }
-{ If the failures look unrelated with the issue at hand open another ticket }
 ```
-test failure output
+output of `python -c psutil.tests` (failures only, not full result)
 ```
+{ you may want to do this in order to discover other issues affecting your platform }
+{ if failures look unrelated with the issue at hand open another ticket }
