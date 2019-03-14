@@ -54,18 +54,18 @@ PROC_STATUSES = {
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    "ESTABLISHED": _common.CONN_ESTABLISHED,
+    "SYN-SENT": _common.CONN_SYN_SENT,
+    "SYN-RECEIVED": _common.CONN_SYN_RECV,
+    "FIN-WAIT-1": _common.CONN_FIN_WAIT1,
+    "FIN-WAIT-2": _common.CONN_FIN_WAIT2,
+    "TIME-WAIT": _common.CONN_TIME_WAIT,
+    "CLOSED": _common.CONN_CLOSE,
+    "CLOSE-WAIT": _common.CONN_CLOSE_WAIT,
+    "LAST-ACK": _common.CONN_LAST_ACK,
+    "LISTEN": _common.CONN_LISTEN,
+    "CLOSING": _common.CONN_CLOSING,
+    None: _common.CONN_NONE,
 }
 
 proc_info_map = dict(
@@ -111,6 +111,13 @@ pmmap_ext = namedtuple(
 # =====================================================================
 def _not_supported(*args, **kw):
     raise NotImplementedError("not supported on this platform")
+# =====================================================================
+# --- IBM i utility funcs
+# =====================================================================
+def jobname_to_pid(_jobname=None):
+    if _jobname is None:
+        return -1
+    return 8888
 
 
 # =====================================================================
@@ -257,33 +264,40 @@ def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
     connections (as opposed to connections opened by one process only).
     """
-    cmap = _common.conn_tmap
-    if kind not in cmap:
-        raise ValueError("invalid %r kind argument; choose between %s"
-                         % (kind, ', '.join([repr(x) for x in cmap])))
-    families, types = _common.conn_tmap[kind]
-    rawlist = cext.net_connections(_pid)
     ret = set()
-    for item in rawlist:
-        fd, fam, type_, laddr, raddr, status, pid = item
-        if fam not in families:
-            continue
-        if type_ not in types:
-            continue
-        status = TCP_STATUSES[status]
-        if fam in (AF_INET, AF_INET6):
-            if laddr:
-                laddr = _common.addr(*laddr)
-            if raddr:
-                raddr = _common.addr(*raddr)
-        fam = sockfam_to_enum(fam)
-        type_ = socktype_to_enum(type_)
-        if _pid == -1:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
-        else:
+    cursor = _conn.cursor()
+    print("Getting net connections for pid ", _pid)
+    querystring = """ 
+                        SELECT j.CONNECTION_TYPE,j.LOCAL_ADDRESS,j.LOCAL_PORT,j.REMOTE_ADDRESS,j.REMOTE_PORT,j.JOB_NAME,i.TCP_STATE
+                        FROM QSYS2.NETSTAT_INFO i
+                        INNER JOIN QSYS2.NETSTAT_JOB_INFO j ON
+                        i.local_port = j.local_port and
+                        i.remote_port = j.remote_port
+                        ORDER BY i.TCP_STATE ASC, j.CONNECTION_TYPE DESC """
+    cursor.execute(querystring)
+    for row in cursor:
+        print("adding one that's' ", row[0])
+        type_ = AF_INET6 if row[0] == "IPV6" else AF_INET
+        laddr = _common.addr(row[1], row[2])
+        raddr = _common.addr(row[3], row[4])
+        jobname = row[5]
+        status = TCP_STATUSES[row[6]]
+        fam = AF_INET
+        fd = -1
+        pid = jobname_to_pid(jobname)
+        if _pid == -1 and jobname is None:
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
+        elif _pid != -1 and _pid == pid:
+            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
+        elif jobname is None:
+            continue
+        elif pid is None:
+            nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
+        else:
+            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         ret.add(nt)
-    return list(ret)
+    cursor.close()
+    return ret
 
 
 def net_if_stats():

@@ -49,6 +49,7 @@
 #ifdef __PASE__
 #include <procinfo.h>
 #include <sys/types.h>
+#include <sys/core.h>
 #ifdef HAVE_IBMIPERFSTAT
 #include <ibmiperfstat.h>
 #endif
@@ -65,6 +66,25 @@
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+
+
+struct procentry64 *
+psutil_get_proc(struct procentry64* dest, int pid) {
+    int pid_in_table = pid;
+    int rtv = getprocs64(dest, 
+                        sizeof(struct procentry64),
+                        NULL,
+                        0,
+                        &pid_in_table,
+                        1);
+    if( 0 >= rtv ||dest->pi_pid != pid) {
+        printf("process %d is gone\n", pid);
+        errno = ENOENT;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return dest;
+}
 
 /*
  * Read a file content and fills a C structure with it.
@@ -877,10 +897,6 @@ PsutilMethods[] =
      "Return stats about swap memory, in bytes"},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for network I/O statistics."},
-#endif
-    {"net_connections", psutil_net_connections, METH_VARARGS,
-     "Return system-wide connections"},
-#ifndef __PASE__
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats (isup, mtu)"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
