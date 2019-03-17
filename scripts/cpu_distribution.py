@@ -59,17 +59,44 @@ def clean_screen():
         os.system('cls')
 
 
+def get_terminal_size(fallback=(80, 24)):
+    try:
+        # Added in Python 3.3
+        from shutil import get_terminal_size as gts
+        return gts(fallback=fallback)
+    except ImportError:
+        try:
+            # This should work on Linux.
+            import fcntl
+            import termios
+            import struct
+            res = struct.unpack(
+                'hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234'))
+            return (res[1], res[0])
+        except Exception:
+            return fallback
+
+
 def main():
-    total = psutil.cpu_count()
+    num_cpus = psutil.cpu_count()
+    if num_cpus > 8:
+        num_cpus = 8  # try to fit into screen
+        cpus_hidden = True
+    else:
+        cpus_hidden = False
+
     while True:
         # header
         clean_screen()
         cpus_percent = psutil.cpu_percent(percpu=True)
-        for i in range(total):
+        for i in range(num_cpus):
             print("CPU %-6i" % i, end="")
+        if cpus_hidden:
+            print(" (+ hidden)", end="")
+
         print()
-        for percent in cpus_percent:
-            print("%-10s" % percent, end="")
+        for _ in range(num_cpus):
+            print("%-10s" % cpus_percent.pop(0), end="")
         print()
 
         # processes
@@ -77,16 +104,17 @@ def main():
         for p in psutil.process_iter(attrs=['name', 'cpu_num']):
             procs[p.info['cpu_num']].append(p.info['name'][:5])
 
-        end_marker = [[] for x in range(total)]
+        curr_line = 3
         while True:
-            for num in range(total):
+            for num in range(num_cpus):
                 try:
                     pname = procs[num].pop()
                 except IndexError:
                     pname = ""
                 print("%-10s" % pname[:10], end="")
             print()
-            if procs.values() == end_marker:
+            curr_line += 1
+            if curr_line >= get_terminal_size()[1]:
                 break
 
         time.sleep(1)
