@@ -24,8 +24,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 from psutil.tests import which
@@ -159,7 +158,20 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
-    @retry_before_failing()
+    @staticmethod
+    def parse_swapinfo():
+        # the last line is always the total
+        output = sh("swapinfo -k").splitlines()[-1]
+        parts = re.split(r'\s+', output)
+
+        if not parts:
+            raise ValueError("Can't parse swapinfo: %s" % output)
+
+        # the size is in 1k units, so multiply by 1024
+        total, used, free = (int(p) * 1024 for p in parts[1:4])
+        return total, used, free
+
+    @retry_on_failure()
     def test_proc_memory_maps(self):
         out = sh('procstat -v %s' % self.pid)
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
@@ -197,7 +209,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(gids.effective, int(egid))
         self.assertEqual(gids.saved, int(sgid))
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_proc_ctx_switches(self):
         tested = []
         out = sh('procstat -r %s' % self.pid)
@@ -217,7 +229,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_proc_cpu_times(self):
         tested = []
         out = sh('procstat -r %s' % self.pid)
@@ -237,39 +249,56 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
 
+    def test_cpu_frequency_against_sysctl(self):
+        # Currently only cpu 0 is frequency is supported in FreeBSD
+        # All other cores use the same frequency.
+        sensor = "dev.cpu.0.freq"
+        sysctl_result = int(sysctl(sensor))
+        self.assertEqual(psutil.cpu_freq().current, sysctl_result)
+
+        sensor = "dev.cpu.0.freq_levels"
+        sysctl_result = sysctl(sensor)
+        # sysctl returns a string of the format:
+        # <freq_level_1>/<voltage_level_1> <freq_level_2>/<voltage_level_2>...
+        # Ordered highest available to lowest available.
+        max_freq = int(sysctl_result.split()[0].split("/")[0])
+        min_freq = int(sysctl_result.split()[-1].split("/")[0])
+        self.assertEqual(psutil.cpu_freq().max, max_freq)
+        self.assertEqual(psutil.cpu_freq().min, min_freq)
+
     # --- virtual_memory(); tests against sysctl
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().active, syst,
                                delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().inactive, syst,
                                delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().wired, syst,
                                delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().cached, syst,
                                delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().free, syst,
                                delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         self.assertAlmostEqual(psutil.virtual_memory().buffers, syst,
@@ -283,42 +312,42 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil.virtual_memory().total, num)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_active(self):
         num = muse('Active')
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_wired(self):
         num = muse('Wired')
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_cached(self):
         num = muse('Cache')
         self.assertAlmostEqual(psutil.virtual_memory().cached, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_free(self):
         num = muse('Free')
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_muse_vmem_buffers(self):
         num = muse('Buffer')
         self.assertAlmostEqual(psutil.virtual_memory().buffers, num,
@@ -343,6 +372,23 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     # def test_cpu_stats_traps(self):
     #    self.assertAlmostEqual(psutil.cpu_stats().traps,
     #                           sysctl('vm.stats.sys.v_trap'), delta=1000)
+
+    # --- swap memory
+
+    def test_swapmem_free(self):
+        total, used, free = self.parse_swapinfo()
+        self.assertAlmostEqual(
+            psutil.swap_memory().free, free, delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_used(self):
+        total, used, free = self.parse_swapinfo()
+        self.assertAlmostEqual(
+            psutil.swap_memory().used, used, delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_total(self):
+        total, used, free = self.parse_swapinfo()
+        self.assertAlmostEqual(
+            psutil.swap_memory().total, total, delta=MEMORY_TOLERANCE)
 
     # --- others
 
@@ -397,6 +443,23 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             sysctl("hw.acpi.acline")
         self.assertIsNone(psutil.sensors_battery())
 
+    # --- sensors_temperatures
+
+    def test_sensors_temperatures_against_sysctl(self):
+        num_cpus = psutil.cpu_count(True)
+        for cpu in range(num_cpus):
+            sensor = "dev.cpu.%s.temperature" % cpu
+            # sysctl returns a string in the format 46.0C
+            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            self.assertAlmostEqual(
+                psutil.sensors_temperatures()["coretemp"][cpu].current,
+                sysctl_result, delta=10)
+
+            sensor = "dev.cpu.%s.coretemp.tjmax" % cpu
+            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            self.assertEqual(
+                psutil.sensors_temperatures()["coretemp"][cpu].high,
+                sysctl_result)
 
 # =====================================================================
 # --- OpenBSD
@@ -486,4 +549,5 @@ class NetBSDSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

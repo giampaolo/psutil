@@ -223,6 +223,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         PyErr_Clear();
         py_name = Py_None;
     }
+    // Py_INCREF(py_name);
 
     // Calculate memory.
 #ifdef PSUTIL_FREEBSD
@@ -343,10 +344,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         py_name                           // (pystr) name
     );
 
-    if (py_retlist != NULL) {
-        // XXX shall we decref() also in case of Py_BuildValue() error?
-        Py_DECREF(py_name);
-    }
+    Py_DECREF(py_name);
     return py_retlist;
 }
 
@@ -393,7 +391,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 /*
  * Return the number of logical CPUs in the system.
- * XXX this could be shared with OSX
+ * XXX this could be shared with macOS
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
@@ -804,7 +802,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
     fp = fopen(_PATH_UTMP, "r");
     if (fp == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMP);
         goto error;
     }
 
@@ -981,6 +979,10 @@ PsutilMethods[] = {
 #if defined(PSUTIL_FREEBSD)
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
+    {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
+     "Return temperature information for a given CPU core number."},
+    {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
+     "Return frequency of a given CPU"},
 #endif
 
     // --- others

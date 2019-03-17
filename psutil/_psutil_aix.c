@@ -13,7 +13,9 @@
  *
  * Known limitations:
  * - psutil.Process.io_counters read count is always 0
+ * - psutil.Process.io_counters may not be available on older AIX versions
  * - psutil.Process.threads may not be available on older AIX versions
+ # - psutil.net_io_counters may not be available on older AIX versions
  * - reading basic process info may fail or return incorrect values when
  *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
  * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
@@ -46,6 +48,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <libperfstat.h>
+#include <unistd.h>
 
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
@@ -171,6 +174,7 @@ error:
 
 
 #ifdef CURR_VERSION_THREAD
+
 /*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
@@ -236,8 +240,11 @@ error:
         free(threadt);
     return NULL;
 }
+
 #endif
 
+
+#ifdef CURR_VERSION_PROCESS
 
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
@@ -261,6 +268,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
                          procinfo.inBytes,    // XXX always 0
                          procinfo.outBytes);
 }
+
+#endif
 
 
 /*
@@ -468,6 +477,8 @@ error:
 }
 
 
+#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
+
 /*
  * Return a list of tuples for network I/O statistics.
  */
@@ -536,6 +547,8 @@ error:
     Py_DECREF(py_retdict);
     return NULL;
 }
+
+#endif
 
 
 static PyObject*
@@ -617,6 +630,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
+    long ticks;
     perfstat_cpu_t *cpu = NULL;
     perfstat_id_t id;
     PyObject *py_retlist = PyList_New(0);
@@ -624,6 +638,13 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
+    /* get the number of ticks per second */
+    ticks = sysconf(_SC_CLK_TCK);
+    if (ticks < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
 
     /* get the number of cpus in ncpu */
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
@@ -650,10 +671,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     for (i = 0; i < ncpu; i++) {
         py_cputime = Py_BuildValue(
             "(dddd)",
-            (double)cpu[i].user,
-            (double)cpu[i].sys,
-            (double)cpu[i].idle,
-            (double)cpu[i].wait);
+            (double)cpu[i].user / ticks,
+            (double)cpu[i].sys / ticks,
+            (double)cpu[i].idle / ticks,
+            (double)cpu[i].wait / ticks);
         if (!py_cputime)
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
@@ -869,8 +890,10 @@ PsutilMethods[] =
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
 #endif
+#ifdef CURR_VERSION_PROCESS
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
+#endif
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Get process I/O counters."},
 
@@ -889,8 +912,10 @@ PsutilMethods[] =
      "Return system virtual memory usage statistics"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
      "Return stats about swap memory, in bytes"},
+#if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for network I/O statistics."},
+#endif
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide connections"},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
@@ -914,6 +939,10 @@ struct module_state {
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -986,3 +1015,7 @@ void init_psutil_aix(void)
     return module;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

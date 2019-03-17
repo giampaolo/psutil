@@ -1,4 +1,8 @@
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
+.. image:: https://pepy.tech/badge/psutil/month
+    :target: https://pepy.tech/project/psutil
+    :alt: Downloads
+
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
 
@@ -15,7 +19,7 @@
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: Latest version
 
 .. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
@@ -23,24 +27,24 @@
     :alt: Github stars
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil/
+    :target: https://pypi.org/project/psutil
     :alt: License
 
-===========
+
 Quick links
 ===========
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
+- `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
-=======
+
 Summary
 =======
 
@@ -56,16 +60,32 @@ psutil currently supports the following platforms:
 
 - **Linux**
 - **Windows**
-- **OSX**,
+- **macOS**
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.6**.
-`PyPy <http://pypy.org/>`__ is also known to work.
+...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
-====================
+
+Author
+======
+
+psutil was created and is maintained by
+`Giampaolo Rodola <http://grodola.blogspot.com/p/about.html>`__ and it
+received many useful `contributions <https://github.com/giampaolo/psutil/blob/master/CREDITS>`__
+over the years.
+A lot of time and effort went into making psutil as it is right now.
+If you feel psutil is useful to you or your business and want to support its
+future development consider making a small donation:
+
+.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
+    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+    :alt: Donate via PayPal
+
+Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
+
+
 Example applications
 ====================
 
@@ -80,25 +100,28 @@ Example applications
 Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
 and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
 
-=====================
 Projects using psutil
 =====================
 
-At the time of writing psutil has roughly
-`2.9 milion downloads <https://github.com/giampaolo/psutil/issues/1053#issuecomment-340166262>`__
-per month and there are over
-`6000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+psutil has roughly the following monthly downloads:
+
+.. image:: https://pepy.tech/badge/psutil/month
+    :target: https://pepy.tech/project/psutil
+    :alt: Downloads
+
+There are over
+`10.000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
 on github which depend from psutil.
 Here's some I find particularly interesting:
 
+- https://github.com/google/grr
 - https://github.com/facebook/osquery/
 - https://github.com/nicolargo/glances
-- https://github.com/google/grr
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
 - https://github.com/home-assistant/home-assistant/
 
-========
+
 Portings
 ========
 
@@ -109,16 +132,19 @@ Portings
 - Ruby: https://github.com/spacewander/posixpsutil
 - Nim: https://github.com/johnscillieri/psutil-nim
 
-==============
+
 Example usages
 ==============
 
+This represents pretty much the whole psutil API.
+
 CPU
-===
+---
 
 .. code-block:: python
 
     >>> import psutil
+    >>>
     >>> psutil.cpu_times()
     scputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540, iowait=629.59, irq=0.0, softirq=19.42, steal=0.0, guest=0, nice=0.0)
     >>>
@@ -156,11 +182,10 @@ CPU
     >>>
 
 Memory
-======
+------
 
 .. code-block:: python
 
-    >>> import psutil
     >>> psutil.virtual_memory()
     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
     >>> psutil.swap_memory()
@@ -168,11 +193,10 @@ Memory
     >>>
 
 Disks
-=====
+-----
 
 .. code-block:: python
 
-    >>> import psutil
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
      sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
@@ -185,11 +209,10 @@ Disks
     >>>
 
 Network
-=======
+-------
 
 .. code-block:: python
 
-    >>> import psutil
     >>> psutil.net_io_counters(pernic=True)
     {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
      'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
@@ -197,25 +220,23 @@ Network
     >>> psutil.net_connections()
     [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
      sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING', pid=2987),
-     sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED', pid=None),
-     sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT', pid=None)
      ...]
     >>>
     >>> psutil.net_if_addrs()
-    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
-            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
-            snic(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
-     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
-               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
-               snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
+    {'lo': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
+            snicaddr(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
+            snicaddr(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
+     'wlan0': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
+               snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
+               snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
     >>> psutil.net_if_stats()
-    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
-     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
+    {'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536),
+     'wlan0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500)}
     >>>
 
 Sensors
-=======
+-------
 
 .. code-block:: python
 
@@ -224,10 +245,7 @@ Sensors
     {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
      'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
      'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
+                  shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0)]}
     >>>
     >>> psutil.sensors_fans()
     {'asus': [sfan(label='cpu_fan', current=3200)]}
@@ -237,7 +255,7 @@ Sensors
     >>>
 
 Other system info
-=================
+-----------------
 
 .. code-block:: python
 
@@ -251,7 +269,7 @@ Other system info
     >>>
 
 Process management
-==================
+------------------
 
 .. code-block:: python
 
@@ -263,6 +281,8 @@ Process management
      5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
     >>>
     >>> p = psutil.Process(7055)
+    >>> p
+    psutil.Process(pid=7055, name='python', started='09:04:44')
     >>> p.name()
     'python'
     >>> p.exe()
@@ -276,11 +296,16 @@ Process management
     7055
     >>> p.ppid()
     7054
+    >>> p.children(recursive=True)
+    [psutil.Process(pid=29835, name='python2.7', started='11:45:38'),
+     psutil.Process(pid=29836, name='python2.7', started='11:43:39')]
+    >>>
     >>> p.parent()
-    <psutil.Process(pid=7054, name='bash') at 140008329539408>
-    >>> p.children()
-    [<psutil.Process(pid=8031, name='python') at 14020832451977>,
-     <psutil.Process(pid=8044, name='python') at 19229444921932>]
+    psutil.Process(pid=4699, name='bash', started='09:06:44')
+    >>> p.parents()
+    [psutil.Process(pid=4699, name='bash', started='09:06:44'),
+     psutil.Process(pid=4689, name='gnome-terminal-server', started='0:06:44'),
+     psutil.Process(pid=1, name='systemd', started='05:56:55')]
     >>>
     >>> p.status()
     'running'
@@ -308,14 +333,13 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
-    >>> p.memory_full_info()  # "real" USS memory usage (Linux, OSX, Win only)
+    >>> p.memory_full_info()  # "real" USS memory usage (Linux, macOS, Win only)
     pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
     >>> p.memory_percent()
     0.7823
     >>> p.memory_maps()
     [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
      pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
-     pmmap_grouped(path='/lib/x8664-linux-gnu/libcrypto.so.0.1', rss=34124, rss=32768, size=2134016, pss=15360, shared_clean=24576, shared_dirty=0, private_clean=0, private_dirty=8192, referenced=24576, anonymous=8192, swap=0),
      pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
      pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
      ...]
@@ -329,9 +353,7 @@ Process management
     >>>
     >>> p.connections()
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING'),
-     pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED'),
-     pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT')]
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING')]
     >>>
     >>> p.num_threads()
     4
@@ -339,8 +361,6 @@ Process management
     8
     >>> p.threads()
     [pthread(id=5234, user_time=22.5, system_time=9.2891),
-     pthread(id=5235, user_time=0.0, system_time=0.0),
-     pthread(id=5236, user_time=0.0, system_time=0.0),
      pthread(id=5237, user_time=0.0707, system_time=1.1)]
     >>>
     >>> p.num_ctx_switches()
@@ -360,7 +380,7 @@ Process management
     >>>
     >>> p.environ()
     {'LC_PAPER': 'it_IT.UTF-8', 'SHELL': '/bin/bash', 'GREP_OPTIONS': '--color=auto',
-    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'COLORTERM': 'gnome-terminal',
+    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg',
      ...}
     >>>
     >>> p.as_dict()
@@ -378,7 +398,6 @@ Process management
     USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
     root           1  0.0  0.0   24584    2240            Jun17   00:00  init
     root           2  0.0  0.0       0       0            Jun17   00:00  kthreadd
-    root           3  0.0  0.0       0       0            Jun17   00:05  ksoftirqd/0
     ...
     giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
     giampaolo  31721  0.0  2.2  773060  181896            00:04   10:30  chrome
@@ -386,7 +405,7 @@ Process management
     >>>
 
 Further process APIs
-====================
+--------------------
 
 .. code-block:: python
 
@@ -427,7 +446,7 @@ Popen wrapper:
     >>>
 
 Windows services
-================
+----------------
 
 .. code-block:: python
 
@@ -447,25 +466,3 @@ Windows services
      'start_type': 'manual',
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
-
-Other samples
-=============
-
-See `doc recipes <http://psutil.readthedocs.io/#recipes>`__.
-
-======
-Author
-======
-
-psutil was created and is maintained by
-`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`__.
-A lot of time and effort went into making psutil as it is right now.
-If you feel psutil is useful to you or your business and want to support its
-future development please consider donating me
-(`Giampaolo <http://grodola.blogspot.com/p/about.html>`__) some money.
-
-.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
-    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-    :alt: Donate via PayPal
-
-Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.

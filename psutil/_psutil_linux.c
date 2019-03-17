@@ -195,6 +195,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
+    const char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
@@ -203,12 +204,15 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    if (!PyArg_ParseTuple(args, "s", &mtab_path))
+        return NULL;
+
     Py_BEGIN_ALLOW_THREADS
-    file = setmntent(MOUNTED, "r");
+    file = setmntent(mtab_path, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, MOUNTED);
+        psutil_debug("setmntent() failed");
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, mtab_path);
         goto error;
     }
 
@@ -295,8 +299,10 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     while (1) {
         setsize = CPU_ALLOC_SIZE(ncpus);
         mask = CPU_ALLOC(ncpus);
-        if (mask == NULL)
+        if (mask == NULL) {
+            psutil_debug("CPU_ALLOC() failed");
             return PyErr_NoMemory();
+        }
         if (sched_getaffinity(pid, setsize, mask) == 0)
             break;
         CPU_FREE(mask);
@@ -529,7 +535,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        goto error;
+        return PyErr_SetFromOSErrnoWithSyscall("socket()");
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // duplex and speed
@@ -552,20 +558,21 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
             speed = 0;
         }
         else {
+            PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCETHTOOL)");
             goto error;
         }
     }
 
-    close(sock);
     py_retlist = Py_BuildValue("[ii]", duplex, speed);
     if (!py_retlist)
         goto error;
+    close(sock);
     return py_retlist;
 
 error:
     if (sock != -1)
         close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
 }
 
 
@@ -666,6 +673,8 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
@@ -712,8 +721,6 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;

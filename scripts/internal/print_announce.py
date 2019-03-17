@@ -20,7 +20,7 @@ HISTORY = os.path.abspath(os.path.join(HERE, '../../HISTORY.rst'))
 PRJ_NAME = 'psutil'
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'http://psutil.readthedocs.io'
-PRJ_URL_DOWNLOAD = 'https://pypi.python.org/pypi/psutil'
+PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
 PRJ_URL_WHATSNEW = \
     'https://github.com/giampaolo/psutil/blob/master/HISTORY.rst'
 
@@ -39,9 +39,9 @@ monitoring, profiling and limiting process resources and management of \
 running processes. It implements many functionalities offered by command \
 line tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, \
 nice, ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It \
-currently supports Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD, NetBSD \
-and AIX, both 32-bit and 64-bit architectures, with Python versions from 2.6 \
-to 3.6. PyPy is also known to work.
+currently supports Linux, Windows, macOS, Sun Solaris, FreeBSD, OpenBSD, \
+NetBSD and AIX, both 32-bit and 64-bit architectures.  Supported Python \
+versions are 2.6, 2.7 and 3.4+. PyPy is also known to work.
 
 What's new
 ==========
@@ -81,7 +81,7 @@ def get_changes():
     for i, line in enumerate(lines):
         line = lines.pop(0)
         line = line.rstrip()
-        if re.match("^- \d+_: ", line):
+        if re.match(r"^- \d+_: ", line):
             num, _, rest = line.partition(': ')
             num = ''.join([x for x in num if x.isdigit()])
             line = "- #%s: %s" % (num, rest)

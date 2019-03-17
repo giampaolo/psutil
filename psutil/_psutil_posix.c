@@ -431,7 +431,7 @@ error:
 
 
 /*
- * net_if_stats() OSX/BSD implementation.
+ * net_if_stats() macOS/BSD implementation.
  */
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 
@@ -620,7 +620,7 @@ error:
         close(sock);
     return PyErr_SetFromErrno(PyExc_OSError);
 }
-#endif  // net_if_stats() OSX/BSD implementation
+#endif  // net_if_stats() macOS/BSD implementation
 
 
 /*
@@ -653,6 +653,10 @@ struct module_state {
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -708,3 +712,7 @@ void init_psutil_posix(void)
     return module;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -28,9 +28,6 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 
 __extra__all__ = ["PROCFS_PATH"]
@@ -42,6 +39,8 @@ __extra__all__ = ["PROCFS_PATH"]
 
 
 HAS_THREADS = hasattr(cext, "proc_threads")
+HAS_NET_IO_COUNTERS = hasattr(cext, "net_io_counters")
+HAS_PROC_IO_COUNTERS = hasattr(cext, "proc_io_counters")
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
@@ -79,6 +78,13 @@ proc_info_map = dict(
     status=6,
     ttynr=7)
 
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
 
 # =====================================================================
 # --- named tuples
@@ -93,11 +99,6 @@ pfullmem = pmem
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================
@@ -117,7 +118,7 @@ def get_procfs_path():
 
 def virtual_memory():
     total, avail, free, pinned, inuse = cext.virtual_mem()
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 
 
@@ -125,7 +126,7 @@ def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, free, sin, sout = cext.swap_mem()
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
 
@@ -212,7 +213,9 @@ def disk_partitions(all=False):
 
 
 net_if_addrs = cext_posix.net_if_addrs
-net_io_counters = cext.net_io_counters
+
+if HAS_NET_IO_COUNTERS:
+    net_io_counters = cext.net_io_counters
 
 
 def net_connections(kind, _pid=-1):
@@ -269,7 +272,8 @@ def net_if_stats():
             stdout, stderr = [x.decode(sys.stdout.encoding)
                               for x in (stdout, stderr)]
         if p.returncode == 0:
-            re_result = re.search("Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
+            re_result = re.search(
+                r"Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
             if re_result is not None:
                 speed = int(re_result.group(1))
                 duplex = re_result.group(2)
@@ -353,7 +357,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -362,23 +366,26 @@ class Process(object):
         self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
-        self._proc_name_and_args.cache_activate()
-        self._proc_basic_info.cache_activate()
-        self._proc_cred.cache_activate()
+        self._proc_name_and_args.cache_activate(self)
+        self._proc_basic_info.cache_activate(self)
+        self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_name_and_args.cache_deactivate()
-        self._proc_basic_info.cache_deactivate()
-        self._proc_cred.cache_deactivate()
+        self._proc_name_and_args.cache_deactivate(self)
+        self._proc_basic_info.cache_deactivate(self)
+        self._proc_cred.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
         return cext.proc_name_and_args(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_basic_info(self):
         return cext.proc_basic_info(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
         return cext.proc_cred(self.pid, self._procfs_path)
@@ -534,7 +541,7 @@ class Process(object):
                               for x in (stdout, stderr)]
         if "no such process" in stderr.lower():
             raise NoSuchProcess(self.pid, self._name)
-        procfiles = re.findall("(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)
+        procfiles = re.findall(r"(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)
         retlist = []
         for fd, path in procfiles:
             path = path.strip()
@@ -560,14 +567,15 @@ class Process(object):
     def wait(self, timeout=None):
         return _psposix.wait_pid(self.pid, timeout, self._name)
 
-    @wrap_exceptions
-    def io_counters(self):
-        try:
-            rc, wc, rb, wb = cext.proc_io_counters(self.pid)
-        except OSError:
-            # if process is terminated, proc_io_counters returns OSError
-            # instead of NSP
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            raise
-        return _common.pio(rc, wc, rb, wb)
+    if HAS_PROC_IO_COUNTERS:
+        @wrap_exceptions
+        def io_counters(self):
+            try:
+                rc, wc, rb, wb = cext.proc_io_counters(self.pid)
+            except OSError:
+                # if process is terminated, proc_io_counters returns OSError
+                # instead of NSP
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                raise
+            return _common.pio(rc, wc, rb, wb)

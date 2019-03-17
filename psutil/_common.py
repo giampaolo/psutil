@@ -42,8 +42,8 @@ PY3 = sys.version_info[0] == 3
 
 __all__ = [
     # constants
-    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
-    'WINDOWS',
+    'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
+    'SUNOS', 'WINDOWS',
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
@@ -55,11 +55,11 @@ __all__ = [
     'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
     'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
-    'STATUS_WAKING', 'STATUS_ZOMBIE',
+    'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
-    'sdiskusage', 'snetio', 'snic', 'snicstats', 'sswap', 'suser',
+    'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
@@ -75,12 +75,13 @@ __all__ = [
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith("linux")
-OSX = sys.platform.startswith("darwin")
+MACOS = sys.platform.startswith("darwin")
+OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
-SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+SUNOS = sys.platform.startswith(("sunos", "solaris"))
 AIX = sys.platform.startswith("aix")
 
 
@@ -99,10 +100,11 @@ STATUS_ZOMBIE = "zombie"
 STATUS_DEAD = "dead"
 STATUS_WAKE_KILL = "wake-kill"
 STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # FreeBSD, OSX
+STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
 STATUS_LOCKED = "locked"  # FreeBSD
 STATUS_WAITING = "waiting"  # FreeBSD
 STATUS_SUSPENDED = "suspended"  # NetBSD
+STATUS_PARKED = "parked"  # Linux
 
 # Process.connections() and psutil.net_connections()
 CONN_ESTABLISHED = "ESTABLISHED"
@@ -182,7 +184,8 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
 # psutil.net_if_addrs()
-snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
+snicaddr = namedtuple('snicaddr',
+                      ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
 snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 # psutil.cpu_stats()
@@ -195,7 +198,7 @@ shwtemp = namedtuple(
     'shwtemp', ['label', 'current', 'high', 'critical'])
 # psutil.sensors_battery()
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
-# psutil.sensors_battery()
+# psutil.sensors_fans()
 sfan = namedtuple('sfan', ['label', 'current'])
 
 # --- for Process methods
@@ -261,14 +264,14 @@ del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 # ===================================================================
 
 
-def usage_percent(used, total, _round=None):
+def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
         ret = (used / total) * 100
     except ZeroDivisionError:
         ret = 0.0 if isinstance(used, float) or isinstance(total, float) else 0
-    if _round is not None:
-        return round(ret, _round)
+    if round_ is not None:
+        return round(ret, round_)
     else:
         return ret
 
@@ -324,7 +327,7 @@ def memoize_when_activated(fun):
     1
     >>>
     >>> # activated
-    >>> foo.cache_activate()
+    >>> foo.cache_activate(self)
     >>> foo()
     1
     >>> foo()
@@ -333,26 +336,30 @@ def memoize_when_activated(fun):
     """
     @functools.wraps(fun)
     def wrapper(self):
-        if not wrapper.cache_activated:
+        try:
+            # case 1: we previously entered oneshot() ctx
+            ret = self._cache[fun]
+        except AttributeError:
+            # case 2: we never entered oneshot() ctx
             return fun(self)
-        else:
-            try:
-                ret = cache[fun]
-            except KeyError:
-                ret = cache[fun] = fun(self)
-            return ret
+        except KeyError:
+            # case 3: we entered oneshot() ctx but there's no cache
+            # for this entry yet
+            ret = self._cache[fun] = fun(self)
+        return ret
 
-    def cache_activate():
-        """Activate cache."""
-        wrapper.cache_activated = True
+    def cache_activate(proc):
+        """Activate cache. Expects a Process instance. Cache will be
+        stored as a "_cache" instance attribute."""
+        proc._cache = {}
 
-    def cache_deactivate():
+    def cache_deactivate(proc):
         """Deactivate and clear cache."""
-        wrapper.cache_activated = False
-        cache.clear()
+        try:
+            del proc._cache
+        except AttributeError:
+            pass
 
-    cache = {}
-    wrapper.cache_activated = False
     wrapper.cache_activate = cache_activate
     wrapper.cache_deactivate = cache_deactivate
     return wrapper
@@ -468,7 +475,7 @@ def deprecated_method(replacement):
 
         @functools.wraps(fun)
         def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=FutureWarning, stacklevel=2)
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
@@ -573,3 +580,21 @@ def wrap_numbers(input_dict, name):
 _wn = _WrapNumbers()
 wrap_numbers.cache_clear = _wn.cache_clear
 wrap_numbers.cache_info = _wn.cache_info
+
+
+def open_binary(fname, **kwargs):
+    return open(fname, "rb", **kwargs)
+
+
+def open_text(fname, **kwargs):
+    """On Python 3 opens a file in text mode by using fs encoding and
+    a proper en/decoding errors handler.
+    On Python 2 this is just an alias for open(name, 'rt').
+    """
+    if PY3:
+        # See:
+        # https://github.com/giampaolo/psutil/issues/675
+        # https://github.com/giampaolo/psutil/pull/733
+        kwargs.setdefault('encoding', ENCODING)
+        kwargs.setdefault('errors', ENCODING_ERRS)
+    return open(fname, "rt", **kwargs)

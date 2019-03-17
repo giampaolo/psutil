@@ -2,20 +2,18 @@ Intro
 =====
 
 I would like to recognize some of the people who have been instrumental in the
-development of psutil.
-I'm sure I'm forgetting some people (feel free to email me), but here is a
-short list.
-It's modeled after the Linux CREDITS file where the fields are:
-name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
-(issue tracker is at https://github.com/giampaolo/psutil/issues).
-Really thanks to all of you.
+development of psutil. I'm sure I'm forgetting somebody (feel free to email me)
+but here is a short list. It's modeled after the Linux CREDITS file where the
+fields are: name (N), e-mail (E), website (W), country (C), description (D),
+(I) issues. Issue tracker is at https://github.com/giampaolo/psutil/issues).
+A big thanks to all of you.
 
 - Giampaolo
 
 Author
 ======
 
-N: Giampaolo Rodola'
+N: Giampaolo Rodola
 C: Italy
 E: g.rodola@gmail.com
 W: http://grodola.blogspot.com/
@@ -34,7 +32,7 @@ Github usernames of people to CC on github when in need of help.
     - glebius, Gleb Smirnoff (#1013)
     - sunpoet, Po-Chuan Hsieh (pkg maintainer, #1105)
     - kostikbel, Konstantin Belousov (#1105)
-- OSX:
+- macOS:
     - whitlockjc, Jeremy Whitlock
 - Windows:
     - mrjefftang, Jeff Tang
@@ -46,8 +44,8 @@ Github usernames of people to CC on github when in need of help.
 - AIX:
     - wiggin15, Arnon Yaari (maintainer)
 
-Contributors
-============
+Top contributors
+================
 
 N: Jay Loden
 C: NJ, USA
@@ -57,7 +55,14 @@ W: http://www.jayloden.com
 
 N: Arnon Yaari (wiggin15)
 W: https://github.com/wiggin15
-I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177
+D: AIX implementation, expert on multiple fronts
+I: 517, 607, 610, 1131, 1123, 1130, 1154, 1164, 1174, 1177, 1210, 1214, 1408,
+   1329.
+
+N: Alex Manuskin
+W: https://github.com/amanusk
+D: FreeBSD cpu_freq(), OSX temperatures, support for Linux temperatures
+I: 1284, 1345, 1350, 1352
 
 N: Jeff Tang
 W: https://github.com/mrjefftang
@@ -65,13 +70,31 @@ I: 340, 529, 616, 653, 654, 648, 641
 
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
-D: great help with OSX C development.
+D: great help with macOS C development.
 I: 125, 150, 174, 206
 
 N: Landry Breuil
 W: https://github.com/landryb
 D: OpenBSD implementation.
 I: 615
+
+N: Justin Venus
+E: justin.venus@gmail.com
+D: Solaris support
+I: 18
+
+N: Thomas Klausner
+W: https://github.com/0-wiz-0
+D: NetBSD implementation (co-author).
+I: 557
+
+N: Ryo Onodera
+W: https://github.com/ryoon
+D: NetBSD implementation (co-author).
+I: 557
+
+Contributors
+============
 
 N: wj32
 E: wj32.64@gmail.com
@@ -83,11 +106,6 @@ C: Bologna, Italy
 E: yanraber@gmail.com
 D: help on Windows development (initial version of Process.username())
 
-N: Justin Venus
-E: justin.venus@gmail.com
-D: Solaris support
-I: 18
-
 N: Dave Daeschler
 C: USA
 E: david.daeschler@gmail.com
@@ -95,18 +113,24 @@ W: http://daviddaeschler.com
 D: some contributions to initial design/bootstrap plus occasional bug fixing
 I: 522, 536
 
-N: Thomas Klausner
-W: https://github.com/0-wiz-0
-I: #557
-
-N: Ryo Onodera
-W: https://github.com/ryoon
-I: #557
-
 N: cjgohlke
 E: cjgohlke@gmail.com
 D: Windows 64 bit support
 I: 107
+
+N: Frank Benkstein
+D: process environ()
+W: https://github.com/fbenkstein
+I: 732, 733
+
+N: Mozilla Foundation
+D: sample code for process USS memory.
+
+N: EccoTheFlintstone
+W: https://github.com/EccoTheFlintstone
+I: 1368, 1348
+
+----
 
 N: Jeffery Kline
 E: jeffery.kline@gmail.com
@@ -381,10 +405,6 @@ N: Syohei YOSHIDA
 W: https://github.com/syohex
 I: 730
 
-N: Frank Benkstein
-W: https://github.com/fbenkstein
-I: 732, 733
-
 N: Visa Hankala
 E: visa@openbsd.org
 I: 741
@@ -401,9 +421,6 @@ I: 751
 N: mpderbec
 W: https://github.com/mpderbec
 I: 660
-
-N: Mozilla Foundation
-D: sample code for process USS memory.
 
 N: wxwright
 W: https://github.com/wxwright
@@ -482,11 +499,12 @@ I: 1057
 
 N: Gleb Smirnoff
 W: https://github.com/glebius
-I: 1042, 1079
+D: good help with FreeBSD
+I: 1042, 1079, 1070
 
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
-I: 1077, 1093, 1091
+I: 1077, 1093, 1091, 1220, 1346
 
 N: Prodesire
 W: https://github.com/Prodesire
@@ -519,3 +537,58 @@ I: 1169
 N: Dan Vinakovsky
 W: https://github.com/hexaclock
 I: 1216
+
+N: stswandering
+W: https://github.com/stswandering
+I: 1243
+
+N: Georg Sauthoff
+W: https://github.com/gsauthof
+I: 1193, 1194
+
+N: Maxime Mouial
+W: https://github.com/hush-hush
+I: 1239
+
+N: Denis Krienbühl
+W: https://github.com/href
+I: 1260
+
+N: Jean-Luc Migot
+W: https://github.com/jmigot-tehtris
+I: 1258, 1289
+
+N: Nikhil Marathe
+W: https://github.com/nikhilm
+I: 1278
+
+N: Sylvain Duchesne
+W: https://github.com/sylvainduchesne
+I: 1294
+
+N: Lawrence Ye
+W: https://github.com/LEAFERx
+I: 1321
+
+N: Ilya Yanok
+W: https://github.com/yanok
+I: 1332
+
+N: Jaime Fullaondo
+W: https://github.com/truthbk
+D: AIX support
+I: 1320
+
+N: Koen Kooi
+W: https://github.com/koenkooi
+I: 1360
+
+N: Ghislain Le Meur
+W: https://github.com/gigi206
+D: idea for Process.parents()
+I: 1379
+
+N: Benjamin Drung
+D: make tests invariant to LANG setting
+W: https://github.com/bdrung
+I: 1462

@@ -41,7 +41,7 @@ import sys
 import psutil
 
 
-if not (psutil.LINUX or psutil.OSX or psutil.WINDOWS):
+if not (psutil.LINUX or psutil.MACOS or psutil.WINDOWS):
     sys.exit("platform not supported")
 
 
@@ -86,7 +86,7 @@ def main():
     for p in procs[:86]:
         line = templ % (
             p.pid,
-            p._info["username"][:7],
+            p._info["username"][:7] if p._info["username"] else "",
             " ".join(p._info["cmdline"])[:30],
             convert_bytes(p._uss),
             convert_bytes(p._pss) if p._pss != "" else "",

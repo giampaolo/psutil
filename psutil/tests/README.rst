@@ -17,7 +17,7 @@ Instructions for running tests
   (``pip install tox``) then run ``tox`` from within psutil root directory.
 
 * Every time a commit is pushed tests are automatically run on Travis
-  (Linux, OSX) and appveyor (Windows):
+  (Linux, MACOS) and appveyor (Windows):
 
   * Travis builds: https://travis-ci.org/giampaolo/psutil
   * AppVeyor builds: https://ci.appveyor.com/project/giampaolo/psutil

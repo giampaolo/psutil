@@ -7,8 +7,11 @@
  */
 
 #include <Python.h>
-#include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
+#include "_psutil_common.h"
 
 // Global vars.
 int PSUTIL_DEBUG = 0;
@@ -40,7 +43,7 @@ PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
  * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-NoSuchProcess(char *msg) {
+NoSuchProcess(const char *msg) {
     PyObject *exc;
     exc = PyObject_CallFunction(
         PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
@@ -51,11 +54,33 @@ NoSuchProcess(char *msg) {
 
 
 /*
+ * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
+ * message.
+ */
+PyObject *
+PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
+    char fullmsg[1024];
+
+#ifdef _WIN32
+    sprintf(fullmsg, "originated from %s", syscall);
+    PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
+#else
+    PyObject *exc;
+    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+#endif
+    return NULL;
+}
+
+
+/*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
  * If msg != "" the exception message will change in accordance.
  */
 PyObject *
-AccessDenied(char *msg) {
+AccessDenied(const char *msg) {
     PyObject *exc;
     exc = PyObject_CallFunction(
         PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
@@ -84,21 +109,24 @@ psutil_set_testing(PyObject *self, PyObject *args) {
 void
 psutil_debug(const char* format, ...) {
     va_list argptr;
-    va_start(argptr, format);
-    fprintf(stderr, "psutil-dubug> ");
-    vfprintf(stderr, format, argptr);
-    fprintf(stderr, "\n");
-    va_end(argptr);
+    if (PSUTIL_DEBUG) {
+        va_start(argptr, format);
+        fprintf(stderr, "psutil-debug> ");
+        vfprintf(stderr, format, argptr);
+        fprintf(stderr, "\n");
+        va_end(argptr);
+    }
 }
 
 
 /*
  * Called on module import on all platforms.
  */
-void
+int
 psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
+    return 0;
 }

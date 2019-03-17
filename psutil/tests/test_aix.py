@@ -11,7 +11,6 @@
 import re
 
 from psutil import AIX
-from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
@@ -22,9 +21,9 @@ class AIXSpecificTestCase(unittest.TestCase):
 
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
-        re_pattern = "memory\s*"
+        re_pattern = r"memory\s*"
         for field in ("size inuse free pin virtual available mmode").split():
-            re_pattern += "(?P<%s>\S+)\s+" % (field,)
+            re_pattern += r"(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
         self.assertIsNotNone(
@@ -56,10 +55,10 @@ class AIXSpecificTestCase(unittest.TestCase):
         # we'll always have 'MB' in the result
         # TODO maybe try to use "swap -l" to check "used" too, but its units
         # are not guaranteed to be "MB" so parsing may not be consistent
-        matchobj = re.search("(?P<space>\S+)\s+"
-                             "(?P<vol>\S+)\s+"
-                             "(?P<vg>\S+)\s+"
-                             "(?P<size>\d+)MB", out)
+        matchobj = re.search(r"(?P<space>\S+)\s+"
+                             r"(?P<vol>\S+)\s+"
+                             r"(?P<vg>\S+)\s+"
+                             r"(?P<size>\d+)MB", out)
 
         self.assertIsNotNone(
             matchobj, "lsps command returned unexpected output")
@@ -74,11 +73,11 @@ class AIXSpecificTestCase(unittest.TestCase):
     def test_cpu_stats(self):
         out = sh('/usr/bin/mpstat -a')
 
-        re_pattern = "ALL\s*"
+        re_pattern = r"ALL\s*"
         for field in ("min maj mpcs mpcr dev soft dec ph cs ics bound rq "
                       "push S3pull S3grd S0rd S1rd S2rd S3rd S4rd S5rd "
                       "sysc").split():
-            re_pattern += "(?P<%s>\S+)\s+" % (field,)
+            re_pattern += r"(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
         self.assertIsNotNone(
@@ -106,7 +105,7 @@ class AIXSpecificTestCase(unittest.TestCase):
 
     def test_cpu_count_logical(self):
         out = sh('/usr/bin/mpstat -a')
-        mpstat_lcpu = int(re.search("lcpu=(\d+)", out).group(1))
+        mpstat_lcpu = int(re.search(r"lcpu=(\d+)", out).group(1))
         psutil_lcpu = psutil.cpu_count(logical=True)
         self.assertEqual(mpstat_lcpu, psutil_lcpu)
 
@@ -118,4 +117,5 @@ class AIXSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

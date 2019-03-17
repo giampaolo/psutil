@@ -23,9 +23,9 @@ from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -38,13 +38,13 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -124,7 +124,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
@@ -143,7 +143,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
@@ -242,11 +242,11 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
     def test_pids(self):
-        plist = [x.pid for x in psutil.process_iter()]
-        pidlist = psutil.pids()
-        self.assertEqual(plist.sort(), pidlist.sort())
+        pidslist = psutil.pids()
+        procslist = [x.pid for x in psutil.process_iter()]
         # make sure every pid is unique
-        self.assertEqual(len(pidlist), len(set(pidlist)))
+        self.assertEqual(sorted(set(pidslist)), pidslist)
+        self.assertEqual(pidslist, procslist)
 
     def test_test(self):
         # test for psutil.test() function
@@ -268,8 +268,11 @@ class TestSystemAPIs(unittest.TestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
-        self.assertGreaterEqual(physical, 1)
-        self.assertGreaterEqual(logical, physical)
+        if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
+            self.assertIsNone(physical)
+        else:
+            self.assertGreaterEqual(physical, 1)
+            self.assertGreaterEqual(logical, physical)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -315,11 +318,12 @@ class TestSystemAPIs(unittest.TestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        time.sleep(0.1)
-        t2 = sum(psutil.cpu_times())
-        difference = t2 - t1
-        if not difference >= 0.05:
-            self.fail("difference %s" % difference)
+        stop_at = time.time() + 1
+        while time.time() < stop_at:
+            t2 = sum(psutil.cpu_times())
+            if t2 > t1:
+                return
+        self.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
@@ -511,18 +515,14 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and OSX and err.errno == errno.EIO:
+                    if TRAVIS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
-                    if SUNOS or TRAVIS:
-                        # on solaris apparently mount points can also be files
-                        assert os.path.exists(disk.mountpoint), disk
-                    else:
-                        assert os.path.isdir(disk.mountpoint), disk
+                    assert os.path.exists(disk.mountpoint), disk
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
@@ -538,6 +538,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
@@ -566,6 +567,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIsInstance(key, str)
             check_ntuple(ret[key])
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters_no_nics(self):
         # Emulate a case where no NICs are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
@@ -627,7 +629,7 @@ class TestSystemAPIs(unittest.TestCase):
                 elif addr.ptp:
                     self.assertIsNone(addr.broadcast)
 
-        if BSD or OSX or SUNOS:
+        if BSD or MACOS or SUNOS:
             if hasattr(socket, "AF_LINK"):
                 self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
         elif LINUX:
@@ -668,6 +670,16 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
 
+    @unittest.skipIf(not (LINUX or BSD or MACOS),
+                     "LINUX or BSD or MACOS specific")
+    def test_net_if_stats_enodev(self):
+        # See: https://github.com/giampaolo/psutil/issues/1279
+        with mock.patch('psutil._psutil_posix.net_if_mtu',
+                        side_effect=OSError(errno.ENODEV, "")) as m:
+            ret = psutil.net_if_stats()
+            self.assertEqual(ret, {})
+            assert m.called
+
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     @unittest.skipIf(APPVEYOR and psutil.disk_io_counters() is None,
@@ -699,12 +711,6 @@ class TestSystemAPIs(unittest.TestCase):
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
-            if LINUX and key[-1].isdigit():
-                # if 'sda1' is listed 'sda' shouldn't, see:
-                # https://github.com/giampaolo/psutil/issues/338
-                while key[-1].isdigit():
-                    key = key[:-1]
-                self.assertNotIn(key, ret.keys())
 
     def test_disk_io_counters_no_disks(self):
         # Emulate a case where no disks are installed, see:
@@ -762,7 +768,9 @@ class TestSystemAPIs(unittest.TestCase):
 
         ls = psutil.cpu_freq(percpu=True)
         if TRAVIS and not ls:
-            return
+            raise self.skipTest("skipped on Travis")
+        if FREEBSD and not ls:
+            raise self.skipTest("returns empty list on FreeBSD")
 
         assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])
@@ -771,7 +779,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(ls), psutil.cpu_count())
 
     def test_os_constants(self):
-        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+        names = ["POSIX", "WINDOWS", "LINUX", "MACOS", "FREEBSD", "OPENBSD",
                  "NETBSD", "BSD", "SUNOS"]
         for name in names:
             self.assertIsInstance(getattr(psutil, name), bool, msg=name)
@@ -796,8 +804,8 @@ class TestSystemAPIs(unittest.TestCase):
                 assert psutil.SUNOS
                 names.remove("SUNOS")
             elif "darwin" in sys.platform.lower():
-                assert psutil.OSX
-                names.remove("OSX")
+                assert psutil.MACOS
+                names.remove("MACOS")
         else:
             assert psutil.WINDOWS
             assert not psutil.POSIX
@@ -859,4 +867,5 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

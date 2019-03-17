@@ -19,52 +19,15 @@ import errno
 import os
 import requests
 import shutil
-import sys
 
 from psutil import __version__ as PSUTIL_VERSION
+from scriptutils import printerr, exit
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.4', '3.5', '3.6']
+PY_VERSIONS = ['2.7', '3.5', '3.6', '3.7']
 TIMEOUT = 30
 COLORS = True
-
-
-def exit(msg=""):
-    if msg:
-        print(hilite(msg, ok=False), file=sys.stderr)
-    sys.exit(1)
-
-
-def term_supports_colors(file=sys.stdout):
-    try:
-        import curses
-        assert file.isatty()
-        curses.setupterm()
-        assert curses.tigetnum("colors") > 0
-    except Exception:
-        return False
-    else:
-        return True
-
-
-COLORS = term_supports_colors()
-
-
-def hilite(s, ok=True, bold=False):
-    """Return an highlighted version of 'string'."""
-    if not COLORS:
-        return s
-    attr = []
-    if ok is None:  # no color
-        pass
-    elif ok:   # green
-        attr.append('32')
-    else:   # red
-        attr.append('31')
-    if bold:
-        attr.append('1')
-    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
 def safe_makedirs(path):
@@ -120,24 +83,25 @@ def download_file(url):
 
 
 def get_file_urls(options):
-    session = requests.Session()
-    data = session.get(
-        BASE_URL + '/projects/' + options.user + '/' + options.project,
-        timeout=TIMEOUT)
-    data = data.json()
-
-    urls = []
-    for job in (job['jobId'] for job in data['build']['jobs']):
-        job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
-        data = session.get(job_url, timeout=TIMEOUT)
+    with requests.Session() as session:
+        data = session.get(
+            BASE_URL + '/projects/' + options.user + '/' + options.project,
+            timeout=TIMEOUT)
         data = data.json()
-        for item in data:
-            file_url = job_url + '/' + item['fileName']
-            urls.append(file_url)
-    if not urls:
-        exit("no artifacts found")
-    for url in sorted(urls, key=lambda x: os.path.basename(x)):
-        yield url
+
+        urls = []
+        for job in (job['jobId'] for job in data['build']['jobs']):
+            job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
+            data = session.get(job_url, timeout=TIMEOUT)
+            data = data.json()
+            for item in data:
+                file_url = job_url + '/' + item['fileName']
+                urls.append(file_url)
+        if not urls:
+            exit("no artifacts found")
+        else:
+            for url in sorted(urls, key=lambda x: os.path.basename(x)):
+                yield url
 
 
 def rename_27_wheels():
@@ -152,7 +116,7 @@ def rename_27_wheels():
     os.rename(src, dst)
 
 
-def main(options):
+def run(options):
     safe_rmtree('dist')
     urls = get_file_urls(options)
     completed = 0
@@ -163,9 +127,9 @@ def main(options):
             url = fut_to_url[fut]
             try:
                 local_fname = fut.result()
-            except Exception as _:
-                exc = _
-                print("error while downloading %s: %s" % (url, exc))
+            except Exception:
+                printerr("error while downloading %s" % (url))
+                raise
             else:
                 completed += 1
                 print("downloaded %-45s %s" % (
@@ -179,10 +143,14 @@ def main(options):
     rename_27_wheels()
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='AppVeyor artifact downloader')
     parser.add_argument('--user', required=True)
     parser.add_argument('--project', required=True)
     args = parser.parse_args()
-    main(args)
+    run(args)
+
+
+if __name__ == '__main__':
+    main()

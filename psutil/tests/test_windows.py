@@ -21,14 +21,12 @@ import warnings
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import callable
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
@@ -70,6 +68,45 @@ def wrap_exceptions(fun):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestCpuAPIs(unittest.TestCase):
+
+    @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
+                     'NUMBER_OF_PROCESSORS env var is not available')
+    def test_cpu_count_vs_NUMBER_OF_PROCESSORS(self):
+        # Will likely fail on many-cores systems:
+        # https://stackoverflow.com/questions/31209256
+        num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
+        self.assertEqual(num_cpus, psutil.cpu_count())
+
+    def test_cpu_count_vs_GetSystemInfo(self):
+        # Will likely fail on many-cores systems:
+        # https://stackoverflow.com/questions/31209256
+        sys_value = win32api.GetSystemInfo()[5]
+        psutil_value = psutil.cpu_count()
+        self.assertEqual(sys_value, psutil_value)
+
+    def test_cpu_count_logical_vs_wmi(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+
+    def test_cpu_count_phys_vs_wmi(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+
+    def test_cpu_count_vs_cpu_times(self):
+        self.assertEqual(psutil.cpu_count(),
+                         len(psutil.cpu_times(percpu=True)))
+
+    def test_cpu_freq(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
+        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
+
+
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
@@ -81,23 +118,6 @@ class TestSystemAPIs(unittest.TestCase):
             if nic not in out:
                 self.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
-
-    @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
-                     'NUMBER_OF_PROCESSORS env var is not available')
-    def test_cpu_count(self):
-        num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
-        self.assertEqual(num_cpus, psutil.cpu_count())
-
-    def test_cpu_count_2(self):
-        sys_value = win32api.GetSystemInfo()[5]
-        psutil_value = psutil.cpu_count()
-        self.assertEqual(sys_value, psutil_value)
-
-    def test_cpu_freq(self):
-        w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
-        self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
@@ -117,7 +137,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     # Note: this test is not very reliable
     @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -126,7 +146,7 @@ class TestSystemAPIs(unittest.TestCase):
         psutil_pids = set(psutil.pids())
         self.assertEqual(wmi_pids, psutil_pids)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
@@ -135,6 +155,8 @@ class TestSystemAPIs(unittest.TestCase):
                 if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
                     if not ps_part.mountpoint:
                         # this is usually a CD-ROM with no disk inserted
+                        break
+                    if 'cdrom' in ps_part.opts:
                         break
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
@@ -157,6 +179,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage(self):
         for disk in psutil.disk_partitions():
+            if 'cdrom' in disk.opts:
+                continue
             sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
             psutil_value = psutil.disk_usage(disk.mountpoint)
             self.assertAlmostEqual(sys_value[0], psutil_value.free,
@@ -307,12 +331,19 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_exe(self):
+    def test_exe_and_name(self):
         for p in psutil.process_iter():
+            # On Windows name() is never supposed to raise AccessDenied,
+            # see https://github.com/giampaolo/psutil/issues/627
             try:
-                self.assertEqual(os.path.basename(p.exe()), p.name())
-            except psutil.Error:
+                name = p.name()
+            except psutil.NoSuchProcess:
                 pass
+            else:
+                try:
+                    self.assertEqual(os.path.basename(p.exe()), name)
+                except psutil.Error:
+                    continue
 
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
@@ -360,15 +391,6 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    def test_name_always_available(self):
-        # On Windows name() is never supposed to raise AccessDenied,
-        # see https://github.com/giampaolo/psutil/issues/627
-        for p in psutil.process_iter():
-            try:
-                p.name()
-            except psutil.NoSuchProcess:
-                pass
-
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
@@ -381,16 +403,6 @@ class TestProcess(unittest.TestCase):
                           p.send_signal, signal.CTRL_C_EVENT)
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
-
-    def test_compare_name_exe(self):
-        for p in psutil.process_iter():
-            try:
-                a = os.path.basename(p.exe())
-                b = p.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                self.assertEqual(a, b)
 
     def test_username(self):
         self.assertEqual(psutil.Process().username(),
@@ -497,15 +509,15 @@ class TestProcess(unittest.TestCase):
         import ctypes.wintypes
         PROCESS_QUERY_INFORMATION = 0x400
         handle = ctypes.windll.kernel32.OpenProcess(
-            PROCESS_QUERY_INFORMATION, 0, os.getpid())
+            PROCESS_QUERY_INFORMATION, 0, self.pid)
         self.addCleanup(ctypes.windll.kernel32.CloseHandle, handle)
+
         hndcnt = ctypes.wintypes.DWORD()
         ctypes.windll.kernel32.GetProcessHandleCount(
             handle, ctypes.byref(hndcnt))
         sys_value = hndcnt.value
-        psutil_value = psutil.Process().num_handles()
-        ctypes.windll.kernel32.CloseHandle(handle)
-        self.assertEqual(psutil_value, sys_value + 1)
+        psutil_value = psutil.Process(self.pid).num_handles()
+        self.assertEqual(psutil_value, sys_value)
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
@@ -652,6 +664,22 @@ class TestDualProcessImplementation(unittest.TestCase):
                              num_handles)
             assert fun.called
 
+    def test_cmdline(self):
+        from psutil._pswindows import ACCESS_DENIED_ERRSET
+        for pid in psutil.pids():
+            try:
+                a = cext.proc_cmdline(pid, use_peb=True)
+                b = cext.proc_cmdline(pid, use_peb=False)
+            except OSError as err:
+                if err.errno in ACCESS_DENIED_ERRSET:
+                    pass
+                elif err.errno == errno.ESRCH:
+                    pass  # NSP
+                else:
+                    raise
+            else:
+                self.assertEqual(a, b)
+
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
@@ -738,9 +766,10 @@ class RemoteProcessTestCase(unittest.TestCase):
 
     def test_environ_64(self):
         p = psutil.Process(self.proc64.pid)
-        e = p.environ()
-        self.assertIn("THINK_OF_A_NUMBER", e)
-        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+        try:
+            p.environ()
+        except psutil.AccessDenied:
+            pass
 
 
 # ===================================================================
@@ -835,4 +864,5 @@ class TestServices(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

@@ -9,6 +9,7 @@ import errno
 import functools
 import os
 import sys
+import time
 from collections import namedtuple
 
 from . import _common
@@ -26,8 +27,7 @@ except ImportError as err:
         # but if we get here it means this this was a wheel (or exe).
         msg = "this Windows version is too old (< Windows Vista); "
         msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server; it may be possible that psutil "
-        msg += "will work if compiled from sources though"
+        msg += "2000, XP and 2003 server"
         raise RuntimeError(msg)
     else:
         raise
@@ -36,6 +36,7 @@ from ._common import conn_tmap
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import isfile_strict
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
@@ -46,9 +47,6 @@ from ._compat import lru_cache
 from ._compat import PY3
 from ._compat import unicode
 from ._compat import xrange
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -78,11 +76,11 @@ __extra__all__ = [
 # =====================================================================
 
 CONN_DELETE_TCB = "DELETE_TCB"
-WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_ERRSET = frozenset([errno.EPERM, errno.EACCES,
                                   cext.ERROR_ACCESS_DENIED])
 NO_SUCH_SERVICE_ERRSET = frozenset([cext.ERROR_INVALID_NAME,
                                     cext.ERROR_SERVICE_DOES_NOT_EXIST])
+HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
 
 
 if enum is None:
@@ -142,6 +140,35 @@ pinfo_map = dict(
     peak_pagefile=20,
     mem_private=21,
 )
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
+# More values at: https://stackoverflow.com/a/20804735/376587
+WIN_10 = (10, 0)
+WIN_8 = (6, 2)
+WIN_7 = (6, 1)
+WIN_SERVER_2008 = (6, 0)
+WIN_VISTA = (6, 0)
+WIN_SERVER_2003 = (5, 2)
+WIN_XP = (5, 1)
+
+
+@lru_cache()
+def get_winver():
+    """Usage:
+    >>> if get_winver() <= WIN_VISTA:
+    ...      ...
+    """
+    wv = sys.getwindowsversion()
+    return (wv.major, wv.minor)
+
+
+IS_WIN_XP = get_winver() < WIN_VISTA
 
 
 # =====================================================================
@@ -203,6 +230,11 @@ def py2_strencode(s):
             return s.encode(ENCODING, ENCODING_ERRS)
 
 
+@memoize
+def getpagesize():
+    return cext.getpagesize()
+
+
 # =====================================================================
 # --- memory
 # =====================================================================
@@ -217,7 +249,7 @@ def virtual_memory():
     avail = availphys
     free = availphys
     used = total - avail
-    percent = usage_percent((total - avail), total, _round=1)
+    percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free)
 
 
@@ -227,7 +259,7 @@ def swap_memory():
     total = mem[2]
     free = mem[3]
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
 
 
@@ -247,7 +279,7 @@ def disk_usage(path):
         path = path.decode(ENCODING, errors="strict")
     total, free = cext.disk_usage(path)
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sdiskusage(total, used, free, percent)
 
 
@@ -288,7 +320,7 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
+    """Return the number of physical CPU cores in the system."""
     return cext.cpu_count_phys()
 
 
@@ -645,7 +677,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -655,11 +687,12 @@ class Process(object):
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self.oneshot_info.cache_activate()
+        self.oneshot_info.cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot_info.cache_deactivate()
+        self.oneshot_info.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def oneshot_info(self):
         """Return multiple information about this process as a
@@ -690,19 +723,33 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        # Note: os.path.exists(path) may return False even if the file
-        # is there, see:
-        # http://stackoverflow.com/questions/3112546/os-path-exists-lies
-
-        # see https://github.com/giampaolo/psutil/issues/414
-        # see https://github.com/giampaolo/psutil/issues/528
-        if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._name)
-        return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
+        # Dual implementation, see:
+        # https://github.com/giampaolo/psutil/pull/1413
+        if not IS_WIN_XP:
+            exe = cext.proc_exe(self.pid)
+        else:
+            if self.pid in (0, 4):
+                # https://github.com/giampaolo/psutil/issues/414
+                # https://github.com/giampaolo/psutil/issues/528
+                raise AccessDenied(self.pid, self._name)
+            exe = cext.proc_exe(self.pid)
+            exe = convert_dos_path(exe)
+        return py2_strencode(exe)
 
     @wrap_exceptions
     def cmdline(self):
-        ret = cext.proc_cmdline(self.pid)
+        if cext.WINVER >= cext.WINDOWS_8_1:
+            # PEB method detects cmdline changes but requires more
+            # privileges: https://github.com/giampaolo/psutil/pull/1398
+            try:
+                ret = cext.proc_cmdline(self.pid, use_peb=True)
+            except OSError as err:
+                if err.errno in ACCESS_DENIED_ERRSET:
+                    ret = cext.proc_cmdline(self.pid, use_peb=False)
+                else:
+                    raise
+        else:
+            ret = cext.proc_cmdline(self.pid, use_peb=True)
         if PY3:
             return ret
         else:
@@ -757,6 +804,7 @@ class Process(object):
     def memory_full_info(self):
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
+        uss *= getpagesize()
         return pfullmem(*basic_mem + (uss, ))
 
     def memory_maps(self):
@@ -792,18 +840,43 @@ class Process(object):
         if timeout is None:
             cext_timeout = cext.INFINITE
         else:
-            # WaitForSingleObject() expects time in milliseconds
+            # WaitForSingleObject() expects time in milliseconds.
             cext_timeout = int(timeout * 1000)
+
+        timer = getattr(time, 'monotonic', time.time)
+        stop_at = timer() + timeout if timeout is not None else None
+
+        try:
+            # Exit code is supposed to come from GetExitCodeProcess().
+            # May also be None if OpenProcess() failed with
+            # ERROR_INVALID_PARAMETER, meaning PID is already gone.
+            exit_code = cext.proc_wait(self.pid, cext_timeout)
+        except cext.TimeoutExpired:
+            # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
+            raise TimeoutExpired(timeout, self.pid, self._name)
+        except cext.TimeoutAbandoned:
+            # WaitForSingleObject() returned WAIT_ABANDONED, see:
+            # https://github.com/giampaolo/psutil/issues/1224
+            # We'll just rely on the internal polling and return None
+            # when the PID disappears. Subprocess module does the same
+            # (return None):
+            # https://github.com/python/cpython/blob/
+            #     be50a7b627d0aa37e08fa8e2d5568891f19903ce/
+            #     Lib/subprocess.py#L1193-L1194
+            exit_code = None
+
+        # At this point WaitForSingleObject() returned WAIT_OBJECT_0,
+        # meaning the process is gone. Stupidly there are cases where
+        # its PID may still stick around so we do a further internal
+        # polling.
+        delay = 0.0001
         while True:
-            ret = cext.proc_wait(self.pid, cext_timeout)
-            if ret == WAIT_TIMEOUT:
-                raise TimeoutExpired(timeout, self.pid, self._name)
-            if pid_exists(self.pid):
-                if timeout is None:
-                    continue
-                else:
-                    raise TimeoutExpired(timeout, self.pid, self._name)
-            return ret
+            if not pid_exists(self.pid):
+                return exit_code
+            if stop_at and timer() >= stop_at:
+                raise TimeoutExpired(timeout, pid=self.pid, name=self._name)
+            time.sleep(delay)
+            delay = min(delay * 2, 0.04)  # incremental delay
 
     @wrap_exceptions
     def username(self):
@@ -853,11 +926,11 @@ class Process(object):
 
     @wrap_exceptions
     def suspend(self):
-        return cext.proc_suspend(self.pid)
+        cext.proc_suspend_or_resume(self.pid, True)
 
     @wrap_exceptions
     def resume(self):
-        return cext.proc_resume(self.pid)
+        cext.proc_suspend_or_resume(self.pid, False)
 
     @wrap_exceptions
     def cwd(self):
@@ -903,7 +976,7 @@ class Process(object):
         return cext.proc_priority_set(self.pid, value)
 
     # available on Windows >= Vista
-    if hasattr(cext, "proc_io_priority_get"):
+    if HAS_PROC_IO_PRIORITY:
         @wrap_exceptions
         def ionice_get(self):
             return cext.proc_io_priority_get(self.pid)

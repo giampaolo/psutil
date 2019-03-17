@@ -28,23 +28,21 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 # ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
+from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import LINUX  # NOQA
+from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
 from _common import OPENBSD  # NOQA
-from _common import OSX  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
-from _common import AIX  # NOQA
 
 
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
-if WINDOWS:
-    macros.append(("PSUTIL_WINDOWS", 1))
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
@@ -111,12 +109,12 @@ if WINDOWS:
         return '0x0%s' % ((maj * 100) + min)
 
     if sys.getwindowsversion()[0] < 6:
-        msg = "warning: Windows versions < Vista are no longer supported or "
-        msg = "maintained; latest official supported version is psutil 3.4.2; "
-        msg += "psutil may still be installed from sources if you have "
-        msg += "Visual Studio and may also (kind of) work though"
-        warnings.warn(msg, UserWarning)
+        msg = "this Windows version is too old (< Windows Vista); "
+        msg += "psutil 3.4.2 is the latest version which supports Windows "
+        msg += "2000, XP and 2003 server"
+        raise RuntimeError(msg)
 
+    macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
         # be nice to mingw, see:
         # http://www.mingw.org/wiki/Use_more_recent_defined_functions
@@ -136,17 +134,19 @@ if WINDOWS:
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
+            'psutil/arch/windows/global.c',
+            # 'psutil/arch/windows/connections.c',
         ],
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "iphlpapi", "wtsapi32", "ws2_32", "PowrProf",
+            "wtsapi32", "ws2_32", "PowrProf",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
     )
 
-elif OSX:
+elif MACOS:
     macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
         'psutil._psutil_osx',
@@ -252,6 +252,7 @@ elif AIX:
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
         define_macros=macros)
+
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
@@ -284,7 +285,8 @@ def main():
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
             'ifconfig', 'taskset', 'who', 'pidof', 'pmap', 'smem', 'pstree',
-            'monitoring', 'ulimit', 'prlimit', 'smem',
+            'monitoring', 'ulimit', 'prlimit', 'smem', 'performance',
+            'metrics', 'agent', 'observability',
         ],
         author='Giampaolo Rodola',
         author_email='g.rodola@gmail.com',
@@ -321,6 +323,7 @@ def main():
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',

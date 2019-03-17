@@ -24,9 +24,6 @@ from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import b
 from ._compat import PY3
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
@@ -79,7 +76,18 @@ proc_info_map = dict(
     nice=4,
     num_threads=5,
     status=6,
-    ttynr=7)
+    ttynr=7,
+    uid=8,
+    euid=9,
+    gid=10,
+    egid=11)
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================
@@ -127,7 +135,7 @@ def virtual_memory():
     # note: there's no difference on Solaris
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return svmem(total, avail, percent, used, free)
 
 
@@ -159,7 +167,7 @@ def swap_memory():
         total += int(int(t) * 512)
         free += int(int(f) * 512)
     used = total - free
-    percent = usage_percent(used, total, _round=1)
+    percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent,
                          sin * PAGE_SIZE, sout * PAGE_SIZE)
 
@@ -364,7 +372,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -372,26 +380,35 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        os.stat('%s/%s' % (self._procfs_path, self.pid))
+
     def oneshot_enter(self):
-        self._proc_name_and_args.cache_activate()
-        self._proc_basic_info.cache_activate()
-        self._proc_cred.cache_activate()
+        self._proc_name_and_args.cache_activate(self)
+        self._proc_basic_info.cache_activate(self)
+        self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_name_and_args.cache_deactivate()
-        self._proc_basic_info.cache_deactivate()
-        self._proc_cred.cache_deactivate()
+        self._proc_name_and_args.cache_deactivate(self)
+        self._proc_basic_info.cache_deactivate(self)
+        self._proc_cred.cache_deactivate(self)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_name_and_args(self):
         return cext.proc_name_and_args(self.pid, self._procfs_path)
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_basic_info(self):
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
         assert len(ret) == len(proc_info_map)
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _proc_cred(self):
         return cext.proc_cred(self.pid, self._procfs_path)
@@ -432,27 +449,10 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        # Note #1: for some reason getpriority(3) return ESRCH (no such
-        # process) for certain low-pid processes, no matter what (even
-        # as root).
-        # The process actually exists though, as it has a name,
-        # creation time, etc.
-        # The best thing we can do here appears to be raising AD.
-        # Note: tested on Solaris 11; on Open Solaris 5 everything is
-        # fine.
-        #
-        # Note #2: we also can get niceness from /proc/pid/psinfo
-        # but it's wrong, see:
-        # https://github.com/giampaolo/psutil/issues/1082
-        try:
-            return cext_posix.getpriority(self.pid)
-        except EnvironmentError as err:
-            # 48 is 'operation not supported' but errno does not expose
-            # it. It occurs for low system pids.
-            if err.errno in (errno.ENOENT, errno.ESRCH, 48):
-                if pid_exists(self.pid):
-                    raise AccessDenied(self.pid, self._name)
-            raise
+        # Note #1: getpriority(3) doesn't work for realtime processes.
+        # Psinfo is what ps uses, see:
+        # https://github.com/giampaolo/psutil/issues/1194
+        return self._proc_basic_info()[proc_info_map['nice']]
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -471,12 +471,22 @@ class Process(object):
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = self._proc_cred()
+        try:
+            real, effective, saved, _, _, _ = self._proc_cred()
+        except AccessDenied:
+            real = self._proc_basic_info()[proc_info_map['uid']]
+            effective = self._proc_basic_info()[proc_info_map['euid']]
+            saved = None
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = self._proc_cred()
+        try:
+            _, _, _, real, effective, saved = self._proc_cred()
+        except AccessDenied:
+            real = self._proc_basic_info()[proc_info_map['gid']]
+            effective = self._proc_basic_info()[proc_info_map['egid']]
+            saved = None
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
@@ -518,8 +528,7 @@ class Process(object):
                         continue
                     raise
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
 
     @wrap_exceptions
     def cwd(self):
@@ -581,8 +590,7 @@ class Process(object):
                 nt = _common.pthread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return ret
 
     @wrap_exceptions
@@ -606,8 +614,7 @@ class Process(object):
                     if isfile_strict(file):
                         retlist.append(_common.popenfile(file, int(fd)))
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     def _get_unix_sockets(self, pid):
@@ -707,8 +714,7 @@ class Process(object):
                         raise
             retlist.append((addr, perm, name, rss, anon, locked))
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
