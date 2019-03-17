@@ -16,6 +16,7 @@
 - 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
   Benjamin Drung)
 - 1463_: cpu_distribution.py script was broken.
+- 1223_: [Windows] boot_time() may return value on Windows XP.
 
 5.6.1
 =====

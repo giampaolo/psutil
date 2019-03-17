@@ -592,3 +592,6 @@ N: Benjamin Drung
 D: make tests invariant to LANG setting
 W: https://github.com/bdrung
 I: 1462
+
+N: Xiaoling Bao
+I: 1223

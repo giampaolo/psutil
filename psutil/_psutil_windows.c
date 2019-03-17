@@ -138,8 +138,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     time_t pt;
     FILETIME fileTime;
     ULONGLONG ll;
-    HINSTANCE hKernel32;
-    psutil_GetTickCount64 = NULL;
 
     GetSystemTimeAsFileTime(&fileTime);
     /*
@@ -151,7 +149,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     The time_t is a 32-bit value for the number of seconds since
     January 1, 1970. A FILETIME is a 64-bit for the number of
     100-nanosecond periods since January 1, 1601. Convert by
-    subtracting the number of 100-nanosecond period betwee 01-01-1970
+    subtracting the number of 100-nanosecond period between 01-01-1970
     and 01-01-1601, from time_t the divide by 1e+7 to get to the same
     base granularity.
     */
@@ -159,11 +157,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         (fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
-    // GetTickCount64() is Windows Vista+ only. Dynamically load
-    // GetTickCount64() at runtime. We may have used
-    // "#if (_WIN32_WINNT >= 0x0600)" pre-processor but that way
-    // the produced exe/wheels cannot be used on Windows XP, see:
-    // https://github.com/giampaolo/psutil/issues/811#issuecomment-230639178
     if (psutil_GetTickCount64 != NULL) {
         // Windows >= Vista
         uptime = psutil_GetTickCount64() / 1000ull;
