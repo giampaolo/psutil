@@ -17,10 +17,8 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/unpcb.h>
-#ifndef __PASE__
 #include <sys/mbuf_base.h>
 #include <sys/mbuf_macro.h>
-#endif
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>

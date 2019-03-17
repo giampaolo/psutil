@@ -40,9 +40,6 @@ read_unp_addr(
     char *buf,
     size_t buflen
 ) {
-#ifdef __PASE__
-    return 1;
-#else
     struct sockaddr_un *ua = (struct sockaddr_un *)NULL;
     struct sockaddr_un un;
     struct mbuf64 mb;
@@ -69,7 +66,6 @@ read_unp_addr(
         snprintf(buf, buflen, "%s", ua->sun_path);
     }
     return 0;
-#endif
 }
 
 static PyObject *
