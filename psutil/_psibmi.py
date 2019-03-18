@@ -42,9 +42,6 @@ __extra__all__ = []
 
 HAS_THREADS = hasattr(cext, "proc_threads")
 
-PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-AF_LINK = cext_posix.AF_LINK
-
 PROC_STATUSES = {
     cext.SIDL: _common.STATUS_IDLE,
     cext.SZOMB: _common.STATUS_ZOMBIE,
@@ -378,7 +375,6 @@ def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
-
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
