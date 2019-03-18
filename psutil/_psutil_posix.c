@@ -18,6 +18,11 @@
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
+#elif __PASE__
+    #include <as400_protos.h>
+    #define ifaddrs ifaddrs_pase
+    #define getifaddrs Qp2getifaddrs
+    #define freeifaddrs Qp2freeifaddrs
 #elif PSUTIL_AIX
     #include "arch/aix/ifaddrs.h"
 #else

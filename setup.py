@@ -245,8 +245,7 @@ elif AIX:
         ext = Extension(
             'psutil._psutil_ibmi',
             sources=sources + [
-                'psutil/_psutil_ibmi.c',
-                'psutil/arch/aix/ifaddrs.c'],
+                'psutil/_psutil_ibmi.c'],
             libraries=['util'],
             extra_compile_args=['-I/QOpenSys/pkgs/include'],
             define_macros=macros)
