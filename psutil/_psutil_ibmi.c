@@ -67,7 +67,6 @@ psutil_get_proc(struct procentry64* dest, int pid) {
                         &pid_in_table,
                         1);
     if( 0 >= rtv ||dest->pi_pid != pid) {
-        printf("process %d is gone\n", pid);
         errno = ENOENT;
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;

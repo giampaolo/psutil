@@ -267,7 +267,7 @@ def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
     connections (as opposed to connections opened by one process only).
     """
-    ret = set()
+    ret = list()
     cursor = _conn.cursor()
     querystring = """ 
                         SELECT j.CONNECTION_TYPE,j.LOCAL_ADDRESS,j.LOCAL_PORT,j.REMOTE_ADDRESS,j.REMOTE_PORT,j.JOB_NAME,i.TCP_STATE
@@ -291,11 +291,13 @@ def net_connections(kind, _pid=-1):
             continue
         else: 
             pid = jobname_to_pid(jobname)
+            if _pid != -1 and _pid != pid:
+                continue
             if pid == -1:
                 nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
             else: 
                 nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
-        ret.add(nt)
+        ret.append(nt)
     cursor.close()
     return ret
 
