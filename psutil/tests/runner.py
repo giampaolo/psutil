@@ -10,25 +10,39 @@ on KeyboardInterrupt.
 """
 
 from __future__ import print_function
+import atexit
 import os
 import sys
 import unittest
 from unittest import TestResult
 from unittest import TextTestResult
 from unittest import TextTestRunner
+try:
+    import ctypes
+except ImportError:
+    ctypes = None
 
 import psutil
+from psutil._common import memoize
 from psutil.tests import TOX
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
-GREEN = 1
-RED = 2
-BROWN = 94
+if os.name == 'posix':
+    GREEN = 1
+    RED = 2
+    BROWN = 94
+else:
+    GREEN = 2
+    RED = 4
+    BROWN = 6
+    DEFAULT_COLOR = 7
 
 
 def term_supports_colors(file=sys.stdout):
+    if os.name == 'nt':
+        return ctypes is not None
     try:
         import curses
         assert file.isatty()
@@ -56,23 +70,51 @@ def hilite(s, color, bold=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
+@memoize
+def _stderr_handle():
+    GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
+    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xfffffff4)
+    GetStdHandle.restype = ctypes.c_ulong
+    handle = GetStdHandle(STD_ERROR_HANDLE_ID)
+    atexit.register(ctypes.windll.Kernel32.CloseHandle, handle)
+    return handle
+
+
+def win_colorprint(printer, s, color, bold=False):
+    if bold and color <= 7:
+        color += 8
+    handle = _stderr_handle()
+    SetConsoleTextAttribute = ctypes.windll.Kernel32.SetConsoleTextAttribute
+    SetConsoleTextAttribute(handle, color)
+    try:
+        printer(s)
+    finally:
+        SetConsoleTextAttribute(handle, DEFAULT_COLOR)
+
+
 class ColouredResult(TextTestResult):
+
+    def _color_print(self, s, color, bold=False):
+        if os.name == 'posix':
+            self.stream.writeln(hilite(s, color, bold=bold))
+        else:
+            win_colorprint(self.stream.writeln, s, color, bold=bold)
 
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)
-        self.stream.writeln(hilite("OK", GREEN))
+        self._color_print("OK", GREEN)
 
     def addError(self, test, err):
         TestResult.addError(self, test, err)
-        self.stream.writeln(hilite("ERROR", RED, bold=True))
+        self._color_print("ERROR", RED, bold=True)
 
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
-        self.stream.writeln(hilite("FAIL", RED))
+        self._color_print("FAIL", RED)
 
     def addSkip(self, test, reason):
         TestResult.addSkip(self, test, reason)
-        self.stream.writeln(hilite("skipped: %s" % reason, BROWN))
+        self._color_print("skipped: %s" % reason, BROWN)
 
     def printErrorList(self, flavour, errors):
         flavour = hilite(flavour, RED, bold=flavour == 'ERROR')
