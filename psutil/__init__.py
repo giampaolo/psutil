@@ -2370,7 +2370,7 @@ if hasattr(_psplatform, "sensors_fans"):
 # Linux, Windows, FreeBSD, macOS
 if hasattr(_psplatform, "sensors_battery"):
 
-    def sensors_battery():
+    def sensors_battery(per_battery=False):
         """Return battery information. If no battery is installed
         returns None.
 
@@ -2380,7 +2380,7 @@ if hasattr(_psplatform, "sensors_battery"):
                      POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
          - power_plugged: True if the AC power cable is connected.
         """
-        return _psplatform.sensors_battery()
+        return _psplatform.sensors_battery(per_battery)
 
     __all__.append("sensors_battery")
 

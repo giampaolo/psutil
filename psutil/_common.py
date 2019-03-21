@@ -197,7 +197,8 @@ scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
 shwtemp = namedtuple(
     'shwtemp', ['label', 'current', 'high', 'critical'])
 # psutil.sensors_battery()
-sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
+sbattery = namedtuple(
+    'sbattery', ['label', 'percent', 'secsleft', 'power_plugged'])
 # psutil.sensors_fans()
 sfan = namedtuple('sfan', ['label', 'current'])
 
