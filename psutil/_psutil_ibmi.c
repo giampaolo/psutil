@@ -119,34 +119,6 @@ psutil_read_process_table_i(int * num) {
 }
 
 /*
- * Read a file content and fills a C structure with it.
- */
-int
-psutil_file_to_struct(char *path, void *fstruct, size_t size) {
-    int fd;
-    size_t nbytes;
-    fd = open(path, O_RDONLY);
-    if (fd == -1) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
-        return 0;
-    }
-    nbytes = read(fd, fstruct, size);
-    if (nbytes <= 0) {
-        close(fd);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
-    }
-    if (nbytes != size) {
-        close(fd);
-        PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
-        return 0;
-    }
-    close(fd);
-    return nbytes;
-}
-
-
-/*
  * Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
  * as a Python tuple.
  */
