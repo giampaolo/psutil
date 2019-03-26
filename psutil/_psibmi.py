@@ -182,9 +182,7 @@ def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     cursor = _conn.cursor()
     cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
-    #print("Executed query for logical CPUs")
     ncpus = math.ceil(cursor.fetchone()[0])
-    #print("Determined logical CPU count to be ", ncpus)
     cursor.close()
     return ncpus
 
@@ -223,7 +221,6 @@ def disk_io_counters(all=False): #TODO
     cursor.execute("SELECT UNIT_NUMBER FROM QSYS2.SYSDISKSTAT")
     counters = {}
     for row in cursor:
-        print("adding ", row[0])
         counters["unit:"+str(row[0])] = (0,0,0,0,0,0) #TODO: query system performance data to get this
     cursor.close()
     return counters
@@ -254,7 +251,6 @@ def net_io_counters(pernic=True):
     cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
     counters = {}
     for row in cursor:
-        print("adding ", row[0])
         counters[row[0]] = (0,0,0,0,0,0,0,0) #TODO: investigate ways to get proper data
     cursor.close()
     return counters
@@ -310,7 +306,6 @@ def net_if_stats():
         duplex = NIC_DUPLEX_FULL
         mtu = row[2]
         speed = 0 if name == "*LOOPBACK" else 100
-        print("adding ", name)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     cursor.close()
     return ret
