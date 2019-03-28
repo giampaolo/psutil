@@ -1169,13 +1169,13 @@ def disk_partitions(all=False):
                     fstypes.add("zfs")
 
     # See: https://github.com/giampaolo/psutil/issues/1307
-    if procfs_path == "/proc":
-        mtab_path = os.path.realpath("/etc/mtab")
+    if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
+        mounts_path = os.path.realpath("/etc/mtab")
     else:
-        mtab_path = os.path.realpath("%s/self/mounts" % procfs_path)
+        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
 
     retlist = []
-    partitions = cext.disk_partitions(mtab_path)
+    partitions = cext.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
