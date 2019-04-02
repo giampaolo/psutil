@@ -13,12 +13,14 @@
 
 **Bug fixes**
 
+- 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
+- 1463_: cpu_distribution.py script was broken.
+  Benjamin Drung)
 - 1470_: [Linux] disk_partitions(): fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
-- 1463_: cpu_distribution.py script was broken.
-- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
-  Benjamin Drung)
-- 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
+  by Daniel Beer)
 
 5.6.1
 =====

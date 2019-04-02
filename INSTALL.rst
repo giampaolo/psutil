@@ -92,7 +92,7 @@ OpenBSD
 
 ::
 
-    export PKG_PATH="http://ftp.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`/"
+    export PKG_PATH=http://ftp.eu.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
     pkg_add -v python3 gcc
     python3 -m pip install psutil
 
