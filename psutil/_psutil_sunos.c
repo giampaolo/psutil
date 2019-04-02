@@ -218,8 +218,10 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
 
     /* If we can't read process memory or can't decode the result
      * then return args from /proc. */
-    if (!py_args)
+    if (!py_args) {
+        PyErr_Clear();
         py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+    }
 
     /* Both methods has been failed. */
     if (!py_args)
