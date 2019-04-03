@@ -12,6 +12,7 @@ Some of these are duplicates of tests test_system.py and test_process.py
 import errno
 import os
 import stat
+import sys
 import time
 import traceback
 import warnings
@@ -47,6 +48,10 @@ from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import warn
 import psutil
 
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 # ===================================================================
 # --- APIs availability
@@ -142,7 +147,8 @@ class TestAvailability(unittest.TestCase):
         self.assertEqual(hasattr(psutil.Process, "terminal"), POSIX)
 
     def test_proc_ionice(self):
-        self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
+        self.assertEqual(hasattr(psutil.Process, "ionice"),
+                         LINUX or WINDOWS or MACOS)
 
     def test_proc_rlimit(self):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
@@ -334,6 +340,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         default = object()
         failures = []
         for p, name in self.iter_procs():
+            if name == 'ionice' and MACOS and p.pid != os.getpid():
+                continue
             ret = default
             try:
                 ret = self.call_meth(p, name)
@@ -457,16 +465,19 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertGreaterEqual(field, 0)
 
     def ionice(self, ret, proc):
-        if POSIX:
+        if LINUX:
             assert is_namedtuple(ret)
             for field in ret:
                 self.assertIsInstance(field, int)
-        if LINUX:
             self.assertGreaterEqual(ret.ioclass, 0)
             self.assertGreaterEqual(ret.value, 0)
         else:
             self.assertGreaterEqual(ret, 0)
-            self.assertIn(ret, (0, 1, 2))
+            if enum is not None:
+                self.assertIn(
+                    ret, psutil._psplatform.IOPriority.__members__.values())
+            else:
+                self.assertIn(ret, (0, 1, 2))
 
     def num_threads(self, ret, proc):
         self.assertIsInstance(ret, int)

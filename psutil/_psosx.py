@@ -8,6 +8,7 @@ import contextlib
 import errno
 import functools
 import os
+import sys
 from socket import AF_INET
 from collections import namedtuple
 
@@ -24,9 +25,16 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
-__extra__all__ = []
-
+__extra__all__ = [
+    # IO priority constants
+    "IOPOL_DEFAULT", "IOPOL_IMPORTANT", "IOPOL_PASSIVE", "IOPOL_THROTTLE",
+    "IOPOL_UTILITY", "IOPOL_STANDARD"
+]
 
 # =====================================================================
 # --- globals
@@ -58,6 +66,26 @@ PROC_STATUSES = {
     cext.SSTOP: _common.STATUS_STOPPED,
     cext.SZOMB: _common.STATUS_ZOMBIE,
 }
+
+# [get|set]iopolicy constants (ionice() / I/O priority)
+# http://www.manpagez.com/man/3/setiopolicy_np/
+if enum is None:
+    IOPOL_DEFAULT = cext.IOPOL_DEFAULT
+    IOPOL_IMPORTANT = cext.IOPOL_IMPORTANT
+    IOPOL_PASSIVE = cext.IOPOL_PASSIVE
+    IOPOL_THROTTLE = cext.IOPOL_THROTTLE
+    IOPOL_UTILITY = cext.IOPOL_UTILITY
+    IOPOL_STANDARD = cext.IOPOL_STANDARD
+else:
+    class IOPriority(enum.IntEnum):
+        IOPOL_DEFAULT = cext.IOPOL_DEFAULT
+        IOPOL_IMPORTANT = cext.IOPOL_IMPORTANT
+        IOPOL_PASSIVE = cext.IOPOL_PASSIVE
+        IOPOL_THROTTLE = cext.IOPOL_THROTTLE
+        IOPOL_UTILITY = cext.IOPOL_UTILITY
+        IOPOL_STANDARD = cext.IOPOL_STANDARD
+
+    globals().update(IOPriority.__members__)
 
 kinfo_proc_map = dict(
     ppid=0,
@@ -576,3 +604,21 @@ class Process(object):
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
+
+    @wrap_exceptions
+    def ionice_get(self):
+        if self.pid != os.getpid():
+            raise ValueError("can't set I/O priority for another process")
+        policy = cext.proc_ioprio_get(self.pid)
+        if enum is not None:
+            policy = IOPriority(policy)
+        return policy
+
+    @wrap_exceptions
+    def ionice_set(self, policy, _):
+        if self.pid != os.getpid():
+            raise ValueError("can't set I/O priority for another process")
+        if _:
+            raise TypeError("set_proc_ionice() on macOS takes only "
+                            "1 argument (2 given)")
+        return cext.proc_ioprio_set(policy)

@@ -353,6 +353,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
     def test_ionice(self):
+        p = psutil.Process()
         if LINUX:
             from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
                                 IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE)
@@ -360,7 +361,6 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(IOPRIO_CLASS_RT, 1)
             self.assertEqual(IOPRIO_CLASS_BE, 2)
             self.assertEqual(IOPRIO_CLASS_IDLE, 3)
-            p = psutil.Process()
             try:
                 p.ionice(2)
                 ioclass, value = p.ionice()
@@ -384,8 +384,21 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(value, 7)
             finally:
                 p.ionice(IOPRIO_CLASS_NONE)
+        if MACOS:
+            names = ("IOPOL_IMPORTANT", "IOPOL_STANDARD", "IOPOL_UTILITY",
+                     "IOPOL_THROTTLE", "IOPOL_PASSIVE")
+            original = p.ionice()
+            try:
+                for name in names:
+                    if name == "IOPOL_IMPORTANT":
+                        # XXX has no effect (?!?)
+                        continue
+                    value = getattr(psutil, name)
+                    p.ionice(value)
+                    self.assertEqual(p.ionice(), value)
+            finally:
+                p.ionice(original)
         else:
-            p = psutil.Process()
             original = p.ionice()
             self.assertIsInstance(original, int)
             try:
@@ -417,8 +430,10 @@ class TestProcess(unittest.TestCase):
                 ValueError, "'ioclass' argument must be specified",
                 p.ionice, value=1)
         else:
-            self.assertRaises(ValueError, p.ionice, 3)
-            self.assertRaises(TypeError, p.ionice, 2, 1)
+            if not MACOS:
+                # ionice() can only be set for the current process
+                self.assertRaises(TypeError, p.ionice, 2, 1)
+                self.assertRaises(ValueError, p.ionice, 3)
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
@@ -1280,6 +1295,9 @@ class TestProcess(unittest.TestCase):
                     else:
                         ret = meth(psutil.NORMAL_PRIORITY_CLASS)
                 elif name == 'ionice':
+                    if MACOS:
+                        # ionice() on OSX can only be used for os.getpid()
+                        continue
                     ret = meth()
                     ret = meth(2)
                 elif name == 'rlimit':
@@ -1349,7 +1367,7 @@ class TestProcess(unittest.TestCase):
                     raise
 
         succeed_or_zombie_p_exc(zproc.nice, 0)
-        if hasattr(zproc, 'ionice'):
+        if hasattr(zproc, 'ionice') and not MACOS:
             if LINUX:
                 succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
             else:

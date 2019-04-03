@@ -1230,13 +1230,21 @@ Process class
 
   .. method:: ionice(ioclass=None, value=None)
 
-    Get or set process I/O niceness (priority). On Linux *ioclass* is one of the
+    Get or set process I/O niceness (priority).
+
+    On Linux *ioclass* is one of the
     :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
     *value* is a number which goes from  ``0`` to ``7``. The higher the value,
-    the lower the I/O priority of the process. On Windows only *ioclass* is
-    used and it can be set to ``2`` (normal), ``1`` (low) or ``0`` (very low).
-    The example below sets IDLE priority class for the current process,
-    meaning it will only get I/O time when no other process needs the disk:
+    the lower the I/O priority of the process.
+    On Linux this returns a ``(ioclass, value))`` tuple, on all other platforms
+    it returns an integer.
+    On macOS only *ioclass* is used and it must be one of the
+    :data:`psutil.IOPOL_*<psutil.IOPOL_DEFAULT>` constants.
+    On Windows only *ioclass* is used and can be set to ``2`` (normal),
+    ``1`` (low) or ``0`` (very low).
+    The example below sets IDLE priority class for the current process on
+    Linux, meaning it will only get I/O time when no other process needs the
+    disk:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1245,11 +1253,9 @@ Process class
       pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
-    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
-    named tuple.
+    Availability: Linux, macOS, Windows Vista+
 
-    Availability: Linux and Windows > Vista
+    .. versionchanged:: 5.6.2 added macOS support
 
     .. versionchanged::
       3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
@@ -2161,6 +2167,21 @@ Constants
     3.0.0 on Python >= 3.4 these constants are
     `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
     instead of a plain integer.
+
+.. _const-iopol:
+.. data:: IOPOL_DEFAULT
+.. data:: IOPOL_IMPORTANT
+.. data:: IOPOL_PASSIVE
+.. data:: IOPOL_THROTTLE
+.. data:: IOPOL_UTILITY
+.. data:: IOPOL_STANDARD
+
+  A set of integers representing the I/O priority of a process on macOS. They
+  can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
+  process I/O priority.  For further information refer to
+  `ionice <http://www.manpagez.com/man/3/setiopolicy_np/>`__ manual.
+
+  Availability: macOS
 
 .. _const-rlimit:
 .. data:: RLIM_INFINITY

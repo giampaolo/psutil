@@ -1743,6 +1743,37 @@ error:
 
 
 /*
+ * Get current process I/O priority (not possible for other PIDs).
+ */
+static PyObject *
+psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
+    int ret;
+
+    ret = getiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_PROCESS);
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    return Py_BuildValue("i", ret);
+}
+
+
+/*
+ * Set current process I/O priority (not possible for other PIDs).
+ */
+static PyObject *
+psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
+    int ret;
+    int policy;
+
+    if (! PyArg_ParseTuple(args, "i", &policy))
+        return NULL;
+    ret = setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_PROCESS, policy);
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    Py_RETURN_NONE;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1773,6 +1804,10 @@ PsutilMethods[] = {
      "Return the number of fds opened by process."},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
+    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
+     "Get current process' I/O priority."},
+    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
+     "Set current process' I/O priority."},
 
     // --- system-related functions
 
@@ -1896,6 +1931,13 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    PyModule_AddIntConstant(module, "IOPOL_DEFAULT", IOPOL_DEFAULT);
+    PyModule_AddIntConstant(module, "IOPOL_IMPORTANT", IOPOL_IMPORTANT);
+    PyModule_AddIntConstant(module, "IOPOL_PASSIVE", IOPOL_PASSIVE);
+    PyModule_AddIntConstant(module, "IOPOL_THROTTLE", IOPOL_THROTTLE);
+    PyModule_AddIntConstant(module, "IOPOL_UTILITY", IOPOL_UTILITY);
+    PyModule_AddIntConstant(module, "IOPOL_STANDARD", IOPOL_STANDARD);
 
     // Exception.
     ZombieProcessError = PyErr_NewException(

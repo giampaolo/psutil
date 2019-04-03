@@ -149,6 +149,12 @@ elif WINDOWS:
 
 elif MACOS:
     from . import _psosx as _psplatform
+    from ._psosx import IOPOL_DEFAULT  # NOQA
+    from ._psosx import IOPOL_IMPORTANT  # NOQA
+    from ._psosx import IOPOL_PASSIVE  # NOQA
+    from ._psosx import IOPOL_THROTTLE  # NOQA
+    from ._psosx import IOPOL_UTILITY  # NOQA
+    from ._psosx import IOPOL_STANDARD  # NOQA
 
 elif BSD:
     from . import _psbsd as _psplatform
@@ -871,7 +877,7 @@ class Process(object):
             """
             return self._proc.io_counters()
 
-    # Linux and Windows >= Vista only
+    # Linux, macOS and Windows >= Vista only
     if hasattr(_psplatform.Process, "ionice_get"):
 
         def ionice(self, ioclass=None, value=None):
@@ -1475,6 +1481,8 @@ _as_dict_attrnames = set(
      ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
       'memory_info_ex', 'oneshot']])
+if MACOS:
+    _as_dict_attrnames.remove('ionice')
 
 
 # =====================================================================
