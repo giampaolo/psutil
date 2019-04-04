@@ -656,8 +656,11 @@ ppid_map = cext.ppid_map  # used internally by Process.children()
 def is_permission_err(exc):
     """Return True if this is a permission error."""
     assert isinstance(exc, OSError), exc
+    # On Python 2 OSError doesn't always have 'winerror'. Sometimes
+    # it does, in which case the original exception was WindowsError
+    # (which is a subclass of OSError).
     return exc.errno in (errno.EPERM, errno.EACCES) or \
-        exc.winerror == cext.ERROR_ACCESS_DENIED
+        getattr(exc, "winerror", -1) == cext.ERROR_ACCESS_DENIED
 
 
 def convert_oserror(exc, pid=None, name=None):
