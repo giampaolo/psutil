@@ -161,9 +161,11 @@ def get_suite(name=None):
 
 def get_suite_from_failed():
     # ...from previously failed test run
+    suite = unittest.TestSuite()
+    if not os.path.isfile(FAILED_TESTS_FNAME):
+        return suite
     with open(FAILED_TESTS_FNAME, 'rt') as f:
         names = f.read().split()
-    suite = unittest.TestSuite()
     for n in names:
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(n))
     return suite
