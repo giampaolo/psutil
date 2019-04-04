@@ -1245,11 +1245,14 @@ Process class
       pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
-    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
-    named tuple.
+    On Windows only *ioclass* is used and it can be set to ``3`` (high),
+    ``2`` (normal), ``1`` (low) or ``0`` (very low).
+    Also it returns an integer instead of a named tuple.
 
     Availability: Linux and Windows > Vista
+
+    .. versionchanged::
+      Windows accepts ``3`` (high) value.
 
     .. versionchanged::
       3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
@@ -2157,10 +2160,19 @@ Constants
 
   Availability: Linux
 
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
+.. _const-ioprio:
+.. data:: IOPRIO_VERYLOW
+.. data:: IOPRIO_LOW
+.. data:: IOPRIO_NORMAL
+.. data:: IOPRIO_HIGH
+
+  A set of integers representing the I/O priority of a process on Linux.
+  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  or set process I/O priority.
+
+  Availability: Windows
+
+  .. versionadded:: 5.6.2
 
 .. _const-rlimit:
 .. data:: RLIM_INFINITY

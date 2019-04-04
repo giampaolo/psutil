@@ -146,6 +146,10 @@ elif WINDOWS:
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
+    from ._pswindows import IOPRIO_VERYLOW  # NOQA
+    from ._pswindows import IOPRIO_LOW  # NOQA
+    from ._pswindows import IOPRIO_NORMAL  # NOQA
+    from ._pswindows import IOPRIO_HIGH  # NOQA
 
 elif MACOS:
     from . import _psosx as _psplatform

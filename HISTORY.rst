@@ -10,6 +10,9 @@
   the number of physical CPUs in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+- 1473_: [Windows] process IO priority (ionice()) values are now exposed as 4
+  new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
+  Also it was not possible to set high I/O priority (not it is).
 - 1478_: add make command to re-run tests failed on last run.
 
 **Bug fixes**
