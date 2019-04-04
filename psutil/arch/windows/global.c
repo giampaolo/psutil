@@ -18,7 +18,6 @@
 int PSUTIL_WINVER;
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 
-#define FACILITY_WIN32 0x0007
 #define NT_FACILITY_MASK 0xfff
 #define NT_FACILITY_SHIFT 16
 #define NT_FACILITY(Status) \
@@ -74,14 +73,16 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
  * Python exception.
  */
 PVOID
-psutil_SetFromNTStatusErr(NTSTATUS Status) {
+psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall) {
     ULONG err;
+    char fullmsg[1024];
 
     if (NT_NTWIN32(Status))
         err = WIN32_FROM_NTSTATUS(Status);
     else
         err = psutil_RtlNtStatusToDosErrorNoTeb(Status);
-    return PyErr_SetFromWindowsErr(err);
+    sprintf(fullmsg, "(originated from %s)", syscall);
+    return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
 
 
