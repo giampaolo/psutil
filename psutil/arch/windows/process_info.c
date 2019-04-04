@@ -971,9 +971,9 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         }
     }
 
-    if (status != 0) {
-        PyErr_Format(
-            PyExc_RuntimeError, "NtQuerySystemInformation() syscall failed");
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemProcessInformation)");
         goto error;
     }
 

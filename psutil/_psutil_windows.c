@@ -946,8 +946,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
-    if (status != 0) {
-        PyErr_SetFromWindowsErr(0);
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status,
+            "NtQuerySystemInformation(SystemProcessorPerformanceInformation)"
+        );
         goto error;
     }
 
@@ -3227,9 +3230,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         spi,
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
         NULL);
-    if (status != 0) {
-        PyErr_SetFromOSErrnoWithSyscall(
-            "NtQuerySystemInformation(SYSTEM_PERFORMANCE_INFORMATION)");
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemPerformanceInformation)");
         goto error;
     }
 
@@ -3246,9 +3249,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
         NULL);
-    if (status != 0) {
-        PyErr_SetFromOSErrnoWithSyscall(
-            "NtQuerySystemInformation(SYSTEM_INTERRUPT_INFORMATION)");
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemInterruptInformation)");
         goto error;
     }
     for (i = 0; i < ncpus; i++) {
@@ -3268,9 +3271,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
-    if (status != 0) {
-        PyErr_SetFromOSErrnoWithSyscall(
-            "NtQuerySystemInformation(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)");
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status,
+            "NtQuerySystemInformation(SystemProcessorPerformanceInformation)");
         goto error;
     }
 
