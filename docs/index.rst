@@ -1228,39 +1228,63 @@ Process class
 
       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
+
   .. method:: ionice(ioclass=None, value=None)
 
     Get or set process I/O niceness (priority).
+    If no argument is provided it acts as a get, returning a ``(ioclass, value)``
+    tuple on Linux and a *ioclass* integer on other platforms.
+    If *ioclass* is provided it acts as a set. In this case an additional
+    *value* can be specified on Linux only in order to increase or decrease the
+    I/O priority even further.
+    Here's the possible platform-dependent *ioclass* values.
 
-    On Linux *ioclass* is one of the
-    :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
-    *value* is a number which goes from  ``0`` to ``7``. The higher the value,
-    the lower the I/O priority of the process.
-    On Linux this returns a ``(ioclass, value))`` tuple, on all other platforms
-    it returns an integer.
-    On macOS only *ioclass* is used and it must be one of the
-    :data:`psutil.IOPOL_*<psutil.IOPOL_DEFAULT>` constants.
-    On Windows only *ioclass* is used and can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low).
-    The example below sets IDLE priority class for the current process on
-    Linux, meaning it will only get I/O time when no other process needs the
-    disk:
+    Linux:
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # set
-      >>> p.ionice()  # get
-      pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
-      >>>
+    * ``IOPRIO_CLASS_RT``: (highest priority) the process gets first access
+      to the disk every time. Use it with care as it can starve the entire
+      system. Additional priority *level* can be specified and ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_BE``: (best effort) the default for any process that
+      hasn't set a specific I/O priority. Additional priority *level* ranges
+      from ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_IDLE``: (lowest priority) get I/O time when no-one else
+      needs the disk.
+    * ``IOPRIO_CLASS_NONE``: this should be equal to ``IOPRIO_CLASS_RT``.
+
+    macOS:
+
+    * ``IOPOL_IMPORTANT``: highest priority
+    * ``IOPOL_DEFAULT``: the default
+    * ``IOPOL_STANDARD``, ``IOPOL_UTILITY``, ``IOPOL_THROTTLE``:
+      various levels of low priority (refer to man page)
+    * ``IOPOL_PASSIVE``: lowest priority
+
+    Windows:
+
+    * ``REALTIME_PRIORITY_CLASS``: highest priority
+    * ``HIGH_PRIORITY_CLASS``: high priority
+    * ``ABOVE_NORMAL_PRIORITY_CLASS``: something between high and normal
+    * ``NORMAL_PRIORITY_CLASS``: the default
+    * ``BELOW_NORMAL_PRIORITY_CLASS``: something between normal and low
+    * ``IDLE_PRIORITY_CLASS``: lowest possible priority
+
+    Here's an example on how to set the highest I/O priority depending on what
+    platform you're on::
+
+      import psutil
+      p = psutil.Process()
+      if psutil.LINUX
+          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+      elif psutil.MACOS:
+          p.ionice(psutil.IOPOL_IMPORTANT)
+      else:  # Windows
+          p.ionice(psutil.REALTIME_PRIORITY_CLASS)
+      p.ionice()  # get
 
     Availability: Linux, macOS, Windows Vista+
 
     .. versionchanged:: 5.6.2 added macOS support
-
-    .. versionchanged::
-      3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
-      `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
-      instead of a plain integer.
 
   .. method:: rlimit(resource, limits=None)
 
