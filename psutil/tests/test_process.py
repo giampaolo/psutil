@@ -380,36 +380,7 @@ class TestProcess(unittest.TestCase):
                                  (psutil.IOPRIO_CLASS_RT, 7))
                 with self.assertRaises(ValueError):
                     p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
-        finally:
-            p.ionice(psutil.IOPRIO_CLASS_BE)
-
-    @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(not WINDOWS, 'not supported on this win version')
-    def test_ionice_win(self):
-        p = psutil.Process()
-        self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
-        try:
-            p.ionice(psutil.IOPRIO_VERYLOW)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_VERYLOW)
-            p.ionice(psutil.IOPRIO_LOW)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_LOW)
-            try:
-                p.ionice(psutil.IOPRIO_HIGH)
-            except psutil.AccessDenied:
-                pass
-            else:
-                self.assertEqual(p.ionice(), psutil.IOPRIO_HIGH)
-            with self.assertRaises(ValueError):
-                p.ionice(psutil.IOPRIO_HIGH + 1)
-        finally:
-            p.ionice(psutil.IOPRIO_NORMAL)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
-
-    @unittest.skipIf(not HAS_IONICE, "not supported")
-    def test_ionice_errs(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        if LINUX:
+            # errs
             self.assertRaises(ValueError, p.ionice, 2, 10)
             self.assertRaises(ValueError, p.ionice, 2, -1)
             self.assertRaises(ValueError, p.ionice, 4)
@@ -423,9 +394,36 @@ class TestProcess(unittest.TestCase):
             self.assertRaisesRegex(
                 ValueError, "'ioclass' argument must be specified",
                 p.ionice, value=1)
-        else:
-            self.assertRaises(ValueError, p.ionice, 3)
-            self.assertRaises(TypeError, p.ionice, 2, 1)
+        finally:
+            p.ionice(psutil.IOPRIO_CLASS_BE)
+
+    @unittest.skipIf(not HAS_IONICE, "not supported")
+    @unittest.skipIf(not WINDOWS, 'not supported on this win version')
+    def test_ionice_win(self):
+        p = psutil.Process()
+        self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+        try:
+            # base
+            p.ionice(psutil.IOPRIO_VERYLOW)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_VERYLOW)
+            p.ionice(psutil.IOPRIO_LOW)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_LOW)
+            try:
+                p.ionice(psutil.IOPRIO_HIGH)
+            except psutil.AccessDenied:
+                pass
+            else:
+                self.assertEqual(p.ionice(), psutil.IOPRIO_HIGH)
+            # errs
+            self.assertRaisesRegex(
+                TypeError, "value argument not accepted on Windows",
+                p.ionice, psutil.IOPRIO_NORMAL, value=1)
+            self.assertRaisesRegex(
+                ValueError, "is not a valid priority",
+                p.ionice, psutil.IOPRIO_HIGH + 1)
+        finally:
+            p.ionice(psutil.IOPRIO_NORMAL)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):

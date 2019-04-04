@@ -63,6 +63,10 @@ else:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
 __extra__all__ = [
     "win_service_iter", "win_service_get",
+    # Process priority
+    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS", "NORMAL_PRIORITY_CLASS",
+    "REALTIME_PRIORITY_CLASS",
     # IO priority
     "IOPRIO_VERYLOW", "IOPRIO_LOW", "IOPRIO_NORMAL", "IOPRIO_HIGH",
     # others
