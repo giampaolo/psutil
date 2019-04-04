@@ -52,6 +52,7 @@ psutil_wait_thread(LPVOID lpvParam) {
     while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
 
+        // TODO: return code not checked
         g_status = psutil_NtQueryObject(
             g_hFile,
             ObjectNameInformation,

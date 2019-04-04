@@ -4,6 +4,10 @@
  * found in the LICENSE file.
  *
  * Windows platform-specific module methods for _psutil_windows
+ * List of undocumented Windows APIs used (in here and in other modules):
+ * - NtQuerySystemInformation
+ * - NtQueryInformationProcess
+ * - NtQueryObject
  */
 
 // Fixes clash between winsock2.h and windows.h
