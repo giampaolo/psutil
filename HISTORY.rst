@@ -23,9 +23,8 @@
   by Daniel Beer)
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
   in WindowsError being raised instead of AccessDenied.
-- XXXX_: [Windows] wrong or absent error handling for private NTSTATUS Windows
-  APIs. Affected process methods are: ionice() (get and set), ...
-
+- 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
+  APIs. Different process methods were affected by this.
 
 5.6.1
 =====
