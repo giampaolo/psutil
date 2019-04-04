@@ -10,6 +10,7 @@
   the number of physical CPUs in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+- 1478_: add make command to re-run tests failed on last run.
 
 **Bug fixes**
 

@@ -24,11 +24,13 @@ except ImportError:
 
 import psutil
 from psutil._common import memoize
+from psutil.tests import safe_rmpath
 from psutil.tests import TOX
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
+FAILED_TESTS_FNAME = '.failed-tests.txt'
 if os.name == 'posix':
     GREEN = 1
     RED = 2
@@ -157,15 +159,36 @@ def get_suite(name=None):
     return suite
 
 
-def run(name=None):
+def get_suite_from_failed():
+    # ...from previously failed test run
+    with open(FAILED_TESTS_FNAME, 'rt') as f:
+        names = f.read().split()
+    suite = unittest.TestSuite()
+    for n in names:
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(n))
+    return suite
+
+
+def save_failed_tests(result):
+    if result.wasSuccessful():
+        return safe_rmpath(FAILED_TESTS_FNAME)
+    with open(FAILED_TESTS_FNAME, 'wt') as f:
+        for t in result.errors + result.failures:
+            tname = str(t[0])
+            f.write(tname + '\n')
+
+
+def run(name=None, last_failed=False):
     setup_tests()
     runner = ColouredRunner(verbosity=VERBOSITY)
+    suite = get_suite_from_failed() if last_failed else get_suite(name)
     try:
-        result = runner.run(get_suite(name))
+        result = runner.run(suite)
     except (KeyboardInterrupt, SystemExit) as err:
         print("received %s" % err.__class__.__name__, file=sys.stderr)
         runner.result.printErrors()
         sys.exit(1)
     else:
+        save_failed_tests(result)
         success = result.wasSuccessful()
         sys.exit(0 if success else 1)

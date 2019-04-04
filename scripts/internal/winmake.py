@@ -318,6 +318,7 @@ def clean():
         "*.~",
         "*__pycache__",
         ".coverage",
+        ".failed-tests.txt",
         ".tox",
     )
     safe_rmtree("build")
@@ -437,6 +438,15 @@ def test_by_name():
     install()
     test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
+
+
+@cmd
+def test_failed():
+    """Re-run tests which failed on last run."""
+    install()
+    test_setup()
+    sh('%s -c "import psutil.tests.runner as r; r.run(last_failed=True)"' % (
+        PYTHON))
 
 
 @cmd
