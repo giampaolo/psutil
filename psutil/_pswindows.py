@@ -979,17 +979,43 @@ class Process(object):
     if HAS_PROC_IO_PRIORITY:
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority_get(self.pid)
+            ret = cext.proc_io_priority_get(self.pid)
+            # Reuse nice() / GetPriorityClass constants.
+            if ret == 0:
+                return IDLE_PRIORITY_CLASS
+            elif ret == 1:
+                return BELOW_NORMAL_PRIORITY_CLASS
+            elif ret == 2:
+                return NORMAL_PRIORITY_CLASS
+            elif ret == 3:
+                return ABOVE_NORMAL_PRIORITY_CLASS
+            elif ret == 4:
+                return HIGH_PRIORITY_CLASS
+            elif ret == 5:
+                return REALTIME_PRIORITY_CLASS
+            else:
+                return ret
 
         @wrap_exceptions
-        def ionice_set(self, value, _):
-            if _:
-                raise TypeError("set_proc_ionice() on Windows takes only "
-                                "1 argument (2 given)")
-            if value not in (2, 1, 0):
-                raise ValueError("value must be 2 (normal), 1 (low) or 0 "
-                                 "(very low); got %r" % value)
-            return cext.proc_io_priority_set(self.pid, value)
+        def ionice_set(self, ioclass, value):
+            # Reuse nice() / SetPriorityClass constants.
+            if value:
+                raise TypeError("value argument not accepted on Windows")
+            if ioclass == IDLE_PRIORITY_CLASS:
+                ioclass = 0
+            elif ioclass == BELOW_NORMAL_PRIORITY_CLASS:
+                ioclass = 1
+            elif ioclass == NORMAL_PRIORITY_CLASS:
+                ioclass = 2
+            elif ioclass == ABOVE_NORMAL_PRIORITY_CLASS:
+                ioclass = 3
+            elif ioclass == HIGH_PRIORITY_CLASS:
+                ioclass = 4
+            elif ioclass == REALTIME_PRIORITY_CLASS:
+                ioclass = 5
+            else:
+                raise ValueError("invalid value %r" % value)
+            return cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
     def io_counters(self):

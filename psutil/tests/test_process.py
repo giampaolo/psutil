@@ -387,16 +387,19 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(not WINDOWS, 'not supported on this win version')
     def test_ionice_win(self):
         p = psutil.Process()
-        original = p.ionice()
-        self.assertIsInstance(original, int)
+        self.assertEqual(p.ionice(), psutil.NORMAL_PRIORITY_CLASS)
         try:
-            value = 0  # very low
-            if original == value:
-                value = 1  # low
-            p.ionice(value)
-            self.assertEqual(p.ionice(), value)
+            for prio in (psutil.IDLE_PRIORITY_CLASS,
+                         psutil.BELOW_NORMAL_PRIORITY_CLASS,
+                         psutil.NORMAL_PRIORITY_CLASS,
+                         psutil.ABOVE_NORMAL_PRIORITY_CLASS,
+                         psutil.HIGH_PRIORITY_CLASS,
+                         psutil.REALTIME_PRIORITY_CLASS):
+                with self.subTest(prio=str(prio)):
+                    p.ionice(-1)
+                    self.assertEqual(p.ionice(), prio)
         finally:
-            p.ionice(original)
+            p.ionice(psutil.NORMAL_PRIORITY_CLASS)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
     def test_ionice_errs(self):
