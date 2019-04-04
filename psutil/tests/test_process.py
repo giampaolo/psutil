@@ -43,7 +43,6 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_zombie_proc
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
-from psutil.tests import get_winver
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -67,7 +66,6 @@ from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
-from psutil.tests import WIN_VISTA
 
 
 # ===================================================================
@@ -351,54 +349,58 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(io2[i], 0)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
-    def test_ionice(self):
-        if LINUX:
-            from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
-                                IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE)
-            self.assertEqual(IOPRIO_CLASS_NONE, 0)
-            self.assertEqual(IOPRIO_CLASS_RT, 1)
-            self.assertEqual(IOPRIO_CLASS_BE, 2)
-            self.assertEqual(IOPRIO_CLASS_IDLE, 3)
-            p = psutil.Process()
-            try:
-                p.ionice(2)
-                ioclass, value = p.ionice()
-                if enum is not None:
-                    self.assertIsInstance(ioclass, enum.IntEnum)
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 4)
-                #
-                p.ionice(3)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 3)
-                self.assertEqual(value, 0)
-                #
-                p.ionice(2, 0)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 0)
-                p.ionice(2, 7)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 7)
-            finally:
-                p.ionice(IOPRIO_CLASS_NONE)
-        else:
-            p = psutil.Process()
-            original = p.ionice()
-            self.assertIsInstance(original, int)
-            try:
-                value = 0  # very low
-                if original == value:
-                    value = 1  # low
-                p.ionice(value)
-                self.assertEqual(p.ionice(), value)
-            finally:
-                p.ionice(original)
+    @unittest.skipIf(not LINUX, "linux only")
+    def test_ionice_linux(self):
+        p = psutil.Process()
+        self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_NONE, 0))
+
+        self.assertEqual(psutil.IOPRIO_CLASS_NONE, 0)
+        self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)
+        self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)
+        self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)
+        if enum is not None:
+            self.assertIsInstance(p.ionice()[0], enum.IntEnum)
+
+        try:
+            p.ionice(2)
+            ioclass, value = p.ionice()
+            if enum is not None:
+                self.assertIsInstance(ioclass, enum.IntEnum)
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(value, 4)
+            #
+            p.ionice(3)
+            ioclass, value = p.ionice()
+            self.assertEqual(ioclass, 3)
+            self.assertEqual(value, 0)
+            #
+            p.ionice(2, 0)
+            ioclass, value = p.ionice()
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(value, 0)
+            p.ionice(2, 7)
+            ioclass, value = p.ionice()
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(value, 7)
+        finally:
+            p.ionice(psutil.IOPRIO_CLASS_NONE, value=0)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
+    @unittest.skipIf(not WINDOWS, 'not supported on this win version')
+    def test_ionice_win(self):
+        p = psutil.Process()
+        original = p.ionice()
+        self.assertIsInstance(original, int)
+        try:
+            value = 0  # very low
+            if original == value:
+                value = 1  # low
+            p.ionice(value)
+            self.assertEqual(p.ionice(), value)
+        finally:
+            p.ionice(original)
+
+    @unittest.skipIf(not HAS_IONICE, "not supported")
     def test_ionice_errs(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
