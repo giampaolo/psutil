@@ -62,7 +62,7 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     char fullmsg[1024];
 
 #ifdef _WIN32
-    sprintf(fullmsg, "originated from %s", syscall);
+    sprintf(fullmsg, "(originated from %s)", syscall);
     PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
 #else
     PyObject *exc;

@@ -23,6 +23,7 @@ extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 int psutil_load_globals();
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
+PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
 
 _NtQuerySystemInformation \
     psutil_NtQuerySystemInformation;
@@ -71,3 +72,6 @@ _NtResumeProcess \
 
 _NtQueryVirtualMemory \
     psutil_NtQueryVirtualMemory;
+
+_RtlNtStatusToDosErrorNoTeb \
+    psutil_RtlNtStatusToDosErrorNoTeb;
