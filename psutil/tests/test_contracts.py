@@ -614,8 +614,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                         # commented as on Linux we might get
                         # '/foo/bar (deleted)'
                         # assert os.path.exists(nt.path), nt.path
-                elif fname in ('addr', 'perms'):
-                    assert value
+                elif fname == 'addr':
+                    assert value, repr(value)
+                elif fname == 'perms':
+                    if not WINDOWS:
+                        assert value, repr(value)
                 else:
                     self.assertIsInstance(value, (int, long))
                     self.assertGreaterEqual(value, 0)
