@@ -664,17 +664,15 @@ class TestDualProcessImplementation(unittest.TestCase):
             assert fun.called
 
     def test_cmdline(self):
-        from psutil._pswindows import ACCESS_DENIED_ERRSET
+        from psutil._pswindows import convert_oserror
         for pid in psutil.pids():
             try:
                 a = cext.proc_cmdline(pid, use_peb=True)
                 b = cext.proc_cmdline(pid, use_peb=False)
             except OSError as err:
-                if err.errno in ACCESS_DENIED_ERRSET:
-                    pass
-                elif err.errno == errno.ESRCH:
-                    pass  # NSP
-                else:
+                err = convert_oserror(err)
+                if not isinstance(err, (psutil.AccessDenied,
+                                        psutil.NoSuchProcess)):
                     raise
             else:
                 self.assertEqual(a, b)
@@ -837,7 +835,8 @@ class TestServices(unittest.TestCase):
         # test NoSuchProcess
         service = psutil.win_service_get(name)
         exc = WindowsError(
-            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST, "")
+            0, "", 0,
+            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.NoSuchProcess, service.status)
@@ -847,7 +846,8 @@ class TestServices(unittest.TestCase):
 
         # test AccessDenied
         exc = WindowsError(
-            psutil._psplatform.cext.ERROR_ACCESS_DENIED, "")
+            0, "", 0,
+            psutil._psplatform.cext.ERROR_ACCESS_DENIED)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.AccessDenied, service.status)
