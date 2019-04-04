@@ -63,11 +63,10 @@ else:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
 __extra__all__ = [
     "win_service_iter", "win_service_get",
-    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-    "CONN_DELETE_TCB",
-    "AF_LINK",
+    # IO priority
+    "IOPRIO_VERYLOW", "IOPRIO_LOW", "IOPRIO_NORMAL", "IOPRIO_HIGH",
+    # others
+    "CONN_DELETE_TCB", "AF_LINK",
 ]
 
 
@@ -111,6 +110,19 @@ if enum is not None:
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
     globals().update(Priority.__members__)
+
+if enum is None:
+    IOPRIO_VERYLOW = 0
+    IOPRIO_LOW = 1
+    IOPRIO_NORMAL = 2
+    IOPRIO_HIGH = 3
+else:
+    class IOPriority(enum.IntEnum):
+        IOPRIO_VERYLOW = 0
+        IOPRIO_LOW = 1
+        IOPRIO_NORMAL = 2
+        IOPRIO_HIGH = 3
+    globals().update(IOPriority.__members__)
 
 pinfo_map = dict(
     num_handles=0,
@@ -660,7 +672,8 @@ def is_permission_err(exc):
     # it does, in which case the original exception was WindowsError
     # (which is a subclass of OSError).
     return exc.errno in (errno.EPERM, errno.EACCES) or \
-        getattr(exc, "winerror", -1) == cext.ERROR_ACCESS_DENIED
+        getattr(exc, "winerror", -1) in (cext.ERROR_ACCESS_DENIED,
+                                         cext.ERROR_PRIVILEGE_NOT_HELD)
 
 
 def convert_oserror(exc, pid=None, name=None):
@@ -985,42 +998,18 @@ class Process(object):
         @wrap_exceptions
         def ionice_get(self):
             ret = cext.proc_io_priority_get(self.pid)
-            # Reuse nice() / GetPriorityClass constants.
-            if ret == 0:
-                return IDLE_PRIORITY_CLASS
-            elif ret == 1:
-                return BELOW_NORMAL_PRIORITY_CLASS
-            elif ret == 2:
-                return NORMAL_PRIORITY_CLASS
-            elif ret == 3:
-                return ABOVE_NORMAL_PRIORITY_CLASS
-            elif ret == 4:
-                return HIGH_PRIORITY_CLASS
-            elif ret == 5:
-                return REALTIME_PRIORITY_CLASS
-            else:
-                return ret
+            if enum is not None:
+                ret = IOPriority(ret)
+            return ret
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
-            # Reuse nice() / SetPriorityClass constants.
             if value:
                 raise TypeError("value argument not accepted on Windows")
-            if ioclass == IDLE_PRIORITY_CLASS:
-                ioclass = 0
-            elif ioclass == BELOW_NORMAL_PRIORITY_CLASS:
-                ioclass = 1
-            elif ioclass == NORMAL_PRIORITY_CLASS:
-                ioclass = 2
-            elif ioclass == ABOVE_NORMAL_PRIORITY_CLASS:
-                ioclass = 3
-            elif ioclass == HIGH_PRIORITY_CLASS:
-                ioclass = 4
-            elif ioclass == REALTIME_PRIORITY_CLASS:
-                ioclass = 5
-            else:
-                raise ValueError("invalid value %r" % value)
-            return cext.proc_io_priority_set(self.pid, ioclass)
+            if ioclass not in (IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL,
+                               IOPRIO_HIGH):
+                raise ValueError("%s is not a valid priority" % ioclass)
+            cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
     def io_counters(self):

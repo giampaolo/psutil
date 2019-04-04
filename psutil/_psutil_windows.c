@@ -3685,7 +3685,8 @@ void init_psutil_windows(void)
         module, "ERROR_INVALID_NAME", ERROR_INVALID_NAME);
     PyModule_AddIntConstant(
         module, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST);
-
+    PyModule_AddIntConstant(
+        module, "ERROR_PRIVILEGE_NOT_HELD", ERROR_PRIVILEGE_NOT_HELD);
     PyModule_AddIntConstant(
         module, "WINVER", PSUTIL_WINVER);
     PyModule_AddIntConstant(
