@@ -2160,10 +2160,19 @@ Constants
 
   Availability: Linux
 
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
+.. _const-ioprio:
+.. data:: IOPRIO_VERYLOW
+.. data:: IOPRIO_LOW
+.. data:: IOPRIO_NORMAL
+.. data:: IOPRIO_HIGH
+
+  A set of integers representing the I/O priority of a process on Linux.
+  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  or set process I/O priority.
+
+  Availability: Windows
+
+  .. versionadded:: 5.6.2
 
 .. _const-rlimit:
 .. data:: RLIM_INFINITY
