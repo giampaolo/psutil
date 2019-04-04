@@ -352,38 +352,36 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(not LINUX, "linux only")
     def test_ionice_linux(self):
         p = psutil.Process()
-        self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_NONE, 0))
-
+        self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
         self.assertEqual(psutil.IOPRIO_CLASS_NONE, 0)
-        self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)
-        self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)
-        self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)
-        if enum is not None:
-            self.assertIsInstance(p.ionice()[0], enum.IntEnum)
-
+        self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)  # high
+        self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)  # normal
+        self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)  # low
         try:
-            p.ionice(2)
-            ioclass, value = p.ionice()
-            if enum is not None:
-                self.assertIsInstance(ioclass, enum.IntEnum)
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 4)
-            #
-            p.ionice(3)
-            ioclass, value = p.ionice()
-            self.assertEqual(ioclass, 3)
-            self.assertEqual(value, 0)
-            #
-            p.ionice(2, 0)
-            ioclass, value = p.ionice()
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 0)
-            p.ionice(2, 7)
-            ioclass, value = p.ionice()
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 7)
+            # low
+            p.ionice(psutil.IOPRIO_CLASS_IDLE)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_IDLE, 0))
+            with self.assertRaises(ValueError):  # accepts no value
+                p.ionice(psutil.IOPRIO_CLASS_IDLE, value=7)
+            # normal
+            p.ionice(psutil.IOPRIO_CLASS_BE)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 0))
+            p.ionice(psutil.IOPRIO_CLASS_BE, value=7)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
+            with self.assertRaises(ValueError):
+                p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
+            # high
+            if os.getuid() == 0:  # root
+                p.ionice(psutil.IOPRIO_CLASS_RT)
+                self.assertEqual(tuple(p.ionice()),
+                                 (psutil.IOPRIO_CLASS_RT, 0))
+                p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+                self.assertEqual(tuple(p.ionice()),
+                                 (psutil.IOPRIO_CLASS_RT, 7))
+                with self.assertRaises(ValueError):
+                    p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
         finally:
-            p.ionice(psutil.IOPRIO_CLASS_NONE, value=0)
+            p.ionice(psutil.IOPRIO_CLASS_BE)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(not WINDOWS, 'not supported on this win version')

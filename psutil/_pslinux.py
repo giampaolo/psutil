@@ -41,7 +41,6 @@ from ._common import supports_ipv6
 from ._common import usage_percent
 from ._compat import b
 from ._compat import basestring
-from ._compat import long
 from ._compat import PY3
 
 if sys.version_info >= (3, 4):
@@ -1987,36 +1986,16 @@ class Process(object):
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
-            if value is not None:
-                if not PY3 and not isinstance(value, (int, long)):
-                    msg = "value argument is not an integer (gor %r)" % value
-                    raise TypeError(msg)
-                if not 0 <= value <= 7:
-                    raise ValueError(
-                        "value argument range expected is between 0 and 7")
-
-            if ioclass in (IOPRIO_CLASS_NONE, None):
-                if value:
-                    msg = "can't specify value with IOPRIO_CLASS_NONE " \
-                          "(got %r)" % value
-                    raise ValueError(msg)
-                ioclass = IOPRIO_CLASS_NONE
+            if value is None:
                 value = 0
-            elif ioclass == IOPRIO_CLASS_IDLE:
-                if value:
-                    msg = "can't specify value with IOPRIO_CLASS_IDLE " \
-                          "(got %r)" % value
-                    raise ValueError(msg)
-                value = 0
-            elif ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
-                if value is None:
-                    # TODO: add comment explaining why this is 4 (?)
-                    value = 4
-            else:
-                # otherwise we would get OSError(EVINAL)
-                raise ValueError("invalid ioclass argument %r" % ioclass)
-
-            return cext.proc_ioprio_set(self.pid, ioclass, value)
+            if value and ioclass == IOPRIO_CLASS_IDLE:
+                raise ValueError("IOPRIO_CLASS_IDLE accepts no value")
+            try:
+                return cext.proc_ioprio_set(self.pid, ioclass, value)
+            except OSError as err:
+                if err.errno == errno.EINVAL and value > 7:
+                    raise ValueError("value not in 0-7 range")
+                raise
 
     if HAS_PRLIMIT:
 
