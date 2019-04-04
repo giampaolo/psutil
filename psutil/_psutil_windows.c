@@ -1859,19 +1859,24 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     DWORD IoPriority;
+    NTSTATUS status;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL)
         return NULL;
-    psutil_NtQueryInformationProcess(
+    status = psutil_NtQueryInformationProcess(
         hProcess,
         ProcessIoPriority,
         &IoPriority,
         sizeof(DWORD),
         NULL
     );
+    if (! NT_SUCCESS(status)) {
+        CloseHandle(hProcess);
+        return psutil_SetFromNTStatusErr(status);
+    }
     CloseHandle(hProcess);
     return Py_BuildValue("i", IoPriority);
 }
@@ -1885,6 +1890,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     long pid;
     DWORD prio;
     HANDLE hProcess;
+    NTSTATUS status;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
     if (! PyArg_ParseTuple(args, "li", &pid, &prio))
@@ -1893,13 +1899,16 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    psutil_NtSetInformationProcess(
+    status = psutil_NtSetInformationProcess(
         hProcess,
         ProcessIoPriority,
         (PVOID)&prio,
         sizeof(DWORD)
     );
-
+    if (! NT_SUCCESS(status)) {
+        CloseHandle(hProcess);
+        return psutil_SetFromNTStatusErr(status);
+    }
     CloseHandle(hProcess);
     Py_RETURN_NONE;
 }

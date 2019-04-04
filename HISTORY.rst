@@ -21,6 +21,8 @@
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
+- XXXX_: [Windows] wrong or absent error handling for private NTSTATUS Windows
+  APIs. Affected process methods are: ionice() (get and set), ...
 
 5.6.1
 =====
