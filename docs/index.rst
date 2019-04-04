@@ -1245,11 +1245,14 @@ Process class
       pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
-    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
-    named tuple.
+    On Windows only *ioclass* is used and it can be set to ``3`` (high),
+    ``2`` (normal), ``1`` (low) or ``0`` (very low).
+    Also it returns an integer instead of a named tuple.
 
     Availability: Linux and Windows > Vista
+
+    .. versionchanged::
+      Windows accepts ``3`` (high) value.
 
     .. versionchanged::
       3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
