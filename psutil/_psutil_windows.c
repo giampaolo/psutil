@@ -3,11 +3,15 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Windows platform-specific module methods for _psutil_windows
- * List of undocumented Windows APIs used (in here and in other modules):
+ * Windows platform-specific module methods for _psutil_windows.
+ *
+ * List of undocumented Windows NT APIs which are used in here and in
+ * other modules:
  * - NtQuerySystemInformation
  * - NtQueryInformationProcess
  * - NtQueryObject
+ * - NtSuspendProcess
+ * - NtResumeProcess
  */
 
 // Fixes clash between winsock2.h and windows.h
@@ -1032,7 +1036,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     long pid;
-    int ret;
+    NTSTATUS status;
     HANDLE hProcess;
     PyObject* suspend;
 
@@ -1044,15 +1048,15 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
         return NULL;
 
     if (PyObject_IsTrue(suspend))
-        ret = psutil_NtSuspendProcess(hProcess);
+        status = psutil_NtSuspendProcess(hProcess);
     else
-        ret = psutil_NtResumeProcess(hProcess);
+        status = psutil_NtResumeProcess(hProcess);
 
-    if (ret != 0) {
-        PyErr_SetFromWindowsErr(0);
+    if (! NT_SUCCESS(status)) {
         CloseHandle(hProcess);
-        return NULL;
+        return psutil_SetFromNTStatusErr(status, "NtSuspend|ResumeProcess");
     }
+
     CloseHandle(hProcess);
     Py_RETURN_NONE;
 }
@@ -1346,6 +1350,7 @@ error:
 
 
 // https://msdn.microsoft.com/library/aa365928.aspx
+// TODO properly handle return code
 static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
                                    ULONG address_family,
                                    PVOID * data, DWORD * size)
@@ -1380,6 +1385,7 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
 
 
 // https://msdn.microsoft.com/library/aa365930.aspx
+// TODO properly check return value
 static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
                                    ULONG address_family,
                                    PVOID * data, DWORD * size)
