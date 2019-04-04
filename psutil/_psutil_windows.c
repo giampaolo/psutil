@@ -805,8 +805,8 @@ psutil_GetProcWsetInformation(
         }
         else {
             PyErr_Clear();
-            psutil_debug("NtQueryVirtualMemory failed with %i", status);
-            PyErr_SetString(PyExc_RuntimeError, "NtQueryVirtualMemory failed");
+            psutil_SetFromNTStatusErr(
+                status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)");
         }
         HeapFree(GetProcessHeap(), 0, buffer);
         return 1;
