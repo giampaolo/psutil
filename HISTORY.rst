@@ -21,6 +21,8 @@
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
+- 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
+  in WindowsError being raised instead of AccessDenied.
 
 5.6.1
 =====
