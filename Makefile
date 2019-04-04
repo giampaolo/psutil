@@ -49,6 +49,7 @@ clean:  ## Remove all build files.
 		*.egg-info \
 		*\$testfn* \
 		.coverage \
+		.failed-tests.txt \
 		.tox \
 		build/ \
 		dist/ \
@@ -150,6 +151,10 @@ test-memleaks:  ## Memory leak tests.
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} install
 	@$(TEST_PREFIX) $(PYTHON) -m unittest -v $(ARGS)
+
+test-failed:  ## Re-run tests which failed on last run
+	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) -c "import psutil.tests.runner as r; r.run(last_failed=True)"
 
 test-coverage:  ## Run test coverage.
 	${MAKE} install
