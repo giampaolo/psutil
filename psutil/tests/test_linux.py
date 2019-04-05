@@ -750,11 +750,14 @@ class TestSystemCPUFrequency(unittest.TestCase):
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq'):
+            if (name.endswith('/scaling_cur_freq') and
+                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
                 return io.BytesIO(b"500000")
-            elif name.endswith('/scaling_min_freq'):
+            elif (name.endswith('/scaling_min_freq') and
+                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
                 return io.BytesIO(b"600000")
-            elif name.endswith('/scaling_max_freq'):
+            elif (name.endswith('/scaling_max_freq') and
+                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
                 return io.BytesIO(b"700000")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -763,8 +766,7 @@ class TestSystemCPUFrequency(unittest.TestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             with mock.patch(
-                    'glob.glob',
-                    return_value=['/sys/devices/system/cpu/cpufreq/policy0']):
+                    'os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 self.assertEqual(freq.current, 500.0)
                 self.assertEqual(freq.min, 600.0)
@@ -773,26 +775,41 @@ class TestSystemCPUFrequency(unittest.TestCase):
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_multi_cpu(self):
         def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq'):
+            n = name
+            if (n.endswith('/scaling_cur_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
                 return io.BytesIO(b"100000")
-            elif name.endswith('/scaling_min_freq'):
+            elif (n.endswith('/scaling_min_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
                 return io.BytesIO(b"200000")
-            elif name.endswith('/scaling_max_freq'):
+            elif (n.endswith('/scaling_max_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
                 return io.BytesIO(b"300000")
+            elif (n.endswith('/scaling_cur_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+                return io.BytesIO(b"400000")
+            elif (n.endswith('/scaling_min_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+                return io.BytesIO(b"500000")
+            elif (n.endswith('/scaling_max_freq') and
+                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+                return io.BytesIO(b"600000")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        policies = ['/sys/devices/system/cpu/cpufreq/policy0',
-                    '/sys/devices/system/cpu/cpufreq/policy1',
-                    '/sys/devices/system/cpu/cpufreq/policy2']
         with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('glob.glob', return_value=policies):
-                freq = psutil.cpu_freq()
-                self.assertEqual(freq.current, 100.0)
-                self.assertEqual(freq.min, 200.0)
-                self.assertEqual(freq.max, 300.0)
+            with mock.patch('os.path.exists', return_value=True):
+                with mock.patch('psutil._pslinux.cpu_count_logical',
+                                return_value=2):
+                    freq = psutil.cpu_freq(percpu=True)
+                    self.assertEqual(freq[0].current, 100.0)
+                    self.assertEqual(freq[0].min, 200.0)
+                    self.assertEqual(freq[0].max, 300.0)
+                    self.assertEqual(freq[1].current, 400.0)
+                    self.assertEqual(freq[1].min, 500.0)
+                    self.assertEqual(freq[1].max, 600.0)
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
@@ -808,14 +825,12 @@ class TestSystemCPUFrequency(unittest.TestCase):
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        policies = ['/sys/devices/system/cpu/cpufreq/policy0',
-                    '/sys/devices/system/cpu/cpufreq/policy1',
-                    '/sys/devices/system/cpu/cpufreq/policy2']
-
         with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('glob.glob', return_value=policies):
-                freq = psutil.cpu_freq()
-                self.assertEqual(freq.current, 200)
+            with mock.patch('os.path.exists', return_value=True):
+                with mock.patch('psutil._pslinux.cpu_count_logical',
+                                return_value=1):
+                    freq = psutil.cpu_freq()
+                    self.assertEqual(freq.current, 200)
 
         # Also test that NotImplementedError is raised in case no
         # current freq file is present.
@@ -831,7 +846,7 @@ class TestSystemCPUFrequency(unittest.TestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('glob.glob', return_value=policies):
+            with mock.patch('os.path.exists', return_value=True):
                 self.assertRaises(NotImplementedError, psutil.cpu_freq)
 
 
