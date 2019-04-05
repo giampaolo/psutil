@@ -18,32 +18,13 @@ import psutil
 from psutil._common import bytes2human
 
 
-PROC_STATUSES_RAW = {
-    psutil.STATUS_RUNNING: "R",
-    psutil.STATUS_SLEEPING: "S",
-    psutil.STATUS_DISK_SLEEP: "D",
-    psutil.STATUS_STOPPED: "T",
-    psutil.STATUS_TRACING_STOP: "t",
-    psutil.STATUS_ZOMBIE: "Z",
-    psutil.STATUS_DEAD: "X",
-    psutil.STATUS_WAKING: "WA",
-    psutil.STATUS_IDLE: "I",
-    psutil.STATUS_LOCKED: "L",
-    psutil.STATUS_WAITING: "W",
-}
-if hasattr(psutil, 'STATUS_WAKE_KILL'):
-    PROC_STATUSES_RAW[psutil.STATUS_WAKE_KILL] = "WK"
-if hasattr(psutil, 'STATUS_SUSPENDED'):
-    PROC_STATUSES_RAW[psutil.STATUS_SUSPENDED] = "V"
-
-
 def main():
     today_day = datetime.date.today()
-    templ = "%-10s %5s %5s %5s %7s %7s %5s %-5s %5s %7s  %s"
-    attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
+    templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
+    attrs = ['pid', 'memory_percent', 'name', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
-    print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "NICE",
-                   "STAT", "START", "TIME", "COMMAND"))
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+                   "STAT", "START", "TIME", "NAME"))
     for p in psutil.process_iter(attrs, ad_value=None):
         pinfo = p.info
         if pinfo['create_time']:
@@ -79,11 +60,11 @@ def main():
         nice = int(pinfo['nice']) if pinfo['nice'] else ''
         name = pinfo['name'] if pinfo['name'] else ''
 
-        status = PROC_STATUSES_RAW.get(pinfo['status'], pinfo['status'])
+#        status = PROC_STATUSES_RAW.get(pinfo['status'], pinfo['status'])
+        status = pinfo['status'][:5] if pinfo['status'] else ''
         print(templ % (
             user[:10],
             pinfo['pid'],
-            pinfo['cpu_percent'],
             memp,
             vms,
             rss,
