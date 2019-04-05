@@ -10,6 +10,9 @@
   the number of physical CPUs in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+- 1473_: [Windows] process IO priority (ionice()) values are now exposed as 4
+  new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
+  Also it was not possible to set high I/O priority (not it is).
 - 1478_: add make command to re-run tests failed on last run.
 
 **Bug fixes**
@@ -22,10 +25,13 @@
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
+- 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
   in WindowsError being raised instead of AccessDenied.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
+- 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
+  fixed read violation.  (patch by Samer Masterson)
 
 5.6.1
 =====

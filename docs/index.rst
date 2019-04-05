@@ -500,7 +500,7 @@ Network
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
-    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
+    is one of the `psutil.CONN_* <#connections-constants>`_ constants
     (a string).
     For UDP and UNIX sockets this is always going to be
     :const:`psutil.CONN_NONE`.
@@ -1173,7 +1173,7 @@ Process class
   .. method:: status()
 
     The current process status as a string. The returned string is one of the
-    :data:`psutil.STATUS_*<psutil.STATUS_RUNNING>` constants.
+    `psutil.STATUS_* <#process-status-constants>`_ constants.
 
   .. method:: cwd()
 
@@ -1230,36 +1230,54 @@ Process class
 
   .. method:: ionice(ioclass=None, value=None)
 
-    Get or set process I/O niceness (priority). On Linux *ioclass* is one of the
-    :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
-    *value* is a number which goes from  ``0`` to ``7``. The higher the value,
-    the lower the I/O priority of the process. On Windows only *ioclass* is
-    used and it can be set to ``2`` (normal), ``1`` (low) or ``0`` (very low).
-    The example below sets IDLE priority class for the current process,
-    meaning it will only get I/O time when no other process needs the disk:
+    Get or set process I/O niceness (priority).
+    If no argument is provided it acts as a get, returning a ``(ioclass, value)``
+    tuple on Linux and a *ioclass* integer on Windows.
+    If *ioclass* is provided it acts as a set. In this case an additional
+    *value* can be specified on Linux only in order to increase or decrease the
+    I/O priority even further.
+    Here's the possible platform-dependent *ioclass* values.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # set
-      >>> p.ionice()  # get
-      pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
-      >>>
+    Linux (see `ioprio_get`_ manual):
 
-    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
-    named tuple.
+    * ``IOPRIO_CLASS_RT``: (high) the process gets first access to the disk
+      every time. Use it with care as it can starve the entire
+      system. Additional priority *level* can be specified and ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_BE``: (normal) the default for any process that hasn't set
+      a specific I/O priority. Additional priority *level* ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_IDLE``: (low) get I/O time when no-one else needs the disk.
+      No additional *value* is accepted.
+    * ``IOPRIO_CLASS_NONE``: returned when no priority was previously set.
 
-    Availability: Linux and Windows > Vista
+    Windows:
 
-    .. versionchanged::
-      3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
-      `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
-      instead of a plain integer.
+    * ``IOPRIO_HIGH``: highest priority.
+    * ``IOPRIO_NORMAL``: default priority.
+    * ``IOPRIO_LOW``: low priority.
+    * ``IOPRIO_VERYLOW``: lowest priority.
+
+    Here's an example on how to set the highest I/O priority depending on what
+    platform you're on::
+
+      import psutil
+      p = psutil.Process()
+      if psutil.LINUX
+          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+      else:  # Windows
+          p.ionice(psutil.IOPRIO_HIGH)
+      p.ionice()  # get
+
+    Availability: Linux, Windows Vista+
+
+    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_*`` constants
+     including new ``IOPRIO_HIGH``.
 
   .. method:: rlimit(resource, limits=None)
 
     Get or set process resource limits (see `man prlimit`_). *resource* is one
-    of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>` constants.
+    of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as `resource.getrlimit`_ and `resource.setrlimit`_
     but can be used for any process PID, not only `os.getpid`_.
@@ -2031,10 +2049,13 @@ Example code:
 Constants
 =========
 
+Operating system constants
+--------------------------
+
 .. _const-oses:
 .. data:: POSIX
-.. data:: WINDOWS
 .. data:: LINUX
+.. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
@@ -2051,7 +2072,7 @@ Constants
 
 .. data:: OSX
 
-  Alias for :const:`MACOS` (deprecated).
+  Alias for :const:`MACOS`.
 
   .. warning::
     deprecated in version 5.4.7; use :const:`MACOS` instead.
@@ -2075,6 +2096,9 @@ Constants
   .. versionchanged:: 3.4.2 also available on Solaris.
   .. versionchanged:: 5.4.0 also available on AIX.
 
+Process status constants
+------------------------
+
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
 .. data:: STATUS_SLEEPING
@@ -2091,50 +2115,27 @@ Constants
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  A set of strings representing the status of a process.
-  Returned by :meth:`psutil.Process.status()`.
+  Represent a process status. Returned by :meth:`psutil.Process.status()`.
 
-  .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
-  .. versionadded:: 5.4.7 STATUS_PARKED (Linux)
+  .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
+  .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
 
-.. _const-conn:
-.. data:: CONN_ESTABLISHED
-.. data:: CONN_SYN_SENT
-.. data:: CONN_SYN_RECV
-.. data:: CONN_FIN_WAIT1
-.. data:: CONN_FIN_WAIT2
-.. data:: CONN_TIME_WAIT
-.. data:: CONN_CLOSE
-.. data:: CONN_CLOSE_WAIT
-.. data:: CONN_LAST_ACK
-.. data:: CONN_LISTEN
-.. data:: CONN_CLOSING
-.. data:: CONN_NONE
-.. data:: CONN_DELETE_TCB (Windows)
-.. data:: CONN_IDLE (Solaris)
-.. data:: CONN_BOUND (Solaris)
-
-  A set of strings representing the status of a TCP connection.
-  Returned by :meth:`psutil.Process.connections()` (`status` field).
+Process priority constants
+--------------------------
 
 .. _const-prio:
-.. data:: ABOVE_NORMAL_PRIORITY_CLASS
-.. data:: BELOW_NORMAL_PRIORITY_CLASS
-.. data:: HIGH_PRIORITY_CLASS
-.. data:: IDLE_PRIORITY_CLASS
-.. data:: NORMAL_PRIORITY_CLASS
 .. data:: REALTIME_PRIORITY_CLASS
+.. data:: HIGH_PRIORITY_CLASS
+.. data:: ABOVE_NORMAL_PRIORITY_CLASS
+.. data:: NORMAL_PRIORITY_CLASS
+.. data:: IDLE_PRIORITY_CLASS
+.. data:: BELOW_NORMAL_PRIORITY_CLASS
 
-  A set of integers representing the priority of a process on Windows (see
-  `SetPriorityClass`_). They can be used in conjunction with
-  :meth:`psutil.Process.nice()` to get or set process priority.
+  Represent the priority of a process on Windows (see `SetPriorityClass`_).
+  They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
+  set process priority.
 
   Availability: Windows
-
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2157,12 +2158,22 @@ Constants
 
   Availability: Linux
 
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
+.. data:: IOPRIO_VERYLOW
+.. data:: IOPRIO_LOW
+.. data:: IOPRIO_NORMAL
+.. data:: IOPRIO_HIGH
 
-.. _const-rlimit:
+  A set of integers representing the I/O priority of a process on Linux.
+  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  or set process I/O priority.
+
+  Availability: Windows
+
+  .. versionadded:: 5.6.2
+
+Process resources constants
+---------------------------
+
 .. data:: RLIM_INFINITY
 .. data:: RLIMIT_AS
 .. data:: RLIMIT_CORE
@@ -2186,6 +2197,33 @@ Constants
   further information.
 
   Availability: Linux
+
+Connections constants
+---------------------
+
+.. _const-conn:
+.. data:: CONN_ESTABLISHED
+.. data:: CONN_SYN_SENT
+.. data:: CONN_SYN_RECV
+.. data:: CONN_FIN_WAIT1
+.. data:: CONN_FIN_WAIT2
+.. data:: CONN_TIME_WAIT
+.. data:: CONN_CLOSE
+.. data:: CONN_CLOSE_WAIT
+.. data:: CONN_LAST_ACK
+.. data:: CONN_LISTEN
+.. data:: CONN_CLOSING
+.. data:: CONN_NONE
+.. data:: CONN_DELETE_TCB (Windows)
+.. data:: CONN_IDLE (Solaris)
+.. data:: CONN_BOUND (Solaris)
+
+  A set of strings representing the status of a TCP connection.
+  Returned by :meth:`psutil.Process.connections()` and
+  :func:`psutil.net_connections` (`status` field).
+
+Hardware constants
+------------------
 
 .. _const-aflink:
 .. data:: AF_LINK
