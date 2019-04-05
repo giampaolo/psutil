@@ -18,6 +18,14 @@
 int PSUTIL_WINVER;
 SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 
+#define NT_FACILITY_MASK 0xfff
+#define NT_FACILITY_SHIFT 16
+#define NT_FACILITY(Status) \
+    ((((ULONG)(Status)) >> NT_FACILITY_SHIFT) & NT_FACILITY_MASK)
+#define NT_NTWIN32(status) (NT_FACILITY(Status) == FACILITY_WIN32)
+#define WIN32_FROM_NTSTATUS(Status) (((ULONG)(Status)) & 0xffff)
+
+
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
 psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
@@ -57,6 +65,26 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     // Causes crash.
     // FreeLibrary(mod);
     return addr;
+}
+
+
+/*
+ * Convert a NTSTATUS value to a Win32 error code and set the proper
+ * Python exception.
+ */
+PVOID
+psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall) {
+    ULONG err;
+    char fullmsg[1024];
+
+    if (NT_NTWIN32(Status))
+        err = WIN32_FROM_NTSTATUS(Status);
+    else
+        err = psutil_RtlNtStatusToDosErrorNoTeb(Status);
+    // if (GetLastError() != 0)
+    //     err = GetLastError();
+    sprintf(fullmsg, "(originated from %s)", syscall);
+    return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
 
 
@@ -125,6 +153,11 @@ psutil_loadlibs() {
     psutil_NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
         "ntdll", "NtQueryVirtualMemory");
     if (! psutil_NtQueryVirtualMemory)
+        return 1;
+
+    psutil_RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
+        "ntdll", "RtlNtStatusToDosErrorNoTeb");
+    if (! psutil_RtlNtStatusToDosErrorNoTeb)
         return 1;
 
     /*

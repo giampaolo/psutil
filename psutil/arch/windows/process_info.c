@@ -483,6 +483,7 @@ psutil_get_process_data(long pid,
     BOOL theyAreWow64;
 #endif
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
+    NTSTATUS status;
 
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
@@ -491,15 +492,16 @@ psutil_get_process_data(long pid,
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
      * mode. */
-    if (! NT_SUCCESS(psutil_NtQueryInformationProcess(
-            hProcess,
-            ProcessWow64Information,
-            &ppeb32,
-            sizeof(LPVOID),
-            NULL)))
-    {
-        PyErr_SetFromOSErrnoWithSyscall(
-            "NtQueryInformationProcess(ProcessWow64Information)");
+    status = psutil_NtQueryInformationProcess(
+        hProcess,
+        ProcessWow64Information,
+        &ppeb32,
+        sizeof(LPVOID),
+        NULL);
+
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQueryInformationProcess(ProcessWow64Information)");
         goto error;
     }
 
@@ -633,17 +635,19 @@ psutil_get_process_data(long pid,
         PEB_ peb;
         RTL_USER_PROCESS_PARAMETERS_ procParameters;
 
-        if (! NT_SUCCESS(psutil_NtQueryInformationProcess(
-                hProcess,
-                ProcessBasicInformation,
-                &pbi,
-                sizeof(pbi),
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "NtQueryInformationProcess(ProcessBasicInformation)");
+        status = psutil_NtQueryInformationProcess(
+            hProcess,
+            ProcessBasicInformation,
+            &pbi,
+            sizeof(pbi),
+            NULL);
+
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(
+                status, "NtQueryInformationProcess(ProcessBasicInformation)");
             goto error;
         }
+
 
         // read peb
         if (!ReadProcessMemory(hProcess,
@@ -767,10 +771,12 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
         NULL,
         0,
         &bufLen);
+
     if (status != STATUS_BUFFER_OVERFLOW && \
             status != STATUS_BUFFER_TOO_SMALL && \
             status != STATUS_INFO_LENGTH_MISMATCH) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess(0)");
+        psutil_SetFromNTStatusErr(
+            status, "NtQueryInformationProcess(ProcessBasicInformation)");
         goto error;
     }
 
@@ -789,8 +795,9 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
         bufLen,
         &bufLen
     );
-    if (! NT_SUCCESS(status)) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQueryInformationProcess(withlen)");
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQueryInformationProcess(ProcessCommandLineInformation)");
         goto error;
     }
 
@@ -971,9 +978,9 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         }
     }
 
-    if (status != 0) {
-        PyErr_Format(
-            PyExc_RuntimeError, "NtQuerySystemInformation() syscall failed");
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemProcessInformation)");
         goto error;
     }
 

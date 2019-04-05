@@ -500,4 +500,8 @@ typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
     PSIZE_T ReturnLength
 );
 
+typedef ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
+    NTSTATUS status
+);
+
 #endif // __NTEXTAPI_H__

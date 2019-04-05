@@ -63,11 +63,14 @@ else:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
 __extra__all__ = [
     "win_service_iter", "win_service_get",
+    # Process priority
     "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-    "CONN_DELETE_TCB",
-    "AF_LINK",
+    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS", "NORMAL_PRIORITY_CLASS",
+    "REALTIME_PRIORITY_CLASS",
+    # IO priority
+    "IOPRIO_VERYLOW", "IOPRIO_LOW", "IOPRIO_NORMAL", "IOPRIO_HIGH",
+    # others
+    "CONN_DELETE_TCB", "AF_LINK",
 ]
 
 
@@ -76,10 +79,6 @@ __extra__all__ = [
 # =====================================================================
 
 CONN_DELETE_TCB = "DELETE_TCB"
-ACCESS_DENIED_ERRSET = frozenset([errno.EPERM, errno.EACCES,
-                                  cext.ERROR_ACCESS_DENIED])
-NO_SUCH_SERVICE_ERRSET = frozenset([cext.ERROR_INVALID_NAME,
-                                    cext.ERROR_SERVICE_DOES_NOT_EXIST])
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
 
 
@@ -115,6 +114,19 @@ if enum is not None:
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
     globals().update(Priority.__members__)
+
+if enum is None:
+    IOPRIO_VERYLOW = 0
+    IOPRIO_LOW = 1
+    IOPRIO_NORMAL = 2
+    IOPRIO_HIGH = 3
+else:
+    class IOPriority(enum.IntEnum):
+        IOPRIO_VERYLOW = 0
+        IOPRIO_LOW = 1
+        IOPRIO_NORMAL = 2
+        IOPRIO_HIGH = 3
+    globals().update(IOPriority.__members__)
 
 pinfo_map = dict(
     num_handles=0,
@@ -533,14 +545,14 @@ class WindowsService(object):
         """
         try:
             yield
-        except WindowsError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
+        except OSError as err:
+            if is_permission_err(err):
                 raise AccessDenied(
                     pid=None, name=self._name,
                     msg="service %r is not querable (not enough privileges)" %
                         self._name)
-            elif err.errno in NO_SUCH_SERVICE_ERRSET or \
-                    err.winerror in NO_SUCH_SERVICE_ERRSET:
+            elif err.winerror in (cext.ERROR_INVALID_NAME,
+                                  cext.ERROR_SERVICE_DOES_NOT_EXIST):
                 raise NoSuchProcess(
                     pid=None, name=self._name,
                     msg="service %r does not exist)" % self._name)
@@ -657,20 +669,35 @@ pid_exists = cext.pid_exists
 ppid_map = cext.ppid_map  # used internally by Process.children()
 
 
+def is_permission_err(exc):
+    """Return True if this is a permission error."""
+    assert isinstance(exc, OSError), exc
+    # On Python 2 OSError doesn't always have 'winerror'. Sometimes
+    # it does, in which case the original exception was WindowsError
+    # (which is a subclass of OSError).
+    return exc.errno in (errno.EPERM, errno.EACCES) or \
+        getattr(exc, "winerror", -1) in (cext.ERROR_ACCESS_DENIED,
+                                         cext.ERROR_PRIVILEGE_NOT_HELD)
+
+
+def convert_oserror(exc, pid=None, name=None):
+    """Convert OSError into NoSuchProcess or AccessDenied."""
+    assert isinstance(exc, OSError), exc
+    if is_permission_err(exc):
+        return AccessDenied(pid=pid, name=name)
+    if exc.errno == errno.ESRCH:
+        return NoSuchProcess(pid=pid, name=name)
+    raise exc
+
+
 def wrap_exceptions(fun):
-    """Decorator which translates bare OSError and WindowsError
-    exceptions into NoSuchProcess and AccessDenied.
-    """
+    """Decorator which converts OSError into NoSuchProcess or AccessDenied."""
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
-                raise AccessDenied(self.pid, self._name)
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
-            raise
+            raise convert_oserror(err, pid=self.pid, name=self._name)
     return wrapper
 
 
@@ -744,7 +771,7 @@ class Process(object):
             try:
                 ret = cext.proc_cmdline(self.pid, use_peb=True)
             except OSError as err:
-                if err.errno in ACCESS_DENIED_ERRSET:
+                if is_permission_err(err):
                     ret = cext.proc_cmdline(self.pid, use_peb=False)
                 else:
                     raise
@@ -772,7 +799,7 @@ class Process(object):
         try:
             return cext.proc_memory_info(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
+            if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
                 info = self.oneshot_info()
@@ -813,11 +840,7 @@ class Process(object):
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
-            if err.errno in ACCESS_DENIED_ERRSET:
-                raise AccessDenied(self.pid, self._name)
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
-            raise
+            raise convert_oserror(err, self.pid, self._name)
         else:
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
@@ -893,7 +916,7 @@ class Process(object):
         try:
             return cext.proc_create_time(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
+            if is_permission_err(err):
                 return self.oneshot_info()[pinfo_map['create_time']]
             raise
 
@@ -915,12 +938,11 @@ class Process(object):
         try:
             user, system = cext.proc_cpu_times(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
-                info = self.oneshot_info()
-                user = info[pinfo_map['user_time']]
-                system = info[pinfo_map['kernel_time']]
-            else:
+            if not is_permission_err(err):
                 raise
+            info = self.oneshot_info()
+            user = info[pinfo_map['user_time']]
+            system = info[pinfo_map['kernel_time']]
         # Children user/system times are not retrievable (set to 0).
         return _common.pcputimes(user, system, 0.0, 0.0)
 
@@ -979,35 +1001,36 @@ class Process(object):
     if HAS_PROC_IO_PRIORITY:
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority_get(self.pid)
+            ret = cext.proc_io_priority_get(self.pid)
+            if enum is not None:
+                ret = IOPriority(ret)
+            return ret
 
         @wrap_exceptions
-        def ionice_set(self, value, _):
-            if _:
-                raise TypeError("set_proc_ionice() on Windows takes only "
-                                "1 argument (2 given)")
-            if value not in (2, 1, 0):
-                raise ValueError("value must be 2 (normal), 1 (low) or 0 "
-                                 "(very low); got %r" % value)
-            return cext.proc_io_priority_set(self.pid, value)
+        def ionice_set(self, ioclass, value):
+            if value:
+                raise TypeError("value argument not accepted on Windows")
+            if ioclass not in (IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL,
+                               IOPRIO_HIGH):
+                raise ValueError("%s is not a valid priority" % ioclass)
+            cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
     def io_counters(self):
         try:
             ret = cext.proc_io_counters(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
-                info = self.oneshot_info()
-                ret = (
-                    info[pinfo_map['io_rcount']],
-                    info[pinfo_map['io_wcount']],
-                    info[pinfo_map['io_rbytes']],
-                    info[pinfo_map['io_wbytes']],
-                    info[pinfo_map['io_count_others']],
-                    info[pinfo_map['io_bytes_others']],
-                )
-            else:
+            if not is_permission_err(err):
                 raise
+            info = self.oneshot_info()
+            ret = (
+                info[pinfo_map['io_rcount']],
+                info[pinfo_map['io_wcount']],
+                info[pinfo_map['io_rbytes']],
+                info[pinfo_map['io_wbytes']],
+                info[pinfo_map['io_count_others']],
+                info[pinfo_map['io_bytes_others']],
+            )
         return pio(*ret)
 
     @wrap_exceptions
@@ -1055,7 +1078,7 @@ class Process(object):
         try:
             return cext.proc_num_handles(self.pid)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_ERRSET:
+            if is_permission_err(err):
                 return self.oneshot_info()[pinfo_map['num_handles']]
             raise
 

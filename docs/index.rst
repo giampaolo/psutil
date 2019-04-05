@@ -1228,7 +1228,6 @@ Process class
 
       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
-
   .. method:: ionice(ioclass=None, value=None)
 
     Get or set process I/O niceness (priority).
@@ -1239,35 +1238,33 @@ Process class
     I/O priority even further.
     Here's the possible platform-dependent *ioclass* values.
 
-    Linux:
+    Linux (see `ioprio_get`_ manual):
 
-    * ``IOPRIO_CLASS_RT``: (highest priority) the process gets first access
-      to the disk every time. Use it with care as it can starve the entire
+    * ``IOPRIO_CLASS_RT``: (high) the process gets first access to the disk
+      every time. Use it with care as it can starve the entire
       system. Additional priority *level* can be specified and ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_BE``: (best effort) the default for any process that
-      hasn't set a specific I/O priority. Additional priority *level* ranges
-      from ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_IDLE``: (lowest priority) get I/O time when no-one else
-      needs the disk.
-    * ``IOPRIO_CLASS_NONE``: this should be equal to ``IOPRIO_CLASS_RT``.
+    * ``IOPRIO_CLASS_BE``: (normal) the default for any process that hasn't set
+      a specific I/O priority. Additional priority *level* ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_IDLE``: (low) get I/O time when no-one else needs the disk.
+      No additional *value* is accepted.
+    * ``IOPRIO_CLASS_NONE``: returned when no priority was previously set.
 
-    macOS:
+    macOS (see `getiopolicy_np`_ manual):
 
-    * ``IOPOL_IMPORTANT``: highest priority
-    * ``IOPOL_DEFAULT``: the default
+    * ``IOPOL_IMPORTANT``: highest priority.
+    * ``IOPOL_DEFAULT``: the default.
     * ``IOPOL_STANDARD``, ``IOPOL_UTILITY``, ``IOPOL_THROTTLE``:
-      various levels of low priority (refer to man page)
-    * ``IOPOL_PASSIVE``: lowest priority
+      various levels of low priority (refer to man page).
+    * ``IOPOL_PASSIVE``: lowest priority.
 
     Windows:
 
-    * ``REALTIME_PRIORITY_CLASS``: highest priority
-    * ``HIGH_PRIORITY_CLASS``: high priority
-    * ``ABOVE_NORMAL_PRIORITY_CLASS``: something between high and normal
-    * ``NORMAL_PRIORITY_CLASS``: the default
-    * ``BELOW_NORMAL_PRIORITY_CLASS``: something between normal and low
-    * ``IDLE_PRIORITY_CLASS``: lowest possible priority
+    * ``IOPRIO_HIGH``: highest priority.
+    * ``IOPRIO_NORMAL``: default priority.
+    * ``IOPRIO_LOW``: low priority.
+    * ``IOPRIO_VERYLOW``: lowest priority.
 
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on::
@@ -1279,12 +1276,15 @@ Process class
       elif psutil.MACOS:
           p.ionice(psutil.IOPOL_IMPORTANT)
       else:  # Windows
-          p.ionice(psutil.REALTIME_PRIORITY_CLASS)
+          p.ionice(psutil.IOPRIO_HIGH)
       p.ionice()  # get
 
     Availability: Linux, macOS, Windows Vista+
 
     .. versionchanged:: 5.6.2 added macOS support
+
+    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_`` constants
+     including new IOPRIO_HIGH.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -2187,10 +2187,18 @@ Constants
 
   Availability: Linux
 
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
+.. data:: IOPRIO_VERYLOW
+.. data:: IOPRIO_LOW
+.. data:: IOPRIO_NORMAL
+.. data:: IOPRIO_HIGH
+
+  A set of integers representing the I/O priority of a process on Linux.
+  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  or set process I/O priority.
+
+  Availability: Windows
+
+  .. versionadded:: 5.6.2
 
 .. _const-iopol:
 .. data:: IOPOL_DEFAULT
@@ -2206,6 +2214,8 @@ Constants
   `ionice <http://www.manpagez.com/man/3/setiopolicy_np/>`__ manual.
 
   Availability: macOS
+
+  .. versionadded:: 5.6.2
 
 .. _const-rlimit:
 .. data:: RLIM_INFINITY
@@ -2905,6 +2915,7 @@ Timeline
 .. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py.
 .. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
 .. _`open`: https://docs.python.org/3/library/functions.html#open
+.. _`getiopolicy_np`: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/getiopolicy_np.3.html
 .. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
 .. _`os.getloadavg`: https://docs.python.org/3/library/os.html#os.getloadavg
 .. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid

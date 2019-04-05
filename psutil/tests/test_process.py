@@ -43,7 +43,6 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_zombie_proc
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
-from psutil.tests import get_winver
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -67,7 +66,6 @@ from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
-from psutil.tests import WIN_VISTA
 
 
 # ===================================================================
@@ -351,71 +349,38 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(io2[i], 0)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
-    def test_ionice(self):
+    @unittest.skipIf(not LINUX, "Linux only")
+    def test_ionice_linux(self):
         p = psutil.Process()
-        if LINUX:
-            from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
-                                IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE)
-            self.assertEqual(IOPRIO_CLASS_NONE, 0)
-            self.assertEqual(IOPRIO_CLASS_RT, 1)
-            self.assertEqual(IOPRIO_CLASS_BE, 2)
-            self.assertEqual(IOPRIO_CLASS_IDLE, 3)
-            try:
-                p.ionice(2)
-                ioclass, value = p.ionice()
-                if enum is not None:
-                    self.assertIsInstance(ioclass, enum.IntEnum)
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 4)
-                #
-                p.ionice(3)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 3)
-                self.assertEqual(value, 0)
-                #
-                p.ionice(2, 0)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 0)
-                p.ionice(2, 7)
-                ioclass, value = p.ionice()
-                self.assertEqual(ioclass, 2)
-                self.assertEqual(value, 7)
-            finally:
-                p.ionice(IOPRIO_CLASS_NONE)
-        if MACOS:
-            names = ("IOPOL_IMPORTANT", "IOPOL_STANDARD", "IOPOL_UTILITY",
-                     "IOPOL_THROTTLE", "IOPOL_PASSIVE")
-            original = p.ionice()
-            try:
-                for name in names:
-                    if name == "IOPOL_IMPORTANT":
-                        # XXX has no effect (?!?)
-                        continue
-                    value = getattr(psutil, name)
-                    p.ionice(value)
-                    self.assertEqual(p.ionice(), value)
-            finally:
-                p.ionice(original)
-        else:
-            original = p.ionice()
-            self.assertIsInstance(original, int)
-            try:
-                value = 0  # very low
-                if original == value:
-                    value = 1  # low
-                p.ionice(value)
-                self.assertEqual(p.ionice(), value)
-            finally:
-                p.ionice(original)
-
-    @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(WINDOWS and get_winver() < WIN_VISTA, 'not supported')
-    def test_ionice_errs(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        if LINUX:
+        self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
+        self.assertEqual(psutil.IOPRIO_CLASS_NONE, 0)
+        self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)  # high
+        self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)  # normal
+        self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)  # low
+        try:
+            # low
+            p.ionice(psutil.IOPRIO_CLASS_IDLE)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_IDLE, 0))
+            with self.assertRaises(ValueError):  # accepts no value
+                p.ionice(psutil.IOPRIO_CLASS_IDLE, value=7)
+            # normal
+            p.ionice(psutil.IOPRIO_CLASS_BE)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 0))
+            p.ionice(psutil.IOPRIO_CLASS_BE, value=7)
+            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
+            with self.assertRaises(ValueError):
+                p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
+            # high
+            if os.getuid() == 0:  # root
+                p.ionice(psutil.IOPRIO_CLASS_RT)
+                self.assertEqual(tuple(p.ionice()),
+                                 (psutil.IOPRIO_CLASS_RT, 0))
+                p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+                self.assertEqual(tuple(p.ionice()),
+                                 (psutil.IOPRIO_CLASS_RT, 7))
+                with self.assertRaises(ValueError):
+                    p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
+            # errs
             self.assertRaises(ValueError, p.ionice, 2, 10)
             self.assertRaises(ValueError, p.ionice, 2, -1)
             self.assertRaises(ValueError, p.ionice, 4)
@@ -429,11 +394,55 @@ class TestProcess(unittest.TestCase):
             self.assertRaisesRegex(
                 ValueError, "'ioclass' argument must be specified",
                 p.ionice, value=1)
-        else:
-            if not MACOS:
-                # ionice() can only be set for the current process
-                self.assertRaises(TypeError, p.ionice, 2, 1)
-                self.assertRaises(ValueError, p.ionice, 3)
+        finally:
+            p.ionice(psutil.IOPRIO_CLASS_BE)
+
+    @unittest.skipIf(not HAS_IONICE, "not supported")
+    @unittest.skipIf(not WINDOWS, 'Windows only')
+    def test_ionice_win(self):
+        p = psutil.Process()
+        self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+        try:
+            # base
+            p.ionice(psutil.IOPRIO_VERYLOW)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_VERYLOW)
+            p.ionice(psutil.IOPRIO_LOW)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_LOW)
+            try:
+                p.ionice(psutil.IOPRIO_HIGH)
+            except psutil.AccessDenied:
+                pass
+            else:
+                self.assertEqual(p.ionice(), psutil.IOPRIO_HIGH)
+            # errs
+            self.assertRaisesRegex(
+                TypeError, "value argument not accepted on Windows",
+                p.ionice, psutil.IOPRIO_NORMAL, value=1)
+            self.assertRaisesRegex(
+                ValueError, "is not a valid priority",
+                p.ionice, psutil.IOPRIO_HIGH + 1)
+        finally:
+            p.ionice(psutil.IOPRIO_NORMAL)
+            self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+
+    @unittest.skipIf(not HAS_IONICE, "not supported")
+    @unittest.skipIf(not MACOS, 'macOS only')
+    def test_ionice_macos(self):
+        names = ("IOPOL_IMPORTANT", "IOPOL_STANDARD", "IOPOL_UTILITY",
+                 "IOPOL_THROTTLE", "IOPOL_PASSIVE")
+        p = psutil.Process()
+        original = p.ionice()
+        try:
+            for n in names:
+                with self.subTest(name=n):
+                    if n == "IOPOL_IMPORTANT":
+                        # XXX has no effect (?!?)
+                        continue
+                    value = getattr(psutil, n)
+                    p.ionice(value)
+                    self.assertEqual(p.ionice(), value)
+        finally:
+            p.ionice(original)
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):

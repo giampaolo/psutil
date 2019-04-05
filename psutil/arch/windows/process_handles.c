@@ -52,6 +52,7 @@ psutil_wait_thread(LPVOID lpvParam) {
     while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
 
+        // TODO: return code not checked
         g_status = psutil_NtQueryObject(
             g_hFile,
             ObjectNameInformation,
@@ -159,8 +160,9 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
                             &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (!NT_SUCCESS(status)) {
-        PyErr_SetFromWindowsErr(HRESULT_FROM_NT(status));
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemExtendedHandleInformation)");
         error = TRUE;
         goto cleanup;
     }
@@ -355,8 +357,9 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
                             &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (!NT_SUCCESS(status)) {
-        PyErr_SetFromWindowsErr(HRESULT_FROM_NT(status));
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemExtendedHandleInformation)");
         error = TRUE;
         goto cleanup;
     }
