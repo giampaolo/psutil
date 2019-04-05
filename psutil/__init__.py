@@ -2441,8 +2441,25 @@ def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """
+    def bytes2human(n):
+        """
+        >>> bytes2human(10000)
+        '9.8 K'
+        >>> bytes2human(100001221)
+        '95.4 M'
+        """
+        symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+        prefix = {}
+        for i, s in enumerate(symbols):
+            prefix[s] = 1 << (i + 1) * 10
+        for s in reversed(symbols):
+            if n >= prefix[s]:
+                value = float(n) / prefix[s]
+                return '%.1f%s' % (value, s)
+        return '%.1fB' % (n)
+
     today_day = datetime.date.today()
-    templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
+    templ = "%-10s %6s %5s %8s %8s %12s %5s %7s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
              'memory_info']
     if POSIX:
@@ -2450,7 +2467,7 @@ def test():  # pragma: no cover
         attrs.append('terminal')
     print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
                    "COMMAND"))
-    for p in process_iter(attrs=attrs, ad_value=''):
+    for p in process_iter(attrs=attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
             if ctime.date() == today_day:
@@ -2462,24 +2479,26 @@ def test():  # pragma: no cover
         cputime = time.strftime("%M:%S",
                                 time.localtime(sum(p.info['cpu_times'])))
         try:
-            user = p.username()
+            user = p.username()[:9]
         except Error:
             user = ''
         if WINDOWS and '\\' in user:
             user = user.split('\\')[1]
-        vms = p.info['memory_info'] and \
-            int(p.info['memory_info'].vms / 1024) or '?'
-        rss = p.info['memory_info'] and \
-            int(p.info['memory_info'].rss / 1024) or '?'
-        memp = p.info['memory_percent'] and \
-            round(p.info['memory_percent'], 1) or '?'
+
+        vms = bytes2human(p.info['memory_info'].vms) if \
+            p.info['memory_info'] is not None else ''
+        rss = bytes2human(p.info['memory_info'].rss) if \
+            p.info['memory_info'] is not None else ''
+        memp = round(p.info['memory_percent']) if \
+            p.info['memory_percent'] is not None else ''
+
         print(templ % (
             user[:10],
             p.info['pid'],
             memp,
             vms,
             rss,
-            p.info.get('terminal', '') or '?',
+            p.info.get('terminal', '') or '',
             ctime,
             cputime,
             p.info['name'].strip() or '?'))
