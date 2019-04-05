@@ -79,8 +79,9 @@ def main():
                 os.path.exists(x)]
 
     lineno = 0
+    kw = {'encoding': 'utf8'} if sys.version_info[0] == 3 else {}
     for path in py_files:
-        with open(path) as f:
+        with open(path, 'rt', **kw) as f:
             for line in f:
                 lineno += 1
                 # space at end of line
