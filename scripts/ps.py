@@ -8,7 +8,28 @@
 A clone of 'ps aux'.
 
 $ python scripts/ps.py
-...
+USER         PID  %MEM     VSZ     RSS  NICE STATUS  START   TIME  CMDLINE
+root           1   0.0  220.9M    6.5M        sleep  Mar27  09:10  /lib/systemd
+root           2   0.0    0.0B    0.0B        sleep  Mar27  00:00  kthreadd
+root           4   0.0    0.0B    0.0B   -20   idle  Mar27  00:00  kworker/0:0H
+root           6   0.0    0.0B    0.0B   -20   idle  Mar27  00:00  mm_percpu_wq
+root           7   0.0    0.0B    0.0B        sleep  Mar27  00:06  ksoftirqd/0
+root           8   0.0    0.0B    0.0B         idle  Mar27  03:32  rcu_sched
+root           9   0.0    0.0B    0.0B         idle  Mar27  00:00  rcu_bh
+root          10   0.0    0.0B    0.0B        sleep  Mar27  00:00  migration/0
+root          11   0.0    0.0B    0.0B        sleep  Mar27  00:00  watchdog/0
+root          12   0.0    0.0B    0.0B        sleep  Mar27  00:00  cpuhp/0
+root          13   0.0    0.0B    0.0B        sleep  Mar27  00:00  cpuhp/1
+root          14   0.0    0.0B    0.0B        sleep  Mar27  00:01  watchdog/1
+root          15   0.0    0.0B    0.0B        sleep  Mar27  00:00  migration/1
+[...]
+giampaolo  19704   1.5    1.9G  235.6M        sleep  17:39  01:11  firefox
+root       20414   0.0    0.0B    0.0B         idle  Apr04  00:00  kworker/4:2
+giampaolo  20952   0.0   10.7M  100.0K        sleep  Mar28  00:00  sh -c /usr
+giampaolo  20953   0.0  269.0M  528.0K        sleep  Mar28  00:00  /usr/lib/
+giampaolo  22150   3.3    2.4G  525.5M        sleep  Apr02  49:09  /usr/lib/
+root       22338   0.0    0.0B    0.0B         idle  02:04  00:00  kworker/1:2
+giampaolo  24123   0.0   35.0M    7.0M        sleep  02:12  00:02  bash
 """
 
 import datetime
@@ -50,7 +71,6 @@ def main():
         if user and psutil.WINDOWS and '\\' in user:
             user = user.split('\\')[1]
         user = user[:9]
-
         vms = bytes2human(p.info['memory_info'].vms) if \
             p.info['memory_info'] is not None else ''
         rss = bytes2human(p.info['memory_info'].rss) if \

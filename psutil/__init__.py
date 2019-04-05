@@ -2438,36 +2438,16 @@ if WINDOWS:
 
 
 def test():  # pragma: no cover
-    """List info of all currently running processes emulating ps aux
-    output.
-    """
-    def bytes2human(n):
-        """
-        >>> bytes2human(10000)
-        '9.8 K'
-        >>> bytes2human(100001221)
-        '95.4 M'
-        """
-        symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-        prefix = {}
-        for i, s in enumerate(symbols):
-            prefix[s] = 1 << (i + 1) * 10
-        for s in reversed(symbols):
-            if n >= prefix[s]:
-                value = float(n) / prefix[s]
-                return '%.1f%s' % (value, s)
-        return '%.1fB' % (n)
+    from ._common import bytes2human
+    from ._compat import get_terminal_size
 
     today_day = datetime.date.today()
-    templ = "%-10s %6s %5s %8s %8s %12s %5s %7s  %s"
-    attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
-             'memory_info']
-    if POSIX:
-        attrs.append('uids')
-        attrs.append('terminal')
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
-                   "COMMAND"))
-    for p in process_iter(attrs=attrs, ad_value=None):
+    templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
+    attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
+             'create_time', 'memory_info', 'status', 'nice', 'username']
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+                   "STATUS", "START", "TIME", "CMDLINE"))
+    for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
             if ctime.date() == today_day:
@@ -2476,35 +2456,46 @@ def test():  # pragma: no cover
                 ctime = ctime.strftime("%b%d")
         else:
             ctime = ''
-        if p.info['cpu_times'] is not None:
+        if p.info['cpu_times']:
             cputime = time.strftime("%M:%S",
                                     time.localtime(sum(p.info['cpu_times'])))
         else:
             cputime = ''
-        try:
-            user = p.username()[:9]
-        except Error:
-            user = ''
-        if WINDOWS and '\\' in user:
-            user = user.split('\\')[1]
 
+        user = p.info['username']
+        if not user and POSIX:
+            try:
+                user = p.uids()[0]
+            except Error:
+                pass
+        if user and WINDOWS and '\\' in user:
+            user = user.split('\\')[1]
+        user = user[:9]
         vms = bytes2human(p.info['memory_info'].vms) if \
             p.info['memory_info'] is not None else ''
         rss = bytes2human(p.info['memory_info'].rss) if \
             p.info['memory_info'] is not None else ''
         memp = round(p.info['memory_percent'], 1) if \
             p.info['memory_percent'] is not None else ''
+        nice = int(p.info['nice']) if p.info['nice'] else ''
+        if p.info['cmdline']:
+            cmdline = ' '.join(p.info['cmdline'])
+        else:
+            cmdline = p.info['name']
+        status = p.info['status'][:5] if p.info['status'] else ''
 
-        print(templ % (
+        line = templ % (
             user[:10],
             p.info['pid'],
             memp,
             vms,
             rss,
-            p.info.get('terminal', '') or '',
+            nice,
+            status,
             ctime,
             cputime,
-            p.info['name'].strip() or '?'))
+            cmdline)
+        print(line[:get_terminal_size()[0]])
 
 
 del memoize, memoize_when_activated, division, deprecated_method
