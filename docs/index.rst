@@ -500,7 +500,7 @@ Network
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
-    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
+    is one of the `psutil.CONN_* <#connections-constants>`_ constants
     (a string).
     For UDP and UNIX sockets this is always going to be
     :const:`psutil.CONN_NONE`.
@@ -1173,7 +1173,7 @@ Process class
   .. method:: status()
 
     The current process status as a string. The returned string is one of the
-    :data:`psutil.STATUS_*<psutil.STATUS_RUNNING>` constants.
+    `psutil.STATUS_* <#process-status-constants>`_ constants.
 
   .. method:: cwd()
 
@@ -1277,7 +1277,7 @@ Process class
   .. method:: rlimit(resource, limits=None)
 
     Get or set process resource limits (see `man prlimit`_). *resource* is one
-    of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>` constants.
+    of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as `resource.getrlimit`_ and `resource.setrlimit`_
     but can be used for any process PID, not only `os.getpid`_.
@@ -2054,8 +2054,8 @@ Operating system constants
 
 .. _const-oses:
 .. data:: POSIX
-.. data:: WINDOWS
 .. data:: LINUX
+.. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
@@ -2115,10 +2115,10 @@ Process status constants
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  Returned by :meth:`psutil.Process.status()`.
+  Represent a process status. Returned by :meth:`psutil.Process.status()`.
 
-  .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
-  .. versionadded:: 5.4.7 STATUS_PARKED (Linux)
+  .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
+  .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
 
 Process priority constants
 --------------------------
@@ -2131,16 +2131,11 @@ Process priority constants
 .. data:: IDLE_PRIORITY_CLASS
 .. data:: BELOW_NORMAL_PRIORITY_CLASS
 
-  A set of integers representing the priority of a process on Windows (see
-  `SetPriorityClass`_). They can be used in conjunction with
-  :meth:`psutil.Process.nice()` to get or set process priority.
+  Represent the priority of a process on Windows (see `SetPriorityClass`_).
+  They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
+  set process priority.
 
   Availability: Windows
-
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
