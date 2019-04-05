@@ -29,6 +29,8 @@
   in WindowsError being raised instead of AccessDenied.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
+- 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
+  fixed read violation.  (patch by Samer Masterson)
 
 5.6.1
 =====
