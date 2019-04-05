@@ -1988,8 +1988,8 @@ class Process(object):
         def ionice_set(self, ioclass, value):
             if value is None:
                 value = 0
-            if value and ioclass == IOPRIO_CLASS_IDLE:
-                raise ValueError("IOPRIO_CLASS_IDLE accepts no value")
+            if value and ioclass in (IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE):
+                raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
                 raise ValueError("value not in 0-7 range")
             return cext.proc_ioprio_set(self.pid, ioclass, value)

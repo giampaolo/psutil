@@ -2489,7 +2489,7 @@ def test():  # pragma: no cover
             p.info['memory_info'] is not None else ''
         rss = bytes2human(p.info['memory_info'].rss) if \
             p.info['memory_info'] is not None else ''
-        memp = round(p.info['memory_percent']) if \
+        memp = round(p.info['memory_percent'], 1) if \
             p.info['memory_percent'] is not None else ''
 
         print(templ % (

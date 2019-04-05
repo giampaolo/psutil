@@ -382,10 +382,10 @@ class TestProcess(unittest.TestCase):
                     p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
             # errs
             self.assertRaisesRegex(
-                ValueError, "can't specify value with IOPRIO_CLASS_NONE",
+                ValueError, "ioclass accepts no value",
                 p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
             self.assertRaisesRegex(
-                ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
+                ValueError, "ioclass accepts no value",
                 p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
             self.assertRaisesRegex(
                 ValueError, "'ioclass' argument must be specified",
