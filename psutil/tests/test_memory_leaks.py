@@ -30,6 +30,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import bytes2human
 from psutil._compat import xrange
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
@@ -71,25 +72,6 @@ SKIP_PYTHON_IMPL = True if TRAVIS else False
 def skip_if_linux():
     return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
                            "worthless on LINUX (pure python)")
-
-
-def bytes2human(n):
-    """
-    http://code.activestate.com/recipes/578019
-    >>> bytes2human(10000)
-    '9.8K'
-    >>> bytes2human(100001221)
-    '95.4M'
-    """
-    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
-    for s in reversed(symbols):
-        if n >= prefix[s]:
-            value = float(n) / prefix[s]
-            return '%.2f%s' % (value, s)
-    return "%sB" % n
 
 
 class TestMemLeak(unittest.TestCase):

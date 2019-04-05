@@ -2476,8 +2476,11 @@ def test():  # pragma: no cover
                 ctime = ctime.strftime("%b%d")
         else:
             ctime = ''
-        cputime = time.strftime("%M:%S",
-                                time.localtime(sum(p.info['cpu_times'])))
+        if p.info['cpu_times'] is not None:
+            cputime = time.strftime("%M:%S",
+                                    time.localtime(sum(p.info['cpu_times'])))
+        else:
+            cputime = ''
         try:
             user = p.username()[:9]
         except Error:

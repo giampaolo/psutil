@@ -16,6 +16,7 @@ import os
 import time
 
 import psutil
+from psutil._common import bytes2human
 
 
 PROC_STATUSES_RAW = {
@@ -49,55 +50,52 @@ def main():
         attrs.append('terminal')
     print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
                    "STAT", "START", "TIME", "COMMAND"))
-    for p in psutil.process_iter():
-        try:
-            pinfo = p.as_dict(attrs, ad_value='')
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            if pinfo['create_time']:
-                ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
-                if ctime.date() == today_day:
-                    ctime = ctime.strftime("%H:%M")
-                else:
-                    ctime = ctime.strftime("%b%d")
+    for p in psutil.process_iter(attrs, ad_value=''):
+        pinfo = p.info
+        if pinfo['create_time']:
+            ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
+            if ctime.date() == today_day:
+                ctime = ctime.strftime("%H:%M")
             else:
-                ctime = ''
-            cputime = time.strftime("%M:%S",
-                                    time.localtime(sum(pinfo['cpu_times'])))
-            try:
-                user = p.username()
-            except KeyError:
-                if os.name == 'posix':
-                    if pinfo['uids']:
-                        user = str(pinfo['uids'].real)
-                    else:
-                        user = ''
+                ctime = ctime.strftime("%b%d")
+        else:
+            ctime = ''
+        cputime = time.strftime("%M:%S",
+                                time.localtime(sum(pinfo['cpu_times'])))
+        try:
+            user = p.username()
+        except KeyError:
+            if psutil.POSIX:
+                if pinfo['uids']:
+                    user = str(pinfo['uids'].real)
                 else:
-                    raise
-            except psutil.Error:
-                user = ''
-            if os.name == 'nt' and '\\' in user:
-                user = user.split('\\')[1]
-            vms = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].vms / 1024) or '?'
-            rss = pinfo['memory_info'] and \
-                int(pinfo['memory_info'].rss / 1024) or '?'
-            memp = pinfo['memory_percent'] and \
-                round(pinfo['memory_percent'], 1) or '?'
-            status = PROC_STATUSES_RAW.get(pinfo['status'], pinfo['status'])
-            print(templ % (
-                user[:10],
-                pinfo['pid'],
-                pinfo['cpu_percent'],
-                memp,
-                vms,
-                rss,
-                pinfo.get('terminal', '') or '?',
-                status,
-                ctime,
-                cputime,
-                pinfo['name'].strip() or '?'))
+                    user = ''
+            else:
+                raise
+        except psutil.Error:
+            user = ''
+        if psutil.WINDOWS and '\\' in user:
+            user = user.split('\\')[1]
+        vms = bytes2human(pinfo['memory_info'].vms) if \
+            pinfo['memory_info'] is not None else ''
+        rss = bytes2human(pinfo['memory_info'].rss) if \
+            pinfo['memory_info'] is not None else ''
+        memp = round(pinfo['memory_percent'], 1) if \
+            pinfo['memory_percent'] is not None else ''
+
+        status = PROC_STATUSES_RAW.get(pinfo['status'], pinfo['status'])
+        print(templ % (
+            user[:10],
+            pinfo['pid'],
+            pinfo['cpu_percent'],
+            memp,
+            vms,
+            rss,
+            pinfo.get('terminal', '') or '',
+            status,
+            ctime,
+            cputime,
+            pinfo['name'].strip() or '?'))
 
 
 if __name__ == '__main__':

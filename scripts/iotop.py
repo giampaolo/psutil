@@ -39,9 +39,9 @@ except ImportError:
     sys.exit('platform not supported')
 
 import psutil
+from psutil._common import bytes2human
 
 
-# --- curses stuff
 def tear_down():
     win.keypad(0)
     curses.nocbreak()
@@ -70,25 +70,6 @@ def print_line(line, highlight=False):
         raise
     else:
         lineno += 1
-# --- /curses stuff
-
-
-def bytes2human(n):
-    """
-    >>> bytes2human(10000)
-    '9.8 K/s'
-    >>> bytes2human(100001221)
-    '95.4 M/s'
-    """
-    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
-    for s in reversed(symbols):
-        if n >= prefix[s]:
-            value = float(n) / prefix[s]
-            return '%.2f %s/s' % (value, s)
-    return '%.2f B/s' % (n)
 
 
 def poll(interval):
