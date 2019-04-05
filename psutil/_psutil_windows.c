@@ -495,6 +495,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     DWORD length = 0;
     DWORD offset = 0;
     DWORD ncpus = 0;
+    DWORD prev_processor_info_size = 0;
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
@@ -533,13 +534,20 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     }
 
     ptr = buffer;
-    while (ptr->Size > 0 && offset + ptr->Size <= length) {
+    while (offset < length) {
+        // Advance ptr by the size of the previous
+        // SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct.
+        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)\
+            (((char*)ptr) + prev_processor_info_size);
+
         if (ptr->Relationship == RelationProcessorCore) {
             ncpus += 1;
         }
+
+        // When offset == length, we've reached the last processor
+        // info struct in the buffer.
         offset += ptr->Size;
-        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)\
-            (((char*)ptr) + ptr->Size);
+        prev_processor_info_size = ptr->Size;
     }
 
     free(buffer);
