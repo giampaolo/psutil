@@ -10,7 +10,6 @@ from __future__ import division
 import collections
 import contextlib
 import errno
-import glob
 import io
 import os
 import re
@@ -698,27 +697,26 @@ class TestSystemCPUFrequency(unittest.TestCase):
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_no_files(self):
-        with mock.patch("psutil._pslinux.glob.glob", return_value=[]):
+        with mock.patch("os.path.exists", return_value=False):
             self.assertIsNone(psutil.cpu_freq())
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
-        def glob_mock(pattern):
-            if pattern.startswith("/sys/devices/system/cpu/cpufreq/policy"):
-                flags.append(None)
-                return []
+        def path_exists_mock(path):
+            if path.startswith("/sys/devices/system/cpu/cpufreq/policy"):
+                return False
             else:
                 flags.append(None)
-                return orig_glob(pattern)
+                return orig_exists(path)
 
         flags = []
-        orig_glob = glob.glob
-        with mock.patch("psutil._pslinux.glob.glob", side_effect=glob_mock,
+        orig_exists = os.path.exists
+        with mock.patch("os.path.exists", side_effect=path_exists_mock,
                         create=True):
             assert psutil.cpu_freq()
-            self.assertEqual(len(flags), 2)
+            self.assertEqual(len(flags), psutil.cpu_count(logical=True))
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_cpuinfo(self):
