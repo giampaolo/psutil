@@ -381,10 +381,6 @@ class TestProcess(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
             # errs
-            self.assertRaises(ValueError, p.ionice, 2, 10)
-            self.assertRaises(ValueError, p.ionice, 2, -1)
-            self.assertRaises(ValueError, p.ionice, 4)
-            self.assertRaises(TypeError, p.ionice, 2, "foo")
             self.assertRaisesRegex(
                 ValueError, "can't specify value with IOPRIO_CLASS_NONE",
                 p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
