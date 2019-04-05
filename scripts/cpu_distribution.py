@@ -46,6 +46,7 @@ import sys
 import time
 
 import psutil
+from psutil._compat import get_terminal_size
 
 
 if not hasattr(psutil.Process, "cpu_num"):
@@ -57,24 +58,6 @@ def clean_screen():
         os.system('clear')
     else:
         os.system('cls')
-
-
-def get_terminal_size(fallback=(80, 24)):
-    try:
-        # Added in Python 3.3
-        from shutil import get_terminal_size as gts
-        return gts(fallback=fallback)
-    except ImportError:
-        try:
-            # This should work on Linux.
-            import fcntl
-            import termios
-            import struct
-            res = struct.unpack(
-                'hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234'))
-            return (res[1], res[0])
-        except Exception:
-            return fallback
 
 
 def main():

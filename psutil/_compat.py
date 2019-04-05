@@ -10,7 +10,7 @@ import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "lru_cache", "which"]
+           "lru_cache", "which", "get_terminal_size"]
 
 PY3 = sys.version_info[0] == 3
 
@@ -239,3 +239,24 @@ except ImportError:
                     if _access_check(name, mode):
                         return name
         return None
+
+
+# python 3.3
+try:
+    from shutil import get_terminal_size
+except ImportError:
+    def get_terminal_size(fallback=(80, 24)):
+        try:
+            import fcntl
+            import termios
+            import struct
+        except ImportError:
+            return fallback
+        else:
+            try:
+                # This should work on Linux.
+                res = struct.unpack(
+                    'hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234'))
+                return (res[1], res[0])
+            except Exception:
+                return fallback
