@@ -25,6 +25,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
+from psutil.tests import PY3
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
@@ -826,17 +827,22 @@ class TestServices(unittest.TestCase):
             self.assertEqual(serv, s)
 
     def test_win_service_get(self):
-        name = next(psutil.win_service_iter()).name()
+        ERROR_SERVICE_DOES_NOT_EXIST = \
+            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST
+        ERROR_ACCESS_DENIED = psutil._psplatform.cext.ERROR_ACCESS_DENIED
 
+        name = next(psutil.win_service_iter()).name()
         with self.assertRaises(psutil.NoSuchProcess) as cm:
             psutil.win_service_get(name + '???')
         self.assertEqual(cm.exception.name, name + '???')
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
-        exc = WindowsError(
-            0, "", 0,
-            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST)
+        if PY3:
+            args = (0, "msg", 0, ERROR_SERVICE_DOES_NOT_EXIST)
+        else:
+            args = (ERROR_SERVICE_DOES_NOT_EXIST, "msg")
+        exc = WindowsError(*args)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.NoSuchProcess, service.status)
@@ -845,9 +851,11 @@ class TestServices(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, service.username)
 
         # test AccessDenied
-        exc = WindowsError(
-            0, "", 0,
-            psutil._psplatform.cext.ERROR_ACCESS_DENIED)
+        if PY3:
+            args = (0, "msg", 0, ERROR_ACCESS_DENIED)
+        else:
+            args = (ERROR_ACCESS_DENIED, "msg")
+        exc = WindowsError(*args)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.AccessDenied, service.status)
