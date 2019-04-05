@@ -688,23 +688,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
-        # scaling_* files seem preferable to cpuinfo_*, see:
-        # http://unix.stackexchange.com/a/87537/168884
-        ret = []
-        ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy*")
-        if ls:
-            # Sort the list so that '10' comes after '2'. This should
-            # ensure the CPU order is consistent with other CPU functions
-            # having a 'percpu' argument and returning results for multiple
-            # CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
-            ls.sort(key=lambda x: int(os.path.basename(x)[6:]))
-        else:
-            # https://github.com/giampaolo/psutil/issues/981
-            ls = glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
-            ls.sort(key=lambda x: int(re.search('[0-9]+', x).group(0)))
+        def get_path(num):
+            for p in ("/sys/devices/system/cpu/cpufreq/policy%s" % num,
+                      "/sys/devices/system/cpu/cpu%s/cpufreq" % num):
+                if os.path.exists(p):
+                    return p
 
-        pjoin = os.path.join
-        for path in ls:
+        ret = []
+        for n in range(cpu_count_logical()):
+            path = get_path(n)
+            if not path:
+                continue
+
+            pjoin = os.path.join
             curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
                 # Likely an old RedHat, see:
