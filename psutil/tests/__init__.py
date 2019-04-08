@@ -37,6 +37,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -220,6 +221,9 @@ def _get_py_exe():
         return exe
     else:
         exe = os.path.realpath(sys.executable)
+        if CYGWIN:
+            # split off the .exe extension on Cygwin
+            exe = os.path.splitext(exe)[0]
         assert os.path.exists(exe), exe
         return exe
 
@@ -1189,7 +1193,6 @@ class process_namespace:
 
     getters = [
         ('cmdline', (), {}),
-        ('connections', (), {'kind': 'all'}),
         ('cpu_times', (), {}),
         ('create_time', (), {}),
         ('cwd', (), {}),
@@ -1198,19 +1201,24 @@ class process_namespace:
         ('memory_info', (), {}),
         ('name', (), {}),
         ('nice', (), {}),
-        ('num_ctx_switches', (), {}),
-        ('num_threads', (), {}),
-        ('open_files', (), {}),
         ('ppid', (), {}),
         ('status', (), {}),
-        ('threads', (), {}),
         ('username', (), {}),
     ]
+    if not CYGWIN:
+        # not supported yet on Cygwin
+        getters += [('connections', (), {'kind': 'all'})]
+        getters += [('num_ctx_switches', (), {})]
+        getters += [('threads', (), {})]
+        getters += [('open_files', (), {})]
+        getters += [('num_threads', (), {})]
     if POSIX:
         getters += [('uids', (), {})]
         getters += [('gids', (), {})]
-        getters += [('terminal', (), {})]
-        getters += [('num_fds', (), {})]
+        if not CYGWIN:
+            # not supported yet on Cygwin
+            getters += [('terminal', (), {})]
+            getters += [('num_fds', (), {})]
     if HAS_PROC_IO_COUNTERS:
         getters += [('io_counters', (), {})]
     if HAS_IONICE:
@@ -1295,7 +1303,13 @@ class process_namespace:
         klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
         leftout = (this | ignored) ^ klass
         if leftout:
-            raise ValueError("uncovered Process class names: %r" % leftout)
+            msg = "uncovered Process class names: %r" % leftout
+            if CYGWIN:
+                # Cygwin port is still under construction so we expect some
+                # methods to be unconvered; just warn so we don't forget
+                warnings.warn(msg)
+            else:
+                raise ValueError(msg)
 
 
 class system_namespace:
@@ -1487,6 +1501,11 @@ def tcp_socketpair(family, addr=("", 0)):
             raise
 
 
+# NOTE: Cygwin has a known bug
+# (https://cygwin.com/ml/cygwin/2017-01/msg00111.html) with creating a pair
+# of UNIX sockets within the same process and having them communicate with
+# each other.  Therefore any test which uses this should be skipped on Cygwin
+# until there is a better solution.
 def unix_socketpair(name):
     """Build a pair of UNIX sockets connected to each other through
     the same UNIX file name.
@@ -1521,7 +1540,9 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX and HAS_CONNECTIONS_UNIX:
+        if POSIX and HAS_CONNECTIONS_UNIX and not CYGWIN:
+            # Creating a UNIX socket pair on the same process can cause
+            # the sockets to block on Cygwin
             fname1 = get_testfn()
             fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)

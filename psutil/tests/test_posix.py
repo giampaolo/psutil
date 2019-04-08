@@ -17,6 +17,7 @@ import time
 import psutil
 from psutil import AIX
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -137,26 +138,31 @@ class TestProcess(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_ppid(self):
         ppid_ps = ps('ppid', self.pid)
         ppid_psutil = psutil.Process(self.pid).ppid()
         self.assertEqual(ppid_ps, ppid_psutil)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_uid(self):
         uid_ps = ps('uid', self.pid)
         uid_psutil = psutil.Process(self.pid).uids().real
         self.assertEqual(uid_ps, uid_psutil)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_gid(self):
         gid_ps = ps('rgid', self.pid)
         gid_psutil = psutil.Process(self.pid).gids().real
         self.assertEqual(gid_ps, gid_psutil)
 
+    @unittest.skipIf(CYGWIN, "username not supported yet on Cygwin")
     def test_username(self):
         username_ps = ps('user', self.pid)
         username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
 
+    @unittest.skipIf(CYGWIN, "username not supported yet on Cygwin")
     def test_username_no_resolution(self):
         # Emulate a case where the system can't resolve the uid to
         # a username in which case psutil is supposed to return
@@ -166,6 +172,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.username(), str(p.uids().real))
             assert fun.called
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     @skip_on_access_denied()
     @retry_on_failure()
     def test_rss_memory(self):
@@ -176,6 +183,7 @@ class TestProcess(PsutilTestCase):
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     @skip_on_access_denied()
     @retry_on_failure()
     def test_vsz_memory(self):
@@ -186,6 +194,7 @@ class TestProcess(PsutilTestCase):
         vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_name(self):
         name_ps = ps_name(self.pid)
         # remove path if there is any, from the command
@@ -237,6 +246,7 @@ class TestProcess(PsutilTestCase):
                 self.assertRaises(psutil.NoSuchProcess, p.name)
 
     @unittest.skipIf(MACOS or BSD, 'ps -o start not available')
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_create_time(self):
         time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
@@ -249,6 +259,7 @@ class TestProcess(PsutilTestCase):
             round_time_psutil).strftime("%H:%M:%S")
         self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_exe(self):
         ps_pathname = ps_name(self.pid)
         psutil_pathname = psutil.Process(self.pid).exe()
@@ -264,6 +275,7 @@ class TestProcess(PsutilTestCase):
             adjusted_ps_pathname = ps_pathname[:len(ps_pathname)]
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
@@ -276,6 +288,7 @@ class TestProcess(PsutilTestCase):
     # AIX has the same issue
     @unittest.skipIf(SUNOS, "not reliable on SUNOS")
     @unittest.skipIf(AIX, "not reliable on AIX")
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
@@ -286,6 +299,7 @@ class TestProcess(PsutilTestCase):
 class TestSystemAPIs(PsutilTestCase):
     """Test some system APIs."""
 
+    @unittest.skipIf(CYGWIN, "ps not supported yet on Cygwin")
     @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
@@ -320,6 +334,7 @@ class TestSystemAPIs(PsutilTestCase):
                         nic, output))
 
     @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     @retry_on_failure()
     def test_users(self):
         out = sh("who")
@@ -369,6 +384,7 @@ class TestSystemAPIs(PsutilTestCase):
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @unittest.skipIf(AIX, "unreliable on AIX")
+    @unittest.skipIf(CYGWIN, "disk_partitions not supported yet on Cygwin")
     @retry_on_failure()
     def test_disk_usage(self):
         def df(device):

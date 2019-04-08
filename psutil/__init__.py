@@ -16,6 +16,7 @@ sensors) in Python. Supported platforms:
  - NetBSD
  - Sun Solaris
  - AIX
+ - Cygwin (experimental)
 
 Works with Python versions from 2.6 to 3.4+.
 """
@@ -81,6 +82,7 @@ from ._common import STATUS_ZOMBIE
 
 from ._common import AIX
 from ._common import BSD
+from ._common import CYGWIN
 from ._common import FREEBSD  # NOQA
 from ._common import LINUX
 from ._common import MACOS
@@ -139,6 +141,10 @@ elif AIX:
     # via sys.modules.
     PROCFS_PATH = "/proc"
 
+elif CYGWIN:
+    PROCFS_PATH = "/proc"
+    from . import _pscygwin as _psplatform
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -168,7 +174,7 @@ __all__ = [
     "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
-    "SUNOS", "WINDOWS", "AIX",
+    "SUNOS", "WINDOWS", "AIX", "CYGWIN",
 
     # "RLIM_INFINITY", "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA",
     # "RLIMIT_FSIZE", "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_NOFILE",
@@ -544,11 +550,16 @@ class Process(object):
         if self.pid == lowest_pid:
             return None
         ppid = self.ppid()
+        if CYGWIN:
+            # See note for Process.create_time in _pscygwin.py
+            rounding_error = 1
+        else:
+            rounding_error = 0
         if ppid is not None:
             ctime = self.create_time()
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= ctime:
+                if parent.create_time() <= (ctime + rounding_error):
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -1363,7 +1374,15 @@ def pids():
     """Return a list of current running PIDs."""
     global _LOWEST_PID
     ret = sorted(_psplatform.pids())
-    _LOWEST_PID = ret[0]
+
+    if CYGWIN:
+        # Note: The _LOWEST_PID concept is not very meaningful since every
+        # "top-level" process has a non-1 PID; they do have PPID of 1 but that
+        # does not correspend to an actual process that shows up in the pids()
+        # list
+        _LOWEST_PID = 1
+    else:
+        _LOWEST_PID = ret[0]
     return ret
 
 

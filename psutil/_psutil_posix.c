@@ -43,6 +43,9 @@
 #endif
 #if defined(PSUTIL_AIX)
     #include <netdb.h>
+#elif defined(PSUTIL_CYGWIN)
+    #include <netdb.h>
+    #include <netinet/in.h>
 #endif
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
     #include <sys/resource.h>
@@ -70,7 +73,7 @@ psutil_pid_exists(pid_t pid) {
     // Not what we want. Some platforms have PID 0, some do not.
     // We decide that at runtime.
     if (pid == 0) {
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD) || defined(PSUTIL_CYGWIN)
         return 0;
 #else
         return 1;

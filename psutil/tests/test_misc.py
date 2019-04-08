@@ -19,6 +19,7 @@ import socket
 import stat
 import sys
 
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -331,6 +332,7 @@ class TestMisc(PsutilTestCase):
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
 
+    @unittest.skipIf(CYGWIN, "swap_memory not supported yet on Cygwin")
     def test_serialization(self):
         def check(ret):
             if json is not None:
@@ -685,31 +687,40 @@ class TestScripts(PsutilTestCase):
                 if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
                     self.fail('%r is not executable' % path)
 
+    @unittest.skipIf(CYGWIN, "disk_usage.py not supported yet on Cygwin")
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')
 
+    @unittest.skipIf(CYGWIN, "free.py not supported yet on Cygwin")
     def test_free(self):
         self.assert_stdout('free.py')
 
+    @unittest.skipIf(CYGWIN, "meminfo.py not supported yet on Cygwin")
     def test_meminfo(self):
         self.assert_stdout('meminfo.py')
 
+    @unittest.skipIf(CYGWIN, "procinfo.py not supported yet on Cygwin")
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', str(os.getpid()))
 
     @unittest.skipIf(CI_TESTING and not psutil.users(), "no users")
+    @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     def test_who(self):
         self.assert_stdout('who.py')
 
+    @unittest.skipIf(CYGWIN, "ps.py not supported yet on Cygwin")
     def test_ps(self):
         self.assert_stdout('ps.py')
 
+    @unittest.skipIf(CYGWIN, "pstree.py not supported yet on Cygwin")
     def test_pstree(self):
         self.assert_stdout('pstree.py')
 
+    @unittest.skipIf(CYGWIN, "netstat.py not supported yet on Cygwin")
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
+    @unittest.skipIf(CYGWIN, "ifconfig.py not supported yet on Cygwin")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 

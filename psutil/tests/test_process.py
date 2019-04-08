@@ -24,6 +24,7 @@ import psutil
 
 from psutil import AIX
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -261,10 +262,19 @@ class TestProcess(PsutilTestCase):
         # Use os.times()[:2] as base values to compare our results
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
-        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+        #
+        # On Cygwin there is enough overhead involved in reading
+        # /proc/stat as compared to os.times() that the tolerance
+        # needs to be quite high especially on a system under load
+        if CYGWIN:
+            tol = 1.0
+        else:
+            tol = 0.1
+
+        if (max([user_time, utime]) - min([user_time, utime])) > tol:
             self.fail("expected: %s, found: %s" % (utime, user_time))
 
-        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > tol:
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
@@ -284,8 +294,9 @@ class TestProcess(PsutilTestCase):
         # Use time.time() as base value to compare our result using a
         # tolerance of +/- 1 second.
         # It will fail if the difference between the values is > 2s.
+        # This check is not reliable on Cygwin
         difference = abs(create_time - now)
-        if difference > 2:
+        if not CYGWIN and difference > 2:
             self.fail("expected: %s, found: %s, difference: %s"
                       % (now, create_time, difference))
 
@@ -293,6 +304,7 @@ class TestProcess(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "terminal not supported yet on Cygwin")
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
@@ -498,6 +510,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(psutil.RLIM_INFINITY, hard)
         p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
+    @unittest.skipIf(CYGWIN, "num_threads not supported yet on Cygwin")
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -710,6 +723,7 @@ class TestProcess(PsutilTestCase):
     def test_cmdline(self):
         cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
         p = self.spawn_psproc(cmdline)
+
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
         # Also /proc/pid/cmdline behaves the same so it looks
@@ -729,7 +743,13 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
-        p = self.spawn_psproc(PYTHON_EXE)
+        if CYGWIN:
+            # The test will fail if we pass a non-default command because
+            # the process will become immediately zombified and impossible to
+            # determine the original exe name
+            p = self.spawn_psproc()
+        else:
+            p = self.spawn_psproc(PYTHON_EXE)
         name = p.name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
@@ -738,7 +758,15 @@ class TestProcess(PsutilTestCase):
     def test_long_name(self):
         testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
-        p = self.spawn_psproc(testfn)
+        if CYGWIN:
+            # The test will fail if the process exits immediately because
+            # it will become immediately zombified and impossible to determine
+            # the original exe name
+            cmdline = [testfn, "-c",
+                       "import time; [time.sleep(0.01) for x in range(3000)]"]
+        else:
+            cmdline = [testfn]
+        p = self.spawn_psproc(cmdline)
         self.assertEqual(p.name(), os.path.basename(testfn))
 
     # XXX
@@ -761,6 +789,7 @@ class TestProcess(PsutilTestCase):
                          os.path.normcase(funky_path))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "uids not supported yet on Cygwin")
     def test_uids(self):
         p = psutil.Process()
         real, effective, saved = p.uids()
@@ -775,6 +804,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(os.getresuid(), p.uids())
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "gids not supported yet on Cygwin")
     def test_gids(self):
         p = psutil.Process()
         real, effective, saved = p.gids()
@@ -836,6 +866,7 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         self.assertEqual(p.status(), psutil.STATUS_RUNNING)
 
+    @unittest.skipIf(CYGWIN, "username not supported yet on Cygwin")
     def test_username(self):
         p = self.spawn_psproc()
         username = p.username()
@@ -930,6 +961,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(BSD, "broken on BSD")
     # can't find any process file on Appveyor
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    @unittest.skipIf(CYGWIN, "open_files not supported yet on Cygwin")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -967,6 +999,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(BSD, "broken on BSD")
     # can't find any process file on Appveyor
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    @unittest.skipIf(CYGWIN, "open_files not supported yet on Cygwin")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
@@ -992,6 +1025,7 @@ class TestProcess(PsutilTestCase):
             self.assertNotIn(fileobj.name, p.open_files())
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "num_fds not supported yet on Cygwin")
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -1008,6 +1042,7 @@ class TestProcess(PsutilTestCase):
 
     @skip_on_not_implemented(only_if=LINUX)
     @unittest.skipIf(OPENBSD or NETBSD, "not reliable on OPENBSD & NETBSD")
+    @unittest.skipIf(CYGWIN, "num_ctx_switches not supported yet on Cygwin")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -1033,6 +1068,8 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc()
         self.assertEqual(p.parent().pid, os.getpid())
 
+    @unittest.skipIf(CYGWIN, 'not a meaningful test on Cygwin')
+    def test_lowest_pid_parent(self):
         lowest_pid = psutil.pids()[0]
         self.assertIsNone(psutil.Process(lowest_pid).parent())
 
@@ -1098,6 +1135,10 @@ class TestProcess(PsutilTestCase):
         pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
         if LINUX and pid == 0:
             raise self.skipTest("PID 0")
+        elif CYGWIN and pid == 1:
+            # On Cygwin PID=1 is the default PPID for initial
+            # processes, but does not represent an actual process
+            raise self.skipTest("PID 1")
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)
@@ -1139,9 +1180,12 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
 
         p = psutil.Process(min(psutil.pids()))
-        d = p.as_dict(attrs=['connections'], ad_value='foo')
-        if not isinstance(d['connections'], list):
-            self.assertEqual(d['connections'], 'foo')
+
+        if not CYGWIN:
+            # Skip on CYGWIN: connections not supported yet
+            d = p.as_dict(attrs=['connections'], ad_value='foo')
+            if not isinstance(d['connections'], list):
+                self.assertEqual(d['connections'], 'foo')
 
         # Test ad_value is set on AccessDenied.
         with mock.patch('psutil.Process.nice', create=True,
@@ -1301,10 +1345,14 @@ class TestProcess(PsutilTestCase):
             succeed_or_zombie_p_exc(fun)
 
         assert psutil.pid_exists(zproc.pid)
-        self.assertIn(zproc.pid, psutil.pids())
-        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
-        psutil._pmap = {}
-        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        if not CYGWIN:
+            # Some versions of Cygwin have an issue where zombie processes
+            # no longer appear in the dirents for /proc, though its /proc/<pid>
+            # still exists
+            self.assertIn(zproc.pid, psutil.pids())
+            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+            psutil._pmap = {}
+            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
@@ -1333,7 +1381,9 @@ class TestProcess(PsutilTestCase):
             # These 2 are a contradiction, but "ps" says PID 1's parent
             # is PID 0.
             assert not psutil.pid_exists(0)
-            self.assertEqual(psutil.Process(1).ppid(), 0)
+            if not CYGWIN:
+                # PID 1 is not even guaranteed to exist on Cygwin
+                self.assertEqual(psutil.Process(1).ppid(), 0)
             return
 
         p = psutil.Process(0)

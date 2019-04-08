@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.join(HERE, "psutil"))
 
 from _common import AIX  # NOQA
 from _common import BSD  # NOQA
+from _common import CYGWIN  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import hilite  # NOQA
 from _common import LINUX  # NOQA
@@ -291,6 +292,12 @@ elif AIX:
         libraries=['perfstat'],
         define_macros=macros)
 
+elif CYGWIN:
+    macros.append(("PSUTIL_CYGWIN", 1))
+    ext = Extension(
+        'psutil._psutil_cygwin',
+        sources=sources + ['psutil/_psutil_cygwin.c'],
+        define_macros=macros)
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 

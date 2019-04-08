@@ -17,6 +17,7 @@ import socket
 import stat
 import subprocess
 
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
@@ -313,6 +314,7 @@ class TestNetUtils(PsutilTestCase):
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(NETBSD or FREEBSD,
                      "/var/run/log UNIX socket opened by default")
+    @unittest.skipIf(CYGWIN, "num_fds not supported yet on Cygwin")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
@@ -341,13 +343,14 @@ class TestNetUtils(PsutilTestCase):
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
             if supports_ipv6():
                 self.assertGreaterEqual(fams[socket.AF_INET6], 2)
-            if POSIX and HAS_CONNECTIONS_UNIX:
+            if POSIX and HAS_CONNECTIONS_UNIX and not CYGWIN:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
 @serialrun
+@unittest.skipIf(CYGWIN, "num_fds not supported yet on Cygwin")
 class TestMemLeakClass(TestMemoryLeak):
 
     def test_times(self):
@@ -421,6 +424,7 @@ class TestTestingUtils(PsutilTestCase):
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
         self.assertEqual(fun(), p.ppid())
 
+    @unittest.skipIf(CYGWIN, "net_if_addrs not supported yet on Cygwin")
     def test_system_namespace(self):
         ns = system_namespace()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]

@@ -20,6 +20,7 @@ import time
 import psutil
 from psutil import AIX
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -200,6 +201,7 @@ class TestMiscAPIs(PsutilTestCase):
         self.assertLess(bt, time.time())
 
     @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     def test_users(self):
         users = psutil.users()
         self.assertNotEqual(users, [])
@@ -293,6 +295,7 @@ class TestMemoryAPIs(PsutilTestCase):
                     self.fail("%r > total (total=%s, %s=%s)"
                               % (name, mem.total, name, value))
 
+    @unittest.skipIf(CYGWIN, "swap_memory not supported yet on Cygwin")
     def test_swap_memory(self):
         mem = psutil.swap_memory()
         self.assertEqual(
@@ -553,6 +556,7 @@ class TestCpuAPIs(PsutilTestCase):
 class TestDiskAPIs(PsutilTestCase):
 
     @unittest.skipIf(PYPY and not IS_64BIT, "unreliable on PYPY32 + 32BIT")
+    @unittest.skipIf(CYGWIN, "disk_usage not supported yet on Cygwin")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         self.assertEqual(usage._fields, ('total', 'used', 'free', 'percent'))
@@ -585,9 +589,11 @@ class TestDiskAPIs(PsutilTestCase):
         with self.assertRaises(UnicodeEncodeError):
             psutil.disk_usage(UNICODE_SUFFIX)
 
+    @unittest.skipIf(CYGWIN, "disk_usage not supported yet on Cygwin")
     def test_disk_usage_bytes(self):
         psutil.disk_usage(b'.')
 
+    @unittest.skipIf(CYGWIN, "disk_partitions not supported yet on Cygwin")
     def test_disk_partitions(self):
         def check_ntuple(nt):
             self.assertIsInstance(nt.device, str)
@@ -653,6 +659,7 @@ class TestDiskAPIs(PsutilTestCase):
                      '/proc/diskstats not available on this linux version')
     @unittest.skipIf(CI_TESTING and not psutil.disk_io_counters(),
                      "unreliable on CI")  # no visible disks
+    @unittest.skipIf(CYGWIN, "disk_io_counters not supported yet on Cygwin")
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -681,6 +688,7 @@ class TestDiskAPIs(PsutilTestCase):
             assert key, key
             check_ntuple(ret[key])
 
+    @unittest.skipIf(CYGWIN, "disk_io_counters not supported yet on Cygwin")
     def test_disk_io_counters_no_disks(self):
         # Emulate a case where no disks are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
@@ -694,6 +702,7 @@ class TestDiskAPIs(PsutilTestCase):
 class TestNetAPIs(PsutilTestCase):
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
+    @unittest.skipIf(CYGWIN, "net_io_counters not supported yet on Cygwin")
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
@@ -732,6 +741,7 @@ class TestNetAPIs(PsutilTestCase):
             self.assertEqual(psutil.net_io_counters(pernic=True), {})
             assert m.called
 
+    @unittest.skipIf(CYGWIN, "net_if_addrs not supported yet on Cygwin")
     def test_net_if_addrs(self):
         nics = psutil.net_if_addrs()
         assert nics, nics
@@ -809,6 +819,7 @@ class TestNetAPIs(PsutilTestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
+    @unittest.skipIf(CYGWIN, "net_if_stats not supported yet on Cygwin")
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics
