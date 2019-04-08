@@ -58,6 +58,7 @@ import warnings
 from contextlib import closing
 
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
@@ -159,6 +160,10 @@ class _BaseFSAPIsTests(object):
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
 
+    # NOTE: The following three tests are not reliable on Cygwin, due to the
+    # difficulty of retrieving the command name of zombie processes (which
+    # just return '<defunct>')
+    @unittest.skipIf(CYGWIN, "not reliable on Cygwin")
     def test_proc_exe(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
@@ -167,6 +172,7 @@ class _BaseFSAPIsTests(object):
         if self.expect_exact_path_match():
             self.assertEqual(exe, self.funky_name)
 
+    @unittest.skipIf(CYGWIN, "not reliable on Cygwin")
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
         if WINDOWS:
@@ -183,6 +189,7 @@ class _BaseFSAPIsTests(object):
         if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
 
+    @unittest.skipIf(CYGWIN, "not reliable on Cygwin")
     def test_proc_cmdline(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
@@ -203,6 +210,7 @@ class _BaseFSAPIsTests(object):
         if self.expect_exact_path_match():
             self.assertEqual(cwd, dname)
 
+    @unittest.skipIf(CYGWIN, "open_files not supported yet on Cygwin")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -218,6 +226,7 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
         with unix_socket_path(suffix=suffix) as name:
@@ -237,6 +246,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
+    @unittest.skipIf(CYGWIN, "net_connections not supported yet on Cygwin")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
@@ -262,6 +272,7 @@ class _BaseFSAPIsTests(object):
                     self.assertIsInstance(conn.laddr, str)
                     self.assertEqual(conn.laddr, name)
 
+    @unittest.skipIf(CYGWIN, "disk_usage not supported yet on Cygwin")
     def test_disk_usage(self):
         dname = self.funky_name + "2"
         self.addCleanup(safe_rmpath, dname)

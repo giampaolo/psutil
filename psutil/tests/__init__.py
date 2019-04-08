@@ -36,6 +36,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import CYGWIN
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
@@ -942,6 +943,11 @@ def tcp_socketpair(family, addr=("", 0)):
             raise
 
 
+# NOTE: Cygwin has a known bug
+# (https://cygwin.com/ml/cygwin/2017-01/msg00111.html) with creating a pair
+# of UNIX sockets within the same process and having them communicate with
+# each other.  Therefore any test which uses this should be skipped on Cygwin
+# until there is a better solution.
 def unix_socketpair(name):
     """Build a pair of UNIX sockets connected to each other through
     the same UNIX file name.
@@ -976,7 +982,7 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX and HAS_CONNECTIONS_UNIX:
+        if POSIX and HAS_CONNECTIONS_UNIX and not CYGWIN:
             fname1 = unix_socket_path().__enter__()
             fname2 = unix_socket_path().__enter__()
             s1, s2 = unix_socketpair(fname1)

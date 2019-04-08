@@ -19,6 +19,7 @@ import pickle
 import socket
 import stat
 
+from psutil import CYGWIN
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -342,6 +343,7 @@ class TestMisc(unittest.TestCase):
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
 
+    @unittest.skipIf(CYGWIN, "swap_memory not supported yet on Cygwin")
     def test_serialization(self):
         def check(ret):
             if json is not None:
@@ -698,34 +700,43 @@ class TestScripts(unittest.TestCase):
                 if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
                     self.fail('%r is not executable' % path)
 
+    @unittest.skipIf(CYGWIN, "disk_usage.py not supported yet on Cygwin")
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')
 
+    @unittest.skipIf(CYGWIN, "free.py not supported yet on Cygwin")
     def test_free(self):
         self.assert_stdout('free.py')
 
+    @unittest.skipIf(CYGWIN, "meminfo.py not supported yet on Cygwin")
     def test_meminfo(self):
         self.assert_stdout('meminfo.py')
 
+    @unittest.skipIf(CYGWIN, "procinfo.py not supported yet on Cygwin")
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', str(os.getpid()))
 
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
                      "unreliable on APPVEYOR or TRAVIS")
+    @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     def test_who(self):
         self.assert_stdout('who.py')
 
+    @unittest.skipIf(CYGWIN, "ps.py not supported yet on Cygwin")
     def test_ps(self):
         self.assert_stdout('ps.py')
 
+    @unittest.skipIf(CYGWIN, "pstree.py not supported yet on Cygwin")
     def test_pstree(self):
         self.assert_stdout('pstree.py')
 
+    @unittest.skipIf(CYGWIN, "netstat.py not supported yet on Cygwin")
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
     # permission denied on travis
+    @unittest.skipIf(CYGWIN, "ifconfig.py not supported yet on Cygwin")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
@@ -1011,6 +1022,7 @@ class TestNetUtils(unittest.TestCase):
                 self.assertNotEqual(client.getsockname(), addr)
 
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(CYGWIN, "num_fds not supported yet on Cygwin")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
@@ -1039,7 +1051,7 @@ class TestNetUtils(unittest.TestCase):
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
             if supports_ipv6():
                 self.assertGreaterEqual(fams[socket.AF_INET6], 2)
-            if POSIX and HAS_CONNECTIONS_UNIX:
+            if POSIX and HAS_CONNECTIONS_UNIX and not CYGWIN:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)

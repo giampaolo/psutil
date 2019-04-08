@@ -19,6 +19,7 @@ from contextlib import closing
 
 from psutil import AIX
 from psutil import BSD
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -68,7 +69,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_PROCFS_PATH(self):
         self.assertEqual(hasattr(psutil, "PROCFS_PATH"),
-                         LINUX or SUNOS or AIX)
+                         LINUX or SUNOS or AIX or CYGWIN)
 
     def test_win_priority(self):
         ae = self.assertEqual
@@ -149,7 +150,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
-        self.assertEqual(hasit, False if MACOS or SUNOS else True)
+        self.assertEqual(hasit, False if (MACOS or SUNOS or CYGWIN) else True)
 
     def test_proc_num_fds(self):
         self.assertEqual(hasattr(psutil.Process, "num_fds"), POSIX)
@@ -167,8 +168,8 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(
-            hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
+        supported = not any([OPENBSD, NETBSD, AIX, MACOS, CYGWIN])
+        self.assertEqual(hasit, supported)
 
 
 # ===================================================================
@@ -218,6 +219,7 @@ class TestSystem(unittest.TestCase):
         for k in psutil.disk_io_counters(perdisk=True):
             self.assertIsInstance(k, str)
 
+    @unittest.skipIf(CYGWIN, "disk_partitions not supported yet on Cygwin")
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.
         for disk in psutil.disk_partitions():
@@ -228,6 +230,7 @@ class TestSystem(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
+    @unittest.skipIf(CYGWIN, "net_connections not supported yet on Cygwin")
     @skip_on_access_denied(only_if=MACOS)
     def test_net_connections(self):
         with unix_socket_path() as name:
@@ -237,6 +240,7 @@ class TestSystem(unittest.TestCase):
                 for conn in cons:
                     self.assertIsInstance(conn.laddr, str)
 
+    @unittest.skipIf(CYGWIN, "net_if_addrs not supported yet on Cygwin")
     def test_net_if_addrs(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, addrs in psutil.net_if_addrs().items():
@@ -246,12 +250,14 @@ class TestSystem(unittest.TestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
 
+    @unittest.skipIf(CYGWIN, "net_if_stats not supported yet on Cygwin")
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_if_stats().items():
             self.assertIsInstance(ifname, str)
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
+    @unittest.skipIf(CYGWIN, "net_io_counters not supported yet on Cygwin")
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
@@ -273,6 +279,7 @@ class TestSystem(unittest.TestCase):
             for unit in units:
                 self.assertIsInstance(unit.label, str)
 
+    @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     def test_users(self):
         # Duplicate of test_system.py. Keep it anyway.
         for user in psutil.users():
@@ -385,7 +392,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         if not ret:
             self.assertEqual(ret, '')
         else:
-            assert os.path.isabs(ret), ret
+            assert os.path.isabs(ret) or (CYGWIN and ret == '<defunct>'), ret
             # Note: os.stat() may return False even if the file is there
             # hence we skip the test, see:
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
@@ -507,8 +514,9 @@ class TestFetchAllProcesses(unittest.TestCase):
         for value in ret:
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
-        if POSIX and not AIX and ret.vms != 0:
-            # VMS is always supposed to be the highest
+        if POSIX and not (AIX or CYGWIN) and ret.vms != 0:
+            # VMS is always supposed to be the highest but some memory
+            # management implementations may be different (see AIX, Cygwin)
             for name in ret._fields:
                 if name != 'vms':
                     value = getattr(ret, name)
@@ -567,7 +575,9 @@ class TestFetchAllProcesses(unittest.TestCase):
     def cwd(self, ret, proc):
         if ret:     # 'ret' can be None or empty
             self.assertIsInstance(ret, str)
-            assert os.path.isabs(ret), ret
+            # On Cygwin if the process became a zombie before accessing
+            # the cwd can become '<defunct>'
+            assert os.path.isabs(ret) or (CYGWIN and ret == '<defunct>'), ret
             try:
                 st = os.stat(ret)
             except OSError as err:

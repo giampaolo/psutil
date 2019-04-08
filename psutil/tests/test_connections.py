@@ -16,6 +16,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import CYGWIN
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -145,6 +146,7 @@ class Base(object):
 class TestUnconnectedSockets(Base, unittest.TestCase):
     """Tests sockets which are open but not connected to anything."""
 
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_tcp_v4(self):
         addr = ("127.0.0.1", get_free_port())
         with closing(bind_socket(AF_INET, SOCK_STREAM, addr=addr)) as sock:
@@ -153,6 +155,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_tcp_v6(self):
         addr = ("::1", get_free_port())
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
@@ -160,6 +163,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_udp_v4(self):
         addr = ("127.0.0.1", get_free_port())
         with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
@@ -168,6 +172,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_udp_v6(self):
         addr = ("::1", get_free_port())
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
@@ -176,6 +181,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_unix_tcp(self):
         with unix_socket_path() as name:
             with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
@@ -184,6 +190,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_unix_udp(self):
         with unix_socket_path() as name:
             with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
@@ -204,6 +211,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
 
     # On SunOS, even after we close() it, the server socket stays around
     # in TIME_WAIT state.
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
         addr = ("127.0.0.1", get_free_port())
@@ -224,6 +232,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
             server.close()
             client.close()
 
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
         with unix_socket_path() as name:
@@ -257,6 +266,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                 server.close()
                 client.close()
 
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
@@ -355,6 +365,7 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
         # err
         self.assertRaises(ValueError, p.connections, kind='???')
 
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_multi_sockets_filtering(self):
         with create_sockets() as socks:
             cons = thisproc.connections(kind='all')
@@ -424,6 +435,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
     """Tests for net_connections()."""
 
     @skip_on_access_denied()
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_it(self):
         def check(cons, families, types_):
             AF_UNIX = getattr(socket, 'AF_UNIX', object())
@@ -447,6 +459,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
             self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
     @skip_on_access_denied()
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     def test_multi_socks(self):
         with create_sockets() as socks:
             cons = [x for x in psutil.net_connections(kind='all')
@@ -455,6 +468,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
 
     @skip_on_access_denied()
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
+    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
     @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different

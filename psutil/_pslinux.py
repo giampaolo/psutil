@@ -23,7 +23,13 @@ from collections import namedtuple
 
 from . import _common
 from . import _psposix
-from . import _psutil_linux as cext
+
+try:
+    from . import _psutil_linux as cext
+except ImportError:
+    # e.g. on Linux-like but ultimately non-Linux platforms like Cygwin
+    cext = None
+
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
 from ._common import memoize
@@ -102,11 +108,19 @@ LITTLE_ENDIAN = sys.byteorder == 'little'
 # * https://lkml.org/lkml/2015/8/17/234
 DISK_SECTOR_SIZE = 512
 
+
+if hasattr(socket, 'AF_PACKET'):
+    AF_PACKET = socket.AF_PACKET
+else:
+    # Not defined on some platforms for some reason
+    AF_PACKET = -1
+
+
 if enum is None:
-    AF_LINK = socket.AF_PACKET
+    AF_LINK = AF_PACKET
 else:
     AddressFamily = enum.IntEnum('AddressFamily',
-                                 {'AF_LINK': int(socket.AF_PACKET)})
+                                 {'AF_LINK': int(AF_PACKET)})
     AF_LINK = AddressFamily.AF_LINK
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
@@ -666,7 +680,7 @@ def cpu_stats():
                 break
     syscalls = 0
     return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls)
+        ctx_switches or 0, interrupts or 0, soft_interrupts or 0, syscalls)
 
 
 if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
@@ -1541,6 +1555,19 @@ class Process(object):
         # incorrect or incomplete result.
         os.stat('%s/%s' % (self._procfs_path, self.pid))
 
+    # Map field names to indices of fields in the /proc/[pid]/stat file
+    _stat_map = {
+        'status': 0,
+        'ppid': 1,
+        'ttynr': 4,
+        'utime': 11,
+        'stime': 12,
+        'children_utime': 13,
+        'children_stime': 14,
+        'create_time': 19,
+        'cpu_num': 36
+    }
+
     @wrap_exceptions
     @memoize_when_activated
     def _parse_stat_file(self):
@@ -1554,6 +1581,11 @@ class Process(object):
         """
         with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()
+
+        # Can sometimes happen on Cygwin with zombie processes
+        if not data:
+            return {}
+
         # Process name is between parentheses. It can contain spaces and
         # other parentheses. This is taken into account by looking for
         # the first occurrence of "(" and the last occurence of ")".
@@ -1561,24 +1593,19 @@ class Process(object):
         name = data[data.find(b'(') + 1:rpar]
         fields = data[rpar + 2:].split()
 
-        ret = {}
-        ret['name'] = name
-        ret['status'] = fields[0]
-        ret['ppid'] = fields[1]
-        ret['ttynr'] = fields[4]
-        ret['utime'] = fields[11]
-        ret['stime'] = fields[12]
-        ret['children_utime'] = fields[13]
-        ret['children_stime'] = fields[14]
-        ret['create_time'] = fields[19]
-        ret['cpu_num'] = fields[36]
+        ret = {'name': name}
+        for field, idx in self._stat_map.items():
+            try:
+                ret[field] = fields[idx]
+            except IndexError:
+                pass
 
         return ret
 
     @wrap_exceptions
     @memoize_when_activated
     def _read_status_file(self):
-        """Read /proc/{pid}/stat file and return its content.
+        """Read /proc/{pid}/status file and return its content.
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
@@ -1588,6 +1615,8 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
+        # Note: /proc/[pid]/smaps supported on Linux since 2.6.14, but not
+        # on Cygwin
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
                          buffering=BIGFILE_BUFFERING) as f:
             return f.read().strip()
@@ -2072,13 +2101,19 @@ class Process(object):
         return int(self._parse_stat_file()['ppid'])
 
     @wrap_exceptions
-    def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):
+    def uids(self, _uids_re=re.compile(br'Uid:\s+(\d+)\s+(\d+)\s+(\d+)')):
         data = self._read_status_file()
-        real, effective, saved = _uids_re.findall(data)[0]
+        if data:
+            real, effective, saved = _uids_re.findall(data)[0]
+        else:
+            real, effective, saved = (0, 0, 0)
         return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
-    def gids(self, _gids_re=re.compile(br'Gid:\t(\d+)\t(\d+)\t(\d+)')):
+    def gids(self, _gids_re=re.compile(br'Gid:\s+(\d+)\s+(\d+)\s+(\d+)')):
         data = self._read_status_file()
-        real, effective, saved = _gids_re.findall(data)[0]
+        if data:
+            real, effective, saved = _gids_re.findall(data)[0]
+        else:
+            real, effective, saved = (0, 0, 0)
         return _common.pgids(int(real), int(effective), int(saved))
