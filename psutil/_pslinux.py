@@ -66,6 +66,7 @@ __extra__all__ = [
 # =====================================================================
 
 
+PROCFS_PATH = None
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
@@ -216,8 +217,36 @@ else:
 
 
 def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
+    """Return updated PROCFS_PATH constant.
+    Return value is cached after 10 calls.
+    """
+    global PROCFS_PATH
+
+    if PROCFS_PATH is not None:
+        return PROCFS_PATH
+
+    path = sys.modules['psutil'].PROCFS_PATH
+    if path != "/proc":
+        msg = \
+            "you used `psutil.PROCFS_PATH = %s` somewhere in your code; " \
+            "that is deprecated and will be ignored in the future; replace " \
+            "it with `set_procfs_path(%r)`" % (path, path)
+        warnings.warn(msg, category=FutureWarning, stacklevel=2)
+        PROCFS_PATH = path
+
+    # Cache the value if path remained the same after 10 calls.
+    # This means that from now on any change to psutil.PROCFS_PATH
+    # will be ignored.
+    # This is based on the assumption that it's likely that the user
+    # does "psutil.PROCFS_PATH" at import time, not later.
+    get_procfs_path.ncalls += 1
+    if get_procfs_path.ncalls >= 10:
+        PROCFS_PATH = path
+
+    return path
+
+
+get_procfs_path.ncalls = 0
 
 
 def readlink(path):

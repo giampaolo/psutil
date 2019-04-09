@@ -2414,6 +2414,13 @@ def users():
     return _psplatform.users()
 
 
+def set_procfs_path(path):
+    """Set an alternative path for /proc filesystem on Linux, Solaris
+    and AIX. This superseds PROCFS_PATH variable which is deprecated.
+    """
+    _psplatform.PROCFS_PATH = path
+
+
 # =====================================================================
 # --- Windows services
 # =====================================================================
