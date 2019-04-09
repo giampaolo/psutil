@@ -22,9 +22,10 @@ PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 
 PyObject* AccessDenied(const char *msg);
 PyObject* NoSuchProcess(const char *msg);
+PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
-void psutil_setup(void);
+int psutil_setup(void);
 
 #endif // PSUTIL_PSUTIL_COMMON_H

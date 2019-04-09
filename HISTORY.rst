@@ -1,19 +1,124 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.2
+=====
+
+**Enhancements**
+
+- 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
+  `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
+  the number of physical CPUs in case /proc/cpuinfo does not provide this info.
+- 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
+- 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+- 1473_: [Windows] process IO priority (ionice()) values are now exposed as 4
+  new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
+  Also it was not possible to set high I/O priority (not it is).
+- 1478_: add make command to re-run tests failed on last run.
+
+**Bug fixes**
+
+- 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
+- 1463_: cpu_distribution.py script was broken.
+  Benjamin Drung)
+- 1470_: [Linux] disk_partitions(): fix corner case when /etc/mtab doesn't
+  exist.  (patch by Cedric Lamoriniere)
+- 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
+  by Daniel Beer)
+- 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
+- 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
+  in WindowsError being raised instead of AccessDenied.
+- 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
+  APIs. Different process methods were affected by this.
+- 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
+  fixed read violation.  (patch by Samer Masterson)
+
+5.6.1
+=====
+
+2019-03-11
+
+**Bug fixes**
+
+- 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
+- 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
+  on Wine.
+- 1451_: [Windows] Process.memory_full_info() segfaults. NtQueryVirtualMemory
+  is now used instead of QueryWorkingSet to calculate USS memory.
+
+5.6.0
+=====
+
+2019-03-05
+
+**Enhancements**
+
+- 1379_: [Windows] Process suspend() and resume() now use NtSuspendProcess
+  and NtResumeProcess instead of stopping/resuming all threads of a process.
+  This is faster and more reliable (aka this is what ProcessHacker does).
+- 1420_: [Windows] in case of exception disk_usage() now also shows the path
+  name.
+- 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
+  libraries are now loaded only once on startup (instead of on per function
+  call) significantly speeding up different functions and methods.
+- 1426_: [Windows] PAGESIZE and number of processors is now calculated on
+  startup.
+- 1428_: in case of error, the traceback message now shows the underlying C
+  function called which failed.
+- 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
+- 1437_: pids() are returned in sorted order.
+- 1442_: python3 is now the default interpreter used by Makefile.
+
+**Bug fixes**
+
+- 1353_: process_iter() is now thread safe (it rarely raised TypeError).
+- 1394_: [Windows] Process name() and exe() may erroneously return "Registry".
+  QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
+  in order to prevent that.
+- 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
+  instantiation.
+- 1419_: [Windows] Process.environ() raises NotImplementedError when querying
+  a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
+- 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
+  on failed malloc().
+- 1429_: [Windows] SE DEBUG was not properly set for current process. It is
+  now, and it should result in less AccessDenied exceptions for low-pid
+  processes.
+- 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
+  because we're not using the actual system PAGESIZE.
+- 1439_: [NetBSD] Process.connections() may return incomplete results if using
+  oneshot().
+- 1447_: original exception wasn't turned into NSP/AD exceptions when using
+  Process.oneshot() ctx manager.
+
+**Incompatible API changes**
+
+- 1291_: [OSX] Process.memory_maps() was removed because inherently broken
+  (segfault) for years.
+
 5.5.1
 =====
 
-XXXX-XX-XX
+2019-02-15
+
+**Enhancements**
+
+- 1348_: [Windows] on Windows >= 8.1 if Process.cmdline() fails due to
+  ERROR_ACCESS_DENIED attempt using NtQueryInformationProcess +
+  ProcessCommandLineInformation. (patch by EccoTheFlintstone)
 
 **Bug fixes**
 
 - 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
+- 1402_: psutil exceptions' repr() show the internal private module path.
+- 1408_: [AIX] psutil won't compile on AIX 7.1 due to missing header.  (patch
+  by Arnon Yaari)
 
 5.5.0
 =====
 
-2019-0-23
+2019-01-23
 
 **Enhancements**
 
@@ -870,7 +975,7 @@ XXXX-XX-XX
 - 646_: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
-  https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
+  https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 - 651_: continuous code quality test integration with scrutinizer-ci.com
 
 **Bug fixes**

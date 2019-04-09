@@ -25,9 +25,9 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
+from psutil.tests import PY3
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
@@ -138,7 +138,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     # Note: this test is not very reliable
     @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -147,7 +147,7 @@ class TestSystemAPIs(unittest.TestCase):
         psutil_pids = set(psutil.pids())
         self.assertEqual(wmi_pids, psutil_pids)
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
@@ -156,6 +156,8 @@ class TestSystemAPIs(unittest.TestCase):
                 if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
                     if not ps_part.mountpoint:
                         # this is usually a CD-ROM with no disk inserted
+                        break
+                    if 'cdrom' in ps_part.opts:
                         break
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
@@ -178,6 +180,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage(self):
         for disk in psutil.disk_partitions():
+            if 'cdrom' in disk.opts:
+                continue
             sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
             psutil_value = psutil.disk_usage(disk.mountpoint)
             self.assertAlmostEqual(sys_value[0], psutil_value.free,
@@ -211,8 +215,7 @@ class TestSystemAPIs(unittest.TestCase):
             wmi_btime_str, "%Y%m%d%H%M%S")
         psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        # Wmic time is 2-3 secs lower for some reason; that's OK.
-        self.assertLessEqual(diff, 3)
+        self.assertLessEqual(diff, 1)
 
     def test_boot_time_fluctuation(self):
         # https://github.com/giampaolo/psutil/issues/1007
@@ -328,12 +331,19 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_exe(self):
+    def test_exe_and_name(self):
         for p in psutil.process_iter():
+            # On Windows name() is never supposed to raise AccessDenied,
+            # see https://github.com/giampaolo/psutil/issues/627
             try:
-                self.assertEqual(os.path.basename(p.exe()), p.name())
-            except psutil.Error:
+                name = p.name()
+            except psutil.NoSuchProcess:
                 pass
+            else:
+                try:
+                    self.assertEqual(os.path.basename(p.exe()), name)
+                except psutil.Error:
+                    continue
 
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
@@ -381,15 +391,6 @@ class TestProcess(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
-    def test_name_always_available(self):
-        # On Windows name() is never supposed to raise AccessDenied,
-        # see https://github.com/giampaolo/psutil/issues/627
-        for p in psutil.process_iter():
-            try:
-                p.name()
-            except psutil.NoSuchProcess:
-                pass
-
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
@@ -402,16 +403,6 @@ class TestProcess(unittest.TestCase):
                           p.send_signal, signal.CTRL_C_EVENT)
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
-
-    def test_compare_name_exe(self):
-        for p in psutil.process_iter():
-            try:
-                a = os.path.basename(p.exe())
-                b = p.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                self.assertEqual(a, b)
 
     def test_username(self):
         self.assertEqual(psutil.Process().username(),
@@ -673,6 +664,20 @@ class TestDualProcessImplementation(unittest.TestCase):
                              num_handles)
             assert fun.called
 
+    def test_cmdline(self):
+        from psutil._pswindows import convert_oserror
+        for pid in psutil.pids():
+            try:
+                a = cext.proc_cmdline(pid, use_peb=True)
+                b = cext.proc_cmdline(pid, use_peb=False)
+            except OSError as err:
+                err = convert_oserror(err)
+                if not isinstance(err, (psutil.AccessDenied,
+                                        psutil.NoSuchProcess)):
+                    raise
+            else:
+                self.assertEqual(a, b)
+
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
@@ -759,9 +764,10 @@ class RemoteProcessTestCase(unittest.TestCase):
 
     def test_environ_64(self):
         p = psutil.Process(self.proc64.pid)
-        e = p.environ()
-        self.assertIn("THINK_OF_A_NUMBER", e)
-        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+        try:
+            p.environ()
+        except psutil.AccessDenied:
+            pass
 
 
 # ===================================================================
@@ -821,16 +827,22 @@ class TestServices(unittest.TestCase):
             self.assertEqual(serv, s)
 
     def test_win_service_get(self):
-        name = next(psutil.win_service_iter()).name()
+        ERROR_SERVICE_DOES_NOT_EXIST = \
+            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST
+        ERROR_ACCESS_DENIED = psutil._psplatform.cext.ERROR_ACCESS_DENIED
 
+        name = next(psutil.win_service_iter()).name()
         with self.assertRaises(psutil.NoSuchProcess) as cm:
             psutil.win_service_get(name + '???')
         self.assertEqual(cm.exception.name, name + '???')
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
-        exc = WindowsError(
-            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST, "")
+        if PY3:
+            args = (0, "msg", 0, ERROR_SERVICE_DOES_NOT_EXIST)
+        else:
+            args = (ERROR_SERVICE_DOES_NOT_EXIST, "msg")
+        exc = WindowsError(*args)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.NoSuchProcess, service.status)
@@ -839,8 +851,11 @@ class TestServices(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, service.username)
 
         # test AccessDenied
-        exc = WindowsError(
-            psutil._psplatform.cext.ERROR_ACCESS_DENIED, "")
+        if PY3:
+            args = (0, "msg", 0, ERROR_ACCESS_DENIED)
+        else:
+            args = (ERROR_ACCESS_DENIED, "msg")
+        exc = WindowsError(*args)
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
             self.assertRaises(psutil.AccessDenied, service.status)
@@ -856,4 +871,5 @@ class TestServices(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

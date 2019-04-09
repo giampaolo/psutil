@@ -35,7 +35,6 @@ from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import tcp_socketpair
@@ -474,7 +473,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
                 import time, os
                 from psutil.tests import create_sockets
                 with create_sockets():
-                    with open('%s', 'w') as f:
+                    with open(r'%s', 'w') as f:
                         f.write(str(os.getpid()))
                     time.sleep(60)
                 """ % fname)
@@ -523,4 +522,5 @@ class TestMisc(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

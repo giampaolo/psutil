@@ -535,7 +535,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        goto error;
+        return PyErr_SetFromOSErrnoWithSyscall("socket()");
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // duplex and speed
@@ -558,20 +558,21 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
             speed = 0;
         }
         else {
+            PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCETHTOOL)");
             goto error;
         }
     }
 
-    close(sock);
     py_retlist = Py_BuildValue("[ii]", duplex, speed);
     if (!py_retlist)
         goto error;
+    close(sock);
     return py_retlist;
 
 error:
     if (sock != -1)
         close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
 }
 
 
@@ -672,6 +673,8 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
@@ -718,8 +721,6 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;

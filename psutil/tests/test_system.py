@@ -38,13 +38,13 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -124,7 +124,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
@@ -143,7 +143,7 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
-        @retry_before_failing(30)
+        @retry_on_failure(30)
         def test(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
@@ -242,11 +242,11 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
     def test_pids(self):
-        plist = [x.pid for x in psutil.process_iter()]
-        pidlist = psutil.pids()
-        self.assertEqual(plist.sort(), pidlist.sort())
+        pidslist = psutil.pids()
+        procslist = [x.pid for x in psutil.process_iter()]
         # make sure every pid is unique
-        self.assertEqual(len(pidlist), len(set(pidlist)))
+        self.assertEqual(sorted(set(pidslist)), pidslist)
+        self.assertEqual(pidslist, procslist)
 
     def test_test(self):
         # test for psutil.test() function
@@ -538,6 +538,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
@@ -566,6 +567,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIsInstance(key, str)
             check_ntuple(ret[key])
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters_no_nics(self):
         # Emulate a case where no NICs are installed, see:
         # https://github.com/giampaolo/psutil/issues/1062
@@ -766,7 +768,9 @@ class TestSystemAPIs(unittest.TestCase):
 
         ls = psutil.cpu_freq(percpu=True)
         if TRAVIS and not ls:
-            return
+            raise self.skipTest("skipped on Travis")
+        if FREEBSD and not ls:
+            raise self.skipTest("returns empty list on FreeBSD")
 
         assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])
@@ -863,4 +867,5 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

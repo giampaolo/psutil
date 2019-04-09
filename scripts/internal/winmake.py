@@ -29,7 +29,7 @@ if APPVEYOR:
     PYTHON = sys.executable
 else:
     PYTHON = os.getenv('PYTHON', sys.executable)
-TSCRIPT = os.getenv('TSCRIPT', 'psutil\\tests\\__main__.py')
+TEST_SCRIPT = 'psutil\\tests\\__main__.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -318,6 +318,7 @@ def clean():
         "*.~",
         "*__pycache__",
         ".coverage",
+        ".failed-tests.txt",
         ".tox",
     )
     safe_rmtree("build")
@@ -350,9 +351,16 @@ def flake8():
 @cmd
 def test():
     """Run tests"""
+    try:
+        arg = sys.argv[2]
+    except IndexError:
+        arg = TEST_SCRIPT
+
     install()
     test_setup()
-    sh("%s %s" % (PYTHON, TSCRIPT))
+    cmdline = "%s %s" % (PYTHON, arg)
+    safe_print(cmdline)
+    sh(cmdline)
 
 
 @cmd
@@ -361,7 +369,7 @@ def coverage():
     # Note: coverage options are controlled by .coveragerc file
     install()
     test_setup()
-    sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
+    sh("%s -m coverage run %s" % (PYTHON, TEST_SCRIPT))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -426,14 +434,19 @@ def test_contracts():
 @cmd
 def test_by_name():
     """Run test by name"""
-    try:
-        safe_print(sys.argv)
-        name = sys.argv[2]
-    except IndexError:
-        sys.exit('second arg missing')
+    name = sys.argv[2]
     install()
     test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
+
+
+@cmd
+def test_failed():
+    """Re-run tests which failed on last run."""
+    install()
+    test_setup()
+    sh('%s -c "import psutil.tests.runner as r; r.run(last_failed=True)"' % (
+        PYTHON))
 
 
 @cmd
@@ -461,7 +474,7 @@ def test_memleaks():
 def install_git_hooks():
     """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
-        src = os.path.join(ROOT_DIR, ".git-pre-commit")
+        src = os.path.join(ROOT_DIR, "scripts", "internal", ".git-pre-commit")
         dst = os.path.realpath(
             os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
         with open(src, "rt") as s:
@@ -472,15 +485,25 @@ def install_git_hooks():
 @cmd
 def bench_oneshot():
     """Benchmarks for oneshot() ctx manager (see #799)."""
-    install()
     sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
     """Same as above but using perf module (supposed to be more precise)."""
-    install()
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+
+
+@cmd
+def print_access_denied():
+    """Print AD exceptions raised by all Process methods."""
+    sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
+
+
+@cmd
+def print_api_speed():
+    """Benchmark all API calls."""
+    sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 
 def set_python(s):

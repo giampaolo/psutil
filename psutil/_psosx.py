@@ -23,9 +23,6 @@ from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 
 __extra__all__ = []
@@ -87,6 +84,13 @@ pidtaskinfo_map = dict(
     volctxsw=7,
 )
 
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
 
 # =====================================================================
 # --- named tuples
@@ -103,13 +107,6 @@ svmem = namedtuple(
 pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 # psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped',
-    'path rss private swapped dirtied ref_count shadow_depth')
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================
@@ -387,6 +384,7 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    @wrap_exceptions
     @memoize_when_activated
     def _get_kinfo_proc(self):
         # Note: should work with all PIDs without permission issues.
@@ -394,6 +392,7 @@ class Process(object):
         assert len(ret) == len(kinfo_proc_map)
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _get_pidtaskinfo(self):
         # Note: should work for PIDs owned by user only.
@@ -577,7 +576,3 @@ class Process(object):
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
-
-    @wrap_exceptions
-    def memory_maps(self):
-        return cext.proc_memory_maps(self.pid)

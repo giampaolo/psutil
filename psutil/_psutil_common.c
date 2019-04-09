@@ -7,8 +7,11 @@
  */
 
 #include <Python.h>
-#include <stdio.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
+#include "_psutil_common.h"
 
 // Global vars.
 int PSUTIL_DEBUG = 0;
@@ -46,6 +49,28 @@ NoSuchProcess(const char *msg) {
         PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
+    return NULL;
+}
+
+
+/*
+ * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
+ * message.
+ */
+PyObject *
+PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
+    char fullmsg[1024];
+
+#ifdef _WIN32
+    sprintf(fullmsg, "(originated from %s)", syscall);
+    PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
+#else
+    PyObject *exc;
+    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+#endif
     return NULL;
 }
 
@@ -97,10 +122,11 @@ psutil_debug(const char* format, ...) {
 /*
  * Called on module import on all platforms.
  */
-void
+int
 psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
+    return 0;
 }

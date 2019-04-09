@@ -2,7 +2,7 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-PYTHON = python
+PYTHON = python3
 TSCRIPT = psutil/tests/__main__.py
 ARGS =
 # List of nice-to-have dev libs.
@@ -14,14 +14,13 @@ DEPS = \
 	futures \
 	ipaddress \
 	mock==1.0.1 \
-	pep8 \
 	perf \
-	pyflakes \
 	requests \
 	setuptools \
 	sphinx \
 	twine \
 	unittest2 \
+	virtualenv \
 	wheel
 
 # In not in a virtualenv, add --user options for install commands.
@@ -50,6 +49,7 @@ clean:  ## Remove all build files.
 		*.egg-info \
 		*\$testfn* \
 		.coverage \
+		.failed-tests.txt \
 		.tox \
 		build/ \
 		dist/ \
@@ -114,11 +114,11 @@ test:  ## Run all tests.
 
 test-process:  ## Run process-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_process
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_process.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -m unittest -v psutil.tests.test_system
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
@@ -152,6 +152,10 @@ test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSyste
 	${MAKE} install
 	@$(TEST_PREFIX) $(PYTHON) -m unittest -v $(ARGS)
 
+test-failed:  ## Re-run tests which failed on last run
+	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) -c "import psutil.tests.runner as r; r.run(last_failed=True)"
+
 test-coverage:  ## Run test coverage.
 	${MAKE} install
 	# Note: coverage options are controlled by .coveragerc file
@@ -166,13 +170,6 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-pep8:  ## PEP8 linter.
-	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
-
-pyflakes:  ## Pyflakes linter.
-	@export PYFLAKES_NODOCTEST=1 && \
-		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
-
 flake8:  ## flake8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
@@ -185,14 +182,12 @@ git-tag-release:  ## Git-tag a new release.
 	git push --follow-tags
 
 install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
+	ln -sf ../../scripts/internal/.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Distribution
 # ===================================================================
-
-# --- create
 
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
@@ -204,8 +199,6 @@ wheel:  ## Generate wheel.
 win-download-wheels:  ## Download wheels hosted on appveyor.
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
-# --- upload
-
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
 	$(PYTHON) setup.py sdist upload
@@ -215,8 +208,16 @@ upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
 
 # --- others
 
-pre-release:  ## Check if we're ready to produce a new release.
+check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	rm -rf dist
+	${MAKE} clean
+	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
+	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
+	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
+	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
+
+pre-release:  ## Check if we're ready to produce a new release.
+	${MAKE} check-sdist
 	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
@@ -236,17 +237,27 @@ release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
-print-announce:  ## Print announce of new release.
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_announce.py
-
-print-timeline:  ## Print releases' timeline.
-	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_timeline.py
-
 check-manifest:  ## Inspect MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v $(ARGS)
 
 generate-manifest:  ## Generates MANIFEST.in file.
 	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+# ===================================================================
+# Printers
+# ===================================================================
+
+print-announce:  ## Print announce of new release.
+	@$(PYTHON) scripts/internal/print_announce.py
+
+print-timeline:  ## Print releases' timeline.
+	@$(PYTHON) scripts/internal/print_timeline.py
+
+print-access-denied: ## Print AD exceptions
+	@$(PYTHON) scripts/internal/print_access_denied.py
+
+print-api-speed:  ## Benchmark all API calls
+	@$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 # ===================================================================
 # Misc

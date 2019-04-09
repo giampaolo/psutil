@@ -86,7 +86,7 @@ def main():
     for p in procs[:86]:
         line = templ % (
             p.pid,
-            p._info["username"][:7],
+            p._info["username"][:7] if p._info["username"] else "",
             " ".join(p._info["cmdline"])[:30],
             convert_bytes(p._uss),
             convert_bytes(p._pss) if p._pss != "" else "",

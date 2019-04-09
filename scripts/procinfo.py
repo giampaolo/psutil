@@ -91,6 +91,7 @@ import socket
 import sys
 
 import psutil
+from psutil._common import bytes2human
 
 
 ACCESS_DENIED = ''
@@ -115,18 +116,6 @@ RLIMITS_MAP = {
 }
 
 
-def convert_bytes(n):
-    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
-    for s in reversed(symbols):
-        if n >= prefix[s]:
-            value = float(n) / prefix[s]
-            return '%.1f%s' % (value, s)
-    return "%sB" % n
-
-
 def print_(a, b):
     if sys.stdout.isatty() and psutil.POSIX:
         fmt = '\x1b[1;32m%-13s\x1b[0m %s' % (a, b)
@@ -135,13 +124,13 @@ def print_(a, b):
     print(fmt)
 
 
-def str_ntuple(nt, bytes2human=False):
+def str_ntuple(nt, convert_bytes=False):
     if nt == ACCESS_DENIED:
         return ""
-    if not bytes2human:
+    if not convert_bytes:
         return ", ".join(["%s=%s" % (x, getattr(nt, x)) for x in nt._fields])
     else:
-        return ", ".join(["%s=%s" % (x, convert_bytes(getattr(nt, x)))
+        return ", ".join(["%s=%s" % (x, bytes2human(getattr(nt, x)))
                           for x in nt._fields])
 
 
@@ -193,7 +182,7 @@ def run(pid, verbose=False):
     if hasattr(proc, "cpu_num"):
         print_("cpu-num", pinfo["cpu_num"])
 
-    print_('memory', str_ntuple(pinfo['memory_info'], bytes2human=True))
+    print_('memory', str_ntuple(pinfo['memory_info'], convert_bytes=True))
     print_('memory %', round(pinfo['memory_percent'], 2))
     print_('user', pinfo['username'])
     if psutil.POSIX:
@@ -224,7 +213,7 @@ def run(pid, verbose=False):
         print_('num-handles', pinfo['num_handles'])
 
     if 'io_counters' in pinfo:
-        print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
+        print_('I/O', str_ntuple(pinfo['io_counters'], convert_bytes=True))
     if 'num_ctx_switches' in pinfo:
         print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if pinfo['children']:
@@ -322,7 +311,7 @@ def run(pid, verbose=False):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template % (convert_bytes(region.rss), region.path))
+            print_("", template % (bytes2human(region.rss), region.path))
 
 
 def main(argv=None):

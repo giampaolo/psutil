@@ -10,27 +10,26 @@ A clone of top / htop.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
 $ python scripts/top.py
- CPU0  [|                                       ]   4.9%
- CPU1  [|||                                     ]   7.8%
- CPU2  [                                        ]   2.0%
- CPU3  [|||||                                   ]  13.9%
- Mem   [|||||||||||||||||||                     ]  49.8%  4920M / 9888M
- Swap  [                                        ]   0.0%     0M / 0M
- Processes: 287 (running=1, sleeping=286, zombie=1)
- Load average: 0.34 0.54 0.46  Uptime: 3 days, 10:16:37
+ CPU0  [||||                                    ]  10.9%
+ CPU1  [|||||                                   ]  13.1%
+ CPU2  [|||||                                   ]  12.8%
+ CPU3  [||||                                    ]  11.5%
+ Mem   [|||||||||||||||||||||||||||||           ]  73.0% 11017M / 15936M
+ Swap  [                                        ]   1.3%   276M / 20467M
+ Processes: 347 (sleeping=273, running=1, idle=73)
+ Load average: 1.10 1.28 1.34  Uptime: 8 days, 21:15:40
 
-PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
-------------------------------------------------------------
-989    giampaol    0   66M   12M    7.4  0.1   0:00.61  python
-2083   root        0  506M  159M    6.5  1.6   0:29.26  Xorg
-4503   giampaol    0  599M   25M    6.5  0.3   3:32.60  gnome-terminal
-3868   giampaol    0  358M    8M    2.8  0.1  23:12.60  pulseaudio
-3936   giampaol    0    1G  111M    2.8  1.1  33:41.67  compiz
-4401   giampaol    0  536M  141M    2.8  1.4  35:42.73  skype
-4047   giampaol    0  743M   76M    1.8  0.8  42:03.33  unity-panel-service
-13155  giampaol    0    1G  280M    1.8  2.8  41:57.34  chrome
-10     root        0    0B    0B    0.9  0.0   4:01.81  rcu_sched
-339    giampaol    0    1G  113M    0.9  1.1   8:15.73  chrome
+PID    USER       NI   VIRT    RES  CPU%  MEM%     TIME+  NAME
+5368   giampaol    0   7.2G   4.3G  41.8  27.7  56:34.18  VirtualBox
+24976  giampaol    0   2.1G 487.2M  18.7   3.1  22:05.16  Web Content
+22731  giampaol    0   3.2G 596.2M  11.6   3.7  35:04.90  firefox
+1202   root        0 807.4M 288.5M  10.6   1.8  12:22.12  Xorg
+22811  giampaol    0   2.8G 741.8M   9.0   4.7   2:26.61  Web Content
+2590   giampaol    0   2.3G 579.4M   5.5   3.6  28:02.70  compiz
+22990  giampaol    0   3.0G   1.2G   4.2   7.6   4:30.32  Web Content
+18412  giampaol    0  90.1M  14.5M   3.5   0.1   0:00.26  python3
+26971  netdata     0  20.8M   3.9M   2.9   0.0   3:17.14  apps.plugin
+2421   giampaol    0   3.3G  36.9M   2.3   0.2  57:14.21  pulseaudio
 ...
 """
 
@@ -45,6 +44,7 @@ except ImportError:
     sys.exit('platform not supported')
 
 import psutil
+from psutil._common import bytes2human
 
 
 # --- curses stuff
@@ -79,24 +79,6 @@ def print_line(line, highlight=False):
         lineno += 1
 
 # --- /curses stuff
-
-
-def bytes2human(n):
-    """
-    >>> bytes2human(10000)
-    '9K'
-    >>> bytes2human(100001221)
-    '95M'
-    """
-    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
-    for s in reversed(symbols):
-        if n >= prefix[s]:
-            value = int(float(n) / prefix[s])
-            return '%s%s' % (value, s)
-    return "%sB" % n
 
 
 def poll(interval):
@@ -178,7 +160,7 @@ def print_header(procs_status, num_procs):
 def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
     curses.endwin()
-    templ = "%-6s %-8s %4s %5s %5s %6s %4s %9s  %2s"
+    templ = "%-6s %-8s %4s %6s %6s %5s %5s %9s  %2s"
     win.erase()
     header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                       "TIME+", "NAME")

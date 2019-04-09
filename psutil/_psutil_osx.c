@@ -74,20 +74,6 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
 
 /*
- * Return 1 if pid refers to a zombie process else 0.
- */
-int
-psutil_is_zombie(long pid)
-{
-    struct kinfo_proc kp;
-
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return 0;
-    return (kp.kp_proc.p_stat == SZOMB) ? 1 : 0;
-}
-
-
-/*
  * A wrapper around task_for_pid() which sucks big time:
  * - it's not documented
  * - errno is set only sometimes
@@ -141,31 +127,22 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        if (errno != 0) {
-            PyErr_SetFromErrno(PyExc_OSError);
-        }
-        else {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "failed to retrieve process list");
-        }
+    if (psutil_get_proc_list(&proclist, &num_processes) != 0)
         goto error;
-    }
 
-    if (num_processes > 0) {
-        // save the address of proclist so we can free it later
-        orig_address = proclist;
-        for (idx = 0; idx < num_processes; idx++) {
-            py_pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
-            if (! py_pid)
-                goto error;
-            if (PyList_Append(py_retlist, py_pid))
-                goto error;
-            Py_DECREF(py_pid);
-            proclist++;
-        }
-        free(orig_address);
+    // save the address of proclist so we can free it later
+    orig_address = proclist;
+    for (idx = 0; idx < num_processes; idx++) {
+        py_pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
+        if (! py_pid)
+            goto error;
+        if (PyList_Append(py_retlist, py_pid))
+            goto error;
+        Py_DECREF(py_pid);
+        proclist++;
     }
+    free(orig_address);
+
     return py_retlist;
 
 error:
@@ -365,163 +342,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 
 /*
- * Return a list of tuples for every process memory maps.
- * 'procstat' cmdline utility has been used as an example.
- */
-static PyObject *
-psutil_proc_memory_maps(PyObject *self, PyObject *args) {
-    char buf[PATH_MAX];
-    char addr_str[34];
-    char perms[8];
-    int pagesize = getpagesize();
-    long pid;
-    kern_return_t err = KERN_SUCCESS;
-    mach_port_t task = MACH_PORT_NULL;
-    uint32_t depth = 1;
-    vm_address_t address = 0;
-    vm_size_t size = 0;
-
-    PyObject *py_tuple = NULL;
-    PyObject *py_path = NULL;
-    PyObject *py_list = PyList_New(0);
-
-    if (py_list == NULL)
-        return NULL;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
-
-    if (psutil_task_for_pid(pid, &task) != 0)
-        goto error;
-
-    while (1) {
-        py_tuple = NULL;
-        struct vm_region_submap_info_64 info;
-        mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
-
-        err = vm_region_recurse_64(task, &address, &size, &depth,
-                                   (vm_region_info_64_t)&info, &count);
-        if (err == KERN_INVALID_ADDRESS) {
-            // TODO temporary
-            psutil_debug("vm_region_recurse_64 returned KERN_INVALID_ADDRESS");
-            break;
-        }
-        if (err != KERN_SUCCESS) {
-            psutil_debug("vm_region_recurse_64 returned !=  KERN_SUCCESS");
-        }
-
-        if (info.is_submap) {
-            depth++;
-        }
-        else {
-            // Free/Reset the char[]s to avoid weird paths
-            memset(buf, 0, sizeof(buf));
-            memset(addr_str, 0, sizeof(addr_str));
-            memset(perms, 0, sizeof(perms));
-
-            sprintf(addr_str,
-                    "%016lx-%016lx",
-                    (long unsigned int)address,
-                    (long unsigned int)address + size);
-            sprintf(perms, "%c%c%c/%c%c%c",
-                    (info.protection & VM_PROT_READ) ? 'r' : '-',
-                    (info.protection & VM_PROT_WRITE) ? 'w' : '-',
-                    (info.protection & VM_PROT_EXECUTE) ? 'x' : '-',
-                    (info.max_protection & VM_PROT_READ) ? 'r' : '-',
-                    (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
-                    (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
-
-            // proc_regionfilename() return value seems meaningless
-            // so we do what we can in order to not continue in case
-            // of error.
-            errno = 0;
-            proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
-            if ((errno != 0) || ((sizeof(buf)) <= 0)) {
-                // TODO temporary
-                psutil_debug("proc_regionfilename() failed");
-                psutil_raise_for_pid(pid, "proc_regionfilename()");
-                goto error;
-            }
-
-            if (info.share_mode == SM_COW && info.ref_count == 1) {
-                // Treat single reference SM_COW as SM_PRIVATE
-                info.share_mode = SM_PRIVATE;
-            }
-
-            if (strlen(buf) == 0) {
-                switch (info.share_mode) {
-// #ifdef SM_LARGE_PAGE
-                    // case SM_LARGE_PAGE:
-                        // Treat SM_LARGE_PAGE the same as SM_PRIVATE
-                        // since they are not shareable and are wired.
-// #endif
-                    case SM_COW:
-                        strcpy(buf, "[cow]");
-                        break;
-                    case SM_PRIVATE:
-                        strcpy(buf, "[prv]");
-                        break;
-                    case SM_EMPTY:
-                        strcpy(buf, "[nul]");
-                        break;
-                    case SM_SHARED:
-                    case SM_TRUESHARED:
-                        strcpy(buf, "[shm]");
-                        break;
-                    case SM_PRIVATE_ALIASED:
-                        strcpy(buf, "[ali]");
-                        break;
-                    case SM_SHARED_ALIASED:
-                        strcpy(buf, "[s/a]");
-                        break;
-                    default:
-                        strcpy(buf, "[???]");
-                }
-            }
-
-            py_path = PyUnicode_DecodeFSDefault(buf);
-            if (! py_path)
-                goto error;
-            py_tuple = Py_BuildValue(
-                "ssOIIIIIH",
-                addr_str,                                 // "start-end"address
-                perms,                                    // "rwx" permissions
-                py_path,                                  // path
-                info.pages_resident * pagesize,           // rss
-                info.pages_shared_now_private * pagesize, // private
-                info.pages_swapped_out * pagesize,        // swapped
-                info.pages_dirtied * pagesize,            // dirtied
-                info.ref_count,                           // ref count
-                info.shadow_depth                         // shadow depth
-            );
-            if (!py_tuple)
-                goto error;
-            if (PyList_Append(py_list, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
-            Py_DECREF(py_path);
-        }
-
-        // increment address for the next map/file
-        address += size;
-    }
-
-    if (task != MACH_PORT_NULL)
-        mach_port_deallocate(mach_task_self(), task);
-
-    return py_list;
-
-error:
-    if (task != MACH_PORT_NULL)
-        mach_port_deallocate(mach_task_self(), task);
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_path);
-    Py_DECREF(py_list);
-    return NULL;
-}
-
-
-/*
  * Return the number of logical CPUs in the system.
  * XXX this could be shared with BSD.
  */
@@ -569,7 +389,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */
-bool
+static bool
 psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
     mach_vm_address_t size;
@@ -622,8 +442,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         return NULL;
 
     len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('sysctl.proc_cputype')");
+    }
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
@@ -863,12 +685,18 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int64_t max;
     size_t size = sizeof(int64_t);
 
-    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency')");
+    }
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency_min')");
+    }
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.cpufrequency_max')");
+    }
 
     return Py_BuildValue(
         "KKK",
@@ -1370,7 +1198,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
                 // check for inet_ntop failures
                 if (errno != 0) {
-                    PyErr_SetFromErrno(PyExc_OSError);
+                    PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
                     goto error;
                 }
 
@@ -1483,19 +1311,18 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
-    size_t len;
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_ifc_info = NULL;
-
-    if (py_retdict == NULL)
-        return NULL;
-
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
     mib[2] = 0;                // protocol (IPPROTO_xxx)
     mib[3] = 0;                // address family
     mib[4] = NET_RT_IFLIST2;   // operation
     mib[5] = 0;
+    size_t len;
+    PyObject *py_ifc_info = NULL;
+    PyObject *py_retdict = PyDict_New();
+
+    if (py_retdict == NULL)
+        return NULL;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -1573,8 +1400,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     io_registry_entry_t parent;
     io_registry_entry_t disk;
     io_iterator_t disk_list;
-    PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+    PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
@@ -1946,8 +1773,6 @@ PsutilMethods[] = {
      "Return the number of fds opened by process."},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
-    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
-     "Return a list of tuples for every process's memory map"},
 
     // --- system-related functions
 
@@ -2044,6 +1869,12 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
+    if (module == NULL)
+        INITERROR;
+
+    if (psutil_setup() != 0)
+        INITERROR;
+
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
@@ -2071,8 +1902,6 @@ init_psutil_osx(void)
         "_psutil_osx.ZombieProcessError", NULL, NULL);
     Py_INCREF(ZombieProcessError);
     PyModule_AddObject(module, "ZombieProcessError", ZombieProcessError);
-
-    psutil_setup();
 
     if (module == NULL)
         INITERROR;

@@ -15,10 +15,14 @@ from ._common import sdiskusage
 from ._common import usage_percent
 from ._compat import PY3
 from ._compat import unicode
-from ._exceptions import TimeoutExpired
 
 
 __all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
+
+
+# This object gets set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+TimeoutExpired = None
 
 
 def pid_exists(pid):

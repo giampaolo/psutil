@@ -25,11 +25,11 @@ from psutil import SUNOS
 from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
-from psutil.tests import retry_before_failing
-from psutil.tests import run_test_module_by_name
+from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TRAVIS
@@ -157,7 +157,7 @@ class TestProcess(unittest.TestCase):
             assert fun.called
 
     @skip_on_access_denied()
-    @retry_before_failing()
+    @retry_on_failure()
     def test_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -167,7 +167,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(rss_ps, rss_psutil)
 
     @skip_on_access_denied()
-    @retry_before_failing()
+    @retry_on_failure()
     def test_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -288,7 +288,7 @@ class TestProcess(unittest.TestCase):
         failures = []
         ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
                          'send_signal', 'wait', 'children', 'as_dict',
-                         'memory_info_ex']
+                         'memory_info_ex', 'parent', 'parents']
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
         if LINUX and get_kernel_version() < (2, 6, 23):
@@ -317,14 +317,12 @@ class TestProcess(unittest.TestCase):
 class TestSystemAPIs(unittest.TestCase):
     """Test some system APIs."""
 
-    @retry_before_failing()
+    @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        pids_ps = ps("pid")
+        pids_ps = sorted(ps("pid"))
         pids_psutil = psutil.pids()
-        pids_ps.sort()
-        pids_psutil.sort()
 
         # on MACOS and OPENBSD ps doesn't show pid 0
         if MACOS or OPENBSD and 0 not in pids_ps:
@@ -341,6 +339,7 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True).keys():
@@ -355,7 +354,7 @@ class TestSystemAPIs(unittest.TestCase):
     # can't find users on APPVEYOR or TRAVIS
     @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
                      "unreliable on APPVEYOR or TRAVIS")
-    @retry_before_failing()
+    @retry_on_failure()
     def test_users(self):
         out = sh("who")
         lines = out.split('\n')
@@ -437,4 +436,5 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions from 2.6 to 3.X.
+Works with Python versions from 2.6 to 3.4+.
 """
 
 from __future__ import division
@@ -87,12 +87,6 @@ from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
 
-from ._exceptions import AccessDenied
-from ._exceptions import Error
-from ._exceptions import NoSuchProcess
-from ._exceptions import TimeoutExpired
-from ._exceptions import ZombieProcess
-
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
@@ -152,6 +146,10 @@ elif WINDOWS:
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
+    from ._pswindows import IOPRIO_VERYLOW  # NOQA
+    from ._pswindows import IOPRIO_LOW  # NOQA
+    from ._pswindows import IOPRIO_NORMAL  # NOQA
+    from ._pswindows import IOPRIO_HIGH  # NOQA
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -219,16 +217,19 @@ __all__ = [
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
+
+
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.5.0"
+__version__ = "5.6.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
+
+_timer = getattr(time, 'monotonic', time.time)
 AF_LINK = _psplatform.AF_LINK
 POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
 POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
-_timer = getattr(time, 'monotonic', time.time)
-
+_LOWEST_PID = None
 
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
@@ -250,6 +251,112 @@ if (int(__version__.replace('.', '')) !=
                 "the existing psutil install directory"))
     msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
+
+
+# =====================================================================
+# --- Exceptions
+# =====================================================================
+
+
+class Error(Exception):
+    """Base exception class. All other psutil exceptions inherit
+    from this one.
+    """
+
+    def __init__(self, msg=""):
+        Exception.__init__(self, msg)
+        self.msg = msg
+
+    def __repr__(self):
+        ret = "psutil.%s %s" % (self.__class__.__name__, self.msg)
+        return ret.strip()
+
+    __str__ = __repr__
+
+
+class NoSuchProcess(Error):
+    """Exception raised when a process with a certain PID doesn't
+    or no longer exists.
+    """
+
+    def __init__(self, pid, name=None, msg=None):
+        Error.__init__(self, msg)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if name:
+                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+            else:
+                details = "(pid=%s)" % self.pid
+            self.msg = "process no longer exists " + details
+
+
+class ZombieProcess(NoSuchProcess):
+    """Exception raised when querying a zombie process. This is
+    raised on macOS, BSD and Solaris only, and not always: depending
+    on the query the OS may be able to succeed anyway.
+    On Linux all zombie processes are querable (hence this is never
+    raised). Windows doesn't have zombie processes.
+    """
+
+    def __init__(self, pid, name=None, ppid=None, msg=None):
+        NoSuchProcess.__init__(self, msg)
+        self.pid = pid
+        self.ppid = ppid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            args = ["pid=%s" % pid]
+            if name:
+                args.append("name=%s" % repr(self.name))
+            if ppid:
+                args.append("ppid=%s" % self.ppid)
+            details = "(%s)" % ", ".join(args)
+            self.msg = "process still exists but it's a zombie " + details
+
+
+class AccessDenied(Error):
+    """Exception raised when permission to perform an action is denied."""
+
+    def __init__(self, pid=None, name=None, msg=None):
+        Error.__init__(self, msg)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if (pid is not None) and (name is not None):
+                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+            elif (pid is not None):
+                self.msg = "(pid=%s)" % self.pid
+            else:
+                self.msg = ""
+
+
+class TimeoutExpired(Error):
+    """Raised on Process.wait(timeout) if timeout expires and process
+    is still alive.
+    """
+
+    def __init__(self, seconds, pid=None, name=None):
+        Error.__init__(self, "timeout after %s seconds" % seconds)
+        self.seconds = seconds
+        self.pid = pid
+        self.name = name
+        if (pid is not None) and (name is not None):
+            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
+        elif (pid is not None):
+            self.msg += " (pid=%s)" % self.pid
+
+
+# Push exception classes into platform specific module namespace.
+_psplatform.NoSuchProcess = NoSuchProcess
+_psplatform.ZombieProcess = ZombieProcess
+_psplatform.AccessDenied = AccessDenied
+_psplatform.TimeoutExpired = TimeoutExpired
+if POSIX:
+    from . import _psposix
+    _psposix.TimeoutExpired = TimeoutExpired
 
 
 # =====================================================================
@@ -546,6 +653,9 @@ class Process(object):
         checking whether PID has been reused.
         If no parent is known return None.
         """
+        lowest_pid = _LOWEST_PID if _LOWEST_PID is not None else pids()[0]
+        if self.pid == lowest_pid:
+            return None
         ppid = self.ppid()
         if ppid is not None:
             ctime = self.create_time()
@@ -556,6 +666,17 @@ class Process(object):
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
                 pass
+
+    def parents(self):
+        """Return the parents of this process as a list of Process
+        instances. If no parents are known return an empty list.
+        """
+        parents = []
+        proc = self.parent()
+        while proc is not None:
+            parents.append(proc)
+            proc = proc.parent()
+        return parents
 
     def is_running(self):
         """Return whether this process is running.
@@ -805,9 +926,6 @@ class Process(object):
             (and set).
             (Windows, Linux and BSD only).
             """
-            # Automatically remove duplicates both on get and
-            # set (for get it's not really necessary, it's
-            # just for extra safety).
             if cpus is None:
                 return list(set(self._proc.cpu_affinity_get()))
             else:
@@ -1101,7 +1219,6 @@ class Process(object):
         return (value / float(total_phymem)) * 100
 
     if hasattr(_psplatform.Process, "memory_maps"):
-        # Available everywhere except OpenBSD and NetBSD.
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.
@@ -1304,7 +1421,7 @@ class Popen(Process):
     http://bugs.python.org/issue6973.
 
     For a complete documentation refer to:
-    http://docs.python.org/library/subprocess.html
+    http://docs.python.org/3/library/subprocess.html
     """
 
     def __init__(self, *args, **kwargs):
@@ -1360,7 +1477,7 @@ class Popen(Process):
 _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-      'is_running', 'as_dict', 'parent', 'children', 'rlimit',
+      'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
       'memory_info_ex', 'oneshot']])
 
 
@@ -1371,7 +1488,10 @@ _as_dict_attrnames = set(
 
 def pids():
     """Return a list of current running PIDs."""
-    return _psplatform.pids()
+    global _LOWEST_PID
+    ret = sorted(_psplatform.pids())
+    _LOWEST_PID = ret[0]
+    return ret
 
 
 def pid_exists(pid):
@@ -1393,6 +1513,7 @@ def pid_exists(pid):
 
 
 _pmap = {}
+_lock = threading.Lock()
 
 
 def process_iter(attrs=None, ad_value=None):
@@ -1420,21 +1541,26 @@ def process_iter(attrs=None, ad_value=None):
         proc = Process(pid)
         if attrs is not None:
             proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
-        _pmap[proc.pid] = proc
+        with _lock:
+            _pmap[proc.pid] = proc
         return proc
 
     def remove(pid):
-        _pmap.pop(pid, None)
+        with _lock:
+            _pmap.pop(pid, None)
 
     a = set(pids())
     b = set(_pmap.keys())
     new_pids = a - b
     gone_pids = b - a
-
     for pid in gone_pids:
         remove(pid)
-    for pid, proc in sorted(list(_pmap.items()) +
-                            list(dict.fromkeys(new_pids).items())):
+
+    with _lock:
+        ls = sorted(list(_pmap.items()) +
+                    list(dict.fromkeys(new_pids).items()))
+
+    for pid, proc in ls:
         try:
             if proc is None:  # new process
                 yield add(pid)
@@ -2312,19 +2438,16 @@ if WINDOWS:
 
 
 def test():  # pragma: no cover
-    """List info of all currently running processes emulating ps aux
-    output.
-    """
+    from ._common import bytes2human
+    from ._compat import get_terminal_size
+
     today_day = datetime.date.today()
-    templ = "%-10s %5s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'memory_percent', 'name', 'cpu_times', 'create_time',
-             'memory_info']
-    if POSIX:
-        attrs.append('uids')
-        attrs.append('terminal')
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "TTY", "START", "TIME",
-                   "COMMAND"))
-    for p in process_iter(attrs=attrs, ad_value=''):
+    templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
+    attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
+             'create_time', 'memory_info', 'status', 'nice', 'username']
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+                   "STATUS", "START", "TIME", "CMDLINE"))
+    for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
             if ctime.date() == today_day:
@@ -2333,30 +2456,46 @@ def test():  # pragma: no cover
                 ctime = ctime.strftime("%b%d")
         else:
             ctime = ''
-        cputime = time.strftime("%M:%S",
-                                time.localtime(sum(p.info['cpu_times'])))
-        try:
-            user = p.username()
-        except Error:
-            user = ''
-        if WINDOWS and '\\' in user:
+        if p.info['cpu_times']:
+            cputime = time.strftime("%M:%S",
+                                    time.localtime(sum(p.info['cpu_times'])))
+        else:
+            cputime = ''
+
+        user = p.info['username']
+        if not user and POSIX:
+            try:
+                user = p.uids()[0]
+            except Error:
+                pass
+        if user and WINDOWS and '\\' in user:
             user = user.split('\\')[1]
-        vms = p.info['memory_info'] and \
-            int(p.info['memory_info'].vms / 1024) or '?'
-        rss = p.info['memory_info'] and \
-            int(p.info['memory_info'].rss / 1024) or '?'
-        memp = p.info['memory_percent'] and \
-            round(p.info['memory_percent'], 1) or '?'
-        print(templ % (
+        user = user[:9]
+        vms = bytes2human(p.info['memory_info'].vms) if \
+            p.info['memory_info'] is not None else ''
+        rss = bytes2human(p.info['memory_info'].rss) if \
+            p.info['memory_info'] is not None else ''
+        memp = round(p.info['memory_percent'], 1) if \
+            p.info['memory_percent'] is not None else ''
+        nice = int(p.info['nice']) if p.info['nice'] else ''
+        if p.info['cmdline']:
+            cmdline = ' '.join(p.info['cmdline'])
+        else:
+            cmdline = p.info['name']
+        status = p.info['status'][:5] if p.info['status'] else ''
+
+        line = templ % (
             user[:10],
             p.info['pid'],
             memp,
             vms,
             rss,
-            p.info.get('terminal', '') or '?',
+            nice,
+            status,
             ctime,
             cputime,
-            p.info['name'].strip() or '?'))
+            cmdline)
+        print(line[:get_terminal_size()[0]])
 
 
 del memoize, memoize_when_activated, division, deprecated_method

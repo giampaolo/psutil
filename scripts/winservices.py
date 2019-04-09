@@ -27,7 +27,6 @@ binpath: C:\Windows\system32\svchost.exe -k LocalServiceAndNoImpersonation
 Appinfo (Application Information)
 status: stopped, start: manual, username: LocalSystem, pid: None
 binpath: C:\Windows\system32\svchost.exe -k netsvcs
-
 ...
 """
 

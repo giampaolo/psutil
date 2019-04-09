@@ -37,9 +37,7 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures, with Python
-versions from **2.6 to 3.6** (users of Python 2.4 and 2.5 may use
-`2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__ version).
+Supported Python versions are **2.6**, **2.7** and **3.4+**.
 `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
@@ -161,8 +159,7 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (same as
-  `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
+  Return the number of logical CPUs in the system (same as `os.cpu_count`_
   in Python 3.4) or ``None`` if undetermined.
   If *logical* is ``False`` return the number of physical cores only (hyper
   thread CPUs are excluded) or ``None`` if undetermined.
@@ -278,8 +275,8 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
-  script providing an example on how to convert bytes in a human readable form.
+  See `meminfo.py`_ script providing an example on how to convert bytes in a
+  human readable form.
 
   .. note:: if you just want to know how much physical memory is left in a
     cross platform fashion simply rely on the **available** field.
@@ -314,8 +311,8 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are always set to ``0``.
-  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
-  script providing an example on how to convert bytes in a human readable form.
+  See `meminfo.py`_ script providing an example on how to convert bytes in a
+  human readable form.
 
     >>> import psutil
     >>> psutil.swap_memory()
@@ -335,21 +332,17 @@ Disks
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
   parameter is ``False`` it tries to distinguish and return physical devices
   only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
-  (e.g. memory partitions such as
-  `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`__).
+  (e.g. memory partitions such as /dev/shm).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   Named tuple's **fstype** field is a string which varies depending on the
   platform.
   On Linux it can be one of the values found in /proc/filesystems (e.g.
   ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
-  On Windows it is determined via
-  `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`__
-  and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
-  ``"unmounted"`` or ``"ramdisk"``. On macOS and BSD it is retrieved via
-  `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
-  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
-  script providing an example usage.
+  On Windows it is determined via `GetDriveType`_ and can be either
+  ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``, ``"unmounted"`` or
+  ``"ramdisk"``. On macOS and BSD it is retrieved via `getfsstat`_ syscall.
+  See `disk_usage.py`_ script providing an example usage.
 
     >>> import psutil
     >>> psutil.disk_partitions()
@@ -361,12 +354,10 @@ Disks
   Return disk usage statistics about the partition which contains the given
   *path* as a named tuple including **total**, **used** and **free** space
   expressed in bytes, plus the **percentage** usage.
-  `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
-  raised if *path* does not exist.
-  Starting from `Python 3.3 <http://bugs.python.org/issue12442>`__  this is
-  also available as
-  `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
-  See `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__ script providing an example usage.
+  ``OSError`` is raised if *path* does not exist.
+  Starting from Python 3.3 this is also available as `shutil.disk_usage`_
+  (see `BPO-12442`_).
+  See `disk_usage.py`_ script providing an example usage.
 
     >>> import psutil
     >>> psutil.disk_usage('/')
@@ -403,16 +394,13 @@ Disks
     (in milliseconds)
   - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds)
-  - **read_merged_count** (*Linux*): number of merged reads
-    (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
-  - **write_merged_count** (*Linux*): number of merged writes
-    (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **read_merged_count** (*Linux*): number of merged reads (see `iostats doc`_)
+  - **write_merged_count** (*Linux*): number of merged writes (see `iostats doc`_)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the named tuple described above as the values.
-  See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
-  for an example application.
+  See `iotop.py`_ for an example application.
   On some systems such as Linux, on a very busy or long-lived system, the
   numbers returned by the kernel may overflow and wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
@@ -488,9 +476,7 @@ Network
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
-  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
-  for an example application.
+  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
 
   .. versionchanged::
     5.3.0 numbers no longer wrap (restart from zero) across calls thanks to new
@@ -502,18 +488,11 @@ Network
   Every named tuple provides 7 attributes:
 
   - **fd**: the socket file descriptor. If the connection refers to the current
-    process this may be passed to
-    `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
+    process this may be passed to `socket.fromfd`_
     to obtain a usable socket object.
     On Windows and SunOS this is always set to ``-1``.
-  - **family**: the address family, either `AF_INET
-    <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
-    `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
-    or `AF_UNIX <http://docs.python.org//library/socket.html#socket.AF_UNIX>`__.
-  - **type**: the address type, either `SOCK_STREAM
-    <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
-    `SOCK_DGRAM
-    <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
+  - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or `AF_UNIX`_.
+  - **type**: the address type, either `SOCK_STREAM`_ or `SOCK_DGRAM`_.
   - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
     in case of AF_UNIX sockets. For UNIX sockets see notes below.
   - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -521,7 +500,7 @@ Network
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
-    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
+    is one of the `psutil.CONN_* <#connections-constants>`_ constants
     (a string).
     For UDP and UNIX sockets this is always going to be
     :const:`psutil.CONN_NONE`.
@@ -562,8 +541,7 @@ Network
 
   On macOS and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.connections`.
-  Also, see
-  `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py>`__.
+  Also, see `netstat.py`_ example script.
   Example:
 
     >>> import psutil
@@ -603,9 +581,7 @@ Network
   value is a list of named tuples for each address assigned to the NIC.
   Each named tuple includes 5 fields:
 
-  - **family**: the address family, either
-    `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
-    `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+  - **family**: the address family, either `AF_INET`_ or `AF_INET6`_
     or :const:`psutil.AF_LINK`, which refers to a MAC address.
   - **address**: the primary NIC address (always set).
   - **netmask**: the netmask address (may be ``None``).
@@ -626,9 +602,7 @@ Network
                snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
 
-  See also `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
-  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
-  for an example application.
+  See also `nettop.py`_ and `ifconfig.py`_ for an example application.
 
   .. note::
     if you're interested in others families (e.g. AF_BLUETOOTH) you can use
@@ -670,9 +644,7 @@ Network
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
 
-  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
-  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
-  for an example application.
+  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
 
   .. versionadded:: 3.0.0
 
@@ -700,8 +672,7 @@ Sensors
                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  See also `temperatures.py <https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py>`__ and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
-  for an example application.
+  See also `temperatures.py`_ and `sensors.py`_ for an example application.
 
   Availability: Linux, FreeBSD
 
@@ -721,8 +692,7 @@ Sensors
     >>> psutil.sensors_fans()
     {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  See also `fans.py <https://github.com/giampaolo/psutil/blob/master/scripts/fans.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__
-  for an example application.
+  See also `fans.py`_  and `sensors.py`_ for an example application.
 
   Availability: Linux, macOS
 
@@ -759,7 +729,7 @@ Sensors
     >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
     charge = 93%, time left = 4:37:08
 
-  See also `battery.py <https://github.com/giampaolo/psutil/blob/master/scripts/battery.py>`__  and `sensors.py <https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py>`__ for an example application.
+  See also `battery.py`_  and `sensors.py`_ for an example application.
 
   Availability: Linux, Windows, FreeBSD
 
@@ -785,8 +755,7 @@ Other system info
 
   .. note::
     on Windows this function may return a time which is off by 1 second if it's
-    used across different processes (see
-    `issue #1007 <https://github.com/giampaolo/psutil/issues/1007>`__).
+    used across different processes (see `issue #1007`_).
 
 .. function:: users()
 
@@ -820,12 +789,16 @@ Functions
 
 .. function:: pids()
 
-  Return a list of current running PIDs. To iterate over all processes
-  and avoid race conditions :func:`process_iter()` should be preferred.
+  Return a sorted list of current running PIDs.
+  To iterate over all processes and avoid race conditions :func:`process_iter()`
+  should be preferred.
 
   >>> import psutil
   >>> psutil.pids()
   [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
+
+  .. versionchanged::
+    5.6.0 PIDs are returned in sorted order
 
 .. function:: process_iter(attrs=None, ad_value=None)
 
@@ -975,25 +948,21 @@ Process class
 .. class:: Process(pid=None)
 
   Represents an OS process with the given *pid*.
-  If *pid* is omitted current process *pid*
-  (`os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__) is used.
+  If *pid* is omitted current process *pid* (`os.getpid`_) is used.
   Raise :class:`NoSuchProcess` if *pid* does not exist.
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
   When accessing methods of this class always be  prepared to catch
-  :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
-  exceptions.
-  `hash() <https://docs.python.org/3/library/functions.html#hash>`__ builtin can
-  be used against instances of this class in order to identify a process
-  univocally over time (the hash is determined by mixing process PID
-  and creation time). As such it can also be used with
-  `set()s <https://docs.python.org/3/library/stdtypes.html#types-set>`__.
+  :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
+  `hash`_ builtin can be used against instances of this class in order to
+  identify a process univocally over time (the hash is determined by mixing
+  process PID + creation time). As such it can also be used with `set`_.
 
   .. note::
 
     In order to efficiently fetch more than one information about the process
-    at the same time, make sure to use either :meth:`as_dict` or
-    :meth:`oneshot` context manager.
+    at the same time, make sure to use either :meth:`oneshot` context manager
+    or :meth:`as_dict` utility method.
 
   .. note::
 
@@ -1008,6 +977,7 @@ Process class
     :meth:`rlimit` (set),
     :meth:`children`,
     :meth:`parent`,
+    :meth:`parents`,
     :meth:`suspend`
     :meth:`resume`,
     :meth:`send_signal`,
@@ -1104,16 +1074,13 @@ Process class
   .. method:: ppid()
 
     The process parent PID.  On Windows the return value is cached after first
-    call. Not on POSIX because
-    `ppid may change <https://github.com/giampaolo/psutil/issues/321>`__
-    if process becomes a zombie.
-    See also :meth:`parent` method.
+    call. Not on POSIX because ppid may change if process becomes a zombie
+    See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
 
     The process name.  On Windows the return value is cached after first
-    call. Not on POSIX because the process name
-    `may change <https://github.com/giampaolo/psutil/issues/692>`__.
+    call. Not on POSIX because the process name may change.
     See also how to `find a process by name <#find-process-by-name>`__.
 
   .. method:: exe()
@@ -1152,9 +1119,7 @@ Process class
   .. method:: create_time()
 
     The process creation time as a floating point number expressed in seconds
-    since the epoch, in
-    `UTC <http://en.wikipedia.org/wiki/Coordinated_universal_time>`__.
-    The return value is cached after first call.
+    since the epoch, in UTC. The return value is cached after first call.
 
       >>> import psutil, datetime
       >>> p = psutil.Process()
@@ -1193,14 +1158,22 @@ Process class
   .. method:: parent()
 
     Utility method which returns the parent process as a :class:`Process`
-    object preemptively checking whether PID has been reused. If no parent
+    object, preemptively checking whether PID has been reused. If no parent
     PID is known return ``None``.
-    See also :meth:`ppid` method.
+    See also :meth:`ppid` and :meth:`parents` methods.
+
+  .. method:: parents()
+
+    Utility method which return the parents of this process as a list of
+    :class:`Process` instances. If no parents are known return an empty list.
+    See also :meth:`ppid` and :meth:`parent` methods.
+
+    .. versionadded:: 5.6.0
 
   .. method:: status()
 
     The current process status as a string. The returned string is one of the
-    :data:`psutil.STATUS_*<psutil.STATUS_RUNNING>` constants.
+    `psutil.STATUS_* <#process-status-constants>`_ constants.
 
   .. method:: cwd()
 
@@ -1213,19 +1186,15 @@ Process class
 
   .. method:: uids()
 
-    The real, effective and saved user ids of this process as a
-    named tuple. This is the same as
-    `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
-    but can be used for any process PID.
+    The real, effective and saved user ids of this process as a named tuple.
+    This is the same as `os.getresuid`_ but can be used for any process PID.
 
     Availability: UNIX
 
   .. method:: gids()
 
-    The real, effective and saved group ids of this process as a
-    named tuple. This is the same as
-    `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
-    but can be used for any process PID.
+    The real, effective and saved group ids of this process as a named tuple.
+    This is the same as `os.getresgid`_ but can be used for any process PID.
 
     Availability: UNIX
 
@@ -1238,8 +1207,7 @@ Process class
 
   .. method:: nice(value=None)
 
-    Get or set process
-    `niceness <blogs.techrepublic.com.com/opensource/?p=140>`__ (priority).
+    Get or set process niceness (priority).
     On UNIX this is a number which usually goes from ``-20`` to ``20``.
     The higher the nice value, the lower the priority of the process.
 
@@ -1250,16 +1218,10 @@ Process class
       10
       >>>
 
-    Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
-    functionality is also available as
-    `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
-    and
-    `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__
-    (UNIX only).
-    On Windows this is implemented via
-    `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
-    and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
-    Windows APIs and *value* is one of the
+    Starting from Python 3.3 this functionality is also available as
+    `os.getpriority`_ and `os.setpriority`_ (see `BPO-10784`_).
+    On Windows this is implemented via `GetPriorityClass`_ and
+    `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
     constants reflecting the MSDN documentation.
     Example which increases process priority on Windows:
@@ -1268,44 +1230,57 @@ Process class
 
   .. method:: ionice(ioclass=None, value=None)
 
-    Get or set
-    `process I/O niceness <http://friedcpu.wordpress.com/2007/07/17/why-arent-you-using-ionice-yet/>`__ (priority).
-    On Linux *ioclass* is one of the
-    :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
-    *value* is a number which goes from  ``0`` to ``7``. The higher the value,
-    the lower the I/O priority of the process. On Windows only *ioclass* is
-    used and it can be set to ``2`` (normal), ``1`` (low) or ``0`` (very low).
-    The example below sets IDLE priority class for the current process,
-    meaning it will only get I/O time when no other process needs the disk:
+    Get or set process I/O niceness (priority).
+    If no argument is provided it acts as a get, returning a ``(ioclass, value)``
+    tuple on Linux and a *ioclass* integer on Windows.
+    If *ioclass* is provided it acts as a set. In this case an additional
+    *value* can be specified on Linux only in order to increase or decrease the
+    I/O priority even further.
+    Here's the possible platform-dependent *ioclass* values.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # set
-      >>> p.ionice()  # get
-      pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
-      >>>
+    Linux (see `ioprio_get`_ manual):
 
-    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-    ``1`` (low) or ``0`` (very low). Also it returns an integer instead of a
-    named tuple.
+    * ``IOPRIO_CLASS_RT``: (high) the process gets first access to the disk
+      every time. Use it with care as it can starve the entire
+      system. Additional priority *level* can be specified and ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_BE``: (normal) the default for any process that hasn't set
+      a specific I/O priority. Additional priority *level* ranges from
+      ``0`` (highest) to ``7`` (lowest).
+    * ``IOPRIO_CLASS_IDLE``: (low) get I/O time when no-one else needs the disk.
+      No additional *value* is accepted.
+    * ``IOPRIO_CLASS_NONE``: returned when no priority was previously set.
 
-    Availability: Linux and Windows > Vista
+    Windows:
 
-    .. versionchanged::
-      3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
-      `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
-      instead of a plain integer.
+    * ``IOPRIO_HIGH``: highest priority.
+    * ``IOPRIO_NORMAL``: default priority.
+    * ``IOPRIO_LOW``: low priority.
+    * ``IOPRIO_VERYLOW``: lowest priority.
+
+    Here's an example on how to set the highest I/O priority depending on what
+    platform you're on::
+
+      import psutil
+      p = psutil.Process()
+      if psutil.LINUX
+          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+      else:  # Windows
+          p.ionice(psutil.IOPRIO_HIGH)
+      p.ionice()  # get
+
+    Availability: Linux, Windows Vista+
+
+    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_*`` constants
+     including new ``IOPRIO_HIGH``.
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process resource limits (see
-    `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one
-    of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>` constants.
+    Get or set process resource limits (see `man prlimit`_). *resource* is one
+    of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
-    This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
-    and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
-    but can be used for any process PID, not only
-    `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
+    This is the same as `resource.getrlimit`_ and `resource.setrlimit`_
+    but can be used for any process PID, not only `os.getpid`_.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
     and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
     Example:
@@ -1327,7 +1302,7 @@ Process class
 
     Return process I/O statistics as a named tuple.
     For Linux you can refer to
-    `/proc filesysem documentation <http://stackoverflow.com/a/3634088>`__.
+    `/proc filesysem documentation <https://stackoverflow.com/questions/3633286/>`__.
 
     - **read_count**: the number of read operations performed (cumulative).
       This is supposed to count the number of read-related syscalls such as
@@ -1405,9 +1380,7 @@ Process class
     `explanation <http://stackoverflow.com/questions/556405/>`__).
     On Windows and macOS only *user* and *system* are filled, the others are
     set to ``0``.
-    This is similar to
-    `os.times() <http://docs.python.org//library/os.html#os.times>`__
-    but can be used for any process PID.
+    This is similar to `os.times`_ but can be used for any process PID.
 
     .. versionchanged::
       4.1.0 return two extra fields: *children_user* and *children_system*.
@@ -1497,7 +1470,7 @@ Process class
     On FreeBSD certain kernel process may return ``-1``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
-    `cpu_distribution.py <https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py>`__ example script.
+    `cpu_distribution.py`_ example script.
 
     Availability: Linux, FreeBSD, SunOS
 
@@ -1540,32 +1513,27 @@ Process class
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical
       memory a process has used.
-      On UNIX it matches "top"'s RES column
-      (see `doc <http://linux.die.net/man/1/top>`__).
+      On UNIX it matches "top"'s RES column).
       On Windows this is an alias for `wset` field and it matches "Mem Usage"
       column of taskmgr.exe.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process.
-      On UNIX it matches "top"'s VIRT column
-      (see `doc <http://linux.die.net/man/1/top>`__).
+      On UNIX it matches "top"'s VIRT column.
       On Windows this is an alias for `pagefile` field and it matches
       "Mem Usage" "VM Size" column of taskmgr.exe.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
-      This matches "top"'s SHR column
-      (see `doc <http://linux.die.net/man/1/top>`__).
+      This matches "top"'s SHR column).
 
     - **text** *(Linux, BSD)*:
       aka TRS (text resident set) the amount of memory devoted to
-      executable code. This matches "top"'s CODE column
-      (see `doc <http://linux.die.net/man/1/top>`__).
+      executable code. This matches "top"'s CODE column).
 
     - **data** *(Linux, BSD)*:
       aka DRS (data resident set) the amount of physical memory devoted to
-      other than executable code. It matches "top"'s DATA column
-      (see `doc <http://linux.die.net/man/1/top>`__).
+      other than executable code. It matches "top"'s DATA column).
 
     - **lib** *(Linux)*: the memory used by shared libraries.
 
@@ -1575,9 +1543,8 @@ Process class
 
     - **pageins** *(macOS)*: number of actual pageins.
 
-    For on explanation of Windows fields rely on
-    `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
-    Example on Linux:
+    For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
+    structure doc. Example on Linux:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1634,8 +1601,7 @@ Process class
       pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
       >>>
 
-    See also `procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
-    for an example application.
+    See also `procsmem.py`_ for an example application.
 
     .. versionadded:: 4.0.0
 
@@ -1663,51 +1629,44 @@ Process class
     is ``False`` each mapped region is shown as a single entity and the
     named tuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
-    See `pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
-    for an example application.
+    See `pmap.py`_ for an example application.
 
-    +---------------+--------------+---------+-----------+--------------+
-    | Linux         |  macOS       | Windows | Solaris   | FreeBSD      |
-    +===============+==============+=========+===========+==============+
-    | rss           | rss          | rss     | rss       | rss          |
-    +---------------+--------------+---------+-----------+--------------+
-    | size          | private      |         | anonymous | private      |
-    +---------------+--------------+---------+-----------+--------------+
-    | pss           | swapped      |         | locked    | ref_count    |
-    +---------------+--------------+---------+-----------+--------------+
-    | shared_clean  | dirtied      |         |           | shadow_count |
-    +---------------+--------------+---------+-----------+--------------+
-    | shared_dirty  | ref_count    |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | private_clean | shadow_depth |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | private_dirty |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | referenced    |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | anonymous     |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
-    | swap          |              |         |           |              |
-    +---------------+--------------+---------+-----------+--------------+
+    +---------------+---------+--------------+-----------+
+    | Linux         | Windows | FreeBSD      | Solaris   |
+    +===============+=========+==============+===========+
+    | rss           | rss     | rss          | rss       |
+    +---------------+---------+--------------+-----------+
+    | size          |         | private      | anonymous |
+    +---------------+---------+--------------+-----------+
+    | pss           |         | ref_count    | locked    |
+    +---------------+---------+--------------+-----------+
+    | shared_clean  |         | shadow_count |           |
+    +---------------+---------+--------------+-----------+
+    | shared_dirty  |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | private_clean |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | private_dirty |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | referenced    |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | anonymous     |         |              |           |
+    +---------------+---------+--------------+-----------+
+    | swap          |         |              |           |
+    +---------------+---------+--------------+-----------+
 
       >>> import psutil
       >>> p = psutil.Process()
       >>> p.memory_maps()
       [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
        pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
-       pmmap_grouped(path='/lib/x8664-linux-gnu/libcrypto.so.0.1', rss=34124, rss=32768, size=2134016, pss=15360, shared_clean=24576, shared_dirty=0, private_clean=0, private_dirty=8192, referenced=24576, anonymous=8192, swap=0),
-       pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
-       pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
-       ...]
-      >>> p.memory_maps(grouped=False)
-      [pmmap_ext(addr='00400000-006ea000', perms='r-xp', path='/usr/bin/python2.7', rss=2293760, size=3055616, pss=1157120, shared_clean=2273280, shared_dirty=0, private_clean=20480, private_dirty=0, referenced=2293760, anonymous=0, swap=0),
-       pmmap_ext(addr='008e9000-008eb000', perms='r--p', path='/usr/bin/python2.7', rss=8192, size=8192, pss=6144, shared_clean=4096, shared_dirty=0, private_clean=0, private_dirty=4096, referenced=8192, anonymous=4096, swap=0),
-       pmmap_ext(addr='008eb000-00962000', perms='rw-p', path='/usr/bin/python2.7', rss=417792, size=487424, pss=317440, shared_clean=200704, shared_dirty=0, private_clean=16384, private_dirty=200704, referenced=417792, anonymous=200704, swap=0),
-       pmmap_ext(addr='00962000-00985000', perms='rw-p', path='[anon]', rss=139264, size=143360, pss=139264, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=139264, referenced=139264, anonymous=139264, swap=0),
-       pmmap_ext(addr='02829000-02ccf000', perms='rw-p', path='[heap]', rss=4743168, size=4874240, pss=4743168, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=4743168, referenced=4718592, anonymous=4743168, swap=0),
        ...]
 
-    Availability: All platforms except OpenBSD, NetBSD and AIX.
+    Availability: Linux, Windows, FreeBSD, SunOS
+
+    .. versionchanged::
+      5.6.0 removed macOS support because inherently broken (see
+      issue `#1291 <https://github.com/giampaolo/psutil/issues/1291>`__)
 
   .. method:: children(recursive=False)
 
@@ -1749,16 +1708,13 @@ Process class
 
     - **position** (*Linux*): the file (offset) position.
     - **mode** (*Linux*): a string indicating how the file was opened, similarly
-      `open <https://docs.python.org/3/library/functions.html#open>`__'s
-      ``mode`` argument. Possible values are ``'r'``, ``'w'``, ``'a'``,
-      ``'r+'`` and ``'a+'``. There's no distinction between files opened in
-      bynary or text mode (``"b"`` or ``"t"``).
+      to `open`_ builtin ``mode`` argument.
+      Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
+      There's no distinction between files opened in binary or text mode
+      (``"b"`` or ``"t"``).
     - **flags** (*Linux*): the flags which were passed to the underlying
-      `os.open <https://docs.python.org/3/library/os.html#os.open>`__ C call
-      when the file was opened (e.g.
-      `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
-      `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
-      etc).
+      `os.open`_ C call when the file was opened (e.g. `os.O_RDONLY`_,
+      `os.O_TRUNC`_, etc).
 
     >>> import psutil
     >>> f = open('file.ext', 'w')
@@ -1795,17 +1751,12 @@ Process class
     To get system-wide connections use :func:`psutil.net_connections()`.
     Every named tuple provides 6 attributes:
 
-    - **fd**: the socket file descriptor. This can be passed to
-      `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
-      to obtain a usable socket object.
-      On Windows, FreeBSD and SunOS this is always set to ``-1``.
-    - **family**: the address family, either `AF_INET
-      <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
-      `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
-      or `AF_UNIX <http://docs.python.org//library/socket.html#socket.AF_UNIX>`__.
-    - **type**: the address type, either
-      `SOCK_STREAM <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
-      `SOCK_DGRAM <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
+    - **fd**: the socket file descriptor. This can be passed to `socket.fromfd`_
+      to obtain a usable socket object. On Windows, FreeBSD and SunOS this is
+      always set to ``-1``.
+    - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or
+      `AF_UNIX`_.
+    - **type**: the address type, either `SOCK_STREAM`_ or `SOCK_DGRAM`_.
     - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -1888,9 +1839,8 @@ Process class
 
   .. method:: send_signal(signal)
 
-    Send a signal to process (see
-    `signal module <http://docs.python.org//library/signal.html>`__
-    constants) preemptively checking whether PID has been reused.
+    Send a signal to process (see `signal module`_ constants) preemptively
+    checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
     are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
@@ -1929,8 +1879,7 @@ Process class
     Kill the current process by using *SIGKILL* signal preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
-    On Windows this is done by using
-    `TerminateProcess <http://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>`__.
+    On Windows this is done by using `TerminateProcess`_.
     See also how to `kill a process tree <#kill-process-tree>`__ and
     `terminate my children <#terminate-my-children>`__.
 
@@ -1957,10 +1906,9 @@ Popen class
 
 .. class:: Popen(*args, **kwargs)
 
-  A more convenient interface to stdlib
-  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__.
+  A more convenient interface to stdlib `subprocess.Popen`_.
   It starts a sub process and you deal with it exactly as when using
-  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
+  `subprocess.Popen`_.
   but in addition it also provides all the methods of :class:`psutil.Process`
   class.
   For method names common to both classes such as
@@ -1968,18 +1916,16 @@ Popen class
   :meth:`terminate() <psutil.Process.terminate()>` and
   :meth:`kill() <psutil.Process.kill()>`
   :class:`psutil.Process` implementation takes precedence.
-  For a complete documentation refer to
-  `subprocess module documentation <http://docs.python.org/library/subprocess.html>`__.
+  For a complete documentation refer to subprocess module documentation.
 
   .. note::
 
-    Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-    this class preemptively checks whether PID has been reused on
+    Unlike `subprocess.Popen`_ this class preemptively checks whether PID has
+    been reused on
     :meth:`send_signal() <psutil.Process.send_signal()>`,
     :meth:`terminate() <psutil.Process.terminate()>` and
     :meth:`kill() <psutil.Process.kill()>`
-    so that you can't accidentally terminate another process, fixing
-    http://bugs.python.org/issue6973.
+    so that you can't accidentally terminate another process, fixing `BPO-6973`_.
 
   >>> import psutil
   >>> from subprocess import PIPE
@@ -2103,10 +2049,13 @@ Example code:
 Constants
 =========
 
+Operating system constants
+--------------------------
+
 .. _const-oses:
 .. data:: POSIX
-.. data:: WINDOWS
 .. data:: LINUX
+.. data:: WINDOWS
 .. data:: MACOS
 .. data:: FREEBSD
 .. data:: NETBSD
@@ -2123,7 +2072,7 @@ Constants
 
 .. data:: OSX
 
-  Alias for :const:`MACOS` (deprecated).
+  Alias for :const:`MACOS`.
 
   .. warning::
     deprecated in version 5.4.7; use :const:`MACOS` instead.
@@ -2135,10 +2084,7 @@ Constants
   ``"/proc"``).
   You may want to re-set this constant right after importing psutil in case
   your /proc filesystem is mounted elsewhere or if you want to retrieve
-  information about Linux containers such as
-  `Docker <https://www.docker.io/>`__,
-  `Heroku <https://www.heroku.com/>`__ or
-  `LXC <https://linuxcontainers.org/>`__ (see
+  information about Linux containers such as Docker, Heroku or LXC (see
   `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`__
   for more info).
   It must be noted that this trick works only for APIs which rely on /proc
@@ -2149,6 +2095,9 @@ Constants
   .. versionadded:: 3.2.3
   .. versionchanged:: 3.4.2 also available on Solaris.
   .. versionchanged:: 5.4.0 also available on AIX.
+
+Process status constants
+------------------------
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
@@ -2166,51 +2115,27 @@ Constants
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  A set of strings representing the status of a process.
-  Returned by :meth:`psutil.Process.status()`.
+  Represent a process status. Returned by :meth:`psutil.Process.status()`.
 
-  .. versionadded:: 3.4.1 STATUS_SUSPENDED (NetBSD)
-  .. versionadded:: 5.4.7 STATUS_PARKED (Linux)
+  .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
+  .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
 
-.. _const-conn:
-.. data:: CONN_ESTABLISHED
-.. data:: CONN_SYN_SENT
-.. data:: CONN_SYN_RECV
-.. data:: CONN_FIN_WAIT1
-.. data:: CONN_FIN_WAIT2
-.. data:: CONN_TIME_WAIT
-.. data:: CONN_CLOSE
-.. data:: CONN_CLOSE_WAIT
-.. data:: CONN_LAST_ACK
-.. data:: CONN_LISTEN
-.. data:: CONN_CLOSING
-.. data:: CONN_NONE
-.. data:: CONN_DELETE_TCB (Windows)
-.. data:: CONN_IDLE (Solaris)
-.. data:: CONN_BOUND (Solaris)
-
-  A set of strings representing the status of a TCP connection.
-  Returned by :meth:`psutil.Process.connections()` (`status` field).
+Process priority constants
+--------------------------
 
 .. _const-prio:
-.. data:: ABOVE_NORMAL_PRIORITY_CLASS
-.. data:: BELOW_NORMAL_PRIORITY_CLASS
-.. data:: HIGH_PRIORITY_CLASS
-.. data:: IDLE_PRIORITY_CLASS
-.. data:: NORMAL_PRIORITY_CLASS
 .. data:: REALTIME_PRIORITY_CLASS
+.. data:: HIGH_PRIORITY_CLASS
+.. data:: ABOVE_NORMAL_PRIORITY_CLASS
+.. data:: NORMAL_PRIORITY_CLASS
+.. data:: IDLE_PRIORITY_CLASS
+.. data:: BELOW_NORMAL_PRIORITY_CLASS
 
-  A set of integers representing the priority of a process on Windows (see
-  `MSDN documentation <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__).
-  They can be used in conjunction with
-  :meth:`psutil.Process.nice()` to get or set process priority.
+  Represent the priority of a process on Windows (see `SetPriorityClass`_).
+  They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
+  set process priority.
 
   Availability: Windows
-
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2228,19 +2153,27 @@ Constants
   *IOPRIO_CLASS_IDLE* means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
-  `ionice <http://linux.die.net/man/1/ionice>`__
-  command line utility or
-  `ioprio_get <http://linux.die.net/man/2/ioprio_get>`__
-  system call.
+  `ionice <http://linux.die.net/man/1/ionice>`__ command line utility or
+  `ioprio_get`_ system call.
 
   Availability: Linux
 
-  .. versionchanged::
-    3.0.0 on Python >= 3.4 these constants are
-    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
-    instead of a plain integer.
+.. data:: IOPRIO_VERYLOW
+.. data:: IOPRIO_LOW
+.. data:: IOPRIO_NORMAL
+.. data:: IOPRIO_HIGH
 
-.. _const-rlimit:
+  A set of integers representing the I/O priority of a process on Linux.
+  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  or set process I/O priority.
+
+  Availability: Windows
+
+  .. versionadded:: 5.6.2
+
+Process resources constants
+---------------------------
+
 .. data:: RLIM_INFINITY
 .. data:: RLIMIT_AS
 .. data:: RLIMIT_CORE
@@ -2260,10 +2193,37 @@ Constants
 .. data:: RLIMIT_STACK
 
   Constants used for getting and setting process resource limits to be used in
-  conjunction with :meth:`psutil.Process.rlimit()`. See
-  `man prlimit <http://linux.die.net/man/2/prlimit>`__ for further information.
+  conjunction with :meth:`psutil.Process.rlimit()`. See `man prlimit`_ for
+  further information.
 
   Availability: Linux
+
+Connections constants
+---------------------
+
+.. _const-conn:
+.. data:: CONN_ESTABLISHED
+.. data:: CONN_SYN_SENT
+.. data:: CONN_SYN_RECV
+.. data:: CONN_FIN_WAIT1
+.. data:: CONN_FIN_WAIT2
+.. data:: CONN_TIME_WAIT
+.. data:: CONN_CLOSE
+.. data:: CONN_CLOSE_WAIT
+.. data:: CONN_LAST_ACK
+.. data:: CONN_LISTEN
+.. data:: CONN_CLOSING
+.. data:: CONN_NONE
+.. data:: CONN_DELETE_TCB (Windows)
+.. data:: CONN_IDLE (Solaris)
+.. data:: CONN_BOUND (Solaris)
+
+  A set of strings representing the status of a TCP connection.
+  Returned by :meth:`psutil.Process.connections()` and
+  :func:`psutil.net_connections` (`status` field).
+
+Hardware constants
+------------------
 
 .. _const-aflink:
 .. data:: AF_LINK
@@ -2310,8 +2270,7 @@ Constants
 Unicode
 =======
 
-Starting from version 5.3.0 psutil fully supports unicode, see
-`issue #1040 <https://github.com/giampaolo/psutil/issues/1040>`__.
+Starting from version 5.3.0 psutil adds unicode support, see `issue #1040`_.
 The notes below apply to *any* API returning a string such as
 :meth:`Process.exe` or :meth:`Process.cwd`, including non-filesystem related
 methods such as :meth:`Process.username` or :meth:`WindowsService.description`:
@@ -2348,9 +2307,6 @@ and 3::
 
 Recipes
 =======
-
-Follows a collection of utilities and examples which are common but not generic
-enough to be part of the public API.
 
 Find process by name
 --------------------
@@ -2403,8 +2359,7 @@ Kill process tree
       "on_terminate", if specified, is a callabck function which is
       called as soon as a child terminates.
       """
-      if pid == os.getpid():
-          raise RuntimeError("I refuse to kill myself")
+      assert pid != os.getpid(), "won't kill myself"
       parent = psutil.Process(pid)
       children = parent.children(recursive=True)
       if include_parent:
@@ -2434,13 +2389,19 @@ resources.
       procs = psutil.Process().children()
       # send SIGTERM
       for p in procs:
-          p.terminate()
+          try:
+              p.terminate()
+          except psutil.NoSuchProcess:
+              pass
       gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
       if alive:
           # send SIGKILL
           for p in alive:
               print("process {} survived SIGTERM; trying SIGKILL" % p)
-              p.kill()
+              try:
+                  p.kill()
+              except psutil.NoSuchProcess:
+                  pass
           gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
           if alive:
               # give up
@@ -2559,36 +2520,34 @@ Bytes conversion
   100399730688
   93.5G
 
+Supported platforms
+===================
+
+These are the platforms I develop and test on:
+
+* Linux Ubuntu 16.04
+* MacOS 10.11 El Captain
+* Windows 10
+* Solaris 10
+* FreeBSD 11
+* OpenBSD 6.4
+* NetBSD 8.0
+* AIX 6.1 TL8 (maintainer `Arnon Yaari <https://github.com/wiggin15>`__)
+
+Earlier versions are supposed to work but are not tested.
+For Linux, Windows and MacOS we have continuos integration. Other platforms
+are tested manually from time to time.
+Oldest supported Windows version is Windows XP, which can be compiled from
+sources. Latest wheel supporting Windows XP is
+`psutil 2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__.
+Supported Python versions are 3.4+, 2.7 and 2.6.
+
 FAQs
 ====
 
-* Q: What Windows versions are supported?
-* A: From Windows **Vista** onwards, both 32 and 64 bit versions.
-  Latest binary (wheel / exe) release which supports Windows **2000**, **XP**
-  and **2003 server** is
-  `psutil 3.4.2 <https://pypi.org/project/psutil/3.4.2/#files>`__.
-  On such old systems psutil is no longer tested or maintained, but it can
-  still be compiled from sources (you'll need `Visual Studio <(https://github.com/giampaolo/psutil/blob/master/INSTALL.rst#windows>`__)
-  and it should "work" (more or less).
-
-----
-
-* Q: What Python versions are supported?
-* A: From 2.6 to 3.6, both 32 and 64 bit versions. Last version supporting
-  Python 2.4 and 2.5 is `psutil 2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__.
-  PyPy is also known to work.
-
-----
-
-* Q: What SunOS versions are supported?
-* A: From Solaris 10 onwards.
-
-----
-
 * Q: Why do I get :class:`AccessDenied` for certain processes?
 * A: This may happen when you query processess owned by another user,
-  especially on `macOS <https://github.com/giampaolo/psutil/issues/883>`__ and
-  Windows.
+  especially on macOS (see `issue #883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
   On Unix you may run the the Python process as root or use the SUID bit
@@ -2601,8 +2560,7 @@ FAQs
 
 * Q: What about load average?
 * A: psutil does not expose any load average function as it's already available
-  in python as
-  `os.getloadavg <https://docs.python.org/3/library/os.html#os.getloadavg>`__.
+  in python as `os.getloadavg`_.
 
 Running tests
 =============
@@ -2620,12 +2578,23 @@ Development guide
 =================
 
 If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
-take a look at the
-`development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
+take a look at the `development guide`_.
 
 Timeline
 ========
 
+- 2019-03-11:
+  `5.6.1 <https://pypi.org/project/psutil/5.6.1/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#561>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.0...release-5.6.1#files_bucket>`__
+- 2019-03-05:
+  `5.6.0 <https://pypi.org/project/psutil/5.6.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#560>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.1...release-5.6.0#files_bucket>`__
+- 2019-02-15:
+  `5.5.1 <https://pypi.org/project/psutil/5.5.1/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#551>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.5.0...release-5.5.1#files_bucket>`__
 - 2019-01-23:
   `5.5.0 <https://pypi.org/project/psutil/5.5.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#550>`__ -
@@ -2898,3 +2867,61 @@ Timeline
   `0.1.0 <https://pypi.org/project/psutil/0.1.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#010>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/d84cc9a783d977368a64016cdb3568d2c9bceacc...release-0.1.0#files_bucket>`__
+
+
+.. _`AF_INET6`: https://docs.python.org/3/library/socket.html#socket.AF_INET6
+.. _`AF_INET`: https://docs.python.org/3/library/socket.html#socket.AF_INET
+.. _`AF_UNIX`: https://docs.python.org/3/library/socket.html#socket.AF_UNIX
+.. _`battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
+.. _`BPO-10784`: https://bugs.python.org/issue10784
+.. _`BPO-12442`: https://bugs.python.org/issue12442
+.. _`BPO-6973`: https://bugs.python.org/issue6973
+.. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
+.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
+.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`enums`: https://docs.python.org/3/library/enum.html#module-enum
+.. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
+.. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
+.. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
+.. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+.. _`hash`: https://docs.python.org/3/library/functions.html#hash
+.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
+.. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
+.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`issue #1007`: https://github.com/giampaolo/psutil/issues/1007
+.. _`issue #1040`: https://github.com/giampaolo/psutil/issues/1040
+.. _`issue #883`: https://github.com/giampaolo/psutil/issues/883
+.. _`man prlimit`: https://linux.die.net/man/2/prlimit
+.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py.
+.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`open`: https://docs.python.org/3/library/functions.html#open
+.. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
+.. _`os.getloadavg`: https://docs.python.org/3/library/os.html#os.getloadavg
+.. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid
+.. _`os.getpriority`: https://docs.python.org/3/library/os.html#os.getpriority
+.. _`os.getresgid`: https://docs.python.org//library/os.html#os.getresgid
+.. _`os.getresuid`: https://docs.python.org//library/os.html#os.getresuid
+.. _`os.O_RDONLY`: https://docs.python.org/3/library/os.html#os.O_RDONLY
+.. _`os.O_TRUNC`: https://docs.python.org/3/library/os.html#os.O_TRUNC
+.. _`os.open`: https://docs.python.org/3/library/os.html#os.open
+.. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
+.. _`os.times`: https://docs.python.org//library/os.html#os.times
+.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
+.. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
+.. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
+.. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set.
+.. _`SetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
+.. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage.
+.. _`signal module`: https://docs.python.org//library/signal.html
+.. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
+.. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
+.. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
+.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+.. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
+.. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess

@@ -33,11 +33,11 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import get_kernel_version
 from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
@@ -167,7 +167,8 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(hasit, False if OPENBSD or NETBSD or AIX else True)
+        self.assertEqual(
+            hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
 
 
 # ===================================================================
@@ -181,7 +182,7 @@ class TestDeprecations(unittest.TestCase):
         with warnings.catch_warnings(record=True) as ws:
             psutil.Process().memory_info_ex()
         w = ws[0]
-        self.assertIsInstance(w.category(), FutureWarning)
+        self.assertIsInstance(w.category(), DeprecationWarning)
         self.assertIn("memory_info_ex() is deprecated", str(w.message))
         self.assertIn("use memory_info() instead", str(w.message))
 
@@ -250,6 +251,7 @@ class TestSystem(unittest.TestCase):
         for ifname, _ in psutil.net_if_stats().items():
             self.assertIsInstance(ifname, str)
 
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, _ in psutil.net_io_counters(pernic=True).items():
@@ -290,11 +292,11 @@ class TestFetchAllProcesses(unittest.TestCase):
     some sanity checks against Process API's returned values.
     """
 
-    def test_fetch_all(self):
-        valid_procs = 0
+    def get_attr_names(self):
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-            'as_dict', 'parent', 'children', 'memory_info_ex', 'oneshot',
+            'as_dict', 'parent', 'parents', 'children', 'memory_info_ex',
+            'oneshot',
         ])
         if LINUX and not HAS_RLIMIT:
             excluded_names.add('rlimit')
@@ -305,55 +307,66 @@ class TestFetchAllProcesses(unittest.TestCase):
             if name in excluded_names:
                 continue
             attrs.append(name)
+        return attrs
 
-        default = object()
-        failures = []
+    def iter_procs(self):
+        attrs = self.get_attr_names()
         for p in psutil.process_iter():
             with p.oneshot():
                 for name in attrs:
-                    ret = default
-                    try:
-                        args = ()
-                        kwargs = {}
-                        attr = getattr(p, name, None)
-                        if attr is not None and callable(attr):
-                            if name == 'rlimit':
-                                args = (psutil.RLIMIT_NOFILE,)
-                            elif name == 'memory_maps':
-                                kwargs = {'grouped': False}
-                            ret = attr(*args, **kwargs)
-                        else:
-                            ret = attr
-                        valid_procs += 1
-                    except NotImplementedError:
-                        msg = "%r was skipped because not implemented" % (
-                            self.__class__.__name__ + '.test_' + name)
-                        warn(msg)
-                    except (psutil.NoSuchProcess, psutil.AccessDenied) as err:
-                        self.assertEqual(err.pid, p.pid)
-                        if err.name:
-                            # make sure exception's name attr is set
-                            # with the actual process name
-                            self.assertEqual(err.name, p.name())
-                        assert str(err)
-                        assert err.msg
-                    except Exception:
-                        s = '\n' + '=' * 70 + '\n'
-                        s += "FAIL: test_%s (proc=%s" % (name, p)
-                        if ret != default:
-                            s += ", ret=%s)" % repr(ret)
-                        s += ')\n'
-                        s += '-' * 70
-                        s += "\n%s" % traceback.format_exc()
-                        s = "\n".join((" " * 4) + i for i in s.splitlines())
-                        s += '\n'
-                        failures.append(s)
-                        break
-                    else:
-                        if ret not in (0, 0.0, [], None, '', {}):
-                            assert ret, ret
-                        meth = getattr(self, name)
-                        meth(ret, p)
+                    yield (p, name)
+
+    def call_meth(self, p, name):
+        args = ()
+        kwargs = {}
+        attr = getattr(p, name, None)
+        if attr is not None and callable(attr):
+            if name == 'rlimit':
+                args = (psutil.RLIMIT_NOFILE,)
+            elif name == 'memory_maps':
+                kwargs = {'grouped': False}
+            return attr(*args, **kwargs)
+        else:
+            return attr
+
+    def test_fetch_all(self):
+        valid_procs = 0
+        default = object()
+        failures = []
+        for p, name in self.iter_procs():
+            ret = default
+            try:
+                ret = self.call_meth(p, name)
+            except NotImplementedError:
+                msg = "%r was skipped because not implemented" % (
+                    self.__class__.__name__ + '.test_' + name)
+                warn(msg)
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as err:
+                self.assertEqual(err.pid, p.pid)
+                if err.name:
+                    # make sure exception's name attr is set
+                    # with the actual process name
+                    self.assertEqual(err.name, p.name())
+                assert str(err)
+                assert err.msg
+            except Exception:
+                s = '\n' + '=' * 70 + '\n'
+                s += "FAIL: test_%s (proc=%s" % (name, p)
+                if ret != default:
+                    s += ", ret=%s)" % repr(ret)
+                s += ')\n'
+                s += '-' * 70
+                s += "\n%s" % traceback.format_exc()
+                s = "\n".join((" " * 4) + i for i in s.splitlines())
+                s += '\n'
+                failures.append(s)
+                break
+            else:
+                valid_procs += 1
+                if ret not in (0, 0.0, [], None, '', {}):
+                    assert ret, ret
+                meth = getattr(self, name)
+                meth(ret, p)
 
         if failures:
             self.fail(''.join(failures))
@@ -601,8 +614,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                         # commented as on Linux we might get
                         # '/foo/bar (deleted)'
                         # assert os.path.exists(nt.path), nt.path
-                elif fname in ('addr', 'perms'):
-                    assert value
+                elif fname == 'addr':
+                    assert value, repr(value)
+                elif fname == 'perms':
+                    if not WINDOWS:
+                        assert value, repr(value)
                 else:
                     self.assertIsInstance(value, (int, long))
                     self.assertGreaterEqual(value, 0)
@@ -640,4 +656,5 @@ class TestFetchAllProcesses(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

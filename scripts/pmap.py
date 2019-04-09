@@ -9,7 +9,6 @@ A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat -v' on BSD.
 Report memory map of a process.
 
 $ python scripts/pmap.py 32402
-pid=32402, name=hg
 Address                 RSS  Mode    Mapping
 0000000000400000      1200K  r-xp    /usr/bin/python2.7
 0000000000838000         4K  r--p    /usr/bin/python2.7
@@ -33,9 +32,12 @@ ffffffffff600000         0K  r-xp    [vsyscall]
 import sys
 
 import psutil
+from psutil._common import bytes2human
+from psutil._compat import get_terminal_size
 
 
 def safe_print(s):
+    s = s[:get_terminal_size()[0]]
     try:
         print(s)
     except UnicodeEncodeError:
@@ -46,19 +48,19 @@ def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap <pid>')
     p = psutil.Process(int(sys.argv[1]))
-    print("pid=%s, name=%s" % (p.pid, p.name()))
-    templ = "%-16s %10s  %-7s %s"
+    templ = "%-20s %10s  %-7s %s"
     print(templ % ("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
         safe_print(templ % (
             m.addr.split('-')[0].zfill(16),
-            str(m.rss / 1024) + 'K',
+            bytes2human(m.rss),
             m.perms,
             m.path))
-    print("-" * 33)
-    print(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
+    print("-" * 31)
+    print(templ % ("Total", bytes2human(total_rss), '', ''))
+    safe_print("PID = %s, name = %s" % (p.pid, p.name()))
 
 
 if __name__ == '__main__':

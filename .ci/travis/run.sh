@@ -33,3 +33,6 @@ if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
         python -m flake8
     fi
 fi
+
+PSUTIL_TESTING=1 python -Wa scripts/internal/print_access_denied.py
+PSUTIL_TESTING=1 python -Wa scripts/internal/print_api_speed.py

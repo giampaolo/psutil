@@ -11,6 +11,7 @@ syntax: glob
 *.rej
 *.so
 *.swp
+.failed-tests.txt
 .cache/
 .idea/
 .tox/

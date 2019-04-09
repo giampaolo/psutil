@@ -42,8 +42,8 @@ from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import HAS_MEMORY_FULL_INFO
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
@@ -55,7 +55,6 @@ from psutil.tests import reap_children
 from psutil.tests import reload_module
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
-from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
@@ -620,10 +619,10 @@ class TestWrapNumbers(unittest.TestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
-    @unittest.skipIf(
-        not psutil.disk_io_counters() or not psutil.net_io_counters(),
-        "no disks or NICs available")
+    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_cache_clear_public_apis(self):
+        if not psutil.disk_io_counters() or not psutil.net_io_counters():
+            return self.skipTest("no disks or NICs available")
         psutil.disk_io_counters()
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()
@@ -735,8 +734,9 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
-    @unittest.skipIf(not HAS_MEMORY_FULL_INFO, "not supported")
     def test_procsmem(self):
+        if 'uss' not in psutil.Process().memory_full_info()._fields:
+            raise self.skipTest("not supported")
         self.assert_stdout('procsmem.py', stderr=DEVNULL)
 
     def test_killall(self):
@@ -1053,4 +1053,5 @@ class TestOtherUtils(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)

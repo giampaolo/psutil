@@ -41,11 +41,7 @@ from ._common import supports_ipv6
 from ._common import usage_percent
 from ._compat import b
 from ._compat import basestring
-from ._compat import long
 from ._compat import PY3
-from ._exceptions import AccessDenied
-from ._exceptions import NoSuchProcess
-from ._exceptions import ZombieProcess
 
 if sys.version_info >= (3, 4):
     import enum
@@ -160,6 +156,13 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
+
+# These objects get set on "import psutil" from the __init__.py
+# file, see: https://github.com/giampaolo/psutil/issues/1402
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================
@@ -623,6 +626,17 @@ def cpu_count_logical():
 
 def cpu_count_physical():
     """Return the number of physical cores in the system."""
+    # Method #1
+    core_ids = set()
+    for path in glob.glob(
+            "/sys/devices/system/cpu/cpu[0-9]*/topology/core_id"):
+        with open_binary(path) as f:
+            core_ids.add(int(f.read()))
+    result = len(core_ids)
+    if result != 0:
+        return result
+
+    # Method #2
     mapping = {}
     current_info = {}
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
@@ -642,8 +656,8 @@ def cpu_count_physical():
                     key, value = line.split(b'\t:', 1)
                     current_info[key] = int(value)
 
-    # mimic os.cpu_count()
-    return sum(mapping.values()) or None
+    result = sum(mapping.values())
+    return result or None  # mimic os.cpu_count()
 
 
 def cpu_stats():
@@ -674,23 +688,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
-        # scaling_* files seem preferable to cpuinfo_*, see:
-        # http://unix.stackexchange.com/a/87537/168884
-        ret = []
-        ls = glob.glob("/sys/devices/system/cpu/cpufreq/policy*")
-        if ls:
-            # Sort the list so that '10' comes after '2'. This should
-            # ensure the CPU order is consistent with other CPU functions
-            # having a 'percpu' argument and returning results for multiple
-            # CPUs (cpu_times(), cpu_percent(), cpu_times_percent()).
-            ls.sort(key=lambda x: int(os.path.basename(x)[6:]))
-        else:
-            # https://github.com/giampaolo/psutil/issues/981
-            ls = glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
-            ls.sort(key=lambda x: int(re.search('[0-9]+', x).group(0)))
+        def get_path(num):
+            for p in ("/sys/devices/system/cpu/cpufreq/policy%s" % num,
+                      "/sys/devices/system/cpu/cpu%s/cpufreq" % num):
+                if os.path.exists(p):
+                    return p
 
-        pjoin = os.path.join
-        for path in ls:
+        ret = []
+        for n in range(cpu_count_logical()):
+            path = get_path(n)
+            if not path:
+                continue
+
+            pjoin = os.path.join
             curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
                 # Likely an old RedHat, see:
@@ -1155,13 +1165,13 @@ def disk_partitions(all=False):
                     fstypes.add("zfs")
 
     # See: https://github.com/giampaolo/psutil/issues/1307
-    if procfs_path == "/proc":
-        mtab_path = os.path.realpath("/etc/mtab")
+    if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
+        mounts_path = os.path.realpath("/etc/mtab")
     else:
-        mtab_path = os.path.realpath("%s/self/mounts" % procfs_path)
+        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
 
     retlist = []
-    partitions = cext.disk_partitions(mtab_path)
+    partitions = cext.disk_partitions(mounts_path)
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -1536,6 +1546,13 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        os.stat('%s/%s' % (self._procfs_path, self.pid))
+
+    @wrap_exceptions
     @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file and return a dict with various
@@ -1569,6 +1586,7 @@ class Process(object):
 
         return ret
 
+    @wrap_exceptions
     @memoize_when_activated
     def _read_status_file(self):
         """Read /proc/{pid}/stat file and return its content.
@@ -1578,6 +1596,7 @@ class Process(object):
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
 
+    @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
@@ -1902,8 +1921,7 @@ class Process(object):
             ntuple = _common.pthread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (self._procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
@@ -1964,35 +1982,12 @@ class Process(object):
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
-            if value is not None:
-                if not PY3 and not isinstance(value, (int, long)):
-                    msg = "value argument is not an integer (gor %r)" % value
-                    raise TypeError(msg)
-                if not 0 <= value <= 7:
-                    raise ValueError(
-                        "value argument range expected is between 0 and 7")
-
-            if ioclass in (IOPRIO_CLASS_NONE, None):
-                if value:
-                    msg = "can't specify value with IOPRIO_CLASS_NONE " \
-                          "(got %r)" % value
-                    raise ValueError(msg)
-                ioclass = IOPRIO_CLASS_NONE
+            if value is None:
                 value = 0
-            elif ioclass == IOPRIO_CLASS_IDLE:
-                if value:
-                    msg = "can't specify value with IOPRIO_CLASS_IDLE " \
-                          "(got %r)" % value
-                    raise ValueError(msg)
-                value = 0
-            elif ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
-                if value is None:
-                    # TODO: add comment explaining why this is 4 (?)
-                    value = 4
-            else:
-                # otherwise we would get OSError(EVINAL)
-                raise ValueError("invalid ioclass argument %r" % ioclass)
-
+            if value and ioclass in (IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE):
+                raise ValueError("%r ioclass accepts no value" % ioclass)
+            if value < 0 or value > 7:
+                raise ValueError("value not in 0-7 range")
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
@@ -2066,9 +2061,8 @@ class Process(object):
                             flags = int(f.readline().split()[1], 8)
                     except IOError as err:
                         if err.errno == errno.ENOENT:
-                            # fd gone in the meantime; does not
-                            # necessarily mean the process disappeared
-                            # on us.
+                            # fd gone in the meantime; process may
+                            # still be alive
                             hit_enoent = True
                         else:
                             raise
@@ -2078,15 +2072,13 @@ class Process(object):
                             path, int(fd), int(pos), mode, flags)
                         retlist.append(ntuple)
         if hit_enoent:
-            # raise NSP if the process disappeared on us
-            os.stat('%s/%s' % (self._procfs_path, self.pid))
+            self._assert_alive()
         return retlist
 
     @wrap_exceptions
     def connections(self, kind='inet'):
         ret = _connections.retrieve(kind, self.pid)
-        # raise NSP if the process disappeared on us
-        os.stat('%s/%s' % (self._procfs_path, self.pid))
+        self._assert_alive()
         return ret
 
     @wrap_exceptions

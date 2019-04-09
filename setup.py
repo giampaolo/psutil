@@ -135,11 +135,13 @@ if WINDOWS:
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
+            'psutil/arch/windows/global.c',
+            # 'psutil/arch/windows/connections.c',
         ],
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "iphlpapi", "wtsapi32", "ws2_32", "PowrProf",
+            "wtsapi32", "ws2_32", "PowrProf",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]

@@ -11,7 +11,6 @@
 import re
 
 from psutil import AIX
-from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
@@ -118,4 +117,5 @@ class AIXSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    run_test_module_by_name(__file__)
+    from psutil.tests.runner import run
+    run(__file__)
