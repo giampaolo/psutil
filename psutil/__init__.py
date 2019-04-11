@@ -2473,7 +2473,7 @@ def test():  # pragma: no cover
         else:
             cputime = ''
 
-        user = p.info['username']
+        user = p.info['username'] or ''
         if not user and POSIX:
             try:
                 user = p.uids()[0]

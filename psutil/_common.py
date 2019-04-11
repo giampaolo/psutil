@@ -619,3 +619,16 @@ def bytes2human(n, format="%(value).1f%(symbol)s"):
             value = float(n) / prefix[symbol]
             return format % locals()
     return format % dict(symbol=symbols[0], value=n)
+
+
+def get_procfs_path():
+    """Return updated psutil.PROCFS_PATH constant."""
+    return sys.modules['psutil'].PROCFS_PATH
+
+
+if PY3:
+    def decode(s):
+        return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
+else:
+    def decode(s):
+        return s
