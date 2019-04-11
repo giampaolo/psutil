@@ -29,6 +29,7 @@ from psutil._compat import u
 from psutil.tests import call_until
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_GET_LOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
@@ -864,6 +865,20 @@ class TestSystemCPUStats(unittest.TestCase):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
         self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestLoadAvg(unittest.TestCase):
+
+    @unittest.skipIf(not HAS_GET_LOADAVG, "not supported")
+    def test_get_loadavg(self):
+        psutil_value = psutil.getloadavg()
+        with open("/proc/loadavg", "r") as f:
+            proc_value = f.read().split()
+
+        self.assertAlmostEqual(float(proc_value[0]), psutil_value[0], delta=1)
+        self.assertAlmostEqual(float(proc_value[1]), psutil_value[1], delta=1)
+        self.assertAlmostEqual(float(proc_value[2]), psutil_value[2], delta=1)
 
 
 # =====================================================================

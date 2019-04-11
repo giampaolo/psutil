@@ -238,6 +238,27 @@ CPU
 
     .. versionchanged:: 5.5.1 added FreeBSD support.
 
+.. function:: getloadavg()
+
+    Returns the average load on the system over the last 1 minute, 5 minutes
+    and 15 minutes respectively as a tuple. The load represents how many
+    processes are waiting to be run by the operating system.
+
+    On \*NIX systems this passes through the value of `os.getloadavg`_ and on
+    Windows psutils emulates the behavior by calculating the load internally.
+
+    Example:
+
+    .. code-block:: python
+
+       >>> import psutil
+       >>> psutil.getloadavg()
+       (3.14, 3.89, 4.67)
+
+    Availability: Linux, macOS, Windows, FreeBSD
+
+    .. versionadded:: 5.6.2
+
 Memory
 ------
 
@@ -2555,12 +2576,6 @@ FAQs
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
   the Python script as a Windows service (this is the trick used by tools
   such as ProcessHacker).
-
-----
-
-* Q: What about load average?
-* A: psutil does not expose any load average function as it's already available
-  in python as `os.getloadavg`_.
 
 Running tests
 =============

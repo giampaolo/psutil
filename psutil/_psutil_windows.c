@@ -40,6 +40,7 @@
 #include "arch/windows/process_handles.h"
 #include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
+#include "arch/windows/wmi.h"
 #include "_psutil_common.h"
 
 
@@ -3508,6 +3509,12 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return CPU frequency."},
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+    {"init_loadavg_counter", psutil_init_loadavg_counter, METH_VARARGS,
+     "Initializes the emulated load average calculator."},
+    {"getloadavg", psutil_get_loadavg, METH_VARARGS,
+     "Returns the emulated POSIX like load average."},
+#endif
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery metrics usage."},
     {"getpagesize", psutil_getpagesize, METH_VARARGS,

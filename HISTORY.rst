@@ -14,6 +14,8 @@
   new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
   Also it was not possible to set high I/O priority (not it is).
 - 1478_: add make command to re-run tests failed on last run.
+- 604: [Windows] getloadavg() is now implemented by mimicking POSIX load
+  average calculation.
 
 **Bug fixes**
 

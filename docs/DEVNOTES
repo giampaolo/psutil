@@ -69,8 +69,6 @@ FEATURES
 
 - #613: thread names.
 
-- #604: emulate os.getloadavg() on Windows
-
 - scripts/taskmgr-gui.py (using tk).
 
 - system-wide number of open file descriptors:
