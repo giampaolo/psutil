@@ -475,7 +475,6 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
 
-    @unittest.skipIf(POSIX, "worthless on POSIX (uses os.getloadavg)")
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         self.execute(psutil.getloadavg)
