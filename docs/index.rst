@@ -240,12 +240,15 @@ CPU
 
 .. function:: getloadavg()
 
-    Returns the average load on the system over the last 1 minute, 5 minutes
-    and 15 minutes respectively as a tuple. The load represents how many
-    processes are waiting to be run by the operating system.
+    Returns the average load on the system over the last 1, 5 and 15 minutes
+    respectively as a tuple. The load represents how many processes are waiting
+    to be run by the operating system.
 
-    On \*NIX systems this passes through the value of `os.getloadavg`_ and on
-    Windows psutils emulates the behavior by calculating the load internally.
+    On UNIX systems this relies on `os.getloadavg`_. On Windows, this is
+    emulated by using a Windows API call that spawns a thread which updates the
+    average every 5 seconds mimicking the UNIX behavior. Thus, the first time
+    this is called and up until 5 seconds it returns a meaningless
+    ``(0.0, 0.0, 0.0)`` tuple.
 
     Example:
 
@@ -255,7 +258,7 @@ CPU
        >>> psutil.getloadavg()
        (3.14, 3.89, 4.67)
 
-    Availability: Linux, macOS, Windows, FreeBSD
+    Availability: Unix, Windows
 
     .. versionadded:: 5.6.2
 

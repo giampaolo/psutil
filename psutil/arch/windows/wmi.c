@@ -35,9 +35,14 @@ double load_avg_15m = 0;
 VOID CALLBACK LoadAvgCallback(PVOID hCounter) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
+    PDH_STATUS err;
 
-    PdhGetFormattedCounterValue(
+    err = PdhGetFormattedCounterValue(
         (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &displayValue);
+    // Skip updating the load if we can't get the value successfully
+    if (err != ERROR_SUCCESS) {
+        return;
+    }
     currentLoad = displayValue.doubleValue;
 
     load_avg_1m = load_avg_1m * LOADAVG_FACTOR_1F + currentLoad * \
@@ -106,10 +111,5 @@ error:
  */
 PyObject *
 psutil_get_loadavg(PyObject *self, PyObject *args) {
-    return PyTuple_Pack(
-        3,
-        PyFloat_FromDouble(load_avg_1m),
-        PyFloat_FromDouble(load_avg_5m),
-        PyFloat_FromDouble(load_avg_15m)
-    );
+    return Py_BuildValue("(ddd)", load_avg_1m, load_avg_5m, load_avg_15m);
 }

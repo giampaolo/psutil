@@ -3513,7 +3513,7 @@ PsutilMethods[] = {
     {"init_loadavg_counter", psutil_init_loadavg_counter, METH_VARARGS,
      "Initializes the emulated load average calculator."},
     {"getloadavg", psutil_get_loadavg, METH_VARARGS,
-     "Returns the emulated POSIX like load average."},
+     "Returns the emulated POSIX-like load average."},
 #endif
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery metrics usage."},

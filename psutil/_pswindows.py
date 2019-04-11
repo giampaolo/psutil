@@ -80,7 +80,7 @@ __extra__all__ = [
 
 CONN_DELETE_TCB = "DELETE_TCB"
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
-HAS_GET_LOADAVG = hasattr(cext, "getloadavg")
+HAS_GETLOADAVG = hasattr(cext, "getloadavg")
 
 
 if enum is None:
@@ -354,10 +354,12 @@ def cpu_freq():
     return [_common.scpufreq(float(curr), min_, float(max_))]
 
 
-if HAS_GET_LOADAVG:
+if HAS_GETLOADAVG:
     _loadavg_inititialized = False
 
     def getloadavg():
+        """Return the number of processes in the system run queue averaged
+        over the last 1, 5, and 15 minutes respectively as a tuple"""
         global _loadavg_inititialized
 
         if not _loadavg_inititialized:

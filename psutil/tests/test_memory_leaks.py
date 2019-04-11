@@ -36,7 +36,7 @@ from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_GET_LOADAVG
+from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
@@ -475,7 +475,8 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
 
-    @unittest.skipIf(not HAS_GET_LOADAVG, "not supported")
+    @unittest.skipIf(POSIX, "worthless on POSIX (uses os.getloadavg)")
+    @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         self.execute(psutil.getloadavg)
 
