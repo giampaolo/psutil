@@ -240,17 +240,14 @@ CPU
 
 .. function:: getloadavg()
 
-    Returns the average load on the system over the last 1, 5 and 15 minutes
-    respectively as a tuple. The load represents how many processes are waiting
-    to be run by the operating system.
-
-    On UNIX systems this relies on `os.getloadavg`_. On Windows, this is
-    emulated by using a Windows API call that spawns a thread which updates the
-    average every 5 seconds mimicking the UNIX behavior. Thus, the first time
-    this is called and up until 5 seconds it returns a meaningless
-    ``(0.0, 0.0, 0.0)`` tuple.
-
-    Example:
+    Return the average system load over the last 1, 5 and 15 minutes as a tuple.
+    The load represents how many processes are waiting to be run by the
+    operating system.
+    On UNIX systems this relies on `os.getloadavg`_. On Windows this is
+    emulated by using a Windows API that spawns a thread which updates the
+    average every 5 seconds, mimicking the UNIX behavior. Thus, the first time
+    this is called and for the next 5 seconds it will return a meaningless
+    ``(0.0, 0.0, 0.0)`` tuple. Example:
 
     .. code-block:: python
 
