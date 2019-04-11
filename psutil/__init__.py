@@ -2017,6 +2017,17 @@ if hasattr(_psplatform, "cpu_freq"):
     __all__.append("cpu_freq")
 
 
+if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):
+    # Perform this hasattr check once on import time to either use the
+    # platform based code or proxy straight from the os module.
+    if hasattr(os, "getloadavg"):
+        getloadavg = os.getloadavg
+    else:
+        getloadavg = _psplatform.getloadavg
+
+    __all__.append("getloadavg")
+
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
