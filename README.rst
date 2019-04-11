@@ -180,6 +180,8 @@ CPU
     >>> psutil.cpu_freq()
     scpufreq(current=931.42925, min=800.0, max=3500.0)
     >>>
+    >>> psutil.getloadavg()  # also on Windows (emulated)
+    (3.14, 3.89, 4.67)
 
 Memory
 ------

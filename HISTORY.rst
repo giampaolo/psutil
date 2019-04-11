@@ -5,6 +5,7 @@
 
 **Enhancements**
 
+- 604_: [UNIX, Windows] add new psutil.getloadavg() returning system load
 - 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
   `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
   the number of physical CPUs in case /proc/cpuinfo does not provide this info.
@@ -14,7 +15,6 @@
   new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
   Also it was not possible to set high I/O priority (not it is).
 - 1478_: add make command to re-run tests failed on last run.
-- 604: [UNIX, Windows] add new psutil.getloadavg() returning system load 
   average calculation. (patch by Ammar Askar)
 
 **Bug fixes**
