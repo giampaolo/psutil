@@ -668,7 +668,7 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
+if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
     def cpu_freq():
         """Return frequency metrics for all CPUs.
