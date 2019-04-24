@@ -715,6 +715,12 @@ elif os.path.exists("/proc/cpuinfo"):
                     ret.append(_common.scpufreq(float(value), None, None))
         return ret
 
+else:
+    def cpu_freq():
+        """Dummy implementation when none of the above files are present.
+        """
+        return []
+
 
 # =====================================================================
 # --- network
