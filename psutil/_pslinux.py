@@ -725,7 +725,7 @@ else:
     def cpu_freq():
         """Dummy implementation when none of the above files are present.
         """
-        return [_common.scpufreq(0.0, 0.0, 0.0)]
+        return [_common.scpufreq(0.0, 0.0, 0.0)] * cpu_count_logical()
 
 
 # =====================================================================
