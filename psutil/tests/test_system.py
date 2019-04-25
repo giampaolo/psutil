@@ -769,7 +769,6 @@ class TestSystemAPIs(unittest.TestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        print(ls)
         if TRAVIS and not ls:
             raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
