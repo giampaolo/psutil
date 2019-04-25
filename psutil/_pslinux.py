@@ -715,7 +715,7 @@ elif os.path.exists("/proc/cpuinfo"):
                     for line in f:
                         if line.lower().startswith(b'cpu mhz'):
                             key, value = line.split(b'\t:', 1)
-                            ret.append(_common.scpufreq(float(value), None, None))
+                            ret.append(_common.scpufreq(float(value), 0.0, 0.0))
             except:
                 raise NotImplementedError(
                     "can't find frequency in file %s" % path)
@@ -725,7 +725,7 @@ else:
     def cpu_freq():
         """Dummy implementation when none of the above files are present.
         """
-        return [_common.scpufreq(None, None, None)]
+        return [_common.scpufreq(0.0, 0.0, 0.0)]
 
 
 # =====================================================================

@@ -120,5 +120,6 @@ error:
         free(ifc.lifc_buf);
     if (sd != -1)
         close(sd);
+    freeifaddrs(*ifap);
     return (-1);
 }

@@ -739,11 +739,11 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 ret = psutil.cpu_freq()
                 assert ret
                 assert flags
-                self.assertIsNone(ret.min)
-                self.assertIsNone(ret.max)
+                self.assertEqual(ret.max, 0.0)
+                self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
-                    self.assertIsNone(freq.min)
-                    self.assertIsNone(freq.max)
+                    self.assertEqual(ret.max, 0.0)
+                    self.assertEqual(ret.min, 0.0)
         finally:
             reload_module(psutil._pslinux)
             reload_module(psutil)
@@ -774,9 +774,9 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 self.assertEqual(freq.current, 500.0)
                 # when /proc/cpuinfo is used min and max frequencies are not
                 # available and are set to None.
-                if freq.min is not None:
+                if freq.min != 0.0:
                     self.assertEqual(freq.min, 600.0)
-                if freq.max is not None:
+                if freq.max != 0.0:
                     self.assertEqual(freq.max, 700.0)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
@@ -815,14 +815,14 @@ class TestSystemCPUFrequency(unittest.TestCase):
                                 return_value=2):
                     freq = psutil.cpu_freq(percpu=True)
                     self.assertEqual(freq[0].current, 100.0)
-                    if freq[0].min is not None:
+                    if freq[0].min != 0.0:
                         self.assertEqual(freq[0].min, 200.0)
-                    if freq[0].max is not None:
+                    if freq[0].max != 0.0:
                         self.assertEqual(freq[0].max, 300.0)
                     self.assertEqual(freq[1].current, 400.0)
-                    if freq[1].min is not None:
+                    if freq[1].min != 0.0:
                         self.assertEqual(freq[1].min, 500.0)
-                    if freq[1].max is not None:
+                    if freq[1].max != 0.0:
                         self.assertEqual(freq[1].max, 600.0)
 
     @unittest.skipIf(TRAVIS, "fails on Travis")

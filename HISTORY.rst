@@ -20,6 +20,8 @@
 **Bug fixes**
 
 - 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1456_: [Linux] cpu_freq() returns None instead of 0.0 when min/max not
+  available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
 - 1463_: cpu_distribution.py script was broken.
   Benjamin Drung)
@@ -35,6 +37,8 @@
   APIs. Different process methods were affected by this.
 - 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
   fixed read violation.  (patch by Samer Masterson)
+- 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
+  involved into oneshot() context.
 
 5.6.1
 =====

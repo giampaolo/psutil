@@ -7,6 +7,7 @@
 """AIX platform implementation."""
 
 import errno
+import functools
 import glob
 import os
 import re
@@ -322,7 +323,7 @@ def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
-
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
