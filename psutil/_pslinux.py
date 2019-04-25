@@ -716,9 +716,9 @@ elif os.path.exists("/proc/cpuinfo"):
                         if line.lower().startswith(b'cpu mhz'):
                             key, value = line.split(b'\t:', 1)
                             ret.append(_common.scpufreq(float(value), 0., 0.))
-            except FileNotFoundError:
+            except IOError as err:
                 raise NotImplementedError(
-                    "can't open file %s" % path)
+                    "%r for file %r" % (err, path))
         return ret
 
 else:
