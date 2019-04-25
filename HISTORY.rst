@@ -37,6 +37,8 @@
   fixed read violation.  (patch by Samer Masterson)
 - 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
   involved into oneshot() context.
+- 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
+  Agnewee)
 
 5.6.1
 =====
