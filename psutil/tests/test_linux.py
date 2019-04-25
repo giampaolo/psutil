@@ -773,7 +773,7 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 freq = psutil.cpu_freq()
                 self.assertEqual(freq.current, 500.0)
                 # when /proc/cpuinfo is used min and max frequencies are not
-                # available and are set to None.
+                # available and are set to 0.
                 if freq.min != 0.0:
                     self.assertEqual(freq.min, 600.0)
                 if freq.max != 0.0:

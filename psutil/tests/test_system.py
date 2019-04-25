@@ -761,13 +761,15 @@ class TestSystemAPIs(unittest.TestCase):
         def check_ls(ls):
             for nt in ls:
                 self.assertEqual(nt._fields, ('current', 'min', 'max'))
-                self.assertLessEqual(nt.current, nt.max)
+                if nt.max != 0.0:
+                    self.assertLessEqual(nt.current, nt.max)
                 for name in nt._fields:
                     value = getattr(nt, name)
                     self.assertIsInstance(value, (int, long, float))
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
+        print(ls)
         if TRAVIS and not ls:
             raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
