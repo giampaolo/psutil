@@ -20,6 +20,8 @@
 **Bug fixes**
 
 - 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1456_: [Linux] cpu_freq() returns None instead of 0.0 when min/max not
+  available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
 - 1463_: cpu_distribution.py script was broken.
   Benjamin Drung)

@@ -712,7 +712,7 @@ elif os.path.exists("/proc/cpuinfo"):
             for line in f:
                 if line.lower().startswith(b'cpu mhz'):
                     key, value = line.split(b'\t:', 1)
-                    ret.append(_common.scpufreq(float(value), None, None))
+                    ret.append(_common.scpufreq(float(value), 0.0, 0.0))
         return ret
 
 
