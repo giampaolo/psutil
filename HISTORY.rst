@@ -35,6 +35,8 @@
   APIs. Different process methods were affected by this.
 - 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
   fixed read violation.  (patch by Samer Masterson)
+- 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
+  involved into oneshot() context.
 
 5.6.1
 =====
