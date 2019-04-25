@@ -739,11 +739,11 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 ret = psutil.cpu_freq()
                 assert ret
                 assert flags
-                self.assertIsNone(ret.min)
-                self.assertIsNone(ret.max)
+                self.assertEqual(ret.max, 0.0)
+                self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
-                    self.assertIsNone(freq.min)
-                    self.assertIsNone(freq.max)
+                    self.assertEqual(ret.max, 0.0)
+                    self.assertEqual(ret.min, 0.0)
         finally:
             reload_module(psutil._pslinux)
             reload_module(psutil)
