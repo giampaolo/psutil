@@ -761,7 +761,8 @@ class TestSystemAPIs(unittest.TestCase):
         def check_ls(ls):
             for nt in ls:
                 self.assertEqual(nt._fields, ('current', 'min', 'max'))
-                self.assertLessEqual(nt.current, nt.max)
+                if nt.max != 0.0:
+                    self.assertLessEqual(nt.current, nt.max)
                 for name in nt._fields:
                     value = getattr(nt, name)
                     self.assertIsInstance(value, (int, long, float))

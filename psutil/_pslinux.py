@@ -708,12 +708,24 @@ elif os.path.exists("/proc/cpuinfo"):
         min and max frequencies are not available and are set to None.
         """
         ret = []
-        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
-            for line in f:
-                if line.lower().startswith(b'cpu mhz'):
-                    key, value = line.split(b'\t:', 1)
-                    ret.append(_common.scpufreq(float(value), 0.0, 0.0))
+        path = '%s/cpuinfo' % get_procfs_path()
+        if os.path.exists(path):
+            try:
+                with open_binary(path) as f:
+                    for line in f:
+                        if line.lower().startswith(b'cpu mhz'):
+                            key, value = line.split(b'\t:', 1)
+                            ret.append(_common.scpufreq(float(value), 0., 0.))
+            except IOError as err:
+                raise NotImplementedError(
+                    "%r for file %r" % (err, path))
         return ret
+
+else:
+    def cpu_freq():
+        """Dummy implementation when none of the above files are present.
+        """
+        return []
 
 
 # =====================================================================
