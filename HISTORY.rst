@@ -41,6 +41,8 @@
   involved into oneshot() context.
 - 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
   Agnewee)
+- 1493_: [Linux] cpu_freq(): handle the case where
+  /sys/devices/system/cpu/cpufreq/ exists but is empty.
 
 5.6.1
 =====
