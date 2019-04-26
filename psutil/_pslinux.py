@@ -668,7 +668,7 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
+if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
         os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
     def cpu_freq():
         """Return frequency metrics for all CPUs.
@@ -714,12 +714,6 @@ elif os.path.exists("/proc/cpuinfo"):
                     key, value = line.split(b'\t:', 1)
                     ret.append(_common.scpufreq(float(value), 0.0, 0.0))
         return ret
-
-else:
-    def cpu_freq():
-        """Dummy implementation when none of the above files are present.
-        """
-        return []
 
 
 # =====================================================================
