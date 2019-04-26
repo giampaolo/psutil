@@ -77,6 +77,8 @@ include psutil/arch/windows/security.c
 include psutil/arch/windows/security.h
 include psutil/arch/windows/services.c
 include psutil/arch/windows/services.h
+include psutil/arch/windows/wmi.c
+include psutil/arch/windows/wmi.h
 include psutil/tests/README.rst
 include psutil/tests/__init__.py
 include psutil/tests/__main__.py

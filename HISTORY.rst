@@ -3,6 +3,8 @@
 5.6.2
 =====
 
+2019-04-26
+
 **Enhancements**
 
 - 604_: [UNIX, Windows] add new psutil.getloadavg() returning system load
