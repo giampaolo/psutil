@@ -7,31 +7,31 @@
 
 **Enhancements**
 
-- 604_: [UNIX, Windows] add new psutil.getloadavg() returning system load
+- 604_: [Windows, Windows] add new psutil.getloadavg(), returning system load
+  average calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
   `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
   the number of physical CPUs in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
-- 1473_: [Windows] process IO priority (ionice()) values are now exposed as 4
-  new constants: IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
-  Also it was not possible to set high I/O priority (not it is).
+- 1476_: [Windows] it is now possible to set process high I/O priority
+  (ionice()).Also, I/O priority values are now exposed as 4 new constants:
+  IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
 - 1478_: add make command to re-run tests failed on last run.
-  average calculation. (patch by Ammar Askar)
 
 **Bug fixes**
 
 - 1223_: [Windows] boot_time() may return value on Windows XP.
 - 1456_: [Linux] cpu_freq() returns None instead of 0.0 when min/max not
   available (patch by Alex Manuskin)
-- 1462_: [Linux] (tests) make  tests invariant to LANG setting (patch by
-- 1463_: cpu_distribution.py script was broken.
+- 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
   Benjamin Drung)
+- 1463_: cpu_distribution.py script was broken.
 - 1470_: [Linux] disk_partitions(): fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
-- 1472_: [Linux] cpu_freq() does not return all CPUs on Rasbperry pi 3.
+- 1472_: [Linux] cpu_freq() does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
   in WindowsError being raised instead of AccessDenied.
