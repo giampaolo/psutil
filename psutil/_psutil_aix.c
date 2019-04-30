@@ -23,9 +23,9 @@
  *
  * Useful resources:
  * - proc filesystem: http://www-01.ibm.com/support/knowledgecenter/
- *       ssw_aix_61/com.ibm.aix.files/proc.htm
+ *       ssw_aix_72/com.ibm.aix.files/proc.htm
  * - libperfstat: http://www-01.ibm.com/support/knowledgecenter/
- *       ssw_aix_61/com.ibm.aix.files/libperfstat.h.htm
+ *       ssw_aix_72/com.ibm.aix.files/libperfstat.h.htm
  */
 
 #include <Python.h>
