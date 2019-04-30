@@ -358,19 +358,12 @@ class Process(object):
         self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
-        self._proc_name_and_args.cache_activate(self)
         self._proc_basic_info.cache_activate(self)
         self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_name_and_args.cache_deactivate(self)
         self._proc_basic_info.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
-
-    @wrap_exceptions
-    @memoize_when_activated
-    def _proc_name_and_args(self):
-        return cext.proc_name_and_args(self.pid, self._procfs_path)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -386,14 +379,17 @@ class Process(object):
     def name(self):
         if self.pid == 0:
             return "swapper"
-        # note: this is limited to 15 characters
-        return self._proc_name_and_args()[0].rstrip("\x00")
+        # note: max 16 characters
+        return cext.proc_name(self.pid, self._procfs_path).rstrip("\x00")
 
     @wrap_exceptions
     def exe(self):
         # there is no way to get executable path in AIX other than to guess,
         # and guessing is more complex than what's in the wrapping class
-        exe = self.cmdline()[0]
+        cmdline = self.cmdline()
+        if not cmdline:
+            return ''
+        exe = cmdline[0]
         if os.path.sep in exe:
             # relative or absolute path
             if not os.path.isabs(exe):
@@ -415,7 +411,7 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return self._proc_name_and_args()[1].split(' ')
+        return cext.proc_args(self.pid)
 
     @wrap_exceptions
     def create_time(self):

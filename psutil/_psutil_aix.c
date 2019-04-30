@@ -30,13 +30,14 @@
 
 #include <Python.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/limits.h>
 #include <sys/proc.h>
-#include <sys/sysinfo.h>
 #include <sys/procfs.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysinfo.h>
 #include <sys/thread.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <utmp.h>
 #include <utmpx.h>
@@ -134,17 +135,14 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process name and args as a Python tuple.
+ * Return process name as a Python string.
  */
 static PyObject *
-psutil_proc_name_and_args(PyObject *self, PyObject *args) {
+psutil_proc_name(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
     const char *procfs_path;
-    PyObject *py_name = NULL;
-    PyObject *py_args = NULL;
-    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -152,23 +150,65 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
-    py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
-    if (!py_name)
+    return PyUnicode_DecodeFSDefaultAndSize(info.pr_fname, PRFNSZ);
+}
+
+
+/*
+ * Return process command line arguments as a Python list
+ */
+static PyObject *
+psutil_proc_args(PyObject *self, PyObject *args) {
+    int pid;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_arg = NULL;
+    struct procsinfo procbuf;
+    long arg_max;
+    char *argbuf = NULL;
+    char *curarg = NULL;
+    int ret;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (!PyArg_ParseTuple(args, "i", &pid))
         goto error;
-    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
-    if (!py_args)
+    arg_max = sysconf(_SC_ARG_MAX);
+    argbuf = malloc(arg_max);
+    if (argbuf == NULL) {
+        PyErr_NoMemory();
         goto error;
-    py_retlist = Py_BuildValue("OO", py_name, py_args);
-    if (!py_retlist)
+    }
+
+    procbuf.pi_pid = pid;
+    ret = getargs(&procbuf, sizeof(struct procinfo), argbuf, ARG_MAX);
+    if (ret == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
-    Py_DECREF(py_name);
-    Py_DECREF(py_args);
+    }
+
+    curarg = argbuf;
+    /* getargs will always append an extra NULL to end the arg list,
+     * even if the buffer is not big enough (even though it is supposed
+     * to be) so the following 'while' is safe */
+    while (*curarg != '\0') {
+        py_arg = PyUnicode_DecodeFSDefault(curarg);
+        if (!py_arg)
+            goto error;
+        if (PyList_Append(py_retlist, py_arg))
+            goto error;
+        Py_DECREF(py_arg);
+        curarg = strchr(curarg, '\0') + 1;
+    }
+
+    free(argbuf);
+
     return py_retlist;
 
 error:
-    Py_XDECREF(py_name);
-    Py_XDECREF(py_args);
+    if (argbuf != NULL)
+        free(argbuf);
     Py_XDECREF(py_retlist);
+    Py_XDECREF(py_arg);
     return NULL;
 }
 
@@ -880,8 +920,10 @@ PsutilMethods[] =
     // --- process-related functions
     {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
-    {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS,
-     "Return process name and args."},
+    {"proc_name", psutil_proc_name, METH_VARARGS,
+     "Return process name."},
+    {"proc_args", psutil_proc_args, METH_VARARGS,
+     "Return process command line arguments."},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
     {"proc_cred", psutil_proc_cred, METH_VARARGS,
