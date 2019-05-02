@@ -414,6 +414,10 @@ class Process(object):
         return cext.proc_args(self.pid)
 
     @wrap_exceptions
+    def environ(self):
+        return cext.proc_environ(self.pid)
+
+    @wrap_exceptions
     def create_time(self):
         return self._proc_basic_info()[proc_info_map['create_time']]
 
