@@ -1285,7 +1285,7 @@ Process class
       import psutil
       p = psutil.Process()
       if psutil.LINUX
-          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+          p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
       else:  # Windows
           p.ionice(psutil.IOPRIO_HIGH)
       p.ionice()  # get
