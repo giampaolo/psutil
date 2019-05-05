@@ -1292,7 +1292,7 @@ Process class
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_*`` constants
+    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
      including new ``IOPRIO_HIGH``.
 
   .. method:: rlimit(resource, limits=None)
