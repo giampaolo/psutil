@@ -238,6 +238,27 @@ CPU
 
     .. versionchanged:: 5.5.1 added FreeBSD support.
 
+.. function:: getloadavg()
+
+    Return the average system load over the last 1, 5 and 15 minutes as a tuple.
+    The load represents how many processes are waiting to be run by the
+    operating system.
+    On UNIX systems this relies on `os.getloadavg`_. On Windows this is
+    emulated by using a Windows API that spawns a thread which updates the
+    average every 5 seconds, mimicking the UNIX behavior. Thus, the first time
+    this is called and for the next 5 seconds it will return a meaningless
+    ``(0.0, 0.0, 0.0)`` tuple. Example:
+
+    .. code-block:: python
+
+       >>> import psutil
+       >>> psutil.getloadavg()
+       (3.14, 3.89, 4.67)
+
+    Availability: Unix, Windows
+
+    .. versionadded:: 5.6.2
+
 Memory
 ------
 
@@ -1264,14 +1285,14 @@ Process class
       import psutil
       p = psutil.Process()
       if psutil.LINUX
-          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+          p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
       else:  # Windows
           p.ionice(psutil.IOPRIO_HIGH)
       p.ionice()  # get
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_*`` constants
+    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
      including new ``IOPRIO_HIGH``.
 
   .. method:: rlimit(resource, limits=None)
@@ -2556,12 +2577,6 @@ FAQs
   the Python script as a Windows service (this is the trick used by tools
   such as ProcessHacker).
 
-----
-
-* Q: What about load average?
-* A: psutil does not expose any load average function as it's already available
-  in python as `os.getloadavg`_.
-
 Running tests
 =============
 
@@ -2583,6 +2598,10 @@ take a look at the `development guide`_.
 Timeline
 ========
 
+- 2019-0426:
+  `5.6.2 <https://pypi.org/project/psutil/5.6.2/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#562>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.1...release-5.6.2#files_bucket>`__
 - 2019-03-11:
   `5.6.1 <https://pypi.org/project/psutil/5.6.1/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#561>`__ -

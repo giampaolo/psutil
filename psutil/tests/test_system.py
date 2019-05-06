@@ -38,6 +38,7 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
@@ -760,7 +761,8 @@ class TestSystemAPIs(unittest.TestCase):
         def check_ls(ls):
             for nt in ls:
                 self.assertEqual(nt._fields, ('current', 'min', 'max'))
-                self.assertLessEqual(nt.current, nt.max)
+                if nt.max != 0.0:
+                    self.assertLessEqual(nt.current, nt.max)
                 for name in nt._fields:
                     value = getattr(nt, name)
                     self.assertIsInstance(value, (int, long, float))
@@ -777,6 +779,15 @@ class TestSystemAPIs(unittest.TestCase):
 
         if LINUX:
             self.assertEqual(len(ls), psutil.cpu_count())
+
+    @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
+    def test_getloadavg(self):
+        loadavg = psutil.getloadavg()
+        assert len(loadavg) == 3
+
+        for load in loadavg:
+            self.assertIsInstance(load, float)
+            self.assertGreaterEqual(load, 0.0)
 
     def test_os_constants(self):
         names = ["POSIX", "WINDOWS", "LINUX", "MACOS", "FREEBSD", "OPENBSD",

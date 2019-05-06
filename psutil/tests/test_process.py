@@ -724,11 +724,27 @@ class TestProcess(unittest.TestCase):
             else:
                 raise
 
+    def test_long_cmdline(self):
+        create_exe(TESTFN)
+        self.addCleanup(safe_rmpath, TESTFN)
+        cmdline = [TESTFN] + (["0123456789"] * 20)
+        sproc = get_test_subprocess(cmdline)
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.cmdline(), cmdline)
+
     def test_name(self):
         sproc = get_test_subprocess(PYTHON_EXE)
         name = psutil.Process(sproc.pid).name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
+
+    def test_long_name(self):
+        long_name = TESTFN + ("0123456789" * 2)
+        create_exe(long_name)
+        self.addCleanup(safe_rmpath, long_name)
+        sproc = get_test_subprocess(long_name)
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.name(), os.path.basename(long_name))
 
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")

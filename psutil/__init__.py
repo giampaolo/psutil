@@ -210,7 +210,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",  # "cpu_freq",
+    "cpu_stats",  # "cpu_freq", "getloadavg"
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -2017,6 +2017,17 @@ if hasattr(_psplatform, "cpu_freq"):
     __all__.append("cpu_freq")
 
 
+if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):
+    # Perform this hasattr check once on import time to either use the
+    # platform based code or proxy straight from the os module.
+    if hasattr(os, "getloadavg"):
+        getloadavg = os.getloadavg
+    else:
+        getloadavg = _psplatform.getloadavg
+
+    __all__.append("getloadavg")
+
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
@@ -2462,7 +2473,7 @@ def test():  # pragma: no cover
         else:
             cputime = ''
 
-        user = p.info['username']
+        user = p.info['username'] or ''
         if not user and POSIX:
             try:
                 user = p.uids()[0]

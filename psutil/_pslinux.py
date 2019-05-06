@@ -25,8 +25,8 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
-from ._common import ENCODING
-from ._common import ENCODING_ERRS
+from ._common import decode
+from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
@@ -205,19 +205,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-if PY3:
-    def decode(s):
-        return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
-else:
-    def decode(s):
-        return s
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
 
 
 def readlink(path):
@@ -681,7 +668,7 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if os.path.exists("/sys/devices/system/cpu/cpufreq") or \
+if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
     def cpu_freq():
         """Return frequency metrics for all CPUs.
@@ -725,8 +712,14 @@ elif os.path.exists("/proc/cpuinfo"):
             for line in f:
                 if line.lower().startswith(b'cpu mhz'):
                     key, value = line.split(b'\t:', 1)
-                    ret.append(_common.scpufreq(float(value), None, None))
+                    ret.append(_common.scpufreq(float(value), 0., 0.))
         return ret
+
+else:
+    def cpu_freq():
+        """Dummy implementation when none of the above files are present.
+        """
+        return []
 
 
 # =====================================================================

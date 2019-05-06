@@ -5,6 +5,7 @@
 """Sun OS Solaris platform implementation."""
 
 import errno
+import functools
 import os
 import socket
 import subprocess
@@ -17,6 +18,7 @@ from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
 from ._common import AF_INET6
+from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
@@ -111,16 +113,6 @@ pmmap_grouped = namedtuple('pmmap_grouped',
 # psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-
-
-# =====================================================================
-# --- utils
-# =====================================================================
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
 
 
 # =====================================================================
@@ -345,7 +337,7 @@ def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
-
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)

@@ -29,6 +29,7 @@ from psutil._compat import u
 from psutil.tests import call_until
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import mock
@@ -738,11 +739,11 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 ret = psutil.cpu_freq()
                 assert ret
                 assert flags
-                self.assertIsNone(ret.min)
-                self.assertIsNone(ret.max)
+                self.assertEqual(ret.max, 0.0)
+                self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
-                    self.assertIsNone(freq.min)
-                    self.assertIsNone(freq.max)
+                    self.assertEqual(ret.max, 0.0)
+                    self.assertEqual(ret.min, 0.0)
         finally:
             reload_module(psutil._pslinux)
             reload_module(psutil)
@@ -759,6 +760,8 @@ class TestSystemCPUFrequency(unittest.TestCase):
             elif (name.endswith('/scaling_max_freq') and
                     name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
                 return io.BytesIO(b"700000")
+            elif name == '/proc/cpuinfo':
+                return io.BytesIO(b"cpu MHz		: 500")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -769,8 +772,12 @@ class TestSystemCPUFrequency(unittest.TestCase):
                     'os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 self.assertEqual(freq.current, 500.0)
-                self.assertEqual(freq.min, 600.0)
-                self.assertEqual(freq.max, 700.0)
+                # when /proc/cpuinfo is used min and max frequencies are not
+                # available and are set to 0.
+                if freq.min != 0.0:
+                    self.assertEqual(freq.min, 600.0)
+                if freq.max != 0.0:
+                    self.assertEqual(freq.max, 700.0)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_multi_cpu(self):
@@ -794,6 +801,9 @@ class TestSystemCPUFrequency(unittest.TestCase):
             elif (n.endswith('/scaling_max_freq') and
                     n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
                 return io.BytesIO(b"600000")
+            elif name == '/proc/cpuinfo':
+                return io.BytesIO(b"cpu MHz		: 100\n"
+                                  b"cpu MHz		: 400")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -805,11 +815,15 @@ class TestSystemCPUFrequency(unittest.TestCase):
                                 return_value=2):
                     freq = psutil.cpu_freq(percpu=True)
                     self.assertEqual(freq[0].current, 100.0)
-                    self.assertEqual(freq[0].min, 200.0)
-                    self.assertEqual(freq[0].max, 300.0)
+                    if freq[0].min != 0.0:
+                        self.assertEqual(freq[0].min, 200.0)
+                    if freq[0].max != 0.0:
+                        self.assertEqual(freq[0].max, 300.0)
                     self.assertEqual(freq[1].current, 400.0)
-                    self.assertEqual(freq[1].min, 500.0)
-                    self.assertEqual(freq[1].max, 600.0)
+                    if freq[1].min != 0.0:
+                        self.assertEqual(freq[1].min, 500.0)
+                    if freq[1].max != 0.0:
+                        self.assertEqual(freq[1].max, 600.0)
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
@@ -820,6 +834,8 @@ class TestSystemCPUFrequency(unittest.TestCase):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith('/cpuinfo_cur_freq'):
                 return io.BytesIO(b"200000")
+            elif name == '/proc/cpuinfo':
+                return io.BytesIO(b"cpu MHz		: 200")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -839,6 +855,8 @@ class TestSystemCPUFrequency(unittest.TestCase):
             if name.endswith('/scaling_cur_freq'):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith('/cpuinfo_cur_freq'):
+                raise IOError(errno.ENOENT, "")
+            elif name == '/proc/cpuinfo':
                 raise IOError(errno.ENOENT, "")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -864,6 +882,20 @@ class TestSystemCPUStats(unittest.TestCase):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
         self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestLoadAvg(unittest.TestCase):
+
+    @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
+    def test_getloadavg(self):
+        psutil_value = psutil.getloadavg()
+        with open("/proc/loadavg", "r") as f:
+            proc_value = f.read().split()
+
+        self.assertAlmostEqual(float(proc_value[0]), psutil_value[0], delta=1)
+        self.assertAlmostEqual(float(proc_value[1]), psutil_value[1], delta=1)
+        self.assertAlmostEqual(float(proc_value[2]), psutil_value[2], delta=1)
 
 
 # =====================================================================
