@@ -1285,14 +1285,14 @@ Process class
       import psutil
       p = psutil.Process()
       if psutil.LINUX
-          p.ionice(psutil.IOPRIO_CLASS_RT, level=7)
+          p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
       else:  # Windows
           p.ionice(psutil.IOPRIO_HIGH)
       p.ionice()  # get
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts mew ``IOPRIO_*`` constants
+    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
      including new ``IOPRIO_HIGH``.
 
   .. method:: rlimit(resource, limits=None)
