@@ -949,7 +949,7 @@ class Process(object):
             """
             return self._proc.cpu_num()
 
-    # Linux, macOS and Windows only
+    # Linux, macOS, Windows, Solaris, AIX
     if hasattr(_psplatform.Process, "environ"):
 
         def environ(self):

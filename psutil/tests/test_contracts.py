@@ -130,7 +130,7 @@ class TestAvailability(unittest.TestCase):
 
     def test_proc_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
-                         LINUX or MACOS or WINDOWS)
+                         LINUX or MACOS or WINDOWS or AIX or SUNOS)
 
     def test_proc_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
