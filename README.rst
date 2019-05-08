@@ -26,10 +26,23 @@
     :target: https://github.com/giampaolo/psutil/
     :alt: Github stars
 
+.. image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/
+    :alt: Github forks
+
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://pypi.org/project/psutil
     :alt: License
 
+.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+    :target: https://pypi.org/project/psutil
+    :alt: Contributors
+
+.. image:: https://img.shields.io/pypi/pyversions/psutil.svg
+    :target: https://pypi.org/project/psutil
+    :alt: Supported Python versions
+
+-----
 
 Quick links
 ===========
