@@ -2,6 +2,18 @@
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
+.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/stargazers
+    :alt: Github stars
+
+.. image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/network/members
+    :alt: Github forks
+
+.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/graphs/contributors
+    :alt: Contributors
+
 .. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
@@ -22,25 +34,13 @@
     :target: https://pypi.org/project/psutil
     :alt: Latest version
 
-.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/
-    :alt: Github stars
-
-.. image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/
-    :alt: Github forks
+.. image:: https://img.shields.io/pypi/pyversions/psutil.svg
+    :target: https://pypi.org/project/psutil
+    :alt: Supported Python versions
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://pypi.org/project/psutil
     :alt: License
-
-.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
-    :target: https://pypi.org/project/psutil
-    :alt: Contributors
-
-.. image:: https://img.shields.io/pypi/pyversions/psutil.svg
-    :target: https://pypi.org/project/psutil
-    :alt: Supported Python versions
 
 -----
 
