@@ -70,6 +70,8 @@ def main():
                 pass
         if user and psutil.WINDOWS and '\\' in user:
             user = user.split('\\')[1]
+        if not user:
+            user = ''
         user = user[:9]
         vms = bytes2human(p.info['memory_info'].vms) if \
             p.info['memory_info'] is not None else ''
@@ -85,7 +87,7 @@ def main():
         status = p.info['status'][:5] if p.info['status'] else ''
 
         line = templ % (
-            user[:10],
+            user,
             p.info['pid'],
             memp,
             vms,

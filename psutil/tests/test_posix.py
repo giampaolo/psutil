@@ -52,7 +52,7 @@ def ps(fmt, pid=None):
     if pid is not None:
         cmd.extend(['-p', str(pid)])
     else:
-        if SUNOS:
+        if SUNOS or AIX:
             cmd.append('-A')
         else:
             cmd.append('ax')
@@ -113,6 +113,20 @@ def ps_args(pid):
     return ps(field, pid)
 
 
+def ps_rss(pid):
+    field = "rss"
+    if AIX:
+        field = "rssize"
+    return ps(field, pid)
+
+
+def ps_vsz(pid):
+    field = "vsz"
+    if AIX:
+        field = "vsize"
+    return ps(field, pid)
+
+
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
@@ -162,7 +176,7 @@ class TestProcess(unittest.TestCase):
         # give python interpreter some time to properly initialize
         # so that the results are the same
         time.sleep(0.1)
-        rss_ps = ps('rss', self.pid)
+        rss_ps = ps_rss(self.pid)
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
@@ -172,7 +186,7 @@ class TestProcess(unittest.TestCase):
         # give python interpreter some time to properly initialize
         # so that the results are the same
         time.sleep(0.1)
-        vsz_ps = ps('vsz', self.pid)
+        vsz_ps = ps_vsz(self.pid)
         vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
 
