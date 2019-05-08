@@ -1136,6 +1136,7 @@ Process class
 
     .. versionadded:: 4.0.0
     .. versionchanged:: 5.3.0 added SunOS support
+    .. versionchanged:: 5.6.3 added AIX suport
 
   .. method:: create_time()
 

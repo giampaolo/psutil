@@ -696,11 +696,6 @@ class TestSystemCPUCountPhysical(unittest.TestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUFrequency(unittest.TestCase):
 
-    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
-    def test_emulate_no_files(self):
-        with mock.patch("os.path.exists", return_value=False):
-            self.assertIsNone(psutil.cpu_freq())
-
     @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_second_file(self):

@@ -1,5 +1,18 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.3
+=====
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 1494_: [AIX] added support for Process.environ().  (patch by Arnon Yaari)
+
+**Bug fixes**
+
+- 1276_: [AIX] can't get whole cmdline().  (patch by Arnon Yaari)
+
 5.6.2
 =====
 

@@ -396,8 +396,8 @@ class Process(object):
                 # if cwd has changed, we're out of luck - this may be wrong!
                 exe = os.path.abspath(os.path.join(self.cwd(), exe))
             if (os.path.isabs(exe) and
-               os.path.isfile(exe) and
-               os.access(exe, os.X_OK)):
+                    os.path.isfile(exe) and
+                    os.access(exe, os.X_OK)):
                 return exe
             # not found, move to search in PATH using basename only
             exe = os.path.basename(exe)
@@ -405,7 +405,7 @@ class Process(object):
         for path in os.environ["PATH"].split(":"):
             possible_exe = os.path.abspath(os.path.join(path, exe))
             if (os.path.isfile(possible_exe) and
-               os.access(possible_exe, os.X_OK)):
+                    os.access(possible_exe, os.X_OK)):
                 return possible_exe
         return ''
 
