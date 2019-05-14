@@ -1650,7 +1650,7 @@ class Process(object):
         sep = '\x00' if data.endswith('\x00') else ' '
         if data.endswith(sep):
             data = data[:-1]
-        return [x for x in data.split(sep)]
+        return data.split(sep)
 
     @wrap_exceptions
     def environ(self):

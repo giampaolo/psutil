@@ -39,7 +39,7 @@
     :alt: Supported Python versions
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.org/project/psutil
+    :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
 
 -----

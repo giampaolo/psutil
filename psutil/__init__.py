@@ -2053,7 +2053,7 @@ def virtual_memory():
      - used:
         memory used, calculated differently depending on the platform and
         designed for informational purposes only:
-        macOS: active + inactive + wired
+        macOS: active + wired
         BSD: active + wired + cached
         Linux: total - free
 
