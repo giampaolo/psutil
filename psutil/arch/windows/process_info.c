@@ -772,6 +772,14 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
         0,
         &bufLen);
 
+    // 0xC0000225 == STATUS_NOT_FOUND, see:
+    // https://github.com/giampaolo/psutil/issues/1501
+    if (status == 0xC0000225) {
+        AccessDenied("NtQueryInformationProcess(ProcessBasicInformation) -> "
+                     "STATUS_NOT_FOUND translated into PermissionError");
+        goto error;
+    }
+
     if (status != STATUS_BUFFER_OVERFLOW && \
             status != STATUS_BUFFER_TOO_SMALL && \
             status != STATUS_INFO_LENGTH_MISMATCH) {
