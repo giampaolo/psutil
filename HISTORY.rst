@@ -12,6 +12,9 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1276_: [AIX] can't get whole cmdline().  (patch by Arnon Yaari)
+- 1501_: [Windows] Process cmdline() and exe() raise unhandled "WinError 1168
+  element not found" exceptions for "Registry" and "Memory Compression" psuedo
+  processes on Windows 10.
 
 5.6.2
 =====
