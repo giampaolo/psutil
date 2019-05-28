@@ -1324,7 +1324,7 @@ Process class
 
     Return process I/O statistics as a named tuple.
     For Linux you can refer to
-    `/proc filesysem documentation <https://stackoverflow.com/questions/3633286/>`__.
+    `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`__.
 
     - **read_count**: the number of read operations performed (cumulative).
       This is supposed to count the number of read-related syscalls such as
