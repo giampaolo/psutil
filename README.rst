@@ -481,3 +481,8 @@ Windows services
      'start_type': 'manual',
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/ce63e7f7f69d44b5b59682196e6fbfca
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/app/g-rodola/psutil?utm_source=github.com&utm_medium=referral&utm_content=giampaolo/psutil&utm_campaign=Badge_Grade_Dashboard
