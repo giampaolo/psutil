@@ -26,7 +26,7 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-.. image:: https://api.codacy.com/project/badge/Grade/ce63e7f7f69d44b5b59682196e6fbfca
+.. image:: https://img.shields.io/codacy/grade/ce63e7f7f69d44b5b59682196e6fbfca.svg
     :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
     :alt: Code quality
 
@@ -49,6 +49,9 @@
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
+
+.. image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=social
+    :alt: Twitter Follow
 
 -----
 
