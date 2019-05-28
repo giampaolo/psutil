@@ -1,4 +1,4 @@
-.. image:: https://pepy.tech/badge/psutil/month
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
@@ -26,6 +26,10 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
+.. image:: https://api.codacy.com/project/badge/Grade/ce63e7f7f69d44b5b59682196e6fbfca
+    :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
+    :alt: Code quality
+
 .. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
     :target: http://psutil.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
@@ -37,6 +41,10 @@
 .. image:: https://img.shields.io/pypi/pyversions/psutil.svg
     :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
+
+.. image:: https://repology.org/badge/tiny-repos/python:psutil.svg
+    :target: https://repology.org/metapackage/python:psutil/versions
+    :alt: Binary packages
 
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
