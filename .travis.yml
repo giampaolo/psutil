@@ -1,4 +1,3 @@
-sudo: false
 language: python
 cache: pip
 matrix:
@@ -10,7 +9,6 @@ matrix:
         - python: 3.6
         - python: 3.7
           dist: xenial
-          sudo: true
         # macOS
         - language: generic
           os: osx
