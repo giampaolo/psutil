@@ -1,56 +1,61 @@
-.. image:: https://img.shields.io/pypi/dm/psutil.svg
+|  |downloads| |stars| |forks| |contributors| |coverage| |quality|
+|  |version| |py-versions| |packages| |license|
+|  |travis| |appveyor| |doc| |twitter|
+
+.. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
-.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/stargazers
     :alt: Github stars
 
-.. image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/network/members
     :alt: Github forks
 
-.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+.. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
 
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
-    :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Linux tests (Travis)
-
-.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
-    :target: https://ci.appveyor.com/project/giampaolo/psutil
-    :alt: Windows tests (Appveyor)
-
-.. image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
-    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
-    :alt: Test coverage (coverall.io)
-
-.. image:: https://img.shields.io/codacy/grade/ce63e7f7f69d44b5b59682196e6fbfca.svg
+.. |quality| image:: https://img.shields.io/codacy/grade/ce63e7f7f69d44b5b59682196e6fbfca.svg
     :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
     :alt: Code quality
 
-.. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
+.. |travis| image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=linux%20/%20osx
+    :target: https://travis-ci.org/giampaolo/psutil
+    :alt: Linux tests (Travis)
+
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=windows
+    :target: https://ci.appveyor.com/project/giampaolo/psutil
+    :alt: Windows tests (Appveyor)
+
+.. |coverage| image:: https://img.shields.io/coveralls/github/giampaolo/psutil.svg?label=test%20coverage
+    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
+    :alt: Test coverage (coverall.io)
+
+.. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
     :target: http://psutil.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
+.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.org/project/psutil
     :alt: Latest version
 
-.. image:: https://img.shields.io/pypi/pyversions/psutil.svg
+.. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
     :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
 
-.. image:: https://repology.org/badge/tiny-repos/python:psutil.svg
+.. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
     :target: https://repology.org/metapackage/python:psutil/versions
     :alt: Binary packages
 
-.. image:: https://img.shields.io/pypi/l/psutil.svg
+.. |license| image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
 
-.. image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=social
+.. |twitter| image:: https://img.shields.io/twitter/url/https/grodola.svg?label=follow
+    :target: https://twitter.com/grodola
     :alt: Twitter Follow
 
 -----
