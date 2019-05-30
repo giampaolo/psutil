@@ -467,6 +467,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_per_cpu_times(self):
         self.execute(psutil.cpu_times, percpu=True)
 
+    @skip_if_linux()
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
 
