@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage| |quality|
 |  |version| |py-versions| |packages| |license|
-|  |travis| |appveyor| |doc| |twitter|
+|  |travis| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -54,9 +54,13 @@
     :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
 
-.. |twitter| image:: https://img.shields.io/twitter/url/https/grodola.svg?label=follow
+.. |twitter| image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=flat&logo=twitter&logoColor=4FADFF
     :target: https://twitter.com/grodola
     :alt: Twitter Follow
+
+.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
+    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+    :alt: Tidelift
 
 -----
 
@@ -73,7 +77,6 @@ Quick links
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
-
 Summary
 =======
 
@@ -82,9 +85,8 @@ retrieving information on **running processes** and **system utilization**
 (CPU, memory, disks, network, sensors) in Python.
 It is useful mainly for **system monitoring**, **profiling and limiting process
 resources** and **management of running processes**.
-It implements many functionalities offered by UNIX command line tools such as:
-ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
-iotop, uptime, pidof, tty, taskset, pmap.
+It implements many functionalities offered by classic UNIX command line tools
+such as *ps, top, iotop, lsof, netstat, ifconfig, free* and others.
 psutil currently supports the following platforms:
 
 - **Linux**
@@ -96,24 +98,28 @@ psutil currently supports the following platforms:
 
 ...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
+Professional support
+====================
 
-Author
-======
+.. |tideliftlogo| image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
+   :width: 100
+   :alt: Tidelift
+   :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
-psutil was created and is maintained by
-`Giampaolo Rodola <http://grodola.blogspot.com/p/about.html>`__ and it
-received many useful `contributions <https://github.com/giampaolo/psutil/blob/master/CREDITS>`__
-over the years.
-A lot of time and effort went into making psutil as it is right now.
-If you feel psutil is useful to you or your business and want to support its
-future development consider making a small donation:
+.. list-table::
+   :widths: 10 100
 
-.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
-    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-    :alt: Donate via PayPal
+   * - |tideliftlogo|
+     - Professional support for psutil is available as part of the
+       `Tidelift Subscription`_.
+       Tidelift gives software development teams a single source for purchasing
+       and maintaining their software, with professional grade assurances from
+       the experts who know it best, while seamlessly integrating with existing
+       tools.
+       By subscribing you will help me (`Giampaolo Rodola`_) support psutil
+       future development. Alternatively consider making a small `donation`_.
 
-Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
-
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
 Example applications
 ====================
@@ -134,7 +140,7 @@ Projects using psutil
 
 psutil has roughly the following monthly downloads:
 
-.. image:: https://pepy.tech/badge/psutil/month
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
@@ -497,3 +503,7 @@ Windows services
      'start_type': 'manual',
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
+
+
+.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
