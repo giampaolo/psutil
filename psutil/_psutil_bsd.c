@@ -30,7 +30,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#if !defined(__NetBSD__)
 #include <sys/user.h>
+#endif
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/socket.h>
