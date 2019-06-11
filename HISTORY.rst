@@ -1,9 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-In development
-==============
+5.6.3
+=====
 
-XXXX-XX-XX
+2019-06-11
 
 **Enhancements**
 
@@ -15,6 +15,8 @@ XXXX-XX-XX
 - 1501_: [Windows] Process cmdline() and exe() raise unhandled "WinError 1168
   element not found" exceptions for "Registry" and "Memory Compression" psuedo
   processes on Windows 10.
+- 1526_: [NetBSD] process cmdline() could raise MemoryError.  (patch by
+  Kamil Rytarowski)
 
 5.6.2
 =====
