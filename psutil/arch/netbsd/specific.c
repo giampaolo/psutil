@@ -679,3 +679,44 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         uv.forks  // forks
     );
 }
+
+PyObject *
+psutil_proc_exe(PyObject *self, PyObject *args) {
+    long pid;
+
+    char path[MAXPATHLEN];
+    size_t pathlen = sizeof path;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+#ifdef KERN_PROC_PATHNAME
+    int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_PATHNAME};
+    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+#else
+    char *buf;
+    if (asprintf(&buf, "/proc/%d/exe", (int)pid) < 0) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ssize_t len = readlink(buf, path, pathlen - 1);
+    free(buf);
+    if (len == -1) {
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    path[len] = '\0';
+#endif
+
+    return PyUnicode_DecodeFSDefault(path);
+}
