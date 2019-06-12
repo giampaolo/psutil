@@ -30,7 +30,7 @@ if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
     PSUTIL_TESTING=1 python -Wa psutil/tests/test_memory_leaks.py
     # run linter (on Linux only)
     if [[ "$(uname -s)" != 'Darwin' ]]; then
-        python -m flake8 --max-complexity=25
+        python -m flake8 --max-complexity=10
     fi
 fi
 
