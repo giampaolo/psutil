@@ -386,9 +386,8 @@ def virtual_memory():
     mems = {}
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
-            name, _, value = line.partition(':')
-            value_num, _, units = value.partition(' ')
-            mems[name + ':'] = int(value_num) * 1024
+            fields = line.split()
+            mems[fields[0]] = int(fields[1]) * 1024
 
     # /proc doc states that the available fields in /proc/meminfo vary
     # by architecture and compile options, but these 3 values are also
