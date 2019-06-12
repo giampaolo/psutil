@@ -9,6 +9,11 @@ XXXX-XX-XX
 
 - 1530_: [NetBSD] add process cwd() support.  (patch by Kamil Rytarowski)
 
+**Bug fixes**
+
+- 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
+  (patch by Arnon Yaari)
+
 5.6.3
 =====
 
