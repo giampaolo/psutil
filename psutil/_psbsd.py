@@ -844,10 +844,7 @@ class Process(object):
         # it into None
         if OPENBSD and self.pid == 0:
             return None  # ...else it would raise EINVAL
-        elif NETBSD:
-            with wrap_exceptions_procfs(self):
-                return os.readlink("/proc/%s/cwd" % self.pid)
-        elif HAS_PROC_OPEN_FILES:
+        elif NETBSD or HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
             return cext.proc_cwd(self.pid) or None

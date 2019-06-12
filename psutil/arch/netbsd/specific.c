@@ -111,6 +111,41 @@ kinfo_getfile(pid_t pid, int* cnt) {
     return kf;
 }
 
+PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    long pid;
+
+    char path[MAXPATHLEN];
+    size_t pathlen = sizeof path;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+#ifdef KERN_PROC_CWD
+    int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
+    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+#else
+    char *buf;
+    if (asprintf(&buf, "/proc/%d/cwd", (int)pid) < 0) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ssize_t len = readlink(buf, path, sizeof(path) - 1);
+    free(buf);
+    if (len == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    path[len] = '\0';
+#endif
+
+    return PyUnicode_DecodeFSDefault(path);
+}
+
 
 // XXX: This is no longer used as per
 // https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
