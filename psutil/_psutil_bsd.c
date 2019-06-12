@@ -921,9 +921,9 @@ PsutilMethods[] = {
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
+#endif
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
-#endif
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
