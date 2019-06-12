@@ -1205,6 +1205,8 @@ Process class
 
     The process current working directory as an absolute path.
 
+    .. versionchanged:: 5.6.4 added support for NetBSD
+
   .. method:: username()
 
     The name of the user that owns the process. On UNIX this is calculated by

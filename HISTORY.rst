@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.4
+=====
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 1530_: [NetBSD] add process cwd() support.  (patch by Kamil Rytarowski)
+
 5.6.3
 =====
 
