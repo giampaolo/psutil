@@ -513,7 +513,8 @@ Network
     to obtain a usable socket object.
     On Windows and SunOS this is always set to ``-1``.
   - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or `AF_UNIX`_.
-  - **type**: the address type, either `SOCK_STREAM`_ or `SOCK_DGRAM`_.
+  - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
+    `SOCK_SEQPACKET`_.
   - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
     in case of AF_UNIX sockets. For UNIX sockets see notes below.
   - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -1784,7 +1785,8 @@ Process class
       always set to ``-1``.
     - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or
       `AF_UNIX`_.
-    - **type**: the address type, either `SOCK_STREAM`_ or `SOCK_DGRAM`_.
+    - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
+      `SOCK_SEQPACKET`_.  .
     - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -2946,6 +2948,7 @@ Timeline
 .. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage.
 .. _`signal module`: https://docs.python.org//library/signal.html
 .. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
+.. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
 .. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
 .. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen

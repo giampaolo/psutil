@@ -172,16 +172,12 @@ class Base(object):
                       if x.startswith('CONN_')]
             self.assertIn(conn.status, valids)
 
-        with self.subTest(conn):
-            check_ntuple(conn)
-            check_fd(conn)
-            check_family(conn)
-            check_type(conn)
-            check_addrs(conn)
-            check_status(conn)
-
-
-# ---
+        check_ntuple(conn)
+        check_fd(conn)
+        check_family(conn)
+        check_type(conn)
+        check_addrs(conn)
+        check_status(conn)
 
 
 class TestBase(Base, unittest.TestCase):
@@ -370,7 +366,7 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 client.close()
 
 
-class TestFiltering(Base, unittest.TestCase):
+class TestFilters(Base, unittest.TestCase):
 
     def test_filters(self):
         def check(kind, families, types):
