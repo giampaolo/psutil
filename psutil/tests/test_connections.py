@@ -34,6 +34,7 @@ from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_net_address
 from psutil.tests import create_sockets
+from psutil.tests import enum
 from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
@@ -124,10 +125,10 @@ class Base(object):
 
         def check_family(conn):
             self.assertIn(conn.family, (AF_INET, AF_INET6, AF_UNIX))
-            # if enum is not None:
-            #     assert isinstance(conn.family, enum.IntEnum), conn
-            # else:
-            #     assert isinstance(conn.family, int), conn
+            if enum is not None:
+                assert isinstance(conn.family, enum.IntEnum), conn
+            else:
+                assert isinstance(conn.family, int), conn
             if conn.family == AF_INET:
                 # actually try to bind the local socket; ignore IPv6
                 # sockets as their address might be represented as
@@ -146,10 +147,10 @@ class Base(object):
         def check_type(conn):
             # SOCK_SEQPACKET may happen in case of AF_UNIX socks
             self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET))
-            # if enum is not None:
-            #     assert isinstance(conn.type, enum.IntEnum), conn
-            # else:
-            #     assert isinstance(conn.type, int), conn
+            if enum is not None:
+                assert isinstance(conn.type, enum.IntEnum), conn
+            else:
+                assert isinstance(conn.type, int), conn
             if conn.type == SOCK_DGRAM:
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
