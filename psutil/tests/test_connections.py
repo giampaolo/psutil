@@ -170,12 +170,13 @@ class Base(object):
                       if x.startswith('CONN_')]
             self.assertIn(conn.status, valids)
 
-        check_ntuple(conn)
-        check_fd(conn)
-        check_family(conn)
-        check_type(conn)
-        check_addrs(conn)
-        check_status(conn)
+        with self.subTest(conn):
+            check_ntuple(conn)
+            check_fd(conn)
+            check_family(conn)
+            check_type(conn)
+            check_addrs(conn)
+            check_status(conn)
 
 
 # ---
