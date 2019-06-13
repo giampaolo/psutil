@@ -172,6 +172,10 @@ class Base(object):
             valids = [getattr(psutil, x) for x in dir(psutil)
                       if x.startswith('CONN_')]
             self.assertIn(conn.status, valids)
+            if conn.family in (AF_INET, AF_INET6) and conn.type == SOCK_STREAM:
+                self.assertNotEqual(conn.status, psutil.CONN_NONE)
+            else:
+                self.assertEqual(conn.status, psutil.CONN_NONE)
 
         check_ntuple(conn)
         check_fd(conn)
