@@ -387,12 +387,8 @@ def net_connections(kind, _pid=-1):
     ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        if _pid == -1:
-            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                TCP_STATUSES, pid=pid)
-        else:
-            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                TCP_STATUSES)
+        nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status, TCP_STATUSES,
+                            pid=pid if _pid == -1 else None)
         ret.add(nt)
     return list(ret)
 
