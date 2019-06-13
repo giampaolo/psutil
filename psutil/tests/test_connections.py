@@ -182,17 +182,21 @@ class Base(object):
 # ---
 
 
-class TestFetchAll(Base, unittest.TestCase):
+class TestBase(Base, unittest.TestCase):
 
     def test_system(self):
         with create_sockets():
-            for conn in psutil.net_connections('all'):
+            for conn in psutil.net_connections(kind='all'):
                 self.check_connection_ntuple(conn)
 
     def test_process(self):
         with create_sockets():
-            for conn in psutil.Process().connections('all'):
+            for conn in psutil.Process().connections(kind='all'):
                 self.check_connection_ntuple(conn)
+
+    def test_invalid_kind(self):
+        self.assertRaises(ValueError, thisproc.connections, kind='???')
+        self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
 class TestUnconnectedSockets(Base, unittest.TestCase):
@@ -450,9 +454,6 @@ class TestFiltering(Base, unittest.TestCase):
                     check_conn(p, conn, AF_INET6, SOCK_DGRAM, udp6_addr, (),
                                psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
-
-        # err
-        self.assertRaises(ValueError, p.connections, kind='???')
 
     def test_multi_sockets_filtering(self):
         with create_sockets() as socks:
