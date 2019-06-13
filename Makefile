@@ -101,8 +101,8 @@ install-pip:  ## Install pip (no-op if already installed).
 setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade $(DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org pip
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(DEPS)
 
 # ===================================================================
 # Tests
