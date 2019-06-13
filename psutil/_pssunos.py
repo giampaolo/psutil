@@ -262,6 +262,7 @@ def net_connections(kind, _pid=-1):
             continue
         if type_ not in types:
             continue
+        # TODO: refactor and use _common.conn_to_ntuple.
         if fam in (AF_INET, AF_INET6):
             if laddr:
                 laddr = _common.addr(*laddr)

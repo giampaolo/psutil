@@ -464,6 +464,22 @@ def socktype_to_enum(num):
             return num
 
 
+def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, pid=None):
+    """Convert a raw connection tuple to a proper ntuple."""
+    if fam in (socket.AF_INET, AF_INET6):
+        if laddr:
+            laddr = addr(*laddr)
+        if raddr:
+            raddr = addr(*raddr)
+    fam = sockfam_to_enum(fam)
+    type_ = socktype_to_enum(type_)
+    if pid is None:
+        nt = pconn(fd, fam, type_, laddr, raddr, status)
+    else:
+        nt = sconn(fd, fam, type_, laddr, raddr, status, pid)
+    return nt
+
+
 def deprecated_method(replacement):
     """A decorator which can be used to mark a method as deprecated
     'replcement' is the method name which will be called instead.

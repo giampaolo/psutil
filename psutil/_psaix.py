@@ -220,6 +220,7 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
+    # XXX: why is this not a list?
     ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item

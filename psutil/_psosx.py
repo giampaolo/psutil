@@ -8,20 +8,16 @@ import contextlib
 import errno
 import functools
 import os
-from socket import AF_INET
 from collections import namedtuple
 
 from . import _common
 from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
-from ._common import AF_INET6
 from ._common import conn_tmap
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
 
 
@@ -530,14 +526,7 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
-            fam = sockfam_to_enum(fam)
-            type = socktype_to_enum(type)
-            if fam in (AF_INET, AF_INET6):
-                if laddr:
-                    laddr = _common.addr(*laddr)
-                if raddr:
-                    raddr = _common.addr(*raddr)
-            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
 
