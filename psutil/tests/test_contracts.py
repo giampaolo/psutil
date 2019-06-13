@@ -15,7 +15,6 @@ import stat
 import time
 import traceback
 import warnings
-from contextlib import closing
 
 from psutil import AIX
 from psutil import BSD
@@ -29,20 +28,16 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
-from psutil.tests import bind_unix_socket
-from psutil.tests import check_connection_ntuple
+from psutil.tests import create_sockets
 from psutil.tests import get_kernel_version
-from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
 from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import warn
 import psutil
@@ -226,16 +221,12 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
-    @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
-    @skip_on_access_denied(only_if=MACOS)
     def test_net_connections(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name)):
-                cons = psutil.net_connections(kind='unix')
-                assert cons
-                for conn in cons:
-                    self.assertIsInstance(conn.laddr, str)
+        with create_sockets():
+            ret = psutil.net_connections('all')
+            self.assertEqual(len(ret), len(set(ret)))
+            for conn in ret:
+                assert is_namedtuple(conn)
 
     def test_net_if_addrs(self):
         # Duplicate of test_system.py. Keep it anyway.
@@ -560,9 +551,10 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertGreaterEqual(ret, 0)
 
     def connections(self, ret, proc):
-        self.assertEqual(len(ret), len(set(ret)))
-        for conn in ret:
-            check_connection_ntuple(conn)
+        with create_sockets():
+            self.assertEqual(len(ret), len(set(ret)))
+            for conn in ret:
+                assert is_namedtuple(conn)
 
     def cwd(self, ret, proc):
         if ret:     # 'ret' can be None or empty
