@@ -198,15 +198,6 @@ class TestBase(Base, unittest.TestCase):
             for conn in psutil.Process().connections(kind='all'):
                 self.check_connection_ntuple(conn)
 
-    @unittest.skipIf(SKIP_SYSCONS, "requires root")
-    def test_sysproc_same_len(self):
-        with create_sockets() as socks:
-            syscons = [x for x in psutil.net_connections(kind='all')
-                       if x.pid == os.getpid()]
-            proccons = thisproc.connections(kind='all')
-            self.assertEqual(len(syscons), len(socks))
-            self.assertEqual(len(syscons), len(proccons))
-
     def test_invalid_kind(self):
         self.assertRaises(ValueError, thisproc.connections, kind='???')
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
@@ -512,9 +503,7 @@ class TestFilters(Base, unittest.TestCase):
                                ("all", "inet", "inet6", "udp", "udp6"))
 
     def test_count(self):
-        with create_sockets() as socks:
-            cons = thisproc.connections(kind='all')
-            self.assertEqual(len(cons), len(socks))
+        with create_sockets():
             # tcp
             cons = thisproc.connections(kind='tcp')
             self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
@@ -562,8 +551,9 @@ class TestFilters(Base, unittest.TestCase):
                 for conn in cons:
                     self.assertEqual(conn.family, AF_INET6)
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
-            # unix
-            if HAS_CONNECTIONS_UNIX:
+            # unix (skipped on NetBSD because by default the Python process
+            # creates a connection to '/var/run/log' UNIX socket)
+            if HAS_CONNECTIONS_UNIX and not NETBSD:
                 cons = thisproc.connections(kind='unix')
                 self.assertEqual(len(cons), 3)
                 for conn in cons:
