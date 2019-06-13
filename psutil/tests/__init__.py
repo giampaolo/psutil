@@ -1024,73 +1024,91 @@ def check_net_address(addr, family):
 
 def check_connection_ntuple(conn):
     """Check validity of a connection namedtuple."""
-    # check ntuple
-    assert len(conn) in (6, 7), conn
-    has_pid = len(conn) == 7
-    has_fd = getattr(conn, 'fd', -1) != -1
-    assert conn[0] == conn.fd
-    assert conn[1] == conn.family
-    assert conn[2] == conn.type
-    assert conn[3] == conn.laddr
-    assert conn[4] == conn.raddr
-    assert conn[5] == conn.status
-    if has_pid:
-        assert conn[6] == conn.pid
+    def check_ntuple(conn):
+        has_pid = len(conn) == 7
+        assert len(conn) in (6, 7), conn
+        assert conn[0] == conn.fd
+        assert conn[1] == conn.family
+        assert conn[2] == conn.type
+        assert conn[3] == conn.laddr
+        assert conn[4] == conn.raddr
+        assert conn[5] == conn.status
+        if has_pid:
+            assert conn[6] == conn.pid
 
-    # check fd
-    if has_fd:
-        assert conn.fd >= 0, conn
-        if hasattr(socket, 'fromfd') and not WINDOWS:
-            try:
-                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-            except (socket.error, OSError) as err:
-                if err.args[0] != errno.EBADF:
-                    raise
-            else:
-                with contextlib.closing(dupsock):
-                    assert dupsock.family == conn.family
-                    assert dupsock.type == conn.type
-
-    # check family
-    assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
-    if conn.family in (AF_INET, AF_INET6):
-        # actually try to bind the local socket; ignore IPv6
-        # sockets as their address might be represented as
-        # an IPv4-mapped-address (e.g. "::127.0.0.1")
-        # and that's rejected by bind()
-        if conn.family == AF_INET:
-            s = socket.socket(conn.family, conn.type)
-            with contextlib.closing(s):
+    def check_fd(conn):
+        has_fd = getattr(conn, 'fd', -1) != -1
+        if has_fd:
+            assert conn.fd >= 0, conn
+            if hasattr(socket, 'fromfd') and not WINDOWS:
                 try:
-                    s.bind((conn.laddr[0], 0))
-                except socket.error as err:
-                    if err.errno != errno.EADDRNOTAVAIL:
+                    dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+                except (socket.error, OSError) as err:
+                    if err.args[0] != errno.EBADF:
                         raise
-    elif conn.family == AF_UNIX:
-        assert conn.status == psutil.CONN_NONE, conn.status
+                else:
+                    with contextlib.closing(dupsock):
+                        assert dupsock.family == conn.family
+                        assert dupsock.type == conn.type
 
-    # check type (SOCK_SEQPACKET may happen in case of AF_UNIX socks)
-    assert conn.type in (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET), \
-        repr(conn.type)
-    if conn.type == SOCK_DGRAM:
-        assert conn.status == psutil.CONN_NONE, conn.status
-
-    # check laddr (IP address and port sanity)
-    for addr in (conn.laddr, conn.raddr):
+    def check_family(conn):
+        assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
+        # if enum is not None:
+        #     assert isinstance(conn.family, enum.IntEnum), conn
+        # else:
+        #     assert isinstance(conn.family, int), conn
         if conn.family in (AF_INET, AF_INET6):
-            assert isinstance(addr, tuple), addr
-            if not addr:
-                continue
-            assert isinstance(addr.port, int), addr.port
-            assert 0 <= addr.port <= 65535, addr.port
-            check_net_address(addr.ip, conn.family)
+            # actually try to bind the local socket; ignore IPv6
+            # sockets as their address might be represented as
+            # an IPv4-mapped-address (e.g. "::127.0.0.1")
+            # and that's rejected by bind()
+            if conn.family == AF_INET:
+                s = socket.socket(conn.family, conn.type)
+                with contextlib.closing(s):
+                    try:
+                        s.bind((conn.laddr[0], 0))
+                    except socket.error as err:
+                        if err.errno != errno.EADDRNOTAVAIL:
+                            raise
         elif conn.family == AF_UNIX:
-            assert isinstance(addr, str), addr
+            assert conn.status == psutil.CONN_NONE, conn.status
 
-    # check status
-    assert isinstance(conn.status, str), conn
-    valids = [getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')]
-    assert conn.status in valids, conn
+    def check_type(conn):
+        # SOCK_SEQPACKET may happen in case of AF_UNIX socks
+        assert conn.type in (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET), \
+            repr(conn.type)
+        # if enum is not None:
+        #     assert isinstance(conn.type, enum.IntEnum), conn
+        # else:
+        #     assert isinstance(conn.type, int), conn
+        if conn.type == SOCK_DGRAM:
+            assert conn.status == psutil.CONN_NONE, conn.status
+
+    def check_addrs(conn):
+        # check IP address and port sanity
+        for addr in (conn.laddr, conn.raddr):
+            if conn.family in (AF_INET, AF_INET6):
+                assert isinstance(addr, tuple), addr
+                if not addr:
+                    continue
+                assert isinstance(addr.port, int), addr.port
+                assert 0 <= addr.port <= 65535, addr.port
+                check_net_address(addr.ip, conn.family)
+            elif conn.family == AF_UNIX:
+                assert isinstance(addr, str), addr
+
+    def check_status(conn):
+        assert isinstance(conn.status, str), conn
+        valids = [getattr(psutil, x) for x in dir(psutil)
+                  if x.startswith('CONN_')]
+        assert conn.status in valids, conn
+
+    check_ntuple(conn)
+    check_fd(conn)
+    check_family(conn)
+    check_type(conn)
+    check_addrs(conn)
+    check_status(conn)
 
 
 # ===================================================================

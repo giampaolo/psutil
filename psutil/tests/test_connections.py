@@ -137,9 +137,17 @@ class Base(object):
         self.assertEqual(proc_cons, sys_cons)
 
 
-# =====================================================================
-# --- Test unconnected sockets
-# =====================================================================
+class TestFetchAll(Base, unittest.TestCase):
+
+    def test_system(self):
+        with create_sockets():
+            for conn in psutil.net_connections('all'):
+                check_connection_ntuple(conn)
+
+    def test_process(self):
+        with create_sockets():
+            for conn in psutil.Process().connections('all'):
+                check_connection_ntuple(conn)
 
 
 class TestUnconnectedSockets(Base, unittest.TestCase):
@@ -192,12 +200,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-# =====================================================================
-# --- Test connected sockets
-# =====================================================================
-
-
-class TestConnectedSocketPairs(Base, unittest.TestCase):
+class TestConnectedSocket(Base, unittest.TestCase):
     """Test socket pairs which are are actually connected to
     each other.
     """
@@ -415,11 +418,6 @@ class TestConnectedSocketPairs(Base, unittest.TestCase):
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
 
 
-# =====================================================================
-# --- Miscellaneous tests
-# =====================================================================
-
-
 class TestSystemWideConnections(Base, unittest.TestCase):
     """Tests for net_connections()."""
 
@@ -493,11 +491,6 @@ class TestSystemWideConnections(Base, unittest.TestCase):
                              expected)
             p = psutil.Process(pid)
             self.assertEqual(len(p.connections('all')), expected)
-
-
-# =====================================================================
-# --- Miscellaneous tests
-# =====================================================================
 
 
 class TestMisc(unittest.TestCase):
