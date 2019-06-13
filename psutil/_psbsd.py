@@ -752,8 +752,7 @@ class Process(object):
 
         if NETBSD:
             families, types = conn_tmap[kind]
-            # XXX: why is this not a list?
-            ret = set()
+            ret = []
             rawlist = cext.net_connections(self.pid)
             for item in rawlist:
                 fd, fam, type, laddr, raddr, status, pid = item
@@ -761,7 +760,7 @@ class Process(object):
                 if fam in families and type in types:
                     nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                         TCP_STATUSES)
-                    ret.add(nt)
+                    ret.append(nt)
             self._assert_alive()
             return list(ret)
 
