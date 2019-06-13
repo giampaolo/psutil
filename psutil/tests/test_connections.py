@@ -353,6 +353,9 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 server.close()
                 client.close()
 
+
+class TestFiltering(Base, unittest.TestCase):
+
     @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
@@ -517,7 +520,6 @@ class TestSystemWideConnections(Base, unittest.TestCase):
     @skip_on_access_denied()
     def test_it(self):
         def check(cons, families, types_):
-            AF_UNIX = getattr(socket, 'AF_UNIX', object())
             for conn in cons:
                 self.assertIn(conn.family, families, msg=conn)
                 if conn.family != AF_UNIX:
