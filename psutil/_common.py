@@ -447,7 +447,7 @@ def sockfam_to_enum(num):
     else:  # pragma: no cover
         try:
             return socket.AddressFamily(num)
-        except (ValueError, AttributeError):
+        except ValueError:
             return num
 
 
@@ -459,8 +459,8 @@ def socktype_to_enum(num):
         return num
     else:  # pragma: no cover
         try:
-            return socket.AddressType(num)
-        except (ValueError, AttributeError):
+            return socket.SocketKind(num)
+        except ValueError:
             return num
 
 
