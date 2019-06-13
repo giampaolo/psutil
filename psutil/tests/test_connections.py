@@ -18,6 +18,7 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import AIX
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -50,6 +51,7 @@ from psutil.tests import wait_for_file
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
+SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 
 class Base(object):
@@ -184,6 +186,7 @@ class Base(object):
 
 class TestBase(Base, unittest.TestCase):
 
+    @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_system(self):
         with create_sockets():
             for conn in psutil.net_connections(kind='all'):
@@ -193,6 +196,15 @@ class TestBase(Base, unittest.TestCase):
         with create_sockets():
             for conn in psutil.Process().connections(kind='all'):
                 self.check_connection_ntuple(conn)
+
+    @unittest.skipIf(SKIP_SYSCONS, "requires root")
+    def test_sysproc_same_len(self):
+        with create_sockets() as socks:
+            syscons = [x for x in psutil.net_connections(kind='all')
+                       if x.pid == os.getpid()]
+            proccons = thisproc.connections(kind='all')
+            self.assertEqual(len(syscons), len(socks))
+            self.assertEqual(len(syscons), len(proccons))
 
     def test_invalid_kind(self):
         self.assertRaises(ValueError, thisproc.connections, kind='???')
@@ -360,6 +372,49 @@ class TestConnectedSocket(Base, unittest.TestCase):
 
 class TestFiltering(Base, unittest.TestCase):
 
+    def test_filters(self):
+        def check(kind, families, types):
+            for conn in thisproc.connections(kind=kind):
+                self.assertIn(conn.family, families)
+                self.assertIn(conn.type, types)
+            if not SKIP_SYSCONS:
+                for conn in psutil.net_connections(kind=kind):
+                    self.assertIn(conn.family, families)
+                    self.assertIn(conn.type, types)
+
+        with create_sockets():
+            check('all',
+                  [AF_INET, AF_INET6, AF_UNIX],
+                  [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET])
+            check('inet',
+                  [AF_INET, AF_INET6],
+                  [SOCK_STREAM, SOCK_DGRAM])
+            check('inet4',
+                  [AF_INET],
+                  [SOCK_STREAM, SOCK_DGRAM])
+            check('tcp',
+                  [AF_INET, AF_INET6],
+                  [SOCK_STREAM])
+            check('tcp4',
+                  [AF_INET],
+                  [SOCK_STREAM])
+            check('tcp6',
+                  [AF_INET6],
+                  [SOCK_STREAM])
+            check('udp',
+                  [AF_INET, AF_INET6],
+                  [SOCK_DGRAM])
+            check('udp4',
+                  [AF_INET],
+                  [SOCK_DGRAM])
+            check('udp6',
+                  [AF_INET6],
+                  [SOCK_DGRAM])
+            if HAS_CONNECTIONS_UNIX:
+                check('unix',
+                      [AF_UNIX],
+                      [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET])
+
     @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
@@ -455,7 +510,7 @@ class TestFiltering(Base, unittest.TestCase):
                                psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
 
-    def test_multi_sockets_filtering(self):
+    def test_count(self):
         with create_sockets() as socks:
             cons = thisproc.connections(kind='all')
             self.assertEqual(len(cons), len(socks))
@@ -515,10 +570,10 @@ class TestFiltering(Base, unittest.TestCase):
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
 
 
+@unittest.skipIf(SKIP_SYSCONS, "requires root")
 class TestSystemWideConnections(Base, unittest.TestCase):
     """Tests for net_connections()."""
 
-    @skip_on_access_denied()
     def test_it(self):
         def check(cons, families, types_):
             for conn in cons:
@@ -538,16 +593,6 @@ class TestSystemWideConnections(Base, unittest.TestCase):
                 self.assertEqual(len(cons), len(set(cons)))
                 check(cons, families, types_)
 
-            self.assertRaises(ValueError, psutil.net_connections, kind='???')
-
-    @skip_on_access_denied()
-    def test_multi_socks(self):
-        with create_sockets() as socks:
-            cons = [x for x in psutil.net_connections(kind='all')
-                    if x.pid == os.getpid()]
-            self.assertEqual(len(cons), len(socks))
-
-    @skip_on_access_denied()
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
     @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
     def test_multi_sockets_procs(self):
