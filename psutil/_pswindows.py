@@ -33,6 +33,7 @@ except ImportError as err:
         raise
 
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import isfile_strict
@@ -386,12 +387,12 @@ def net_connections(kind, _pid=-1):
     ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        status = TCP_STATUSES[status]
         if _pid == -1:
-            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                        pid=pid)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES, pid=pid)
         else:
-            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES)
         ret.add(nt)
     return list(ret)
 

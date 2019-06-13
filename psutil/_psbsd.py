@@ -17,6 +17,7 @@ from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import FREEBSD
 from ._common import memoize
 from ._common import memoize_when_activated
@@ -395,16 +396,8 @@ def net_connections(kind):
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            try:
-                status = TCP_STATUSES[status]
-            except KeyError:
-                # XXX: Not sure why this happens. I saw this occurring
-                # with IPv6 sockets opened by 'vim'. Those sockets
-                # have a very short lifetime so maybe the kernel
-                # can't initialize their status?
-                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                        pid)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES, pid)
             ret.add(nt)
     return list(ret)
 
@@ -766,12 +759,8 @@ class Process(object):
                 fd, fam, type, laddr, raddr, status, pid = item
                 assert pid == self.pid
                 if fam in families and type in types:
-                    try:
-                        status = TCP_STATUSES[status]
-                    except KeyError:
-                        status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-                    nt = _common.conn_to_ntuple(
-                        fd, fam, type, laddr, raddr, status)
+                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                        TCP_STATUSES)
                     ret.add(nt)
             self._assert_alive()
             return list(ret)
@@ -782,7 +771,8 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
-            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES)
             ret.append(nt)
 
         if OPENBSD:

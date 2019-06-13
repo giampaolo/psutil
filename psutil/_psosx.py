@@ -15,6 +15,7 @@ from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
@@ -525,8 +526,8 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            status = TCP_STATUSES[status]
-            nt = _common.conn_to_ntuple(fd, fam, type, laddr, raddr, status)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES)
             ret.append(nt)
         return ret
 
