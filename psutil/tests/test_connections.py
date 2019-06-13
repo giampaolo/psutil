@@ -70,55 +70,6 @@ class Base(object):
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
-    def get_conn_from_sock(self, sock):
-        cons = thisproc.connections(kind='all')
-        smap = dict([(c.fd, c) for c in cons])
-        if NETBSD:
-            # NetBSD opens a UNIX socket to /var/log/run
-            # so there may be more connections.
-            return smap[sock.fileno()]
-        else:
-            self.assertEqual(len(cons), 1)
-            if cons[0].fd != -1:
-                self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
-            return cons[0]
-
-    def check_socket(self, sock, conn=None):
-        """Given a socket, makes sure it matches the one obtained
-        via psutil. It assumes this process created one connection
-        only (the one supposed to be checked).
-        """
-        if conn is None:
-            conn = self.get_conn_from_sock(sock)
-        self.check_connection_ntuple(conn)
-
-        # fd, family, type
-        if conn.fd != -1:
-            self.assertEqual(conn.fd, sock.fileno())
-        self.assertEqual(conn.family, sock.family)
-        # see: http://bugs.python.org/issue30204
-        self.assertEqual(
-            conn.type, sock.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE))
-
-        # local address
-        laddr = sock.getsockname()
-        if not laddr and PY3 and isinstance(laddr, bytes):
-            # See: http://bugs.python.org/issue30205
-            laddr = laddr.decode()
-        if sock.family == AF_INET6:
-            laddr = laddr[:2]
-        if sock.family == AF_UNIX and OPENBSD:
-            # No addresses are set for UNIX sockets on OpenBSD.
-            pass
-        else:
-            self.assertEqual(conn.laddr, laddr)
-
-        # XXX Solaris can't retrieve system-wide UNIX sockets
-        if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
-            cons = thisproc.connections(kind='all')
-            self.compare_procsys_connections(os.getpid(), cons)
-        return conn
-
     def compare_procsys_connections(self, pid, proc_cons, kind='all'):
         """Given a process PID and its list of connections compare
         those against system-wide connections retrieved via
@@ -245,6 +196,54 @@ class TestFetchAll(Base, unittest.TestCase):
 
 class TestUnconnectedSockets(Base, unittest.TestCase):
     """Tests sockets which are open but not connected to anything."""
+
+    def get_conn_from_sock(self, sock):
+        cons = thisproc.connections(kind='all')
+        smap = dict([(c.fd, c) for c in cons])
+        if NETBSD:
+            # NetBSD opens a UNIX socket to /var/log/run
+            # so there may be more connections.
+            return smap[sock.fileno()]
+        else:
+            self.assertEqual(len(cons), 1)
+            if cons[0].fd != -1:
+                self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
+            return cons[0]
+
+    def check_socket(self, sock):
+        """Given a socket, makes sure it matches the one obtained
+        via psutil. It assumes this process created one connection
+        only (the one supposed to be checked).
+        """
+        conn = self.get_conn_from_sock(sock)
+        self.check_connection_ntuple(conn)
+
+        # fd, family, type
+        if conn.fd != -1:
+            self.assertEqual(conn.fd, sock.fileno())
+        self.assertEqual(conn.family, sock.family)
+        # see: http://bugs.python.org/issue30204
+        self.assertEqual(
+            conn.type, sock.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE))
+
+        # local address
+        laddr = sock.getsockname()
+        if not laddr and PY3 and isinstance(laddr, bytes):
+            # See: http://bugs.python.org/issue30205
+            laddr = laddr.decode()
+        if sock.family == AF_INET6:
+            laddr = laddr[:2]
+        if sock.family == AF_UNIX and OPENBSD:
+            # No addresses are set for UNIX sockets on OpenBSD.
+            pass
+        else:
+            self.assertEqual(conn.laddr, laddr)
+
+        # XXX Solaris can't retrieve system-wide UNIX sockets
+        if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
+            cons = thisproc.connections(kind='all')
+            self.compare_procsys_connections(os.getpid(), cons, kind='all')
+        return conn
 
     def test_tcp_v4(self):
         addr = ("127.0.0.1", get_free_port())
