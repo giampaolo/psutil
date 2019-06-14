@@ -142,7 +142,7 @@ test-posix:  ## POSIX specific tests.
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil.tests.test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} install

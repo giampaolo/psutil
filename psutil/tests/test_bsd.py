@@ -148,7 +148,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
-class FreeBSDSpecificTestCase(unittest.TestCase):
+class FreeBSDSpecificProcessTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -158,21 +158,8 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
-    @staticmethod
-    def parse_swapinfo():
-        # the last line is always the total
-        output = sh("swapinfo -k").splitlines()[-1]
-        parts = re.split(r'\s+', output)
-
-        if not parts:
-            raise ValueError("Can't parse swapinfo: %s" % output)
-
-        # the size is in 1k units, so multiply by 1024
-        total, used, free = (int(p) * 1024 for p in parts[1:4])
-        return total, used, free
-
     @retry_on_failure()
-    def test_proc_memory_maps(self):
+    def test_memory_maps(self):
         out = sh('procstat -v %s' % self.pid)
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
         lines = out.split('\n')[1:]
@@ -186,17 +173,17 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             if not map.path.startswith('['):
                 self.assertEqual(fields[10], map.path)
 
-    def test_proc_exe(self):
+    def test_exe(self):
         out = sh('procstat -b %s' % self.pid)
         self.assertEqual(psutil.Process(self.pid).exe(),
                          out.split('\n')[1].split()[-1])
 
-    def test_proc_cmdline(self):
+    def test_cmdline(self):
         out = sh('procstat -c %s' % self.pid)
         self.assertEqual(' '.join(psutil.Process(self.pid).cmdline()),
                          ' '.join(out.split('\n')[1].split()[2:]))
 
-    def test_proc_uids_gids(self):
+    def test_uids_gids(self):
         out = sh('procstat -s %s' % self.pid)
         euid, ruid, suid, egid, rgid, sgid = out.split('\n')[1].split()[2:8]
         p = psutil.Process(self.pid)
@@ -210,7 +197,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(gids.saved, int(sgid))
 
     @retry_on_failure()
-    def test_proc_ctx_switches(self):
+    def test_ctx_switches(self):
         tested = []
         out = sh('procstat -r %s' % self.pid)
         p = psutil.Process(self.pid)
@@ -230,7 +217,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             raise RuntimeError("couldn't find lines match in procstat out")
 
     @retry_on_failure()
-    def test_proc_cpu_times(self):
+    def test_cpu_times(self):
         tested = []
         out = sh('procstat -r %s' % self.pid)
         p = psutil.Process(self.pid)
@@ -248,6 +235,23 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
                 tested.append(None)
         if len(tested) != 2:
             raise RuntimeError("couldn't find lines match in procstat out")
+
+
+@unittest.skipIf(not FREEBSD, "FREEBSD only")
+class FreeBSDSpecificSystemTestCase(unittest.TestCase):
+
+    @staticmethod
+    def parse_swapinfo():
+        # the last line is always the total
+        output = sh("swapinfo -k").splitlines()[-1]
+        parts = re.split(r'\s+', output)
+
+        if not parts:
+            raise ValueError("Can't parse swapinfo: %s" % output)
+
+        # the size is in 1k units, so multiply by 1024
+        total, used, free = (int(p) * 1024 for p in parts[1:4])
+        return total, used, free
 
     def test_cpu_frequency_against_sysctl(self):
         # Currently only cpu 0 is frequency is supported in FreeBSD
