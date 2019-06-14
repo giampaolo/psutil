@@ -648,6 +648,8 @@ class Process(object):
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
+                    # XXX: this happens with unicode tests. It means the C
+                    # routine is unable to decode invalid unicode chars.
                     return []
                 else:
                     raise
