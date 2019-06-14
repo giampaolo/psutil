@@ -766,11 +766,15 @@ class TestScripts(unittest.TestCase):
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
+        if not psutil.sensors_temperatures():
+            self.skipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
+        if not psutil.sensors_fans():
+            self.skipTest("no fans")
         self.assert_stdout('fans.py')
 
     @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")

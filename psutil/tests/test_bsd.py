@@ -253,7 +253,10 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         # Currently only cpu 0 is frequency is supported in FreeBSD
         # All other cores use the same frequency.
         sensor = "dev.cpu.0.freq"
-        sysctl_result = int(sysctl(sensor))
+        try:
+            sysctl_result = int(sysctl(sensor))
+        except RuntimeError:
+            self.skipTest("frequencies not supported by kernel")
         self.assertEqual(psutil.cpu_freq().current, sysctl_result)
 
         sensor = "dev.cpu.0.freq_levels"
@@ -450,7 +453,10 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         for cpu in range(num_cpus):
             sensor = "dev.cpu.%s.temperature" % cpu
             # sysctl returns a string in the format 46.0C
-            sysctl_result = int(float(sysctl(sensor)[:-1]))
+            try:
+                sysctl_result = int(float(sysctl(sensor)[:-1]))
+            except RuntimeError:
+                self.skipTest("temperatures not supported by kernel")
             self.assertAlmostEqual(
                 psutil.sensors_temperatures()["coretemp"][cpu].current,
                 sysctl_result, delta=10)

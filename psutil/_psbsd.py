@@ -781,7 +781,6 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            status = TCP_STATUSES[status]
             nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                 TCP_STATUSES)
             ret.append(nt)

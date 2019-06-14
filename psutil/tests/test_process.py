@@ -24,6 +24,7 @@ import psutil
 
 from psutil import AIX
 from psutil import BSD
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -1084,7 +1085,8 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p1.parents()[0], psutil.Process())
         self.assertEqual(p2.parents()[0], p1)
         self.assertEqual(p2.parents()[1], psutil.Process())
-        if POSIX:
+        if POSIX and not FREEBSD:
+            # On FreeBSD PID 1 has an older/smaller time than PID 0 (?)
             lowest_pid = psutil.pids()[0]
             self.assertEqual(p1.parents()[-1].pid, lowest_pid)
             self.assertEqual(p2.parents()[-1].pid, lowest_pid)
