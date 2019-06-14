@@ -11,6 +11,8 @@ XXXX-XX-XX
   (patch by Arnon Yaari)
 - 1535_: 'type' and 'family' fields returned by net_connections() are not
   always turned into enums.
+- 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
+  cmdline has non encodable chars.
 
 5.6.3
 =====
