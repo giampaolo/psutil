@@ -534,6 +534,14 @@ else:
     pid_exists = _psposix.pid_exists
 
 
+def is_zombie(pid):
+    try:
+        st = cext.proc_oneshot_info(pid)[kinfo_proc_map['status']]
+        return st == cext.SZOMB
+    except Exception:
+        return False
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -648,9 +656,14 @@ class Process(object):
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
-                    # XXX: this happens with unicode tests. It means the C
-                    # routine is unable to decode invalid unicode chars.
-                    return []
+                    if is_zombie(self.pid):
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                    elif not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name, self._ppid)
+                    else:
+                        # XXX: this happens with unicode tests. It means the C
+                        # routine is unable to decode invalid unicode chars.
+                        return []
                 else:
                     raise
         else:
