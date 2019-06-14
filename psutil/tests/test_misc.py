@@ -20,6 +20,7 @@ import socket
 import stat
 
 from psutil import LINUX
+from psutil import NETBSD
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import memoize
@@ -1011,6 +1012,7 @@ class TestNetUtils(unittest.TestCase):
                 self.assertNotEqual(client.getsockname(), addr)
 
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(NETBSD, "/var/run/log UNIX socket opened by default")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()

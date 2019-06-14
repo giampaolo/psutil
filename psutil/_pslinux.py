@@ -933,7 +933,7 @@ class Connections:
                             path = tokens[-1]
                         else:
                             path = ""
-                        type_ = int(type_)
+                        type_ = _common.socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/

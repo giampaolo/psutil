@@ -64,7 +64,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
-    'bytes2human',
+    'bytes2human', 'conn_to_ntuple',
 ]
 
 
@@ -257,8 +257,6 @@ if AF_UNIX is not None:
         "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
-del AF_INET, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
-
 
 # ===================================================================
 # --- utils
@@ -447,7 +445,7 @@ def sockfam_to_enum(num):
     else:  # pragma: no cover
         try:
             return socket.AddressFamily(num)
-        except (ValueError, AttributeError):
+        except ValueError:
             return num
 
 
@@ -459,9 +457,28 @@ def socktype_to_enum(num):
         return num
     else:  # pragma: no cover
         try:
-            return socket.AddressType(num)
-        except (ValueError, AttributeError):
+            return socket.SocketKind(num)
+        except ValueError:
             return num
+
+
+def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
+    """Convert a raw connection tuple to a proper ntuple."""
+    if fam in (socket.AF_INET, AF_INET6):
+        if laddr:
+            laddr = addr(*laddr)
+        if raddr:
+            raddr = addr(*raddr)
+    if type_ == socket.SOCK_STREAM and fam in (AF_INET, AF_INET6):
+        status = status_map.get(status, CONN_NONE)
+    else:
+        status = CONN_NONE  # ignore whatever C returned to us
+    fam = sockfam_to_enum(fam)
+    type_ = socktype_to_enum(type_)
+    if pid is None:
+        return pconn(fd, fam, type_, laddr, raddr, status)
+    else:
+        return sconn(fd, fam, type_, laddr, raddr, status, pid)
 
 
 def deprecated_method(replacement):

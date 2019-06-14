@@ -10,22 +10,19 @@ import functools
 import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
-from socket import AF_INET
 from collections import defaultdict
 
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
-from ._common import AF_INET6
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import FREEBSD
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NETBSD
 from ._common import OPENBSD
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import which
 
@@ -399,22 +396,8 @@ def net_connections(kind):
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            try:
-                status = TCP_STATUSES[status]
-            except KeyError:
-                # XXX: Not sure why this happens. I saw this occurring
-                # with IPv6 sockets opened by 'vim'. Those sockets
-                # have a very short lifetime so maybe the kernel
-                # can't initialize their status?
-                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-            if fam in (AF_INET, AF_INET6):
-                if laddr:
-                    laddr = _common.addr(*laddr)
-                if raddr:
-                    raddr = _common.addr(*raddr)
-            fam = sockfam_to_enum(fam)
-            type = socktype_to_enum(type)
-            nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES, pid)
             ret.add(nt)
     return list(ret)
 
@@ -769,25 +752,15 @@ class Process(object):
 
         if NETBSD:
             families, types = conn_tmap[kind]
-            ret = set()
+            ret = []
             rawlist = cext.net_connections(self.pid)
             for item in rawlist:
                 fd, fam, type, laddr, raddr, status, pid = item
                 assert pid == self.pid
                 if fam in families and type in types:
-                    try:
-                        status = TCP_STATUSES[status]
-                    except KeyError:
-                        status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-                    if fam in (AF_INET, AF_INET6):
-                        if laddr:
-                            laddr = _common.addr(*laddr)
-                        if raddr:
-                            raddr = _common.addr(*raddr)
-                    fam = sockfam_to_enum(fam)
-                    type = socktype_to_enum(type)
-                    nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-                    ret.add(nt)
+                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                        TCP_STATUSES)
+                    ret.append(nt)
             self._assert_alive()
             return list(ret)
 
@@ -796,18 +769,14 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            if fam in (AF_INET, AF_INET6):
-                if laddr:
-                    laddr = _common.addr(*laddr)
-                if raddr:
-                    raddr = _common.addr(*raddr)
-            fam = sockfam_to_enum(fam)
-            type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
-            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES)
             ret.append(nt)
+
         if OPENBSD:
             self._assert_alive()
+
         return ret
 
     @wrap_exceptions
