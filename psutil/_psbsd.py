@@ -648,10 +648,9 @@ class Process(object):
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
-                    if not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name)
-                    else:
-                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                    # XXX: this happens with unicode tests. It means the C
+                    # routine is unable to decode invalid unicode chars.
+                    return []
                 else:
                     raise
         else:

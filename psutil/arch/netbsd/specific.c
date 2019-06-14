@@ -137,7 +137,10 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     ssize_t len = readlink(buf, path, sizeof(path) - 1);
     free(buf);
     if (len == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     path[len] = '\0';
