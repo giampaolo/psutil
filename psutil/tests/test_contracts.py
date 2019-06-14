@@ -36,6 +36,7 @@ from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
 from psutil.tests import safe_rmpath
+from psutil.tests import SKIP_SYSCONS
 from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
@@ -221,6 +222,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
+    @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')

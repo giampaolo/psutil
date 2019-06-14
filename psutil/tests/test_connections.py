@@ -18,7 +18,6 @@ from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
-from psutil import AIX
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -41,6 +40,7 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
+from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
@@ -52,7 +52,6 @@ from psutil.tests import wait_for_file
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
-SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 
 class Base(object):
@@ -417,7 +416,7 @@ class TestFilters(Base, unittest.TestCase):
             import socket, time
             s = socket.socket($family, socket.SOCK_STREAM)
             s.bind(('$addr', 0))
-            s.listen()
+            s.listen(5)
             with open('$testfn', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
             time.sleep(60)

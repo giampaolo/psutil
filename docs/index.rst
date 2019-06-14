@@ -2607,7 +2607,11 @@ take a look at the `development guide`_.
 Timeline
 ========
 
-- 2019-0426:
+- 2019-06-11:
+  `5.6.3 <https://pypi.org/project/psutil/5.6.3/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#563>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.2...release-5.6.3#files_bucket>`__
+- 2019-04-26:
   `5.6.2 <https://pypi.org/project/psutil/5.6.2/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#562>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.6.1...release-5.6.2#files_bucket>`__

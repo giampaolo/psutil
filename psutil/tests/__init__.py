@@ -35,6 +35,7 @@ from socket import AF_INET6
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import AIX
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
@@ -174,6 +175,7 @@ except Exception:
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
+SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 # --- misc
 
@@ -401,7 +403,7 @@ def create_zombie_proc():
     with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
         sock.settimeout(GLOBAL_TIMEOUT)
         sock.bind(unix_file)
-        sock.listen()
+        sock.listen(5)
         pyrun(src)
         conn, _ = sock.accept()
         try:
@@ -896,7 +898,7 @@ def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(addr)
         if type == socket.SOCK_STREAM:
-            sock.listen()
+            sock.listen(5)
         return sock
     except Exception:
         sock.close()
@@ -911,7 +913,7 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     try:
         sock.bind(name)
         if type == socket.SOCK_STREAM:
-            sock.listen()
+            sock.listen(5)
     except Exception:
         sock.close()
         raise
@@ -924,7 +926,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """
     with contextlib.closing(socket.socket(family, SOCK_STREAM)) as ll:
         ll.bind(addr)
-        ll.listen()
+        ll.listen(5)
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:
