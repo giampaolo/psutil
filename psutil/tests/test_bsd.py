@@ -7,7 +7,7 @@
 # TODO: (FreeBSD) add test for comparing connections with 'sockstat' cmd.
 
 
-"""Tests specific to all BSD platforms."""
+"""Tests sprcific to all BSD platforms."""
 
 
 import datetime
@@ -72,7 +72,7 @@ def muse(field):
 
 
 @unittest.skipIf(not BSD, "BSD only")
-class BSDSpecificTestCase(unittest.TestCase):
+class BSDTestCase(unittest.TestCase):
     """Generic tests common to all BSD variants."""
 
     @classmethod
@@ -148,7 +148,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
-class FreeBSDSpecificProcessTestCase(unittest.TestCase):
+class FreeBSDProcessTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -238,7 +238,7 @@ class FreeBSDSpecificProcessTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
-class FreeBSDSpecificSystemTestCase(unittest.TestCase):
+class FreeBSDSystemTestCase(unittest.TestCase):
 
     @staticmethod
     def parse_swapinfo():
@@ -373,8 +373,9 @@ class FreeBSDSpecificSystemTestCase(unittest.TestCase):
                                sysctl('vm.stats.sys.v_soft'), delta=1000)
 
     def test_cpu_stats_syscalls(self):
+        # pretty high tolerance but it looks like it's OK.
         self.assertAlmostEqual(psutil.cpu_stats().syscalls,
-                               sysctl('vm.stats.sys.v_syscall'), delta=1000)
+                               sysctl('vm.stats.sys.v_syscall'), delta=100000)
 
     # def test_cpu_stats_traps(self):
     #    self.assertAlmostEqual(psutil.cpu_stats().traps,
@@ -477,7 +478,7 @@ class FreeBSDSpecificSystemTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not OPENBSD, "OPENBSD only")
-class OpenBSDSpecificTestCase(unittest.TestCase):
+class OpenBSDTestCase(unittest.TestCase):
 
     def test_boot_time(self):
         s = sysctl('kern.boottime')
@@ -492,7 +493,7 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not NETBSD, "NETBSD only")
-class NetBSDSpecificTestCase(unittest.TestCase):
+class NetBSDTestCase(unittest.TestCase):
 
     @staticmethod
     def parse_meminfo(look_for):
