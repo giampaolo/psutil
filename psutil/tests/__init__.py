@@ -401,7 +401,7 @@ def create_zombie_proc():
     with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
         sock.settimeout(GLOBAL_TIMEOUT)
         sock.bind(unix_file)
-        sock.listen(1)
+        sock.listen()
         pyrun(src)
         conn, _ = sock.accept()
         try:
@@ -896,7 +896,7 @@ def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(addr)
         if type == socket.SOCK_STREAM:
-            sock.listen(10)
+            sock.listen()
         return sock
     except Exception:
         sock.close()
@@ -911,7 +911,7 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     try:
         sock.bind(name)
         if type == socket.SOCK_STREAM:
-            sock.listen(10)
+            sock.listen()
     except Exception:
         sock.close()
         raise
@@ -924,7 +924,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """
     with contextlib.closing(socket.socket(family, SOCK_STREAM)) as ll:
         ll.bind(addr)
-        ll.listen(10)
+        ll.listen()
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:

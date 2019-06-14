@@ -107,22 +107,6 @@ class Base(object):
             if has_pid:
                 self.assertEqual(conn[6], conn.pid)
 
-        def check_fd(conn):
-            has_fd = getattr(conn, 'fd', -1) != -1
-            if has_fd:
-                assert conn.fd >= 0, conn
-                if hasattr(socket, 'fromfd') and not WINDOWS:
-                    try:
-                        dupsock = socket.fromfd(conn.fd, conn.family,
-                                                conn.type)
-                    except (socket.error, OSError) as err:
-                        if err.args[0] != errno.EBADF:
-                            raise
-                    else:
-                        with contextlib.closing(dupsock):
-                            self.assertEqual(dupsock.family, conn.family)
-                            self.assertEqual(dupsock.type, conn.type)
-
         def check_family(conn):
             self.assertIn(conn.family, (AF_INET, AF_INET6, AF_UNIX))
             if enum is not None:
@@ -178,7 +162,6 @@ class Base(object):
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
         check_ntuple(conn)
-        check_fd(conn)
         check_family(conn)
         check_type(conn)
         check_addrs(conn)
@@ -434,7 +417,7 @@ class TestFilters(Base, unittest.TestCase):
             import socket, time
             s = socket.socket($family, socket.SOCK_STREAM)
             s.bind(('$addr', 0))
-            s.listen(1)
+            s.listen()
             with open('$testfn', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
             time.sleep(60)
