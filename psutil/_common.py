@@ -470,7 +470,7 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
         if raddr:
             raddr = addr(*raddr)
     if type_ == socket.SOCK_STREAM and fam in (AF_INET, AF_INET6):
-        status = status_map[status]
+        status = status_map.get(status, CONN_NONE)
     else:
         status = CONN_NONE  # ignore whatever C returned to us
     fam = sockfam_to_enum(fam)
