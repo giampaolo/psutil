@@ -124,7 +124,10 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 #ifdef KERN_PROC_CWD
     int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 #else
