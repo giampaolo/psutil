@@ -41,6 +41,9 @@ from ._common import supports_ipv6
 from ._common import usage_percent
 from ._compat import b
 from ._compat import basestring
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3
 
 if sys.version_info >= (3, 4):
@@ -1511,16 +1514,12 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            # ESRCH (no such process) can be raised on read() if
-            # process is gone in the meantime.
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
-            # ENOENT (no such file or directory) can be raised on open().
-            if err.errno == errno.ENOENT and not os.path.exists("%s/%s" % (
-                    self._procfs_path, self.pid)):
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
+        except ProcessLookupError:
+            raise NoSuchProcess(self.pid, self._name)
+        except FileNotFoundError:
+            if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)
             # Note: zombies will keep existing under /proc until they're
             # gone so there's no way to distinguish them in here.

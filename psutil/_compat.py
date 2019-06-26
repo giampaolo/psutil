@@ -5,6 +5,7 @@
 """Module which provides compatibility with older Python versions."""
 
 import collections
+import errno
 import functools
 import os
 import sys
@@ -36,6 +37,58 @@ else:
 
     def b(s):
         return s
+
+
+# --- exceptions
+
+
+if PY3:
+    FileNotFoundError = FileNotFoundError  # NOQA
+    PermissionError = PermissionError  # NOQA
+    ProcessLookupError = ProcessLookupError  # NOQA
+else:
+    # https://github.com/PythonCharmers/python-future/blob/exceptions/
+    #     src/future/types/exceptions/pep3151.py
+
+    def instance_checking_exception(base_exception=Exception):
+        def wrapped(instance_checker):
+            class TemporaryClass(base_exception):
+
+                def __init__(self, *args, **kwargs):
+                    if len(args) == 1 and isinstance(args[0], TemporaryClass):
+                        unwrap_me = args[0]
+                        for attr in dir(unwrap_me):
+                            if not attr.startswith('__'):
+                                setattr(self, attr, getattr(unwrap_me, attr))
+                    else:
+                        super(TemporaryClass, self).__init__(*args, **kwargs)
+
+                class __metaclass__(type):
+                    def __instancecheck__(cls, inst):
+                        return instance_checker(inst)
+
+                    def __subclasscheck__(cls, classinfo):
+                        value = sys.exc_info()[1]
+                        return isinstance(value, cls)
+
+            TemporaryClass.__name__ = instance_checker.__name__
+            TemporaryClass.__doc__ = instance_checker.__doc__
+            return TemporaryClass
+
+        return wrapped
+
+    @instance_checking_exception(OSError)
+    def FileNotFoundError(inst):
+        return getattr(inst, 'errno', object()) == errno.ENOENT
+
+    @instance_checking_exception(OSError)
+    def ProcessLookupError(inst):
+        return getattr(inst, 'errno', object()) == errno.ESRCH
+
+    @instance_checking_exception(OSError)
+    def PermissionError(inst):
+        return getattr(inst, 'errno', object()) in (
+            errno.EACCES, errno.EPERM)
 
 
 # --- stdlib additions
