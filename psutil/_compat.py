@@ -46,6 +46,8 @@ if PY3:
     FileNotFoundError = FileNotFoundError  # NOQA
     PermissionError = PermissionError  # NOQA
     ProcessLookupError = ProcessLookupError  # NOQA
+    InterruptedError = InterruptedError  # NOQA
+    ChildProcessError = ChildProcessError  # NOQA
 else:
     # https://github.com/PythonCharmers/python-future/blob/exceptions/
     #     src/future/types/exceptions/pep3151.py
@@ -89,6 +91,14 @@ else:
     def PermissionError(inst):
         return getattr(inst, 'errno', object()) in (
             errno.EACCES, errno.EPERM)
+
+    @instance_checking_exception(OSError)
+    def InterruptedError(inst):
+        return getattr(inst, 'errno', object()) == errno.EINTR
+
+    @instance_checking_exception(OSError)
+    def ChildProcessError(inst):
+        return getattr(inst, 'errno', object()) == errno.ECHILD
 
 
 # --- stdlib additions
