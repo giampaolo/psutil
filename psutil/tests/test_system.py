@@ -29,6 +29,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
@@ -468,9 +469,8 @@ class TestSystemAPIs(unittest.TestCase):
         # if path does not exist OSError ENOENT is expected across
         # all platforms
         fname = tempfile.mktemp()
-        with self.assertRaises(OSError) as exc:
+        with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
-        self.assertEqual(exc.exception.errno, errno.ENOENT)
 
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416

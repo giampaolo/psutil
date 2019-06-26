@@ -19,6 +19,8 @@ from ._common import conn_to_ntuple
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._common import usage_percent
 
 
@@ -334,12 +336,10 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError as err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
+        except ProcessLookupError:
+            raise NoSuchProcess(self.pid, self._name)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
         except cext.ZombieProcessError:
             raise ZombieProcess(self.pid, self._name, self._ppid)
     return wrapper
