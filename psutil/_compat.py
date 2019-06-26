@@ -48,6 +48,7 @@ if PY3:
     ProcessLookupError = ProcessLookupError  # NOQA
     InterruptedError = InterruptedError  # NOQA
     ChildProcessError = ChildProcessError  # NOQA
+    FileExistsError = FileExistsError  # NOQA
 else:
     # https://github.com/PythonCharmers/python-future/blob/exceptions/
     #     src/future/types/exceptions/pep3151.py
@@ -99,6 +100,10 @@ else:
     @instance_checking_exception(EnvironmentError)
     def ChildProcessError(inst):
         return getattr(inst, 'errno', object()) == errno.ECHILD
+
+    @instance_checking_exception(EnvironmentError)
+    def FileExistsError(inst):
+        return getattr(inst, 'errno', object()) == errno.EEXIST
 
 
 # --- stdlib additions

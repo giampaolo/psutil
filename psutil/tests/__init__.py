@@ -41,6 +41,9 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
+from psutil._compat import ChildProcessError
+from psutil._compat import FileExistsError
+from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil._compat import unicode
@@ -514,9 +517,8 @@ def reap_children(recursive=False):
             # Wait for the process to terminate, to avoid zombies.
             try:
                 subp.wait()
-            except OSError as err:
-                if err.errno != errno.ECHILD:
-                    raise
+            except ChildProcessError:
+                pass
 
     # Terminate started pids.
     while _pids_started:
@@ -710,13 +712,12 @@ def safe_rmpath(path):
         while time.time() < stop_at:
             try:
                 return fun()
+            except FileNotFoundError:
+                pass
             except WindowsError as _:
                 err = _
-                if err.errno != errno.ENOENT:
-                    raise
-                else:
-                    warn("ignoring %s" % (str(err)))
-                    time.sleep(0.01)
+                warn("ignoring %s" % (str(err)))
+            time.sleep(0.01)
         raise err
 
     try:
@@ -729,18 +730,16 @@ def safe_rmpath(path):
             fun()
         else:
             retry_fun(fun)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
 
 
 def safe_mkdir(dir):
     "Convenience function for creating a directory"
     try:
         os.mkdir(dir)
-    except OSError as err:
-        if err.errno != errno.EEXIST:
-            raise
+    except FileExistsError:
+        pass
 
 
 @contextlib.contextmanager
