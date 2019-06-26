@@ -775,17 +775,16 @@ class Connections:
         for fd in os.listdir("%s/%s/fd" % (self._procfs_path, pid)):
             try:
                 inode = readlink("%s/%s/fd/%s" % (self._procfs_path, pid, fd))
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime;
                 # os.stat('/proc/%s' % self.pid) will be done later
                 # to force NSP (if it's the case)
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    continue
-                elif err.errno == errno.EINVAL:
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
                     # not a link
                     continue
-                else:
-                    raise
+                raise
             else:
                 if inode.startswith('socket:['):
                     # the process is using a socket
@@ -798,7 +797,7 @@ class Connections:
         for pid in pids():
             try:
                 inodes.update(self.get_proc_inodes(pid))
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
                 # os.listdir() is gonna raise a lot of access denied
                 # exceptions in case of unprivileged user; that's fine
                 # as we'll just end up returning a connection with PID
@@ -806,9 +805,7 @@ class Connections:
                 # Both netstat -an and lsof does the same so it's
                 # unlikely we can do any better.
                 # ENOENT just means a PID disappeared on us.
-                if err.errno not in (
-                        errno.ENOENT, errno.ESRCH, errno.EPERM, errno.EACCES):
-                    raise
+                continue
         return inodes
 
     @staticmethod
@@ -1493,11 +1490,10 @@ def ppid_map():
         try:
             with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
                 data = f.read()
-        except EnvironmentError as err:
+        except (FileNotFoundError, ProcessLookupError):
             # Note: we should be able to access /stat for all processes
             # aka it's unlikely we'll bump into EPERM, which is good.
-            if err.errno not in (errno.ENOENT, errno.ESRCH):
-                raise
+            pass
         else:
             rpar = data.rfind(b')')
             dset = data[rpar + 2:].split()
@@ -1616,21 +1612,19 @@ class Process(object):
     def exe(self):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
-        except OSError as err:
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                # no such file error; might be raised also if the
-                # path actually exists for system processes with
-                # low pids (about 0-20)
-                if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
-                    return ""
+        except (FileNotFoundError, ProcessLookupError):
+            # no such file error; might be raised also if the
+            # path actually exists for system processes with
+            # low pids (about 0-20)
+            if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
+                return ""
+            else:
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
                 else:
-                    if not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name)
-                    else:
-                        raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
 
     @wrap_exceptions
     def cmdline(self):
@@ -1855,14 +1849,12 @@ class Process(object):
     def cwd(self):
         try:
             return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
-        except OSError as err:
+        except (FileNotFoundError, ProcessLookupError):
             # https://github.com/giampaolo/psutil/issues/986
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            raise
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
 
     @wrap_exceptions
     def num_ctx_switches(self,
@@ -1898,13 +1890,11 @@ class Process(object):
             try:
                 with open_binary(fname) as f:
                     st = f.read().strip()
-            except IOError as err:
-                if err.errno == errno.ENOENT:
-                    # no such file or directory; it means thread
-                    # disappeared on us
-                    hit_enoent = True
-                    continue
-                raise
+            except FileNotFoundError:
+                # no such file or directory; it means thread
+                # disappeared on us
+                hit_enoent = True
+                continue
             # ignore the first two values ("pid (exe)")
             st = st[st.find(b')') + 2:]
             values = st.split(b' ')
@@ -2028,16 +2018,15 @@ class Process(object):
             file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
             try:
                 path = readlink(file)
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    hit_enoent = True
-                    continue
-                elif err.errno == errno.EINVAL:
+                hit_enoent = True
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
                     # not a link
                     continue
-                else:
-                    raise
+                raise
             else:
                 # If path is not an absolute there's no way to tell
                 # whether it's a regular file or not, so we skip it.
@@ -2051,13 +2040,10 @@ class Process(object):
                         with open_binary(file) as f:
                             pos = int(f.readline().split()[1])
                             flags = int(f.readline().split()[1], 8)
-                    except IOError as err:
-                        if err.errno == errno.ENOENT:
-                            # fd gone in the meantime; process may
-                            # still be alive
-                            hit_enoent = True
-                        else:
-                            raise
+                    except FileNotFoundError:
+                        # fd gone in the meantime; process may
+                        # still be alive
+                        hit_enoent = True
                     else:
                         mode = file_flags_to_mode(flags)
                         ntuple = popenfile(

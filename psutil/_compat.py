@@ -77,7 +77,7 @@ else:
 
         return wrapped
 
-    @instance_checking_exception(OSError)
+    @instance_checking_exception(IOError)
     def FileNotFoundError(inst):
         return getattr(inst, 'errno', object()) == errno.ENOENT
 
