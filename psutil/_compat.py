@@ -79,24 +79,24 @@ else:
 
         return wrapped
 
-    @instance_checking_exception(IOError)
+    @instance_checking_exception(EnvironmentError)
     def FileNotFoundError(inst):
         return getattr(inst, 'errno', object()) == errno.ENOENT
 
-    @instance_checking_exception(OSError)
+    @instance_checking_exception(EnvironmentError)
     def ProcessLookupError(inst):
         return getattr(inst, 'errno', object()) == errno.ESRCH
 
-    @instance_checking_exception(OSError)
+    @instance_checking_exception(EnvironmentError)
     def PermissionError(inst):
         return getattr(inst, 'errno', object()) in (
             errno.EACCES, errno.EPERM)
 
-    @instance_checking_exception(OSError)
+    @instance_checking_exception(EnvironmentError)
     def InterruptedError(inst):
         return getattr(inst, 'errno', object()) == errno.EINTR
 
-    @instance_checking_exception(OSError)
+    @instance_checking_exception(EnvironmentError)
     def ChildProcessError(inst):
         return getattr(inst, 'errno', object()) == errno.ECHILD
 
