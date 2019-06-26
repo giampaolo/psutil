@@ -14,7 +14,6 @@ for some reason).
 """
 
 from __future__ import print_function
-import errno
 import functools
 import gc
 import os
@@ -31,6 +30,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import bytes2human
+from psutil._compat import ProcessLookupError
 from psutil._compat import xrange
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
@@ -423,9 +423,8 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             def call():
                 try:
                     return cext.proc_info(self.proc.pid)
-                except OSError as err:
-                    if err.errno != errno.ESRCH:
-                        raise
+                except ProcessLookupError:
+                    pass
 
             self.execute(call)
 
