@@ -15,6 +15,7 @@ DEPS = \
 	ipaddress \
 	mock==1.0.1 \
 	perf \
+	readline \
 	requests \
 	setuptools \
 	sphinx \

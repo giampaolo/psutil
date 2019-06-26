@@ -868,7 +868,6 @@ def skip_on_not_implemented(only_if=None):
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port."""
     with contextlib.closing(socket.socket()) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, 0))
         return sock.getsockname()[1]
 
@@ -895,7 +894,8 @@ def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
         addr = ("", 0)
     sock = socket.socket(family, type)
     try:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if os.name not in ('nt', 'cygwin'):
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(addr)
         if type == socket.SOCK_STREAM:
             sock.listen(5)
