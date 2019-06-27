@@ -11,7 +11,9 @@ import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "lru_cache", "which", "get_terminal_size"]
+           "lru_cache", "which", "get_terminal_size",
+           "FileNotFoundError", "PermissionError", "ProcessLookupError",
+           "InterruptedError", "ChildProcessError", "FileExistsError"]
 
 PY3 = sys.version_info[0] == 3
 
