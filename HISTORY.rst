@@ -13,6 +13,7 @@ XXXX-XX-XX
   always turned into enums.
 - 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
+- 1546_: usage percent may be rounded to 0 on Python 2.
 
 5.6.3
 =====
