@@ -25,7 +25,6 @@ from __future__ import division
 import collections
 import contextlib
 import datetime
-import errno
 import functools
 import os
 import signal
@@ -44,6 +43,8 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._compat import long
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3 as _PY3
 
 from ._common import STATUS_DEAD
@@ -221,7 +222,7 @@ __all__ = [
 
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.6.3"
+__version__ = "5.6.4"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -1290,18 +1291,16 @@ class Process(object):
                     "calling process (os.getpid()) instead of PID 0")
             try:
                 os.kill(self.pid, sig)
-            except OSError as err:
-                if err.errno == errno.ESRCH:
-                    if OPENBSD and pid_exists(self.pid):
-                        # We do this because os.kill() lies in case of
-                        # zombie processes.
-                        raise ZombieProcess(self.pid, self._name, self._ppid)
-                    else:
-                        self._gone = True
-                        raise NoSuchProcess(self.pid, self._name)
-                if err.errno in (errno.EPERM, errno.EACCES):
-                    raise AccessDenied(self.pid, self._name)
-                raise
+            except ProcessLookupError:
+                if OPENBSD and pid_exists(self.pid):
+                    # We do this because os.kill() lies in case of
+                    # zombie processes.
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                else:
+                    self._gone = True
+                    raise NoSuchProcess(self.pid, self._name)
+            except PermissionError:
+                raise AccessDenied(self.pid, self._name)
 
     @_assert_pid_not_reused
     def send_signal(self, sig):

@@ -6,7 +6,6 @@
 
 """AIX platform implementation."""
 
-import errno
 import functools
 import glob
 import os
@@ -26,6 +25,9 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import usage_percent
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3
 
 
@@ -314,22 +316,16 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
-            # support for private module import
-            if (NoSuchProcess is None or AccessDenied is None or
-                    ZombieProcess is None):
-                raise
+        except (FileNotFoundError, ProcessLookupError):
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
     return wrapper
 
 
@@ -488,11 +484,9 @@ class Process(object):
         try:
             result = os.readlink("%s/%s/cwd" % (procfs_path, self.pid))
             return result.rstrip('/')
-        except OSError as err:
-            if err.errno == errno.ENOENT:
-                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
-                return None
-            raise
+        except FileNotFoundError:
+            os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
+            return None
 
     @wrap_exceptions
     def memory_info(self):

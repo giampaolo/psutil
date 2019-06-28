@@ -7,7 +7,7 @@
 # TODO: (FreeBSD) add test for comparing connections with 'sockstat' cmd.
 
 
-"""Tests sprcific to all BSD platforms."""
+"""Tests specific to all BSD platforms."""
 
 
 import datetime
