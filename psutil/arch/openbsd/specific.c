@@ -264,10 +264,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             continue;
         if (kp[i].p_pid == pid) {
             py_tuple = Py_BuildValue(
-                "Idd",
+                "Idds",
                 kp[i].p_tid,
                 PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
-                PSUTIL_KPT2DOUBLE(kp[i].p_ustime));
+                PSUTIL_KPT2DOUBLE(kp[i].p_ustime),
+                kp[i].p_comm);
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))

@@ -580,7 +580,8 @@ class Process(object):
                     continue
                 raise
             else:
-                nt = _common.pthread(tid, utime, stime)
+                # TODO: thread name
+                nt = _common.pthread(tid, utime, stime, "")
                 ret.append(nt)
         if hit_enoent:
             self._assert_alive()

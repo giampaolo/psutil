@@ -749,8 +749,8 @@ class Process(object):
         # Note: on OpenSBD this (/dev/mem) requires root access.
         rawlist = cext.proc_threads(self.pid)
         retlist = []
-        for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
+        for thread_id, utime, stime, name in rawlist:
+            ntuple = _common.pthread(thread_id, utime, stime, name)
             retlist.append(ntuple)
         if OPENBSD:
             self._assert_alive()

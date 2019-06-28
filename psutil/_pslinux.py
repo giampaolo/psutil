@@ -1897,8 +1897,8 @@ class Process(object):
             fname = "%s/%s/task/%s/stat" % (
                 self._procfs_path, self.pid, thread_id)
             try:
-                with open_binary(fname) as f:
-                    st = f.read().strip()
+                with open_text(fname) as f:
+                    data = f.read().strip()
             except IOError as err:
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
@@ -1906,12 +1906,11 @@ class Process(object):
                     hit_enoent = True
                     continue
                 raise
-            # ignore the first two values ("pid (exe)")
-            st = st[st.find(b')') + 2:]
-            values = st.split(b' ')
+            name = data[data.find('(') + 1:data.rfind(')')]
+            values = data[data.find(')') + 2:].split(' ')
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
-            ntuple = _common.pthread(int(thread_id), utime, stime)
+            ntuple = _common.pthread(int(thread_id), utime, stime, name)
             retlist.append(ntuple)
         if hit_enoent:
             self._assert_alive()

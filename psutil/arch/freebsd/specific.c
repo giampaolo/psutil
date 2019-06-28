@@ -379,10 +379,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     for (i = 0; i < size / sizeof(*kipp); i++) {
         kipp = &kip[i];
-        py_tuple = Py_BuildValue("Idd",
+        py_tuple = Py_BuildValue("Idds",
                                  kipp->ki_tid,
                                  PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_utime),
-                                 PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_stime));
+                                 PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_stime),
+                                 kipp->ki_comm);
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

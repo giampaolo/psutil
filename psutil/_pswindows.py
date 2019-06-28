@@ -937,7 +937,10 @@ class Process(object):
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
+            # Thread name is not available on Windows (hence the empty
+            # string), see:
+            # http://stackoverflow.com/questions/9366722
+            ntuple = _common.pthread(thread_id, utime, stime, "")
             retlist.append(ntuple)
         return retlist
 
