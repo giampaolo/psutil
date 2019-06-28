@@ -24,6 +24,7 @@ import warnings
 import psutil
 from psutil import LINUX
 from psutil._compat import basestring
+from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
@@ -1080,10 +1081,9 @@ class TestSystemDiskPartitions(unittest.TestCase):
         try:
             with mock.patch('os.path.realpath',
                             return_value='/non/existent') as m:
-                with self.assertRaises(OSError) as cm:
+                with self.assertRaises(FileNotFoundError):
                     psutil.disk_partitions()
                 assert m.called
-                self.assertEqual(cm.exception.errno, errno.ENOENT)
         finally:
             psutil.PROCFS_PATH = "/proc"
 
@@ -1920,9 +1920,8 @@ class TestProcess(unittest.TestCase):
                 '/proc/%s/smaps' % os.getpid(),
                 IOError(errno.ENOENT, "")) as m:
             p = psutil.Process()
-            with self.assertRaises(IOError) as err:
+            with self.assertRaises(FileNotFoundError):
                 p.memory_maps()
-            self.assertEqual(err.exception.errno, errno.ENOENT)
             assert m.called
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")

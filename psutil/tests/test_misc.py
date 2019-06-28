@@ -180,7 +180,8 @@ class TestMisc(unittest.TestCase):
         for name in dir_psutil:
             if name in ('callable', 'error', 'namedtuple', 'tests',
                         'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
-                        'TOTAL_PHYMEM'):
+                        'TOTAL_PHYMEM', 'PermissionError',
+                        'ProcessLookupError'):
                 continue
             if not name.startswith('_'):
                 try:
