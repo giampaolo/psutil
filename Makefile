@@ -174,6 +174,9 @@ test-coverage:  ## Run test coverage.
 flake8:  ## flake8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
+fix-flake8:  ## Attempt to automaticall fix some flake8 issues.
+	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
+
 # ===================================================================
 # GIT
 # ===================================================================
