@@ -2580,7 +2580,7 @@ FAQs
   especially on macOS (see `issue #883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
-  On Unix you may run the the Python process as root or use the SUID bit
+  On Unix you may run the Python process as root or use the SUID bit
   (this is the trick used by tools such as ``ps`` and ``netstat``).
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
   the Python script as a Windows service (this is the trick used by tools
