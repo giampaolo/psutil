@@ -53,11 +53,11 @@ connections   PROTO LOCAL ADDR            REMOTE ADDR               STATUS
               TCP   10.0.0.3:32922        172.217.16.163:443        ESTABLISHED
               UDP   :::5353               *:*                       NONE
               UDP   10.0.0.3:59925        *:*                       NONE
-threads       TID              USER          SYSTEM
-              11795             0.7            1.35
-              11796            0.68            1.37
-              15887            0.74            0.03
-              19055            0.77            0.01
+threads       TID              USER          SYSTEM          NAME
+              11795             0.7            1.35          'thread-1'
+              11796            0.68            1.37          'thread-2'
+              15887            0.74            0.03          'thread-3'
+              19055            0.77            0.01          'thread-4'
               [...]
               total=47
 res-limits    RLIMIT                     SOFT       HARD
@@ -262,8 +262,8 @@ def run(pid, verbose=False):
         print_('connections', '')
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
-        template = "%-5s %12s %12s"
-        print_('threads', template % ("TID", "USER", "SYSTEM"))
+        template = "%-5s %12s %12s %16s"
+        print_('threads', template % ("TID", "USER", "SYSTEM", "NAME"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
