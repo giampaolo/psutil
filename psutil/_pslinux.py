@@ -1885,11 +1885,10 @@ class Process(object):
         retlist = []
         hit_enoent = False
         for thread_id in thread_ids:
-            fname = "%s/%s/task/%s/stat" % (
-                self._procfs_path, self.pid, thread_id)
+            tdir = "%s/%s/task/%s" % (self._procfs_path, self.pid, thread_id)
             try:
-                with open_binary(fname) as f:
-                    st = f.read().strip()
+                with open_binary("%s/stat" % tdir) as fst:
+                    st = fst.read().strip()
             except FileNotFoundError:
                 # no such file or directory; it means thread
                 # disappeared on us
@@ -1900,7 +1899,12 @@ class Process(object):
             values = st.split(b' ')
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
-            ntuple = _common.pthread(int(thread_id), utime, stime)
+            try:
+                with open_binary("%s/comm" % tdir) as fcomm:
+                    name = fcomm.read().decode().strip()
+            except FileNotFoundError:
+                name = ''
+            ntuple = _common.pthread(int(thread_id), utime, stime, name)
             retlist.append(ntuple)
         if hit_enoent:
             self._assert_alive()

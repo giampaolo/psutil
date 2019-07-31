@@ -875,6 +875,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_info_data_t thinfo_basic;
     thread_basic_info_t basic_info_th;
     mach_msg_type_number_t thread_count, thread_info_count, j;
+    pthread_t pthread;
+    char name[128]; // no explicit upper boundary for thread name... 128 should be inclusive-enough
 
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -921,14 +923,40 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         }
 
+        // This is what was found by looking at macosx pthread implementation
+        //
+        // https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
+        // https://github.com/openbsd/src/blob/master/sys/sys/queue.h
+        //
+        // 1. line 151 : https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
+        // The pthread list head is stored inside the data segment of the program
+        //
+        // 2. line 617 : the actual pthread structure (which contains the thread name)
+        //    is allocated inside the process virtual memory
+        //    VM_PROT_DEFAULT, VM_PROT_ALL => cannot be read by another process
+        // + http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_map.html
+        //
+        // 3. line 945 : https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
+        // 'pthread_from_mach_thread_np' will always return NULL inside the python process, because of 1. and 2.
+        //
+        // However, if this feature is supported by macosx someday,
+        // it is very likely that is will be done using this interfaces.
+        // otherwise, idk what to do with this:
+        pthread = pthread_from_mach_thread_np(thread_list[j]);
+        name[0] = '\0';
+        if (pthread) {
+            pthread_getname_np(pthread, name, sizeof(name));
+        }
+
         basic_info_th = (thread_basic_info_t)thinfo_basic;
         py_tuple = Py_BuildValue(
-            "Iff",
+            "Iffs",
             j + 1,
             basic_info_th->user_time.seconds + \
                 (float)basic_info_th->user_time.microseconds / 1000000.0,
             basic_info_th->system_time.seconds + \
-                (float)basic_info_th->system_time.microseconds / 1000000.0
+                (float)basic_info_th->system_time.microseconds / 1000000.0,
+            name
         );
         if (!py_tuple)
             goto error;

@@ -936,8 +936,8 @@ class Process(object):
     def threads(self):
         rawlist = cext.proc_threads(self.pid)
         retlist = []
-        for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
+        for thread_id, utime, stime, name in rawlist:
+            ntuple = _common.pthread(thread_id, utime, stime, name)
             retlist.append(ntuple)
         return retlist
 
