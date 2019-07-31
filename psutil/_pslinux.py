@@ -1901,7 +1901,7 @@ class Process(object):
             stime = float(values[12]) / CLOCK_TICKS
             try:
                 with open_binary("%s/comm" % tdir) as fcomm:
-                    name = fcomm.read().decode().strip()
+                    name = str(fcomm.read().decode().strip())
             except FileNotFoundError:
                 name = ''
             ntuple = _common.pthread(int(thread_id), utime, stime, name)

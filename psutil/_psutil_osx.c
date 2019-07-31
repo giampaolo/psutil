@@ -875,8 +875,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_info_data_t thinfo_basic;
     thread_basic_info_t basic_info_th;
     mach_msg_type_number_t thread_count, thread_info_count, j;
-    pthread_t pthread;
-    char name[128]; // no explicit upper boundary for thread name... 128 should be inclusive-enough
 
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -942,21 +940,25 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         // However, if this feature is supported by macosx someday,
         // it is very likely that is will be done using this interfaces.
         // otherwise, idk what to do with this:
+
+        /**
+        pthread_t pthread;
+        char name[128];
+
         pthread = pthread_from_mach_thread_np(thread_list[j]);
         name[0] = '\0';
         if (pthread) {
             pthread_getname_np(pthread, name, sizeof(name));
         }
-
+        */
         basic_info_th = (thread_basic_info_t)thinfo_basic;
         py_tuple = Py_BuildValue(
-            "Iffs",
+            "Iff",
             j + 1,
             basic_info_th->user_time.seconds + \
                 (float)basic_info_th->user_time.microseconds / 1000000.0,
             basic_info_th->system_time.seconds + \
-                (float)basic_info_th->system_time.microseconds / 1000000.0,
-            name
+                (float)basic_info_th->system_time.microseconds / 1000000.0
         );
         if (!py_tuple)
             goto error;

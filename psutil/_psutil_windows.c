@@ -1164,7 +1164,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
              * below from Python's Modules/posixmodule.c
              */
             py_tuple = Py_BuildValue(
-                "kddu",
+                "kdds",
                 te32.th32ThreadID,
                 (double)(ftUser.dwHighDateTime * 429.4967296 + \
                          ftUser.dwLowDateTime * 1e-7),
@@ -1174,7 +1174,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 threadDescription);
             LocalFree(threadDescription);
 #else
-                L"");
+                "");
 #endif
 
             if (!py_tuple)
