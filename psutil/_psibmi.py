@@ -7,13 +7,11 @@
 """IBM i platform implementation."""
 
 import errno
-import glob
 import os
 import re
 import subprocess
 import sys
 import ibm_db_dbi as dbi
-import traceback
 import math
 from collections import namedtuple
 from socket import AF_INET
@@ -25,13 +23,8 @@ from . import _psutil_posix as cext_posix
 from ._common import AF_INET6
 from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
-import datetime
 
 __extra__all__ = []
 
@@ -105,30 +98,39 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 # psutil.Process.memory_maps(grouped=False)
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-#jobname to pid cache
+# jobname to pid cache
 jobname_pid_cache = {}
 
 # =====================================================================
 # --- IBM i runs an AIX variant but a number of things are unsupported
 # =====================================================================
+
+
 def _not_supported(*args, **kw):
     raise NotImplementedError("not supported on this platform")
+
 # =====================================================================
 # --- IBM i utility funcs
 # =====================================================================
+
+
 def jobname_to_pid(_jobname=None):
     if _jobname is None:
         return -1
     if _jobname in jobname_pid_cache:
         return jobname_pid_cache[_jobname]
-    p = subprocess.Popen(["/QOpenSys/usr/bin/getjobid", "-jv", _jobname], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(["/QOpenSys/usr/bin/getjobid",
+                          "-jv",
+                          _jobname],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     output = p.communicate()[0]
     try:
         line = output.decode("utf-8") .splitlines()[-1].strip()
         pid = int(line.strip().split(" ")[0])
         jobname_pid_cache[_jobname] = pid
         return pid
-    except:
+    except Exception:
         jobname_pid_cache[_jobname] = -1
         return -1
 
@@ -139,13 +141,14 @@ def jobname_to_pid(_jobname=None):
 
 def virtual_memory():
     cursor = _conn.cursor()
-    cursor.execute("select MAIN_STORAGE_SIZE, CURRENT_TEMPORARY_STORAGE from table (QSYS2.SYSTEM_STATUS()) x")
+    cursor.execute("""select MAIN_STORAGE_SIZE, CURRENT_TEMPORARY_STORAGE
+                      from table (QSYS2.SYSTEM_STATUS()) x""")
     minfo = cursor.fetchone()
     cursor.close()
     total = minfo[0]
     inuse = minfo[1]
     avail = total - inuse
-    free = avail 
+    free = avail
     percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 
@@ -184,7 +187,8 @@ def cpu_count_logical():
     #     return cext.cpu_count_online()
     """Return the number of logical CPUs in the system."""
     cursor = _conn.cursor()
-    cursor.execute("select CURRENT_CPU_CAPACITY from table (QSYS2.SYSTEM_STATUS()) x")
+    cursor.execute("""select CURRENT_CPU_CAPACITY
+                      from table (QSYS2.SYSTEM_STATUS()) x""")
     ncpus = math.ceil(cursor.fetchone()[0])
     cursor.close()
     return ncpus
@@ -194,7 +198,8 @@ def cpu_count_physical():
     if hasattr(cext, 'cpu_count'):
         return cext.cpu_count()
     cursor = _conn.cursor()
-    cursor.execute("select CONFIGURED_CPUS from table (QSYS2.SYSTEM_STATUS()) x")
+    cursor.execute("""select CONFIGURED_CPUS
+                      from table (QSYS2.SYSTEM_STATUS()) x""")
     ncpus = cursor.fetchone()[0]
     cursor.close()
     return ncpus
@@ -202,15 +207,18 @@ def cpu_count_physical():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    return _common.scpustats(0,0,0,0) #TODO: Any way to implement on IBM i?
+    return _common.scpustats(0, 0, 0, 0)  # TODO
 
 # =====================================================================
 # --- disks
 # =====================================================================
 
+
 def disk_usage(path='/'):
     cursor = _conn.cursor()
-    cursor.execute("SELECT SUM(UNIT_STORAGE_CAPACITY) as TOTAL, SUM(UNIT_SPACE_AVAILABLE) as AVAIL FROM QSYS2.SYSDISKSTAT")
+    cursor.execute("""SELECT SUM(UNIT_STORAGE_CAPACITY) as TOTAL,
+                             SUM(UNIT_SPACE_AVAILABLE) as AVAIL
+                             FROM QSYS2.SYSDISKSTAT""")
     for row in cursor:
         total = row[0]
         avail = row[1]
@@ -219,25 +227,30 @@ def disk_usage(path='/'):
         cursor.close()
         return _common.sdiskusage(total, used, avail, percent)
 
-def disk_io_counters(all=False): #TODO
+
+def disk_io_counters(all=False):  # TODO
     cursor = _conn.cursor()
     cursor.execute("SELECT UNIT_NUMBER FROM QSYS2.SYSDISKSTAT")
     counters = {}
     for row in cursor:
-        counters["unit:"+str(row[0])] = (0,0,0,0,0,0) #TODO: query system performance data to get this
+        # TODO: query system performance data to get this
+        counters["unit:"+str(row[0])] = (0, 0, 0, 0, 0, 0)
     cursor.close()
     return counters
 
+
 def disk_partitions(all=False):
     cursor = _conn.cursor()
-    cursor.execute("SELECT UNIT_NUMBER,ASP_NUMBER,UNIT_TYPE,DISK_TYPE FROM QSYS2.SYSDISKSTAT")
+    cursor.execute("""SELECT UNIT_NUMBER,ASP_NUMBER,UNIT_TYPE,DISK_TYPE
+                      FROM QSYS2.SYSDISKSTAT""")
     ret = []
     for row in cursor:
         if(row[2] == 0):
             unit_type = "not_solid_state"
         else:
             unit_type = "solid_state"
-        ret.append(_common.sdiskpart("unit:"+str(row[0]),"/",unit_type, "asp:"+str(row[1])))
+        ret.append(_common.sdiskpart(
+                   "unit:"+str(row[0]), "/", unit_type, "asp:"+str(row[1])))
     cursor.close()
     return ret
 
@@ -249,12 +262,13 @@ def disk_partitions(all=False):
 
 net_if_addrs = cext_posix.net_if_addrs
 
+
 def net_io_counters(pernic=True):
     cursor = _conn.cursor()
     cursor.execute("SELECT LINE_DESCRIPTION FROM QSYS2.NETSTAT_INTERFACE_INFO")
     counters = {}
     for row in cursor:
-        counters[row[0]] = (0,0,0,0,0,0,0,0) #TODO: investigate ways to get proper data
+        counters[row[0]] = (0, 0, 0, 0, 0, 0, 0, 0)  # TODO
     cursor.close()
     return counters
 
@@ -265,8 +279,10 @@ def net_connections(kind, _pid=-1):
     """
     ret = list()
     cursor = _conn.cursor()
-    querystring = """ 
-                        SELECT j.CONNECTION_TYPE,j.LOCAL_ADDRESS,j.LOCAL_PORT,j.REMOTE_ADDRESS,j.REMOTE_PORT,j.JOB_NAME,i.TCP_STATE
+    querystring = """
+                        SELECT j.CONNECTION_TYPE,j.LOCAL_ADDRESS,
+                               j.LOCAL_PORT,j.REMOTE_ADDRESS,
+                               j.REMOTE_PORT,j.JOB_NAME,i.TCP_STATE
                         FROM QSYS2.NETSTAT_INFO i
                         INNER JOIN QSYS2.NETSTAT_JOB_INFO j ON
                         i.local_port = j.local_port and
@@ -285,13 +301,13 @@ def net_connections(kind, _pid=-1):
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
         elif jobname is None:
             continue
-        else: 
+        else:
             pid = jobname_to_pid(jobname)
             if _pid != -1 and _pid != pid:
                 continue
             if pid == -1:
                 nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-            else: 
+            else:
                 nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         ret.append(nt)
     cursor.close()
@@ -301,7 +317,8 @@ def net_connections(kind, _pid=-1):
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     cursor = _conn.cursor()
-    cursor.execute("SELECT LINE_DESCRIPTION,INTERFACE_STATUS,MAXIMUM_TRANSMISSION_UNIT FROM QSYS2.NETSTAT_INTERFACE_INFO")
+    cursor.execute("""SELECT LINE_DESCRIPTION,INTERFACE_STATUS,MAXIMUM_TRANSMISSION_UNIT
+                      FROM QSYS2.NETSTAT_INTERFACE_INFO""")
     ret = {}
     for row in cursor:
         name = row[0]
@@ -321,7 +338,9 @@ def net_if_stats():
 
 def boot_time():
     cursor = _conn.cursor()
-    cursor.execute("SELECT JOB_ACTIVE_TIME FROM TABLE(QSYS2.JOB_INFO(JOB_USER_FILTER => 'QSYS')) A WHERE JOB_NAME = '000000/QSYS/SCPF'")
+    cursor.execute("""SELECT JOB_ACTIVE_TIME
+                      FROM TABLE(QSYS2.JOB_INFO(JOB_USER_FILTER => 'QSYS')) A
+                      WHERE JOB_NAME = '000000/QSYS/SCPF' """)
     for row in cursor:
         ret = row[0].timestamp()
         cursor.close()
@@ -333,13 +352,17 @@ def users():
     retlist = []
     ttylist = []
 
-    p = subprocess.Popen(["/QOpenSys/usr/bin/ps", "-Af", "-o", "tty,pid,user"], stdout=subprocess.PIPE)
+    p = subprocess.Popen(["/QOpenSys/usr/bin/ps",
+                          "-Af",
+                          "-o",
+                          "tty,pid,user"],
+                         stdout=subprocess.PIPE)
     output = p.communicate()[0]
     for line in output.decode("utf-8") .splitlines()[1:]:
         tokens = line.split()
         tty = tokens[0]
         pid = int(tokens[1])
-        user = tokens[2] 
+        user = tokens[2]
         if(tty == "-"):
             continue
         if(tty in ttylist):
@@ -349,7 +372,7 @@ def users():
             ttylist.append(tty)
             retlist.append(nt)
         except NoSuchProcess:
-            #expected 
+            # expected
             continue
     return retlist
 
@@ -438,7 +461,8 @@ class Process(object):
     def exe(self):
         # there is no way to get executable path in AIX other than to guess,
         # and guessing is more complex than what's in the wrapping class
-        #TODO: we can add logic here to use the target process's PATH rather than this one's
+        # TODO: we can add logic here to use the target process's PATH
+        # rather than this one's
         exe = self.cmdline()[0]
         if os.path.sep in exe:
             # relative or absolute path
@@ -498,7 +522,7 @@ class Process(object):
         # an empty list means there were no connections for process or
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
-        #TODO IBM i implementation
+        # TODO IBM i implementation
         # if not ret:
         #     # will raise NSP if process is gone
         #     os.stat('%s/%s' % (self._procfs_path, self.pid))
@@ -535,13 +559,17 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
 
-        p = subprocess.Popen(["/QOpenSys/usr/bin/ps", "-Af", "-o", "tty,pid,user", "-p", str(self.pid)], stdout=subprocess.PIPE)
+        p = subprocess.Popen(
+            ["/QOpenSys/usr/bin/ps",
+             "-Af",
+             "-o",
+             "tty,pid,user",
+             "-p", str(self.pid)], stdout=subprocess.PIPE)
         output = p.communicate()[0]
         for line in output.decode("utf-8") .splitlines()[1:]:
             tokens = line.split()
             tty = tokens[0]
             pid = int(tokens[1])
-            user = tokens[2] 
             if(tty == "-"):
                 continue
             if(pid == int(self.pid)):
@@ -550,7 +578,7 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
-        _not_supported(); #TODO
+        _not_supported()  # TODO
 
     @wrap_exceptions
     def memory_info(self):
@@ -593,7 +621,7 @@ class Process(object):
     def num_fds(self):
         if self.pid == 0:       # no /proc/0/fd
             return 0
-        _not_supported() # TODO
+        _not_supported()  # TODO
 
     @wrap_exceptions
     def num_ctx_switches(self):
