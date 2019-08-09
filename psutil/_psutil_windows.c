@@ -29,6 +29,12 @@
 #if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
 #include <ws2tcpip.h>  // net_connections()
 #endif
+#if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT >= _WIN32_WINNT_WIN10) && (_MSC_VER >= 1900)
+# define WIN_SUPPORTS_THREAD_NAME 1 // threads()
+# include <processthreadsapi.h>
+#else
+# define WIN_SUPPORTS_THREAD_DESC 0
+#endif
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -1072,9 +1078,11 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10) && (_MSC_VER >= 1900)
+#if WIN_SUPPORTS_THREAD_NAME == 1
     HRESULT hr;
-    PWSTR threadDescription;
+    PWSTR wThreadName;
+    char * threadName;
+    size_t len;
 #endif
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
@@ -1147,12 +1155,17 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
  // - https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreaddescription
  //  - https://stackoverflow.com/a/41902967
  //  - https://wiki.python.org/moin/WindowsCompilers
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10) && (_MSC_VER >= 1900)
-            hr = GetThreadDescription(hThread, &threadDescription);
+#if WIN_SUPPORTS_THREAD_NAME == 1
+            hr = GetThreadDescription(hThread, &wThreadName);
             if (FAILED(hr)) {
                 PyErr_SetFromOSErrnoWithSyscall("GetThreadDescription");
                 goto error;
             }
+	        len = wcslen(wThreadName);
+	        threadName = (char *) malloc(sizeof(char) * (len + 1));
+	        if (threadName) {
+	            threadName[wcstombs(threadName, wThreadName, len)] = 0;
+	        }
 #endif
             /*
              * User and kernel times are represented as a FILETIME structure
@@ -1170,9 +1183,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                          ftUser.dwLowDateTime * 1e-7),
                 (double)(ftKernel.dwHighDateTime * 429.4967296 + \
                          ftKernel.dwLowDateTime * 1e-7),
-#if (_WIN32_WINNT >= _WIN32_WINNT_WIN10) && (_MSC_VER >= 1900)
-                threadDescription);
-            LocalFree(threadDescription);
+#if WIN_SUPPORTS_THREAD_NAME == 1
+                threadName ? threadName : "");
+            LocalFree(wThreadName);
+            free(threadName);
 #else
                 "");
 #endif
