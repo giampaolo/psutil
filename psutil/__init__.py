@@ -2176,7 +2176,7 @@ def disk_io_counters(perdisk=False, nowrap=True):
             rawdict[disk] = nt(*fields)
         return rawdict
     else:
-        return nt(*[sum(x) for x in zip(*rawdict.values())])
+        return nt(*(sum(x) for x in zip(*rawdict.values())))
 
 
 disk_io_counters.cache_clear = functools.partial(
