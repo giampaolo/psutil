@@ -207,6 +207,8 @@ elif LINUX:
 
         try:
             compiler = UnixCCompiler()
+            compiler_so = os.getenv('CC', compiler.executables['compiler_so'])
+            compiler.set_executable('compiler_so', compiler_so)
             with silenced_output('stderr'):
                 with silenced_output('stdout'):
                     compiler.compile([f.name])
