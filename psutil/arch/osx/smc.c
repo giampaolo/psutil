@@ -182,6 +182,12 @@ double SMCGetTemperature(char *key) {
     return 0.0;
 }
 
+double SMCGetCoreTemperature(int coreNum) {
+    UInt32Char_t  key;
+    sprintf(key, SMC_KEY_CPU_CORE_TEMP, coreNum);
+    return SMCGetTemperature(key);
+}
+
 
 float SMCGetFanSpeed(int fanNum)
 {

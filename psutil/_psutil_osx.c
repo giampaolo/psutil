@@ -461,6 +461,19 @@ error:
     return NULL;
 }
 
+/*
+ * Return the number of physical CPUs in the system.
+ */
+static int
+_cpu_count_phys() {
+    int num;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
+        return 0;  // mimic os.cpu_count()
+    else
+        return num;
+}
 
 /*
  * Return the number of logical CPUs in the system.
@@ -497,10 +510,10 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     int num;
-    size_t size = sizeof(int);
 
-    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
+    num = _cpu_count_phys();
+    if (num < 1)
+        Py_RETURN_NONE;
     else
         return Py_BuildValue("i", num);
 }
@@ -1788,6 +1801,12 @@ psutil_sensors_temperatures(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
     PyObject *py_battery_temp = NULL;
     PyObject *py_cpu_temp = NULL;
+    PyObject *py_cpu_cores_temp = NULL;
+    PyObject *py_cpu_core_temp = NULL; /* NOTE: PyList_SetItem steals this ref */
+
+    char buffer[8];
+    int cpu_count;
+    int i;
 
     if (py_retdict == NULL)
         goto error;
@@ -1795,6 +1814,23 @@ psutil_sensors_temperatures(PyObject *self, PyObject *args) {
     py_cpu_temp = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_CPU_TEMP));
     if (!py_cpu_temp)
         goto error;
+    cpu_count = _cpu_count_phys();
+    if (cpu_count < 1)
+        goto error;
+    py_cpu_cores_temp = PyList_New((Py_ssize_t) cpu_count);
+    if (!py_cpu_cores_temp) {
+        goto error;
+    }
+    for (i = 0; i < cpu_count; i++) {
+        sprintf(buffer, "Core %d", i);
+        py_cpu_core_temp = Py_BuildValue("(sd)", buffer, SMCGetCoreTemperature(i + 1));
+        if (!py_cpu_core_temp) {
+            goto error;
+        }
+        if (PyList_SetItem(py_cpu_cores_temp, (Py_ssize_t) i, py_cpu_core_temp)) {
+            goto error;
+        }
+    }
     py_battery_temp = Py_BuildValue("d", SMCGetTemperature(SMC_KEY_BATTERY_TEMP));
     if (!py_battery_temp)
         goto error;
@@ -1804,6 +1840,10 @@ psutil_sensors_temperatures(PyObject *self, PyObject *args) {
     if (PyDict_SetItemString(py_retdict, "CPU", py_cpu_temp)) {
         goto error;
     }
+    if (PyDict_SetItemString(py_retdict, "coretemp", py_cpu_cores_temp)) {
+        goto error;
+    }
+    Py_DECREF(py_cpu_cores_temp);
     Py_DECREF(py_cpu_temp);
     Py_DECREF(py_battery_temp);
     return py_retdict;
@@ -1811,6 +1851,8 @@ psutil_sensors_temperatures(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_battery_temp);
     Py_XDECREF(py_cpu_temp);
+    Py_XDECREF(py_cpu_core_temp);
+    Py_XDECREF(py_cpu_cores_temp);
     Py_XDECREF(py_retdict);
     return NULL;
 }

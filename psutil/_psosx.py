@@ -112,7 +112,7 @@ pmmap_grouped = namedtuple(
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 # psutil.sensors_temperatures()
-shwtemp = namedtuple('shwtemp', ['current'])
+shwtemp = namedtuple('shwtemp', ['label', 'current'])
 # psutil.sensors_battery()
 sfan = namedtuple('sfan', ['current'])
 
@@ -222,9 +222,16 @@ def sensors_temperatures(fahrenheit=False):
     """
     ret = dict()
     for key, value in cext.sensors_temperatures().items():
-        if fahrenheit:
-            value = celsius_to_fahrenheit(value)
-        ret[key] = shwtemp(value)
+        if key == 'coretemp':
+            ret[key] = []
+            for label, temp in value:
+                ret[key].append(shwtemp(label=label,
+                                        current=celsius_to_fahrenheit(temp)
+                                        if fahrenheit else temp))
+        else:
+            ret[key] = shwtemp(label='',
+                               current=celsius_to_fahrenheit(value)
+                               if fahrenheit else value)
     return ret
 
 

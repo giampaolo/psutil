@@ -18,6 +18,7 @@
 
 // key values
 #define SMC_KEY_CPU_TEMP      "TC0P"
+#define SMC_KEY_CPU_CORE_TEMP "TC%dC"
 #define SMC_KEY_BATTERY_TEMP  "TB0T"
 #define SMC_KEY_FAN_NUM       "FNum"
 #define SMC_KEY_FAN_SPEED     "F%dAc"
@@ -68,6 +69,7 @@ typedef struct {
 } SMCVal_t;
 
 double SMCGetTemperature(char *key);
+double SMCGetCoreTemperature(int coreNum);
 int SMCGetFanNumber(char *key);
 float SMCGetFanSpeed(int fanNum);
 
