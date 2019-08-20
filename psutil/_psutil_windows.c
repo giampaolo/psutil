@@ -26,15 +26,9 @@
 #include <tlhelp32.h>
 #include <wtsapi32.h>  // users()
 #include <PowrProf.h>  // cpu_freq()
+#include <libloaderapi.h>  // GetModuleHandle()
 #if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
 #include <ws2tcpip.h>  // net_connections()
-#endif
-#if defined(_WIN32_WINNT_WIN10) && (_WIN32_WINNT >= _WIN32_WINNT_WIN10) && (_MSC_VER >= 1900)
-# define WIN_SUPPORTS_THREAD_DESC 1 // threads()
-# include <libloaderapi.h>
-# include <processthreadsapi.h>
-#else
-# define WIN_SUPPORTS_THREAD_DESC 0
 #endif
 
 // Link with Iphlpapi.lib
@@ -1076,13 +1070,10 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
-#if WIN_SUPPORTS_THREAD_DESC == 1
 typedef HRESULT (*get_thread_desc_t)(HANDLE,PWSTR *);
-#endif
 
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-#if WIN_SUPPORTS_THREAD_DESC == 1
     static char get_thread_desc_set = 0;
     static get_thread_desc_t get_thread_desc = NULL;
     static HMODULE windll = NULL;
@@ -1090,7 +1081,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     PWSTR wThreadName;
     char * threadName;
     size_t len;
-#endif
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
@@ -1162,7 +1152,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
  // - https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreaddescription
  //  - https://stackoverflow.com/a/41902967
  //  - https://wiki.python.org/moin/WindowsCompilers
-#if WIN_SUPPORTS_THREAD_DESC == 1
             if (!get_thread_desc_set) {
                 get_thread_desc_set = 1;
                 windll = GetModuleHandle("Kernel32.dll");
@@ -1188,7 +1177,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 wThreadName = NULL;
                 threadName = NULL;
             }
-#endif
             /*
              * User and kernel times are represented as a FILETIME structure
              * which contains a 64-bit value representing the number of
@@ -1205,13 +1193,9 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                          ftUser.dwLowDateTime * 1e-7),
                 (double)(ftKernel.dwHighDateTime * 429.4967296 + \
                          ftKernel.dwLowDateTime * 1e-7),
-#if WIN_SUPPORTS_THREAD_DESC == 1
                 threadName ? threadName : "");
             LocalFree(wThreadName);
             free(threadName);
-#else
-                "");
-#endif
 
             if (!py_tuple)
                 goto error;
