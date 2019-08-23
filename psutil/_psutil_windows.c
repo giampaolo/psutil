@@ -26,7 +26,6 @@
 #include <tlhelp32.h>
 #include <wtsapi32.h>  // users()
 #include <PowrProf.h>  // cpu_freq()
-#include <libloaderapi.h>  // GetModuleHandle()
 #if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
 #include <ws2tcpip.h>  // net_connections()
 #endif
