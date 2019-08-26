@@ -15,7 +15,7 @@ __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
            "FileNotFoundError", "PermissionError", "ProcessLookupError",
            "InterruptedError", "ChildProcessError", "FileExistsError"]
 
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 
 if PY3:
     long = int

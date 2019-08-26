@@ -38,7 +38,7 @@ else:
     enum = None
 
 # can't take it from _common.py as this script is imported by setup.py
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 
 __all__ = [
     # constants
