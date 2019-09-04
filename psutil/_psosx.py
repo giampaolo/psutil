@@ -8,6 +8,8 @@ import contextlib
 import errno
 import functools
 import os
+import collections
+from collections import defaultdict
 from collections import namedtuple
 
 from . import _common
@@ -231,6 +233,17 @@ def sensors_battery():
         secsleft = minsleft * 60
     return _common.sbattery(percent, secsleft, power_plugged)
 
+def sensors_temperatures():
+    """Return temperature information."""
+    try:
+        temps = cext.sensors_cpu_temperature()
+    except:
+        # SMC issue?
+        return None
+    ret = collections.defaultdict(list)
+    for name, temp in temps:
+        ret["coretemp"].append((name, temp, None, None))
+    return dict(ret)
 
 # =====================================================================
 # --- network
