@@ -235,11 +235,7 @@ def sensors_battery():
 
 def sensors_temperatures():
     """Return temperature information."""
-    try:
-        temps = cext.sensors_cpu_temperature()
-    except:
-        # SMC issue?
-        return None
+    temps = cext.sensors_cpu_temperature()
     ret = collections.defaultdict(list)
     for name, temp in temps:
         ret["coretemp"].append((name, temp, None, None))
