@@ -9,7 +9,6 @@ import errno
 import functools
 import os
 import collections
-from collections import defaultdict
 from collections import namedtuple
 
 from . import _common
@@ -232,6 +231,7 @@ def sensors_battery():
     else:
         secsleft = minsleft * 60
     return _common.sbattery(percent, secsleft, power_plugged)
+
 
 def sensors_temperatures():
     """Return temperature information."""
