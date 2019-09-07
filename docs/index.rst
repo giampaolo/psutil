@@ -78,7 +78,8 @@ CPU
 
   - **nice** *(UNIX)*: time spent by niced (prioritized) processes executing in
     user mode; on Linux this also includes **guest_nice** time
-  - **iowait** *(Linux)*: time spent waiting for I/O to complete
+  - **iowait** *(Linux)*: time spent waiting for I/O to complete. This is *not*
+    accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
   - **steal** *(Linux 2.6.11+)*: time spent by other operating systems running
@@ -1404,15 +1405,32 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a `(user, system, children_user, children_system)` named tuple
-    representing the accumulated process time, in seconds (see
-    `explanation <http://stackoverflow.com/questions/556405/>`__).
-    On Windows and macOS only *user* and *system* are filled, the others are
-    set to ``0``.
+    Return a named tuple representing the accumulated process times, in seconds
+    (see `explanation <http://stackoverflow.com/questions/556405/>`__).
     This is similar to `os.times`_ but can be used for any process PID.
+
+    - **user**: time spent in user mode.
+    - **system**: time spent in kernel mode.
+    - **children_user**: user time of all child processes (always ``0`` on
+      Windows and macOS).
+    - **system_user**: user time of all child processes (always ``0`` on
+      Windows and macOS).
+    - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
+      This value is excluded from `user` and `system` times count (because the
+      CPU is not doing any work).
+
+    >>> import psutil
+    >>> p = psutil.Process()
+    >>> p.cpu_times()
+    pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
+    >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
+    0.70
 
     .. versionchanged::
       4.1.0 return two extra fields: *children_user* and *children_system*.
+
+    .. versionchanged::
+      5.6.4 added *iowait* on Linux.
 
   .. method:: cpu_percent(interval=None)
 

@@ -203,6 +203,10 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'read_chars', 'write_chars'])
+# psutil.Process.cpu_times()
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system',
+                        'iowait'])
 
 
 # =====================================================================
@@ -1571,6 +1575,7 @@ class Process(object):
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
         ret['cpu_num'] = fields[36]
+        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
 
         return ret
 
@@ -1700,7 +1705,8 @@ class Process(object):
         stime = float(values['stime']) / CLOCK_TICKS
         children_utime = float(values['children_utime']) / CLOCK_TICKS
         children_stime = float(values['children_stime']) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime, children_utime, children_stime)
+        iowait = float(values['blkio_ticks']) / CLOCK_TICKS
+        return pcputimes(utime, stime, children_utime, children_stime, iowait)
 
     @wrap_exceptions
     def cpu_num(self):

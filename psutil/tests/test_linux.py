@@ -1993,6 +1993,9 @@ class TestProcess(unittest.TestCase):
             "0",      # cnswap
             "0",      # exit_signal
             "6",      # processor
+            "0",      # rt priority
+            "0",      # policy
+            "7",      # delayacct_blkio_ticks
         ]
         content = " ".join(args).encode()
         with mock_open_content('/proc/%s/stat' % os.getpid(), content):
@@ -2007,6 +2010,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(cpu.system, 3 / CLOCK_TICKS)
             self.assertEqual(cpu.children_user, 4 / CLOCK_TICKS)
             self.assertEqual(cpu.children_system, 5 / CLOCK_TICKS)
+            self.assertEqual(cpu.iowait, 7 / CLOCK_TICKS)
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):

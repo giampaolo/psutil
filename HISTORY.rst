@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
+  spent waiting for blocking I/O to complete.
+
 **Bug fixes**
 
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
