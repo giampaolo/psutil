@@ -359,7 +359,7 @@ Process management
     pgids(real=1000, effective=1000, saved=1000)
     >>>
     >>> p.cpu_times()
-    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1)
+    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1, iowait=0.0)
     >>> p.cpu_percent(interval=1.0)
     12.1
     >>> p.cpu_affinity()

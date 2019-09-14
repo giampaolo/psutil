@@ -3,7 +3,6 @@ name: Bug
 about: Report a bug
 title: "[OS] title"
 labels: 'bug'
-assignees: 'giampaolo'
 
 ---
 **Platform**
