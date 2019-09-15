@@ -22,8 +22,8 @@
 // This formula comes from linux's include/linux/sched/loadavg.h
 // https://github.com/torvalds/linux/blob/345671ea0f9258f410eb057b9ced9cefbbe5dc78/include/linux/sched/loadavg.h#L20-L23
 #define LOADAVG_FACTOR_1F  0.9200444146293232478931553241
-#define LOADAVG_FACTOR_5F  0.6592406302004437462547604110
-#define LOADAVG_FACTOR_15F 0.2865047968601901003248854266
+#define LOADAVG_FACTOR_5F  0.9834714538216174894737477501
+#define LOADAVG_FACTOR_15F 0.9944598480048967508795473394
 // The time interval in seconds between taking load counts, same as Linux
 #define SAMPLING_INTERVAL 5
 
