@@ -19,6 +19,8 @@ XXXX-XX-XX
 - 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
 - 1546_: usage percent may be rounded to 0 on Python 2.
+- 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
+  incorrect.
 
 5.6.3
 =====
