@@ -13,7 +13,7 @@ Quick links
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
@@ -2606,7 +2606,7 @@ FAQs
   especially on macOS (see `issue #883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
-  On Unix you may run the the Python process as root or use the SUID bit
+  On Unix you may run the Python process as root or use the SUID bit
   (this is the trick used by tools such as ``ps`` and ``netstat``).
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
   the Python script as a Windows service (this is the trick used by tools
@@ -2936,7 +2936,7 @@ Timeline
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
-.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
+.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`enums`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
@@ -2953,7 +2953,7 @@ Timeline
 .. _`issue #883`: https://github.com/giampaolo/psutil/issues/883
 .. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
-.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py.
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
 .. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
 .. _`open`: https://docs.python.org/3/library/functions.html#open
 .. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
