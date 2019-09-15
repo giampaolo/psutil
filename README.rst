@@ -385,8 +385,8 @@ Process management
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
     >>>
     >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
-     popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
+    [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
+     popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
     >>> p.connections()
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
@@ -428,6 +428,7 @@ Process management
     >>> p.resume()
     >>>
     >>> p.terminate()
+    >>> p.kill()
     >>> p.wait(timeout=3)
     0
     >>>
