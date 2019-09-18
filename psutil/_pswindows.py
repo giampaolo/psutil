@@ -52,6 +52,8 @@ from ._psutil_windows import HIGH_PRIORITY_CLASS
 from ._psutil_windows import IDLE_PRIORITY_CLASS
 from ._psutil_windows import NORMAL_PRIORITY_CLASS
 from ._psutil_windows import REALTIME_PRIORITY_CLASS
+from ._psutil_windows import PROCESS_MODE_BACKGROUND_BEGIN
+from ._psutil_windows import PROCESS_MODE_BACKGROUND_END
 
 if sys.version_info >= (3, 4):
     import enum
