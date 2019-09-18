@@ -2219,7 +2219,7 @@ Process priority constants
 .. data:: IOPRIO_NORMAL
 .. data:: IOPRIO_HIGH
 
-  A set of integers representing the I/O priority of a process on Linux.
+  A set of integers representing the I/O priority of a process on Windows.
   They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
   or set process I/O priority.
 
