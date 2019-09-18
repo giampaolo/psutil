@@ -3641,6 +3641,13 @@ void init_psutil_windows(void)
         module, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS);
     PyModule_AddIntConstant(
         module, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS);
+    // further constants still working with Process.nice()
+    // https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
+    PyModule_AddIntConstant(
+        module, "PROCESS_MODE_BACKGROUND_BEGIN", PROCESS_MODE_BACKGROUND_BEGIN);#0x00100000
+    PyModule_AddIntConstant(
+        module, "PROCESS_MODE_BACKGROUND_END", PROCESS_MODE_BACKGROUND_END);#0x00200000
+    
 
     // connection status constants
     // http://msdn.microsoft.com/en-us/library/cc669305.aspx
