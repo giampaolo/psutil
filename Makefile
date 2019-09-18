@@ -14,7 +14,7 @@ DEPS = \
 	futures \
 	ipaddress \
 	mock==1.0.1 \
-	perf \
+	pyperf \
 	readline \
 	requests \
 	setuptools \
