@@ -7,6 +7,7 @@
 """Cross-platform lib for process and system monitoring in Python."""
 
 import contextlib
+import glob
 import io
 import os
 import platform
@@ -295,6 +296,7 @@ def main():
         license='BSD',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
+        scripts=glob.glob(os.path.join("scripts", "*.py")),
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',

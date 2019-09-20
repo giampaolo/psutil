@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
   spent waiting for blocking I/O to complete.
+- 1560_: The scripts (ifconfig.py, top.py, etc.) are now included in the
+  package.
 
 **Bug fixes**
 
