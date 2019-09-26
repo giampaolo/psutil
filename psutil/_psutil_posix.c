@@ -354,7 +354,7 @@ error:
 static PyObject *
 psutil_net_if_mtu(PyObject *self, PyObject *args) {
     char *nic_name;
-    int sock = 0;
+    int sock = -1;
     int ret;
 #ifdef PSUTIL_SUNOS10
     struct lifreq lifr;
@@ -387,7 +387,7 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
 #endif
 
 error:
-    if (sock != 0)
+    if (sock != -1)
         close(sock);
     return PyErr_SetFromErrno(PyExc_OSError);
 }
@@ -401,7 +401,7 @@ error:
 static PyObject *
 psutil_net_if_flags(PyObject *self, PyObject *args) {
     char *nic_name;
-    int sock = 0;
+    int sock = -1;
     int ret;
     struct ifreq ifr;
 
@@ -424,7 +424,7 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
         return Py_BuildValue("O", Py_False);
 
 error:
-    if (sock != 0)
+    if (sock != -1)
         close(sock);
     return PyErr_SetFromErrno(PyExc_OSError);
 }
@@ -579,7 +579,7 @@ int psutil_get_nic_speed(int ifm_active) {
 static PyObject *
 psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     char *nic_name;
-    int sock = 0;
+    int sock = -1;
     int ret;
     int duplex;
     int speed;
@@ -591,7 +591,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // speed / duplex
@@ -614,11 +614,6 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
 
     close(sock);
     return Py_BuildValue("[ii]", duplex, speed);
-
-error:
-    if (sock != 0)
-        close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
 }
 #endif  // net_if_stats() macOS/BSD implementation
 
