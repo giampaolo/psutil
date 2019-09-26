@@ -940,6 +940,8 @@ class TestProcess(unittest.TestCase):
         self.addCleanup(p.cpu_affinity, initial)
 
         # All possible CPU set combinations.
+        if len(initial) > 12:
+            initial = initial[:12]  # ...otherwise it will take forever
         combos = []
         for l in range(0, len(initial) + 1):
             for subset in itertools.combinations(initial, l):
