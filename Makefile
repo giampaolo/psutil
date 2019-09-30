@@ -55,8 +55,7 @@ clean:  ## Remove all build files.
 		build/ \
 		dist/ \
 		docs/_build/ \
-		htmlcov/ \
-		tmp/
+		htmlcov/
 
 _:
 
@@ -68,13 +67,11 @@ build: _  ## Compile without installing.
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i
-	rm -rf tmp
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
-	rm -rf tmp
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil || true
