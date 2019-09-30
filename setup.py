@@ -205,11 +205,13 @@ elif LINUX:
                 suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
 
+        output_dir = tempfile.mkdtemp()
+
         try:
             compiler = UnixCCompiler()
             with silenced_output('stderr'):
                 with silenced_output('stdout'):
-                    compiler.compile([f.name])
+                    compiler.compile([f.name], output_dir)
         except CompileError:
             return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
         else:
