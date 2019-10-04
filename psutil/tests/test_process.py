@@ -932,24 +932,23 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
         self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
 
+    print(HAS_CPU_AFFINITY)
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_all_combinations(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
         assert initial, initial
         self.addCleanup(p.cpu_affinity, initial)
-
-        # All possible CPU set combinations.
+        i=0
+        ctr=0
         combos = []
-        for l in range(0, len(initial) + 1):
+        for l in range(0, len(initial) +1):
+            i=i+1
+            ctr=ctr+1
             for subset in itertools.combinations(initial, l):
                 if subset:
-                    combos.append(list(subset))
-
-        for combo in combos:
-            p.cpu_affinity(combo)
-            self.assertEqual(p.cpu_affinity(), combo)
-
+                  p.cpu_affinity(subset)
+        self.assertEqual(p.cpu_affinity(), list(subset))
     # TODO: #595
     @unittest.skipIf(BSD, "broken on BSD")
     # can't find any process file on Appveyor
