@@ -939,15 +939,13 @@ class TestProcess(unittest.TestCase):
         initial = p.cpu_affinity()
         assert initial, initial
         self.addCleanup(p.cpu_affinity, initial)
-        i=0
-        ctr=0
-        combos = []
-        for l in range(0, len(initial) +1):
-            i=i+1
-            ctr=ctr+1
+        # All possible CPU set combinations.
+        if (len(initial) > 12):
+            initial = initial[:12]
+        for l in range(0, len(initial) + 1):
             for subset in itertools.combinations(initial, l):
                 if subset:
-                  p.cpu_affinity(subset)
+                    p.cpu_affinity(subset)
         self.assertEqual(p.cpu_affinity(), list(subset))
     # TODO: #595
     @unittest.skipIf(BSD, "broken on BSD")
