@@ -501,11 +501,8 @@ class TestSystemAPIs(unittest.TestCase):
                 # we cannot make any assumption about this, see:
                 # http://goo.gl/p9c43
                 disk.device
-            if SUNOS or TRAVIS:
-                # on solaris apparently mount points can also be files
-                assert os.path.exists(disk.mountpoint), disk
-            else:
-                assert os.path.isdir(disk.mountpoint), disk
+            # on modern systems mount points can also be files
+            assert os.path.exists(disk.mountpoint), disk
             assert disk.fstype, disk
 
         # all = True
