@@ -240,7 +240,7 @@ elif SUNOS:
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
-# AIX
+
 elif AIX:
     macros.append(("PSUTIL_AIX", 1))
     ext = Extension(

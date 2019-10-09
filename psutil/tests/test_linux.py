@@ -10,6 +10,7 @@ from __future__ import division
 import collections
 import contextlib
 import errno
+import glob
 import io
 import os
 import re
@@ -55,7 +56,7 @@ SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
 if LINUX:
     SECTOR_SIZE = 512
-
+EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
 
 # =====================================================================
 # --- utils
@@ -705,15 +706,12 @@ class TestSystemCPUFrequency(unittest.TestCase):
             if path.startswith("/sys/devices/system/cpu/cpufreq/policy"):
                 return False
             else:
-                flags.append(None)
                 return orig_exists(path)
 
-        flags = []
         orig_exists = os.path.exists
         with mock.patch("os.path.exists", side_effect=path_exists_mock,
                         create=True):
             assert psutil.cpu_freq()
-            self.assertEqual(len(flags), psutil.cpu_count(logical=True))
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_cpuinfo(self):
@@ -1569,6 +1567,7 @@ class TestSensorsBattery(unittest.TestCase):
 class TestSensorsTemperatures(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
+    @unittest.skipIf(LINUX and EMPTY_TEMPERATURES, "no temperatures")
     def test_emulate_eio_error(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("_input"):
