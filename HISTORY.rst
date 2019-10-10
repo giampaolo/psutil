@@ -23,6 +23,7 @@ XXXX-XX-XX
 - 1546_: usage percent may be rounded to 0 on Python 2.
 - 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
   incorrect.
+- 1570_: [Windows] NtWow64* syscalls fail to raise the proper error code
 - 1585_: [OSX] calling close() (in C) on possible negative integers.  (patch
   by Athos Ribeiro)
 

@@ -576,41 +576,38 @@ psutil_get_process_data(long pid,
             }
         }
 
-        if (! NT_SUCCESS(
-                NtWow64QueryInformationProcess64(
+        status = NtWow64QueryInformationProcess64(
                 hProcess,
                 ProcessBasicInformation,
                 &pbi64,
                 sizeof(pbi64),
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             goto error;
         }
 
         // read peb
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
-               hProcess,
-               pbi64.PebBaseAddress,
-               &peb64,
-               sizeof(peb64),
-               NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
+        status = NtWow64ReadVirtualMemory64(
+                hProcess,
+                pbi64.PebBaseAddress,
+                &peb64,
+                sizeof(peb64),
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
 
         // read process parameters
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
+        status = NtWow64ReadVirtualMemory64(
                 hProcess,
                 peb64.ProcessParameters,
                 &procParameters64,
                 sizeof(procParameters64),
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "NtWow64ReadVirtualMemory64(ProcessParameters)");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64(ProcessParameters)");
             goto error;
         }
 
@@ -705,14 +702,14 @@ psutil_get_process_data(long pid,
 
 #ifndef _WIN64
     if (weAreWow64 && !theyAreWow64) {
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
+        status = NtWow64ReadVirtualMemory64(
                 hProcess,
                 src64,
                 buffer,
                 size,
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else
