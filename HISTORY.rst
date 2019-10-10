@@ -12,6 +12,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1126_: [Linux] cpu_affinity() segfaults on CentOS 5 / manylinux.
+  cpu_affinity() support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
 - 1535_: 'type' and 'family' fields returned by net_connections() are not

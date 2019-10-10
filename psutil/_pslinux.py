@@ -73,6 +73,7 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -1925,38 +1926,41 @@ class Process(object):
     def nice_set(self, value):
         return cext_posix.setpriority(self.pid, value)
 
-    @wrap_exceptions
-    def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self.pid)
+    # starting from CentOS 6.
+    if HAS_CPU_AFFINITY:
 
-    def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
-        # See: https://github.com/giampaolo/psutil/issues/956
-        data = self._read_status_file()
-        match = _re.findall(data)
-        if match:
-            return list(range(int(match[0][0]), int(match[0][1]) + 1))
-        else:
-            return list(range(len(per_cpu_times())))
+        @wrap_exceptions
+        def cpu_affinity_get(self):
+            return cext.proc_cpu_affinity_get(self.pid)
 
-    @wrap_exceptions
-    def cpu_affinity_set(self, cpus):
-        try:
-            cext.proc_cpu_affinity_set(self.pid, cpus)
-        except (OSError, ValueError) as err:
-            if isinstance(err, ValueError) or err.errno == errno.EINVAL:
-                eligible_cpus = self._get_eligible_cpus()
-                all_cpus = tuple(range(len(per_cpu_times())))
-                for cpu in cpus:
-                    if cpu not in all_cpus:
-                        raise ValueError(
-                            "invalid CPU number %r; choose between %s" % (
-                                cpu, eligible_cpus))
-                    if cpu not in eligible_cpus:
-                        raise ValueError(
-                            "CPU number %r is not eligible; choose "
-                            "between %s" % (cpu, eligible_cpus))
-            raise
+        def _get_eligible_cpus(
+                self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
+            # See: https://github.com/giampaolo/psutil/issues/956
+            data = self._read_status_file()
+            match = _re.findall(data)
+            if match:
+                return list(range(int(match[0][0]), int(match[0][1]) + 1))
+            else:
+                return list(range(len(per_cpu_times())))
+
+        @wrap_exceptions
+        def cpu_affinity_set(self, cpus):
+            try:
+                cext.proc_cpu_affinity_set(self.pid, cpus)
+            except (OSError, ValueError) as err:
+                if isinstance(err, ValueError) or err.errno == errno.EINVAL:
+                    eligible_cpus = self._get_eligible_cpus()
+                    all_cpus = tuple(range(len(per_cpu_times())))
+                    for cpu in cpus:
+                        if cpu not in all_cpus:
+                            raise ValueError(
+                                "invalid CPU number %r; choose between %s" % (
+                                    cpu, eligible_cpus))
+                        if cpu not in eligible_cpus:
+                            raise ValueError(
+                                "CPU number %r is not eligible; choose "
+                                "between %s" % (cpu, eligible_cpus))
+                raise
 
     # only starting from kernel 2.6.13
     if HAS_PROC_IO_PRIORITY:
