@@ -842,25 +842,6 @@ class TestSystemCPUFrequency(unittest.TestCase):
                     freq = psutil.cpu_freq()
                     self.assertEqual(freq.current, 200)
 
-        # Also test that NotImplementedError is raised in case no
-        # current freq file is present.
-
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq'):
-                raise IOError(errno.ENOENT, "")
-            elif name.endswith('/cpuinfo_cur_freq'):
-                raise IOError(errno.ENOENT, "")
-            elif name == '/proc/cpuinfo':
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('os.path.exists', return_value=True):
-                self.assertRaises(NotImplementedError, psutil.cpu_freq)
-
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUStats(unittest.TestCase):
