@@ -583,7 +583,10 @@ psutil_get_process_data(long pid,
                 sizeof(pbi64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
+            psutil_SetFromNTStatusErr(
+                    status,
+                    "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
+            );
             goto error;
         }
 
@@ -607,7 +610,10 @@ psutil_get_process_data(long pid,
                 sizeof(procParameters64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64(ProcessParameters)");
+            psutil_SetFromNTStatusErr(
+                    status,
+                    "NtWow64ReadVirtualMemory64(ProcessParameters)"
+            );
             goto error;
         }
 
