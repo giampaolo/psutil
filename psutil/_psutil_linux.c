@@ -577,10 +577,10 @@ error:
 
 
 /*
- * Define the psutil C module methods and initialize the module.
+ * Module init.
  */
-static PyMethodDef
-PsutilMethods[] = {
+
+static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
@@ -628,7 +628,7 @@ PsutilMethods[] = {
         "_psutil_linux",
         NULL,
         -1,
-        PsutilMethods,
+        mod_methods,
         NULL,
         NULL,
         NULL,
@@ -646,7 +646,7 @@ PsutilMethods[] = {
 #if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
 #else
-    PyObject *mod = Py_InitModule("_psutil_linux", PsutilMethods);
+    PyObject *mod = Py_InitModule("_psutil_linux", mod_methods);
 #endif
     if (mod == NULL)
         INITERR;
