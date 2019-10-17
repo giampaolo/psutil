@@ -612,7 +612,6 @@ PsutilMethods[] = {
     {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
      "Get or set process resource limits."},
 #endif
-
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
@@ -620,52 +619,28 @@ PsutilMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-struct module_state {
-    PyObject *error;
-};
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-#endif
+    #define INITERR return NULL
 
-#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psutil_linux",
+        NULL,
+        -1,
+        PsutilMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
 
-static int
-psutil_linux_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
+    PyObject *PyInit__psutil_linux(void)
+#else  /* PY_MAJOR_VERSION */
+    #define INITERR return
 
-static int
-psutil_linux_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
-static struct PyModuleDef
-        moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_linux",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_linux_traverse,
-    psutil_linux_clear,
-    NULL
-};
-
-#define INITERROR return NULL
-
-PyMODINIT_FUNC PyInit__psutil_linux(void)
-
-#else
-#define INITERROR return
-
-void init_psutil_linux(void)
-#endif
+    void init_psutil_linux(void)
+#endif  /* PY_MAJOR_VERSION */
 {
     PyObject *v;
 #if PY_MAJOR_VERSION >= 3
@@ -674,7 +649,7 @@ void init_psutil_linux(void)
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
     if (module == NULL)
-        INITERROR;
+        INITERR;
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
@@ -723,7 +698,7 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
 
     if (module == NULL)
-        INITERROR;
+        INITERR;
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif
