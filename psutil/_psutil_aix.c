@@ -180,7 +180,7 @@ psutil_proc_args(PyObject *self, PyObject *args) {
     }
 
     procbuf.pi_pid = pid;
-    ret = getargs(&procbuf, sizeof(struct procinfo), argbuf, ARG_MAX);
+    ret = getargs(&procbuf, sizeof(procbuf), argbuf, ARG_MAX);
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -241,7 +241,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     }
 
     procbuf.pi_pid = pid;
-    ret = getevars(&procbuf, sizeof(struct procinfo), envbuf, ARG_MAX);
+    ret = getevars(&procbuf, sizeof(procbuf), envbuf, ARG_MAX);
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;

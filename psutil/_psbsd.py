@@ -10,24 +10,25 @@ import functools
 import os
 import xml.etree.ElementTree as ET
 from collections import namedtuple
-from socket import AF_INET
 from collections import defaultdict
 
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
-from ._common import AF_INET6
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import FREEBSD
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NETBSD
 from ._common import OPENBSD
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import which
+
 
 __extra__all__ = []
 
@@ -399,22 +400,8 @@ def net_connections(kind):
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            try:
-                status = TCP_STATUSES[status]
-            except KeyError:
-                # XXX: Not sure why this happens. I saw this occurring
-                # with IPv6 sockets opened by 'vim'. Those sockets
-                # have a very short lifetime so maybe the kernel
-                # can't initialize their status?
-                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-            if fam in (AF_INET, AF_INET6):
-                if laddr:
-                    laddr = _common.addr(*laddr)
-                if raddr:
-                    raddr = _common.addr(*raddr)
-            fam = sockfam_to_enum(fam)
-            type = socktype_to_enum(type)
-            nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES, pid)
             ret.add(nt)
     return list(ret)
 
@@ -551,6 +538,14 @@ else:
     pid_exists = _psposix.pid_exists
 
 
+def is_zombie(pid):
+    try:
+        st = cext.proc_oneshot_info(pid)[kinfo_proc_map['status']]
+        return st == cext.SZOMB
+    except Exception:
+        return False
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -559,19 +554,19 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError as err:
+        except ProcessLookupError:
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
+        except OSError:
             if self.pid == 0:
                 if 0 in pids():
                     raise AccessDenied(self.pid, self._name)
                 else:
                     raise
-            if err.errno == errno.ESRCH:
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
 
@@ -581,18 +576,16 @@ def wrap_exceptions_procfs(inst):
     """Same as above, for routines relying on reading /proc fs."""
     try:
         yield
-    except EnvironmentError as err:
+    except (ProcessLookupError, FileNotFoundError):
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
-        if err.errno in (errno.ENOENT, errno.ESRCH):
-            if not pid_exists(inst.pid):
-                raise NoSuchProcess(inst.pid, inst._name)
-            else:
-                raise ZombieProcess(inst.pid, inst._name, inst._ppid)
-        if err.errno in (errno.EPERM, errno.EACCES):
-            raise AccessDenied(inst.pid, inst._name)
-        raise
+        if not pid_exists(inst.pid):
+            raise NoSuchProcess(inst.pid, inst._name)
+        else:
+            raise ZombieProcess(inst.pid, inst._name, inst._ppid)
+    except PermissionError:
+        raise AccessDenied(inst.pid, inst._name)
 
 
 class Process(object):
@@ -665,10 +658,14 @@ class Process(object):
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
-                    if not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name)
-                    else:
+                    if is_zombie(self.pid):
                         raise ZombieProcess(self.pid, self._name, self._ppid)
+                    elif not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name, self._ppid)
+                    else:
+                        # XXX: this happens with unicode tests. It means the C
+                        # routine is unable to decode invalid unicode chars.
+                        return []
                 else:
                     raise
         else:
@@ -769,25 +766,15 @@ class Process(object):
 
         if NETBSD:
             families, types = conn_tmap[kind]
-            ret = set()
+            ret = []
             rawlist = cext.net_connections(self.pid)
             for item in rawlist:
                 fd, fam, type, laddr, raddr, status, pid = item
                 assert pid == self.pid
                 if fam in families and type in types:
-                    try:
-                        status = TCP_STATUSES[status]
-                    except KeyError:
-                        status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
-                    if fam in (AF_INET, AF_INET6):
-                        if laddr:
-                            laddr = _common.addr(*laddr)
-                        if raddr:
-                            raddr = _common.addr(*raddr)
-                    fam = sockfam_to_enum(fam)
-                    type = socktype_to_enum(type)
-                    nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-                    ret.add(nt)
+                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                        TCP_STATUSES)
+                    ret.append(nt)
             self._assert_alive()
             return list(ret)
 
@@ -796,18 +783,13 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            if fam in (AF_INET, AF_INET6):
-                if laddr:
-                    laddr = _common.addr(*laddr)
-                if raddr:
-                    raddr = _common.addr(*raddr)
-            fam = sockfam_to_enum(fam)
-            type = socktype_to_enum(type)
-            status = TCP_STATUSES[status]
-            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                TCP_STATUSES)
             ret.append(nt)
+
         if OPENBSD:
             self._assert_alive()
+
         return ret
 
     @wrap_exceptions
@@ -844,10 +826,7 @@ class Process(object):
         # it into None
         if OPENBSD and self.pid == 0:
             return None  # ...else it would raise EINVAL
-        elif NETBSD:
-            with wrap_exceptions_procfs(self):
-                return os.readlink("/proc/%s/cwd" % self.pid)
-        elif HAS_PROC_OPEN_FILES:
+        elif NETBSD or HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
             return cext.proc_cwd(self.pid) or None

@@ -54,6 +54,11 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
     #include <sys/resource.h>
 #endif
 
+// Should exist starting from CentOS 6 (year 2011).
+#ifdef CPU_ALLOC
+    #define PSUTIL_HAVE_CPU_AFFINITY
+#endif
+
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
@@ -279,11 +284,8 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args) {
 
 /*
  * Return process CPU affinity as a Python list
- * The dual implementation exists because of:
- * https://github.com/giampaolo/psutil/issues/536
  */
-
-#ifdef CPU_ALLOC
+#ifdef PSUTIL_HAVE_CPU_AFFINITY
 
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
@@ -347,49 +349,7 @@ error:
     Py_XDECREF(py_list);
     return NULL;
 }
-#else
 
-
-/*
- * Alternative implementation in case CPU_ALLOC is not defined.
- */
-static PyObject *
-psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
-    cpu_set_t cpuset;
-    unsigned int len = sizeof(cpu_set_t);
-    long pid;
-    int i;
-    PyObject* py_retlist = NULL;
-    PyObject *py_cpu_num = NULL;
-
-    if (!PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-	CPU_ZERO(&cpuset);
-    if (sched_getaffinity(pid, len, &cpuset) < 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
-    py_retlist = PyList_New(0);
-    if (py_retlist == NULL)
-        goto error;
-    for (i = 0; i < CPU_SETSIZE; ++i) {
-        if (CPU_ISSET(i, &cpuset)) {
-            py_cpu_num = Py_BuildValue("i", i);
-            if (py_cpu_num == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_cpu_num))
-                goto error;
-            Py_DECREF(py_cpu_num);
-        }
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cpu_num);
-    Py_XDECREF(py_retlist);
-    return NULL;
-}
-#endif
 
 /*
  * Set process CPU affinity; expects a bitmask
@@ -432,7 +392,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         CPU_SET(value, &cpu_set);
     }
 
-
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -447,6 +406,7 @@ error:
         Py_DECREF(py_cpu_seq);
     return NULL;
 }
+#endif  /* PSUTIL_HAVE_CPU_AFFINITY */
 
 
 /*
@@ -583,16 +543,18 @@ static PyMethodDef
 PsutilMethods[] = {
     // --- per-process functions
 
-#if PSUTIL_HAVE_IOPRIO
+#ifdef PSUTIL_HAVE_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
      "Set process I/O priority"},
 #endif
+#ifdef PSUTIL_HAVE_CPU_AFFINITY
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity; expects a bitmask."},
+#endif
 
     // --- system related functions
 

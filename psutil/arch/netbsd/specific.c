@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/swap.h>  // for swap_mem
 #include <signal.h>
@@ -110,6 +109,44 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
+}
+
+PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    long pid;
+
+    char path[MAXPATHLEN];
+    size_t pathlen = sizeof path;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+#ifdef KERN_PROC_CWD
+    int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
+    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+#else
+    char *buf;
+    if (asprintf(&buf, "/proc/%d/cwd", (int)pid) < 0) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ssize_t len = readlink(buf, path, sizeof(path) - 1);
+    free(buf);
+    if (len == -1) {
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    path[len] = '\0';
+#endif
+
+    return PyUnicode_DecodeFSDefault(path);
 }
 
 
@@ -313,40 +350,35 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 char *
 psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     int mib[4];
-    ssize_t st;
-    size_t argmax;
-    size_t size;
-    char *procargs = NULL;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    size = sizeof(argmax);
-    st = sysctl(mib, 2, &argmax, &size, NULL, 0);
-    if (st == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
+    int st;
+    size_t len;
+    char *procargs;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
+    len = 0;
 
-    st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
+    st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
+    if (st == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    procargs = (char *)malloc(len);
+    if (procargs == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    st = sysctl(mib, __arraycount(mib), procargs, &len, NULL, 0);
     if (st == -1) {
         free(procargs);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
-    *argsize = argmax;
+    *argsize = len;
     return procargs;
 }
 

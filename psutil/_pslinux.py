@@ -41,6 +41,9 @@ from ._common import supports_ipv6
 from ._common import usage_percent
 from ._compat import b
 from ._compat import basestring
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3
 
 if sys.version_info >= (3, 4):
@@ -70,6 +73,7 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -200,6 +204,10 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'read_chars', 'write_chars'])
+# psutil.Process.cpu_times()
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system',
+                        'iowait'])
 
 
 # =====================================================================
@@ -772,17 +780,16 @@ class Connections:
         for fd in os.listdir("%s/%s/fd" % (self._procfs_path, pid)):
             try:
                 inode = readlink("%s/%s/fd/%s" % (self._procfs_path, pid, fd))
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime;
                 # os.stat('/proc/%s' % self.pid) will be done later
                 # to force NSP (if it's the case)
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    continue
-                elif err.errno == errno.EINVAL:
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
                     # not a link
                     continue
-                else:
-                    raise
+                raise
             else:
                 if inode.startswith('socket:['):
                     # the process is using a socket
@@ -795,7 +802,7 @@ class Connections:
         for pid in pids():
             try:
                 inodes.update(self.get_proc_inodes(pid))
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
                 # os.listdir() is gonna raise a lot of access denied
                 # exceptions in case of unprivileged user; that's fine
                 # as we'll just end up returning a connection with PID
@@ -803,9 +810,7 @@ class Connections:
                 # Both netstat -an and lsof does the same so it's
                 # unlikely we can do any better.
                 # ENOENT just means a PID disappeared on us.
-                if err.errno not in (
-                        errno.ENOENT, errno.ESRCH, errno.EPERM, errno.EACCES):
-                    raise
+                continue
         return inodes
 
     @staticmethod
@@ -933,7 +938,7 @@ class Connections:
                             path = tokens[-1]
                         else:
                             path = ""
-                        type_ = int(type_)
+                        type_ = _common.socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/
@@ -1490,11 +1495,10 @@ def ppid_map():
         try:
             with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
                 data = f.read()
-        except EnvironmentError as err:
+        except (FileNotFoundError, ProcessLookupError):
             # Note: we should be able to access /stat for all processes
             # aka it's unlikely we'll bump into EPERM, which is good.
-            if err.errno not in (errno.ENOENT, errno.ESRCH):
-                raise
+            pass
         else:
             rpar = data.rfind(b')')
             dset = data[rpar + 2:].split()
@@ -1511,16 +1515,12 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            # ESRCH (no such process) can be raised on read() if
-            # process is gone in the meantime.
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
-            # ENOENT (no such file or directory) can be raised on open().
-            if err.errno == errno.ENOENT and not os.path.exists("%s/%s" % (
-                    self._procfs_path, self.pid)):
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
+        except ProcessLookupError:
+            raise NoSuchProcess(self.pid, self._name)
+        except FileNotFoundError:
+            if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)
             # Note: zombies will keep existing under /proc until they're
             # gone so there's no way to distinguish them in here.
@@ -1576,6 +1576,7 @@ class Process(object):
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
         ret['cpu_num'] = fields[36]
+        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
 
         return ret
 
@@ -1617,21 +1618,19 @@ class Process(object):
     def exe(self):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
-        except OSError as err:
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                # no such file error; might be raised also if the
-                # path actually exists for system processes with
-                # low pids (about 0-20)
-                if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
-                    return ""
+        except (FileNotFoundError, ProcessLookupError):
+            # no such file error; might be raised also if the
+            # path actually exists for system processes with
+            # low pids (about 0-20)
+            if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
+                return ""
+            else:
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
                 else:
-                    if not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name)
-                    else:
-                        raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
 
     @wrap_exceptions
     def cmdline(self):
@@ -1650,7 +1649,7 @@ class Process(object):
         sep = '\x00' if data.endswith('\x00') else ' '
         if data.endswith(sep):
             data = data[:-1]
-        return [x for x in data.split(sep)]
+        return data.split(sep)
 
     @wrap_exceptions
     def environ(self):
@@ -1707,7 +1706,8 @@ class Process(object):
         stime = float(values['stime']) / CLOCK_TICKS
         children_utime = float(values['children_utime']) / CLOCK_TICKS
         children_stime = float(values['children_stime']) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime, children_utime, children_stime)
+        iowait = float(values['blkio_ticks']) / CLOCK_TICKS
+        return pcputimes(utime, stime, children_utime, children_stime, iowait)
 
     @wrap_exceptions
     def cpu_num(self):
@@ -1856,14 +1856,12 @@ class Process(object):
     def cwd(self):
         try:
             return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
-        except OSError as err:
+        except (FileNotFoundError, ProcessLookupError):
             # https://github.com/giampaolo/psutil/issues/986
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            raise
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
 
     @wrap_exceptions
     def num_ctx_switches(self,
@@ -1899,13 +1897,11 @@ class Process(object):
             try:
                 with open_binary(fname) as f:
                     st = f.read().strip()
-            except IOError as err:
-                if err.errno == errno.ENOENT:
-                    # no such file or directory; it means thread
-                    # disappeared on us
-                    hit_enoent = True
-                    continue
-                raise
+            except FileNotFoundError:
+                # no such file or directory; it means thread
+                # disappeared on us
+                hit_enoent = True
+                continue
             # ignore the first two values ("pid (exe)")
             st = st[st.find(b')') + 2:]
             values = st.split(b' ')
@@ -1930,38 +1926,41 @@ class Process(object):
     def nice_set(self, value):
         return cext_posix.setpriority(self.pid, value)
 
-    @wrap_exceptions
-    def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self.pid)
+    # starting from CentOS 6.
+    if HAS_CPU_AFFINITY:
 
-    def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
-        # See: https://github.com/giampaolo/psutil/issues/956
-        data = self._read_status_file()
-        match = _re.findall(data)
-        if match:
-            return list(range(int(match[0][0]), int(match[0][1]) + 1))
-        else:
-            return list(range(len(per_cpu_times())))
+        @wrap_exceptions
+        def cpu_affinity_get(self):
+            return cext.proc_cpu_affinity_get(self.pid)
 
-    @wrap_exceptions
-    def cpu_affinity_set(self, cpus):
-        try:
-            cext.proc_cpu_affinity_set(self.pid, cpus)
-        except (OSError, ValueError) as err:
-            if isinstance(err, ValueError) or err.errno == errno.EINVAL:
-                eligible_cpus = self._get_eligible_cpus()
-                all_cpus = tuple(range(len(per_cpu_times())))
-                for cpu in cpus:
-                    if cpu not in all_cpus:
-                        raise ValueError(
-                            "invalid CPU number %r; choose between %s" % (
-                                cpu, eligible_cpus))
-                    if cpu not in eligible_cpus:
-                        raise ValueError(
-                            "CPU number %r is not eligible; choose "
-                            "between %s" % (cpu, eligible_cpus))
-            raise
+        def _get_eligible_cpus(
+                self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
+            # See: https://github.com/giampaolo/psutil/issues/956
+            data = self._read_status_file()
+            match = _re.findall(data)
+            if match:
+                return list(range(int(match[0][0]), int(match[0][1]) + 1))
+            else:
+                return list(range(len(per_cpu_times())))
+
+        @wrap_exceptions
+        def cpu_affinity_set(self, cpus):
+            try:
+                cext.proc_cpu_affinity_set(self.pid, cpus)
+            except (OSError, ValueError) as err:
+                if isinstance(err, ValueError) or err.errno == errno.EINVAL:
+                    eligible_cpus = self._get_eligible_cpus()
+                    all_cpus = tuple(range(len(per_cpu_times())))
+                    for cpu in cpus:
+                        if cpu not in all_cpus:
+                            raise ValueError(
+                                "invalid CPU number %r; choose between %s" % (
+                                    cpu, eligible_cpus))
+                        if cpu not in eligible_cpus:
+                            raise ValueError(
+                                "CPU number %r is not eligible; choose "
+                                "between %s" % (cpu, eligible_cpus))
+                raise
 
     # only starting from kernel 2.6.13
     if HAS_PROC_IO_PRIORITY:
@@ -2029,16 +2028,15 @@ class Process(object):
             file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
             try:
                 path = readlink(file)
-            except OSError as err:
+            except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    hit_enoent = True
-                    continue
-                elif err.errno == errno.EINVAL:
+                hit_enoent = True
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
                     # not a link
                     continue
-                else:
-                    raise
+                raise
             else:
                 # If path is not an absolute there's no way to tell
                 # whether it's a regular file or not, so we skip it.
@@ -2052,13 +2050,10 @@ class Process(object):
                         with open_binary(file) as f:
                             pos = int(f.readline().split()[1])
                             flags = int(f.readline().split()[1], 8)
-                    except IOError as err:
-                        if err.errno == errno.ENOENT:
-                            # fd gone in the meantime; process may
-                            # still be alive
-                            hit_enoent = True
-                        else:
-                            raise
+                    except FileNotFoundError:
+                        # fd gone in the meantime; process may
+                        # still be alive
+                        hit_enoent = True
                     else:
                         mode = file_flags_to_mode(flags)
                         ntuple = popenfile(

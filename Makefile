@@ -14,7 +14,8 @@ DEPS = \
 	futures \
 	ipaddress \
 	mock==1.0.1 \
-	perf \
+	pyperf \
+	readline \
 	requests \
 	setuptools \
 	sphinx \
@@ -54,8 +55,7 @@ clean:  ## Remove all build files.
 		build/ \
 		dist/ \
 		docs/_build/ \
-		htmlcov/ \
-		tmp/
+		htmlcov/
 
 _:
 
@@ -67,13 +67,11 @@ build: _  ## Compile without installing.
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i
-	rm -rf tmp
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
-	rm -rf tmp
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil || true
@@ -101,8 +99,8 @@ install-pip:  ## Install pip (no-op if already installed).
 setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade $(DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org pip
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(DEPS)
 
 # ===================================================================
 # Tests
@@ -172,6 +170,9 @@ test-coverage:  ## Run test coverage.
 
 flake8:  ## flake8 linter.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
+
+fix-flake8:  ## Attempt to automaticall fix some flake8 issues.
+	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
 
 # ===================================================================
 # GIT

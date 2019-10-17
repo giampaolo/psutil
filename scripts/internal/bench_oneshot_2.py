@@ -11,7 +11,7 @@ supposed to be more precise.
 
 import sys
 
-import perf  # requires "pip install perf"
+import pyperf  # requires "pip install pyperf"
 
 import psutil
 from bench_oneshot import names
@@ -37,7 +37,7 @@ def add_cmdline_args(cmd, args):
 
 
 def main():
-    runner = perf.Runner()
+    runner = pyperf.Runner()
 
     args = runner.parse_args()
     if not args.worker:

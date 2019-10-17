@@ -6,7 +6,6 @@
 
 """AIX platform implementation."""
 
-import errno
 import functools
 import glob
 import os
@@ -14,21 +13,21 @@ import re
 import subprocess
 import sys
 from collections import namedtuple
-from socket import AF_INET
 
 from . import _common
 from . import _psposix
 from . import _psutil_aix as cext
 from . import _psutil_posix as cext_posix
-from ._common import AF_INET6
+from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3
 
 
@@ -220,27 +219,17 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
-    ret = set()
+    ret = []
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
         if fam not in families:
             continue
         if type_ not in types:
             continue
-        status = TCP_STATUSES[status]
-        if fam in (AF_INET, AF_INET6):
-            if laddr:
-                laddr = _common.addr(*laddr)
-            if raddr:
-                raddr = _common.addr(*raddr)
-        fam = sockfam_to_enum(fam)
-        type_ = socktype_to_enum(type_)
-        if _pid == -1:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
-        else:
-            nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        ret.add(nt)
-    return list(ret)
+        nt = conn_to_ntuple(fd, fam, type_, laddr, raddr, status,
+                            TCP_STATUSES, pid=pid if _pid == -1 else None)
+        ret.append(nt)
+    return ret
 
 
 def net_if_stats():
@@ -327,22 +316,16 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
-            # support for private module import
-            if (NoSuchProcess is None or AccessDenied is None or
-                    ZombieProcess is None):
-                raise
+        except (FileNotFoundError, ProcessLookupError):
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
     return wrapper
 
 
@@ -501,11 +484,9 @@ class Process(object):
         try:
             result = os.readlink("%s/%s/cwd" % (procfs_path, self.pid))
             return result.rstrip('/')
-        except OSError as err:
-            if err.errno == errno.ENOENT:
-                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
-                return None
-            raise
+        except FileNotFoundError:
+            os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
+            return None
 
     @wrap_exceptions
     def memory_info(self):

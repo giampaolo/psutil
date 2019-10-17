@@ -1,9 +1,36 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.6.3
+5.6.4
 =====
 
 XXXX-XX-XX
+
+**Enhancements**
+
+- 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
+  spent waiting for blocking I/O to complete.
+
+**Bug fixes**
+
+- 1126_: [Linux] cpu_affinity() segfaults on CentOS 5 / manylinux.
+  cpu_affinity() support for CentOS 5 was removed.
+- 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
+  (patch by Arnon Yaari)
+- 1535_: 'type' and 'family' fields returned by net_connections() are not
+  always turned into enums.
+- 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
+  cmdline has non encodable chars.
+- 1546_: usage percent may be rounded to 0 on Python 2.
+- 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
+  incorrect.
+- 1570_: [Windows] NtWow64* syscalls fail to raise the proper error code
+- 1585_: [OSX] calling close() (in C) on possible negative integers.  (patch
+  by Athos Ribeiro)
+
+5.6.3
+=====
+
+2019-06-11
 
 **Enhancements**
 
@@ -15,6 +42,8 @@ XXXX-XX-XX
 - 1501_: [Windows] Process cmdline() and exe() raise unhandled "WinError 1168
   element not found" exceptions for "Registry" and "Memory Compression" psuedo
   processes on Windows 10.
+- 1526_: [NetBSD] process cmdline() could raise MemoryError.  (patch by
+  Kamil Rytarowski)
 
 5.6.2
 =====

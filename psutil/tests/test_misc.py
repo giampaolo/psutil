@@ -20,6 +20,7 @@ import socket
 import stat
 
 from psutil import LINUX
+from psutil import NETBSD
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import memoize
@@ -179,7 +180,8 @@ class TestMisc(unittest.TestCase):
         for name in dir_psutil:
             if name in ('callable', 'error', 'namedtuple', 'tests',
                         'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
-                        'TOTAL_PHYMEM'):
+                        'TOTAL_PHYMEM', 'PermissionError',
+                        'ProcessLookupError'):
                 continue
             if not name.startswith('_'):
                 try:
@@ -765,11 +767,15 @@ class TestScripts(unittest.TestCase):
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
+        if not psutil.sensors_temperatures():
+            self.skipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
+        if not psutil.sensors_fans():
+            self.skipTest("no fans")
         self.assert_stdout('fans.py')
 
     @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
@@ -1011,6 +1017,7 @@ class TestNetUtils(unittest.TestCase):
                 self.assertNotEqual(client.getsockname(), addr)
 
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(NETBSD, "/var/run/log UNIX socket opened by default")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()

@@ -1,46 +1,66 @@
-.. image:: https://pepy.tech/badge/psutil/month
+|  |downloads| |stars| |forks| |contributors| |coverage| |quality|
+|  |version| |py-versions| |packages| |license|
+|  |travis| |appveyor| |doc| |twitter| |tidelift|
+
+.. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
-.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/stargazers
     :alt: Github stars
 
-.. image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/network/members
     :alt: Github forks
 
-.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+.. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
 
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
+.. |quality| image:: https://img.shields.io/codacy/grade/ce63e7f7f69d44b5b59682196e6fbfca.svg
+    :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
+    :alt: Code quality
+
+.. |travis| image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=linux%20/%20osx
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
 
-.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-.. image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
+.. |coverage| image:: https://img.shields.io/coveralls/github/giampaolo/psutil.svg?label=test%20coverage
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-.. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
+.. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
     :target: http://psutil.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
+.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.org/project/psutil
     :alt: Latest version
 
-.. image:: https://img.shields.io/pypi/pyversions/psutil.svg
+.. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
     :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
 
-.. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.org/project/psutil
+.. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
+    :target: https://repology.org/metapackage/python:psutil/versions
+    :alt: Binary packages
+
+.. |license| image:: https://img.shields.io/pypi/l/psutil.svg
+    :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
+
+.. |twitter| image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=flat&logo=twitter&logoColor=4FADFF
+    :target: https://twitter.com/grodola
+    :alt: Twitter Follow
+
+.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
+    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+    :alt: Tidelift
 
 -----
 
@@ -57,7 +77,6 @@ Quick links
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
-
 Summary
 =======
 
@@ -66,9 +85,8 @@ retrieving information on **running processes** and **system utilization**
 (CPU, memory, disks, network, sensors) in Python.
 It is useful mainly for **system monitoring**, **profiling and limiting process
 resources** and **management of running processes**.
-It implements many functionalities offered by UNIX command line tools such as:
-ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
-iotop, uptime, pidof, tty, taskset, pmap.
+It implements many functionalities offered by classic UNIX command line tools
+such as *ps, top, iotop, lsof, netstat, ifconfig, free* and others.
 psutil currently supports the following platforms:
 
 - **Linux**
@@ -80,24 +98,28 @@ psutil currently supports the following platforms:
 
 ...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy <http://pypy.org/>`__ is also known to work.
 
+Professional support
+====================
 
-Author
-======
+.. |tideliftlogo| image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
+   :width: 100
+   :alt: Tidelift
+   :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
-psutil was created and is maintained by
-`Giampaolo Rodola <http://grodola.blogspot.com/p/about.html>`__ and it
-received many useful `contributions <https://github.com/giampaolo/psutil/blob/master/CREDITS>`__
-over the years.
-A lot of time and effort went into making psutil as it is right now.
-If you feel psutil is useful to you or your business and want to support its
-future development consider making a small donation:
+.. list-table::
+   :widths: 10 100
 
-.. image:: http://www.paypal.com/en_US/i/btn/x-click-but04.gif
-    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-    :alt: Donate via PayPal
+   * - |tideliftlogo|
+     - Professional support for psutil is available as part of the
+       `Tidelift Subscription`_.
+       Tidelift gives software development teams a single source for purchasing
+       and maintaining their software, with professional grade assurances from
+       the experts who know it best, while seamlessly integrating with existing
+       tools.
+       By subscribing you will help me (`Giampaolo Rodola`_) support psutil
+       future development. Alternatively consider making a small `donation`_.
 
-Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <https://www.linkedin.com/in/grodola>`_.
-
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
 Example applications
 ====================
@@ -118,7 +140,7 @@ Projects using psutil
 
 psutil has roughly the following monthly downloads:
 
-.. image:: https://pepy.tech/badge/psutil/month
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
@@ -337,7 +359,7 @@ Process management
     pgids(real=1000, effective=1000, saved=1000)
     >>>
     >>> p.cpu_times()
-    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1)
+    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1, iowait=0.0)
     >>> p.cpu_percent(interval=1.0)
     12.1
     >>> p.cpu_affinity()
@@ -363,8 +385,8 @@ Process management
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
     >>>
     >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
-     popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
+    [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
+     popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
     >>> p.connections()
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
@@ -406,6 +428,7 @@ Process management
     >>> p.resume()
     >>>
     >>> p.terminate()
+    >>> p.kill()
     >>> p.wait(timeout=3)
     0
     >>>
@@ -481,3 +504,7 @@ Windows services
      'start_type': 'manual',
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
+
+
+.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8

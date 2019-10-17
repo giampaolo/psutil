@@ -21,6 +21,7 @@ import warnings
 
 import psutil
 from psutil import WINDOWS
+from psutil._compat import FileNotFoundError
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
@@ -161,12 +162,9 @@ class TestSystemAPIs(unittest.TestCase):
                         break
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
-                    except OSError as err:
-                        if err.errno == errno.ENOENT:
-                            # usually this is the floppy
-                            break
-                        else:
-                            raise
+                    except FileNotFoundError:
+                        # usually this is the floppy
+                        break
                     self.assertEqual(usage.total, int(wmi_part.Size))
                     wmi_free = int(wmi_part.FreeSpace)
                     self.assertEqual(usage.free, wmi_free)

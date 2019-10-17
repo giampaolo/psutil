@@ -25,6 +25,9 @@ from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import b
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
 from ._compat import PY3
 
 
@@ -262,6 +265,7 @@ def net_connections(kind, _pid=-1):
             continue
         if type_ not in types:
             continue
+        # TODO: refactor and use _common.conn_to_ntuple.
         if fam in (AF_INET, AF_INET6):
             if laddr:
                 laddr = _common.addr(*laddr)
@@ -341,22 +345,22 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
+        except (FileNotFoundError, ProcessLookupError):
+            # ENOENT (no such file or directory) gets raised on open().
+            # ESRCH (no such process) can get raised on read() if
+            # process is gone in meantime.
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+        except PermissionError:
+            raise AccessDenied(self.pid, self._name)
+        except OSError:
             if self.pid == 0:
                 if 0 in pids():
                     raise AccessDenied(self.pid, self._name)
                 else:
                     raise
-            # ENOENT (no such file or directory) gets raised on open().
-            # ESRCH (no such process) can get raised on read() if
-            # process is gone in meantime.
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
 
@@ -514,11 +518,9 @@ class Process(object):
                 try:
                     return os.readlink(
                         '%s/%d/path/%d' % (procfs_path, self.pid, x))
-                except OSError as err:
-                    if err.errno == errno.ENOENT:
-                        hit_enoent = True
-                        continue
-                    raise
+                except FileNotFoundError:
+                    hit_enoent = True
+                    continue
         if hit_enoent:
             self._assert_alive()
 
@@ -531,11 +533,9 @@ class Process(object):
         procfs_path = self._procfs_path
         try:
             return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
-        except OSError as err:
-            if err.errno == errno.ENOENT:
-                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
-                return None
-            raise
+        except FileNotFoundError:
+            os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
+            return None
 
     @wrap_exceptions
     def memory_info(self):
@@ -596,12 +596,9 @@ class Process(object):
             if os.path.islink(path):
                 try:
                     file = os.readlink(path)
-                except OSError as err:
-                    # ENOENT == file which is gone in the meantime
-                    if err.errno == errno.ENOENT:
-                        hit_enoent = True
-                        continue
-                    raise
+                except FileNotFoundError:
+                    hit_enoent = True
+                    continue
                 else:
                     if isfile_strict(file):
                         retlist.append(_common.popenfile(file, int(fd)))

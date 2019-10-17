@@ -32,15 +32,18 @@ import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
-from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
 import psutil
+from psutil import AIX
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
+from psutil._compat import ChildProcessError
+from psutil._compat import FileExistsError
+from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil._compat import unicode
@@ -91,7 +94,7 @@ __all__ = [
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
-    'check_connection_ntuple', 'check_net_address',
+    'check_net_address',
     'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
     'tcp_socketpair', 'unix_socketpair', 'create_sockets',
     # compat
@@ -175,6 +178,7 @@ except Exception:
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
+SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 # --- misc
 
@@ -212,7 +216,6 @@ DEVNULL = open(os.devnull, 'r+')
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 AF_UNIX = getattr(socket, "AF_UNIX", object())
-SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 _subprocesses_started = set()
 _pids_started = set()
@@ -403,7 +406,7 @@ def create_zombie_proc():
     with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
         sock.settimeout(GLOBAL_TIMEOUT)
         sock.bind(unix_file)
-        sock.listen(1)
+        sock.listen(5)
         pyrun(src)
         conn, _ = sock.accept()
         try:
@@ -514,9 +517,8 @@ def reap_children(recursive=False):
             # Wait for the process to terminate, to avoid zombies.
             try:
                 subp.wait()
-            except OSError as err:
-                if err.errno != errno.ECHILD:
-                    raise
+            except ChildProcessError:
+                pass
 
     # Terminate started pids.
     while _pids_started:
@@ -710,13 +712,12 @@ def safe_rmpath(path):
         while time.time() < stop_at:
             try:
                 return fun()
+            except FileNotFoundError:
+                pass
             except WindowsError as _:
                 err = _
-                if err.errno != errno.ENOENT:
-                    raise
-                else:
-                    warn("ignoring %s" % (str(err)))
-                    time.sleep(0.01)
+                warn("ignoring %s" % (str(err)))
+            time.sleep(0.01)
         raise err
 
     try:
@@ -729,18 +730,16 @@ def safe_rmpath(path):
             fun()
         else:
             retry_fun(fun)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
 
 
 def safe_mkdir(dir):
     "Convenience function for creating a directory"
     try:
         os.mkdir(dir)
-    except OSError as err:
-        if err.errno != errno.EEXIST:
-            raise
+    except FileExistsError:
+        pass
 
 
 @contextlib.contextmanager
@@ -868,7 +867,6 @@ def skip_on_not_implemented(only_if=None):
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port."""
     with contextlib.closing(socket.socket()) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, 0))
         return sock.getsockname()[1]
 
@@ -895,10 +893,11 @@ def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
         addr = ("", 0)
     sock = socket.socket(family, type)
     try:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if os.name not in ('nt', 'cygwin'):
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(addr)
         if type == socket.SOCK_STREAM:
-            sock.listen(10)
+            sock.listen(5)
         return sock
     except Exception:
         sock.close()
@@ -913,7 +912,7 @@ def bind_unix_socket(name, type=socket.SOCK_STREAM):
     try:
         sock.bind(name)
         if type == socket.SOCK_STREAM:
-            sock.listen(10)
+            sock.listen(5)
     except Exception:
         sock.close()
         raise
@@ -926,7 +925,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """
     with contextlib.closing(socket.socket(family, SOCK_STREAM)) as ll:
         ll.bind(addr)
-        ll.listen(10)
+        ll.listen(5)
         addr = ll.getsockname()
         c = socket.socket(family, SOCK_STREAM)
         try:
@@ -1020,77 +1019,6 @@ def check_net_address(addr, family):
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
-
-
-def check_connection_ntuple(conn):
-    """Check validity of a connection namedtuple."""
-    # check ntuple
-    assert len(conn) in (6, 7), conn
-    has_pid = len(conn) == 7
-    has_fd = getattr(conn, 'fd', -1) != -1
-    assert conn[0] == conn.fd
-    assert conn[1] == conn.family
-    assert conn[2] == conn.type
-    assert conn[3] == conn.laddr
-    assert conn[4] == conn.raddr
-    assert conn[5] == conn.status
-    if has_pid:
-        assert conn[6] == conn.pid
-
-    # check fd
-    if has_fd:
-        assert conn.fd >= 0, conn
-        if hasattr(socket, 'fromfd') and not WINDOWS:
-            try:
-                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-            except (socket.error, OSError) as err:
-                if err.args[0] != errno.EBADF:
-                    raise
-            else:
-                with contextlib.closing(dupsock):
-                    assert dupsock.family == conn.family
-                    assert dupsock.type == conn.type
-
-    # check family
-    assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
-    if conn.family in (AF_INET, AF_INET6):
-        # actually try to bind the local socket; ignore IPv6
-        # sockets as their address might be represented as
-        # an IPv4-mapped-address (e.g. "::127.0.0.1")
-        # and that's rejected by bind()
-        if conn.family == AF_INET:
-            s = socket.socket(conn.family, conn.type)
-            with contextlib.closing(s):
-                try:
-                    s.bind((conn.laddr[0], 0))
-                except socket.error as err:
-                    if err.errno != errno.EADDRNOTAVAIL:
-                        raise
-    elif conn.family == AF_UNIX:
-        assert conn.status == psutil.CONN_NONE, conn.status
-
-    # check type (SOCK_SEQPACKET may happen in case of AF_UNIX socks)
-    assert conn.type in (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET), \
-        repr(conn.type)
-    if conn.type == SOCK_DGRAM:
-        assert conn.status == psutil.CONN_NONE, conn.status
-
-    # check laddr (IP address and port sanity)
-    for addr in (conn.laddr, conn.raddr):
-        if conn.family in (AF_INET, AF_INET6):
-            assert isinstance(addr, tuple), addr
-            if not addr:
-                continue
-            assert isinstance(addr.port, int), addr.port
-            assert 0 <= addr.port <= 65535, addr.port
-            check_net_address(addr.ip, conn.family)
-        elif conn.family == AF_UNIX:
-            assert isinstance(addr, str), addr
-
-    # check status
-    assert isinstance(conn.status, str), conn
-    valids = [getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')]
-    assert conn.status in valids, conn
 
 
 # ===================================================================

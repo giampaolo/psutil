@@ -33,14 +33,13 @@ except ImportError as err:
         raise
 
 from ._common import conn_tmap
+from ._common import conn_to_ntuple
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
-from ._common import sockfam_to_enum
-from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import long
 from ._compat import lru_cache
@@ -388,17 +387,8 @@ def net_connections(kind, _pid=-1):
     ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        if laddr:
-            laddr = _common.addr(*laddr)
-        if raddr:
-            raddr = _common.addr(*raddr)
-        status = TCP_STATUSES[status]
-        fam = sockfam_to_enum(fam)
-        type = socktype_to_enum(type)
-        if _pid == -1:
-            nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
-        else:
-            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+        nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status, TCP_STATUSES,
+                            pid=pid if _pid == -1 else None)
         ret.add(nt)
     return list(ret)
 

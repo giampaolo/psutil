@@ -24,6 +24,7 @@ import psutil
 
 from psutil import AIX
 from psutil import BSD
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -251,6 +252,8 @@ class TestProcess(unittest.TestCase):
         assert (times.user > 0.0) or (times.system > 0.0), times
         assert (times.children_user >= 0.0), times
         assert (times.children_system >= 0.0), times
+        if LINUX:
+            assert times.iowait >= 0.0, times
         # make sure returned values can be pretty printed with strftime
         for name in times._fields:
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
@@ -937,6 +940,8 @@ class TestProcess(unittest.TestCase):
         self.addCleanup(p.cpu_affinity, initial)
 
         # All possible CPU set combinations.
+        if len(initial) > 12:
+            initial = initial[:12]  # ...otherwise it will take forever
         combos = []
         for l in range(0, len(initial) + 1):
             for subset in itertools.combinations(initial, l):
@@ -1084,7 +1089,8 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p1.parents()[0], psutil.Process())
         self.assertEqual(p2.parents()[0], p1)
         self.assertEqual(p2.parents()[1], psutil.Process())
-        if POSIX:
+        if POSIX and not FREEBSD:
+            # On FreeBSD PID 1 has an older/smaller time than PID 0 (?)
             lowest_pid = psutil.pids()[0]
             self.assertEqual(p1.parents()[-1].pid, lowest_pid)
             self.assertEqual(p2.parents()[-1].pid, lowest_pid)
