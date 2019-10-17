@@ -1900,9 +1900,9 @@ static PyMethodDef mod_methods[] = {
         INITERR;
     }
 
-    if (module == NULL)
+    if (mod == NULL)
         INITERR;
 #if PY_MAJOR_VERSION >= 3
-    return module;
+    return mod;
 #endif
 }
