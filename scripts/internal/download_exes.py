@@ -26,7 +26,7 @@ from scriptutils import printerr, exit
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.5', '3.6', '3.7']
+PY_VERSIONS = ['2.7', '3.6', '3.7', '3.8']
 TIMEOUT = 30
 COLORS = True
 
