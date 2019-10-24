@@ -1299,13 +1299,15 @@ Process class
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on::
 
-      import psutil
-      p = psutil.Process()
-      if psutil.LINUX
-          p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
-      else:  # Windows
-          p.ionice(psutil.IOPRIO_HIGH)
-      p.ionice()  # get
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> if psutil.LINUX:
+      ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+      ... else:
+      ...     p.ionice(psutil.IOPRIO_HIGH)
+      ...
+      >>> p.ionice()  # get
+      pionice(ioclass=<IOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
     Availability: Linux, Windows Vista+
 
