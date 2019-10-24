@@ -3510,9 +3510,10 @@ PsutilMethods[] = {
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return CPU frequency."},
 #if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    {"init_loadavg_counter", psutil_init_loadavg_counter, METH_VARARGS,
+    {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter,
+     METH_VARARGS,
      "Initializes the emulated load average calculator."},
-    {"getloadavg", psutil_get_loadavg, METH_VARARGS,
+    {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS,
      "Returns the emulated POSIX-like load average."},
 #endif
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
