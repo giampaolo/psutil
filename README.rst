@@ -121,6 +121,12 @@ Professional support
 
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
+Security
+========
+
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
+
 Example applications
 ====================
 
@@ -508,3 +514,4 @@ Windows services
 
 .. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+.. _Tidelift security contact: https://tidelift.com/security
