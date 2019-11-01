@@ -512,19 +512,17 @@ psutil_get_process_data(long pid,
 
         // read PEB
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
-            goto error;
+            goto read_process_memory_error;
         }
 
         // read process parameters
         if (!ReadProcessMemory(hProcess,
-                              UlongToPtr(peb32.ProcessParameters),
-                              &procParameters32,
-                              sizeof(procParameters32),
-                              NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "ReadProcessMemory(ProcessParameters)");
-            goto error;
+                               UlongToPtr(peb32.ProcessParameters),
+                               &procParameters32,
+                               sizeof(procParameters32),
+                               NULL))
+        {
+            goto read_process_memory_error;
         }
 
         switch (kind) {
@@ -657,9 +655,9 @@ psutil_get_process_data(long pid,
                                pbi.PebBaseAddress,
                                &peb,
                                sizeof(peb),
-                               NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
-            goto error;
+                               NULL))
+        {
+            goto read_process_memory_error;
         }
 
         // read process parameters
@@ -667,10 +665,9 @@ psutil_get_process_data(long pid,
                                peb.ProcessParameters,
                                &procParameters,
                                sizeof(procParameters),
-                               NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "ReadProcessMemory(ProcessParameters)");
-            goto error;
+                               NULL))
+        {
+            goto read_process_memory_error;
         }
 
         switch (kind) {
@@ -721,8 +718,7 @@ psutil_get_process_data(long pid,
     } else
 #endif
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
-        PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
-        goto error;
+        goto read_process_memory_error;
     }
 
     CloseHandle(hProcess);
@@ -731,6 +727,18 @@ psutil_get_process_data(long pid,
     *psize = size;
 
     return 0;
+
+read_process_memory_error:
+    // see: https://github.com/giampaolo/psutil/issues/875
+    if (GetLastError() == ERROR_PARTIAL_COPY) {
+        psutil_debug("ReadProcessMemory() failed with ERROR_PARTIAL_COPY; "
+                     "converting to EACCES");
+        AccessDenied("ReadProcessMemory() failed with ERROR_PARTIAL_COPY");
+    }
+    else {
+        PyErr_SetFromWindowsErr(0);
+    }
+    goto error;
 
 error:
     if (hProcess != NULL)

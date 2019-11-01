@@ -807,7 +807,7 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("");
+            AccessDenied("originated from NtQueryVirtualMemory");
         }
         else if (psutil_pid_is_running(pid) == 0) {
             NoSuchProcess("");
