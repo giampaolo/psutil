@@ -2455,7 +2455,7 @@ resources.
       if alive:
           # send SIGKILL
           for p in alive:
-              print("process {} survived SIGTERM; trying SIGKILL" % p)
+              print("process {} survived SIGTERM; trying SIGKILL".format(p))
               try:
                   p.kill()
               except psutil.NoSuchProcess:
@@ -2464,7 +2464,7 @@ resources.
           if alive:
               # give up
               for p in alive:
-                  print("process {} survived SIGKILL; giving up" % p)
+                  print("process {} survived SIGKILL; giving up".format(p))
 
 Filtering and sorting processes
 -------------------------------

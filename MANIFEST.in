@@ -135,3 +135,4 @@ include scripts/who.py
 include scripts/winservices.py
 include setup.py
 include tox.ini
+include pyproject.toml
