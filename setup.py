@@ -209,6 +209,9 @@ elif LINUX:
         output_dir = tempfile.mkdtemp()
         try:
             compiler = UnixCCompiler()
+            # https://github.com/giampaolo/psutil/pull/1568
+            if os.getenv('CC'):
+                compiler.set_executable('compiler_so', os.getenv('CC'))
             with silenced_output('stderr'):
                 with silenced_output('stdout'):
                     compiler.compile([f.name], output_dir=output_dir)
