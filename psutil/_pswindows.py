@@ -80,6 +80,7 @@ __extra__all__ = [
 CONN_DELETE_TCB = "DELETE_TCB"
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
 HAS_GETLOADAVG = hasattr(cext, "getloadavg")
+ERROR_PARTIAL_COPY = 299
 
 
 if enum is None:
@@ -709,6 +710,32 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def retry_error_partial_copy(fun):
+    """Workaround for https://github.com/giampaolo/psutil/issues/875.
+    See: https://stackoverflow.com/questions/4457745#4457745
+    """
+    @functools.wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        delay = 0.0001
+        times = 33
+        for x in range(times):  # retries for roughly 1 second
+            try:
+                return fun(self, *args, **kwargs)
+            except WindowsError as _:
+                err = _
+                if err.winerror == ERROR_PARTIAL_COPY:
+                    time.sleep(delay)
+                    delay = min(delay * 2, 0.04)
+                    continue
+                else:
+                    raise
+        else:
+            msg = "%s retried %s times, converted to AccessDenied as it's " \
+                "still returning %r" % (fun, times, err)
+            raise AccessDenied(pid=self.pid, name=self._name, msg=msg)
+    return wrapper
+
+
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
@@ -772,6 +799,7 @@ class Process(object):
         return py2_strencode(exe)
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def cmdline(self):
         if cext.WINVER >= cext.WINDOWS_8_1:
             # PEB method detects cmdline changes but requires more
@@ -791,6 +819,7 @@ class Process(object):
             return [py2_strencode(s) for s in ret]
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def environ(self):
         ustr = cext.proc_environ(self.pid)
         if ustr and not PY3:
@@ -963,6 +992,7 @@ class Process(object):
         cext.proc_suspend_or_resume(self.pid, False)
 
     @wrap_exceptions
+    @retry_error_partial_copy
     def cwd(self):
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
