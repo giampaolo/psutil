@@ -97,6 +97,7 @@ include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
 include psutil/tests/test_unicode.py
 include psutil/tests/test_windows.py
+include pyproject.toml
 include scripts/battery.py
 include scripts/cpu_distribution.py
 include scripts/disk_usage.py
@@ -109,6 +110,7 @@ include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/download_exes.py
+include scripts/internal/fix_flake8.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
@@ -135,4 +137,3 @@ include scripts/who.py
 include scripts/winservices.py
 include setup.py
 include tox.ini
-include pyproject.toml
