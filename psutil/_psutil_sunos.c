@@ -1120,7 +1120,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     mib2_udp6Entry_t     ude6;
 #endif
     char buf[512];
-    int i, flags, getcode, num_ent, state;
+    int i, flags, getcode, num_ent, state, ret;
     char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
     int lport, rport;
     int processed_pid;
@@ -1147,7 +1147,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    int ret = ioctl(sd, I_PUSH, "tcp");
+    ret = ioctl(sd, I_PUSH, "tcp");
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
