@@ -154,7 +154,7 @@ psutil_pids(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_pid))
                 goto error;
-            Py_DECREF(py_pid);
+            Py_CLEAR(py_pid);
             proclist++;
         }
         free(orig_address);
@@ -507,8 +507,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_path);
-            Py_DECREF(py_tuple);
+            Py_CLEAR(py_path);
+            Py_CLEAR(py_tuple);
         }
     }
     free(freep);
@@ -670,9 +670,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
 
     free(fs);
@@ -765,7 +765,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
                 goto error;
-            Py_DECREF(py_ifc_info);
+            Py_CLEAR(py_ifc_info);
         }
         else {
             continue;
@@ -840,10 +840,10 @@ psutil_users(PyObject *self, PyObject *args) {
             fclose(fp);
             goto error;
         }
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
 
     fclose(fp);
@@ -883,10 +883,10 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
 
     endutxent();

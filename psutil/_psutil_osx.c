@@ -138,7 +138,7 @@ psutil_pids(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_pid))
             goto error;
-        Py_DECREF(py_pid);
+        Py_CLEAR(py_pid);
         proclist++;
     }
     free(orig_address);
@@ -653,7 +653,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
             goto error;
-        Py_DECREF(py_cputime);
+        Py_CLEAR(py_cputime);
     }
 
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
@@ -841,9 +841,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
 
     free(fs);
@@ -911,7 +911,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     }
 
     for (j = 0; j < thread_count; j++) {
-        py_tuple = NULL;
         thread_info_count = THREAD_INFO_MAX;
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo_basic, &thread_info_count);
@@ -934,7 +933,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
     }
 
     ret = vm_deallocate(task, (vm_address_t)thread_list,
@@ -1043,10 +1042,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_tuple);
-            py_tuple = NULL;
-            Py_DECREF(py_path);
-            py_path = NULL;
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_path);
             // --- /construct python list
         }
     }
@@ -1226,7 +1223,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
             else if (family == AF_UNIX) {
                 py_laddr = PyUnicode_DecodeFSDefault(
@@ -1248,9 +1245,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
-                Py_DECREF(py_laddr);
-                Py_DECREF(py_raddr);
+                Py_CLEAR(py_tuple);
+                Py_CLEAR(py_laddr);
+                Py_CLEAR(py_raddr);
             }
         }
     }
@@ -1370,7 +1367,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
                 goto error;
-            Py_DECREF(py_ifc_info);
+            Py_CLEAR(py_ifc_info);
         }
         else {
             continue;
@@ -1543,7 +1540,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
                 goto error;
-            Py_DECREF(py_disk_info);
+            Py_CLEAR(py_disk_info);
 
             CFRelease(parent_dict);
             IOObjectRelease(parent);
@@ -1605,10 +1602,10 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
 
     endutxent();

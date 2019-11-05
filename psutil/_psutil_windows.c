@@ -221,7 +221,7 @@ psutil_pids(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_pid))
             goto error;
-        Py_DECREF(py_pid);
+        Py_CLEAR(py_pid);
     }
 
     // free C array allocated for PIDs
@@ -1003,7 +1003,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
     }
 
     free(sppi);
@@ -1156,7 +1156,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_tuple);
+            Py_CLEAR(py_tuple);
 
             CloseHandle(hThread);
         }
@@ -1580,7 +1580,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_conn_tuple))
                 goto error;
-            Py_DECREF(py_conn_tuple);
+            Py_CLEAR(py_conn_tuple);
         }
 
         free(table);
@@ -1667,7 +1667,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_conn_tuple))
                 goto error;
-            Py_DECREF(py_conn_tuple);
+            Py_CLEAR(py_conn_tuple);
         }
 
         free(table);
@@ -1730,7 +1730,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_conn_tuple))
                 goto error;
-            Py_DECREF(py_conn_tuple);
+            Py_CLEAR(py_conn_tuple);
         }
 
         free(table);
@@ -1793,7 +1793,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_conn_tuple))
                 goto error;
-            Py_DECREF(py_conn_tuple);
+            Py_CLEAR(py_conn_tuple);
         }
 
         free(table);
@@ -2188,8 +2188,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
             goto error;
-        Py_XDECREF(py_nic_name);
-        Py_XDECREF(py_nic_info);
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_nic_info);
 
         free(pIfRow);
         pCurrAddresses = pCurrAddresses->Next;
@@ -2304,7 +2304,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
             goto error;
-        Py_XDECREF(py_tuple);
+        Py_CLEAR(py_tuple);
 
 next:
         CloseHandle(hDevice);
@@ -2461,7 +2461,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                             goto error;
                         }
 
-                        Py_DECREF(py_tuple);
+                        Py_CLEAR(py_tuple);
 
                         // Continue looking for more mount points
                         mp_flag = FindNextVolumeMountPoint(mp_h, mp_buf, MAX_PATH);
@@ -2486,7 +2486,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
         goto next;
 
 next:
@@ -2610,9 +2610,9 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_XDECREF(py_username);
-        Py_XDECREF(py_address);
-        Py_XDECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_address);
+        Py_CLEAR(py_tuple);
     }
 
     WTSFreeMemory(sessions);
@@ -2838,8 +2838,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_tuple);
-            Py_DECREF(py_str);
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_str);
         }
         previousAllocationBase = (ULONGLONG)basicInfo.AllocationBase;
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
@@ -2889,8 +2889,8 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
                 goto error;
-            Py_DECREF(py_pid);
-            Py_DECREF(py_ppid);
+            Py_CLEAR(py_pid);
+            Py_CLEAR(py_ppid);
         } while (Process32Next(handle, &pe));
     }
 
@@ -2993,8 +2993,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_tuple);
-            Py_DECREF(py_mac_address);
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_mac_address);
         }
 
         // find out the IP address associated with the NIC
@@ -3070,14 +3070,14 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
-                Py_DECREF(py_address);
-                Py_DECREF(py_netmask);
+                Py_CLEAR(py_tuple);
+                Py_CLEAR(py_address);
+                Py_CLEAR(py_netmask);
 
                 pUnicast = pUnicast->Next;
             }
         }
-        Py_DECREF(py_nic_name);
+        Py_CLEAR(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
 
@@ -3197,8 +3197,8 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_ifc_info))
             goto error;
-        Py_DECREF(py_nic_name);
-        Py_DECREF(py_ifc_info);
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_ifc_info);
     }
 
     free(pIfTable);
