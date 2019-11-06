@@ -97,7 +97,6 @@ include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
 include psutil/tests/test_unicode.py
 include psutil/tests/test_windows.py
-include pyproject.toml
 include scripts/battery.py
 include scripts/cpu_distribution.py
 include scripts/disk_usage.py
