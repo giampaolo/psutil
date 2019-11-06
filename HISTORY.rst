@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.5
+=====
+
+2019-11-06
+
+**Bug fixes**
+
+- 1615_: remove pyproject.toml as it was causing installation issues.
+
 5.6.4
 =====
 
