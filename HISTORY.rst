@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.6
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
+  Houghton)
+
 5.6.5
 =====
 
