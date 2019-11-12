@@ -1040,7 +1040,7 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "SRUN", SRUN)) INITERR;
     if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP)) INITERR;
     if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP)) INITERR;
-    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB); INITERR; // unused
+    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB)) INITERR; // unused
     if (PyModule_AddIntConstant(mod, "SDEAD", SDEAD)) INITERR;
     if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC)) INITERR;
 #elif defined(PSUTIL_NETBSD)
