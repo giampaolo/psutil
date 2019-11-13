@@ -241,9 +241,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
     endmntent(file);
     return py_retlist;
@@ -454,10 +454,10 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
     endutent();
     return py_retlist;
