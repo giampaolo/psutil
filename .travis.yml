@@ -2,13 +2,6 @@ language: python
 cache: pip
 matrix:
     include:
-        # Linux
-        - python: 2.7
-        - python: 3.4
-        - python: 3.5
-        - python: 3.6
-        - python: 3.7
-          dist: xenial
         # macOS
         - language: generic
           os: osx
@@ -16,6 +9,13 @@ matrix:
         - language: generic
           os: osx
           env: PYVER=py36
+        # Linux
+        - python: 2.7
+        - python: 3.4
+        - python: 3.5
+        - python: 3.6
+        - python: 3.7
+          dist: xenial
         # pypy
         # - python: pypy
         # - python: pypy3
