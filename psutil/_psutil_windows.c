@@ -243,8 +243,8 @@ error:
 static PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
-    DWORD err;
     long pid;
+    DWORD exitCode;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -265,19 +265,35 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    // kill the process
     if (! TerminateProcess(hProcess, SIGTERM)) {
-        err = GetLastError();
-        // See: https://github.com/giampaolo/psutil/issues/1099
-        if (err != ERROR_ACCESS_DENIED) {
-            PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            // ERROR_ACCESS_DENIED (winerror 5) may happen if the
+            // process already died. See:
+            // https://github.com/giampaolo/psutil/issues/1099
+            // https://github.com/giampaolo/psutil/issues/1595
+            if (GetExitCodeProcess(hProcess, &exitCode) == 0) {
+                PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+                goto error;
+            }
+            if (exitCode == STILL_ACTIVE) {
+                PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
+                goto error;
+            }
             CloseHandle(hProcess);
-            return NULL;
+            Py_RETURN_NONE;
+        }
+        else {
+            PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
+            goto error;
         }
     }
 
     CloseHandle(hProcess);
     Py_RETURN_NONE;
+
+error:
+    CloseHandle(hProcess);
+    return NULL;
 }
 
 
