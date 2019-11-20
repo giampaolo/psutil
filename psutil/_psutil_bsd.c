@@ -802,7 +802,9 @@ psutil_users(PyObject *self, PyObject *args) {
     struct utmp ut;
     FILE *fp;
 
+    Py_BEGIN_ALLOW_THREADS
     fp = fopen(_PATH_UTMP, "r");
+    Py_END_ALLOW_THREADS
     if (fp == NULL) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMP);
         goto error;
