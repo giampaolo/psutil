@@ -1837,6 +1837,14 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
+    def test_cmdline_mixed_separators(self):
+        p = psutil.Process()
+        fake_file = io.StringIO(u('foo\x20bar\x00'))
+        with mock.patch('psutil._common.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar'])
+            assert m.called
+
     def test_readlink_path_deleted_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         return_value='/home/foo (deleted)'):

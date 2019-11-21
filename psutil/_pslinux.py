@@ -1649,7 +1649,14 @@ class Process(object):
         sep = '\x00' if data.endswith('\x00') else ' '
         if data.endswith(sep):
             data = data[:-1]
-        return data.split(sep)
+        cmdline = data.split(sep)
+        # Sometimes last char is a null byte '\0' but the args are
+        # separated by spaces, see:
+        # https://github.com/giampaolo/psutil/
+        #     issues/1179#issuecomment-552984549
+        if sep == '\x00' and len(cmdline) == 1 and ' ' in data:
+            cmdline = data.split(' ')
+        return cmdline
 
     @wrap_exceptions
     def environ(self):
