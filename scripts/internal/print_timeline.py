@@ -30,7 +30,7 @@ def get_tag_date(tag):
 
 def main():
     releases = []
-    out = sh("git tags")
+    out = sh("git tag")
     for line in out.split('\n'):
         tag = line.split(' ')[0]
         ver = tag.replace('release-', '')

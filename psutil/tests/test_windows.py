@@ -517,6 +517,16 @@ class TestProcess(unittest.TestCase):
         psutil_value = psutil.Process(self.pid).num_handles()
         self.assertEqual(psutil_value, sys_value)
 
+    def test_error_partial_copy(self):
+        # https://github.com/giampaolo/psutil/issues/875
+        exc = WindowsError()
+        exc.winerror = 299
+        with mock.patch("psutil._psplatform.cext.proc_cwd", side_effect=exc):
+            with mock.patch("time.sleep") as m:
+                p = psutil.Process()
+                self.assertRaises(psutil.AccessDenied, p.cwd)
+        self.assertGreaterEqual(m.call_count, 5)
+
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):

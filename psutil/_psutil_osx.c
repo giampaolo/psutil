@@ -138,7 +138,7 @@ psutil_pids(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_pid))
             goto error;
-        Py_DECREF(py_pid);
+        Py_CLEAR(py_pid);
         proclist++;
     }
     free(orig_address);
@@ -653,7 +653,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
             goto error;
-        Py_DECREF(py_cputime);
+        Py_CLEAR(py_cputime);
     }
 
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
@@ -841,9 +841,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
 
     free(fs);
@@ -911,7 +911,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     }
 
     for (j = 0; j < thread_count; j++) {
-        py_tuple = NULL;
         thread_info_count = THREAD_INFO_MAX;
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo_basic, &thread_info_count);
@@ -939,7 +938,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
     }
 
     ret = vm_deallocate(task, (vm_address_t)thread_list,
@@ -1048,10 +1047,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(py_tuple);
-            py_tuple = NULL;
-            Py_DECREF(py_path);
-            py_path = NULL;
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_path);
             // --- /construct python list
         }
     }
@@ -1231,7 +1228,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
             else if (family == AF_UNIX) {
                 py_laddr = PyUnicode_DecodeFSDefault(
@@ -1253,9 +1250,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
-                Py_DECREF(py_laddr);
-                Py_DECREF(py_raddr);
+                Py_CLEAR(py_tuple);
+                Py_CLEAR(py_laddr);
+                Py_CLEAR(py_raddr);
             }
         }
     }
@@ -1375,7 +1372,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
                 goto error;
-            Py_DECREF(py_ifc_info);
+            Py_CLEAR(py_ifc_info);
         }
         else {
             continue;
@@ -1548,7 +1545,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
                 goto error;
-            Py_DECREF(py_disk_info);
+            Py_CLEAR(py_disk_info);
 
             CFRelease(parent_dict);
             IOObjectRelease(parent);
@@ -1610,10 +1607,10 @@ psutil_users(PyObject *self, PyObject *args) {
             endutxent();
             goto error;
         }
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
 
     endutxent();
@@ -1750,8 +1747,7 @@ error:
 /*
  * define the psutil C module methods and initialize the module.
  */
-static PyMethodDef
-PsutilMethods[] = {
+static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
@@ -1821,96 +1817,94 @@ PsutilMethods[] = {
 };
 
 
-struct module_state {
-    PyObject *error;
-};
-
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-#endif
+    #define INITERR return NULL
 
-#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_psutil_osx",
+        NULL,
+        -1,
+        mod_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
 
-static int
-psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
+    PyObject *PyInit__psutil_osx(void)
+#else  /* PY_MAJOR_VERSION */
+    #define INITERR return
 
-static int
-psutil_osx_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
-
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_osx",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_osx_traverse,
-    psutil_osx_clear,
-    NULL
-};
-
-#define INITERROR return NULL
-
-PyMODINIT_FUNC PyInit__psutil_osx(void)
-
-#else
-#define INITERROR return
-
-void
-init_psutil_osx(void)
-#endif
+    void init_psutil_osx(void)
+#endif  /* PY_MAJOR_VERSION */
 {
+    PyObject *v;
 #if PY_MAJOR_VERSION >= 3
-    PyObject *module = PyModule_Create(&moduledef);
+    PyObject *mod = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
+    PyObject *mod = Py_InitModule("_psutil_osx", mod_methods);
 #endif
-    if (module == NULL)
-        INITERROR;
+    if (mod == NULL)
+        INITERR;
 
     if (psutil_setup() != 0)
-        INITERROR;
+        INITERR;
 
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+        INITERR;
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
+        INITERR;
     // connection status constants
-    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
-    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
-    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
-    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
-    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
-    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
-    PyModule_AddIntConstant(module, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
-    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
-    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
+        INITERR;
+    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
+        INITERR;
 
     // Exception.
     ZombieProcessError = PyErr_NewException(
         "_psutil_osx.ZombieProcessError", NULL, NULL);
+    if (ZombieProcessError == NULL)
+        INITERR;
     Py_INCREF(ZombieProcessError);
-    PyModule_AddObject(module, "ZombieProcessError", ZombieProcessError);
+    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError)) {
+        Py_DECREF(ZombieProcessError);
+        INITERR;
+    }
 
-    if (module == NULL)
-        INITERROR;
+    if (mod == NULL)
+        INITERR;
 #if PY_MAJOR_VERSION >= 3
-    return module;
+    return mod;
 #endif
 }

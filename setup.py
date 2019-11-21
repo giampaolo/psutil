@@ -10,6 +10,7 @@ import contextlib
 import io
 import os
 import platform
+import shutil
 import sys
 import tempfile
 import warnings
@@ -205,20 +206,22 @@ elif LINUX:
                 suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
 
+        output_dir = tempfile.mkdtemp()
         try:
             compiler = UnixCCompiler()
+            # https://github.com/giampaolo/psutil/pull/1568
+            if os.getenv('CC'):
+                compiler.set_executable('compiler_so', os.getenv('CC'))
             with silenced_output('stderr'):
                 with silenced_output('stdout'):
-                    compiler.compile([f.name])
+                    compiler.compile([f.name], output_dir=output_dir)
         except CompileError:
             return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
         else:
             return None
         finally:
-            try:
-                os.remove(f.name)
-            except OSError:
-                pass
+            os.remove(f.name)
+            shutil.rmtree(output_dir)
 
     macros.append(("PSUTIL_LINUX", 1))
     ETHTOOL_MACRO = get_ethtool_macro()
@@ -240,7 +243,7 @@ elif SUNOS:
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
-# AIX
+
 elif AIX:
     macros.append(("PSUTIL_AIX", 1))
     ext = Extension(

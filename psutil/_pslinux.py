@@ -73,6 +73,7 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
+HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -203,6 +204,10 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'read_chars', 'write_chars'])
+# psutil.Process.cpu_times()
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system',
+                        'iowait'])
 
 
 # =====================================================================
@@ -1571,6 +1576,7 @@ class Process(object):
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
         ret['cpu_num'] = fields[36]
+        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
 
         return ret
 
@@ -1643,7 +1649,14 @@ class Process(object):
         sep = '\x00' if data.endswith('\x00') else ' '
         if data.endswith(sep):
             data = data[:-1]
-        return data.split(sep)
+        cmdline = data.split(sep)
+        # Sometimes last char is a null byte '\0' but the args are
+        # separated by spaces, see:
+        # https://github.com/giampaolo/psutil/
+        #     issues/1179#issuecomment-552984549
+        if sep == '\x00' and len(cmdline) == 1 and ' ' in data:
+            cmdline = data.split(' ')
+        return cmdline
 
     @wrap_exceptions
     def environ(self):
@@ -1700,7 +1713,8 @@ class Process(object):
         stime = float(values['stime']) / CLOCK_TICKS
         children_utime = float(values['children_utime']) / CLOCK_TICKS
         children_stime = float(values['children_stime']) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime, children_utime, children_stime)
+        iowait = float(values['blkio_ticks']) / CLOCK_TICKS
+        return pcputimes(utime, stime, children_utime, children_stime, iowait)
 
     @wrap_exceptions
     def cpu_num(self):
@@ -1923,38 +1937,41 @@ class Process(object):
     def nice_set(self, value):
         return cext_posix.setpriority(self.pid, value)
 
-    @wrap_exceptions
-    def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self.pid)
+    # starting from CentOS 6.
+    if HAS_CPU_AFFINITY:
 
-    def _get_eligible_cpus(
-            self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
-        # See: https://github.com/giampaolo/psutil/issues/956
-        data = self._read_status_file()
-        match = _re.findall(data)
-        if match:
-            return list(range(int(match[0][0]), int(match[0][1]) + 1))
-        else:
-            return list(range(len(per_cpu_times())))
+        @wrap_exceptions
+        def cpu_affinity_get(self):
+            return cext.proc_cpu_affinity_get(self.pid)
 
-    @wrap_exceptions
-    def cpu_affinity_set(self, cpus):
-        try:
-            cext.proc_cpu_affinity_set(self.pid, cpus)
-        except (OSError, ValueError) as err:
-            if isinstance(err, ValueError) or err.errno == errno.EINVAL:
-                eligible_cpus = self._get_eligible_cpus()
-                all_cpus = tuple(range(len(per_cpu_times())))
-                for cpu in cpus:
-                    if cpu not in all_cpus:
-                        raise ValueError(
-                            "invalid CPU number %r; choose between %s" % (
-                                cpu, eligible_cpus))
-                    if cpu not in eligible_cpus:
-                        raise ValueError(
-                            "CPU number %r is not eligible; choose "
-                            "between %s" % (cpu, eligible_cpus))
-            raise
+        def _get_eligible_cpus(
+                self, _re=re.compile(br"Cpus_allowed_list:\t(\d+)-(\d+)")):
+            # See: https://github.com/giampaolo/psutil/issues/956
+            data = self._read_status_file()
+            match = _re.findall(data)
+            if match:
+                return list(range(int(match[0][0]), int(match[0][1]) + 1))
+            else:
+                return list(range(len(per_cpu_times())))
+
+        @wrap_exceptions
+        def cpu_affinity_set(self, cpus):
+            try:
+                cext.proc_cpu_affinity_set(self.pid, cpus)
+            except (OSError, ValueError) as err:
+                if isinstance(err, ValueError) or err.errno == errno.EINVAL:
+                    eligible_cpus = self._get_eligible_cpus()
+                    all_cpus = tuple(range(len(per_cpu_times())))
+                    for cpu in cpus:
+                        if cpu not in all_cpus:
+                            raise ValueError(
+                                "invalid CPU number %r; choose between %s" % (
+                                    cpu, eligible_cpus))
+                        if cpu not in eligible_cpus:
+                            raise ValueError(
+                                "CPU number %r is not eligible; choose "
+                                "between %s" % (cpu, eligible_cpus))
+                raise
 
     # only starting from kernel 2.6.13
     if HAS_PROC_IO_PRIORITY:

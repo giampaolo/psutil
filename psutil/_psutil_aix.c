@@ -265,8 +265,8 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItem(py_retdict, py_key, py_val))
                 goto error;
-            Py_DECREF(py_key);
-            Py_DECREF(py_val);
+            Py_CLEAR(py_key);
+            Py_CLEAR(py_val);
         }
         curvar = strchr(curvar, '\0') + 1;
     }
@@ -510,10 +510,10 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
     endutxent();
 
@@ -570,9 +570,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
         mt = getmntent(file);
     }
     endmntent(file);

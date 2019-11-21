@@ -13,7 +13,7 @@ Quick links
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
+- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
@@ -78,7 +78,8 @@ CPU
 
   - **nice** *(UNIX)*: time spent by niced (prioritized) processes executing in
     user mode; on Linux this also includes **guest_nice** time
-  - **iowait** *(Linux)*: time spent waiting for I/O to complete
+  - **iowait** *(Linux)*: time spent waiting for I/O to complete. This is *not*
+    accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
   - **steal** *(Linux 2.6.11+)*: time spent by other operating systems running
@@ -241,19 +242,27 @@ CPU
 .. function:: getloadavg()
 
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-    The load represents how many processes are waiting to be run by the
-    operating system.
-    On UNIX systems this relies on `os.getloadavg`_. On Windows this is
-    emulated by using a Windows API that spawns a thread which updates the
-    average every 5 seconds, mimicking the UNIX behavior. Thus, the first time
-    this is called and for the next 5 seconds it will return a meaningless
-    ``(0.0, 0.0, 0.0)`` tuple. Example:
+    The load represents the processes which are in a runnable state, either
+    using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
+    On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
+    by using a Windows API that spawns a thread which keeps running in
+    background and updates the load average every 5 seconds, mimicking the UNIX
+    behavior. Thus, the first time this is called and for the next 5 seconds
+    it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
+    The numbers returned only make sense if related to the number of CPU cores
+    installed on the system. So, for instance, `3.14` on a system with 10 CPU
+    cores means that the system load was 31.4% percent over the last N minutes.
 
     .. code-block:: python
 
        >>> import psutil
        >>> psutil.getloadavg()
        (3.14, 3.89, 4.67)
+       >>> psutil.cpu_count()
+       10
+       >>> # percentage representation
+       >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
+       [31.4, 38.9, 46.7]
 
     Availability: Unix, Windows
 
@@ -1290,13 +1299,15 @@ Process class
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on::
 
-      import psutil
-      p = psutil.Process()
-      if psutil.LINUX
-          p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
-      else:  # Windows
-          p.ionice(psutil.IOPRIO_HIGH)
-      p.ionice()  # get
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> if psutil.LINUX:
+      ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+      ... else:
+      ...     p.ionice(psutil.IOPRIO_HIGH)
+      ...
+      >>> p.ionice()  # get
+      pionice(ioclass=<IOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
     Availability: Linux, Windows Vista+
 
@@ -1404,15 +1415,32 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a `(user, system, children_user, children_system)` named tuple
-    representing the accumulated process time, in seconds (see
-    `explanation <http://stackoverflow.com/questions/556405/>`__).
-    On Windows and macOS only *user* and *system* are filled, the others are
-    set to ``0``.
+    Return a named tuple representing the accumulated process times, in seconds
+    (see `explanation <http://stackoverflow.com/questions/556405/>`__).
     This is similar to `os.times`_ but can be used for any process PID.
+
+    - **user**: time spent in user mode.
+    - **system**: time spent in kernel mode.
+    - **children_user**: user time of all child processes (always ``0`` on
+      Windows and macOS).
+    - **system_user**: user time of all child processes (always ``0`` on
+      Windows and macOS).
+    - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
+      This value is excluded from `user` and `system` times count (because the
+      CPU is not doing any work).
+
+    >>> import psutil
+    >>> p = psutil.Process()
+    >>> p.cpu_times()
+    pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
+    >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
+    0.70
 
     .. versionchanged::
       4.1.0 return two extra fields: *children_user* and *children_system*.
+
+    .. versionchanged::
+      5.6.4 added *iowait* on Linux.
 
   .. method:: cpu_percent(interval=None)
 
@@ -2193,7 +2221,7 @@ Process priority constants
 .. data:: IOPRIO_NORMAL
 .. data:: IOPRIO_HIGH
 
-  A set of integers representing the I/O priority of a process on Linux.
+  A set of integers representing the I/O priority of a process on Windows.
   They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
   or set process I/O priority.
 
@@ -2427,7 +2455,7 @@ resources.
       if alive:
           # send SIGKILL
           for p in alive:
-              print("process {} survived SIGTERM; trying SIGKILL" % p)
+              print("process {} survived SIGTERM; trying SIGKILL".format(p))
               try:
                   p.kill()
               except psutil.NoSuchProcess:
@@ -2436,7 +2464,7 @@ resources.
           if alive:
               # give up
               for p in alive:
-                  print("process {} survived SIGKILL; giving up" % p)
+                  print("process {} survived SIGKILL; giving up".format(p))
 
 Filtering and sorting processes
 -------------------------------
@@ -2580,7 +2608,7 @@ FAQs
   especially on macOS (see `issue #883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
-  On Unix you may run the the Python process as root or use the SUID bit
+  On Unix you may run the Python process as root or use the SUID bit
   (this is the trick used by tools such as ``ps`` and ``netstat``).
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
   the Python script as a Windows service (this is the trick used by tools
@@ -2607,6 +2635,14 @@ take a look at the `development guide`_.
 Timeline
 ========
 
+- 2019-11-06:
+  `5.6.5 <https://pypi.org/project/psutil/5.6.5/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#565>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.4...release-5.6.5#files_bucket>`__
+- 2019-11-04:
+  `5.6.4 <https://pypi.org/project/psutil/5.6.4/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#564>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.3...release-5.6.4#files_bucket>`__
 - 2019-06-11:
   `5.6.3 <https://pypi.org/project/psutil/5.6.3/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#563>`__ -
@@ -2910,7 +2946,7 @@ Timeline
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
-.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
+.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`enums`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
@@ -2927,7 +2963,7 @@ Timeline
 .. _`issue #883`: https://github.com/giampaolo/psutil/issues/883
 .. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
-.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py.
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
 .. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
 .. _`open`: https://docs.python.org/3/library/functions.html#open
 .. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count

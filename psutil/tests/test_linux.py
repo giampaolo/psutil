@@ -10,6 +10,7 @@ from __future__ import division
 import collections
 import contextlib
 import errno
+import glob
 import io
 import os
 import re
@@ -55,7 +56,7 @@ SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
 if LINUX:
     SECTOR_SIZE = 512
-
+EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
 
 # =====================================================================
 # --- utils
@@ -705,15 +706,12 @@ class TestSystemCPUFrequency(unittest.TestCase):
             if path.startswith("/sys/devices/system/cpu/cpufreq/policy"):
                 return False
             else:
-                flags.append(None)
                 return orig_exists(path)
 
-        flags = []
         orig_exists = os.path.exists
         with mock.patch("os.path.exists", side_effect=path_exists_mock,
                         create=True):
             assert psutil.cpu_freq()
-            self.assertEqual(len(flags), psutil.cpu_count(logical=True))
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_cpuinfo(self):
@@ -843,25 +841,6 @@ class TestSystemCPUFrequency(unittest.TestCase):
                                 return_value=1):
                     freq = psutil.cpu_freq()
                     self.assertEqual(freq.current, 200)
-
-        # Also test that NotImplementedError is raised in case no
-        # current freq file is present.
-
-        def open_mock(name, *args, **kwargs):
-            if name.endswith('/scaling_cur_freq'):
-                raise IOError(errno.ENOENT, "")
-            elif name.endswith('/cpuinfo_cur_freq'):
-                raise IOError(errno.ENOENT, "")
-            elif name == '/proc/cpuinfo':
-                raise IOError(errno.ENOENT, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('os.path.exists', return_value=True):
-                self.assertRaises(NotImplementedError, psutil.cpu_freq)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -1569,6 +1548,7 @@ class TestSensorsBattery(unittest.TestCase):
 class TestSensorsTemperatures(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
+    @unittest.skipIf(LINUX and EMPTY_TEMPERATURES, "no temperatures")
     def test_emulate_eio_error(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("_input"):
@@ -1857,6 +1837,14 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
+    def test_cmdline_mixed_separators(self):
+        p = psutil.Process()
+        fake_file = io.StringIO(u('foo\x20bar\x00'))
+        with mock.patch('psutil._common.open',
+                        return_value=fake_file, create=True) as m:
+            self.assertEqual(p.cmdline(), ['foo', 'bar'])
+            assert m.called
+
     def test_readlink_path_deleted_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         return_value='/home/foo (deleted)'):
@@ -1993,6 +1981,9 @@ class TestProcess(unittest.TestCase):
             "0",      # cnswap
             "0",      # exit_signal
             "6",      # processor
+            "0",      # rt priority
+            "0",      # policy
+            "7",      # delayacct_blkio_ticks
         ]
         content = " ".join(args).encode()
         with mock_open_content('/proc/%s/stat' % os.getpid(), content):
@@ -2007,6 +1998,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(cpu.system, 3 / CLOCK_TICKS)
             self.assertEqual(cpu.children_user, 4 / CLOCK_TICKS)
             self.assertEqual(cpu.children_system, 5 / CLOCK_TICKS)
+            self.assertEqual(cpu.iowait, 7 / CLOCK_TICKS)
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):

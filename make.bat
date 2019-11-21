@@ -20,8 +20,8 @@ rem      set PYTHON=C:\Python34\python.exe & set TSCRIPT=foo.py & make.bat test
 rem ==========================================================================
 
 if "%PYTHON%" == "" (
-    if exist "C:\Python37\python.exe" (
-        set PYTHON=C:\Python37\python.exe
+    if exist "C:\Python38-64\python.exe" (
+        set PYTHON=C:\Python38-64\python.exe
     ) else (
         set PYTHON=C:\Python27\python.exe
     )

@@ -121,6 +121,12 @@ Professional support
 
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
+Security
+========
+
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
+
 Example applications
 ====================
 
@@ -359,7 +365,7 @@ Process management
     pgids(real=1000, effective=1000, saved=1000)
     >>>
     >>> p.cpu_times()
-    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1)
+    pcputimes(user=1.02, system=0.31, children_user=0.32, children_system=0.1, iowait=0.0)
     >>> p.cpu_percent(interval=1.0)
     12.1
     >>> p.cpu_affinity()
@@ -385,8 +391,8 @@ Process management
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
     >>>
     >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
-     popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
+    [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
+     popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
     >>> p.connections()
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
@@ -428,6 +434,7 @@ Process management
     >>> p.resume()
     >>>
     >>> p.terminate()
+    >>> p.kill()
     >>> p.wait(timeout=3)
     0
     >>>
@@ -507,3 +514,4 @@ Windows services
 
 .. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+.. _Tidelift security contact: https://tidelift.com/security

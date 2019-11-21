@@ -345,8 +345,7 @@ psutil_pid_is_running(DWORD pid) {
         return 1;
     if (pid < 0)
         return 0;
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                           FALSE, pid);
+    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (NULL == hProcess) {
         err = GetLastError();
         // Yeah, this is the actual error code in case of "no such process".
@@ -512,18 +511,22 @@ psutil_get_process_data(long pid,
 
         // read PEB
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
+            // May fail with ERROR_PARTIAL_COPY, see:
+            // https://github.com/giampaolo/psutil/issues/875
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
         // read process parameters
         if (!ReadProcessMemory(hProcess,
-                              UlongToPtr(peb32.ProcessParameters),
-                              &procParameters32,
-                              sizeof(procParameters32),
-                              NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "ReadProcessMemory(ProcessParameters)");
+                               UlongToPtr(peb32.ProcessParameters),
+                               &procParameters32,
+                               sizeof(procParameters32),
+                               NULL))
+        {
+            // May fail with ERROR_PARTIAL_COPY, see:
+            // https://github.com/giampaolo/psutil/issues/875
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
@@ -576,41 +579,44 @@ psutil_get_process_data(long pid,
             }
         }
 
-        if (! NT_SUCCESS(
-                NtWow64QueryInformationProcess64(
+        status = NtWow64QueryInformationProcess64(
                 hProcess,
                 ProcessBasicInformation,
                 &pbi64,
                 sizeof(pbi64),
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(
+                    status,
+                    "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
+            );
             goto error;
         }
 
         // read peb
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
-               hProcess,
-               pbi64.PebBaseAddress,
-               &peb64,
-               sizeof(peb64),
-               NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
+        status = NtWow64ReadVirtualMemory64(
+                hProcess,
+                pbi64.PebBaseAddress,
+                &peb64,
+                sizeof(peb64),
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
 
         // read process parameters
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
+        status = NtWow64ReadVirtualMemory64(
                 hProcess,
                 peb64.ProcessParameters,
                 &procParameters64,
                 sizeof(procParameters64),
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "NtWow64ReadVirtualMemory64(ProcessParameters)");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(
+                    status,
+                    "NtWow64ReadVirtualMemory64(ProcessParameters)"
+            );
             goto error;
         }
 
@@ -654,8 +660,11 @@ psutil_get_process_data(long pid,
                                pbi.PebBaseAddress,
                                &peb,
                                sizeof(peb),
-                               NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
+                               NULL))
+        {
+            // May fail with ERROR_PARTIAL_COPY, see:
+            // https://github.com/giampaolo/psutil/issues/875
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
@@ -664,9 +673,11 @@ psutil_get_process_data(long pid,
                                peb.ProcessParameters,
                                &procParameters,
                                sizeof(procParameters),
-                               NULL)) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "ReadProcessMemory(ProcessParameters)");
+                               NULL))
+        {
+            // May fail with ERROR_PARTIAL_COPY, see:
+            // https://github.com/giampaolo/psutil/issues/875
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
@@ -705,20 +716,22 @@ psutil_get_process_data(long pid,
 
 #ifndef _WIN64
     if (weAreWow64 && !theyAreWow64) {
-        if (! NT_SUCCESS(NtWow64ReadVirtualMemory64(
+        status = NtWow64ReadVirtualMemory64(
                 hProcess,
                 src64,
                 buffer,
                 size,
-                NULL)))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("NtWow64ReadVirtualMemory64");
+                NULL);
+        if (!NT_SUCCESS(status)) {
+            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else
 #endif
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
-        PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
+        // May fail with ERROR_PARTIAL_COPY, see:
+        // https://github.com/giampaolo/psutil/issues/875
+        PyErr_SetFromWindowsErr(0);
         goto error;
     }
 

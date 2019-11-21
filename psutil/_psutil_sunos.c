@@ -300,8 +300,8 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
             goto error;
 
-        Py_DECREF(py_envname);
-        Py_DECREF(py_envval);
+        Py_CLEAR(py_envname);
+        Py_CLEAR(py_envval);
     }
 
     psutil_free_cstrings_array(env, env_count);
@@ -655,10 +655,10 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
     endutxent();
 
@@ -714,9 +714,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
     fclose(file);
     return py_retlist;
@@ -767,8 +767,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_cputime))
                 goto error;
-            Py_DECREF(py_cputime);
-            py_cputime = NULL;
+            Py_CLEAR(py_cputime);
         }
     }
 
@@ -824,7 +823,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 if (PyDict_SetItemString(py_retdict, ksp->ks_name,
                                          py_disk_info))
                     goto error;
-                Py_DECREF(py_disk_info);
+                Py_CLEAR(py_disk_info);
             }
         }
         ksp = ksp->ks_next;
@@ -959,8 +958,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_path);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_path);
+        Py_CLEAR(py_tuple);
 
         // increment pointer
         p += 1;
@@ -1075,7 +1074,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
             goto error;
-        Py_DECREF(py_ifc_info);
+        Py_CLEAR(py_ifc_info);
         goto next;
 
 next:
@@ -1120,7 +1119,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     mib2_udp6Entry_t     ude6;
 #endif
     char buf[512];
-    int i, flags, getcode, num_ent, state;
+    int i, flags, getcode, num_ent, state, ret;
     char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
     int lport, rport;
     int processed_pid;
@@ -1147,7 +1146,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    int ret = ioctl(sd, I_PUSH, "tcp");
+    ret = ioctl(sd, I_PUSH, "tcp");
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -1273,7 +1272,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
         }
 #if defined(AF_INET6)
@@ -1287,7 +1286,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 #ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6.tcp6ConnCreationProcess;
 #else
-        		processed_pid = 0;
+                        processed_pid = 0;
 #endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
@@ -1316,14 +1315,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
         }
 #endif
         // UDPv4
         else if (mibhdr.level == MIB2_UDP || mibhdr.level == MIB2_UDP_ENTRY) {
             num_ent = mibhdr.len / sizeof(mib2_udpEntry_t);
-	    assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr.len);
+            assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr.len);
             for (i = 0; i < num_ent; i++) {
                 memcpy(&ude, databuf.buf + i * sizeof ude, sizeof ude);
 #ifdef NEW_MIB_COMPLIANT
@@ -1355,7 +1354,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
         }
 #if defined(AF_INET6)
@@ -1388,7 +1387,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(py_tuple);
+                Py_CLEAR(py_tuple);
             }
         }
 #endif
@@ -1561,7 +1560,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
                 goto error;
             if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
                 goto error;
-            Py_DECREF(py_ifc_info);
+            Py_CLEAR(py_ifc_info);
         }
     }
 

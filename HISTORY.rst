@@ -1,18 +1,59 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.6.4
+5.6.6
 =====
 
 XXXX-XX-XX
 
 **Bug fixes**
 
+- 1595_: [Windows] Process.kill() may not throw AccessDenied.
+- 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
+  segfault (CVE).  (patch by Riccardo Schirone)
+- 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
+  Houghton)
+
+5.6.5
+=====
+
+2019-11-06
+
+**Bug fixes**
+
+- 1615_: remove pyproject.toml as it was causing installation issues.
+
+5.6.4
+=====
+
+2019-11-04
+
+**Enhancements**
+
+- 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
+  spent waiting for blocking I/O to complete.
+- 1565_: add PEP 517/8 build backend and requirements specification for better
+  pip integration.  (patch by Bernát Gábor)
+
+**Bug fixes**
+
+- 875_: [Windows] Process' cmdline(), environ() or cwd() may occasionally fail
+  with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
+- 1126_: [Linux] cpu_affinity() segfaults on CentOS 5 / manylinux.
+  cpu_affinity() support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
 - 1535_: 'type' and 'family' fields returned by net_connections() are not
   always turned into enums.
 - 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
+- 1546_: usage percent may be rounded to 0 on Python 2.
+- 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
+  incorrect.
+- 1568_: [Linux] use CC compiler env var if defined.
+- 1570_: [Windows] `NtWow64*` syscalls fail to raise the proper error code
+- 1585_: [OSX] calling close() (in C) on possible negative integers.  (patch
+  by Athos Ribeiro)
+- 1606_: [SunOS] compilation fails on SunOS 5.10.  (patch by vser1)
 
 5.6.3
 =====
@@ -3542,3 +3583,503 @@ DeprecationWarning.
 .. _1498: https://github.com/giampaolo/psutil/issues/1498
 .. _1499: https://github.com/giampaolo/psutil/issues/1499
 .. _1500: https://github.com/giampaolo/psutil/issues/1500
+.. _1501: https://github.com/giampaolo/psutil/issues/1501
+.. _1502: https://github.com/giampaolo/psutil/issues/1502
+.. _1503: https://github.com/giampaolo/psutil/issues/1503
+.. _1504: https://github.com/giampaolo/psutil/issues/1504
+.. _1505: https://github.com/giampaolo/psutil/issues/1505
+.. _1506: https://github.com/giampaolo/psutil/issues/1506
+.. _1507: https://github.com/giampaolo/psutil/issues/1507
+.. _1508: https://github.com/giampaolo/psutil/issues/1508
+.. _1509: https://github.com/giampaolo/psutil/issues/1509
+.. _1510: https://github.com/giampaolo/psutil/issues/1510
+.. _1511: https://github.com/giampaolo/psutil/issues/1511
+.. _1512: https://github.com/giampaolo/psutil/issues/1512
+.. _1513: https://github.com/giampaolo/psutil/issues/1513
+.. _1514: https://github.com/giampaolo/psutil/issues/1514
+.. _1515: https://github.com/giampaolo/psutil/issues/1515
+.. _1516: https://github.com/giampaolo/psutil/issues/1516
+.. _1517: https://github.com/giampaolo/psutil/issues/1517
+.. _1518: https://github.com/giampaolo/psutil/issues/1518
+.. _1519: https://github.com/giampaolo/psutil/issues/1519
+.. _1520: https://github.com/giampaolo/psutil/issues/1520
+.. _1521: https://github.com/giampaolo/psutil/issues/1521
+.. _1522: https://github.com/giampaolo/psutil/issues/1522
+.. _1523: https://github.com/giampaolo/psutil/issues/1523
+.. _1524: https://github.com/giampaolo/psutil/issues/1524
+.. _1525: https://github.com/giampaolo/psutil/issues/1525
+.. _1526: https://github.com/giampaolo/psutil/issues/1526
+.. _1527: https://github.com/giampaolo/psutil/issues/1527
+.. _1528: https://github.com/giampaolo/psutil/issues/1528
+.. _1529: https://github.com/giampaolo/psutil/issues/1529
+.. _1530: https://github.com/giampaolo/psutil/issues/1530
+.. _1531: https://github.com/giampaolo/psutil/issues/1531
+.. _1532: https://github.com/giampaolo/psutil/issues/1532
+.. _1533: https://github.com/giampaolo/psutil/issues/1533
+.. _1534: https://github.com/giampaolo/psutil/issues/1534
+.. _1535: https://github.com/giampaolo/psutil/issues/1535
+.. _1536: https://github.com/giampaolo/psutil/issues/1536
+.. _1537: https://github.com/giampaolo/psutil/issues/1537
+.. _1538: https://github.com/giampaolo/psutil/issues/1538
+.. _1539: https://github.com/giampaolo/psutil/issues/1539
+.. _1540: https://github.com/giampaolo/psutil/issues/1540
+.. _1541: https://github.com/giampaolo/psutil/issues/1541
+.. _1542: https://github.com/giampaolo/psutil/issues/1542
+.. _1543: https://github.com/giampaolo/psutil/issues/1543
+.. _1544: https://github.com/giampaolo/psutil/issues/1544
+.. _1545: https://github.com/giampaolo/psutil/issues/1545
+.. _1546: https://github.com/giampaolo/psutil/issues/1546
+.. _1547: https://github.com/giampaolo/psutil/issues/1547
+.. _1548: https://github.com/giampaolo/psutil/issues/1548
+.. _1549: https://github.com/giampaolo/psutil/issues/1549
+.. _1550: https://github.com/giampaolo/psutil/issues/1550
+.. _1551: https://github.com/giampaolo/psutil/issues/1551
+.. _1552: https://github.com/giampaolo/psutil/issues/1552
+.. _1553: https://github.com/giampaolo/psutil/issues/1553
+.. _1554: https://github.com/giampaolo/psutil/issues/1554
+.. _1555: https://github.com/giampaolo/psutil/issues/1555
+.. _1556: https://github.com/giampaolo/psutil/issues/1556
+.. _1557: https://github.com/giampaolo/psutil/issues/1557
+.. _1558: https://github.com/giampaolo/psutil/issues/1558
+.. _1559: https://github.com/giampaolo/psutil/issues/1559
+.. _1560: https://github.com/giampaolo/psutil/issues/1560
+.. _1561: https://github.com/giampaolo/psutil/issues/1561
+.. _1562: https://github.com/giampaolo/psutil/issues/1562
+.. _1563: https://github.com/giampaolo/psutil/issues/1563
+.. _1564: https://github.com/giampaolo/psutil/issues/1564
+.. _1565: https://github.com/giampaolo/psutil/issues/1565
+.. _1566: https://github.com/giampaolo/psutil/issues/1566
+.. _1567: https://github.com/giampaolo/psutil/issues/1567
+.. _1568: https://github.com/giampaolo/psutil/issues/1568
+.. _1569: https://github.com/giampaolo/psutil/issues/1569
+.. _1570: https://github.com/giampaolo/psutil/issues/1570
+.. _1571: https://github.com/giampaolo/psutil/issues/1571
+.. _1572: https://github.com/giampaolo/psutil/issues/1572
+.. _1573: https://github.com/giampaolo/psutil/issues/1573
+.. _1574: https://github.com/giampaolo/psutil/issues/1574
+.. _1575: https://github.com/giampaolo/psutil/issues/1575
+.. _1576: https://github.com/giampaolo/psutil/issues/1576
+.. _1577: https://github.com/giampaolo/psutil/issues/1577
+.. _1578: https://github.com/giampaolo/psutil/issues/1578
+.. _1579: https://github.com/giampaolo/psutil/issues/1579
+.. _1580: https://github.com/giampaolo/psutil/issues/1580
+.. _1581: https://github.com/giampaolo/psutil/issues/1581
+.. _1582: https://github.com/giampaolo/psutil/issues/1582
+.. _1583: https://github.com/giampaolo/psutil/issues/1583
+.. _1584: https://github.com/giampaolo/psutil/issues/1584
+.. _1585: https://github.com/giampaolo/psutil/issues/1585
+.. _1586: https://github.com/giampaolo/psutil/issues/1586
+.. _1587: https://github.com/giampaolo/psutil/issues/1587
+.. _1588: https://github.com/giampaolo/psutil/issues/1588
+.. _1589: https://github.com/giampaolo/psutil/issues/1589
+.. _1590: https://github.com/giampaolo/psutil/issues/1590
+.. _1591: https://github.com/giampaolo/psutil/issues/1591
+.. _1592: https://github.com/giampaolo/psutil/issues/1592
+.. _1593: https://github.com/giampaolo/psutil/issues/1593
+.. _1594: https://github.com/giampaolo/psutil/issues/1594
+.. _1595: https://github.com/giampaolo/psutil/issues/1595
+.. _1596: https://github.com/giampaolo/psutil/issues/1596
+.. _1597: https://github.com/giampaolo/psutil/issues/1597
+.. _1598: https://github.com/giampaolo/psutil/issues/1598
+.. _1599: https://github.com/giampaolo/psutil/issues/1599
+.. _1600: https://github.com/giampaolo/psutil/issues/1600
+.. _1601: https://github.com/giampaolo/psutil/issues/1601
+.. _1602: https://github.com/giampaolo/psutil/issues/1602
+.. _1603: https://github.com/giampaolo/psutil/issues/1603
+.. _1604: https://github.com/giampaolo/psutil/issues/1604
+.. _1605: https://github.com/giampaolo/psutil/issues/1605
+.. _1606: https://github.com/giampaolo/psutil/issues/1606
+.. _1607: https://github.com/giampaolo/psutil/issues/1607
+.. _1608: https://github.com/giampaolo/psutil/issues/1608
+.. _1609: https://github.com/giampaolo/psutil/issues/1609
+.. _1610: https://github.com/giampaolo/psutil/issues/1610
+.. _1611: https://github.com/giampaolo/psutil/issues/1611
+.. _1612: https://github.com/giampaolo/psutil/issues/1612
+.. _1613: https://github.com/giampaolo/psutil/issues/1613
+.. _1614: https://github.com/giampaolo/psutil/issues/1614
+.. _1615: https://github.com/giampaolo/psutil/issues/1615
+.. _1616: https://github.com/giampaolo/psutil/issues/1616
+.. _1617: https://github.com/giampaolo/psutil/issues/1617
+.. _1618: https://github.com/giampaolo/psutil/issues/1618
+.. _1619: https://github.com/giampaolo/psutil/issues/1619
+.. _1620: https://github.com/giampaolo/psutil/issues/1620
+.. _1621: https://github.com/giampaolo/psutil/issues/1621
+.. _1622: https://github.com/giampaolo/psutil/issues/1622
+.. _1623: https://github.com/giampaolo/psutil/issues/1623
+.. _1624: https://github.com/giampaolo/psutil/issues/1624
+.. _1625: https://github.com/giampaolo/psutil/issues/1625
+.. _1626: https://github.com/giampaolo/psutil/issues/1626
+.. _1627: https://github.com/giampaolo/psutil/issues/1627
+.. _1628: https://github.com/giampaolo/psutil/issues/1628
+.. _1629: https://github.com/giampaolo/psutil/issues/1629
+.. _1630: https://github.com/giampaolo/psutil/issues/1630
+.. _1631: https://github.com/giampaolo/psutil/issues/1631
+.. _1632: https://github.com/giampaolo/psutil/issues/1632
+.. _1633: https://github.com/giampaolo/psutil/issues/1633
+.. _1634: https://github.com/giampaolo/psutil/issues/1634
+.. _1635: https://github.com/giampaolo/psutil/issues/1635
+.. _1636: https://github.com/giampaolo/psutil/issues/1636
+.. _1637: https://github.com/giampaolo/psutil/issues/1637
+.. _1638: https://github.com/giampaolo/psutil/issues/1638
+.. _1639: https://github.com/giampaolo/psutil/issues/1639
+.. _1640: https://github.com/giampaolo/psutil/issues/1640
+.. _1641: https://github.com/giampaolo/psutil/issues/1641
+.. _1642: https://github.com/giampaolo/psutil/issues/1642
+.. _1643: https://github.com/giampaolo/psutil/issues/1643
+.. _1644: https://github.com/giampaolo/psutil/issues/1644
+.. _1645: https://github.com/giampaolo/psutil/issues/1645
+.. _1646: https://github.com/giampaolo/psutil/issues/1646
+.. _1647: https://github.com/giampaolo/psutil/issues/1647
+.. _1648: https://github.com/giampaolo/psutil/issues/1648
+.. _1649: https://github.com/giampaolo/psutil/issues/1649
+.. _1650: https://github.com/giampaolo/psutil/issues/1650
+.. _1651: https://github.com/giampaolo/psutil/issues/1651
+.. _1652: https://github.com/giampaolo/psutil/issues/1652
+.. _1653: https://github.com/giampaolo/psutil/issues/1653
+.. _1654: https://github.com/giampaolo/psutil/issues/1654
+.. _1655: https://github.com/giampaolo/psutil/issues/1655
+.. _1656: https://github.com/giampaolo/psutil/issues/1656
+.. _1657: https://github.com/giampaolo/psutil/issues/1657
+.. _1658: https://github.com/giampaolo/psutil/issues/1658
+.. _1659: https://github.com/giampaolo/psutil/issues/1659
+.. _1660: https://github.com/giampaolo/psutil/issues/1660
+.. _1661: https://github.com/giampaolo/psutil/issues/1661
+.. _1662: https://github.com/giampaolo/psutil/issues/1662
+.. _1663: https://github.com/giampaolo/psutil/issues/1663
+.. _1664: https://github.com/giampaolo/psutil/issues/1664
+.. _1665: https://github.com/giampaolo/psutil/issues/1665
+.. _1666: https://github.com/giampaolo/psutil/issues/1666
+.. _1667: https://github.com/giampaolo/psutil/issues/1667
+.. _1668: https://github.com/giampaolo/psutil/issues/1668
+.. _1669: https://github.com/giampaolo/psutil/issues/1669
+.. _1670: https://github.com/giampaolo/psutil/issues/1670
+.. _1671: https://github.com/giampaolo/psutil/issues/1671
+.. _1672: https://github.com/giampaolo/psutil/issues/1672
+.. _1673: https://github.com/giampaolo/psutil/issues/1673
+.. _1674: https://github.com/giampaolo/psutil/issues/1674
+.. _1675: https://github.com/giampaolo/psutil/issues/1675
+.. _1676: https://github.com/giampaolo/psutil/issues/1676
+.. _1677: https://github.com/giampaolo/psutil/issues/1677
+.. _1678: https://github.com/giampaolo/psutil/issues/1678
+.. _1679: https://github.com/giampaolo/psutil/issues/1679
+.. _1680: https://github.com/giampaolo/psutil/issues/1680
+.. _1681: https://github.com/giampaolo/psutil/issues/1681
+.. _1682: https://github.com/giampaolo/psutil/issues/1682
+.. _1683: https://github.com/giampaolo/psutil/issues/1683
+.. _1684: https://github.com/giampaolo/psutil/issues/1684
+.. _1685: https://github.com/giampaolo/psutil/issues/1685
+.. _1686: https://github.com/giampaolo/psutil/issues/1686
+.. _1687: https://github.com/giampaolo/psutil/issues/1687
+.. _1688: https://github.com/giampaolo/psutil/issues/1688
+.. _1689: https://github.com/giampaolo/psutil/issues/1689
+.. _1690: https://github.com/giampaolo/psutil/issues/1690
+.. _1691: https://github.com/giampaolo/psutil/issues/1691
+.. _1692: https://github.com/giampaolo/psutil/issues/1692
+.. _1693: https://github.com/giampaolo/psutil/issues/1693
+.. _1694: https://github.com/giampaolo/psutil/issues/1694
+.. _1695: https://github.com/giampaolo/psutil/issues/1695
+.. _1696: https://github.com/giampaolo/psutil/issues/1696
+.. _1697: https://github.com/giampaolo/psutil/issues/1697
+.. _1698: https://github.com/giampaolo/psutil/issues/1698
+.. _1699: https://github.com/giampaolo/psutil/issues/1699
+.. _1700: https://github.com/giampaolo/psutil/issues/1700
+.. _1701: https://github.com/giampaolo/psutil/issues/1701
+.. _1702: https://github.com/giampaolo/psutil/issues/1702
+.. _1703: https://github.com/giampaolo/psutil/issues/1703
+.. _1704: https://github.com/giampaolo/psutil/issues/1704
+.. _1705: https://github.com/giampaolo/psutil/issues/1705
+.. _1706: https://github.com/giampaolo/psutil/issues/1706
+.. _1707: https://github.com/giampaolo/psutil/issues/1707
+.. _1708: https://github.com/giampaolo/psutil/issues/1708
+.. _1709: https://github.com/giampaolo/psutil/issues/1709
+.. _1710: https://github.com/giampaolo/psutil/issues/1710
+.. _1711: https://github.com/giampaolo/psutil/issues/1711
+.. _1712: https://github.com/giampaolo/psutil/issues/1712
+.. _1713: https://github.com/giampaolo/psutil/issues/1713
+.. _1714: https://github.com/giampaolo/psutil/issues/1714
+.. _1715: https://github.com/giampaolo/psutil/issues/1715
+.. _1716: https://github.com/giampaolo/psutil/issues/1716
+.. _1717: https://github.com/giampaolo/psutil/issues/1717
+.. _1718: https://github.com/giampaolo/psutil/issues/1718
+.. _1719: https://github.com/giampaolo/psutil/issues/1719
+.. _1720: https://github.com/giampaolo/psutil/issues/1720
+.. _1721: https://github.com/giampaolo/psutil/issues/1721
+.. _1722: https://github.com/giampaolo/psutil/issues/1722
+.. _1723: https://github.com/giampaolo/psutil/issues/1723
+.. _1724: https://github.com/giampaolo/psutil/issues/1724
+.. _1725: https://github.com/giampaolo/psutil/issues/1725
+.. _1726: https://github.com/giampaolo/psutil/issues/1726
+.. _1727: https://github.com/giampaolo/psutil/issues/1727
+.. _1728: https://github.com/giampaolo/psutil/issues/1728
+.. _1729: https://github.com/giampaolo/psutil/issues/1729
+.. _1730: https://github.com/giampaolo/psutil/issues/1730
+.. _1731: https://github.com/giampaolo/psutil/issues/1731
+.. _1732: https://github.com/giampaolo/psutil/issues/1732
+.. _1733: https://github.com/giampaolo/psutil/issues/1733
+.. _1734: https://github.com/giampaolo/psutil/issues/1734
+.. _1735: https://github.com/giampaolo/psutil/issues/1735
+.. _1736: https://github.com/giampaolo/psutil/issues/1736
+.. _1737: https://github.com/giampaolo/psutil/issues/1737
+.. _1738: https://github.com/giampaolo/psutil/issues/1738
+.. _1739: https://github.com/giampaolo/psutil/issues/1739
+.. _1740: https://github.com/giampaolo/psutil/issues/1740
+.. _1741: https://github.com/giampaolo/psutil/issues/1741
+.. _1742: https://github.com/giampaolo/psutil/issues/1742
+.. _1743: https://github.com/giampaolo/psutil/issues/1743
+.. _1744: https://github.com/giampaolo/psutil/issues/1744
+.. _1745: https://github.com/giampaolo/psutil/issues/1745
+.. _1746: https://github.com/giampaolo/psutil/issues/1746
+.. _1747: https://github.com/giampaolo/psutil/issues/1747
+.. _1748: https://github.com/giampaolo/psutil/issues/1748
+.. _1749: https://github.com/giampaolo/psutil/issues/1749
+.. _1750: https://github.com/giampaolo/psutil/issues/1750
+.. _1751: https://github.com/giampaolo/psutil/issues/1751
+.. _1752: https://github.com/giampaolo/psutil/issues/1752
+.. _1753: https://github.com/giampaolo/psutil/issues/1753
+.. _1754: https://github.com/giampaolo/psutil/issues/1754
+.. _1755: https://github.com/giampaolo/psutil/issues/1755
+.. _1756: https://github.com/giampaolo/psutil/issues/1756
+.. _1757: https://github.com/giampaolo/psutil/issues/1757
+.. _1758: https://github.com/giampaolo/psutil/issues/1758
+.. _1759: https://github.com/giampaolo/psutil/issues/1759
+.. _1760: https://github.com/giampaolo/psutil/issues/1760
+.. _1761: https://github.com/giampaolo/psutil/issues/1761
+.. _1762: https://github.com/giampaolo/psutil/issues/1762
+.. _1763: https://github.com/giampaolo/psutil/issues/1763
+.. _1764: https://github.com/giampaolo/psutil/issues/1764
+.. _1765: https://github.com/giampaolo/psutil/issues/1765
+.. _1766: https://github.com/giampaolo/psutil/issues/1766
+.. _1767: https://github.com/giampaolo/psutil/issues/1767
+.. _1768: https://github.com/giampaolo/psutil/issues/1768
+.. _1769: https://github.com/giampaolo/psutil/issues/1769
+.. _1770: https://github.com/giampaolo/psutil/issues/1770
+.. _1771: https://github.com/giampaolo/psutil/issues/1771
+.. _1772: https://github.com/giampaolo/psutil/issues/1772
+.. _1773: https://github.com/giampaolo/psutil/issues/1773
+.. _1774: https://github.com/giampaolo/psutil/issues/1774
+.. _1775: https://github.com/giampaolo/psutil/issues/1775
+.. _1776: https://github.com/giampaolo/psutil/issues/1776
+.. _1777: https://github.com/giampaolo/psutil/issues/1777
+.. _1778: https://github.com/giampaolo/psutil/issues/1778
+.. _1779: https://github.com/giampaolo/psutil/issues/1779
+.. _1780: https://github.com/giampaolo/psutil/issues/1780
+.. _1781: https://github.com/giampaolo/psutil/issues/1781
+.. _1782: https://github.com/giampaolo/psutil/issues/1782
+.. _1783: https://github.com/giampaolo/psutil/issues/1783
+.. _1784: https://github.com/giampaolo/psutil/issues/1784
+.. _1785: https://github.com/giampaolo/psutil/issues/1785
+.. _1786: https://github.com/giampaolo/psutil/issues/1786
+.. _1787: https://github.com/giampaolo/psutil/issues/1787
+.. _1788: https://github.com/giampaolo/psutil/issues/1788
+.. _1789: https://github.com/giampaolo/psutil/issues/1789
+.. _1790: https://github.com/giampaolo/psutil/issues/1790
+.. _1791: https://github.com/giampaolo/psutil/issues/1791
+.. _1792: https://github.com/giampaolo/psutil/issues/1792
+.. _1793: https://github.com/giampaolo/psutil/issues/1793
+.. _1794: https://github.com/giampaolo/psutil/issues/1794
+.. _1795: https://github.com/giampaolo/psutil/issues/1795
+.. _1796: https://github.com/giampaolo/psutil/issues/1796
+.. _1797: https://github.com/giampaolo/psutil/issues/1797
+.. _1798: https://github.com/giampaolo/psutil/issues/1798
+.. _1799: https://github.com/giampaolo/psutil/issues/1799
+.. _1800: https://github.com/giampaolo/psutil/issues/1800
+.. _1801: https://github.com/giampaolo/psutil/issues/1801
+.. _1802: https://github.com/giampaolo/psutil/issues/1802
+.. _1803: https://github.com/giampaolo/psutil/issues/1803
+.. _1804: https://github.com/giampaolo/psutil/issues/1804
+.. _1805: https://github.com/giampaolo/psutil/issues/1805
+.. _1806: https://github.com/giampaolo/psutil/issues/1806
+.. _1807: https://github.com/giampaolo/psutil/issues/1807
+.. _1808: https://github.com/giampaolo/psutil/issues/1808
+.. _1809: https://github.com/giampaolo/psutil/issues/1809
+.. _1810: https://github.com/giampaolo/psutil/issues/1810
+.. _1811: https://github.com/giampaolo/psutil/issues/1811
+.. _1812: https://github.com/giampaolo/psutil/issues/1812
+.. _1813: https://github.com/giampaolo/psutil/issues/1813
+.. _1814: https://github.com/giampaolo/psutil/issues/1814
+.. _1815: https://github.com/giampaolo/psutil/issues/1815
+.. _1816: https://github.com/giampaolo/psutil/issues/1816
+.. _1817: https://github.com/giampaolo/psutil/issues/1817
+.. _1818: https://github.com/giampaolo/psutil/issues/1818
+.. _1819: https://github.com/giampaolo/psutil/issues/1819
+.. _1820: https://github.com/giampaolo/psutil/issues/1820
+.. _1821: https://github.com/giampaolo/psutil/issues/1821
+.. _1822: https://github.com/giampaolo/psutil/issues/1822
+.. _1823: https://github.com/giampaolo/psutil/issues/1823
+.. _1824: https://github.com/giampaolo/psutil/issues/1824
+.. _1825: https://github.com/giampaolo/psutil/issues/1825
+.. _1826: https://github.com/giampaolo/psutil/issues/1826
+.. _1827: https://github.com/giampaolo/psutil/issues/1827
+.. _1828: https://github.com/giampaolo/psutil/issues/1828
+.. _1829: https://github.com/giampaolo/psutil/issues/1829
+.. _1830: https://github.com/giampaolo/psutil/issues/1830
+.. _1831: https://github.com/giampaolo/psutil/issues/1831
+.. _1832: https://github.com/giampaolo/psutil/issues/1832
+.. _1833: https://github.com/giampaolo/psutil/issues/1833
+.. _1834: https://github.com/giampaolo/psutil/issues/1834
+.. _1835: https://github.com/giampaolo/psutil/issues/1835
+.. _1836: https://github.com/giampaolo/psutil/issues/1836
+.. _1837: https://github.com/giampaolo/psutil/issues/1837
+.. _1838: https://github.com/giampaolo/psutil/issues/1838
+.. _1839: https://github.com/giampaolo/psutil/issues/1839
+.. _1840: https://github.com/giampaolo/psutil/issues/1840
+.. _1841: https://github.com/giampaolo/psutil/issues/1841
+.. _1842: https://github.com/giampaolo/psutil/issues/1842
+.. _1843: https://github.com/giampaolo/psutil/issues/1843
+.. _1844: https://github.com/giampaolo/psutil/issues/1844
+.. _1845: https://github.com/giampaolo/psutil/issues/1845
+.. _1846: https://github.com/giampaolo/psutil/issues/1846
+.. _1847: https://github.com/giampaolo/psutil/issues/1847
+.. _1848: https://github.com/giampaolo/psutil/issues/1848
+.. _1849: https://github.com/giampaolo/psutil/issues/1849
+.. _1850: https://github.com/giampaolo/psutil/issues/1850
+.. _1851: https://github.com/giampaolo/psutil/issues/1851
+.. _1852: https://github.com/giampaolo/psutil/issues/1852
+.. _1853: https://github.com/giampaolo/psutil/issues/1853
+.. _1854: https://github.com/giampaolo/psutil/issues/1854
+.. _1855: https://github.com/giampaolo/psutil/issues/1855
+.. _1856: https://github.com/giampaolo/psutil/issues/1856
+.. _1857: https://github.com/giampaolo/psutil/issues/1857
+.. _1858: https://github.com/giampaolo/psutil/issues/1858
+.. _1859: https://github.com/giampaolo/psutil/issues/1859
+.. _1860: https://github.com/giampaolo/psutil/issues/1860
+.. _1861: https://github.com/giampaolo/psutil/issues/1861
+.. _1862: https://github.com/giampaolo/psutil/issues/1862
+.. _1863: https://github.com/giampaolo/psutil/issues/1863
+.. _1864: https://github.com/giampaolo/psutil/issues/1864
+.. _1865: https://github.com/giampaolo/psutil/issues/1865
+.. _1866: https://github.com/giampaolo/psutil/issues/1866
+.. _1867: https://github.com/giampaolo/psutil/issues/1867
+.. _1868: https://github.com/giampaolo/psutil/issues/1868
+.. _1869: https://github.com/giampaolo/psutil/issues/1869
+.. _1870: https://github.com/giampaolo/psutil/issues/1870
+.. _1871: https://github.com/giampaolo/psutil/issues/1871
+.. _1872: https://github.com/giampaolo/psutil/issues/1872
+.. _1873: https://github.com/giampaolo/psutil/issues/1873
+.. _1874: https://github.com/giampaolo/psutil/issues/1874
+.. _1875: https://github.com/giampaolo/psutil/issues/1875
+.. _1876: https://github.com/giampaolo/psutil/issues/1876
+.. _1877: https://github.com/giampaolo/psutil/issues/1877
+.. _1878: https://github.com/giampaolo/psutil/issues/1878
+.. _1879: https://github.com/giampaolo/psutil/issues/1879
+.. _1880: https://github.com/giampaolo/psutil/issues/1880
+.. _1881: https://github.com/giampaolo/psutil/issues/1881
+.. _1882: https://github.com/giampaolo/psutil/issues/1882
+.. _1883: https://github.com/giampaolo/psutil/issues/1883
+.. _1884: https://github.com/giampaolo/psutil/issues/1884
+.. _1885: https://github.com/giampaolo/psutil/issues/1885
+.. _1886: https://github.com/giampaolo/psutil/issues/1886
+.. _1887: https://github.com/giampaolo/psutil/issues/1887
+.. _1888: https://github.com/giampaolo/psutil/issues/1888
+.. _1889: https://github.com/giampaolo/psutil/issues/1889
+.. _1890: https://github.com/giampaolo/psutil/issues/1890
+.. _1891: https://github.com/giampaolo/psutil/issues/1891
+.. _1892: https://github.com/giampaolo/psutil/issues/1892
+.. _1893: https://github.com/giampaolo/psutil/issues/1893
+.. _1894: https://github.com/giampaolo/psutil/issues/1894
+.. _1895: https://github.com/giampaolo/psutil/issues/1895
+.. _1896: https://github.com/giampaolo/psutil/issues/1896
+.. _1897: https://github.com/giampaolo/psutil/issues/1897
+.. _1898: https://github.com/giampaolo/psutil/issues/1898
+.. _1899: https://github.com/giampaolo/psutil/issues/1899
+.. _1900: https://github.com/giampaolo/psutil/issues/1900
+.. _1901: https://github.com/giampaolo/psutil/issues/1901
+.. _1902: https://github.com/giampaolo/psutil/issues/1902
+.. _1903: https://github.com/giampaolo/psutil/issues/1903
+.. _1904: https://github.com/giampaolo/psutil/issues/1904
+.. _1905: https://github.com/giampaolo/psutil/issues/1905
+.. _1906: https://github.com/giampaolo/psutil/issues/1906
+.. _1907: https://github.com/giampaolo/psutil/issues/1907
+.. _1908: https://github.com/giampaolo/psutil/issues/1908
+.. _1909: https://github.com/giampaolo/psutil/issues/1909
+.. _1910: https://github.com/giampaolo/psutil/issues/1910
+.. _1911: https://github.com/giampaolo/psutil/issues/1911
+.. _1912: https://github.com/giampaolo/psutil/issues/1912
+.. _1913: https://github.com/giampaolo/psutil/issues/1913
+.. _1914: https://github.com/giampaolo/psutil/issues/1914
+.. _1915: https://github.com/giampaolo/psutil/issues/1915
+.. _1916: https://github.com/giampaolo/psutil/issues/1916
+.. _1917: https://github.com/giampaolo/psutil/issues/1917
+.. _1918: https://github.com/giampaolo/psutil/issues/1918
+.. _1919: https://github.com/giampaolo/psutil/issues/1919
+.. _1920: https://github.com/giampaolo/psutil/issues/1920
+.. _1921: https://github.com/giampaolo/psutil/issues/1921
+.. _1922: https://github.com/giampaolo/psutil/issues/1922
+.. _1923: https://github.com/giampaolo/psutil/issues/1923
+.. _1924: https://github.com/giampaolo/psutil/issues/1924
+.. _1925: https://github.com/giampaolo/psutil/issues/1925
+.. _1926: https://github.com/giampaolo/psutil/issues/1926
+.. _1927: https://github.com/giampaolo/psutil/issues/1927
+.. _1928: https://github.com/giampaolo/psutil/issues/1928
+.. _1929: https://github.com/giampaolo/psutil/issues/1929
+.. _1930: https://github.com/giampaolo/psutil/issues/1930
+.. _1931: https://github.com/giampaolo/psutil/issues/1931
+.. _1932: https://github.com/giampaolo/psutil/issues/1932
+.. _1933: https://github.com/giampaolo/psutil/issues/1933
+.. _1934: https://github.com/giampaolo/psutil/issues/1934
+.. _1935: https://github.com/giampaolo/psutil/issues/1935
+.. _1936: https://github.com/giampaolo/psutil/issues/1936
+.. _1937: https://github.com/giampaolo/psutil/issues/1937
+.. _1938: https://github.com/giampaolo/psutil/issues/1938
+.. _1939: https://github.com/giampaolo/psutil/issues/1939
+.. _1940: https://github.com/giampaolo/psutil/issues/1940
+.. _1941: https://github.com/giampaolo/psutil/issues/1941
+.. _1942: https://github.com/giampaolo/psutil/issues/1942
+.. _1943: https://github.com/giampaolo/psutil/issues/1943
+.. _1944: https://github.com/giampaolo/psutil/issues/1944
+.. _1945: https://github.com/giampaolo/psutil/issues/1945
+.. _1946: https://github.com/giampaolo/psutil/issues/1946
+.. _1947: https://github.com/giampaolo/psutil/issues/1947
+.. _1948: https://github.com/giampaolo/psutil/issues/1948
+.. _1949: https://github.com/giampaolo/psutil/issues/1949
+.. _1950: https://github.com/giampaolo/psutil/issues/1950
+.. _1951: https://github.com/giampaolo/psutil/issues/1951
+.. _1952: https://github.com/giampaolo/psutil/issues/1952
+.. _1953: https://github.com/giampaolo/psutil/issues/1953
+.. _1954: https://github.com/giampaolo/psutil/issues/1954
+.. _1955: https://github.com/giampaolo/psutil/issues/1955
+.. _1956: https://github.com/giampaolo/psutil/issues/1956
+.. _1957: https://github.com/giampaolo/psutil/issues/1957
+.. _1958: https://github.com/giampaolo/psutil/issues/1958
+.. _1959: https://github.com/giampaolo/psutil/issues/1959
+.. _1960: https://github.com/giampaolo/psutil/issues/1960
+.. _1961: https://github.com/giampaolo/psutil/issues/1961
+.. _1962: https://github.com/giampaolo/psutil/issues/1962
+.. _1963: https://github.com/giampaolo/psutil/issues/1963
+.. _1964: https://github.com/giampaolo/psutil/issues/1964
+.. _1965: https://github.com/giampaolo/psutil/issues/1965
+.. _1966: https://github.com/giampaolo/psutil/issues/1966
+.. _1967: https://github.com/giampaolo/psutil/issues/1967
+.. _1968: https://github.com/giampaolo/psutil/issues/1968
+.. _1969: https://github.com/giampaolo/psutil/issues/1969
+.. _1970: https://github.com/giampaolo/psutil/issues/1970
+.. _1971: https://github.com/giampaolo/psutil/issues/1971
+.. _1972: https://github.com/giampaolo/psutil/issues/1972
+.. _1973: https://github.com/giampaolo/psutil/issues/1973
+.. _1974: https://github.com/giampaolo/psutil/issues/1974
+.. _1975: https://github.com/giampaolo/psutil/issues/1975
+.. _1976: https://github.com/giampaolo/psutil/issues/1976
+.. _1977: https://github.com/giampaolo/psutil/issues/1977
+.. _1978: https://github.com/giampaolo/psutil/issues/1978
+.. _1979: https://github.com/giampaolo/psutil/issues/1979
+.. _1980: https://github.com/giampaolo/psutil/issues/1980
+.. _1981: https://github.com/giampaolo/psutil/issues/1981
+.. _1982: https://github.com/giampaolo/psutil/issues/1982
+.. _1983: https://github.com/giampaolo/psutil/issues/1983
+.. _1984: https://github.com/giampaolo/psutil/issues/1984
+.. _1985: https://github.com/giampaolo/psutil/issues/1985
+.. _1986: https://github.com/giampaolo/psutil/issues/1986
+.. _1987: https://github.com/giampaolo/psutil/issues/1987
+.. _1988: https://github.com/giampaolo/psutil/issues/1988
+.. _1989: https://github.com/giampaolo/psutil/issues/1989
+.. _1990: https://github.com/giampaolo/psutil/issues/1990
+.. _1991: https://github.com/giampaolo/psutil/issues/1991
+.. _1992: https://github.com/giampaolo/psutil/issues/1992
+.. _1993: https://github.com/giampaolo/psutil/issues/1993
+.. _1994: https://github.com/giampaolo/psutil/issues/1994
+.. _1995: https://github.com/giampaolo/psutil/issues/1995
+.. _1996: https://github.com/giampaolo/psutil/issues/1996
+.. _1997: https://github.com/giampaolo/psutil/issues/1997
+.. _1998: https://github.com/giampaolo/psutil/issues/1998
+.. _1999: https://github.com/giampaolo/psutil/issues/1999
+.. _2000: https://github.com/giampaolo/psutil/issues/2000
