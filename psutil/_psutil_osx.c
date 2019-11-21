@@ -921,36 +921,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        // This is what was found by looking at macosx pthread implementation
+        // Retreaving thread names via a sys-call, from other processes than the owner process,
+	// is currently not supported by MacOSX.
         //
         // https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
         // https://github.com/openbsd/src/blob/master/sys/sys/queue.h
-        //
-        // 1. line 151 : https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
-        // The pthread list head is stored inside the data segment of the program
-        //
-        // 2. line 617 : the actual pthread structure (which contains the thread name)
-        //    is allocated inside the process virtual memory
-        //    VM_PROT_DEFAULT, VM_PROT_ALL => cannot be read by another process
-        // + http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/vm_map.html
-        //
-        // 3. line 945 : https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
-        // 'pthread_from_mach_thread_np' will always return NULL inside the python process, because of 1. and 2.
-        //
-        // However, if this feature is supported by macosx someday,
-        // it is very likely that is will be done using this interfaces.
-        // otherwise, idk what to do with this:
-
-        /**
-        pthread_t pthread;
-        char name[128];
-
-        pthread = pthread_from_mach_thread_np(thread_list[j]);
-        name[0] = '\0';
-        if (pthread) {
-            pthread_getname_np(pthread, name, sizeof(name));
-        }
-        */
         basic_info_th = (thread_basic_info_t)thinfo_basic;
         py_tuple = Py_BuildValue(
             "Iff",

@@ -1142,15 +1142,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 PyErr_SetFromOSErrnoWithSyscall("GetThreadTimes");
                 goto error;
             }
- // Thread 'names' only available for
- // - Windows 10, version >= 1607
- // - Windows Server >= 2016
- //
- // Do not be mistaken by the function name, most dev (and even Microsoft)
- // actually suggest to name threads using this function, see:
- // - https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreaddescription
- //  - https://stackoverflow.com/a/41902967
- //  - https://wiki.python.org/moin/WindowsCompilers
+            // https://stackoverflow.com/a/41902967
+            // https://wiki.python.org/moin/WindowsCompilers
             if (!get_thread_desc_set) {
                 get_thread_desc_set = 1;
                 windll = GetModuleHandle("Kernel32.dll");
