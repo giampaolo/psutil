@@ -345,8 +345,7 @@ psutil_pid_is_running(DWORD pid) {
         return 1;
     if (pid < 0)
         return 0;
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                           FALSE, pid);
+    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (NULL == hProcess) {
         err = GetLastError();
         // Yeah, this is the actual error code in case of "no such process".
