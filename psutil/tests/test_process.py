@@ -613,8 +613,9 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(mem.pss, 0)
             self.assertGreaterEqual(mem.swap, 0)
         if WINDOWS:
-            self.assertGreaterEqual(mem.shared, 0)
-            self.assertGreaterEqual(mem.shareable, 0)
+            self.assertGreaterEqual(mem.wset_private, 0)
+            self.assertGreaterEqual(mem.wset_shared, 0)
+            self.assertGreaterEqual(mem.wset_shareable, 0)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps(self):

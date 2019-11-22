@@ -202,7 +202,8 @@ pmem = namedtuple(
              'pagefile', 'peak_pagefile', 'private'])
 # psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem',
-                      pmem._fields + ('uss', 'shared', 'shareable'))
+                      pmem._fields + ('uss', 'wset_private', 'wset_shared',
+                                      'wset_shareable'))
 # psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 # psutil.Process.memory_maps(grouped=False)
@@ -868,11 +869,12 @@ class Process(object):
     @wrap_exceptions
     def memory_full_info(self):
         basic_mem = self.memory_info()
-        uss, shared, shareable = cext.proc_memory_wset(self.pid)
+        uss, private, shared, shareable = cext.proc_memory_wset(self.pid)
         uss *= getpagesize()
+        private *= getpagesize()
         shared *= getpagesize()
         shareable *= getpagesize()
-        return pfullmem(*basic_mem + (uss, shared, shareable))
+        return pfullmem(*basic_mem + (uss, private, shared, shareable))
 
     def memory_maps(self):
         try:

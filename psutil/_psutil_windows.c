@@ -833,8 +833,8 @@ static PyObject *
 psutil_proc_memory_wset(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
-    PSUTIL_PROCESS_WS_COUNTERS wsCounters;
     PMEMORY_WORKING_SET_INFORMATION wsInfo;
+    SIZE_T uss, private, shared, shareable = 0;
     ULONG_PTR i;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -847,42 +847,24 @@ psutil_proc_memory_wset(PyObject *self, PyObject *args) {
         CloseHandle(hProcess);
         return NULL;
     }
-    memset(&wsCounters, 0, sizeof(PSUTIL_PROCESS_WS_COUNTERS));
 
     for (i = 0; i < wsInfo->NumberOfEntries; i++) {
-        // This is what ProcessHacker does.
-        /*
-        wsCounters.NumberOfPages++;
-        if (wsInfo->WorkingSetInfo[i].ShareCount > 1)
-            wsCounters.NumberOfSharedPages++;
-        if (wsInfo->WorkingSetInfo[i].ShareCount == 0)
-            wsCounters.NumberOfPrivatePages++;
-        if (wsInfo->WorkingSetInfo[i].Shared)
-            wsCounters.NumberOfShareablePages++;
-        */
-
-        // This is what we do: count shared pages that only one process
-        // is using as private (USS).
         if (!wsInfo->WorkingSetInfo[i].Shared ||
                 wsInfo->WorkingSetInfo[i].ShareCount <= 1) {
-            wsCounters.NumberOfPrivatePages++;
+            uss++;
         }
-
-        // shared memory info
         if (wsInfo->WorkingSetInfo[i].ShareCount > 1)
-            wsCounters.NumberOfSharedPages++;
+            shared++;
         if (wsInfo->WorkingSetInfo[i].Shared)
-            wsCounters.NumberOfShareablePages++;
+            shareable++;
+        if (wsInfo->WorkingSetInfo[i].ShareCount == 0)
+            private++;
     }
 
     HeapFree(GetProcessHeap(), 0, wsInfo);
     CloseHandle(hProcess);
 
-    return Py_BuildValue(
-        "III",
-        wsCounters.NumberOfPrivatePages,
-        wsCounters.NumberOfSharedPages,
-        wsCounters.NumberOfShareablePages);
+    return Py_BuildValue("IIII", uss, private, shared, shareable);
 }
 
 
