@@ -267,14 +267,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (! TerminateProcess(hProcess, SIGTERM)) {
         // ERROR_ACCESS_DENIED may happen if the process already died. See:
         // https://github.com/giampaolo/psutil/issues/1099
-        // https://github.com/giampaolo/psutil/issues/1595
-        if ((GetLastError() == ERROR_ACCESS_DENIED) && \
-                (psutil_pid_is_running(pid) == 0))
-        {
-            CloseHandle(hProcess);
-            Py_RETURN_NONE;
-        }
-        else {
+        if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
             goto error;
         }
@@ -282,10 +275,6 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     Py_RETURN_NONE;
-
-error:
-    CloseHandle(hProcess);
-    return NULL;
 }
 
 
