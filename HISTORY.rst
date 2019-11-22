@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1452_: [Windows] Process memory_full_info() now reports 'shared' and
+  'shareable' memory metrics.
+
 **Bug fixes**
 
 - 1179_: [Linux] Process cmdline() now takes into account misbehaving processes

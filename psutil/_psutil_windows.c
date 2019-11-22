@@ -269,7 +269,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         // https://github.com/giampaolo/psutil/issues/1099
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
-            goto error;
+            return NULL;
         }
     }
 
@@ -824,13 +824,13 @@ psutil_GetProcWsetInformation(
 
 
 /*
- * Returns the USS of the process.
- * Reference:
+ * Returns memory working set info about process.
+ * Reference (USS):
  * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
  *     nsMemoryReporterManager.cpp
  */
 static PyObject *
-psutil_proc_memory_uss(PyObject *self, PyObject *args) {
+psutil_proc_memory_wset(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     PSUTIL_PROCESS_WS_COUNTERS wsCounters;
@@ -867,12 +867,22 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
                 wsInfo->WorkingSetInfo[i].ShareCount <= 1) {
             wsCounters.NumberOfPrivatePages++;
         }
+
+        // shared memory info
+        if (wsInfo->WorkingSetInfo[i].ShareCount > 1)
+            wsCounters.NumberOfSharedPages++;
+        if (wsInfo->WorkingSetInfo[i].Shared)
+            wsCounters.NumberOfShareablePages++;
     }
 
     HeapFree(GetProcessHeap(), 0, wsInfo);
     CloseHandle(hProcess);
 
-    return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
+    return Py_BuildValue(
+        "III",
+        wsCounters.NumberOfPrivatePages,
+        wsCounters.NumberOfSharedPages,
+        wsCounters.NumberOfShareablePages);
 }
 
 
@@ -3426,8 +3436,8 @@ PsutilMethods[] = {
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
-     "Return the USS of the process"},
+    {"proc_memory_wset", psutil_proc_memory_wset, METH_VARARGS,
+     "Return memory working set info about a process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS,
