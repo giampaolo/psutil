@@ -269,7 +269,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         // https://github.com/giampaolo/psutil/issues/1099
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
-            goto error;
+            return NULL;
         }
     }
 
