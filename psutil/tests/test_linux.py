@@ -1838,6 +1838,8 @@ class TestProcess(unittest.TestCase):
             assert m.called
 
     def test_cmdline_mixed_separators(self):
+        # https://github.com/giampaolo/psutil/issues/
+        #    1179#issuecomment-552984549
         p = psutil.Process()
         fake_file = io.StringIO(u('foo\x20bar\x00'))
         with mock.patch('psutil._common.open',

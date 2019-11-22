@@ -1651,9 +1651,8 @@ class Process(object):
             data = data[:-1]
         cmdline = data.split(sep)
         # Sometimes last char is a null byte '\0' but the args are
-        # separated by spaces, see:
-        # https://github.com/giampaolo/psutil/
-        #     issues/1179#issuecomment-552984549
+        # separated by spaces, see: https://github.com/giampaolo/psutil/
+        # issues/1179#issuecomment-552984549
         if sep == '\x00' and len(cmdline) == 1 and ' ' in data:
             cmdline = data.split(' ')
         return cmdline

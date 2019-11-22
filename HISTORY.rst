@@ -7,6 +7,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1179_: [Linux] Process cmdline() now takes into account misbehaving processes
+  renaming the command line and using inappropriate chars to separate args.
 - 1595_: [Windows] Process.kill() may not throw AccessDenied.
 - 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
   segfault (CVE).  (patch by Riccardo Schirone)
