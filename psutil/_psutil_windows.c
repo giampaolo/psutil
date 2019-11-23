@@ -1200,7 +1200,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
 
 /*
- Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
+ Accept a filename's drive in native format like "\Device\HarddiskVolume1\"
  and return the corresponding drive letter (e.g. "C:\\").
  If no match is found return an empty string.
 */
@@ -1210,7 +1210,11 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
     TCHAR d = TEXT('A');
     TCHAR     szBuff[5];
 
+#if PY_MAJOR_VERSION <= 2
+    if (!PyArg_ParseTuple(args, "O", &lpDevicePath))
+#else
     if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
+#endif
         return NULL;
 
     while (d <= TEXT('Z')) {
