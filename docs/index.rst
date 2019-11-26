@@ -42,20 +42,44 @@ Supported Python versions are **2.6**, **2.7** and **3.4+**.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+
+Professional support
+====================
+
+.. image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
+    :width: 80px
+    :align: left
+
+Professional support for psutil is available as part of the `Tidelift Subscription`_.
+Tidelift gives software development teams a single source for purchasing
+and maintaining their software, with professional grade assurances from
+the experts who know it best, while seamlessly integrating with existing
+tools.
+By subscribing you will help me (`Giampaolo Rodola`_) support psutil
+future development. Alternatively consider making a small `donation`_.
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
+
 Install
--------
+=======
 
-The easiest way to install psutil is via ``pip``::
+Linux Ubuntu / Debian::
 
-    pip install psutil
+  sudo apt-get install gcc python3-dev
+  sudo pip3 install psutil
 
-On UNIX this requires a C compiler (e.g. gcc) installed. On Windows pip will
-automatically retrieve a pre-compiled wheel version from
-`PyPI repository <https://pypi.org/project/psutil>`__.
-Alternatively, see more detailed
+Linux Redhat::
+
+  sudo yum install gcc python3-devel
+  sudo pip3 install psutil
+
+Windows::
+
+  pip3 install psutil
+
+For other platforms see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 instructions.
-
 
 System related functions
 ========================
@@ -2635,6 +2659,10 @@ take a look at the `development guide`_.
 Timeline
 ========
 
+- 2019-11-26:
+  `5.6.7 <https://pypi.org/project/psutil/5.6.7/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#567>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.6...release-5.6.7#files_bucket>`__
 - 2019-11-25:
   `5.6.6 <https://pypi.org/project/psutil/5.6.6/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#566>`__ -
@@ -2952,11 +2980,13 @@ Timeline
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _`enums`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
@@ -2998,3 +3028,5 @@ Timeline
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme

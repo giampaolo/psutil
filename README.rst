@@ -119,8 +119,6 @@ Professional support
        By subscribing you will help me (`Giampaolo Rodola`_) support psutil
        future development. Alternatively consider making a small `donation`_.
 
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-
 Security
 ========
 
@@ -515,3 +513,5 @@ Windows services
 .. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+
