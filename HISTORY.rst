@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+
+5.6.7
+=====
+
+2019-11-26
+
+**Bug fixes**
+
+- 1630_: [Windows] can't compile source distribution due to C syntax error.
+
 5.6.6
 =====
 
