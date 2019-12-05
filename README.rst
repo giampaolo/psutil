@@ -102,7 +102,7 @@ psutil for enterprise
 =====================
 
 .. |tideliftlogo| image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
-   :width: 100
+   :width: 150
    :alt: Tidelift
    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
@@ -115,7 +115,7 @@ psutil for enterprise
        source dependencies you use to build your applications. Save time,
        reduce risk, and improve code health, while paying the maintainers of
        the exact dependencies you use.
-       `Learn more <(https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`__).
+       `Learn more <https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`__).
        By subscribing you will help me (`Giampaolo Rodola`_) support
        psutil future development. Alternatively consider making a small
        `donation`_.
