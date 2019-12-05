@@ -300,7 +300,7 @@ Memory
   Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes. Main metrics:
 
-  - **total**: total physical memory.
+  - **total**: total physical memory (exclusive swap).
   - **available**: the memory that can be given instantly to processes without
     the system going into swap.
     This is calculated by summing different memory values depending on the
