@@ -44,7 +44,7 @@ The psutil documentation you're reading is distributed as a single HTML page.
 
 
 Professional support
-====================
+--------------------
 
 .. image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
     :width: 80px
@@ -61,7 +61,7 @@ To report a security vulnerability, please use the `Tidelift security
 contact`_.  Tidelift will coordinate the fix and disclosure.
 
 Install
-=======
+-------
 
 Linux Ubuntu / Debian::
 
