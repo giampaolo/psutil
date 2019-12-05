@@ -116,7 +116,8 @@ psutil for enterprise
        reduce risk, and improve code health, while paying the maintainers of
        the exact dependencies you use.
        `Learn more <https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`__.
-       By subscribing you will help me (`Giampaolo Rodola`_) support
+
+       By subscribing to Tidelift you will help me (`Giampaolo Rodola`_) support
        psutil future development. Alternatively consider making a small
        `donation`_.
 
