@@ -14,6 +14,7 @@ import shutil
 import sys
 import tempfile
 import warnings
+import re
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -268,6 +269,17 @@ if POSIX:
     if SUNOS:
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
+            # To ensure no regression, we assume by default
+            # the target is new_mib_compliant
+            new_mib_compliant = True
+            # See https://serverfault.com/q/524883
+            # for an explanation of Solaris /etc/release
+            with open('/etc/release') as f:
+                update = re.search(r'(?<=s10s_u)[0-9]{1,2}', f.readline())
+                if update is None or (int(update.group(0)) < 4):
+                    new_mib_compliant = False
+            if new_mib_compliant:
+                posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
     elif AIX:
