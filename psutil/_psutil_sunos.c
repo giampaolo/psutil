@@ -12,9 +12,6 @@
 /* fix compilation issue on SunOS 5.10, see:
  * https://github.com/giampaolo/psutil/issues/421
  * https://github.com/giampaolo/psutil/issues/1077
- * http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
- *
- * Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
 */
 
 #define _STRUCTURED_PROC 1
