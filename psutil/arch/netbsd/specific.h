@@ -27,3 +27,4 @@ PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
 PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
 PyObject* psutil_cpu_stats(PyObject* self, PyObject* args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
+PyObject *psutil_proc_exe(PyObject *self, PyObject *args);

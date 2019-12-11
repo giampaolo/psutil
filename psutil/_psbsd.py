@@ -625,14 +625,8 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        if FREEBSD:
+        if FREEBSD or NETBSD:
             return cext.proc_exe(self.pid)
-        elif NETBSD:
-            if self.pid == 0:
-                # /proc/0 dir exists but /proc/0/exe doesn't
-                return ""
-            with wrap_exceptions_procfs(self):
-                return os.readlink("/proc/%s/exe" % self.pid)
         else:
             # OpenBSD: exe cannot be determined; references:
             # https://chromium.googlesource.com/chromium/src/base/+/
