@@ -1073,9 +1073,44 @@ class TestSystemNetConnections(unittest.TestCase):
         self.assertEqual(conn_p1[0].raddr.ip, '192.168.1.2')
         self.assertEqual(conn_p1[0].raddr.port, 22)
 
-        # NOTE: This fails now. Should not fail after fix.
+        # NOTE: This is set to pass now. Should not fail after fix.
         self.assertEqual(len(conn_p2), 1)
         # TODO: add similar assertions as for conn_p1
+
+    def test_network_namespaces(self):
+        def mock_readlink(path, paths_links_map, orig_method):
+            if path in paths_links_map:
+                return paths_links_map[path]
+
+            try:
+                return orig_method(path)
+            except PermissionError:
+                return ""
+
+        orig_readlink = psutil._pslinux.readlink
+
+        p1 = get_test_subprocess()
+        p2 = get_test_subprocess()
+
+        mock_inode1 = '7258461850'
+        mock_inode2 = '3650844375'
+        mock_paths_links_map = {
+                "%s/%s/ns/net" % (
+                    psutil._common.get_procfs_path(), p1.pid
+                    ): "net:[%s]" % mock_inode1,
+                "%s/%s/ns/net" % (
+                    psutil._common.get_procfs_path(), p2.pid
+                    ): "net:[%s]" % mock_inode2
+                }
+        with mock.patch(
+                "psutil._pslinux.readlink",
+                new=lambda path: mock_readlink(
+                    path, mock_paths_links_map, orig_readlink)):
+
+            namespaces = psutil._pslinux.Connections.network_namespaces()
+
+        self.assertIn(mock_inode1, namespaces)
+        self.assertIn(mock_inode2, namespaces)
 
 # =====================================================================
 # --- system disks

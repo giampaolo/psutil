@@ -868,6 +868,25 @@ class Connections:
         return _common.addr(ip, port)
 
     @staticmethod
+    def network_namespaces():
+        net_namespaces = defaultdict(list)
+        for pid in pids():
+            try:
+                ns = readlink("%s/%s/ns/net" % (get_procfs_path(), pid))
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
+                    # not a link
+                    continue
+                raise
+            else:
+                if ns.startswith('net:['):
+                    ns = ns[5:][:-1]
+                    net_namespaces[ns].append(pid)
+        return net_namespaces
+
+    @staticmethod
     def process_inet(file, family, type_, inodes, filter_pid=None):
         """Parse /proc/net/tcp* and /proc/net/udp* files."""
         if file.endswith('6') and not os.path.exists(file):
