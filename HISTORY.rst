@@ -1,6 +1,11 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
 
+**Bug fixes**
+
+- 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
+  (patch by Étienne Servais)
+
 5.6.7
 =====
 

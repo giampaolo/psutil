@@ -14,6 +14,7 @@ import shutil
 import sys
 import tempfile
 import warnings
+import re
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -266,10 +267,28 @@ if POSIX:
         define_macros=macros,
         sources=sources)
     if SUNOS:
+        def get_sunos_update():
+            # See https://serverfault.com/q/524883
+            # for an explanation of Solaris /etc/release
+            with open('/etc/release') as f:
+                update = re.search(r'(?<=s10s_u)[0-9]{1,2}', f.readline())
+                if update is None:
+                    return 0
+                else:
+                    return int(update.group(0))
+
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
+            # Detect Solaris 5.10, update >= 4, see:
+            # https://github.com/giampaolo/psutil/pull/1638
+            if get_sunos_update() >= 4:
+                # MIB compliancy starts with SunOS 5.10 Update 4:
+                posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+        else:
+            # Other releases are by default considered to be new mib compliant.
+            posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
     elif AIX:
         posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
 
