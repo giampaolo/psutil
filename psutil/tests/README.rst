@@ -7,7 +7,7 @@ Instructions for running tests
     python -m psutil.tests --install-deps  # install test deps
     python -m psutil.tests
 
-  As a "developer", if you have a copy of the source code and you whish to hack
+  As a "developer", if you have a copy of the source code and you wish to hack
   on psutil::
 
     make setup-dev-env  # install test deps (+ other things)
