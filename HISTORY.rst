@@ -4,7 +4,7 @@
 **Bug fixes**
 
 - 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
-  (patch by Étienne Servais)
+- 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 
 5.6.7
 =====
