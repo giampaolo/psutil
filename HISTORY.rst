@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
+- 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
+  due to a backward incompatible change in a C type introduced in 12.0.
 
 5.6.7
 =====
