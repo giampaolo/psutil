@@ -13,6 +13,7 @@ import platform
 import shutil
 import sys
 import tempfile
+import glob
 import warnings
 import re
 
@@ -318,6 +319,7 @@ def main():
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
         # see: python setup.py register --list-classifiers
+        scripts=glob.glob('scripts/*.py'),
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
