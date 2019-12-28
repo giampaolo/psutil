@@ -932,11 +932,11 @@ Functions
   Convenience function which waits for a list of :class:`Process` instances to
   terminate. Return a ``(gone, alive)`` tuple indicating which processes are
   gone and which ones are still alive. The *gone* ones will have a new
-  *returncode* attribute indicating process exit status (will be ``None`` for
-  processes which are not our children).
+  *returncode* attribute indicating process exit status as returned by
+  :meth:`Process.wait`.
   ``callback`` is a function which gets called when one of the processes being
   waited on is terminated and a :class:`Process` instance is passed as callback
-  argument).
+  argument (the instance will also have a *returncode* attribute set).
   This function will return as soon as all processes terminate or when
   *timeout* (seconds) occurs.
   Differently from :meth:`Process.wait` it will not raise
