@@ -1616,6 +1616,7 @@ class TestSensorsTemperatures(unittest.TestCase):
             elif path == '/sys/class/thermal/thermal_zone0/trip_point*':
                 return ['/sys/class/thermal/thermal_zone1/trip_point_0_type',
                         '/sys/class/thermal/thermal_zone1/trip_point_0_temp']
+            return []
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'

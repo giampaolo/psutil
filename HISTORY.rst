@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
+  directory for additional data.  (patch by Javad Karabi)
+
 **Bug fixes**
 
 - 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
