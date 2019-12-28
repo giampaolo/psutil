@@ -1369,6 +1369,8 @@ class Process(object):
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
         of os.getpid(), also return its exit code, else None.
+        On Windows there's no such limitation (exit code is always
+        returned).
 
         If the process is already terminated immediately return None
         instead of raising NoSuchProcess.
