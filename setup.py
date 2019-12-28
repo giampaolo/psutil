@@ -6,6 +6,7 @@
 
 """Cross-platform lib for process and system monitoring in Python."""
 
+from __future__ import print_function
 import contextlib
 import io
 import os
@@ -27,12 +28,13 @@ with warnings.catch_warnings():
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-# ...so we can import _common.py
+# ...so we can import _common.py and _compat.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
 from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
+from _common import hilite  # NOQA
 from _common import LINUX  # NOQA
 from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
@@ -40,6 +42,8 @@ from _common import OPENBSD  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
+from _compat import PY3  # NOQA
+from _compat import which  # NOQA
 
 
 macros = []
@@ -103,6 +107,13 @@ def silenced_output(stream_name):
         yield
     finally:
         setattr(sys, stream_name, orig)
+
+
+def missdeps(msg):
+    s = hilite("C compiler or Python headers are not installed ", ok=False)
+    s += hilite("on this system. Try to run:\n", ok=False)
+    s += hilite(msg, ok=False, bold=True)
+    print(s, file=sys.stderr)
 
 
 if WINDOWS:
@@ -365,7 +376,38 @@ def main():
             extras_require=extras_require,
             zip_safe=False,
         )
-    setup(**kwargs)
+    success = False
+    try:
+        setup(**kwargs)
+        success = True
+    finally:
+        if not success and POSIX and not which('gcc'):
+            py3 = "3" if PY3 else ""
+            if LINUX:
+                if which('dpkg'):
+                    missdeps("sudo apt-get install gcc python%s-dev" % py3)
+                elif which('rpm'):
+                    missdeps("sudo yum install gcc python%s-devel" % py3)
+            elif MACOS:
+                print(hilite("XCode (https://developer.apple.com/xcode/) "
+                             "is not installed"), ok=False, file=sys.stderr)
+            elif FREEBSD:
+                missdeps("pkg install gcc python%s" % py3)
+            elif OPENBSD:
+                missdeps("pkg_add -v gcc python%s" % py3)
+            elif NETBSD:
+                missdeps("pkgin install gcc python%s" % py3)
+            elif SUNOS:
+                missdeps("sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
+                         "pkg install gcc")
+        elif not success and WINDOWS:
+            if PY3:
+                ur = "http://www.visualstudio.com/en-au/news/vs2015-preview-vs"
+            else:
+                ur = "http://www.microsoft.com/en-us/download/"
+                ur += "details.aspx?id=44266"
+            print(hilite("VisualStudio is not installed; get it from %s" % ur),
+                  ok=False, file=sys.stderr)
 
 
 if __name__ == '__main__':
