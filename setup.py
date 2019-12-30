@@ -148,6 +148,7 @@ if WINDOWS:
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
             'psutil/arch/windows/global.c',
+            'psutil/arch/windows/socks.c',
             'psutil/arch/windows/wmi.c',
         ],
         define_macros=macros,
@@ -406,8 +407,8 @@ def main():
             else:
                 ur = "http://www.microsoft.com/en-us/download/"
                 ur += "details.aspx?id=44266"
-            print(hilite("VisualStudio is not installed; get it from %s" % ur),
-                  ok=False, file=sys.stderr)
+            s = "VisualStudio is not installed; get it from %s" % ur
+            print(hilite(s, ok=False), file=sys.stderr)
 
 
 if __name__ == '__main__':
