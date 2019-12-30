@@ -15,7 +15,7 @@
 
 #include "ntextapi.h"
 #include "global.h"
-#include "process_info.h"
+#include "process_utils.h"
 #include "../../_psutil_common.h"
 
 
