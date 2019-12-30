@@ -12,12 +12,8 @@
 /* fix compilation issue on SunOS 5.10, see:
  * https://github.com/giampaolo/psutil/issues/421
  * https://github.com/giampaolo/psutil/issues/1077
- * http://us-east.manta.joyent.com/jmc/public/opensolaris/ARChive/PSARC/2010/111/materials/s10ceval.txt
- *
- * Because LEGACY_MIB_SIZE defined in the same file there is no way to make autoconfiguration =\
 */
 
-#define NEW_MIB_COMPLIANT 1
 #define _STRUCTURED_PROC 1
 
 #include <Python.h>
@@ -44,6 +40,14 @@
 #include <sys/tihdr.h>
 #include <stropts.h>
 #include <inet/tcp.h>
+#ifndef NEW_MIB_COMPLIANT
+/*
+ * Solaris introduced NEW_MIB_COMPLIANT macro with Update 4.
+ * See https://github.com/giampaolo/psutil/issues/421
+ * Prior to Update 4, one has to include mib2 by hand.
+ */
+#include <inet/mib2.h>
+#endif
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <math.h> // fabs()
@@ -1747,7 +1751,14 @@ void init_psutil_sunos(void)
     PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SIDL", SIDL);
     PyModule_AddIntConstant(module, "SONPROC", SONPROC);
+#ifdef SWAIT
     PyModule_AddIntConstant(module, "SWAIT", SWAIT);
+#else
+    /* sys/proc.h started defining SWAIT somewhere
+     * after Update 3 and prior to Update 5 included.
+     */
+    PyModule_AddIntConstant(module, "SWAIT", 0);
+#endif
 
     PyModule_AddIntConstant(module, "PRNODEV", PRNODEV);  // for process tty
 

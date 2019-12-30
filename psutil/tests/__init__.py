@@ -153,9 +153,10 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+ROOT_DIR = os.path.realpath(
+    os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
-HERE = os.path.abspath(os.path.dirname(__file__))
+HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 

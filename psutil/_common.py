@@ -23,6 +23,7 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
 try:
     from socket import AF_INET6
 except ImportError:
@@ -36,6 +37,7 @@ if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
+
 
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] == 3
@@ -64,7 +66,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
-    'bytes2human', 'conn_to_ntuple',
+    'bytes2human', 'conn_to_ntuple', 'hilite',
 ]
 
 
@@ -649,3 +651,35 @@ if PY3:
 else:
     def decode(s):
         return s
+
+
+def _term_supports_colors(file=sys.stdout):
+    if hasattr(_term_supports_colors, "ret"):
+        return _term_supports_colors.ret
+    try:
+        import curses
+        assert file.isatty()
+        curses.setupterm()
+        assert curses.tigetnum("colors") > 0
+    except Exception:
+        _term_supports_colors.ret = False
+        return False
+    else:
+        _term_supports_colors.ret = True
+    return _term_supports_colors.ret
+
+
+def hilite(s, ok=True, bold=False):
+    """Return an highlighted version of 'string'."""
+    if not _term_supports_colors():
+        return s
+    attr = []
+    if ok is None:  # no color
+        pass
+    elif ok:   # green
+        attr.append('32')
+    else:   # red
+        attr.append('31')
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)

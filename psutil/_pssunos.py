@@ -400,6 +400,9 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _proc_basic_info(self):
+        if self.pid == 0 and not \
+                os.path.exists('%s/%s/psinfo' % (self._procfs_path, self.pid)):
+            raise AccessDenied(self.pid)
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
         assert len(ret) == len(proc_info_map)
         return ret

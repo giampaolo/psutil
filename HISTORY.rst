@@ -1,9 +1,35 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.6.8 (unreleased)
+==================
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
+  directory for additional data.  (patch by Javad Karabi)
+
+**Bug fixes**
+
+- 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
+- 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
+- 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
+  due to a backward incompatible change in a C type introduced in 12.0.
+
+5.6.7
+=====
+
+2019-11-26
+
+**Bug fixes**
+
+- 1630_: [Windows] can't compile source distribution due to C syntax error.
+
 5.6.6
 =====
 
-XXXX-XX-XX
+2019-11-25
 
 **Bug fixes**
 
