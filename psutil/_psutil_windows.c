@@ -45,7 +45,6 @@
 #include "arch/windows/wmi.h"
 #include "_psutil_common.h"
 
-
 /*
  * ============================================================================
  * Utilities
@@ -1068,9 +1067,17 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+typedef HRESULT (*get_thread_desc_t)(HANDLE,PWSTR *);
 
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
+    static char get_thread_desc_set = 0;
+    static get_thread_desc_t get_thread_desc = NULL;
+    static HMODULE windll = NULL;
+    HRESULT hr;
+    PWSTR wThreadName;
+    char * threadName;
+    size_t len;
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
@@ -1133,7 +1140,33 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 PyErr_SetFromOSErrnoWithSyscall("GetThreadTimes");
                 goto error;
             }
-
+            // https://stackoverflow.com/a/41902967
+            // https://wiki.python.org/moin/WindowsCompilers
+            if (!get_thread_desc_set) {
+                get_thread_desc_set = 1;
+                windll = GetModuleHandle("Kernel32.dll");
+                if (windll) {
+                    get_thread_desc = (get_thread_desc_t) GetProcAddress(windll, "GetThreadDescription");
+                }
+                get_thread_desc = (get_thread_desc_t) GetProcAddress(
+                    GetModuleHandle("Kernel32.dll"), "GetThreadDescription"
+                );
+            }
+            if (get_thread_desc) {
+                hr = get_thread_desc(hThread, &wThreadName);
+                if (FAILED(hr)) {
+                    PyErr_SetFromOSErrnoWithSyscall("GetThreadDescription");
+                    goto error;
+                }
+                len = wcslen(wThreadName);
+                threadName = (char *) malloc(sizeof(char) * (len + 1));
+                if (threadName) {
+                    threadName[wcstombs(threadName, wThreadName, len)] = 0;
+                }
+            } else {
+                wThreadName = NULL;
+                threadName = NULL;
+            }
             /*
              * User and kernel times are represented as a FILETIME structure
              * which contains a 64-bit value representing the number of
@@ -1144,12 +1177,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
              * below from Python's Modules/posixmodule.c
              */
             py_tuple = Py_BuildValue(
-                "kdd",
+                "kdds",
                 te32.th32ThreadID,
                 (double)(ftUser.dwHighDateTime * 429.4967296 + \
                          ftUser.dwLowDateTime * 1e-7),
                 (double)(ftKernel.dwHighDateTime * 429.4967296 + \
-                         ftKernel.dwLowDateTime * 1e-7));
+                         ftKernel.dwLowDateTime * 1e-7),
+                threadName ? threadName : "");
+            LocalFree(wThreadName);
+            free(threadName);
+
             if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))

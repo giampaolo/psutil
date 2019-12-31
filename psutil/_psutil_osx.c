@@ -920,6 +920,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         }
 
+        // Retreaving thread names via a sys-call, from other processes than the owner process,
+	// is currently not supported by MacOSX.
+        //
+        // https://github.com/apple/darwin-libpthread/blob/master/src/pthread.c
+        // https://github.com/openbsd/src/blob/master/sys/sys/queue.h
         basic_info_th = (thread_basic_info_t)thinfo_basic;
         py_tuple = Py_BuildValue(
             "Iff",

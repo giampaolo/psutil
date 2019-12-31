@@ -472,8 +472,10 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertGreaterEqual(t.id, 0)
             self.assertGreaterEqual(t.user_time, 0)
             self.assertGreaterEqual(t.system_time, 0)
-            for field in t:
-                self.assertIsInstance(field, (int, float))
+            self.assertIsInstance(t.id, (int, float))
+            self.assertIsInstance(t.user_time, (int, float))
+            self.assertIsInstance(t.system_time, (int, float))
+            self.assertIsInstance(t.name, str)
 
     def cpu_times(self, ret, proc):
         assert is_namedtuple(ret)
