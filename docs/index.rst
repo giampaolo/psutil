@@ -2607,9 +2607,9 @@ Supported platforms
 
 These are the platforms I develop and test on:
 
-* Linux Ubuntu 16.04
+* Linux Ubuntu 18.04
+* Windows 10 (support back to Windows Vista)
 * MacOS 10.11 El Captain
-* Windows 10
 * Solaris 10
 * FreeBSD 11
 * OpenBSD 6.4

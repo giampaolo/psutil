@@ -1206,7 +1206,8 @@ def sensors_temperatures():
     # https://github.com/giampaolo/psutil/issues/971
     # https://github.com/nicolargo/glances/issues/1060
     basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*'))
-    basenames.extend(glob.glob('/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'))
+    basenames.extend(glob.glob(
+        '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'))
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
 
     for base in basenames:
