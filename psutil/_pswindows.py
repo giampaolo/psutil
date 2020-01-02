@@ -168,20 +168,6 @@ WIN_7 = (6, 1)
 WIN_SERVER_2008 = (6, 0)
 WIN_VISTA = (6, 0)
 WIN_SERVER_2003 = (5, 2)
-WIN_XP = (5, 1)
-
-
-@lru_cache()
-def get_winver():
-    """Usage:
-    >>> if get_winver() <= WIN_VISTA:
-    ...      ...
-    """
-    wv = sys.getwindowsversion()
-    return (wv.major, wv.minor)
-
-
-IS_WIN_XP = get_winver() < WIN_VISTA
 
 
 # =====================================================================
@@ -785,17 +771,7 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        # Dual implementation, see:
-        # https://github.com/giampaolo/psutil/pull/1413
-        if not IS_WIN_XP:
-            exe = cext.proc_exe(self.pid)
-        else:
-            if self.pid in (0, 4):
-                # https://github.com/giampaolo/psutil/issues/414
-                # https://github.com/giampaolo/psutil/issues/528
-                raise AccessDenied(self.pid, self._name)
-            exe = cext.proc_exe(self.pid)
-            exe = convert_dos_path(exe)
+        exe = cext.proc_exe(self.pid)
         return py2_strencode(exe)
 
     @wrap_exceptions

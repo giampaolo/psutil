@@ -123,13 +123,11 @@ psutil_loadlibs() {
     if (! psutil_rtlIpv4AddressToStringA)
         return 1;
 
-    // minimum requirement: Win XP SP3
     psutil_GetExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (! psutil_GetExtendedTcpTable)
         return 1;
 
-    // minimum requirement: Win XP SP3
     psutil_GetExtendedUdpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! psutil_GetExtendedUdpTable)
