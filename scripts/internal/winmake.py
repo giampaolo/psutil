@@ -12,6 +12,8 @@ that they should be deemed illegal!
 """
 
 from __future__ import print_function
+import atexit
+import ctypes
 import errno
 import fnmatch
 import functools
@@ -59,6 +61,12 @@ _cmds = {}
 if PY3:
     basestring = str
 
+GREEN = 2
+YELLOW = 6
+RED = 4
+DEFAULT_COLOR = 7
+
+
 # ===================================================================
 # utils
 # ===================================================================
@@ -82,6 +90,26 @@ def safe_print(text, file=sys.stdout, flush=False):
             text = bytes_string.decode(file.encoding, 'strict')
             file.write(text)
     file.write("\n")
+
+
+def stderr_handle():
+    GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
+    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xfffffff4)
+    GetStdHandle.restype = ctypes.c_ulong
+    handle = GetStdHandle(STD_ERROR_HANDLE_ID)
+    atexit.register(ctypes.windll.Kernel32.CloseHandle, handle)
+    return handle
+
+
+def win_colorprint(s, color=3):
+    color += 8  # bold
+    handle = stderr_handle()
+    SetConsoleTextAttribute = ctypes.windll.Kernel32.SetConsoleTextAttribute
+    SetConsoleTextAttribute(handle, color)
+    try:
+        print(s)
+    finally:
+        SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
 
 def sh(cmd, nolog=False):
@@ -211,13 +239,37 @@ def build():
     # Make sure setuptools is installed (needed for 'develop' /
     # edit mode).
     sh('%s -c "import setuptools"' % PYTHON)
-    sh("%s setup.py build" % PYTHON)
+
+    # Print coloured warnings in real time.
+    cmd = [PYTHON, "setup.py", "build"]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        for line in iter(p.stdout.readline, b''):
+            if PY3:
+                line = line.decode()
+            line = line.strip()
+            if 'warning' in line:
+                win_colorprint(line, YELLOW)
+            elif 'error' in line:
+                win_colorprint(line, RED)
+            else:
+                print(line)
+        # retcode = p.poll()
+        p.communicate()
+        if p.returncode:
+            win_colorprint("failure", RED)
+            sys.exit(p.returncode)
+    finally:
+        p.terminate()
+        p.wait()
+
     # Copies compiled *.pyd files in ./psutil directory in order to
     # allow "import psutil" when using the interactive interpreter
     # from within this directory.
     sh("%s setup.py build_ext -i" % PYTHON)
     # Make sure it actually worked.
     sh('%s -c "import psutil"' % PYTHON)
+    win_colorprint("success", GREEN)
 
 
 @cmd

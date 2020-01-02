@@ -8,10 +8,11 @@
 #include <windows.h>
 #include <Psapi.h>
 #include <Python.h>
+
 #include "ntextapi.h"
 #include "global.h"
 #include "process_handles.h"
-#include "process_info.h"
+#include "process_utils.h"
 #include "../../_psutil_common.h"
 
 CRITICAL_SECTION g_cs;
