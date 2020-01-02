@@ -25,6 +25,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
+from ._common import AccessDenied
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -33,12 +34,14 @@ from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import NoSuchProcess
 from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._common import ZombieProcess
 from ._compat import b
 from ._compat import basestring
 from ._compat import FileNotFoundError
@@ -160,13 +163,6 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
-
-# These objects get set on "import psutil" from the __init__.py
-# file, see: https://github.com/giampaolo/psutil/issues/1402
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

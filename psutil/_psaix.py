@@ -18,13 +18,16 @@ from . import _common
 from . import _psposix
 from . import _psutil_aix as cext
 from . import _psutil_posix as cext_posix
+from ._common import AccessDenied
 from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import NoSuchProcess
 from ._common import usage_percent
+from ._common import ZombieProcess
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
@@ -78,13 +81,6 @@ proc_info_map = dict(
     num_threads=5,
     status=6,
     ttynr=7)
-
-# These objects get set on "import psutil" from the __init__.py
-# file, see: https://github.com/giampaolo/psutil/issues/1402
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================

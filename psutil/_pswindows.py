@@ -32,6 +32,7 @@ except ImportError as err:
     else:
         raise
 
+from ._common import AccessDenied
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import ENCODING
@@ -39,7 +40,9 @@ from ._common import ENCODING_ERRS
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import NoSuchProcess
 from ._common import parse_environ_block
+from ._common import TimeoutExpired
 from ._common import usage_percent
 from ._compat import long
 from ._compat import lru_cache
@@ -153,13 +156,6 @@ pinfo_map = dict(
     peak_pagefile=20,
     mem_private=21,
 )
-
-# These objects get set on "import psutil" from the __init__.py
-# file, see: https://github.com/giampaolo/psutil/issues/1402
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 # More values at: https://stackoverflow.com/a/20804735/376587
 WIN_10 = (10, 0)

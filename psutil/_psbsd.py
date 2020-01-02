@@ -16,14 +16,17 @@ from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
+from ._common import AccessDenied
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import FREEBSD
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NETBSD
+from ._common import NoSuchProcess
 from ._common import OPENBSD
 from ._common import usage_percent
+from ._common import ZombieProcess
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
@@ -134,13 +137,6 @@ kinfo_proc_map = dict(
     cpunum=23,
     name=24,
 )
-
-# These objects get set on "import psutil" from the __init__.py
-# file, see: https://github.com/giampaolo/psutil/issues/1402
-NoSuchProcess = None
-ZombieProcess = None
-AccessDenied = None
-TimeoutExpired = None
 
 
 # =====================================================================
