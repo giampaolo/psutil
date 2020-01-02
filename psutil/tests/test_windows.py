@@ -32,16 +32,13 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
+if WINDOWS:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         import win32api  # requires "pip install pypiwin32"
         import win32con
         import win32process
         import wmi  # requires "pip install wmi" / "make setup-dev-env"
-    except ImportError:
-        if os.name == 'nt':
-            raise
 
 
 cext = psutil._psplatform.cext
