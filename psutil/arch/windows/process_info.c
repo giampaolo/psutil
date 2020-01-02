@@ -16,6 +16,14 @@
 #include "../../_psutil_common.h"
 
 
+#define PSUTIL_FIRST_PROCESS(Processes) ( \
+    (PSYSTEM_PROCESS_INFORMATION)(Processes))
+#define PSUTIL_NEXT_PROCESS(Process) ( \
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
+
+
 // ====================================================================
 // Helper structures to access the memory correctly.
 // Some of these might also be defined in the winternl.h header file
@@ -120,16 +128,8 @@ typedef struct {
 #endif
 
 
-#define PSUTIL_FIRST_PROCESS(Processes) ( \
-    (PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PSUTIL_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
-
-
 // ====================================================================
-// Process and PIDs utiilties.
+// Process / PEB functions.
 // ====================================================================
 
 
