@@ -36,7 +36,6 @@
 #include "arch/windows/disk.h"
 #include "arch/windows/cpu.h"
 #include "arch/windows/net.h"
-#include "arch/windows/inet_ntop.h"
 #include "arch/windows/services.h"
 #include "arch/windows/socks.h"
 #include "arch/windows/wmi.h"

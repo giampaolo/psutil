@@ -149,7 +149,6 @@ if WINDOWS:
             'psutil/arch/windows/net.c',
             'psutil/arch/windows/cpu.c',
             'psutil/arch/windows/security.c',
-            'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
             'psutil/arch/windows/global.c',
             'psutil/arch/windows/socks.c',
