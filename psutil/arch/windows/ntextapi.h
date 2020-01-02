@@ -10,11 +10,15 @@
 
 typedef LONG NTSTATUS;
 
-#define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
-#define STATUS_BUFFER_TOO_SMALL 0xC0000023L
+// https://github.com/ajkhoury/TestDll/blob/master/nt_ddk.h
+#define STATUS_INFO_LENGTH_MISMATCH ((NTSTATUS)0xC0000004L)
+#define STATUS_BUFFER_TOO_SMALL ((NTSTATUS)0xC0000023L)
+#define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
+#define STATUS_NOT_FOUND ((NTSTATUS)0xC0000225L)
+#define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
+
 #define SystemExtendedHandleInformation 64
 #define MemoryWorkingSetInformation 0x1
-#define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
 
 /*
  * ================================================================

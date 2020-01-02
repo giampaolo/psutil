@@ -137,8 +137,6 @@ typedef struct {
 // ====================================================================
 
 
-#define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
-
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */
 static int
