@@ -3173,10 +3173,6 @@ void init_psutil_windows(void)
     PyModule_AddIntConstant(
         module, "WINVER", PSUTIL_WINVER);
     PyModule_AddIntConstant(
-        module, "WINDOWS_XP", PSUTIL_WINDOWS_XP);
-    PyModule_AddIntConstant(
-        module, "WINDOWS_SERVER_2003", PSUTIL_WINDOWS_SERVER_2003);
-    PyModule_AddIntConstant(
         module, "WINDOWS_VISTA", PSUTIL_WINDOWS_VISTA);
     PyModule_AddIntConstant(
         module, "WINDOWS_7", PSUTIL_WINDOWS_7);

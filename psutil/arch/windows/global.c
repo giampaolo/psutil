@@ -193,11 +193,7 @@ psutil_set_winver() {
     psutil_RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
-    if (maj == 5 && min == 1)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_XP;
-    else if (maj == 5 && min == 2)
-        PSUTIL_WINVER = PSUTIL_WINDOWS_SERVER_2003;
-    else if (maj == 6 && min == 0)
+    if (maj == 6 && min == 0)
         PSUTIL_WINVER = PSUTIL_WINDOWS_VISTA;  // or Server 2008
     else if (maj == 6 && min == 1)
         PSUTIL_WINVER = PSUTIL_WINDOWS_7;

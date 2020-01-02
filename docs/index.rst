@@ -2619,9 +2619,8 @@ These are the platforms I develop and test on:
 Earlier versions are supposed to work but are not tested.
 For Linux, Windows and MacOS we have continuos integration. Other platforms
 are tested manually from time to time.
-Oldest supported Windows version is Windows XP, which can be compiled from
-sources. Latest wheel supporting Windows XP is
-`psutil 2.1.3 <https://pypi.org/project/psutil/2.1.3/#files>`__.
+Minimum supported Windows version is Windows Vista (Windows XP and Windows
+Server 2003 are not supported).
 Supported Python versions are 3.4+, 2.7 and 2.6.
 
 FAQs

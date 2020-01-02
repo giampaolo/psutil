@@ -9,8 +9,8 @@ XXXX-XX-XX
 
 - 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
   directory for additional data.  (patch by Javad Karabi)
-- 1652_: [Windows] dropped Windows XP support. Minumum supported client now is
-  Windows Vista.
+- 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
+  Minimum supported Windows version now is Windows Vista.
 
 **Bug fixes**
 
