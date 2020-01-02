@@ -319,7 +319,6 @@ def install_pip():
 @cmd
 def install():
     """Install in develop / edit mode"""
-    install_git_hooks()
     build()
     sh("%s setup.py develop" % PYTHON)
 

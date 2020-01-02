@@ -26,9 +26,7 @@
 #include <tlhelp32.h>
 #include <wtsapi32.h>  // users()
 #include <PowrProf.h>  // cpu_freq()
-#if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
 #include <ws2tcpip.h>  // net_io_counters()
-#endif
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -625,9 +623,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
-#if (_WIN32_WINNT >= 0x0600)  // >= Vista
     unsigned int size = sizeof(exe);
-#endif
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -639,24 +635,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     // QueryFullProcessImageNameW is better than GetProcessImageFileNameW
     // (avoid using QueryDosDevice on the returned path), see:
     // https://github.com/giampaolo/psutil/issues/1394
-#if (_WIN32_WINNT >= 0x0600)  // Windows >= Vista
     memset(exe, 0, MAX_PATH);
     if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
         PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
         CloseHandle(hProcess);
         return NULL;
     }
-#else  // Windows XP
-    if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
-        // see: https://github.com/giampaolo/psutil/issues/1394
-        if (GetLastError() == 0)
-            PyErr_SetFromWindowsErr(ERROR_ACCESS_DENIED);
-        else
-            PyErr_SetFromOSErrnoWithSyscall("GetProcessImageFileNameW");
-        CloseHandle(hProcess);
-        return NULL;
-    }
-#endif
     CloseHandle(hProcess);
     return PyUnicode_FromWideChar(exe, wcslen(exe));
 }
@@ -709,12 +693,7 @@ static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD pid;
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
     PROCESS_MEMORY_COUNTERS_EX cnt;
-#else
-    PROCESS_MEMORY_COUNTERS cnt;
-#endif
-    SIZE_T private = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -729,11 +708,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         CloseHandle(hProcess);
         return NULL;
     }
-
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
-    private = cnt.PrivateUsage;
-#endif
-
     CloseHandle(hProcess);
 
     // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
@@ -752,7 +726,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned long long)cnt.QuotaNonPagedPoolUsage,
         (unsigned long long)cnt.PagefileUsage,
         (unsigned long long)cnt.PeakPagefileUsage,
-        (unsigned long long)private);
+        (unsigned long long)cnt.PrivateUsage);
 #else
     return Py_BuildValue(
         "(kIIIIIIIII)",
@@ -765,7 +739,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned int)cnt.QuotaNonPagedPoolUsage,
         (unsigned int)cnt.PagefileUsage,
         (unsigned int)cnt.PeakPagefileUsage,
-        (unsigned int)private);
+        (unsigned int)cnt.PrivateUsage);
 #endif
 }
 
@@ -1412,7 +1386,6 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 }
 
 
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
 /*
  * Get process IO priority as a Python integer.
  */
@@ -1475,7 +1448,6 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
         return psutil_SetFromNTStatusErr(status, "NtSetInformationProcess");
     Py_RETURN_NONE;
 }
-#endif
 
 
 /*
@@ -1645,13 +1617,7 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
-
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
     MIB_IF_ROW2 *pIfRow = NULL;
-#else // Windows XP
-    MIB_IFROW *pIfRow = NULL;
-#endif
-
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -1669,33 +1635,21 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         py_nic_name = NULL;
         py_nic_info = NULL;
 
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
         pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
-#else // Windows XP
-        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
-#endif
-
         if (pIfRow == NULL) {
             PyErr_NoMemory();
             goto error;
         }
 
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
         SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
         pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry2(pIfRow);
-#else // Windows XP
-        pIfRow->dwIndex = pCurrAddresses->IfIndex;
-        dwRetVal = GetIfEntry(pIfRow);
-#endif
-
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError,
                             "GetIfEntry() or GetIfEntry2() syscalls failed.");
             goto error;
         }
 
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
         py_nic_info = Py_BuildValue("(KKKKKKKK)",
                                     pIfRow->OutOctets,
                                     pIfRow->InOctets,
@@ -1705,18 +1659,6 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                                     pIfRow->OutErrors,
                                     pIfRow->InDiscards,
                                     pIfRow->OutDiscards);
-#else // Windows XP
-        py_nic_info = Py_BuildValue("(kkkkkkkk)",
-                                    pIfRow->dwOutOctets,
-                                    pIfRow->dwInOctets,
-                                    (pIfRow->dwOutUcastPkts + pIfRow->dwOutNUcastPkts),
-                                    (pIfRow->dwInUcastPkts + pIfRow->dwInNUcastPkts),
-                                    pIfRow->dwInErrors,
-                                    pIfRow->dwOutErrors,
-                                    pIfRow->dwInDiscards,
-                                    pIfRow->dwOutDiscards);
-#endif
-
         if (!py_nic_info)
             goto error;
 
@@ -2224,7 +2166,6 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     double user_time;
     double kernel_time;
     long long create_time;
-    SIZE_T mem_private;
     PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -2251,12 +2192,6 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         create_time += process->CreateTime.LowPart - 116444736000000000LL;
         create_time /= 10000000;
     }
-
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
-    mem_private = process->PrivatePageCount;
-#else
-    mem_private = 0;
-#endif
 
     py_retlist = Py_BuildValue(
 #if defined(_WIN64)
@@ -2287,7 +2222,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         process->QuotaNonPagedPoolUsage,        // non paged pool
         process->PagefileUsage,                 // pagefile
         process->PeakPagefileUsage,             // peak pagefile
-        mem_private                             // private
+        process->PrivatePageCount               // private
     );
 
     free(buffer);
@@ -2461,11 +2396,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     char buff_macaddr[1024];
     char buff_netmask[1024];
     DWORD dwRetVal = 0;
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
     ULONG converted_netmask;
     UINT netmask_bits;
     struct in_addr in_netmask;
-#endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
@@ -2548,7 +2481,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                                        sizeof(buff_addr));
                     if (!intRet)
                         goto error;
-#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
                     netmask_bits = pUnicast->OnLinkPrefixLength;
                     dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
                     if (dwRetVal == NO_ERROR) {
@@ -2559,7 +2491,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         if (!netmaskIntRet)
                             goto error;
                     }
-#endif
                 }
                 else if (family == AF_INET6) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
@@ -2987,12 +2918,10 @@ PsutilMethods[] = {
      "Return process priority."},
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS,
      "Set process priority."},
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
     {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS,
      "Return process IO priority."},
     {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS,
      "Set process IO priority."},
-#endif
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
@@ -3049,13 +2978,11 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return CPU frequency."},
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
     {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter,
      METH_VARARGS,
      "Initializes the emulated load average calculator."},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS,
      "Returns the emulated POSIX-like load average."},
-#endif
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery metrics usage."},
     {"getpagesize", psutil_getpagesize, METH_VARARGS,
