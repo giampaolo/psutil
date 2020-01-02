@@ -145,6 +145,8 @@ if WINDOWS:
             'psutil/arch/windows/process_utils.c',
             'psutil/arch/windows/process_info.c',
             'psutil/arch/windows/process_handles.c',
+            'psutil/arch/windows/disk.c',
+            'psutil/arch/windows/net.c',
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
