@@ -38,7 +38,9 @@ XXXX-XX-XX
 - 1179_: [Linux] Process cmdline() now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
 - 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
-  segfault (CVE).  (patch by Riccardo Schirone)
+  segfault
+  (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__). 
+  (patch by Riccardo Schirone)
 - 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
   Houghton)
 
