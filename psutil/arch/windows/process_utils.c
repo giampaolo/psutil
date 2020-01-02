@@ -8,8 +8,7 @@
 
 #include <Python.h>
 #include <windows.h>
-#include <Psapi.h>
-#include <tlhelp32.h>
+#include <Psapi.h>  // EnumProcesses
 
 #include "ntextapi.h"
 #include "global.h"

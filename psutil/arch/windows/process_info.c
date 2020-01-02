@@ -9,15 +9,19 @@
 
 #include <Python.h>
 #include <windows.h>
-#include <Psapi.h>
-#include <tlhelp32.h>
 
 #include "ntextapi.h"
 #include "global.h"
-#include "security.h"
-#include "process_info.h"
 #include "process_utils.h"
 #include "../../_psutil_common.h"
+
+
+#define PSUTIL_FIRST_PROCESS(Processes) ( \
+    (PSYSTEM_PROCESS_INFORMATION)(Processes))
+#define PSUTIL_NEXT_PROCESS(Process) ( \
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
 
 
 // ====================================================================
@@ -124,20 +128,10 @@ typedef struct {
 #endif
 
 
-#define PSUTIL_FIRST_PROCESS(Processes) ( \
-    (PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PSUTIL_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
-
-
 // ====================================================================
-// Process and PIDs utiilties.
+// Process / PEB functions.
 // ====================================================================
 
-
-#define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
 
 /* Given a pointer into a process's memory, figure out how much data can be
  * read from it. */

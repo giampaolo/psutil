@@ -10,8 +10,6 @@
 #include <windows.h>
 #include <pdh.h>
 
-#include "../../_psutil_common.h"
-
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation
@@ -104,7 +102,7 @@ error:
 
 
 /*
- * Gets the emulated 1 minute, 5 minute and 15 minute load averages 
+ * Gets the emulated 1 minute, 5 minute and 15 minute load averages
  * (processor queue length) for the system.
  * `init_loadavg_counter` must be called before this function to engage the
  * mechanism that records load values.

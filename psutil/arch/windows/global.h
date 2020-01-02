@@ -18,6 +18,9 @@ extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 #define PSUTIL_WINDOWS_10 100
 #define PSUTIL_WINDOWS_NEW MAXLONG
 
+#define LO_T 1e-7
+#define HI_T 429.4967296
+
 int psutil_load_globals();
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);

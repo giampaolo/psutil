@@ -9,9 +9,7 @@
 
 #include <Python.h>
 #include <windows.h>
-#if (_WIN32_WINNT >= 0x0600) // Windows >= Vista
 #include <ws2tcpip.h>
-#endif
 
 #include "ntextapi.h"
 #include "global.h"
