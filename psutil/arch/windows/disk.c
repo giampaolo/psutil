@@ -6,9 +6,6 @@
 
 #include <Python.h>
 #include <windows.h>
-#include <signal.h>
-#include <Psapi.h>
-#include <tlhelp32.h>
 #include <tchar.h>
 
 #include "ntextapi.h"

@@ -9,13 +9,9 @@
 
 #include <Python.h>
 #include <windows.h>
-#include <Psapi.h>
-#include <tlhelp32.h>
 
 #include "ntextapi.h"
 #include "global.h"
-#include "security.h"
-#include "process_info.h"
 #include "process_utils.h"
 #include "../../_psutil_common.h"
 

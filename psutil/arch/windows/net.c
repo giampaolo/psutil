@@ -9,11 +9,11 @@
 
 #include <Python.h>
 #include <windows.h>
+#include <wchar.h>
 #include <ws2tcpip.h>
 
 #include "ntextapi.h"
 #include "global.h"
-#include "../../_psutil_common.h"
 
 
 #ifndef AF_INET6
