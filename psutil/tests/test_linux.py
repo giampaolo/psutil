@@ -26,6 +26,7 @@ import psutil
 from psutil import LINUX
 from psutil._compat import basestring
 from psutil._compat import FileNotFoundError
+from psutil._compat import PermissionError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
@@ -1068,14 +1069,21 @@ class TestSystemNetConnections(unittest.TestCase):
                kind='tcp4',
                pid=p2.pid)
 
+        # Sanity checks on retrieved data
         self.assertEqual(conn_p1[0].laddr.ip, '172.17.0.2')
         self.assertEqual(conn_p1[0].laddr.port, 37560)
         self.assertEqual(conn_p1[0].raddr.ip, '192.168.1.2')
         self.assertEqual(conn_p1[0].raddr.port, 22)
+        self.assertEqual(conn_p2[0].laddr.ip, '172.17.0.2')
+        self.assertEqual(conn_p2[0].laddr.port, 37560)
+        self.assertEqual(conn_p2[0].raddr.ip, '192.168.1.2')
+        self.assertEqual(conn_p2[0].raddr.port, 22)
 
-        # NOTE: This is set to pass now. Should not fail after fix.
+        # Detect connection in other namespace
+        self.assertEqual(len(conn_p1), 1)
+
+        # Detect connection in namespace other than ours
         self.assertEqual(len(conn_p2), 1)
-        # TODO: add similar assertions as for conn_p1
 
     def test_network_namespaces(self):
         def mock_readlink(path, paths_links_map, orig_method):
@@ -1468,7 +1476,7 @@ class TestMisc(unittest.TestCase):
             self.assertRaises(IOError, psutil.cpu_times, percpu=True)
             self.assertRaises(IOError, psutil.boot_time)
             # self.assertRaises(IOError, psutil.pids)
-            self.assertRaises(IOError, psutil.net_connections)
+            # self.assertRaises(IOError, psutil.net_connections)
             self.assertRaises(IOError, psutil.net_io_counters)
             self.assertRaises(IOError, psutil.net_if_stats)
             # self.assertRaises(IOError, psutil.disk_io_counters)
