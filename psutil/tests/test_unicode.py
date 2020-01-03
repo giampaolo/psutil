@@ -165,7 +165,8 @@ class _BaseFSAPIsTests(object):
         exe = p.exe()
         self.assertIsInstance(exe, str)
         if self.expect_exact_path_match():
-            self.assertEqual(exe, self.funky_name)
+            self.assertEqual(os.path.normcase(exe),
+                             os.path.normcase(self.funky_name))
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.funky_name])

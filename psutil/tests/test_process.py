@@ -966,13 +966,12 @@ class TestProcess(unittest.TestCase):
             f.flush()
             # give the kernel some time to see the new file
             files = call_until(p.open_files, "len(ret) != %i" % len(files))
-            for file in files:
-                if file.path == TESTFN:
-                    if LINUX:
+            filenames = [os.path.normcase(x.path) for x in files]
+            self.assertIn(os.path.normcase(TESTFN), filenames)
+            if LINUX:
+                for file in files:
+                    if file.path == TESTFN:
                         self.assertEqual(file.position, 1024)
-                    break
-            else:
-                self.fail("no file found; files=%s" % repr(files))
         for file in files:
             assert os.path.isfile(file.path), file
 
@@ -982,12 +981,12 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
 
         for x in range(100):
-            filenames = [x.path for x in p.open_files()]
+            filenames = [os.path.normcase(x.path) for x in p.open_files()]
             if TESTFN in filenames:
                 break
             time.sleep(.01)
         else:
-            self.assertIn(TESTFN, filenames)
+            self.assertIn(os.path.normcase(TESTFN), filenames)
         for file in filenames:
             assert os.path.isfile(file), file
 
@@ -997,14 +996,16 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files_2(self):
         # test fd and path fields
+        normcase = os.path.normcase
         with open(TESTFN, 'w') as fileobj:
             p = psutil.Process()
             for file in p.open_files():
-                if file.path == fileobj.name or file.fd == fileobj.fileno():
+                if normcase(file.path) == normcase(fileobj.name) or \
+                        file.fd == fileobj.fileno():
                     break
             else:
                 self.fail("no file found; files=%s" % repr(p.open_files()))
-            self.assertEqual(file.path, fileobj.name)
+            self.assertEqual(normcase(file.path), normcase(fileobj.name))
             if WINDOWS:
                 self.assertEqual(file.fd, -1)
             else:
