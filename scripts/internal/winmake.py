@@ -606,19 +606,22 @@ def parse_cmdline():
         except IndexError:
             return help()
         set_python(py)
+    cmds = sys.argv[1:]
+    if not cmds:
+        return help()
+    funcs = []
+    for cmd in cmds:
+        cmd = cmd.replace('-', '_')
+        fun = getattr(sys.modules[__name__], cmd, None)
+        if fun is None:
+            return help()
+        funcs.append(fun)
+    return funcs
 
 
 def main():
-    parse_cmdline()
-    try:
-        cmd = sys.argv[1].replace('-', '_')
-    except IndexError:
-        return help()
-    if cmd in _cmds:
-        fun = getattr(sys.modules[__name__], cmd)
+    for fun in parse_cmdline():
         fun()
-    else:
-        help()
 
 
 if __name__ == '__main__':
