@@ -735,12 +735,12 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
 
     process = PSUTIL_FIRST_PROCESS(buffer);
     do {
-        if (process->UniqueProcessId == (HANDLE)pid) {
+        if ((ULONG_PTR)process->UniqueProcessId == pid) {
             *retProcess = process;
             *retBuffer = buffer;
             return 1;
         }
-    } while ( (process = PSUTIL_NEXT_PROCESS(process)) );
+    } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
     NoSuchProcess("");
     goto error;
