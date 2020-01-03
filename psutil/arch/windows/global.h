@@ -19,6 +19,8 @@ extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 #define PSUTIL_WINDOWS_10 100
 #define PSUTIL_WINDOWS_NEW MAXLONG
 
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 #define LO_T 1e-7
 #define HI_T 429.4967296
 
