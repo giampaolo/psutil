@@ -28,7 +28,7 @@
 #pragma comment(lib, "IPHLPAPI.lib")
 
 #include "arch/windows/ntextapi.h"
-#include "arch/windows/global.h"
+#include "arch/windows/globals.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_utils.h"
 #include "arch/windows/process_info.h"

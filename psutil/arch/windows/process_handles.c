@@ -10,7 +10,7 @@
 #include <Python.h>
 
 #include "ntextapi.h"
-#include "global.h"
+#include "globals.h"
 #include "process_utils.h"
 
 CRITICAL_SECTION g_cs;

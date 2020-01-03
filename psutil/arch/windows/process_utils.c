@@ -11,7 +11,7 @@
 #include <Psapi.h>  // EnumProcesses
 
 #include "ntextapi.h"
-#include "global.h"
+#include "globals.h"
 #include "process_utils.h"
 #include "../../_psutil_common.h"
 

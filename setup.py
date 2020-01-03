@@ -150,7 +150,7 @@ if WINDOWS:
             'psutil/arch/windows/cpu.c',
             'psutil/arch/windows/security.c',
             'psutil/arch/windows/services.c',
-            'psutil/arch/windows/global.c',
+            'psutil/arch/windows/globals.c',
             'psutil/arch/windows/socks.c',
             'psutil/arch/windows/wmi.c',
         ],

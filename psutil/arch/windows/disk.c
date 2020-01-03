@@ -9,7 +9,7 @@
 #include <tchar.h>
 
 #include "ntextapi.h"
-#include "global.h"
+#include "globals.h"
 #include "../../_psutil_common.h"
 
 

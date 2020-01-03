@@ -13,7 +13,7 @@
 #include <ws2tcpip.h>
 
 #include "ntextapi.h"
-#include "global.h"
+#include "globals.h"
 
 
 static PIP_ADAPTER_ADDRESSES

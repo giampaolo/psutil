@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <Python.h>
 #include "ntextapi.h"
-#include "global.h"
+#include "globals.h"
 
 
 // Needed to make these globally visible.
