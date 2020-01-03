@@ -10,7 +10,6 @@
 
 #include <windows.h>
 #include <Python.h>
-#include "ntextapi.h"
 #include "globals.h"
 
 

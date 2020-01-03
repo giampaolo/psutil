@@ -9,7 +9,6 @@
 #include <Psapi.h>  // GetMappedFileName()
 #include <Python.h>
 
-#include "ntextapi.h"
 #include "globals.h"
 #include "process_utils.h"
 

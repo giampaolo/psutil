@@ -12,7 +12,6 @@
 #include <wchar.h>
 #include <ws2tcpip.h>
 
-#include "ntextapi.h"
 #include "globals.h"
 
 

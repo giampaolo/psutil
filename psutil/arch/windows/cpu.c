@@ -8,7 +8,6 @@
 #include <windows.h>
 #include <PowrProf.h>
 
-#include "ntextapi.h"
 #include "globals.h"
 #include "../../_psutil_common.h"
 

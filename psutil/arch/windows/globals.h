@@ -7,7 +7,7 @@
  */
 
 #include <windows.h>
-#include "ntextapi.h"
+#include "ntextapi.h"  // make it available to any file including us
 
 extern int PSUTIL_WINVER;
 extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;

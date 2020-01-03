@@ -10,7 +10,6 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "ntextapi.h"
 #include "globals.h"
 #include "process_utils.h"
 #include "../../_psutil_common.h"
