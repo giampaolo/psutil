@@ -991,10 +991,10 @@ error:
 
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
-    long       pid;
-    HANDLE     processHandle;
-    DWORD      access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
-    PyObject  *py_retlist;
+    DWORD pid;
+    HANDLE processHandle;
+    DWORD access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;

@@ -24,7 +24,6 @@ PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
 
-
 #define ObjectNameInformation 1
 #define NTQO_TIMEOUT 100
 
@@ -99,7 +98,7 @@ psutil_create_thread() {
 
 
 static PyObject *
-psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
+psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
     DWORD                               dwInfoSize = 0x10000;
@@ -118,10 +117,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     // to psutil_get_open_files() is running
     EnterCriticalSection(&g_cs);
 
-    if (g_hEvtStart == NULL ||
-        g_hEvtFinish == NULL)
-
-    {
+    if (g_hEvtStart == NULL || g_hEvtFinish == NULL) {
         PyErr_SetFromWindowsErr(0);
         error = TRUE;
         goto cleanup;
@@ -170,7 +166,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
-        if (hHandle->UniqueProcessId != (ULONG_PTR)dwPid)
+        if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
             goto loop_cleanup;
 
         if (!DuplicateHandle(hProcess,
@@ -181,12 +177,6 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
                              TRUE,
                              DUPLICATE_SAME_ACCESS))
         {
-            /*
-            printf("[%d] DuplicateHandle (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             goto loop_cleanup;
         }
 
@@ -230,34 +220,14 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
 
         // Convert to PyUnicode and append it to the return list
         if (g_pNameBuffer->Length > 0) {
-            /*
-            printf("[%d] Filename (%#x) %#d bytes: %S\n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   g_pNameBuffer->Length,
-                   g_pNameBuffer->Buffer);
-            */
-
             py_path = PyUnicode_FromWideChar(g_pNameBuffer->Buffer,
-                                                g_pNameBuffer->Length/2);
+                                             g_pNameBuffer->Length / 2);
             if (py_path == NULL) {
-                /*
-                printf("[%d] PyUnicode_FromWideChar (%#x): %#x \n",
-                       dwPid,
-                       hHandle->HandleValue,
-                       GetLastError());
-                */
                 error = TRUE;
                 goto loop_cleanup;
             }
 
             if (PyList_Append(py_retlist, py_path)) {
-                /*
-                printf("[%d] PyList_Append (%#x): %#x \n",
-                       dwPid,
-                       hHandle->HandleValue,
-                       GetLastError());
-                */
                 error = TRUE;
                 goto loop_cleanup;
             }
@@ -266,13 +236,11 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
 loop_cleanup:
     Py_XDECREF(py_path);
     py_path = NULL;
-
     if (g_pNameBuffer != NULL)
         HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
     g_pNameBuffer = NULL;
     g_dwSize = 0;
     g_dwLength = 0;
-
     if (g_hFile != NULL)
         CloseHandle(g_hFile);
     g_hFile = NULL;
@@ -299,13 +267,12 @@ cleanup:
     }
 
     LeaveCriticalSection(&g_cs);
-
     return py_retlist;
 }
 
 
 static PyObject *
-psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
+psutil_get_open_files_getmappedfilename(DWORD dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
     DWORD                               dwInfoSize = 0x10000;
@@ -367,7 +334,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
-        if (hHandle->UniqueProcessId != (ULONG_PTR)dwPid)
+        if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
             goto loop_cleanup;
 
         if (!DuplicateHandle(hProcess,
@@ -378,78 +345,34 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
                              TRUE,
                              DUPLICATE_SAME_ACCESS))
         {
-            /*
-            printf("[%d] DuplicateHandle (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             goto loop_cleanup;
         }
 
         hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
         if (hMap == NULL) {
-            /*
-            printf("[%d] CreateFileMapping (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             goto loop_cleanup;
         }
 
         pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
 
         if (pMem == NULL) {
-            /*
-            printf("[%d] MapViewOfFile (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             goto loop_cleanup;
         }
 
         dwSize = GetMappedFileName(
             GetCurrentProcess(), pMem, (LPSTR)pszFilename, MAX_PATH);
         if (dwSize == 0) {
-            /*
-            printf("[%d] GetMappedFileName (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             goto loop_cleanup;
         }
 
         pszFilename[dwSize] = '\0';
-        /*
-        printf("[%d] Filename (%#x) %#d bytes: %S\n",
-               dwPid,
-               hHandle->HandleValue,
-               dwSize,
-               pszFilename);
-        */
-
         py_path = PyUnicode_FromWideChar(pszFilename, dwSize);
         if (py_path == NULL) {
-            /*
-            printf("[%d] PyUnicode_FromStringAndSize (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             error = TRUE;
             goto loop_cleanup;
         }
 
         if (PyList_Append(py_retlist, py_path)) {
-            /*
-            printf("[%d] PyList_Append (%#x): %#x \n",
-                   dwPid,
-                   hHandle->HandleValue,
-                   GetLastError());
-            */
             error = TRUE;
             goto loop_cleanup;
         }
@@ -457,19 +380,15 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
 loop_cleanup:
         Py_XDECREF(py_path);
         py_path = NULL;
-
         if (pMem != NULL)
             UnmapViewOfFile(pMem);
         pMem = NULL;
-
         if (hMap != NULL)
             CloseHandle(hMap);
         hMap = NULL;
-
         if (hFile != NULL)
             CloseHandle(hFile);
         hFile = NULL;
-
         dwSize = 0;
     }
 
@@ -477,24 +396,19 @@ cleanup:
     if (pMem != NULL)
         UnmapViewOfFile(pMem);
     pMem = NULL;
-
     if (hMap != NULL)
         CloseHandle(hMap);
     hMap = NULL;
-
     if (hFile != NULL)
         CloseHandle(hFile);
     hFile = NULL;
-
     if (pHandleInfo != NULL)
         HeapFree(GetProcessHeap(), 0, pHandleInfo);
     pHandleInfo = NULL;
-
     if (error) {
         Py_XDECREF(py_retlist);
         py_retlist = NULL;
     }
-
     return py_retlist;
 }
 
@@ -503,10 +417,10 @@ cleanup:
  * The public function.
  */
 PyObject *
-psutil_get_open_files(long dwPid, HANDLE hProcess) {
+psutil_get_open_files(DWORD pid, HANDLE hProcess) {
     // Threaded version only works for Vista+
     if (PSUTIL_WINVER >= PSUTIL_WINDOWS_VISTA)
-        return psutil_get_open_files_ntqueryobject(dwPid, hProcess);
+        return psutil_get_open_files_ntqueryobject(pid, hProcess);
     else
-        return psutil_get_open_files_getmappedfilename(dwPid, hProcess);
+        return psutil_get_open_files_getmappedfilename(pid, hProcess);
 }
