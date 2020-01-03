@@ -350,6 +350,24 @@ def uninstall():
         for name in os.listdir(dir):
             if name.startswith('psutil'):
                 rm(os.path.join(dir, name))
+            elif name == 'easy-install.pth':
+                # easy_install can add a line (installation path) into
+                # easy-install.pth; that line alters sys.path.
+                path = os.path.join(dir, name)
+                with open(path, 'rt') as f:
+                    lines = f.readlines()
+                    hasit = False
+                    for line in lines:
+                        if 'psutil' in line:
+                            hasit = True
+                            break
+                if hasit:
+                    with open(path, 'wt') as f:
+                        for line in lines:
+                            if 'psutil' not in line:
+                                f.write(line)
+                            else:
+                                print("removed line %r from %r" % (line, path))
 
 
 @cmd
