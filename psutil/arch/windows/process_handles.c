@@ -25,6 +25,7 @@ ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
 
 #define NTQO_TIMEOUT 100
+#define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
 
 
 static VOID
@@ -131,16 +132,14 @@ psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
 
     do {
         if (pHandleInfo != NULL) {
-            HeapFree(GetProcessHeap(), 0, pHandleInfo);
+            FREE(pHandleInfo);
             pHandleInfo = NULL;
         }
 
         // NtQuerySystemInformation won't give us the correct buffer size,
         // so we guess by doubling the buffer size.
         dwInfoSize *= 2;
-        pHandleInfo = HeapAlloc(GetProcessHeap(),
-                                HEAP_ZERO_MEMORY,
-                                dwInfoSize);
+        pHandleInfo = MALLOC_ZERO(dwInfoSize);
 
         if (pHandleInfo == NULL) {
             PyErr_NoMemory();
@@ -185,7 +184,7 @@ psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
         do {
             // Release any previously allocated buffer
             if (g_pNameBuffer != NULL) {
-                HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
+                FREE(g_pNameBuffer);
                 g_pNameBuffer = NULL;
                 g_dwSize = 0;
             }
@@ -197,9 +196,7 @@ psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
 
             g_dwSize = g_dwLength;
             if (g_dwSize > 0) {
-                g_pNameBuffer = HeapAlloc(GetProcessHeap(),
-                                          HEAP_ZERO_MEMORY,
-                                          g_dwSize);
+                g_pNameBuffer = MALLOC_ZERO(g_dwSize);
 
                 if (g_pNameBuffer == NULL)
                     goto loop_cleanup;
@@ -236,7 +233,7 @@ loop_cleanup:
     Py_XDECREF(py_path);
     py_path = NULL;
     if (g_pNameBuffer != NULL)
-        HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
+        FREE(g_pNameBuffer);
     g_pNameBuffer = NULL;
     g_dwSize = 0;
     g_dwLength = 0;
@@ -247,7 +244,7 @@ loop_cleanup:
 
 cleanup:
     if (g_pNameBuffer != NULL)
-        HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
+        FREE(g_pNameBuffer);
     g_pNameBuffer = NULL;
     g_dwSize = 0;
     g_dwLength = 0;
@@ -257,7 +254,7 @@ cleanup:
     g_hFile = NULL;
 
     if (pHandleInfo != NULL)
-        HeapFree(GetProcessHeap(), 0, pHandleInfo);
+        FREE(pHandleInfo);
     pHandleInfo = NULL;
 
     if (error) {
@@ -299,16 +296,14 @@ psutil_get_open_files_getmappedfilename(DWORD dwPid, HANDLE hProcess) {
 
     do {
         if (pHandleInfo != NULL) {
-            HeapFree(GetProcessHeap(), 0, pHandleInfo);
+            FREE(pHandleInfo);
             pHandleInfo = NULL;
         }
 
         // NtQuerySystemInformation won't give us the correct buffer size,
         // so we guess by doubling the buffer size.
         dwInfoSize *= 2;
-        pHandleInfo = HeapAlloc(GetProcessHeap(),
-                                HEAP_ZERO_MEMORY,
-                                dwInfoSize);
+        pHandleInfo = MALLOC_ZERO(dwInfoSize);
 
         if (pHandleInfo == NULL) {
             PyErr_NoMemory();
@@ -402,7 +397,7 @@ cleanup:
         CloseHandle(hFile);
     hFile = NULL;
     if (pHandleInfo != NULL)
-        HeapFree(GetProcessHeap(), 0, pHandleInfo);
+        FREE(pHandleInfo);
     pHandleInfo = NULL;
     if (error) {
         Py_XDECREF(py_retlist);
