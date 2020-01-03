@@ -24,7 +24,6 @@ PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
 
-#define ObjectNameInformation 1
 #define NTQO_TIMEOUT 100
 
 

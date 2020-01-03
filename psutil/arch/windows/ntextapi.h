@@ -19,6 +19,7 @@ typedef LONG NTSTATUS;
 
 #define SystemExtendedHandleInformation 64
 #define MemoryWorkingSetInformation 0x1
+#define ObjectNameInformation 1
 
 /*
  * ================================================================
