@@ -11,6 +11,7 @@
 
 extern int PSUTIL_WINVER;
 extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
+
 #define PSUTIL_WINDOWS_VISTA 60
 #define PSUTIL_WINDOWS_7 61
 #define PSUTIL_WINDOWS_8 62
@@ -20,6 +21,10 @@ extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
 
 #define LO_T 1e-7
 #define HI_T 429.4967296
+
+#ifndef AF_INET6
+#define AF_INET6 23
+#endif
 
 int psutil_load_globals();
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);

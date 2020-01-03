@@ -16,11 +16,6 @@
 #include "global.h"
 
 
-#ifndef AF_INET6
-#define AF_INET6 23
-#endif
-
-
 static PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with

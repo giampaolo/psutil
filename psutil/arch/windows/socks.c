@@ -19,10 +19,6 @@
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 
-#ifndef AF_INET6
-#define AF_INET6 23
-#endif
-
 
 // https://msdn.microsoft.com/library/aa365928.aspx
 // TODO properly handle return code
