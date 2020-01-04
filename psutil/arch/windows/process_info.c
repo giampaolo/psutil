@@ -11,16 +11,9 @@
 #include <windows.h>
 
 #include "globals.h"
+#include "process_info.h"
 #include "process_utils.h"
 #include "../../_psutil_common.h"
-
-
-#define PSUTIL_FIRST_PROCESS(Processes) ( \
-    (PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PSUTIL_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
 
 
 // ====================================================================
@@ -189,14 +182,13 @@ psutil_get_process_data(long pid,
          http://stackoverflow.com/a/14012919
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
-    _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+    SIZE_T size = 0;
 #ifndef _WIN64
     static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
 #endif
     HANDLE hProcess = NULL;
     LPCVOID src;
-    SIZE_T size;
     WCHAR *buffer = NULL;
 #ifdef _WIN64
     LPVOID ppeb32 = NULL;
@@ -482,7 +474,7 @@ error:
  */
 static int
 psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
-    HANDLE hProcess;
+    HANDLE hProcess = NULL;
     ULONG bufLen = 0;
     NTSTATUS status;
     char * buffer = NULL;
@@ -509,9 +501,8 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
         0,
         &bufLen);
 
-    // 0xC0000225 == STATUS_NOT_FOUND, see:
     // https://github.com/giampaolo/psutil/issues/1501
-    if (status == 0xC0000225) {
+    if (status == STATUS_NOT_FOUND) {
         AccessDenied("NtQueryInformationProcess(ProcessBasicInformation) -> "
                      "STATUS_NOT_FOUND translated into PermissionError");
         goto error;
