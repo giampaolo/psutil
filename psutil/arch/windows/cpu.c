@@ -229,7 +229,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     while (offset < length) {
         // Advance ptr by the size of the previous
         // SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct.
-        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)\
+        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*) \
             (((char*)ptr) + prev_processor_info_size);
 
         if (ptr->Relationship == RelationProcessorCore) {
