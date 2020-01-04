@@ -119,7 +119,6 @@ psutil_print_err() {
 int
 psutil_set_se_debug() {
     HANDLE hToken;
-    int err = 1;
 
     if ((hToken = psutil_get_thisproc_token()) == NULL) {
         // "return 1;" to get an exception

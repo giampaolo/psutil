@@ -18,7 +18,6 @@
 SC_HANDLE
 psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
 {
-    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
 
@@ -193,8 +192,6 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
-    DWORD resumeHandle = 0;
-    DWORD dwBytes = 0;
     QUERY_SERVICE_CONFIGW *qsc = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_unicode_display_name = NULL;
@@ -284,8 +281,6 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
-    DWORD resumeHandle = 0;
-    DWORD dwBytes = 0;
     SERVICE_STATUS_PROCESS  *ssp = NULL;
     PyObject *py_tuple = NULL;
 
@@ -355,8 +350,6 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
-    DWORD resumeHandle = 0;
-    DWORD dwBytes = 0;
     SC_HANDLE hService = NULL;
     SERVICE_DESCRIPTIONW *scd = NULL;
     char *service_name;
