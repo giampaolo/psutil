@@ -8,6 +8,7 @@ import contextlib
 import errno
 import functools
 import os
+import signal
 import sys
 import time
 from collections import namedtuple
@@ -865,7 +866,16 @@ class Process(object):
 
     @wrap_exceptions
     def send_signal(self, sig):
-        os.kill(self.pid, sig)
+        if sig == signal.SIGTERM:
+            cext.proc_kill(self.pid)
+        # py >= 2.7
+        elif sig in (getattr(signal, "CTRL_C_EVENT", object()),
+                     getattr(signal, "CTRL_BREAK_EVENT", object())):
+            os.kill(self.pid, sig)(sig)
+        else:
+            raise ValueError(
+                "only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT signals "
+                "are supported on Windows")
 
     @wrap_exceptions
     def wait(self, timeout=None):
