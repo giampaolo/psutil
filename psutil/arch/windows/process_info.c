@@ -102,7 +102,7 @@ psutil_get_process_data(long pid,
 #ifdef _WIN64
     /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
      * mode. */
-    status = psutil_NtQueryInformationProcess(
+    status = NtQueryInformationProcess(
         hProcess,
         ProcessWow64Information,
         &ppeb32,
@@ -252,7 +252,7 @@ psutil_get_process_data(long pid,
         PEB_ peb;
         RTL_USER_PROCESS_PARAMETERS_ procParameters;
 
-        status = psutil_NtQueryInformationProcess(
+        status = NtQueryInformationProcess(
             hProcess,
             ProcessBasicInformation,
             &pbi,
@@ -389,7 +389,7 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
         goto error;
 
     // get the right buf size
-    status = psutil_NtQueryInformationProcess(
+    status = NtQueryInformationProcess(
         hProcess,
         ProcessCommandLineInformation,
         NULL,
@@ -419,7 +419,7 @@ psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
     }
 
     // get the cmdline
-    status = psutil_NtQueryInformationProcess(
+    status = NtQueryInformationProcess(
         hProcess,
         ProcessCommandLineInformation,
         buffer,
@@ -589,7 +589,7 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     }
 
     while (TRUE) {
-        status = psutil_NtQuerySystemInformation(
+        status = NtQuerySystemInformation(
             SystemProcessInformation,
             buffer,
             bufferSize,

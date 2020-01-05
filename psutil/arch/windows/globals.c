@@ -79,7 +79,7 @@ psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall) {
     if (NT_NTWIN32(Status))
         err = WIN32_FROM_NTSTATUS(Status);
     else
-        err = psutil_RtlNtStatusToDosErrorNoTeb(Status);
+        err = RtlNtStatusToDosErrorNoTeb(Status);
     // if (GetLastError() != 0)
     //     err = GetLastError();
     sprintf(fullmsg, "(originated from %s)", syscall);
@@ -92,88 +92,88 @@ psutil_loadlibs() {
     /*
      * Mandatory.
      */
-    psutil_NtQuerySystemInformation = psutil_GetProcAddressFromLib(
+    NtQuerySystemInformation = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
-    if (psutil_NtQuerySystemInformation == NULL)
+    if (NtQuerySystemInformation == NULL)
         return 1;
 
-    psutil_NtQueryInformationProcess = psutil_GetProcAddress(
+    NtQueryInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
-    if (! psutil_NtQueryInformationProcess)
+    if (! NtQueryInformationProcess)
         return 1;
 
-    psutil_NtSetInformationProcess = psutil_GetProcAddress(
+    NtSetInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
-    if (! psutil_NtSetInformationProcess)
+    if (! NtSetInformationProcess)
         return 1;
 
-    psutil_WinStationQueryInformationW = psutil_GetProcAddressFromLib(
+    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
         "winsta.dll", "WinStationQueryInformationW");
-    if (! psutil_WinStationQueryInformationW)
+    if (! WinStationQueryInformationW)
         return 1;
 
-    psutil_NtQueryObject = psutil_GetProcAddressFromLib(
+    NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
-    if (! psutil_NtQueryObject)
+    if (! NtQueryObject)
         return 1;
 
-    psutil_rtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
+    RtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
-    if (! psutil_rtlIpv4AddressToStringA)
+    if (! RtlIpv4AddressToStringA)
         return 1;
 
-    psutil_GetExtendedTcpTable = psutil_GetProcAddressFromLib(
+    GetExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
-    if (! psutil_GetExtendedTcpTable)
+    if (! GetExtendedTcpTable)
         return 1;
 
-    psutil_GetExtendedUdpTable = psutil_GetProcAddressFromLib(
+    GetExtendedUdpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
-    if (! psutil_GetExtendedUdpTable)
+    if (! GetExtendedUdpTable)
         return 1;
 
-    psutil_RtlGetVersion = psutil_GetProcAddressFromLib(
+    RtlGetVersion = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlGetVersion");
-    if (! psutil_RtlGetVersion)
+    if (! RtlGetVersion)
         return 1;
 
-    psutil_NtSuspendProcess = psutil_GetProcAddressFromLib(
+    NtSuspendProcess = psutil_GetProcAddressFromLib(
         "ntdll", "NtSuspendProcess");
-    if (! psutil_NtSuspendProcess)
+    if (! NtSuspendProcess)
         return 1;
 
-    psutil_NtResumeProcess = psutil_GetProcAddressFromLib(
+    NtResumeProcess = psutil_GetProcAddressFromLib(
         "ntdll", "NtResumeProcess");
-    if (! psutil_NtResumeProcess)
+    if (! NtResumeProcess)
         return 1;
 
-    psutil_NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
+    NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
         "ntdll", "NtQueryVirtualMemory");
-    if (! psutil_NtQueryVirtualMemory)
+    if (! NtQueryVirtualMemory)
         return 1;
 
-    psutil_RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
+    RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
         "ntdll", "RtlNtStatusToDosErrorNoTeb");
-    if (! psutil_RtlNtStatusToDosErrorNoTeb)
+    if (! RtlNtStatusToDosErrorNoTeb)
         return 1;
 
     /*
      * Optional.
      */
     // not available on Wine
-    psutil_rtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+    RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA");
 
     // minimum requirement: Win Vista
-    psutil_GetTickCount64 = psutil_GetProcAddress(
+    GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
 
     // minimum requirement: Win 7
-    psutil_GetActiveProcessorCount = psutil_GetProcAddress(
+    GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
 
     // minumum requirement: Win 7
-    psutil_GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
+    GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
 
     PyErr_Clear();
@@ -189,7 +189,7 @@ psutil_set_winver() {
 
     versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
-    psutil_RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
+    RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo);
     maj = versionInfo.dwMajorVersion;
     min = versionInfo.dwMinorVersion;
     if (maj == 6 && min == 0)

@@ -55,8 +55,8 @@ psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
 
     // Minimum requirement: Windows 7
-    if (psutil_GetActiveProcessorCount != NULL) {
-        ncpus = psutil_GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if (GetActiveProcessorCount != NULL) {
+        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetFromWindowsErr(0);
         }
@@ -104,9 +104,9 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         (fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
-    if (psutil_GetTickCount64 != NULL) {
+    if (GetTickCount64 != NULL) {
         // Windows >= Vista
-        uptime = psutil_GetTickCount64() / 1000ull;
+        uptime = GetTickCount64() / 1000ull;
     }
     else {
         // Windows XP.
@@ -598,7 +598,7 @@ psutil_GetProcWsetInformation(
     bufferSize = 0x8000;
     buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
 
-    while ((status = psutil_NtQueryVirtualMemory(
+    while ((status = NtQueryVirtualMemory(
             hProcess,
             NULL,
             MemoryWorkingSetInformation,
@@ -752,9 +752,9 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
         return NULL;
 
     if (PyObject_IsTrue(suspend))
-        status = psutil_NtSuspendProcess(hProcess);
+        status = NtSuspendProcess(hProcess);
     else
-        status = psutil_NtResumeProcess(hProcess);
+        status = NtResumeProcess(hProcess);
 
     if (! NT_SUCCESS(status)) {
         CloseHandle(hProcess);
@@ -1097,7 +1097,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    status = psutil_NtQueryInformationProcess(
+    status = NtQueryInformationProcess(
         hProcess,
         ProcessIoPriority,
         &IoPriority,
@@ -1130,7 +1130,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     if (hProcess == NULL)
         return NULL;
 
-    status = psutil_NtSetInformationProcess(
+    status = NtSetInformationProcess(
         hProcess,
         ProcessIoPriority,
         (PVOID)&prio,
@@ -1346,7 +1346,7 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         // login time
-        if (! psutil_WinStationQueryInformationW(
+        if (! WinStationQueryInformationW(
                 hServer,
                 sessionId,
                 WinStationInformation,

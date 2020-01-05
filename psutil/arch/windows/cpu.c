@@ -21,8 +21,8 @@ psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
 
     // Minimum requirement: Windows 7
-    if (psutil_GetActiveProcessorCount != NULL) {
-        ncpus = psutil_GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+    if (GetActiveProcessorCount != NULL) {
+        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
             PyErr_SetFromWindowsErr(0);
         }
@@ -100,7 +100,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     // gets cpu time informations
-    status = psutil_NtQuerySystemInformation(
+    status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
@@ -194,13 +194,13 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // it supports process groups, meaning this is able to report more
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
-    if (psutil_GetLogicalProcessorInformationEx == NULL) {
+    if (GetLogicalProcessorInformationEx == NULL) {
         psutil_debug("Win < 7; cpu_count_phys() forced to None");
         Py_RETURN_NONE;
     }
 
     while (1) {
-        rc = psutil_GetLogicalProcessorInformationEx(
+        rc = GetLogicalProcessorInformationEx(
             RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
@@ -284,7 +284,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    status = psutil_NtQuerySystemInformation(
+    status = NtQuerySystemInformation(
         SystemPerformanceInformation,
         spi,
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
@@ -303,7 +303,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = psutil_NtQuerySystemInformation(
+    status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
@@ -325,7 +325,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    status = psutil_NtQuerySystemInformation(
+    status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),

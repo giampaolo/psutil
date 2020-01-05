@@ -464,12 +464,14 @@ typedef struct {
 // Type defs for modules loaded at runtime.
 // ================================================================
 
-typedef BOOL (WINAPI *_GetLogicalProcessorInformationEx)(
+BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
     LOGICAL_PROCESSOR_RELATIONSHIP relationship,
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
     PDWORD ReturnLength);
 
-typedef BOOLEAN (WINAPI * _WinStationQueryInformationW)(
+#define GetLogicalProcessorInformationEx _GetLogicalProcessorInformationEx
+
+BOOLEAN (WINAPI * _WinStationQueryInformationW) (
     HANDLE ServerHandle,
     ULONG SessionId,
     WINSTATIONINFOCLASS WinStationInformationClass,
@@ -477,34 +479,46 @@ typedef BOOLEAN (WINAPI * _WinStationQueryInformationW)(
     ULONG WinStationInformationLength,
     PULONG pReturnLength);
 
-typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
+#define WinStationQueryInformationW _WinStationQueryInformationW
+
+NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength,
     PDWORD ReturnLength);
 
-typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
+#define NtQueryInformationProcess _NtQueryInformationProcess
+
+NTSTATUS (NTAPI *_NtQuerySystemInformation) (
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength);
 
-typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
+#define NtQuerySystemInformation _NtQuerySystemInformation
+
+NTSTATUS (NTAPI *_NtSetInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
     DWORD ProcessInformationLength);
 
-typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(
+#define NtSetInformationProcess _NtSetInformationProcess
+
+PSTR (NTAPI * _RtlIpv4AddressToStringA) (
     struct in_addr *Addr,
     PSTR S);
 
-typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(
+#define RtlIpv4AddressToStringA _RtlIpv4AddressToStringA
+
+PSTR (NTAPI * _RtlIpv6AddressToStringA) (
     struct in6_addr *Addr,
     PSTR P);
 
-typedef DWORD (WINAPI * _GetExtendedTcpTable)(
+#define RtlIpv6AddressToStringA _RtlIpv6AddressToStringA
+
+DWORD (WINAPI * _GetExtendedTcpTable) (
     PVOID pTcpTable,
     PDWORD pdwSize,
     BOOL bOrder,
@@ -512,7 +526,9 @@ typedef DWORD (WINAPI * _GetExtendedTcpTable)(
     TCP_TABLE_CLASS TableClass,
     ULONG Reserved);
 
-typedef DWORD (WINAPI * _GetExtendedUdpTable)(
+#define GetExtendedTcpTable _GetExtendedTcpTable
+
+DWORD (WINAPI * _GetExtendedUdpTable) (
     PVOID pUdpTable,
     PDWORD pdwSize,
     BOOL bOrder,
@@ -520,32 +536,46 @@ typedef DWORD (WINAPI * _GetExtendedUdpTable)(
     UDP_TABLE_CLASS TableClass,
     ULONG Reserved);
 
-typedef DWORD (CALLBACK *_GetActiveProcessorCount)(
+#define GetExtendedUdpTable _GetExtendedUdpTable
+
+DWORD (CALLBACK *_GetActiveProcessorCount) (
     WORD GroupNumber);
 
-typedef ULONGLONG (CALLBACK *_GetTickCount64)(
+#define GetActiveProcessorCount _GetActiveProcessorCount
+
+ULONGLONG (CALLBACK *_GetTickCount64) (
     void);
 
-typedef NTSTATUS (NTAPI *_NtQueryObject)(
+#define GetTickCount64 _GetTickCount64
+
+NTSTATUS (NTAPI *_NtQueryObject) (
     HANDLE Handle,
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
     PVOID ObjectInformation,
     ULONG ObjectInformationLength,
     PULONG ReturnLength);
 
-typedef NTSTATUS (WINAPI *_RtlGetVersion) (
+#define NtQueryObject _NtQueryObject
+
+NTSTATUS (WINAPI *_RtlGetVersion) (
     PRTL_OSVERSIONINFOW lpVersionInformation
 );
 
-typedef NTSTATUS (WINAPI *_NtResumeProcess) (
+#define RtlGetVersion _RtlGetVersion
+
+NTSTATUS (WINAPI *_NtResumeProcess) (
     HANDLE hProcess
 );
 
-typedef NTSTATUS (WINAPI *_NtSuspendProcess) (
+#define NtResumeProcess _NtResumeProcess
+
+NTSTATUS (WINAPI *_NtSuspendProcess) (
     HANDLE hProcess
 );
 
-typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+#define NtSuspendProcess _NtSuspendProcess
+
+NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
     HANDLE ProcessHandle,
     PVOID BaseAddress,
     int MemoryInformationClass,
@@ -554,8 +584,12 @@ typedef NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
     PSIZE_T ReturnLength
 );
 
-typedef ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
+#define NtQueryVirtualMemory _NtQueryVirtualMemory
+
+ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
     NTSTATUS status
 );
+
+#define RtlNtStatusToDosErrorNoTeb _RtlNtStatusToDosErrorNoTeb
 
 #endif // __NTEXTAPI_H__

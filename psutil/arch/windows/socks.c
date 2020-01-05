@@ -17,13 +17,14 @@
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
+typedef DWORD (WINAPI * TYPE_GetExtendedTcpTable)();
+typedef DWORD (WINAPI * TYPE_GetExtendedUdpTable)();
 
 
-// https://msdn.microsoft.com/library/aa365928.aspx
-// TODO properly handle return code
-static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
-                                   ULONG address_family,
-                                   PVOID * data, DWORD * size)
+static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
+                                   ULONG family,
+                                   PVOID *data,
+                                   DWORD *size)
 {
     // Due to other processes being active on the machine, it's possible
     // that the size of the table increases between the moment where we
@@ -34,8 +35,7 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    error = call(NULL, size, FALSE, address_family,
-                 TCP_TABLE_OWNER_PID_ALL, 0);
+    error = call(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
@@ -43,55 +43,58 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
             error = ERROR_NOT_ENOUGH_MEMORY;
             continue;
         }
-        error = call(*data, size, FALSE, address_family,
-                     TCP_TABLE_OWNER_PID_ALL, 0);
+        error = call(*data, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
         if (error != NO_ERROR) {
             free(*data);
             *data = NULL;
         }
     }
-    return error;
-}
-
-
-// https://msdn.microsoft.com/library/aa365930.aspx
-// TODO properly check return value
-static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
-                                   ULONG address_family,
-                                   PVOID * data, DWORD * size)
-{
-    // Due to other processes being active on the machine, it's possible
-    // that the size of the table increases between the moment where we
-    // query the size and the moment where we query the data.  Therefore, it's
-    // important to call this in a loop to retry if that happens.
-    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
-    // and https://github.com/giampaolo/psutil/issues/1294
-    DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = call(NULL, size, FALSE, address_family,
-                 UDP_TABLE_OWNER_PID, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
-    {
-        *data = malloc(*size);
-        if (*data == NULL) {
-            error = ERROR_NOT_ENOUGH_MEMORY;
-            continue;
-        }
-        error = call(*data, size, FALSE, address_family,
-                     UDP_TABLE_OWNER_PID, 0);
-        if (error != NO_ERROR) {
-            free(*data);
-            *data = NULL;
-        }
-    }
-
     if (error == ERROR_NOT_ENOUGH_MEMORY) {
         PyErr_NoMemory();
         return 1;
     }
     if (error != NO_ERROR) {
-        PyErr_SetFromWindowsErr(error);
+        PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
+        return 1;
+    }
+    return error;
+}
+
+
+static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
+                                   ULONG family,
+                                   PVOID * data,
+                                   DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
+    // and https://github.com/giampaolo/psutil/issues/1294
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    error = call(NULL, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    if (error == ERROR_NOT_ENOUGH_MEMORY) {
+        PyErr_NoMemory();
+        return 1;
+    }
+    if (error != NO_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
         return 1;
     }
     return 0;
@@ -174,7 +177,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
+        error = __GetExtendedTcpTable(GetExtendedTcpTable,
                                       AF_INET, &table, &tableSize);
         if (error != 0)
             goto error;
@@ -192,7 +195,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in_addr addr;
 
                 addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
-                psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                RtlIpv4AddressToStringA(&addr, addressBufferLocal);
                 py_addr_tuple_local = Py_BuildValue(
                     "(si)",
                     addressBufferLocal,
@@ -214,7 +217,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in_addr addr;
 
                 addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
-                psutil_rtlIpv4AddressToStringA(&addr, addressBufferRemote);
+                RtlIpv4AddressToStringA(&addr, addressBufferRemote);
                 py_addr_tuple_remote = Py_BuildValue(
                     "(si)",
                     addressBufferRemote,
@@ -252,7 +255,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     // TCP IPv6
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
             (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1) &&
-            (psutil_rtlIpv6AddressToStringA != NULL))
+            (RtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
         py_conn_tuple = NULL;
@@ -260,7 +263,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(psutil_GetExtendedTcpTable,
+        error = __GetExtendedTcpTable(GetExtendedTcpTable,
                                       AF_INET6, &table, &tableSize);
         if (error != 0)
             goto error;
@@ -279,7 +282,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in6_addr addr;
 
                 memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
-                psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                RtlIpv6AddressToStringA(&addr, addressBufferLocal);
                 py_addr_tuple_local = Py_BuildValue(
                     "(si)",
                     addressBufferLocal,
@@ -302,7 +305,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in6_addr addr;
 
                 memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
-                psutil_rtlIpv6AddressToStringA(&addr, addressBufferRemote);
+                RtlIpv6AddressToStringA(&addr, addressBufferRemote);
                 py_addr_tuple_remote = Py_BuildValue(
                     "(si)",
                     addressBufferRemote,
@@ -346,7 +349,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
+        error = __GetExtendedUdpTable(GetExtendedUdpTable,
                                       AF_INET, &table, &tableSize);
         if (error != 0)
             goto error;
@@ -365,7 +368,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in_addr addr;
 
                 addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
-                psutil_rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                RtlIpv4AddressToStringA(&addr, addressBufferLocal);
                 py_addr_tuple_local = Py_BuildValue(
                     "(si)",
                     addressBufferLocal,
@@ -403,14 +406,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
             (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1) &&
-            (psutil_rtlIpv6AddressToStringA != NULL))
+            (RtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(psutil_GetExtendedUdpTable,
+        error = __GetExtendedUdpTable(GetExtendedUdpTable,
                                       AF_INET6, &table, &tableSize);
         if (error != 0)
             goto error;
@@ -428,7 +431,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 struct in6_addr addr;
 
                 memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
-                psutil_rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                RtlIpv6AddressToStringA(&addr, addressBufferLocal);
                 py_addr_tuple_local = Py_BuildValue(
                     "(si)",
                     addressBufferLocal,

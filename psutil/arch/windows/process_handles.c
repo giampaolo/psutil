@@ -50,7 +50,7 @@ psutil_wait_thread(LPVOID lpvParam) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
 
         // TODO: return code not checked
-        g_status = psutil_NtQueryObject(
+        g_status = NtQueryObject(
             g_hFile,
             ObjectNameInformation,
             g_pNameBuffer,
@@ -145,7 +145,7 @@ psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = psutil_NtQuerySystemInformation(
+    } while ((status = NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,
@@ -309,7 +309,7 @@ psutil_get_open_files_getmappedfilename(DWORD dwPid, HANDLE hProcess) {
             error = TRUE;
             goto cleanup;
         }
-    } while ((status = psutil_NtQuerySystemInformation(
+    } while ((status = NtQuerySystemInformation(
                             SystemExtendedHandleInformation,
                             pHandleInfo,
                             dwInfoSize,
