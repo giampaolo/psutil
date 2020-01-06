@@ -12,11 +12,11 @@ that they should be deemed illegal!
 """
 
 from __future__ import print_function
+import argparse
 import atexit
 import ctypes
 import errno
 import fnmatch
-import functools
 import os
 import shutil
 import site
@@ -62,6 +62,7 @@ if PY3:
     basestring = str
 
 GREEN = 2
+LIGHTBLUE = 3
 YELLOW = 6
 RED = 4
 DEFAULT_COLOR = 7
@@ -101,7 +102,7 @@ def stderr_handle():
     return handle
 
 
-def win_colorprint(s, color=3):
+def win_colorprint(s, color=LIGHTBLUE):
     color += 8  # bold
     handle = stderr_handle()
     SetConsoleTextAttribute = ctypes.windll.Kernel32.SetConsoleTextAttribute
@@ -119,15 +120,6 @@ def sh(cmd, nolog=False):
     p.communicate()
     if p.returncode != 0:
         sys.exit(p.returncode)
-
-
-def cmd(fun):
-    @functools.wraps(fun)
-    def wrapper(*args, **kwds):
-        return fun(*args, **kwds)
-
-    _cmds[fun.__name__] = fun.__doc__
-    return wrapper
 
 
 def rm(pattern, directory=False):
@@ -223,17 +215,6 @@ def test_setup():
 # ===================================================================
 
 
-@cmd
-def help():
-    """Print this help"""
-    safe_print('Run "make [-p <PYTHON>] <target>" where <target> is one of:')
-    for name in sorted(_cmds):
-        safe_print(
-            "    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
-    sys.exit(1)
-
-
-@cmd
 def build():
     """Build / compile"""
     # Make sure setuptools is installed (needed for 'develop' /
@@ -269,24 +250,21 @@ def build():
     sh("%s setup.py build_ext -i" % PYTHON)
     # Make sure it actually worked.
     sh('%s -c "import psutil"' % PYTHON)
-    win_colorprint("success", GREEN)
+    win_colorprint("build + import successful", GREEN)
 
 
-@cmd
 def wheel():
     """Create wheel file."""
     build()
     sh("%s setup.py bdist_wheel" % PYTHON)
 
 
-@cmd
 def upload_wheels():
     """Upload wheel files on PyPI."""
     build()
     sh("%s -m twine upload dist/*.whl" % PYTHON)
 
 
-@cmd
 def install_pip():
     """Install pip"""
     try:
@@ -316,14 +294,12 @@ def install_pip():
             os.remove(tfile)
 
 
-@cmd
 def install():
     """Install in develop / edit mode"""
     build()
     sh("%s setup.py develop" % PYTHON)
 
 
-@cmd
 def uninstall():
     """Uninstall psutil"""
     # Uninstalling psutil on Windows seems to be tricky.
@@ -370,7 +346,6 @@ def uninstall():
                                 print("removed line %r from %r" % (line, path))
 
 
-@cmd
 def clean():
     """Deletes dev files"""
     recursive_rm(
@@ -398,7 +373,6 @@ def clean():
     safe_rmtree("tmp")
 
 
-@cmd
 def setup_dev_env():
     """Install useful deps"""
     install_pip()
@@ -406,7 +380,6 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-@cmd
 def flake8():
     """Run flake8 against all py files"""
     py_files = subprocess.check_output("git ls-files")
@@ -417,22 +390,15 @@ def flake8():
     sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
-@cmd
-def test():
+def test(script=TEST_SCRIPT):
     """Run tests"""
-    try:
-        arg = sys.argv[2]
-    except IndexError:
-        arg = TEST_SCRIPT
-
     install()
     test_setup()
-    cmdline = "%s %s" % (PYTHON, arg)
+    cmdline = "%s %s" % (PYTHON, script)
     safe_print(cmdline)
     sh(cmdline)
 
 
-@cmd
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
@@ -444,7 +410,6 @@ def coverage():
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
 
 
-@cmd
 def test_process():
     """Run process tests"""
     install()
@@ -452,7 +417,6 @@ def test_process():
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
-@cmd
 def test_system():
     """Run system tests"""
     install()
@@ -460,7 +424,6 @@ def test_system():
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
-@cmd
 def test_platform():
     """Run windows only tests"""
     install()
@@ -468,7 +431,6 @@ def test_platform():
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
-@cmd
 def test_misc():
     """Run misc tests"""
     install()
@@ -476,7 +438,6 @@ def test_misc():
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
-@cmd
 def test_unicode():
     """Run unicode tests"""
     install()
@@ -484,7 +445,6 @@ def test_unicode():
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
-@cmd
 def test_connections():
     """Run connections tests"""
     install()
@@ -492,7 +452,6 @@ def test_connections():
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
-@cmd
 def test_contracts():
     """Run contracts tests"""
     install()
@@ -500,16 +459,13 @@ def test_contracts():
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
-@cmd
-def test_by_name():
+def test_by_name(name):
     """Run test by name"""
-    name = sys.argv[2]
     install()
     test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
-@cmd
 def test_failed():
     """Re-run tests which failed on last run."""
     install()
@@ -518,20 +474,6 @@ def test_failed():
         PYTHON))
 
 
-@cmd
-def test_script():
-    """Quick way to test a script"""
-    try:
-        safe_print(sys.argv)
-        name = sys.argv[2]
-    except IndexError:
-        sys.exit('second arg missing')
-    install()
-    test_setup()
-    sh("%s %s" % (PYTHON, name))
-
-
-@cmd
 def test_memleaks():
     """Run memory leaks tests"""
     install()
@@ -539,7 +481,6 @@ def test_memleaks():
     sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
-@cmd
 def install_git_hooks():
     """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
@@ -551,77 +492,106 @@ def install_git_hooks():
                 d.write(s.read())
 
 
-@cmd
 def bench_oneshot():
     """Benchmarks for oneshot() ctx manager (see #799)."""
     sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
-@cmd
 def bench_oneshot_2():
     """Same as above but using perf module (supposed to be more precise)."""
     sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
-@cmd
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
 
 
-@cmd
 def print_api_speed():
     """Benchmark all API calls."""
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 
-def set_python(s):
-    global PYTHON
-    if os.path.isabs(s):
-        PYTHON = s
-    else:
-        # try to look for a python installation
-        orig = s
-        s = s.replace('.', '')
-        vers = ('26', '27', '34', '35', '36', '37',
-                '26-64', '27-64', '34-64', '35-64', '36-64', '37-64')
-        for v in vers:
-            if s == v:
-                path = r'C:\\python%s\python.exe' % s
-                if os.path.isfile(path):
-                    print(path)
-                    PYTHON = path
-                    os.putenv('PYTHON', path)
-                    return
-        return sys.exit(
-            "can't find any python installation matching %r" % orig)
-
-
-def parse_cmdline():
-    if '-p' in sys.argv:
-        try:
-            pos = sys.argv.index('-p')
-            sys.argv.pop(pos)
-            py = sys.argv.pop(pos)
-        except IndexError:
-            return help()
-        set_python(py)
-    cmds = sys.argv[1:]
-    if not cmds:
-        return help()
-    funcs = []
-    for cmd in cmds:
-        cmd = cmd.replace('-', '_')
-        fun = getattr(sys.modules[__name__], cmd, None)
-        if fun is None:
-            return help()
-        funcs.append(fun)
-    return funcs
+def get_python(path):
+    if not path:
+        return sys.executable
+    if os.path.isabs(path):
+        return path
+    # try to look for a python installation given a shortcut name
+    path = path.replace('.', '')
+    vers = ('26', '27', '36', '37', '38',
+            '26-64', '27-64', '36-64', '37-64', '38-64'
+            '26-32', '27-32', '36-32', '37-32', '38-32')
+    for v in vers:
+        pypath = r'C:\\python%s\python.exe' % v
+        if path in pypath and os.path.isfile(pypath):
+            return pypath
 
 
 def main():
-    for fun in parse_cmdline():
-        fun()
+    global PYYHON
+    parser = argparse.ArgumentParser()
+    # option shared by all commands
+    parser.add_argument(
+        '-p', '--python',
+        help="use python executable path")
+    sp = parser.add_subparsers(dest='command', title='targets')
+    sp.add_parser('bench-oneshot', help="benchmarks for oneshot()")
+    sp.add_parser('bench-oneshot_2', help="benchmarks for oneshot() (perf)")
+    sp.add_parser('build', help="build")
+    sp.add_parser('clean', help="deletes dev files")
+    sp.add_parser('coverage', help="run coverage tests.")
+    sp.add_parser('flake8', help="run flake8 against all py files")
+    sp.add_parser('help', help="print this help")
+    sp.add_parser('install', help="build + install in develop/edit mode")
+    sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
+    sp.add_parser('install-pip', help="install pip")
+    sp.add_parser('print-access-denied', help="print AD exceptions")
+    sp.add_parser('print-api-speed', help="benchmark all API calls")
+    sp.add_parser('setup-dev-env', help="install deps")
+    test = sp.add_parser('test', help="[ARG] run tests")
+    test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
+    sp.add_parser('test-connections', help="run connections tests")
+    sp.add_parser('test-contracts', help="run contracts tests")
+    sp.add_parser('test-failed', help="re-run tests which failed on last run")
+    sp.add_parser('test-memleaks', help="run memory leaks tests")
+    sp.add_parser('test-misc', help="run misc tests")
+    sp.add_parser('test-platform', help="run windows only tests")
+    sp.add_parser('test-process', help="run process tests")
+    sp.add_parser('test-system', help="run system tests")
+    sp.add_parser('test-unicode', help="run unicode tests")
+    sp.add_parser('uninstall', help="uninstall psutil")
+    sp.add_parser('upload-wheels', help="upload wheel files on PyPI")
+    sp.add_parser('wheel', help="create wheel file")
+
+    for p in (test, test_by_name):
+        p.add_argument('arg', type=str, nargs='?', default="", help="arg")
+    args = parser.parse_args()
+
+    # set python exe
+    PYTHON = get_python(args.python)
+    if not PYTHON:
+        return sys.exit(
+            "can't find any python installation matching %r" % args.python)
+    os.putenv('PYTHON', PYTHON)
+    win_colorprint("using " + PYTHON)
+
+    if not args.command or args.command == 'help':
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    fname = args.command.replace('-', '_')
+    fun = getattr(sys.modules[__name__], fname)  # err if fun not defined
+    funargs = []
+    # mandatory args
+    if args.command in ('test-by-name', 'test-script'):
+        if not args.arg:
+            sys.exit('command needs an argument')
+        funargs = [args.arg]
+    # optional args
+    if args.command == 'test' and args.arg:
+        funargs = [args.arg]
+    fun(*funargs)
 
 
 if __name__ == '__main__':
