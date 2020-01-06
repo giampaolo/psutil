@@ -16,6 +16,16 @@
 #include "../../_psutil_common.h"
 
 
+#ifndef _WIN64
+typedef NTSTATUS (NTAPI *__NtQueryInformationProcess)(
+    HANDLE ProcessHandle,
+    DWORD ProcessInformationClass,
+    PVOID ProcessInformation,
+    DWORD ProcessInformationLength,
+    PDWORD ReturnLength);
+#endif
+
+
 /*
  * Given a pointer into a process's memory, figure out how much
  * data can be read from it.
@@ -79,7 +89,7 @@ psutil_get_process_data(long pid,
      */
     SIZE_T size = 0;
 #ifndef _WIN64
-    static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
+    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
     static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
 #endif
     HANDLE hProcess = NULL;
