@@ -529,7 +529,7 @@ def get_python(path):
 
 
 def main():
-    global PYYHON
+    global PYTHON
     parser = argparse.ArgumentParser()
     # option shared by all commands
     parser.add_argument(

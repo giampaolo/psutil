@@ -453,7 +453,10 @@ def sh(cmd, **kwds):
     kwds.setdefault("creationflags", flags)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
-    stdout, stderr = p.communicate()
+    if PY3:
+        stdout, stderr = p.communicate(timeout=GLOBAL_TIMEOUT)
+    else:
+        stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
