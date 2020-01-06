@@ -655,7 +655,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_INFORMATION);
     if (hProcess == NULL)
         return NULL;
 

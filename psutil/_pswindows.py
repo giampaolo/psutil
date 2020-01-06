@@ -860,7 +860,7 @@ class Process(object):
         # py >= 2.7
         elif sig in (getattr(signal, "CTRL_C_EVENT", object()),
                      getattr(signal, "CTRL_BREAK_EVENT", object())):
-            os.kill(self.pid, sig)(sig)
+            os.kill(self.pid, sig)
         else:
             raise ValueError(
                 "only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT signals "
