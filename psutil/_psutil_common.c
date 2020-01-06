@@ -7,16 +7,26 @@
  */
 
 #include <Python.h>
-#ifdef _WIN32
+#ifdef PSUTIL_WINDOWS
 #include <windows.h>
-#endif
+#endif  // !PSUTIL_WINDOWS
 
 #include "_psutil_common.h"
 
-// Global vars.
+
+// ====================================================================
+// --- Global vars / constants
+// ====================================================================
+
+
 int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
+// PSUTIL_CONN_NONE
 
+
+// ====================================================================
+// --- Python functions and backward compatibility
+// ====================================================================
 
 /*
  * Backport of unicode FS APIs from Python 3.
@@ -36,22 +46,6 @@ PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
     return PyString_FromStringAndSize(s, size);
 }
 #endif
-
-
-/*
- * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
- * If msg != "" the exception message will change in accordance.
- */
-PyObject *
-NoSuchProcess(const char *msg) {
-    PyObject *exc;
-    exc = PyObject_CallFunction(
-        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
 
 /*
  * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
@@ -75,6 +69,25 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 }
 
 
+// ====================================================================
+// --- Custom exceptions
+// ====================================================================
+
+/*
+ * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
+ * If msg != "" the exception message will change in accordance.
+ */
+PyObject *
+NoSuchProcess(const char *msg) {
+    PyObject *exc;
+    exc = PyObject_CallFunction(
+        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
 /*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
  * If msg != "" the exception message will change in accordance.
@@ -89,6 +102,10 @@ AccessDenied(const char *msg) {
     return NULL;
 }
 
+
+// ====================================================================
+// --- Global utils
+// ====================================================================
 
 /*
  * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
