@@ -14,25 +14,6 @@ import time
 from collections import namedtuple
 
 from . import _common
-try:
-    from . import _psutil_windows as cext
-except ImportError as err:
-    if str(err).lower().startswith("dll load failed") and \
-            sys.getwindowsversion()[0] < 6:
-        # We may get here if:
-        # 1) we are on an old Windows version
-        # 2) psutil was installed via pip + wheel
-        # See: https://github.com/giampaolo/psutil/issues/811
-        # It must be noted that psutil can still (kind of) work
-        # on outdated systems if compiled / installed from sources,
-        # but if we get here it means this this was a wheel (or exe).
-        msg = "this Windows version is too old (< Windows Vista); "
-        msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
-        raise RuntimeError(msg)
-    else:
-        raise
-
 from ._common import AccessDenied
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
@@ -56,6 +37,22 @@ from ._psutil_windows import HIGH_PRIORITY_CLASS
 from ._psutil_windows import IDLE_PRIORITY_CLASS
 from ._psutil_windows import NORMAL_PRIORITY_CLASS
 from ._psutil_windows import REALTIME_PRIORITY_CLASS
+
+try:
+    from . import _psutil_windows as cext
+except ImportError as err:
+    if str(err).lower().startswith("dll load failed") and \
+            sys.getwindowsversion()[0] < 6:
+        # We may get here if:
+        # 1) we are on an old Windows version
+        # 2) psutil was installed via pip + wheel
+        # See: https://github.com/giampaolo/psutil/issues/811
+        msg = "this Windows version is too old (< Windows Vista); "
+        msg += "psutil 3.4.2 is the latest version which supports Windows "
+        msg += "2000, XP and 2003 server"
+        raise RuntimeError(msg)
+    else:
+        raise
 
 if sys.version_info >= (3, 4):
     import enum
@@ -83,7 +80,6 @@ __extra__all__ = [
 
 CONN_DELETE_TCB = "DELETE_TCB"
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
-HAS_GETLOADAVG = hasattr(cext, "getloadavg")
 ERROR_PARTIAL_COPY = 299
 
 
@@ -158,14 +154,6 @@ pinfo_map = dict(
     mem_private=21,
 )
 
-# More values at: https://stackoverflow.com/a/20804735/376587
-WIN_10 = (10, 0)
-WIN_8 = (6, 2)
-WIN_7 = (6, 1)
-WIN_SERVER_2008 = (6, 0)
-WIN_VISTA = (6, 0)
-WIN_SERVER_2003 = (5, 2)
-
 
 # =====================================================================
 # --- named tuples
@@ -210,7 +198,8 @@ def convert_dos_path(s):
     """
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.win32_QueryDosDevice(rawdrive)
-    return os.path.join(driveletter, s[len(rawdrive):])
+    remainder = s[len(rawdrive):]
+    return os.path.join(driveletter, remainder)
 
 
 def py2_strencode(s):
@@ -337,21 +326,20 @@ def cpu_freq():
     return [_common.scpufreq(float(curr), min_, float(max_))]
 
 
-if HAS_GETLOADAVG:
-    _loadavg_inititialized = False
+_loadavg_inititialized = False
 
-    def getloadavg():
-        """Return the number of processes in the system run queue averaged
-        over the last 1, 5, and 15 minutes respectively as a tuple"""
-        global _loadavg_inititialized
+def getloadavg():
+    """Return the number of processes in the system run queue averaged
+    over the last 1, 5, and 15 minutes respectively as a tuple"""
+    global _loadavg_inititialized
 
-        if not _loadavg_inititialized:
-            cext.init_loadavg_counter()
-            _loadavg_inititialized = True
+    if not _loadavg_inititialized:
+        cext.init_loadavg_counter()
+        _loadavg_inititialized = True
 
-        # Drop to 2 decimal points which is what Linux does
-        raw_loads = cext.getloadavg()
-        return tuple([round(load, 2) for load in raw_loads])
+    # Drop to 2 decimal points which is what Linux does
+    raw_loads = cext.getloadavg()
+    return tuple([round(load, 2) for load in raw_loads])
 
 
 # =====================================================================
