@@ -31,15 +31,16 @@
 #include <sys/socket.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
 #define _KERNEL  // for DTYPE_*
-#include <sys/file.h>
+    #include <sys/file.h>
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "specific.h"
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
+#include "specific.h"
+
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)

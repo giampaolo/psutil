@@ -9,7 +9,7 @@
 #include <Psapi.h>  // GetMappedFileName()
 #include <Python.h>
 
-#include "globals.h"
+#include "../../_psutil_common.h"
 #include "process_utils.h"
 
 CRITICAL_SECTION g_cs;

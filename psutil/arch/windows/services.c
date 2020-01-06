@@ -8,8 +8,9 @@
 #include <windows.h>
 #include <Winsvc.h>
 
-#include "services.h"
 #include "../../_psutil_common.h"
+#include "services.h"
+
 
 // ==================================================================
 // utils

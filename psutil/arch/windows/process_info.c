@@ -10,10 +10,9 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "globals.h"
+#include "../../_psutil_common.h"
 #include "process_info.h"
 #include "process_utils.h"
-#include "../../_psutil_common.h"
 
 
 #ifndef _WIN64

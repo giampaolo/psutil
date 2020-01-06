@@ -20,8 +20,8 @@ static const int PSUTIL_CONN_NONE = 128;
 // ====================================================================
 
 #if PY_MAJOR_VERSION < 3
-PyObject* PyUnicode_DecodeFSDefault(char *s);
-PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
+    PyObject* PyUnicode_DecodeFSDefault(char *s);
+    PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 #endif
 PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
@@ -39,3 +39,37 @@ PyObject* NoSuchProcess(const char *msg);
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
 int psutil_setup(void);
+
+// ====================================================================
+// --- Windows
+// ====================================================================
+
+#ifdef PSUTIL_WINDOWS
+    #include <windows.h>
+    // make it available to any file which includes this module
+    #include "arch/windows/ntextapi.h"
+
+    extern int PSUTIL_WINVER;
+    extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
+
+    #define PSUTIL_WINDOWS_VISTA 60
+    #define PSUTIL_WINDOWS_7 61
+    #define PSUTIL_WINDOWS_8 62
+    #define PSUTIL_WINDOWS_8_1 63
+    #define PSUTIL_WINDOWS_10 100
+    #define PSUTIL_WINDOWS_NEW MAXLONG
+
+    #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+    #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+    #define LO_T 1e-7
+    #define HI_T 429.4967296
+
+    #ifndef AF_INET6
+        #define AF_INET6 23
+    #endif
+
+    int psutil_load_globals();
+    PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
+    PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
+    PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
+#endif

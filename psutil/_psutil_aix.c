@@ -29,7 +29,6 @@
  */
 
 #include <Python.h>
-
 #include <sys/limits.h>
 #include <sys/proc.h>
 #include <sys/procfs.h>
@@ -51,11 +50,11 @@
 #include <libperfstat.h>
 #include <unistd.h>
 
+#include "_psutil_common.h"
+#include "_psutil_posix.h"
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
 #include "arch/aix/common.h"
-#include "_psutil_common.h"
-#include "_psutil_posix.h"
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)

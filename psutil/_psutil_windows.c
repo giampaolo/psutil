@@ -27,8 +27,7 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "arch/windows/ntextapi.h"
-#include "arch/windows/globals.h"
+#include "_psutil_common.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_utils.h"
 #include "arch/windows/process_info.h"
@@ -39,7 +38,6 @@
 #include "arch/windows/services.h"
 #include "arch/windows/socks.h"
 #include "arch/windows/wmi.h"
-#include "_psutil_common.h"
 
 // Raised by Process.wait().
 static PyObject *TimeoutExpired;

@@ -31,7 +31,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #if !defined(__NetBSD__)
-#include <sys/user.h>
+    #include <sys/user.h>
 #endif
 #include <sys/proc.h>
 #include <sys/file.h>
@@ -51,13 +51,10 @@
 #include <netinet/tcp_var.h>   // for struct xtcpcb
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 #include <arpa/inet.h>         // for inet_ntop()
-
 #include <sys/mount.h>
-
 #include <net/if.h>       // net io counters
 #include <net/if_dl.h>
 #include <net/route.h>
-
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
 
@@ -97,7 +94,6 @@
         #define DTYPE_VNODE 1
     #endif
 #endif
-
 
 
 // convert a timeval struct to a double
