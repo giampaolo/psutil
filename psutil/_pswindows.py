@@ -328,6 +328,7 @@ def cpu_freq():
 
 _loadavg_inititialized = False
 
+
 def getloadavg():
     """Return the number of processes in the system run queue averaged
     over the last 1, 5, and 15 minutes respectively as a tuple"""

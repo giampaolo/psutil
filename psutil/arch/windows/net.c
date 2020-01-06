@@ -18,13 +18,13 @@
 static PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
-    ULONG outBufLen = 15000;
+    int outBufLen = 15000;
     DWORD dwRetVal = 0;
     ULONG attempts = 0;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
 
     do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *) MALLOC(outBufLen);
+        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -33,7 +33,7 @@ psutil_get_nic_addresses() {
         dwRetVal = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, pAddresses,
                                         &outBufLen);
         if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            FREE(pAddresses);
+            free(pAddresses);
             pAddresses = NULL;
         }
         else {
