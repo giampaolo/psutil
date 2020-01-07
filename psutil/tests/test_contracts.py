@@ -29,7 +29,9 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
 from psutil.tests import create_sockets
+from psutil.tests import enum
 from psutil.tests import get_kernel_version
+from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
@@ -198,7 +200,7 @@ class TestDeprecations(unittest.TestCase):
 # ===================================================================
 
 
-class TestSystem(unittest.TestCase):
+class TestSystemAPITypes(unittest.TestCase):
     """Check the return types of system related APIs.
     Mainly we want to test we never return unicode on Python 2, see:
     https://github.com/giampaolo/psutil/issues/1039
@@ -211,18 +213,38 @@ class TestSystem(unittest.TestCase):
     def tearDown(self):
         safe_rmpath(TESTFN)
 
-    def test_cpu_times(self):
-        # Duplicate of test_system.py. Keep it anyway.
-        ret = psutil.cpu_times()
-        assert is_namedtuple(ret)
-        for n in ret:
-            self.assertIsInstance(n, float)
-            self.assertGreaterEqual(n, 0)
+    def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
+        assert is_namedtuple(nt)
+        for n in nt:
+            self.assertIsInstance(n, type_)
+            if gezero:
+                self.assertGreaterEqual(n, 0)
 
-    def test_io_counters(self):
+    def test_cpu_times(self):
+        self.assert_ntuple_of_nums(psutil.cpu_times())
+        for nt in psutil.cpu_times(percpu=True):
+            self.assert_ntuple_of_nums(nt)
+
+    def test_cpu_percent(self):
+        self.assertIsInstance(psutil.cpu_percent(interval=None), float)
+        self.assertIsInstance(psutil.cpu_percent(interval=0.00001), float)
+
+    def test_cpu_times_percent(self):
+        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
+        self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
+
+    def test_cpu_count(self):
+        self.assertIsInstance(psutil.cpu_count(), int)
+
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    def test_cpu_freq(self):
+        self.assert_ntuple_of_nums(psutil.cpu_freq())
+
+    def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
-        for k in psutil.disk_io_counters(perdisk=True):
+        for k, v in psutil.disk_io_counters(perdisk=True).items():
             self.assertIsInstance(k, str)
+            self.assert_ntuple_of_nums(v, type_=(int, long))
 
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.
@@ -245,14 +267,25 @@ class TestSystem(unittest.TestCase):
         for ifname, addrs in psutil.net_if_addrs().items():
             self.assertIsInstance(ifname, str)
             for addr in addrs:
+                if enum is not None:
+                    assert isinstance(addr.family, enum.IntEnum), addr
+                else:
+                    assert isinstance(addr.family, int), addr
                 self.assertIsInstance(addr.address, str)
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
 
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
-        for ifname, _ in psutil.net_if_stats().items():
+        for ifname, info in psutil.net_if_stats().items():
             self.assertIsInstance(ifname, str)
+            self.assertIsInstance(info.isup, bool)
+            if enum is not None:
+                self.assertIsInstance(info.duplex, enum.IntEnum)
+            else:
+                self.assertIsInstance(info.duplex, int)
+            self.assertIsInstance(info.speed, int)
+            self.assertIsInstance(info.mtu, int)
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
@@ -267,6 +300,7 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(name, str)
             for unit in units:
                 self.assertIsInstance(unit.label, str)
+                self.assertIsInstance(unit.current, (float, int, type(None)))
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
@@ -275,6 +309,13 @@ class TestSystem(unittest.TestCase):
             self.assertIsInstance(name, str)
             for unit in units:
                 self.assertIsInstance(unit.label, str)
+                self.assertIsInstance(unit.current, (float, int, type(None)))
+                self.assertIsInstance(unit.high, (float, int, type(None)))
+                self.assertIsInstance(unit.critical, (float, int, type(None)))
+
+    def test_boot_time(self):
+        # Duplicate of test_system.py. Keep it anyway.
+        self.assertIsInstance(psutil.boot_time(), float)
 
     def test_users(self):
         # Duplicate of test_system.py. Keep it anyway.
