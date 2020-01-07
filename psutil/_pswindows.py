@@ -79,7 +79,6 @@ __extra__all__ = [
 # =====================================================================
 
 CONN_DELETE_TCB = "DELETE_TCB"
-HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_io_priority_get")
 ERROR_PARTIAL_COPY = 299
 
 
@@ -1006,23 +1005,21 @@ class Process(object):
     def nice_set(self, value):
         return cext.proc_priority_set(self.pid, value)
 
-    # available on Windows >= Vista
-    if HAS_PROC_IO_PRIORITY:
-        @wrap_exceptions
-        def ionice_get(self):
-            ret = cext.proc_io_priority_get(self.pid)
-            if enum is not None:
-                ret = IOPriority(ret)
-            return ret
+    @wrap_exceptions
+    def ionice_get(self):
+        ret = cext.proc_io_priority_get(self.pid)
+        if enum is not None:
+            ret = IOPriority(ret)
+        return ret
 
-        @wrap_exceptions
-        def ionice_set(self, ioclass, value):
-            if value:
-                raise TypeError("value argument not accepted on Windows")
-            if ioclass not in (IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL,
-                               IOPRIO_HIGH):
-                raise ValueError("%s is not a valid priority" % ioclass)
-            cext.proc_io_priority_set(self.pid, ioclass)
+    @wrap_exceptions
+    def ionice_set(self, ioclass, value):
+        if value:
+            raise TypeError("value argument not accepted on Windows")
+        if ioclass not in (IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL,
+                           IOPRIO_HIGH):
+            raise ValueError("%s is not a valid priority" % ioclass)
+        cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
     def io_counters(self):
