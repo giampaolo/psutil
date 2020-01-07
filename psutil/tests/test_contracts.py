@@ -48,19 +48,10 @@ import psutil
 # --- APIs availability
 # ===================================================================
 
+# Make sure code reflects what doc promises in terms of APIs
+# availability.
 
-class TestAvailability(unittest.TestCase):
-    """Make sure code reflects what doc promises in terms of APIs
-    availability.
-    """
-
-    def test_cpu_affinity(self):
-        hasit = LINUX or WINDOWS or FREEBSD
-        self.assertEqual(hasattr(psutil.Process, "cpu_affinity"), hasit)
-
-    def test_win_service(self):
-        self.assertEqual(hasattr(psutil, "win_service_iter"), WINDOWS)
-        self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
+class TestAvailConstantsAPIs(unittest.TestCase):
 
     def test_PROCFS_PATH(self):
         self.assertEqual(hasattr(psutil, "PROCFS_PATH"),
@@ -106,6 +97,15 @@ class TestAvailability(unittest.TestCase):
         ae(hasattr(psutil, "RLIMIT_RTTIME"), hasit)
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
 
+
+class TestAvailSystemAPIs(unittest.TestCase):
+
+    def test_win_service_iter(self):
+        self.assertEqual(hasattr(psutil, "win_service_iter"), WINDOWS)
+
+    def test_win_service_get(self):
+        self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
+
     def test_cpu_freq(self):
         linux = (LINUX and
                  (os.path.exists("/sys/devices/system/cpu/cpufreq") or
@@ -124,44 +124,47 @@ class TestAvailability(unittest.TestCase):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
                          LINUX or WINDOWS or FREEBSD or MACOS)
 
-    def test_proc_environ(self):
+
+class TestAvailProcessAPIs(unittest.TestCase):
+
+    def test_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
                          LINUX or MACOS or WINDOWS or AIX or SUNOS)
 
-    def test_proc_uids(self):
+    def test_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
 
-    def test_proc_gids(self):
+    def test_gids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
 
-    def test_proc_terminal(self):
+    def test_terminal(self):
         self.assertEqual(hasattr(psutil.Process, "terminal"), POSIX)
 
-    def test_proc_ionice(self):
+    def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
-    def test_proc_rlimit(self):
+    def test_rlimit(self):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
 
-    def test_proc_io_counters(self):
+    def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
         self.assertEqual(hasit, False if MACOS or SUNOS else True)
 
-    def test_proc_num_fds(self):
+    def test_num_fds(self):
         self.assertEqual(hasattr(psutil.Process, "num_fds"), POSIX)
 
-    def test_proc_num_handles(self):
+    def test_num_handles(self):
         self.assertEqual(hasattr(psutil.Process, "num_handles"), WINDOWS)
 
-    def test_proc_cpu_affinity(self):
+    def test_cpu_affinity(self):
         self.assertEqual(hasattr(psutil.Process, "cpu_affinity"),
                          LINUX or WINDOWS or FREEBSD)
 
-    def test_proc_cpu_num(self):
+    def test_cpu_num(self):
         self.assertEqual(hasattr(psutil.Process, "cpu_num"),
                          LINUX or FREEBSD or SUNOS)
 
-    def test_proc_memory_maps(self):
+    def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
         self.assertEqual(
             hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
