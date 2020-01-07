@@ -66,12 +66,19 @@ class TestAvailConstantsAPIs(unittest.TestCase):
         ae(hasattr(psutil, "NORMAL_PRIORITY_CLASS"), WINDOWS)
         ae(hasattr(psutil, "REALTIME_PRIORITY_CLASS"), WINDOWS)
 
-    def test_linux_ioprio(self):
+    def test_linux_ioprio_linux(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "IOPRIO_CLASS_NONE"), LINUX)
         ae(hasattr(psutil, "IOPRIO_CLASS_RT"), LINUX)
         ae(hasattr(psutil, "IOPRIO_CLASS_BE"), LINUX)
         ae(hasattr(psutil, "IOPRIO_CLASS_IDLE"), LINUX)
+
+    def test_linux_ioprio_windows(self):
+        ae = self.assertEqual
+        ae(hasattr(psutil, "IOPRIO_HIGH"), WINDOWS)
+        ae(hasattr(psutil, "IOPRIO_NORMAL"), WINDOWS)
+        ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
+        ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
     def test_linux_rlimit(self):
         ae = self.assertEqual
@@ -453,16 +460,20 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertGreaterEqual(field, 0)
 
     def ionice(self, ret, proc):
-        if POSIX:
-            assert is_namedtuple(ret)
-            for field in ret:
-                self.assertIsInstance(field, int)
         if LINUX:
+            self.assertIsInstance(ret.ioclass, int)
+            self.assertIsInstance(ret.value, int)
             self.assertGreaterEqual(ret.ioclass, 0)
             self.assertGreaterEqual(ret.value, 0)
-        else:
+        else:  # Windows, Cygwin
+            choices = [
+                psutil.IOPRIO_VERYLOW,
+                psutil.IOPRIO_LOW,
+                psutil.IOPRIO_NORMAL,
+                psutil.IOPRIO_HIGH]
+            self.assertIsInstance(ret, int)
             self.assertGreaterEqual(ret, 0)
-            self.assertIn(ret, (0, 1, 2))
+            self.assertIn(ret, choices)
 
     def num_threads(self, ret, proc):
         self.assertIsInstance(ret, int)
