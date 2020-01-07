@@ -6,11 +6,11 @@
  */
 
 #include <windows.h>
-#include <Psapi.h>  // GetMappedFileName()
 #include <Python.h>
 
 #include "../../_psutil_common.h"
 #include "process_utils.h"
+
 
 CRITICAL_SECTION g_cs;
 BOOL g_initialized = FALSE;
@@ -96,8 +96,8 @@ psutil_create_thread() {
 }
 
 
-static PyObject *
-psutil_get_open_files_ntqueryobject(DWORD dwPid, HANDLE hProcess) {
+PyObject *
+psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
     DWORD                               dwInfoSize = 0x10000;
@@ -263,157 +263,4 @@ cleanup:
 
     LeaveCriticalSection(&g_cs);
     return py_retlist;
-}
-
-
-static PyObject *
-psutil_get_open_files_getmappedfilename(DWORD dwPid, HANDLE hProcess) {
-    NTSTATUS                            status;
-    PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
-    DWORD                               dwInfoSize = 0x10000;
-    DWORD                               dwRet = 0;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
-    HANDLE                              hFile = NULL;
-    HANDLE                              hMap = NULL;
-    DWORD                               i = 0;
-    BOOLEAN                             error = FALSE;
-    PyObject*                           py_retlist = NULL;
-    PyObject*                           py_path = NULL;
-    ULONG                               dwSize = 0;
-    LPVOID                              pMem = NULL;
-    wchar_t                             pszFilename[MAX_PATH+1];
-
-    if (g_initialized == FALSE)
-        psutil_get_open_files_init(FALSE);
-
-    // Py_BuildValue raises an exception if NULL is returned
-    py_retlist = PyList_New(0);
-    if (py_retlist == NULL) {
-        error = TRUE;
-        goto cleanup;
-    }
-
-    do {
-        if (pHandleInfo != NULL) {
-            FREE(pHandleInfo);
-            pHandleInfo = NULL;
-        }
-
-        // NtQuerySystemInformation won't give us the correct buffer size,
-        // so we guess by doubling the buffer size.
-        dwInfoSize *= 2;
-        pHandleInfo = MALLOC_ZERO(dwInfoSize);
-
-        if (pHandleInfo == NULL) {
-            PyErr_NoMemory();
-            error = TRUE;
-            goto cleanup;
-        }
-    } while ((status = NtQuerySystemInformation(
-                            SystemExtendedHandleInformation,
-                            pHandleInfo,
-                            dwInfoSize,
-                            &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
-
-    // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (! NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
-            status, "NtQuerySystemInformation(SystemExtendedHandleInformation)");
-        error = TRUE;
-        goto cleanup;
-    }
-
-    for (i = 0; i < pHandleInfo->NumberOfHandles; i++) {
-        hHandle = &pHandleInfo->Handles[i];
-
-        // Check if this hHandle belongs to the PID the user specified.
-        if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
-            goto loop_cleanup;
-
-        if (!DuplicateHandle(hProcess,
-                             (HANDLE)hHandle->HandleValue,
-                             GetCurrentProcess(),
-                             &hFile,
-                             0,
-                             TRUE,
-                             DUPLICATE_SAME_ACCESS))
-        {
-            goto loop_cleanup;
-        }
-
-        hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-        if (hMap == NULL) {
-            goto loop_cleanup;
-        }
-
-        pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
-
-        if (pMem == NULL) {
-            goto loop_cleanup;
-        }
-
-        dwSize = GetMappedFileName(
-            GetCurrentProcess(), pMem, (LPSTR)pszFilename, MAX_PATH);
-        if (dwSize == 0) {
-            goto loop_cleanup;
-        }
-
-        pszFilename[dwSize] = '\0';
-        py_path = PyUnicode_FromWideChar(pszFilename, dwSize);
-        if (py_path == NULL) {
-            error = TRUE;
-            goto loop_cleanup;
-        }
-
-        if (PyList_Append(py_retlist, py_path)) {
-            error = TRUE;
-            goto loop_cleanup;
-        }
-
-loop_cleanup:
-        Py_XDECREF(py_path);
-        py_path = NULL;
-        if (pMem != NULL)
-            UnmapViewOfFile(pMem);
-        pMem = NULL;
-        if (hMap != NULL)
-            CloseHandle(hMap);
-        hMap = NULL;
-        if (hFile != NULL)
-            CloseHandle(hFile);
-        hFile = NULL;
-        dwSize = 0;
-    }
-
-cleanup:
-    if (pMem != NULL)
-        UnmapViewOfFile(pMem);
-    pMem = NULL;
-    if (hMap != NULL)
-        CloseHandle(hMap);
-    hMap = NULL;
-    if (hFile != NULL)
-        CloseHandle(hFile);
-    hFile = NULL;
-    if (pHandleInfo != NULL)
-        FREE(pHandleInfo);
-    pHandleInfo = NULL;
-    if (error) {
-        Py_XDECREF(py_retlist);
-        py_retlist = NULL;
-    }
-    return py_retlist;
-}
-
-
-/*
- * The public function.
- */
-PyObject *
-psutil_get_open_files(DWORD pid, HANDLE hProcess) {
-    // Threaded version only works for Vista+
-    if (PSUTIL_WINVER >= PSUTIL_WINDOWS_VISTA)
-        return psutil_get_open_files_ntqueryobject(pid, hProcess);
-    else
-        return psutil_get_open_files_getmappedfilename(pid, hProcess);
 }
