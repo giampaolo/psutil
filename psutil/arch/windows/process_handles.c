@@ -142,10 +142,15 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
 
+    for (i = 0; i < handlesList->NumberOfHandles; i++) {
+        printf("%i\n", i);
+        hHandle = &pHandleInfo->Handles[i];
+    }
+/*
     ret = psutil_create_thread();
     if (ret != 0)
         goto error;
-
+*/
     goto exit;
 
 error:
