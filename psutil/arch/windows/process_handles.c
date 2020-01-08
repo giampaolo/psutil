@@ -38,7 +38,6 @@ psutil_init_threads() {
 static int
 psutil_get_filename(LPVOID lpvParam) {
     printf("inside thread fun\n");
-    // Sleep(3000);
     return 0;
 }
 
@@ -138,9 +137,10 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     if (!py_retlist)
         return NULL;
 
-    if (g_initialized == FALSE)
-        if (psutil_init_threads() != 0)
-            goto error;
+    if (psutil_init_threads() != 0)
+        goto error;
+    if (psutil_enum_handles(&handlesList) != 0)
+        goto error;
 
     ret = psutil_create_thread();
     if (ret != 0)
