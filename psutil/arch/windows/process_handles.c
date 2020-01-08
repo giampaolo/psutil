@@ -20,11 +20,6 @@
 // Global objects used by threads.
 CRITICAL_SECTION g_cs;
 BOOL g_initialized = FALSE;
-NTSTATUS g_status;
-HANDLE g_hFile = NULL;
-PUNICODE_STRING g_pNameBuffer = NULL;
-ULONG g_dwSize = 0;
-ULONG g_dwLength = 0;
 
 
 static DWORD
@@ -43,7 +38,7 @@ psutil_get_filename(LPVOID lpvParam) {
     TCHAR Path[BUFSIZE];
     DWORD dwRet;
 
-    dwRet = GetFinalPathNameByHandle( hFile, Path, BUFSIZE, VOLUME_NAME_NT );
+    dwRet = GetFinalPathNameByHandle(hFile, Path, BUFSIZE, VOLUME_NAME_NT);
     if(dwRet < BUFSIZE)
     {
         _tprintf(TEXT("The final path is: %s\n"), Path);
