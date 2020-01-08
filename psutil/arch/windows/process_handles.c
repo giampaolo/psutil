@@ -28,17 +28,14 @@ ULONG g_dwLength = 0;
 
 
 static VOID
-psutil_get_open_files_init(BOOL threaded) {
+psutil_init_threads() {
     if (g_initialized == TRUE)
         return;
 
     // Create events for signalling work between threads
-    if (threaded == TRUE) {
-        g_hEvtStart = CreateEvent(NULL, FALSE, FALSE, NULL);
-        g_hEvtFinish = CreateEvent(NULL, FALSE, FALSE, NULL);
-        InitializeCriticalSection(&g_cs);
-    }
-
+    g_hEvtStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+    g_hEvtFinish = CreateEvent(NULL, FALSE, FALSE, NULL);
+    InitializeCriticalSection(&g_cs);
     g_initialized = TRUE;
 }
 
@@ -143,13 +140,35 @@ PyObject *
 psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
+    int                                 ret;
     DWORD                               i = 0;
-    BOOLEAN                             error = FALSE;
+    BOOLEAN                             error_occurred = FALSE;
     DWORD                               dwWait = 0;
     PyObject*                           py_retlist = NULL;
     PyObject*                           py_path = NULL;
-    int                                 ret;
 
+    py_retlist = PyList_New(0);
+    if (!py_retlist)
+        return NULL;
+
+    if (g_initialized == FALSE)
+        psutil_init_threads();
+
+    goto exit;
+
+error:
+    error_occurred = TRUE;
+    goto exit;
+
+exit:
+    Py_DECREF(py_retlist);
+    if (error_occurred == TRUE)
+        return NULL;
+    return py_retlist;
+}
+
+
+/*
     if (g_initialized == FALSE)
         psutil_get_open_files_init(TRUE);
 
@@ -210,7 +229,7 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
 
             g_dwSize = g_dwLength;
             if (g_dwSize > 0) {
-                g_pNameBuffer = MALLOC_ZERO(g_dwSize);
+                g_pNameBuffer = malloc(g_dwSize);
 
                 if (g_pNameBuffer == NULL)
                     goto loop_cleanup;
@@ -278,4 +297,4 @@ cleanup:
 
     LeaveCriticalSection(&g_cs);
     return py_retlist;
-}
+*/
