@@ -96,18 +96,59 @@ psutil_create_thread() {
 }
 
 
+// Taken from Process Hacker.
+int
+psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
+    static ULONG initialBufferSize = 0x10000;
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize;
+
+    bufferSize = initialBufferSize;
+    buffer = malloc(bufferSize);
+
+    while ((status = NtQuerySystemInformation(
+        SystemExtendedHandleInformation,
+        buffer,
+        bufferSize,
+        NULL
+        )) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        free(buffer);
+        bufferSize *= 2;
+
+        // Fail if we're resizing the buffer to something very large.
+        if (bufferSize > 256 * 1024 * 1024) {
+            psutil_debug("SystemExtendedHandleInformation: buffer too big");
+            PyErr_NoMemory();
+            return 1;
+        }
+
+        buffer = malloc(bufferSize);
+    }
+
+    if (! NT_SUCCESS(status)) {
+        PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
+        free(buffer);
+        return 1;
+    }
+
+    *handles = (PSYSTEM_HANDLE_INFORMATION_EX)buffer;
+    return 0;
+}
+
+
+
 PyObject *
 psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
-    NTSTATUS                            status;
-    PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
-    DWORD                               dwInfoSize = 0x10000;
-    DWORD                               dwRet = 0;
+    PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
     DWORD                               i = 0;
     BOOLEAN                             error = FALSE;
     DWORD                               dwWait = 0;
     PyObject*                           py_retlist = NULL;
     PyObject*                           py_path = NULL;
+    int                                 ret;
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(TRUE);
@@ -129,38 +170,12 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         goto cleanup;
     }
 
-    do {
-        if (pHandleInfo != NULL) {
-            FREE(pHandleInfo);
-            pHandleInfo = NULL;
-        }
-
-        // NtQuerySystemInformation won't give us the correct buffer size,
-        // so we guess by doubling the buffer size.
-        dwInfoSize *= 2;
-        pHandleInfo = MALLOC_ZERO(dwInfoSize);
-
-        if (pHandleInfo == NULL) {
-            PyErr_NoMemory();
-            error = TRUE;
-            goto cleanup;
-        }
-    } while ((status = NtQuerySystemInformation(
-                            SystemExtendedHandleInformation,
-                            pHandleInfo,
-                            dwInfoSize,
-                            &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
-
-    // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (! NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(
-            status, "NtQuerySystemInformation(SystemExtendedHandleInformation)");
-        error = TRUE;
+    ret = psutil_enum_handles(&handlesList);
+    if (ret != 0)
         goto cleanup;
-    }
 
-    for (i = 0; i < pHandleInfo->NumberOfHandles; i++) {
-        hHandle = &pHandleInfo->Handles[i];
+    for (i = 0; i < handlesList->NumberOfHandles; i++) {
+        hHandle = &handlesList->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
         if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
@@ -252,9 +267,9 @@ cleanup:
         CloseHandle(g_hFile);
     g_hFile = NULL;
 
-    if (pHandleInfo != NULL)
-        FREE(pHandleInfo);
-    pHandleInfo = NULL;
+    if (handlesList != NULL)
+        FREE(handlesList);
+    handlesList = NULL;
 
     if (error) {
         Py_XDECREF(py_retlist);
