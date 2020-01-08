@@ -115,7 +115,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     }
 
     if (! NT_SUCCESS(status)) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
+        psutil_SetFromNTStatusErr("NtQuerySystemInformation");
         free(buffer);
         return 1;
     }
