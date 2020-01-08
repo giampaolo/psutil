@@ -126,7 +126,7 @@ PyObject *
 psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
-    int                                 ret;
+    HANDLE                              hFile = NULL;
     DWORD                               i = 0;
     BOOLEAN                             error_occurred = FALSE;
     DWORD                               dwWait = 0;
@@ -136,15 +136,29 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     py_retlist = PyList_New(0);
     if (!py_retlist)
         return NULL;
-
     if (psutil_init_threads() != 0)
         goto error;
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
-
     for (i = 0; i < handlesList->NumberOfHandles; i++) {
+        hHandle = &handlesList->Handles[i];
+        if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
+            continue;
+        if (! DuplicateHandle(
+                hProcess,
+                hHandle->HandleValue,
+                GetCurrentProcess(),
+                &hFile,
+                0,
+                TRUE,
+                DUPLICATE_SAME_ACCESS))
+        {
+            // Will fail if not a regular file; just skip it.
+            continue;
+        }
         printf("%i\n", i);
-        hHandle = &pHandleInfo->Handles[i];
+        // cleanup section
+        CloseHandle(hFile);
     }
 /*
     ret = psutil_create_thread();
@@ -159,6 +173,10 @@ error:
 
 exit:
     Py_DECREF(py_retlist);
+    if (hFile != NULL)
+        CloseHandle(hFile);
+    if (handlesList != NULL)
+        FREE(handlesList);
     if (error_occurred == TRUE)
         return NULL;
     return py_retlist;
