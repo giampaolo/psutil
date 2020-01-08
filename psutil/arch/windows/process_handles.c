@@ -7,9 +7,14 @@
 
 #include <windows.h>
 #include <Python.h>
+#include <tchar.h>
 
 #include "../../_psutil_common.h"
 #include "process_utils.h"
+
+#define BUFSIZE MAX_PATH
+#define NTQO_TIMEOUT 2000
+#define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
 
 
 // Global objects used by threads.
@@ -20,9 +25,6 @@ HANDLE g_hFile = NULL;
 PUNICODE_STRING g_pNameBuffer = NULL;
 ULONG g_dwSize = 0;
 ULONG g_dwLength = 0;
-
-#define NTQO_TIMEOUT 2000
-#define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
 
 
 static DWORD
@@ -37,18 +39,27 @@ psutil_init_threads() {
 
 static int
 psutil_get_filename(LPVOID lpvParam) {
-    printf("inside thread fun\n");
+    HANDLE hFile = *((HANDLE*)lpvParam);
+    TCHAR Path[BUFSIZE];
+    DWORD dwRet;
+
+    dwRet = GetFinalPathNameByHandle( hFile, Path, BUFSIZE, VOLUME_NAME_NT );
+    if(dwRet < BUFSIZE)
+    {
+        _tprintf(TEXT("The final path is: %s\n"), Path);
+    }
+    else printf("The required buffer size is %d.\n", dwRet);
     return 0;
 }
 
 
 static DWORD
-psutil_create_thread() {
+psutil_threaded_get_filename(HANDLE hFile) {
     DWORD dwWait = 0;
     HANDLE hThread = NULL;
     DWORD threadRetValue;
 
-    hThread = CreateThread(NULL, 0, psutil_get_filename, NULL, 0, NULL);
+    hThread = CreateThread(NULL, 0, psutil_get_filename, &hFile, 0, NULL);
     if (hThread == NULL) {
         PyErr_SetFromOSErrnoWithSyscall("CreateThread");
         return 1;
@@ -59,21 +70,19 @@ psutil_create_thread() {
 
     // If the thread hangs, kill it and cleanup.
     if (dwWait == WAIT_TIMEOUT) {
-        printf("thread timed out\n");
+        psutil_debug("thread for getting file handle name timed out");
         SuspendThread(hThread);
         TerminateThread(hThread, 1);
         CloseHandle(hThread);
         return 0;
     }
     else {
-        printf("thread completed\n");
         if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
             CloseHandle(hThread);
             PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
             return 1;
         }
         CloseHandle(hThread);
-        printf("retcode = %i\n", threadRetValue);
         return threadRetValue;
     }
 }
@@ -140,10 +149,12 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         goto error;
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
+
     for (i = 0; i < handlesList->NumberOfHandles; i++) {
         hHandle = &handlesList->Handles[i];
         if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
             continue;
+
         if (! DuplicateHandle(
                 hProcess,
                 hHandle->HandleValue,
@@ -156,15 +167,14 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             // Will fail if not a regular file; just skip it.
             continue;
         }
-        printf("%i\n", i);
+
+        if (psutil_threaded_get_filename(hFile) != 0)
+            goto error;
+
         // cleanup section
         CloseHandle(hFile);
     }
-/*
-    ret = psutil_create_thread();
-    if (ret != 0)
-        goto error;
-*/
+
     goto exit;
 
 error:
