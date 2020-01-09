@@ -1807,13 +1807,12 @@ Process class
       on Windows this method is not reliable due to some limitations of the
       underlying Windows API which may hang when retrieving certain file
       handles.
-      In order to work around that psutil spawns a thread for each handle and
-      kills it if it's not responding after 100ms.
+      In order to work around that psutil spawns a thread to determine the file
+      handle name and kills it if it's not responding after 100ms.
       That implies that this method on Windows is not guaranteed to enumerate
       all regular file handles (see
       `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
-      Also, it will only list files living in the C:\\ drive (see
-      `issue 1020 <https://github.com/giampaolo/psutil/pull/1020>`_).
+      Tools like ProcessHacker has the same limitation.
 
     .. warning::
       on BSD this method can return files with a null path ("") due to a
