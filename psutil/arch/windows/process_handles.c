@@ -12,25 +12,11 @@
 #include "../../_psutil_common.h"
 #include "process_utils.h"
 
-#define BUFSIZE MAX_PATH
-#define NTQO_TIMEOUT 2000
-#define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
 
+#define THREAD_TIMEOUT 200  // ms
 
-// Global objects used by threads.
-CRITICAL_SECTION g_cs;
-BOOL g_initialized = FALSE;
+// Global object shared between the 2 threads.
 PUNICODE_STRING globalFileName = NULL;
-
-
-static DWORD
-psutil_init_threads() {
-    if (g_initialized == TRUE)
-        return 0;
-    InitializeCriticalSection(&g_cs);
-    g_initialized = TRUE;
-    return 0;
-}
 
 
 static int
@@ -67,13 +53,12 @@ psutil_get_filename(LPVOID lpvParam) {
 
     if (! NT_SUCCESS(status)) {
         PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
-        free(globalFileName);
+        FREE(globalFileName);
         return 1;
     }
 
     return 0;
 }
-
 
 
 static DWORD
@@ -89,11 +74,12 @@ psutil_threaded_get_filename(HANDLE hFile) {
     }
 
     // Wait for the worker thread to finish
-    dwWait = WaitForSingleObject(hThread, NTQO_TIMEOUT);
+    dwWait = WaitForSingleObject(hThread, THREAD_TIMEOUT);
 
     // If the thread hangs, kill it and cleanup.
     if (dwWait == WAIT_TIMEOUT) {
-        psutil_debug("thread for getting file handle name timed out");
+        psutil_debug(
+            "get file name thread timed out after %i ms", THREAD_TIMEOUT);
         SuspendThread(hThread);
         TerminateThread(hThread, 1);
         CloseHandle(hThread);
@@ -120,7 +106,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     ULONG bufferSize;
 
     bufferSize = initialBufferSize;
-    buffer = malloc(bufferSize);
+    buffer = MALLOC_ZERO(bufferSize);
 
     while ((status = NtQuerySystemInformation(
         SystemExtendedHandleInformation,
@@ -129,7 +115,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
         NULL
         )) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        free(buffer);
+        FREE(buffer);
         bufferSize *= 2;
 
         // Fail if we're resizing the buffer to something very large.
@@ -139,12 +125,12 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
             return 1;
         }
 
-        buffer = malloc(bufferSize);
+        buffer = MALLOC_ZERO(bufferSize);
     }
 
     if (! NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        free(buffer);
+        FREE(buffer);
         return 1;
     }
 
@@ -158,16 +144,13 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
     HANDLE                              hFile = NULL;
-    DWORD                               i = 0;
-    BOOLEAN                             error_occurred = FALSE;
-    DWORD                               dwWait = 0;
+    ULONG                               i = 0;
+    BOOLEAN                             errorOccurred = FALSE;
     PyObject*                           py_path = NULL;
     PyObject*                           py_retlist = PyList_New(0);;
 
     if (!py_retlist)
         return NULL;
-    if (psutil_init_threads() != 0)
-        goto error;
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
 
@@ -213,7 +196,7 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
 
 error:
     Py_XDECREF(py_retlist);
-    error_occurred = TRUE;
+    errorOccurred = TRUE;
     goto exit;
 
 exit:
@@ -227,7 +210,7 @@ exit:
         Py_DECREF(py_path);
     if (handlesList != NULL)
         FREE(handlesList);
-    if (error_occurred == TRUE)
+    if (errorOccurred == TRUE)
         return NULL;
     return py_retlist;
 }

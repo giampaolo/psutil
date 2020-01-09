@@ -60,6 +60,7 @@ int psutil_setup(void);
     #define PSUTIL_WINDOWS_NEW MAXLONG
 
     #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+    #define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
     #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
     #define LO_T 1e-7
     #define HI_T 429.4967296
