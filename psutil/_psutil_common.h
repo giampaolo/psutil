@@ -50,7 +50,8 @@ int psutil_setup(void);
     #include "arch/windows/ntextapi.h"
 
     extern int PSUTIL_WINVER;
-    extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
+    extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
+    extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
     #define PSUTIL_WINDOWS_VISTA 60
     #define PSUTIL_WINDOWS_7 61

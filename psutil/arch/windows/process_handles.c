@@ -17,6 +17,9 @@
  * WARNING 2: this will only list files living in the C:\\ drive, see
  * https://github.com/giampaolo/psutil/pull/1020
  *
+ * WARNING 3: GIL is not released, meaning other Python threads won't run
+ * until return.
+ *
  * Most of this code was re-adapted from the excellent ProcessHacker.
  */
 
@@ -30,8 +33,6 @@
 #define THREAD_TIMEOUT 100  // ms
 
 // Global object shared between the 2 threads.
-// XXX: this is evil but not sure how to avoid it. Python GIL is supposed
-// to save us though.
 PUNICODE_STRING globalFileName = NULL;
 
 
@@ -174,6 +175,11 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
 
     if (!py_retlist)
         return NULL;
+
+    // Due to the use of global variables, ensure only 1 call
+    // to psutil_get_open_files() is running.
+    EnterCriticalSection(&PSUTIL_CRITICAL_SECTION);
+
     if (psutil_enum_handles(&handlesList) != 0)
         goto error;
 
@@ -233,6 +239,8 @@ exit:
         Py_DECREF(py_path);
     if (handlesList != NULL)
         FREE(handlesList);
+
+    LeaveCriticalSection(&PSUTIL_CRITICAL_SECTION);
     if (errorOccurred == TRUE)
         return NULL;
     return py_retlist;
