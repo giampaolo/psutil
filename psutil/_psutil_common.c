@@ -333,10 +333,8 @@ psutil_load_globals() {
         return 1;
     if (psutil_set_winver() != 0)
         return 1;
-
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
-
     return 0;
 }
 #endif  // PSUTIL_WINDOWS
