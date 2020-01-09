@@ -40,12 +40,56 @@ psutil_get_filename(LPVOID lpvParam) {
 
     dwRet = GetFinalPathNameByHandle(hFile, Path, BUFSIZE, VOLUME_NAME_NT);
     if(dwRet < BUFSIZE)
-    {
         _tprintf(TEXT("The final path is: %s\n"), Path);
-    }
-    else printf("The required buffer size is %d.\n", dwRet);
+    else
+        printf("The required buffer size is %d.\n", dwRet);
     return 0;
 }
+
+
+NTSTATUS
+PhpGetObjectName(HANDLE Handle, PUNICODE_STRING *fileName) {
+    NTSTATUS status;
+    PUNICODE_STRING buffer;
+    ULONG bufferSize;
+    ULONG attempts = 8;
+
+    bufferSize = 0x200;
+    buffer = MALLOC_ZERO(bufferSize);
+
+    // A loop is needed because the I/O subsystem likes to give us the
+    // wrong return lengths...
+    do {
+        status = NtQueryObject(
+            Handle,
+            ObjectNameInformation,
+            buffer,
+            bufferSize,
+            &bufferSize
+            );
+        if (status == STATUS_BUFFER_OVERFLOW ||
+                status == STATUS_INFO_LENGTH_MISMATCH ||
+                status == STATUS_BUFFER_TOO_SMALL)
+        {
+            FREE(buffer);
+            buffer = MALLOC_ZERO(bufferSize);
+        }
+        else {
+            break;
+        }
+    } while (--attempts);
+
+    if (! NT_SUCCESS(status)) {
+        PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
+        free(buffer);
+        return 1;
+    }
+
+    *fileName = buffer;
+    FREE(buffer);
+    return 0;
+}
+
 
 
 static DWORD
@@ -115,7 +159,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     }
 
     if (! NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr("NtQuerySystemInformation");
+        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         free(buffer);
         return 1;
     }
@@ -125,19 +169,18 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 }
 
 
-
 PyObject *
 psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
+    PUNICODE_STRING                     fileName = NULL;
     HANDLE                              hFile = NULL;
     DWORD                               i = 0;
     BOOLEAN                             error_occurred = FALSE;
     DWORD                               dwWait = 0;
-    PyObject*                           py_retlist = NULL;
     PyObject*                           py_path = NULL;
+    PyObject*                           py_retlist = PyList_New(0);;
 
-    py_retlist = PyList_New(0);
     if (!py_retlist)
         return NULL;
     if (psutil_init_threads() != 0)
@@ -149,7 +192,6 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         hHandle = &handlesList->Handles[i];
         if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
             continue;
-
         if (! DuplicateHandle(
                 hProcess,
                 hHandle->HandleValue,
@@ -162,9 +204,22 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             // Will fail if not a regular file; just skip it.
             continue;
         }
-
+/*
         if (psutil_threaded_get_filename(hFile) != 0)
             goto error;
+*/
+        if (PhpGetObjectName(hFile, &fileName) != 0)
+            goto error;
+
+        if (fileName->Length > 0) {
+            py_path = PyUnicode_FromWideChar(fileName->Buffer,
+                                             wcslen(fileName->Buffer));
+            if (! py_path)
+                goto error;
+            if (PyList_Append(py_retlist, py_path))
+                goto error;
+            Py_CLEAR(py_path);
+        }
 
         // cleanup section
         CloseHandle(hFile);
@@ -173,11 +228,11 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     goto exit;
 
 error:
+    Py_XDECREF(py_retlist);
     error_occurred = TRUE;
     goto exit;
 
 exit:
-    Py_DECREF(py_retlist);
     if (hFile != NULL)
         CloseHandle(hFile);
     if (handlesList != NULL)
@@ -186,4 +241,3 @@ exit:
         return NULL;
     return py_retlist;
 }
-
