@@ -2,23 +2,39 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ */
+
+/*
+ * This module retrieves process open handles (regular files only).
+ * We use NtQuerySystemInformation to enumerate handles and NtQueryObject
+ * to get the file name.
  *
+ * WARNING 1: NtQueryObject may hang for certain handle types.
+ * In order to work around that we spawn a thread for each handle and
+ * kill it if it didn't complete within 100ms. See:
+ * https://github.com/giampaolo/psutil/pull/597
+ *
+ * WARNING 2: this will only list files living in the C:\\ drive, see
+ * https://github.com/giampaolo/psutil/pull/1020
+ *
+ * Most of this code was re-adapted from the excellent ProcessHacker.
  */
 
 #include <windows.h>
 #include <Python.h>
-#include <tchar.h>
 
 #include "../../_psutil_common.h"
 #include "process_utils.h"
 
 
-#define THREAD_TIMEOUT 200  // ms
+#define THREAD_TIMEOUT 100  // ms
 
 // Global object shared between the 2 threads.
 PUNICODE_STRING globalFileName = NULL;
 
 
+// Return a file name string given a file handle by using NtQueryObject
+// which may hang on certain file types.
 static int
 psutil_get_filename(LPVOID lpvParam) {
     HANDLE hFile = *((HANDLE*)lpvParam);
@@ -63,8 +79,8 @@ psutil_get_filename(LPVOID lpvParam) {
 
 static DWORD
 psutil_threaded_get_filename(HANDLE hFile) {
-    DWORD dwWait = 0;
-    HANDLE hThread = NULL;
+    DWORD dwWait;
+    HANDLE hThread;
     DWORD threadRetValue;
 
     hThread = CreateThread(NULL, 0, psutil_get_filename, &hFile, 0, NULL);
@@ -73,14 +89,13 @@ psutil_threaded_get_filename(HANDLE hFile) {
         return 1;
     }
 
-    // Wait for the worker thread to finish
+    // Wait for the worker thread to finish.
     dwWait = WaitForSingleObject(hThread, THREAD_TIMEOUT);
 
     // If the thread hangs, kill it and cleanup.
     if (dwWait == WAIT_TIMEOUT) {
         psutil_debug(
             "get file name thread timed out after %i ms", THREAD_TIMEOUT);
-        SuspendThread(hThread);
         TerminateThread(hThread, 1);
         CloseHandle(hThread);
         return 0;
@@ -97,8 +112,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
 }
 
 
-// Taken from Process Hacker.
-int
+static int
 psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     static ULONG initialBufferSize = 0x10000;
     NTSTATUS status;
@@ -120,8 +134,9 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
-            psutil_debug("SystemExtendedHandleInformation: buffer too big");
-            PyErr_NoMemory();
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "SystemExtendedHandleInformation buffer too big");
             return 1;
         }
 
