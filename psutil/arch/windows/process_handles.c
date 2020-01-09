@@ -19,7 +19,6 @@
  * from the excellent ProcessHacker.
  */
 
-
 #include <windows.h>
 #include <Python.h>
 
@@ -28,13 +27,52 @@
 
 
 #define THREAD_TIMEOUT 100  // ms
-
 // Global object shared between the 2 threads.
 PUNICODE_STRING globalFileName = NULL;
 
 
-// Return a file name string given a file handle by using NtQueryObject
-// which may hang on certain file types.
+static int
+psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
+    static ULONG initialBufferSize = 0x10000;
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize;
+
+    bufferSize = initialBufferSize;
+    buffer = MALLOC_ZERO(bufferSize);
+
+    while ((status = NtQuerySystemInformation(
+        SystemExtendedHandleInformation,
+        buffer,
+        bufferSize,
+        NULL
+        )) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        FREE(buffer);
+        bufferSize *= 2;
+
+        // Fail if we're resizing the buffer to something very large.
+        if (bufferSize > 256 * 1024 * 1024) {
+            PyErr_SetString(
+                PyExc_RuntimeError,
+                "SystemExtendedHandleInformation buffer too big");
+            return 1;
+        }
+
+        buffer = MALLOC_ZERO(bufferSize);
+    }
+
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+        FREE(buffer);
+        return 1;
+    }
+
+    *handles = (PSYSTEM_HANDLE_INFORMATION_EX)buffer;
+    return 0;
+}
+
+
 static int
 psutil_get_filename(LPVOID lpvParam) {
     HANDLE hFile = *((HANDLE*)lpvParam);
@@ -115,48 +153,6 @@ psutil_threaded_get_filename(HANDLE hFile) {
         CloseHandle(hThread);
         return threadRetValue;
     }
-}
-
-
-static int
-psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
-    static ULONG initialBufferSize = 0x10000;
-    NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize;
-
-    bufferSize = initialBufferSize;
-    buffer = MALLOC_ZERO(bufferSize);
-
-    while ((status = NtQuerySystemInformation(
-        SystemExtendedHandleInformation,
-        buffer,
-        bufferSize,
-        NULL
-        )) == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        FREE(buffer);
-        bufferSize *= 2;
-
-        // Fail if we're resizing the buffer to something very large.
-        if (bufferSize > 256 * 1024 * 1024) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "SystemExtendedHandleInformation buffer too big");
-            return 1;
-        }
-
-        buffer = MALLOC_ZERO(bufferSize);
-    }
-
-    if (! NT_SUCCESS(status)) {
-        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        FREE(buffer);
-        return 1;
-    }
-
-    *handles = (PSYSTEM_HANDLE_INFORMATION_EX)buffer;
-    return 0;
 }
 
 
