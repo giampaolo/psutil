@@ -5,23 +5,20 @@
  */
 
 /*
- * This module retrieves process open handles (regular files only).
- * We use NtQuerySystemInformation to enumerate handles and NtQueryObject
- * to get the file name.
+ * This module retrieves handles opened by a process.
+ * We use NtQuerySystemInformation to enumerate them and NtQueryObject
+ * to obtain the corresponding file name.
+ * Since NtQueryObject hangs for certain handle types we call it in a
+ * separate thread which gets killed if it doesn't complete within 100ms.
+ * This is a limitation of the Windows API and ProcessHacker uses the
+ * same trick: https://github.com/giampaolo/psutil/pull/597
  *
- * WARNING 1: NtQueryObject may hang for certain handle types.
- * In order to work around that we spawn a thread for each handle and
- * kill it if it didn't complete within 100ms. See:
- * https://github.com/giampaolo/psutil/pull/597
- *
- * WARNING 2: this will only list files living in the C:\\ drive, see
- * https://github.com/giampaolo/psutil/pull/1020
- *
- * WARNING 3: GIL is not released, meaning other Python threads won't run
- * until return.
- *
- * Most of this code was re-adapted from the excellent ProcessHacker.
+ * CREDITS: original implementation was written by Jeff Tang.
+ * It was then rewritten by Giampaolo Rodola many years later.
+ * Utility functions for getting the file handles and names were re-adapted
+ * from the excellent ProcessHacker.
  */
+
 
 #include <windows.h>
 #include <Python.h>
