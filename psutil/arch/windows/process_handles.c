@@ -30,6 +30,8 @@
 #define THREAD_TIMEOUT 100  // ms
 
 // Global object shared between the 2 threads.
+// XXX: this is evil but not sure how to avoid it. Python GIL is supposed
+// to save us though.
 PUNICODE_STRING globalFileName = NULL;
 
 
@@ -44,6 +46,12 @@ psutil_get_filename(LPVOID lpvParam) {
 
     bufferSize = 0x200;
     globalFileName = MALLOC_ZERO(bufferSize);
+
+    // Note: also this is supposed to hang, hence why we do it in here.
+    if (GetFileType(hFile) != FILE_TYPE_DISK) {
+        globalFileName->Length = 0;
+        return 0;
+    }
 
     // A loop is needed because the I/O subsystem likes to give us the
     // wrong return lengths...
