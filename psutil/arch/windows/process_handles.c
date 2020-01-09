@@ -206,11 +206,11 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             if (PyList_Append(py_retlist, py_path))
                 goto error;
             Py_CLEAR(py_path);  // also sets to NULL
-            FREE(globalFileName);
-            globalFileName = NULL;
         }
 
-        // cleanup section
+        // Loop cleanup section.
+        FREE(globalFileName);
+        globalFileName = NULL;
         CloseHandle(hFile);
         hFile = NULL;
     }
