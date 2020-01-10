@@ -127,7 +127,8 @@ psutil_threaded_get_filename(HANDLE hFile) {
     HANDLE hThread;
     DWORD threadRetValue;
 
-    hThread = CreateThread(NULL, 0, psutil_get_filename, &hFile, 0, NULL);
+    hThread = CreateThread(
+        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL);
     if (hThread == NULL) {
         PyErr_SetFromOSErrnoWithSyscall("CreateThread");
         return 1;
