@@ -153,7 +153,8 @@ psutil_setup(void) {
 
 // Needed to make these globally visible.
 int PSUTIL_WINVER;
-SYSTEM_INFO PSUTIL_SYSTEM_INFO;
+SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
+CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 #define NT_FACILITY_MASK 0xfff
 #define NT_FACILITY_SHIFT 16
@@ -326,22 +327,14 @@ psutil_set_winver() {
     return 0;
 }
 
-
-static int
-psutil_load_sysinfo() {
-    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
-    return 0;
-}
-
-
 int
 psutil_load_globals() {
     if (psutil_loadlibs() != 0)
         return 1;
     if (psutil_set_winver() != 0)
         return 1;
-    if (psutil_load_sysinfo() != 0)
-        return 1;
+    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
+    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
     return 0;
 }
 #endif  // PSUTIL_WINDOWS
