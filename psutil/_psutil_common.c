@@ -281,14 +281,16 @@ psutil_loadlibs() {
         "ntdll", "RtlNtStatusToDosErrorNoTeb");
     if (! RtlNtStatusToDosErrorNoTeb)
         return 1;
-
-    // --- Optional
-    // not available on Wine
-    RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
-        "ntdll.dll", "RtlIpv6AddressToStringA");
-    // minimum requirement: Win Vista
     GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
+    if (! GetTickCount64)
+        return 1;
+    RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlIpv6AddressToStringA");
+    if (! RtlIpv6AddressToStringA)
+        return 1;
+
+    // --- Optional
     // minimum requirement: Win 7
     GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");

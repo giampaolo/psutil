@@ -101,17 +101,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     ll = (((ULONGLONG)
         (fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
-
-    if (GetTickCount64 != NULL) {
-        // Windows >= Vista
-        uptime = GetTickCount64() / 1000ull;
-    }
-    else {
-        // Windows XP.
-        // GetTickCount() time will wrap around to zero if the
-        // system is run continuously for 49.7 days.
-        uptime = (ULONGLONG)GetTickCount() / 1000ull;
-    }
+    uptime = GetTickCount64() / 1000ull;
     return Py_BuildValue("K", pt - uptime);
 }
 
