@@ -775,7 +775,7 @@ class Process(object):
             """
             return self._proc.io_counters()
 
-    # Linux and Windows >= Vista only
+    # Linux and Windows
     if hasattr(_psplatform.Process, "ionice_get"):
 
         def ionice(self, ioclass=None, value=None):

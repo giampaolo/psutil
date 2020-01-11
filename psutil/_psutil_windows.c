@@ -456,14 +456,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
         return NULL;
 
-    // Here we differentiate between XP and Vista+ because
-    // QueryFullProcessImageNameW is better than GetProcessImageFileNameW
-    // (avoid using QueryDosDevice on the returned path), see:
-    // https://github.com/giampaolo/psutil/issues/1394
     memset(exe, 0, MAX_PATH);
     if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
         PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
