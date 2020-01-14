@@ -255,9 +255,11 @@ print-timeline:  ## Print releases' timeline.
 	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
+	${MAKE} install
 	@$(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
+	${MAKE} install
 	@$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 # ===================================================================
