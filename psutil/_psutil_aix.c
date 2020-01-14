@@ -461,7 +461,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     /* finished iteration without finding requested pid */
     free(processes);
-    return NoSuchProcess("");
+    return NoSuchProcess("psutil_read_process_table (no PID found)");
 }
 
 

@@ -72,7 +72,7 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         return -1;
     }
     return 0;
@@ -139,7 +139,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     free(buf);
     if (len == -1) {
         if (errno == ENOENT)
-            NoSuchProcess("");
+            NoSuchProcess("readlink (ENOENT)");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -195,7 +195,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("");
+            return NoSuchProcess("psutil_pid_exists");
         else
             strcpy(pathname, "");
     }
@@ -247,7 +247,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
@@ -264,7 +264,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 

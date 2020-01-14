@@ -96,7 +96,7 @@ psutil_task_for_pid(long pid, mach_port_t *task)
     err = task_for_pid(mach_task_self(), (pid_t)pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("task_for_pid() failed");
+            NoSuchProcess("task_for_pid");
         else if (psutil_is_zombie(pid) == 1)
             PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
         else {
@@ -104,7 +104,7 @@ psutil_task_for_pid(long pid, mach_port_t *task)
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
                 "setting AccessDenied()",
                 pid, err, errno, mach_error_string(err));
-            AccessDenied("task_for_pid() failed");
+            AccessDenied("task_for_pid");
         }
         return 1;
     }
@@ -298,7 +298,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0)
-            AccessDenied("");
+            AccessDenied("automatically set for PID 0");
         else
             psutil_raise_for_pid(pid, "proc_pidpath()");
         return NULL;
@@ -894,7 +894,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied("");
+            AccessDenied("task_info");
         }
         else {
             // otherwise throw a runtime error with appropriate error code

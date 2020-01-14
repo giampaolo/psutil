@@ -69,14 +69,16 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 // ====================================================================
 
 /*
- * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
- * If msg != "" the exception message will change in accordance.
+ * Set OSError(errno=ESRCH, strerror="No such process (originated from")
+ * Python exception.
  */
 PyObject *
-NoSuchProcess(const char *msg) {
+NoSuchProcess(const char *syscall) {
     PyObject *exc;
-    exc = PyObject_CallFunction(
-        PyExc_OSError, "(is)", ESRCH, strlen(msg) ? msg : strerror(ESRCH));
+    char msg[1024];
+
+    sprintf(msg, "No such process (originated from %s)", syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
@@ -84,14 +86,16 @@ NoSuchProcess(const char *msg) {
 
 
 /*
- * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
- * If msg != "" the exception message will change in accordance.
+ * Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
+ * Python exception.
  */
 PyObject *
-AccessDenied(const char *msg) {
+AccessDenied(const char *syscall) {
     PyObject *exc;
-    exc = PyObject_CallFunction(
-        PyExc_OSError, "(is)", EACCES, strlen(msg) ? msg : strerror(EACCES));
+    char msg[1024];
+
+    sprintf(msg, "Access denied (originated from %s)", syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;

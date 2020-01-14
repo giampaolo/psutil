@@ -151,7 +151,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         pid_return = psutil_pid_is_running(pid);
         if (pid_return == 0) {
             psutil_conn_decref_objs();
-            return NoSuchProcess("");
+            return NoSuchProcess("psutil_pid_is_running");
         }
         else if (pid_return == -1) {
             psutil_conn_decref_objs();

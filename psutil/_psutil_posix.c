@@ -122,7 +122,7 @@ psutil_raise_for_pid(long pid, char *syscall_name) {
     else if (psutil_pid_exists(pid) == 0) {
         psutil_debug("%s syscall failed and PID %i no longer exists; "
                      "assume NoSuchProcess", syscall_name, pid);
-        NoSuchProcess("");
+        NoSuchProcess("psutil_pid_exists");
     }
     else {
         PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall_name);

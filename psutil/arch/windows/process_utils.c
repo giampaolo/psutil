@@ -142,7 +142,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         return hProcess;
     }
     else if (ret == 0) {
-        return NoSuchProcess("");
+        return NoSuchProcess("psutil_is_phandle_running");
     }
     else if (ret == -1) {
         if (GetLastError() == ERROR_ACCESS_DENIED)
@@ -169,7 +169,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
-        return AccessDenied("");
+        return AccessDenied("automatically set for PID 0");
     }
     // needed for GetExitCodeProcess
     access |= PROCESS_QUERY_LIMITED_INFORMATION;

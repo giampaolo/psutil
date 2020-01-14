@@ -636,7 +636,7 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         }
     } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
-    NoSuchProcess("");
+    NoSuchProcess("NtQuerySystemInformation (no PID found)");
     goto error;
 
 error:
