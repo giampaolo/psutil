@@ -40,6 +40,10 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 
     bufferSize = initialBufferSize;
     buffer = MALLOC_ZERO(bufferSize);
+    if (buffer == NULL) {
+        PyErr_NoMemory();
+        return 1;
+    }
 
     while ((status = NtQuerySystemInformation(
         SystemExtendedHandleInformation,
@@ -60,6 +64,10 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
         }
 
         buffer = MALLOC_ZERO(bufferSize);
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            return 1;
+        }
     }
 
     if (! NT_SUCCESS(status)) {
@@ -82,9 +90,15 @@ psutil_get_filename(LPVOID lpvParam) {
 
     bufferSize = 0x200;
     globalFileName = MALLOC_ZERO(bufferSize);
+    if (globalFileName == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
 
     // Note: also this is supposed to hang, hence why we do it in here.
     if (GetFileType(hFile) != FILE_TYPE_DISK) {
+        SetLastError(0);
         globalFileName->Length = 0;
         return 0;
     }
@@ -105,6 +119,10 @@ psutil_get_filename(LPVOID lpvParam) {
         {
             FREE(globalFileName);
             globalFileName = MALLOC_ZERO(bufferSize);
+            if (globalFileName == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
         }
         else {
             break;
@@ -114,10 +132,18 @@ psutil_get_filename(LPVOID lpvParam) {
     if (! NT_SUCCESS(status)) {
         PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
         FREE(globalFileName);
+        globalFileName = NULL;
         return 1;
     }
 
     return 0;
+
+error:
+    if (globalFileName != NULL) {
+        FREE(globalFileName);
+        globalFileName = NULL;
+    }
+    return 1;
 }
 
 
@@ -209,8 +235,10 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         }
 
         // Loop cleanup section.
-        FREE(globalFileName);
-        globalFileName = NULL;
+        if (globalFileName != NULL) {
+            FREE(globalFileName);
+            globalFileName = NULL;
+        }
         CloseHandle(hFile);
         hFile = NULL;
     }

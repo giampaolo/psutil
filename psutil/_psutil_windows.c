@@ -871,12 +871,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         return NULL;
 
     py_retlist = psutil_get_open_files(pid, processHandle);
-    if (py_retlist == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        CloseHandle(processHandle);
-        return NULL;
-    }
-
     CloseHandle(processHandle);
     return py_retlist;
 }
