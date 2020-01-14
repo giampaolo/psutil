@@ -505,12 +505,14 @@ def bench_oneshot_2():
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     install()
+    test_setup()
     sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
 
 
 def print_api_speed():
     """Benchmark all API calls."""
     install()
+    test_setup()
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 

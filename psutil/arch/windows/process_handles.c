@@ -166,20 +166,43 @@ psutil_threaded_get_filename(HANDLE hFile) {
     // If the thread hangs, kill it and cleanup.
     if (dwWait == WAIT_TIMEOUT) {
         psutil_debug(
-            "get file name thread timed out after %i ms", THREAD_TIMEOUT);
-        TerminateThread(hThread, 1);
-        CloseHandle(hThread);
-        return 0;
-    }
-    else {
-        if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
+            "get handle name thread timed out after %i ms", THREAD_TIMEOUT);
+        if (TerminateThread(hThread, 0) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("TerminateThread");
             CloseHandle(hThread);
-            PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
             return 1;
         }
         CloseHandle(hThread);
-        return threadRetValue;
+        return 0;
     }
+
+    if (dwWait == WAIT_FAILED) {
+        psutil_debug("WaitForSingleObject -> WAIT_FAILED");
+        if (TerminateThread(hThread, 0) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall(
+                "WaitForSingleObject -> WAIT_FAILED -> TerminateThread");
+            CloseHandle(hThread);
+            return 1;
+        }
+        PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
+        CloseHandle(hThread);
+        return 1;
+    }
+
+    if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
+        if (TerminateThread(hThread, 0) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall(
+                "GetExitCodeThread (failed) -> TerminateThread");
+            CloseHandle(hThread);
+            return 1;
+        }
+
+        CloseHandle(hThread);
+        PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
+        return 1;
+    }
+    CloseHandle(hThread);
+    return threadRetValue;
 }
 
 

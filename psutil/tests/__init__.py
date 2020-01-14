@@ -127,7 +127,7 @@ NO_RETRIES = 10
 # bytes tolerance for system-wide memory related tests
 MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
-GLOBAL_TIMEOUT = 3
+GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid
 # false positives
 if TRAVIS or APPVEYOR:

@@ -581,7 +581,7 @@ psutil_GetProcWsetInformation(
     SIZE_T bufferSize;
 
     bufferSize = 0x8000;
-    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+    buffer = MALLOC_ZERO(bufferSize);
 
     while ((status = NtQueryVirtualMemory(
             hProcess,
@@ -591,16 +591,15 @@ psutil_GetProcWsetInformation(
             bufferSize,
             NULL)) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        HeapFree(GetProcessHeap(), 0, buffer);
+        FREE(buffer);
         bufferSize *= 2;
-        psutil_debug("NtQueryVirtualMemory increase bufsize %i", bufferSize);
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
             PyErr_SetString(PyExc_RuntimeError,
                             "NtQueryVirtualMemory bufsize is too large");
             return 1;
         }
-        buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+        buffer = MALLOC_ZERO(bufferSize);
     }
 
     if (!NT_SUCCESS(status)) {
