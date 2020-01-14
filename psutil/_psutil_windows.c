@@ -463,7 +463,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     memset(exe, 0, MAX_PATH);
     if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
-        PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
+        // https://github.com/giampaolo/psutil/issues/1662
+        if (GetLastError() == 0)
+            AccessDenied("QueryFullProcessImageNameW (forced EPERM)");
+        else
+            PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
         CloseHandle(hProcess);
         return NULL;
     }

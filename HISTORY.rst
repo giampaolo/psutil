@@ -21,6 +21,7 @@ XXXX-XX-XX
 - 1656_: [Windows] Process.memory_full_info() raises AccessDenied even for the
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
+- 1662_: [Windows] process exe() may raise WinError 0.
 
 5.6.7
 =====
