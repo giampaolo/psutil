@@ -76,9 +76,9 @@ psutil_pid_in_pids(DWORD pid) {
 
 
 /*
- * Given a process HANDLE checks whether it's actually running and if
- * it does return it, else return NULL with the proper Python exception
- * set. This is needed because OpenProcess API sucks.
+ * Given a process HANDLE checks whether it's actually running. If it
+ * does return it, else return NULL with the Python exception set.
+ * This is needed because OpenProcess API sucks.
  */
 HANDLE
 psutil_check_phandle(HANDLE hProcess, DWORD pid) {
@@ -108,15 +108,14 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
             NoSuchProcess("WaitForSingleObject");
             return NULL;
         case WAIT_ABANDONED:
-            // Should never happen. We can't be sure so we look into pids.
+            // Should never happen. We don't know so we look into pids.
             psutil_debug("WaitForSingleObject -> WAIT_ABANDONED (unexpected)");
             if (psutil_pid_in_pids(pid) == 1)
                 return hProcess;
             CloseHandle(hProcess);
             NoSuchProcess("WaitForSingleObject -> WAIT_ABANDONED");
             return NULL;
-        default:
-            // WAIT_FAILED
+        default:  // WAIT_FAILED
             PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
             CloseHandle(hProcess);
             return NULL;
@@ -125,11 +124,10 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
 
 
 /*
- * A wrapper around OpenProcess setting NSP exception if process
- * no longer exists.
- * "pid" is the process pid, "dwDesiredAccess" is the first argument
- * exptected by OpenProcess.
- * Return a process handle or NULL.
+ * A wrapper around OpenProcess setting NSP exception if process no
+ * longer exists. *pid* is the process PID, dwDesiredAccess" is the
+ * first argument to OpenProcess.
+ * Return a process handle or NULL with exception set.
  */
 HANDLE
 psutil_handle_from_pid(DWORD pid, DWORD access) {
