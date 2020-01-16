@@ -238,7 +238,7 @@ class TestSystemAPITypes(unittest.TestCase):
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
-        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
+        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int, long))
 
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.

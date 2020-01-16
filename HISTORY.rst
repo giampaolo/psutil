@@ -7,6 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
 - 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
   directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
@@ -14,7 +15,6 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
