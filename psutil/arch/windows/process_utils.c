@@ -76,82 +76,50 @@ psutil_pid_in_pids(DWORD pid) {
 
 
 /*
- * Given a process HANDLE checks whether it's actually running.
- * Returns:
- * - 1: running
- * - 0: not running
- * - -1: WindowsError
- * - -2: AssertionError
+ * Given a process HANDLE checks whether it's actually running and if
+ * it does return it, else return NULL with the proper Python exception
+ * set. This is needed because OpenProcess API sucks.
  */
-int
-psutil_is_phandle_running(HANDLE hProcess, DWORD pid) {
-    DWORD processExitCode = 0;
+HANDLE
+psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+    DWORD exitCode = 0;
+    DWORD ret;
 
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
             // "no such process".
-            if (! psutil_assert_pid_not_exists(
-                    pid, "iphr: OpenProcess() -> ERROR_INVALID_PARAMETER")) {
-                return -2;
-            }
-            return 0;
+            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER");
+            NoSuchProcess("OpenProcess");
+            return NULL;
         }
-        return -1;
-    }
-
-    if (GetExitCodeProcess(hProcess, &processExitCode)) {
-        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
-        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        if (processExitCode == STILL_ACTIVE) {
-            if (! psutil_assert_pid_exists(
-                    pid, "iphr: GetExitCodeProcess() -> STILL_ACTIVE")) {
-                return -2;
-            }
-            return 1;
-        }
-        else {
-            // We can't be sure so we look into pids.
-            if (psutil_pid_in_pids(pid) == 1) {
-                return 1;
-            }
-            else {
-                CloseHandle(hProcess);
-                return 0;
-            }
-        }
-    }
-
-    CloseHandle(hProcess);
-    if (! psutil_assert_pid_not_exists( pid, "iphr: exit fun")) {
-        return -2;
-    }
-    return -1;
-}
-
-
-/*
- * Given a process HANDLE checks whether it's actually running and if
- * it does return it, else return NULL with the proper Python exception
- * set.
- */
-HANDLE
-psutil_check_phandle(HANDLE hProcess, DWORD pid) {
-    int ret = psutil_is_phandle_running(hProcess, pid);
-    if (ret == 1) {
-        return hProcess;
-    }
-    else if (ret == 0) {
-        return NoSuchProcess("psutil_is_phandle_running");
-    }
-    else if (ret == -1) {
-        if (GetLastError() == ERROR_ACCESS_DENIED)
-            return PyErr_SetFromWindowsErr(0);
-        else
-            return PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
-    }
-    else {
+        PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
         return NULL;
+    }
+
+    ret = WaitForSingleObject(hProcess, 0);
+    switch (ret) {
+        case WAIT_TIMEOUT:
+            // process still running
+            return hProcess;
+        case WAIT_OBJECT_0:
+            // process has exited
+            CloseHandle(hProcess);
+            NoSuchProcess("WaitForSingleObject");
+            return NULL;
+        case WAIT_ABANDONED:
+            // Should never happen. We can't be sure so we look into pids.
+            psutil_debug("WaitForSingleObject -> WAIT_ABANDONED (unexpected)");
+            if (psutil_pid_in_pids(pid) == 1)
+                return hProcess;
+            CloseHandle(hProcess);
+            NoSuchProcess("WaitForSingleObject -> WAIT_ABANDONED");
+            return NULL;
+        default:
+            // WAIT_FAILED
+            PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
+            CloseHandle(hProcess);
+            return NULL;
     }
 }
 
@@ -171,10 +139,35 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
         // otherwise we'd get NoSuchProcess
         return AccessDenied("automatically set for PID 0");
     }
-    // needed for GetExitCodeProcess
-    access |= PROCESS_QUERY_LIMITED_INFORMATION;
+
+    // needed for WaitForSingleObject
+    access |= SYNCHRONIZE;
     hProcess = OpenProcess(access, FALSE, pid);
-    return psutil_check_phandle(hProcess, pid);
+
+    if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
+        PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+        return NULL;
+    }
+
+    hProcess = psutil_check_phandle(hProcess, pid);
+
+    if (PSUTIL_TESTING) {
+        if (hProcess == NULL) {
+            if (psutil_pid_in_pids(pid) == 1) {
+                PyErr_SetString(PyExc_AssertionError,
+                                "OpenProcess failed but PID exists");
+                return NULL;
+            }
+        }
+        else {
+            // XXX: racy
+            if (psutil_pid_in_pids(pid) == 0) {
+                PyErr_SetString(PyExc_AssertionError,
+                                "OpenProcess succeeded but PID doesn't exist");
+            }
+        }
+    }
+    return hProcess;
 }
 
 
