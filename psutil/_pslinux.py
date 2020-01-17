@@ -1081,7 +1081,7 @@ def disk_io_counters(perdisk=False):
                 reads = int(fields[2])
                 (reads_merged, rbytes, rtime, writes, writes_merged,
                     wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
-            elif flen == 14 or flen >= 18
+            elif flen == 14 or flen >= 18:
                 # Linux 2.6+, line referring to a disk
                 name = fields[2]
                 (reads, reads_merged, rbytes, rtime, writes, writes_merged,
