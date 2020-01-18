@@ -84,6 +84,7 @@ psutil_pid_in_pids(DWORD pid) {
 HANDLE
 psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     DWORD ret;
+    DWORD exitCode;
 
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
@@ -96,29 +97,46 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         return NULL;
     }
 
-    ret = WaitForSingleObject(hProcess, 0);
-    switch (ret) {
-        case WAIT_TIMEOUT:
-            // process still running
+    if (GetExitCodeProcess(hProcess, &exitCode)) {
+        if (exitCode == STILL_ACTIVE) {
+            ret = WaitForSingleObject(hProcess, 0);
+            switch (ret) {
+                case WAIT_TIMEOUT:
+                    // process still running
+                    return hProcess;
+                case WAIT_OBJECT_0:
+                    // process has exited
+                    CloseHandle(hProcess);
+                    NoSuchProcess("WaitForSingleObject -> WAIT_OBJECT_0");
+                    return NULL;
+                case WAIT_ABANDONED:
+                    // Should never happen. We don't know so we look into pids.
+                    psutil_debug(
+                        "WaitForSingleObject -> WAIT_ABANDONED (unexpected)");
+                    if (psutil_pid_in_pids(pid) == 1)
+                        return hProcess;
+                    CloseHandle(hProcess);
+                    NoSuchProcess("WaitForSingleObject -> WAIT_ABANDONED");
+                    return NULL;
+                default:  // WAIT_FAILED
+                    PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
+                    CloseHandle(hProcess);
+                    return NULL;
+            }
+        }
+
+        psutil_debug("GetExitCodeProcess != STILL_ACTIVE");
+        CloseHandle(hProcess);
+        if (psutil_pid_in_pids(pid) == 1)
             return hProcess;
-        case WAIT_OBJECT_0:
-            // process has exited
-            CloseHandle(hProcess);
-            NoSuchProcess("WaitForSingleObject");
-            return NULL;
-        case WAIT_ABANDONED:
-            // Should never happen. We don't know so we look into pids.
-            psutil_debug("WaitForSingleObject -> WAIT_ABANDONED (unexpected)");
-            if (psutil_pid_in_pids(pid) == 1)
-                return hProcess;
-            CloseHandle(hProcess);
-            NoSuchProcess("WaitForSingleObject -> WAIT_ABANDONED");
-            return NULL;
-        default:  // WAIT_FAILED
-            PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
-            CloseHandle(hProcess);
-            return NULL;
+        NoSuchProcess("GetExitCodeProcess != STILL_ACTIVE");
+        return NULL;
     }
+
+    if (GetLastError() == ERROR_ACCESS_DENIED)
+        return hProcess;
+    PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+    return NULL;
 }
 
 
@@ -151,7 +169,8 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     hProcess = psutil_check_phandle(hProcess, pid);
 
     if (PSUTIL_TESTING) {
-        // XXX: racy
+        // Unreliable.
+        /*
         if (hProcess == NULL) {
             if (psutil_pid_in_pids(pid) == 1) {
                 PyErr_SetString(PyExc_AssertionError,
@@ -159,7 +178,8 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
                 return NULL;
             }
         }
-        else {
+        */
+        if (hProcess != NULL) {
             if (psutil_pid_in_pids(pid) == 0) {
                 PyErr_SetString(PyExc_AssertionError,
                                 "OpenProcess succeeded but PID doesn't exist");
@@ -167,13 +187,14 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
             }
         }
     }
+
     return hProcess;
 }
 
 
 /*
 /* Check for PID existance by using OpenProcess() + WaitForSingleObject.
-/* Return 1 if pid exists else 0.
+/* Return 1 if pid exists, else 0 or -1 on error.
  */
 int
 psutil_pid_is_running(DWORD pid) {
@@ -184,6 +205,7 @@ psutil_pid_is_running(DWORD pid) {
         return 1;
     if (pid < 0)
         return 0;
+    return psutil_pid_in_pids(pid);
 
     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE,
                            FALSE, pid);
@@ -193,13 +215,11 @@ psutil_pid_is_running(DWORD pid) {
         return 1;
 
     hProcess = psutil_check_phandle(hProcess, pid);
-    if (hProcess == NULL) {
-        PyErr_Clear();
-        SetLastError(0);
-        return 0;
-    }
-    else {
+    if (hProcess != NULL) {
         CloseHandle(hProcess);
         return 1;
     }
+
+    CloseHandle(hProcess);
+    return psutil_pid_in_pids(pid);
 }
