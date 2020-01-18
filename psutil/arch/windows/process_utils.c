@@ -118,8 +118,8 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
 
 
 // A wrapper around OpenProcess setting NSP exception if process no
-// longer exists. *pid* is the process PID, dwDesiredAccess" is the
-// first argument to OpenProcess.
+// longer exists. *pid* is the process PID, *access* is the first
+// argument to OpenProcess.
 // Return a process handle or NULL with exception set.
 HANDLE
 psutil_handle_from_pid(DWORD pid, DWORD access) {
@@ -167,5 +167,9 @@ psutil_pid_is_running(DWORD pid) {
     }
 
     CloseHandle(hProcess);
-    return psutil_pid_in_pids(pid);
+    if ((PSUTIL_TESTING) && (psutil_pid_in_pids(pid) == 1)) {
+        PyErr_SetString(PyExc_AssertionError, "NULL handle but PID exists");
+        return -1;
+    }
+    return 0;
 }
