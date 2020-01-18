@@ -1427,6 +1427,8 @@ def process_iter(attrs=None, ad_value=None, new_only=False):
     to returned Process instance.
     If *attrs* is an empty list it will retrieve all process info
     (slow).
+    If *new_only* is true this function will yield only new processes
+    which appeared since the last time it was called.
     """
     def add(pid):
         proc = Process(pid)
