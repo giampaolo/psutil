@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.6.8 (unreleased)
+5.7.0 (unreleased)
 ==================
 
 XXXX-XX-XX
@@ -12,6 +12,7 @@ XXXX-XX-XX
   directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
+- 1667_: added process_iter(new_only=True) parameter.
 
 **Bug fixes**
 
