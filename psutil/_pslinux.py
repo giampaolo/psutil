@@ -1066,6 +1066,7 @@ def disk_io_counters(perdisk=False):
         # "3    1   hda1 8 8 8 8"
         # 4.18+ has 4 fields added:
         # "3    0   hda 8 8 8 8 8 8 8 8 8 8 8 0 0 0 0"
+        # 5.5 has 2 more fields.
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
@@ -1080,7 +1081,7 @@ def disk_io_counters(perdisk=False):
                 reads = int(fields[2])
                 (reads_merged, rbytes, rtime, writes, writes_merged,
                     wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
-            elif flen == 14 or flen == 18:
+            elif flen == 14 or flen >= 18:
                 # Linux 2.6+, line referring to a disk
                 name = fields[2]
                 (reads, reads_merged, rbytes, rtime, writes, writes_merged,
