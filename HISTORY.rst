@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.6.8 (unreleased)
+5.7.0 (unreleased)
 ==================
 
 XXXX-XX-XX

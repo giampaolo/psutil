@@ -227,7 +227,7 @@ __all__ = [
 
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.6.8"
+__version__ = "5.7.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -1407,7 +1407,7 @@ _pmap = {}
 _lock = threading.Lock()
 
 
-def process_iter(attrs=None, ad_value=None):
+def process_iter(attrs=None, ad_value=None, new_only=False):
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -1448,8 +1448,10 @@ def process_iter(attrs=None, ad_value=None):
         remove(pid)
 
     with _lock:
-        ls = sorted(list(_pmap.items()) +
-                    list(dict.fromkeys(new_pids).items()))
+        ls = list(dict.fromkeys(new_pids).items())
+        if not new_only:
+            ls += list(_pmap.items())
+        ls.sort()
 
     for pid, proc in ls:
         try:
