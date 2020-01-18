@@ -52,9 +52,8 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     return procArray;
 }
 
-/*
- * Return 1 if PID exists, 0 if not, -1 on error.
- */
+
+// Return 1 if PID exists, 0 if not, -1 on error.
 int
 psutil_pid_in_pids(DWORD pid) {
     DWORD *proclist = NULL;
@@ -75,15 +74,11 @@ psutil_pid_in_pids(DWORD pid) {
 }
 
 
-/*
- * Given a process handle checks whether it's actually running. If it
- * does return the handle, else return NULL with Python exception set.
- * Process handle must have SYNCHRONIZE access right.
- * This is needed because OpenProcess API sucks.
- */
+// Given a process handle checks whether it's actually running. If it
+// does return the handle, else return NULL with Python exception set.
+// This is needed because OpenProcess API sucks.
 HANDLE
 psutil_check_phandle(HANDLE hProcess, DWORD pid) {
-    DWORD ret;
     DWORD exitCode;
 
     if (hProcess == NULL) {
@@ -98,54 +93,34 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
     }
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
+        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
+        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
         if (exitCode == STILL_ACTIVE) {
-            ret = WaitForSingleObject(hProcess, 0);
-            switch (ret) {
-                case WAIT_TIMEOUT:
-                    // process still running
-                    return hProcess;
-                case WAIT_OBJECT_0:
-                    // process has exited
-                    CloseHandle(hProcess);
-                    NoSuchProcess("WaitForSingleObject -> WAIT_OBJECT_0");
-                    return NULL;
-                case WAIT_ABANDONED:
-                    // Should never happen. We don't know so we look into pids.
-                    psutil_debug(
-                        "WaitForSingleObject -> WAIT_ABANDONED (unexpected)");
-                    if (psutil_pid_in_pids(pid) == 1)
-                        return hProcess;
-                    CloseHandle(hProcess);
-                    NoSuchProcess("WaitForSingleObject -> WAIT_ABANDONED");
-                    return NULL;
-                default:  // WAIT_FAILED
-                    PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
-                    CloseHandle(hProcess);
-                    return NULL;
-            }
-        }
-
-        psutil_debug("GetExitCodeProcess != STILL_ACTIVE");
-        CloseHandle(hProcess);
-        if (psutil_pid_in_pids(pid) == 1)
             return hProcess;
+        }
+        if (psutil_pid_in_pids(pid) == 1) {
+            return hProcess;
+        }
+        CloseHandle(hProcess);
         NoSuchProcess("GetExitCodeProcess != STILL_ACTIVE");
         return NULL;
     }
 
-    if (GetLastError() == ERROR_ACCESS_DENIED)
+    if (GetLastError() == ERROR_ACCESS_DENIED) {
+        psutil_debug("GetExitCodeProcess -> ERROR_ACCESS_DENIED (ignored)");
+        SetLastError(0);
         return hProcess;
+    }
     PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+    CloseHandle(hProcess);
     return NULL;
 }
 
 
-/*
- * A wrapper around OpenProcess setting NSP exception if process no
- * longer exists. *pid* is the process PID, dwDesiredAccess" is the
- * first argument to OpenProcess.
- * Return a process handle or NULL with exception set.
- */
+// A wrapper around OpenProcess setting NSP exception if process no
+// longer exists. *pid* is the process PID, dwDesiredAccess" is the
+// first argument to OpenProcess.
+// Return a process handle or NULL with exception set.
 HANDLE
 psutil_handle_from_pid(DWORD pid, DWORD access) {
     HANDLE hProcess;
@@ -155,10 +130,6 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
         return AccessDenied("automatically set for PID 0");
     }
 
-    // Needed for WaitForSingleObject. This does not require more
-    // privileges and should be the same as PROCESS_QUERY_LIMITED_INFORMATION
-    // (tested with "make print-access-denied").
-    access |= SYNCHRONIZE;
     hProcess = OpenProcess(access, FALSE, pid);
 
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
@@ -167,35 +138,11 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     }
 
     hProcess = psutil_check_phandle(hProcess, pid);
-
-    if (PSUTIL_TESTING) {
-        // Unreliable.
-        /*
-        if (hProcess == NULL) {
-            if (psutil_pid_in_pids(pid) == 1) {
-                PyErr_SetString(PyExc_AssertionError,
-                                "OpenProcess failed but PID exists");
-                return NULL;
-            }
-        }
-        */
-        if (hProcess != NULL) {
-            if (psutil_pid_in_pids(pid) == 0) {
-                PyErr_SetString(PyExc_AssertionError,
-                                "OpenProcess succeeded but PID doesn't exist");
-                return NULL;
-            }
-        }
-    }
-
     return hProcess;
 }
 
 
-/*
-/* Check for PID existance by using OpenProcess() + WaitForSingleObject.
-/* Return 1 if pid exists, else 0 or -1 on error.
- */
+// Check for PID existance. Return 1 if pid exists, 0 if not, -1 on error.
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
@@ -207,8 +154,7 @@ psutil_pid_is_running(DWORD pid) {
         return 0;
     return psutil_pid_in_pids(pid);
 
-    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE,
-                           FALSE, pid);
+    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
 
     // Access denied means there's a process to deny access to.
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED))
