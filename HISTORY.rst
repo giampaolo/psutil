@@ -22,6 +22,8 @@ XXXX-XX-XX
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
 - 1662_: [Windows] process exe() may raise WinError 0.
+- 1665_: [Linux] disk_io_counters() does not take into account extra fields
+  added to recent kernels.  (patch by Mike Hommey)
 
 5.6.7
 =====
