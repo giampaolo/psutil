@@ -130,7 +130,7 @@ psutil_get_filename(LPVOID lpvParam) {
     } while (--attempts);
 
     if (! NT_SUCCESS(status)) {
-        PyErr_SetFromOSErrnoWithSyscall("NtQuerySystemInformation");
+        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         FREE(globalFileName);
         globalFileName = NULL;
         return 1;
