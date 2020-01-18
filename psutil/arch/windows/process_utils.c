@@ -76,20 +76,19 @@ psutil_pid_in_pids(DWORD pid) {
 
 
 /*
- * Given a process HANDLE checks whether it's actually running. If it
- * does return it, else return NULL with the Python exception set.
+ * Given a process handle checks whether it's actually running. If it
+ * does return the handle, else return NULL with Python exception set.
+ * Process handle must have SYNCHRONIZE access right.
  * This is needed because OpenProcess API sucks.
  */
 HANDLE
 psutil_check_phandle(HANDLE hProcess, DWORD pid) {
-    DWORD exitCode = 0;
     DWORD ret;
 
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
             // "no such process".
-            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER");
             NoSuchProcess("OpenProcess");
             return NULL;
         }
@@ -138,7 +137,9 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
         return AccessDenied("automatically set for PID 0");
     }
 
-    // needed for WaitForSingleObject
+    // Needed for WaitForSingleObject. This does not require more
+    // privileges and should be the same as PROCESS_QUERY_LIMITED_INFORMATION
+    // (tested with "make print-access-denied").
     access |= SYNCHRONIZE;
     hProcess = OpenProcess(access, FALSE, pid);
 
@@ -150,6 +151,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     hProcess = psutil_check_phandle(hProcess, pid);
 
     if (PSUTIL_TESTING) {
+        // XXX: racy
         if (hProcess == NULL) {
             if (psutil_pid_in_pids(pid) == 1) {
                 PyErr_SetString(PyExc_AssertionError,
@@ -158,10 +160,10 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
             }
         }
         else {
-            // XXX: racy
             if (psutil_pid_in_pids(pid) == 0) {
                 PyErr_SetString(PyExc_AssertionError,
                                 "OpenProcess succeeded but PID doesn't exist");
+                return NULL;
             }
         }
     }
@@ -169,106 +171,35 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 }
 
 
-int
-psutil_assert_pid_exists(DWORD pid, char *err) {
-    if (PSUTIL_TESTING) {
-        if (psutil_pid_in_pids(pid) == 0) {
-            PyErr_SetString(PyExc_AssertionError, err);
-            return 0;
-        }
-    }
-    return 1;
-}
-
-
-int
-psutil_assert_pid_not_exists(DWORD pid, char *err) {
-    if (PSUTIL_TESTING) {
-        if (psutil_pid_in_pids(pid) == 1) {
-            PyErr_SetString(PyExc_AssertionError, err);
-            return 0;
-        }
-    }
-    return 1;
-}
-
-
 /*
-/* Check for PID existance by using OpenProcess() + GetExitCodeProcess.
-/* Returns:
- * 1: pid exists
- * 0: it doesn't
- * -1: error
+/* Check for PID existance by using OpenProcess() + WaitForSingleObject.
+/* Return 1 if pid exists else 0.
  */
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
-    DWORD exitCode;
-    DWORD err;
 
     // Special case for PID 0 System Idle Process
     if (pid == 0)
         return 1;
     if (pid < 0)
         return 0;
-    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    if (NULL == hProcess) {
-        err = GetLastError();
-        // Yeah, this is the actual error code in case of "no such process".
-        if (err == ERROR_INVALID_PARAMETER) {
-            if (! psutil_assert_pid_not_exists(
-                    pid, "pir: OpenProcess() -> INVALID_PARAMETER")) {
-                return -1;
-            }
-            return 0;
-        }
-        // Access denied obviously means there's a process to deny access to.
-        else if (err == ERROR_ACCESS_DENIED) {
-            if (! psutil_assert_pid_exists(
-                    pid, "pir: OpenProcess() ACCESS_DENIED")) {
-                return -1;
-            }
-            return 1;
-        }
-        // Be strict and raise an exception; the caller is supposed
-        // to take -1 into account.
-        else {
-            PyErr_SetFromOSErrnoWithSyscall("OpenProcess(PROCESS_VM_READ)");
-            return -1;
-        }
-    }
 
-    if (GetExitCodeProcess(hProcess, &exitCode)) {
-        CloseHandle(hProcess);
-        // XXX - maybe STILL_ACTIVE is not fully reliable as per:
-        // http://stackoverflow.com/questions/1591342/#comment47830782_1591379
-        if (exitCode == STILL_ACTIVE) {
-            if (! psutil_assert_pid_exists(
-                    pid, "pir: GetExitCodeProcess() -> STILL_ACTIVE")) {
-                return -1;
-            }
-            return 1;
-        }
-        // We can't be sure so we look into pids.
-        else {
-            return psutil_pid_in_pids(pid);
-        }
+    hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE,
+                           FALSE, pid);
+
+    // Access denied means there's a process to deny access to.
+    if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED))
+        return 1;
+
+    hProcess = psutil_check_phandle(hProcess, pid);
+    if (hProcess == NULL) {
+        PyErr_Clear();
+        SetLastError(0);
+        return 0;
     }
     else {
-        err = GetLastError();
         CloseHandle(hProcess);
-        // Same as for OpenProcess, assume access denied means there's
-        // a process to deny access to.
-        if (err == ERROR_ACCESS_DENIED) {
-            if (! psutil_assert_pid_exists(
-                    pid, "pir: GetExitCodeProcess() -> ERROR_ACCESS_DENIED")) {
-                return -1;
-            }
-            return 1;
-        }
-        else {
-            PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
-            return -1;
-        }
+        return 1;
     }
 }
