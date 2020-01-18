@@ -855,7 +855,7 @@ Functions
   .. versionchanged::
     5.6.0 PIDs are returned in sorted order
 
-.. function:: process_iter(attrs=None, ad_value=None)
+.. function:: process_iter(attrs=None, ad_value=None, new_only=False)
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
@@ -871,23 +871,9 @@ Functions
   the resulting dict is stored as a ``info`` attribute which is attached to the
   returned :class:`Process`  instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
+  If *new_only* is true this function will yield only new processes which
+  appeared since the last time it was called.
   Example usage::
-
-    >>> import psutil
-    >>> for proc in psutil.process_iter():
-    ...     try:
-    ...         pinfo = proc.as_dict(attrs=['pid', 'name', 'username'])
-    ...     except psutil.NoSuchProcess:
-    ...         pass
-    ...     else:
-    ...         print(pinfo)
-    ...
-    {'name': 'systemd', 'pid': 1, 'username': 'root'}
-    {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
-    {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
-    ...
-
-  More compact version using *attrs* parameter::
 
     >>> import psutil
     >>> for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
@@ -909,18 +895,27 @@ Functions
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
 
-  Example showing how to filter processes by name::
+  Example showing how to filter processes by name (see also
+  `process filtering <#filtering-and-sorting-processes>`__ section for more
+  examples)::
 
     >>> import psutil
     >>> [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']]
     [{'name': 'python3', 'pid': 21947},
      {'name': 'python', 'pid': 23835}]
 
-  See also `process filtering <#filtering-and-sorting-processes>`__ section for
-  more examples.
+  Get new processes only (since last call)::
+
+    >>> import psutil
+    >>> for proc in psutil.process_iter(attrs=['pid', 'name'], new_only=True):
+    ...     print(proc.info)
+    ...
 
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
+
+  .. versionchanged::
+    5.7.0 added "new_only" parameter.
 
 .. function:: pid_exists(pid)
 

@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.6.8 (unreleased)
+5.7.0 (unreleased)
 ==================
 
 XXXX-XX-XX
@@ -12,6 +12,7 @@ XXXX-XX-XX
   directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
+- 1667_: added process_iter(new_only=True) parameter.
 
 **Bug fixes**
 
@@ -22,6 +23,8 @@ XXXX-XX-XX
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
 - 1662_: [Windows] process exe() may raise WinError 0.
+- 1665_: [Linux] disk_io_counters() does not take into account extra fields
+  added to recent kernels.  (patch by Mike Hommey)
 
 5.6.7
 =====
