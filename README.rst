@@ -168,9 +168,7 @@ Portings
 
 - Go: https://github.com/shirou/gopsutil
 - C: https://github.com/hamon-in/cpslib
-- Node: https://github.com/christkv/node-psutil
 - Rust: https://github.com/borntyping/rust-psutil
-- Ruby: https://github.com/spacewander/posixpsutil
 - Nim: https://github.com/johnscillieri/psutil-nim
 
 
