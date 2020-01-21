@@ -71,6 +71,31 @@ int psutil_setup(void);
         #define AF_INET6 23
     #endif
 
+    // Python 2 compatibility for PyArg_ParseTuple pid arg type handling.
+    #if PY_MAJOR_VERSION == 2
+        #define SIZEOF_INT 4
+        #define SIZEOF_LONG 4
+        #define SIZEOF_PID_T SIZEOF_INT
+        #define SIZEOF_LONG_LONG 8
+
+        #if SIZEOF_PID_T == SIZEOF_INT
+            #define _Py_PARSE_PID "i"
+            #define PyLong_FromPid PyInt_FromLong
+            #define PyLong_AsPid PyInt_AsLong
+        #elif SIZEOF_PID_T == SIZEOF_LONG
+            #define _Py_PARSE_PID "l"
+            #define PyLong_FromPid PyInt_FromLong
+            #define PyLong_AsPid PyInt_AsLong
+        #elif SIZEOF_PID_T == SIZEOF_LONG_LONG
+            #define _Py_PARSE_PID "L"
+            #define PyLong_FromPid PyLong_FromLongLong
+            #define PyLong_AsPid PyInt_AsLongLong
+        #else
+           #error "sizeof(pid_t) is neither sizeof(int), sizeof(long) or " \
+                  "sizeof(long long)"
+        #endif
+    #endif
+
     int psutil_load_globals();
     PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
     PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);

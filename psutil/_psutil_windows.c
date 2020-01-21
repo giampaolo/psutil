@@ -111,10 +111,10 @@ psutil_boot_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_pid_exists(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int status;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     status = psutil_pid_is_running(pid);
@@ -169,9 +169,9 @@ error:
 static PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
-    long pid;
+    pid_t pid;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0)
         return AccessDenied("automatically set for PID 0");
@@ -212,10 +212,10 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD ExitCode;
     DWORD retVal;
-    long pid;
+    pid_t pid;
     long timeout;
 
-    if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "l", &pid, &timeout))
         return NULL;
     if (pid == 0)
         return AccessDenied("automatically set for PID 0");
@@ -281,11 +281,11 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
-    long        pid;
+    pid_t       pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -332,12 +332,12 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_create_time(PyObject *self, PyObject *args) {
-    long        pid;
+    pid_t       pid;
     long long   unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // special case for PIDs 0 and 4, return system boot time
@@ -397,13 +397,13 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
-    long pid;
+    pid_t pid;
     int pid_return;
     int use_peb;
     PyObject *py_usepeb = Py_True;
     static char *keywords[] = {"pid", "use_peb", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, "i|O",
+    if (!PyArg_ParseTupleAndKeywords(args, kwdict, _Py_PARSE_PID "|O",
                                      keywords, &pid, &py_usepeb)) {
         return NULL;
     }
@@ -426,10 +426,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int pid_return;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if ((pid == 0) || (pid == 4))
         return Py_BuildValue("s", "");
@@ -449,12 +449,12 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
     unsigned int size = sizeof(exe);
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -484,12 +484,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ok;
     PROCESSENTRY32W pentry;
     HANDLE hSnapShot;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
     if (hSnapShot == INVALID_HANDLE_VALUE)
@@ -522,10 +522,10 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
-    DWORD pid;
+    pid_t pid;
     PROCESS_MEMORY_COUNTERS_EX cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -576,7 +576,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
 static int
 psutil_GetProcWsetInformation(
-        DWORD pid,
+        pid_t pid,
         HANDLE hProcess,
         PMEMORY_WORKING_SET_INFORMATION *wSetInfo)
 {
@@ -635,13 +635,13 @@ psutil_GetProcWsetInformation(
  */
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess;
     PSUTIL_PROCESS_WS_COUNTERS wsCounters;
     PMEMORY_WORKING_SET_INFORMATION wsInfo;
     ULONG_PTR i;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_INFORMATION);
     if (hProcess == NULL)
@@ -706,10 +706,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int pid_return;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     pid_return = psutil_pid_is_running(pid);
@@ -727,12 +727,12 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     NTSTATUS status;
     HANDLE hProcess;
     PyObject* suspend;
 
-    if (! PyArg_ParseTuple(args, "lO", &pid, &suspend))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &suspend))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_SUSPEND_RESUME);
@@ -758,7 +758,7 @@ static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
-    long pid;
+    pid_t pid;
     int pid_return;
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
@@ -768,7 +768,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
@@ -861,12 +861,12 @@ error:
 
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE processHandle;
     DWORD access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     processHandle = psutil_handle_from_pid(pid, access);
@@ -884,7 +884,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_username(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     HANDLE processHandle = NULL;
     HANDLE tokenHandle = NULL;
     PTOKEN_USER user = NULL;
@@ -898,7 +898,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     PyObject *py_domain = NULL;
     PyObject *py_tuple = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     processHandle = psutil_handle_from_pid(
@@ -1011,11 +1011,11 @@ error:
  */
 static PyObject *
 psutil_proc_priority_get(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     DWORD priority;
     HANDLE hProcess;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -1038,13 +1038,13 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_priority_set(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int priority;
     int retval;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &priority))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
@@ -1067,12 +1067,12 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     HANDLE hProcess;
     DWORD IoPriority;
     NTSTATUS status;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
@@ -1099,13 +1099,13 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     DWORD prio;
     HANDLE hProcess;
     NTSTATUS status;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &prio))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &prio))
         return NULL;
 
     hProcess = psutil_handle_from_pid(pid, access);
@@ -1131,11 +1131,11 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess;
     IO_COUNTERS IoCounters;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
@@ -1163,12 +1163,12 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess;
     DWORD_PTR proc_mask;
     DWORD_PTR system_mask;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (hProcess == NULL) {
@@ -1194,15 +1194,15 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
 #ifdef _WIN64
-    if (! PyArg_ParseTuple(args, "lK", &pid, &mask))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "K", &pid, &mask))
 #else
-    if (! PyArg_ParseTuple(args, "lk", &pid, &mask))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "k", &pid, &mask))
 #endif
     {
         return NULL;
@@ -1227,12 +1227,12 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_is_suspended(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     ULONG i;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
@@ -1387,11 +1387,11 @@ error:
  */
 static PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess;
     DWORD handleCount;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
@@ -1436,7 +1436,7 @@ static char *get_region_protection_string(ULONG protection) {
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     MEMORY_BASIC_INFORMATION basicInfo;
-    DWORD pid;
+    pid_t pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
     WCHAR mappedFileName[MAX_PATH];
@@ -1449,7 +1449,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     hProcess = psutil_handle_from_pid(pid, access);
     if (NULL == hProcess)
