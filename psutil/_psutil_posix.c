@@ -51,7 +51,7 @@
  * -1: error (Python exception is set)
  */
 int
-psutil_pid_exists(long pid) {
+psutil_pid_exists(pid_t pid) {
     int ret;
 
     // No negative PID exists, plus -1 is an alias for sending signal
@@ -71,12 +71,7 @@ psutil_pid_exists(long pid) {
 #endif
     }
 
-#if defined(PSUTIL_OSX)
-    ret = kill((pid_t)pid , 0);
-#else
     ret = kill(pid , 0);
-#endif
-
     if (ret == 0)
         return 1;
     else {
@@ -112,7 +107,7 @@ psutil_pid_exists(long pid) {
  * This will always set a Python exception and return NULL.
  */
 int
-psutil_raise_for_pid(long pid, char *syscall_name) {
+psutil_raise_for_pid(pid_t pid, char *syscall_name) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
     if (errno != 0) {
         // Unlikely we get here.
@@ -136,11 +131,11 @@ psutil_raise_for_pid(long pid, char *syscall_name) {
  */
 static PyObject *
 psutil_posix_getpriority(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int priority;
     errno = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
 #ifdef PSUTIL_OSX
@@ -159,11 +154,11 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_posix_setpriority(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int priority;
     int retval;
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &priority))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
         return NULL;
 
 #ifdef PSUTIL_OSX

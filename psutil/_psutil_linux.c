@@ -97,9 +97,9 @@ ioprio_set(int which, int who, int ioprio) {
  */
 static PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
@@ -117,11 +117,11 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(args, "lii", &pid, &ioclass, &iodata))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata))
         return NULL;
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
@@ -140,15 +140,17 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_linux_prlimit(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ret, resource;
     struct rlimit old, new;
     struct rlimit *newp = NULL;
     PyObject *py_soft = NULL;
     PyObject *py_hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &py_soft, &py_hard))
+    if (! PyArg_ParseTuple(
+            args, _Py_PARSE_PID "i|OO", &pid, &resource, &py_soft, &py_hard)) {
         return NULL;
+}
 
     // get
     if (py_soft == NULL && py_hard == NULL) {
@@ -290,12 +292,12 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int cpu, ncpus, count, cpucount_s;
-    long pid;
+    pid_t pid;
     size_t setsize;
     cpu_set_t *mask = NULL;
     PyObject *py_list = NULL;
 
-    if (!PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ncpus = NCPUS_START;
     while (1) {
@@ -358,12 +360,12 @@ static PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     cpu_set_t cpu_set;
     size_t len;
-    long pid;
+    pid_t pid;
     int i, seq_len;
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
