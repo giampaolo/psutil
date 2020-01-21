@@ -13,9 +13,9 @@
    (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
         ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
 
-int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
+int psutil_get_proc_info(pid_t pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                          PVOID *retBuffer);
-PyObject* psutil_get_cmdline(long pid, int use_peb);
-PyObject* psutil_get_cwd(long pid);
-PyObject* psutil_get_environ(long pid);
+PyObject* psutil_get_cmdline(pid_t pid, int use_peb);
+PyObject* psutil_get_cwd(pid_t pid);
+PyObject* psutil_get_environ(pid_t pid);
 PyObject* psutil_proc_info(PyObject *self, PyObject *args);

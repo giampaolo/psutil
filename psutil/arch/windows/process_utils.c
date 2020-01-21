@@ -55,7 +55,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 // Return 1 if PID exists, 0 if not, -1 on error.
 int
-psutil_pid_in_pids(DWORD pid) {
+psutil_pid_in_pids(pid_t pid) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
@@ -78,7 +78,7 @@ psutil_pid_in_pids(DWORD pid) {
 // does return the handle, else return NULL with Python exception set.
 // This is needed because OpenProcess API sucks.
 HANDLE
-psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+psutil_check_phandle(HANDLE hProcess, pid_t pid) {
     DWORD exitCode;
 
     if (hProcess == NULL) {
@@ -122,7 +122,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
 // argument to OpenProcess.
 // Return a process handle or NULL with exception set.
 HANDLE
-psutil_handle_from_pid(DWORD pid, DWORD access) {
+psutil_handle_from_pid(pid_t pid, DWORD access) {
     HANDLE hProcess;
 
     if (pid == 0) {
@@ -144,7 +144,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 
 // Check for PID existance. Return 1 if pid exists, 0 if not, -1 on error.
 int
-psutil_pid_is_running(DWORD pid) {
+psutil_pid_is_running(pid_t pid) {
     HANDLE hProcess;
 
     // Special case for PID 0 System Idle Process

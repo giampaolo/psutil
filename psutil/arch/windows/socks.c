@@ -113,7 +113,7 @@ static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
-    unsigned long pid;
+    pid_t pid;
     int pid_return;
     PVOID table = NULL;
     DWORD tableSize;
