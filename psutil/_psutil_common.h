@@ -26,22 +26,17 @@ static const int PSUTIL_CONN_NONE = 128;
 
 // Python 2 compatibility for PyArg_ParseTuple pid arg type handling.
 #if PY_MAJOR_VERSION == 2
-    #if SIZEOF_PID_T == SIZEOF_INT
+    #if PSUTIL_SIZEOF_PID_T == SIZEOF_INT
         #define _Py_PARSE_PID "i"
-        #define PyLong_FromPid PyInt_FromLong
-        #define PyLong_AsPid PyInt_AsLong
-    #elif SIZEOF_PID_T == SIZEOF_LONG
+    #elif PSUTIL_SIZEOF_PID_T == SIZEOF_LONG
         #define _Py_PARSE_PID "l"
-        #define PyLong_FromPid PyInt_FromLong
-        #define PyLong_AsPid PyInt_AsLong
-    #elif SIZEOF_PID_T == SIZEOF_LONG_LONG
+    #elif PSUTIL_SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define _Py_PARSE_PID "L"
-        #define PyLong_FromPid PyLong_FromLongLong
-        #define PyLong_AsPid PyInt_AsLongLong
     #else
        #error "sizeof(pid_t) is neither sizeof(int), sizeof(long) or " \
               "sizeof(long long)"
     #endif
+    #undef PSUTIL_SIZEOF_PID_T
 #endif
 
 // ====================================================================

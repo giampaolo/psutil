@@ -12,6 +12,7 @@ import io
 import os
 import platform
 import shutil
+import struct
 import sys
 import tempfile
 import warnings
@@ -84,6 +85,13 @@ def get_version():
 
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
+
+if not PY3:
+    # XXX: not bullet proof (long long case is missing).
+    if struct.calcsize('l') <= 8:
+        macros.append(('PSUTIL_SIZEOF_PID_T', '4'))  # int
+    else:
+        macros.append(('PSUTIL_SIZEOF_PID_T', '8'))  # long
 
 
 def get_description():
