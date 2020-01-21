@@ -670,7 +670,10 @@ static PyMethodDef mod_methods[] = {
     if (mod == NULL)
         INITERR;
 
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) || defined(PSUTIL_AIX)
+#if defined(PSUTIL_BSD) || \
+        defined(PSUTIL_OSX) || \
+        defined(PSUTIL_SUNOS) || \
+        defined(PSUTIL_AIX)
     if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK)) INITERR;
 #endif
 
