@@ -142,9 +142,9 @@ psutil_pids(PyObject *self, PyObject *args) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
 #ifdef PSUTIL_FREEBSD
-            py_pid = Py_BuildValue("i", proclist->ki_pid);
+            py_pid = PyLong_FromPid(proclist->ki_pid);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-            py_pid = Py_BuildValue("i", proclist->p_pid);
+            py_pid = PyLong_FromPid(proclist->p_pid);
 #endif
             if (!py_pid)
                 goto error;
