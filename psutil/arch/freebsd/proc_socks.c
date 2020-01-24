@@ -179,7 +179,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
 PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     // Return connections opened by process.
-    long pid;
+    pid_t pid;
     int i;
     int cnt;
     struct kinfo_file *freep = NULL;
