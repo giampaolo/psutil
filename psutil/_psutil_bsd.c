@@ -842,7 +842,7 @@ psutil_users(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_OPENBSD
             -1                  // process id (set to None later)
 #else
-            ut.ut_pid           // process id
+            ut.ut_pid           // TODO: use PyLong_FromPid
 #endif
         );
         if (!py_tuple) {
