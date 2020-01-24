@@ -38,6 +38,7 @@ from psutil._compat import long
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
+from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import create_proc_children_pair
@@ -298,10 +299,10 @@ class TestProcess(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
-    @unittest.skipIf(TRAVIS, 'not reliable on TRAVIS')
+    @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdin.isatty() or sys.stdout.isatty() or sys.stderr.isatty():
+        if sys.stdin.isatty() or sys.stdout.isatty():
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:

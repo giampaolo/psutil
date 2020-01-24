@@ -321,7 +321,8 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 if NETBSD or FREEBSD:
                     # On NetBSD creating a UNIX socket will cause
                     # a UNIX connection to  /var/run/log.
-                    cons = [c for c in cons if c.raddr != '/var/run/log']
+                    cons = [c for c in cons if c.raddr != '/var/run/log' and
+                            c.laddr]
                 self.assertEqual(len(cons), 2, msg=cons)
                 if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
