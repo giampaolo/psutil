@@ -13,6 +13,7 @@ XXXX-XX-XX
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
 - 1667_: added process_iter(new_only=True) parameter.
+- 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 
 **Bug fixes**
 
