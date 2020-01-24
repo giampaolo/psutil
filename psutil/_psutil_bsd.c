@@ -794,6 +794,7 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_pid = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -864,17 +865,21 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
         if (! py_hostname)
             goto error;
+#ifdef PSUTIL_OPENBSD
+        py_pid = Py_BuildValue("i", -1);  // set to None later
+#else
+        py_pid = PyLong_FromPid(utx->ut_pid);
+#endif
+        if (! py_pid)
+            goto error;
+
         py_tuple = Py_BuildValue(
-            "(OOOfi)",
+            "(OOOfO)",
             py_username,   // username
             py_tty,        // tty
             py_hostname,   // hostname
             (float)utx->ut_tv.tv_sec,  // start time
-#ifdef PSUTIL_OPENBSD
-            -1             // process id (set to None later)
-#else
-            utx->ut_pid    // process id
-#endif
+            py_pid         // process id
         );
 
         if (!py_tuple) {
@@ -889,6 +894,7 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
+        Py_CLEAR(py_pid);
     }
 
     endutxent();
@@ -900,6 +906,7 @@ error:
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     return NULL;
 }
