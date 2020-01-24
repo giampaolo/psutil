@@ -119,7 +119,7 @@ psutil_get_argmax() {
 
 // Return 1 if pid refers to a zombie process else 0.
 int
-psutil_is_zombie(long pid) {
+psutil_is_zombie(pid_t pid) {
     struct kinfo_proc kp;
 
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
@@ -131,7 +131,7 @@ psutil_is_zombie(long pid) {
 
 // return process args as a python list
 PyObject *
-psutil_get_cmdline(long pid) {
+psutil_get_cmdline(pid_t pid) {
     int mib[3];
     int nargs;
     size_t len;
@@ -162,7 +162,7 @@ psutil_get_cmdline(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = (pid_t)pid;
+    mib[2] = pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
@@ -225,7 +225,7 @@ error:
 
 // return process environment as a python string
 PyObject *
-psutil_get_environ(long pid) {
+psutil_get_environ(pid_t pid) {
     int mib[3];
     int nargs;
     char *procargs = NULL;
@@ -254,7 +254,7 @@ psutil_get_environ(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = (pid_t)pid;
+    mib[2] = pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
@@ -339,13 +339,13 @@ error:
 
 
 int
-psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
+psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
-    mib[3] = (pid_t)pid;
+    mib[3] = pid;
 
     // fetch the info with sysctl()
     len = sizeof(struct kinfo_proc);
@@ -371,9 +371,9 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
  * Returns 0 on failure (and Python exception gets already set).
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
+psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
-    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
+    int ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
