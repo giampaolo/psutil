@@ -202,8 +202,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (! PyArg_ParseTuple(args, "O&OO", Py_PidConverter, &pid,
+                          &py_af_filter, &py_type_filter)) {
         goto error;
+    }
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
