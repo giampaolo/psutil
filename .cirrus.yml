@@ -1,0 +1,31 @@
+freebsd_12_1_py3_task:
+  freebsd_instance:
+    image: freebsd-12-1-release-amd64
+  env:
+    CIRRUS: 1
+  install_script:
+    - pkg install -y python3 gcc py37-pip
+  script:
+    - python3 -m pip install --user setuptools
+    - make clean
+    - make install
+    - make test
+    - make test-memleaks
+    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_access_denied.py
+    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_api_speed.py
+
+freebsd_12_1_py2_task:
+  freebsd_instance:
+    image: freebsd-12-1-release-amd64
+  env:
+    CIRRUS: 1
+  install_script:
+    - pkg install -y python gcc py27-pip
+  script:
+    - python2.7 -m pip install --user setuptools ipaddress mock
+    - make clean
+    - make install
+    - make test
+    - make test-memleaks
+    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_access_denied.py
+    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_api_speed.py

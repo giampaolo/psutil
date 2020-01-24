@@ -31,7 +31,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
-from psutil.tests import APPVEYOR
+from psutil.tests import CI_TESTING
 from psutil.tests import ASCII_FS
 from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
@@ -275,8 +275,9 @@ class TestSystemAPIs(unittest.TestCase):
         finally:
             sys.stdout = stdout
 
-    def test_cpu_count(self):
+    def test_cpu_count_logical(self):
         logical = psutil.cpu_count()
+        self.assertIsNotNone(logical)
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
@@ -285,7 +286,12 @@ class TestSystemAPIs(unittest.TestCase):
                 cpuinfo_data = fd.read()
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
+
+    def test_cpu_count_physical(self):
+        logical = psutil.cpu_count()
         physical = psutil.cpu_count(logical=False)
+        if physical is None:
+            raise self.skipTest("physical cpu_count() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
             self.assertIsNone(physical)
         else:
@@ -695,8 +701,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
-    @unittest.skipIf(APPVEYOR and psutil.disk_io_counters() is None,
-                     "unreliable on APPVEYOR")  # no visible disks
+    @unittest.skipIf(CI_TESTING and not psutil.disk_io_counters(),
+                     "unreliable on CI")  # no visible disks
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -734,9 +740,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(psutil.disk_io_counters(perdisk=True), {})
             assert m.called
 
-    # can't find users on APPVEYOR or TRAVIS
-    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
-                     "unreliable on APPVEYOR or TRAVIS")
+    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
     def test_users(self):
         users = psutil.users()
         self.assertNotEqual(users, [])

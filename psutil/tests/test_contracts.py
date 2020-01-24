@@ -238,6 +238,7 @@ class TestSystemAPITypes(unittest.TestCase):
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
+        print(repr(psutil.cpu_freq()))
         self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int, long))
 
     def test_disk_io_counters(self):
@@ -555,13 +556,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         for value in ret:
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0)
-        if POSIX and not AIX and ret.vms != 0:
-            # VMS is always supposed to be the highest
-            for name in ret._fields:
-                if name != 'vms':
-                    value = getattr(ret, name)
-                    self.assertGreater(ret.vms, value, msg=ret)
-        elif WINDOWS:
+        if WINDOWS:
             self.assertGreaterEqual(ret.peak_wset, ret.wset)
             self.assertGreaterEqual(ret.peak_paged_pool, ret.paged_pool)
             self.assertGreaterEqual(ret.peak_nonpaged_pool, ret.nonpaged_pool)

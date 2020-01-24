@@ -58,15 +58,15 @@ class Base(object):
 
     def setUp(self):
         safe_rmpath(TESTFN)
-        if not NETBSD:
-            # NetBSD opens a UNIX socket to /var/log/run.
+        if not (NETBSD or FREEBSD):
+            # process opens a UNIX socket to /var/log/run.
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
     def tearDown(self):
         safe_rmpath(TESTFN)
         reap_children()
-        if not NETBSD:
+        if not (FREEBSD or NETBSD):
             # Make sure we closed all resources.
             # NetBSD opens a UNIX socket to /var/log/run.
             cons = thisproc.connections(kind='all')
@@ -318,11 +318,12 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 cons = thisproc.connections(kind='unix')
                 assert not (cons[0].laddr and cons[0].raddr)
                 assert not (cons[1].laddr and cons[1].raddr)
-                if NETBSD:
+                if NETBSD or FREEBSD:
                     # On NetBSD creating a UNIX socket will cause
                     # a UNIX connection to  /var/run/log.
-                    cons = [c for c in cons if c.raddr != '/var/run/log']
-                self.assertEqual(len(cons), 2)
+                    cons = [c for c in cons if c.raddr != '/var/run/log' and
+                            c.laddr]
+                self.assertEqual(len(cons), 2, msg=cons)
                 if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
                     self.assertEqual(cons[0].raddr, "")
@@ -533,9 +534,9 @@ class TestFilters(Base, unittest.TestCase):
                 for conn in cons:
                     self.assertEqual(conn.family, AF_INET6)
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
-            # unix (skipped on NetBSD because by default the Python process
-            # creates a connection to '/var/run/log' UNIX socket)
-            if HAS_CONNECTIONS_UNIX and not NETBSD:
+            # Skipped on BSD becayse by default the Python process
+            # creates a UNIX socket to '/var/run/log'.
+            if HAS_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
                 cons = thisproc.connections(kind='unix')
                 self.assertEqual(len(cons), 3)
                 for conn in cons:
