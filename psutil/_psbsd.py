@@ -622,6 +622,8 @@ class Process(object):
     @wrap_exceptions
     def exe(self):
         if FREEBSD:
+            if self.pid == 0:
+                return ''  # else NSP
             return cext.proc_exe(self.pid)
         elif NETBSD:
             if self.pid == 0:

@@ -300,13 +300,10 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     def expect_exact_path_match(cls):
         # Do not expect psutil to correctly handle unicode paths on
         # Python 2 if os.listdir() is not able either.
-        if PY3:
-            return True
-        else:
-            here = '.' if isinstance(cls.funky_name, str) else u('.')
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                return cls.funky_name in os.listdir(here)
+        here = '.' if isinstance(cls.funky_name, str) else u('.')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return cls.funky_name in os.listdir(here)
 
 
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
