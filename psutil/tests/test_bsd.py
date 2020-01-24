@@ -376,7 +376,7 @@ class FreeBSDSystemTestCase(unittest.TestCase):
     def test_cpu_stats_syscalls(self):
         # pretty high tolerance but it looks like it's OK.
         self.assertAlmostEqual(psutil.cpu_stats().syscalls,
-                               sysctl('vm.stats.sys.v_syscall'), delta=100000)
+                               sysctl('vm.stats.sys.v_syscall'), delta=200000)
 
     # def test_cpu_stats_traps(self):
     #    self.assertAlmostEqual(psutil.cpu_stats().traps,

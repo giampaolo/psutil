@@ -317,7 +317,7 @@ class TestConnectedSocket(Base, unittest.TestCase):
                     cons = [c for c in cons if c.raddr != '/var/run/log']
                     if CIRRUS:
                         cons = [c for c in cons if c.fd in
-                                (server.fileno() or client.fileno())]
+                                (server.fileno(), client.fileno())]
                 self.assertEqual(len(cons), 2, msg=cons)
                 if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
