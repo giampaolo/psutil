@@ -170,9 +170,11 @@ Py_PidConverter(PyObject *arg, void *addr) {
     if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
         *((pid_t *)addr) = PyLong_AsLong(arg);
     }
+#ifndef PSUTIL_WINDOWS
     else if (sizeof(pid_t) == sizeof(long long)) {
         *((pid_t *)addr) = PyLong_AsLongLong(arg);
     }
+#endif
     else {
         PyErr_SetString(PyExc_ValueError, "can't get size of pid_t");
     }

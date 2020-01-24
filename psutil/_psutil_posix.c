@@ -135,7 +135,7 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
     int priority;
     errno = 0;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
 
 #ifdef PSUTIL_OSX
@@ -158,7 +158,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
     int priority;
     int retval;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
+    if (! PyArg_ParseTuple(args, "O&i", Py_PidConverter, &pid, &priority))
         return NULL;
 
 #ifdef PSUTIL_OSX
