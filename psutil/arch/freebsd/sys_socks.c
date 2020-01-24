@@ -219,7 +219,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
+        Py_CLEAR(py_pid);
     }
 
     free(buf);
@@ -291,7 +292,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     } while (xug->xug_gen != exug->xug_gen && retry--);
 
     for (;;) {
-	struct xfile *xf;
+        struct xfile *xf;
 
         xug = (struct xunpgen *)(void *)((char *)xug + xug->xug_len);
         if (xug >= exug)
