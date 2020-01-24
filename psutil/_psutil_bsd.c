@@ -142,9 +142,9 @@ psutil_pids(PyObject *self, PyObject *args) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
 #ifdef PSUTIL_FREEBSD
-            py_pid = Py_BuildValue("i", proclist->ki_pid);
+            py_pid = PyLong_FromPid(proclist->ki_pid);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-            py_pid = Py_BuildValue("i", proclist->p_pid);
+            py_pid = PyLong_FromPid(proclist->p_pid);
 #endif
             if (!py_pid)
                 goto error;
@@ -190,7 +190,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     long rss;
     long vms;
     long memtext;
@@ -201,9 +201,10 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
     PyObject *py_name;
+    PyObject *py_ppid;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -265,16 +266,25 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     oncpu = -1;
 #endif
 
+#ifdef PSUTIL_FREEBSD
+    py_ppid = PyLong_FromPid(kp.ki_ppid);
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+    py_ppid = PyLong_FromPid(kp.p_ppid);
+#else
+    py_ppid = Py_BuildfValue(-1);
+#endif
+    if (! py_ppid)
+        return NULL;
+
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-        "(lillllllLdllllddddlllllbO)",
+        "(OillllllLdllllddddlllllbO)",
 #else
-        "(lillllllidllllddddlllllbO)",
+        "(OillllllidllllddddlllllbO)",
 #endif
 #ifdef PSUTIL_FREEBSD
-        //
-        (long)kp.ki_ppid,                // (long) ppid
+        py_ppid,                         // (pid_t) ppid
         (int)kp.ki_stat,                 // (int) status
         // UIDs
         (long)kp.ki_ruid,                // (long) real uid
@@ -307,8 +317,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // others
         oncpu,                            // (int) the CPU we are on
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-        //
-        (long)kp.p_ppid,                 // (long) ppid
+        py_ppid,                         // (pid_t) ppid
         (int)kp.p_stat,                  // (int) status
         // UIDs
         (long)kp.p_ruid,                 // (long) real uid
@@ -347,6 +356,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     );
 
     Py_DECREF(py_name);
+    Py_DECREF(py_ppid);
     return py_retlist;
 }
 
@@ -356,11 +366,11 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     kinfo_proc kp;
     char str[1000];
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -379,10 +389,10 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     PyObject *py_retlist = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
     py_retlist = psutil_get_cmdline(pid);
     if (py_retlist == NULL)
@@ -452,7 +462,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 #if (defined(__FreeBSD_version) && __FreeBSD_version >= 800000) || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int i;
     int cnt;
     int regular;
@@ -467,7 +477,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -794,6 +804,7 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_pid = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -831,7 +842,7 @@ psutil_users(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_OPENBSD
             -1                  // process id (set to None later)
 #else
-            ut.ut_pid           // process id
+            ut.ut_pid           // TODO: use PyLong_FromPid
 #endif
         );
         if (!py_tuple) {
@@ -864,17 +875,21 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
         if (! py_hostname)
             goto error;
+#ifdef PSUTIL_OPENBSD
+        py_pid = Py_BuildValue("i", -1);  // set to None later
+#else
+        py_pid = PyLong_FromPid(utx->ut_pid);
+#endif
+        if (! py_pid)
+            goto error;
+
         py_tuple = Py_BuildValue(
-            "(OOOfi)",
+            "(OOOfO)",
             py_username,   // username
             py_tty,        // tty
             py_hostname,   // hostname
             (float)utx->ut_tv.tv_sec,  // start time
-#ifdef PSUTIL_OPENBSD
-            -1             // process id (set to None later)
-#else
-            utx->ut_pid    // process id
-#endif
+            py_pid         // process id
         );
 
         if (!py_tuple) {
@@ -889,6 +904,7 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
+        Py_CLEAR(py_pid);
     }
 
     endutxent();
@@ -900,6 +916,7 @@ error:
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     return NULL;
 }

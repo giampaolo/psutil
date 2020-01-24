@@ -91,6 +91,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
+    PyObject *py_pid = NULL;
 
     switch (proto) {
         case IPPROTO_TCP:
@@ -129,7 +130,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     } while (xig->xig_gen != exig->xig_gen && retry--);
 
     for (;;) {
-	struct xfile *xf;
+        struct xfile *xf;
         int lport, rport, status, family;
 
         xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
@@ -202,20 +203,24 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
+        py_pid = PyLong_FromPid(xf->xf_pid);
+        if (! py_pid)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(iiiNNii)",
+            "(iiiNNiO)",
             xf->xf_fd, // fd
             family,    // family
             type,      // type
             py_laddr,  // laddr
             py_raddr,  // raddr
             status,    // status
-            xf->xf_pid); // pid
+            py_pid); // pid
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
+        Py_CLEAR(py_pid);
     }
 
     free(buf);
@@ -225,6 +230,7 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
+    Py_XDECREF(py_pid);
     free(buf);
     return 0;
 }
@@ -286,7 +292,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     } while (xug->xug_gen != exug->xug_gen && retry--);
 
     for (;;) {
-	struct xfile *xf;
+        struct xfile *xf;
 
         xug = (struct xunpgen *)(void *)((char *)xug + xug->xug_len);
         if (xug >= exug)

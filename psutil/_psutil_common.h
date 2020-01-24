@@ -22,17 +22,6 @@ static const int PSUTIL_CONN_NONE = 128;
 #if PY_MAJOR_VERSION < 3
     PyObject* PyUnicode_DecodeFSDefault(char *s);
     PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
-#endif
-
-// Python 2 compatibility for PyArg_ParseTuple pid arg type handling.
-#if PY_MAJOR_VERSION == 2
-    // XXX: not bullet proof (long long case is missing).
-    #if PSUTIL_SIZEOF_PID_T == 4
-        #define _Py_PARSE_PID "i"
-    #else
-        #define _Py_PARSE_PID "l"
-    #endif
-
     PyObject *PyLong_FromPid(pid_t pid);
 #endif
 

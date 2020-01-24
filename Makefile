@@ -15,7 +15,6 @@ DEPS = \
 	ipaddress \
 	mock==1.0.1 \
 	pyperf \
-	readline \
 	requests \
 	setuptools \
 	sphinx \
