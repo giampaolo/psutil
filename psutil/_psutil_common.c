@@ -64,6 +64,23 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 }
 
 
+#if PY_MAJOR_VERSION == 2
+PyObject *
+PyLong_FromPid(pid_t pid) {
+    if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
+        return PyInt_FromLong(pid);
+    }
+    else if (sizeof(pid_t) == sizeof(long long)) {
+        return PyLong_FromLongLong(pid);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "can't get size of pid_t");
+        return NULL;
+    }
+}
+#endif
+
+
 // ====================================================================
 // --- Custom exceptions
 // ====================================================================
@@ -145,6 +162,24 @@ psutil_setup(void) {
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
     return 0;
+}
+
+
+int
+Py_PidConverter(PyObject *arg, void *addr) {
+    if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
+        *((pid_t *)addr) = PyLong_AsLong(arg);
+    }
+    else if (sizeof(pid_t) == sizeof(long long)) {
+        *((pid_t *)addr) = PyLong_AsLongLong(arg);
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "can't get size of pid_t");
+    }
+
+    if (PyErr_Occurred())
+        return 0;
+    return 1;
 }
 
 

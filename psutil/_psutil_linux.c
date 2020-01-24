@@ -99,7 +99,7 @@ static PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
@@ -121,8 +121,10 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata))
+    if (! PyArg_ParseTuple(
+            args, "O&ii", Py_PidConverter, &pid, &ioclass, &iodata)) {
         return NULL;
+    }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
     if (retval == -1)
@@ -147,10 +149,10 @@ psutil_linux_prlimit(PyObject *self, PyObject *args) {
     PyObject *py_soft = NULL;
     PyObject *py_hard = NULL;
 
-    if (! PyArg_ParseTuple(
-            args, _Py_PARSE_PID "i|OO", &pid, &resource, &py_soft, &py_hard)) {
+    if (! PyArg_ParseTuple(args, "O&i|OO", Py_PidConverter, &pid, &resource,
+                           &py_soft, &py_hard)) {
         return NULL;
-}
+    }
 
     // get
     if (py_soft == NULL && py_hard == NULL) {
@@ -297,7 +299,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpu_set_t *mask = NULL;
     PyObject *py_list = NULL;
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
     ncpus = NCPUS_START;
     while (1) {
@@ -365,7 +367,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, "O&O", Py_PidConverter, &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
@@ -423,6 +425,7 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
+    PyObject *py_pid = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -443,14 +446,17 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
         if (! py_hostname)
             goto error;
+        py_pid = PyLong_FromPid(ut->ut_pid);
+        if (! py_pid)
+            goto error;
         py_tuple = Py_BuildValue(
-            "(OOOfO" _Py_PARSE_PID ")",
+            "(OOOfOO)",
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
-            ut->ut_pid                // process id
+            py_pid                    // process id
         );
         if (! py_tuple)
             goto error;
@@ -460,6 +466,7 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
+        Py_CLEAR(py_pid);
     }
     endutent();
     return py_retlist;
@@ -469,6 +476,7 @@ error:
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     endutent();
     return NULL;

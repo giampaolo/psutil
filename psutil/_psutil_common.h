@@ -32,6 +32,8 @@ static const int PSUTIL_CONN_NONE = 128;
     #else
         #define _Py_PARSE_PID "l"
     #endif
+
+    PyObject *PyLong_FromPid(pid_t pid);
 #endif
 
 // ====================================================================
@@ -49,6 +51,7 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
 int psutil_setup(void);
+int Py_PidConverter(PyObject *arg, void *addr);
 
 // ====================================================================
 // --- Windows
