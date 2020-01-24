@@ -372,6 +372,7 @@ class FreeBSDSystemTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.cpu_stats().soft_interrupts,
                                sysctl('vm.stats.sys.v_soft'), delta=1000)
 
+    @retry_on_failure()
     def test_cpu_stats_syscalls(self):
         # pretty high tolerance but it looks like it's OK.
         self.assertAlmostEqual(psutil.cpu_stats().syscalls,
