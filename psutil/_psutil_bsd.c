@@ -201,6 +201,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
     PyObject *py_name;
+    PyObject *py_ppid;
     PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
@@ -265,16 +266,25 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     oncpu = -1;
 #endif
 
+#ifdef PSUTIL_FREEBSD
+    py_ppid = PyLong_FromPid(kp.ki_ppid);
+#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+    py_ppid = PyLong_FromPid(kp.p_ppid);
+#else
+    py_ppid = Py_BuildfValue(-1);
+#endif
+    if (! py_ppid)
+        return NULL;
+
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-        "(lillllllLdllllddddlllllbO)",
+        "(OillllllLdllllddddlllllbO)",
 #else
-        "(lillllllidllllddddlllllbO)",
+        "(OillllllidllllddddlllllbO)",
 #endif
 #ifdef PSUTIL_FREEBSD
-        //
-        (long)kp.ki_ppid,                // (long) ppid
+        py_ppid,                         // (pid_t) ppid
         (int)kp.ki_stat,                 // (int) status
         // UIDs
         (long)kp.ki_ruid,                // (long) real uid
@@ -307,8 +317,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // others
         oncpu,                            // (int) the CPU we are on
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-        //
-        (long)kp.p_ppid,                 // (long) ppid
+        py_ppid,                         // (pid_t) ppid
         (int)kp.p_stat,                  // (int) status
         // UIDs
         (long)kp.p_ruid,                 // (long) real uid
@@ -347,6 +356,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     );
 
     Py_DECREF(py_name);
+    Py_DECREF(py_ppid);
     return py_retlist;
 }
 
