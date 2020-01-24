@@ -22,7 +22,7 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil.tests import APPVEYOR
+from psutil.tests import CI_TESTING
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -365,13 +365,13 @@ class TestSystemAPIs(unittest.TestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
-    # can't find users on APPVEYOR or TRAVIS
-    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
-                     "unreliable on APPVEYOR or TRAVIS")
+    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
     @retry_on_failure()
     def test_users(self):
         out = sh("who")
         lines = out.split('\n')
+        if not lines:
+            raise self.skipTest("no users on this system")
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
         self.assertEqual(len(users), len(psutil.users()))

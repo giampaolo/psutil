@@ -301,7 +301,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(TRAVIS, 'not reliable on TRAVIS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdin.isatty() or sys.stdout.isatty():
+        if sys.stdin.isatty() or sys.stdout.isatty() or sys.stderr.isatty():
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:

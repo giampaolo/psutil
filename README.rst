@@ -30,6 +30,10 @@
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
+.. |cirrus| image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
+    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
+    :alt: FreeBSD tests (Cirrus-Ci)
+
 .. |coverage| image:: https://img.shields.io/coveralls/github/giampaolo/psutil.svg?label=test%20coverage
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)

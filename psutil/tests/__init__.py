@@ -71,7 +71,8 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
-    'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'VALID_PROC_STATUSES',
+    'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
+    'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -113,11 +114,11 @@ __all__ = [
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 WIN_VISTA = (6, 0, 0) if WINDOWS else None
-# whether we're running this test suite on Travis (https://travis-ci.org/)
+# whether we're running this test suite on a Continuous Integration service
 TRAVIS = bool(os.environ.get('TRAVIS'))
-# whether we're running this test suite on Appveyor for Windows
-# (http://www.appveyor.com/)
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
+CIRRUS = bool(os.environ.get('CIRRUS'))
+CI_TESTING = TRAVIS or APPVEYOR or CIRRUS
 PYPY = '__pypy__' in sys.builtin_module_names
 
 # --- configurable defaults

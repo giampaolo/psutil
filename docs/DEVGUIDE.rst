@@ -149,6 +149,10 @@ Two icons in the home page (README) always show the build status:
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
+.. image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
+    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
+    :alt: FreeBSD tests (Cirrus-CI)
+
 BSD, AIX and Solaris are currently tested manually.
 
 Test coverage
