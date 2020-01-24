@@ -6,7 +6,7 @@ freebsd_12_1_py3_task:
   install_script:
     - pkg install -y python3 gcc py37-pip
   script:
-    - python3 -m pip install --user setuptools flake8 ipaddress mock
+    - python3 -m pip install --user setuptools
     - make clean
     - make install
     - make test
@@ -22,7 +22,7 @@ freebsd_12_1_py2_task:
   install_script:
     - pkg install -y python gcc py27-pip
   script:
-    - python3 -m pip install --user setuptools flake8 ipaddress mock
+    - python2.7 -m pip install --user setuptools ipaddress mock
     - make clean
     - make install
     - make test
