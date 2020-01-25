@@ -64,23 +64,6 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 }
 
 
-#if PY_MAJOR_VERSION == 2
-PyObject *
-PyLong_FromPid(pid_t pid) {
-    if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
-        return PyInt_FromLong(pid);
-    }
-    else if (sizeof(pid_t) == sizeof(long long)) {
-        return PyLong_FromLongLong(pid);
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "can't get size of pid_t");
-        return NULL;
-    }
-}
-#endif
-
-
 // ====================================================================
 // --- Custom exceptions
 // ====================================================================

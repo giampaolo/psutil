@@ -22,7 +22,6 @@ static const int PSUTIL_CONN_NONE = 128;
 #if PY_MAJOR_VERSION < 3
     PyObject* PyUnicode_DecodeFSDefault(char *s);
     PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
-    PyObject *PyLong_FromPid(pid_t pid);
 #endif
 
 // Python 2
