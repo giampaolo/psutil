@@ -1531,10 +1531,10 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
 
     if (Process32First(handle, &pe)) {
         do {
-            py_pid = Py_BuildValue("I", pe.th32ProcessID);
+            py_pid = PyLong_FromPid(pe.th32ProcessID);
             if (py_pid == NULL)
                 goto error;
-            py_ppid = Py_BuildValue("I", pe.th32ParentProcessID);
+            py_ppid = PyLong_FromPid(pe.th32ParentProcessID);
             if (py_ppid == NULL)
                 goto error;
             if (PyDict_SetItem(py_retdict, py_pid, py_ppid))

@@ -425,7 +425,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_user_proc = NULL;
-    PyObject *py_pid = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -446,18 +445,15 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
         if (! py_hostname)
             goto error;
-        py_pid = PyLong_FromPid(ut->ut_pid);
-        if (! py_pid)
-            goto error;
 
         py_tuple = Py_BuildValue(
-            "(OOOfOO)",
+            "OOOfO" _Py_PARSE_PID,
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
-            py_pid                    // process id
+            ut->ut_pid                // process id
         );
         if (! py_tuple)
             goto error;
@@ -467,7 +463,6 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
-        Py_CLEAR(py_pid);
     }
     endutent();
     return py_retlist;
@@ -477,7 +472,6 @@ error:
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     endutent();
     return NULL;
