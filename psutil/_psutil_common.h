@@ -27,6 +27,11 @@ static const int PSUTIL_CONN_NONE = 128;
 
 // Python 2
 #ifndef _Py_PARSE_PID
+    // Python 2: SIZEOF_PID_T not defined but _getpid() returns an int.
+    #if defined(PSUTIL_WINDOWS) && !defined(SIZEOF_PID_T)
+        #define SIZEOF_PID_T SIZEOF_INT
+    #endif
+
     #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
         #error "missing SIZEOF* definition"
     #endif
