@@ -183,8 +183,8 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     }
 
     py_retlist = Py_BuildValue(
-        "lllllllidiO",
-        (long)kp.kp_eproc.e_ppid,                  // (long) ppid
+        _Py_PARSE_PID "llllllidiO",
+        kp.kp_eproc.e_ppid,                        // (pid_t) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
         (long)kp.kp_eproc.e_pcred.p_svuid,         // (long) saved uid
