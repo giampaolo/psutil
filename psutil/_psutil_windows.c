@@ -756,7 +756,7 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
 
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-    HANDLE hThread;
+    HANDLE hThread = NULL;
     THREADENTRY32 te32 = {0};
     pid_t pid;
     int pid_return;
