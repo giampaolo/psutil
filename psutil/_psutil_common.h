@@ -29,13 +29,15 @@ static const int PSUTIL_CONN_NONE = 128;
     #define SIZEOF_PID_T SIZEOF_INT
 #endif
 
-// _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
-// always present.
-#ifndef _Py_PARSE_PID
+#if !defined(_Py_PARSE_PID) || PY_MAJOR_VERSION < 3
     #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
         #error "missing SIZEOF* definition"
     #endif
+#endif
 
+// _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
+// always present.
+#ifndef _Py_PARSE_PID
     #if SIZEOF_PID_T == SIZEOF_INT
         #define _Py_PARSE_PID "i"
     #elif SIZEOF_PID_T == SIZEOF_LONG
@@ -49,13 +51,7 @@ static const int PSUTIL_CONN_NONE = 128;
 #endif
 
 #if PY_MAJOR_VERSION < 3
-    #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
-        #error "missing SIZEOF* definition"
-    #endif
-
-    #if SIZEOF_PID_T == SIZEOF_INT
-        #define PyLong_FromPid PyInt_FromLong
-    #elif SIZEOF_PID_T == SIZEOF_LONG
+    #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
         #define PyLong_FromPid PyInt_FromLong
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
