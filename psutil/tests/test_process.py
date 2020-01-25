@@ -1085,6 +1085,7 @@ class TestProcess(unittest.TestCase):
                         side_effect=psutil.NoSuchProcess(0, 'foo')):
             self.assertIsNone(p.parent())
 
+    @retry_on_failure()
     def test_parents(self):
         assert psutil.Process().parents()
         p1, p2 = create_proc_children_pair()
