@@ -5,7 +5,7 @@
  */
 
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
-HANDLE psutil_handle_from_pid(pid_t pid, DWORD dwDesiredAccess);
-int psutil_pid_is_running(pid_t pid);
-int psutil_assert_pid_exists(pid_t pid, char *err);
-int psutil_assert_pid_not_exists(pid_t pid, char *err);
+HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
+int psutil_pid_is_running(DWORD pid);
+int psutil_assert_pid_exists(DWORD pid, char *err);
+int psutil_assert_pid_not_exists(DWORD pid, char *err);

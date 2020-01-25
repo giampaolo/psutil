@@ -58,7 +58,7 @@ enum psutil_process_data_kind {
  * -1 is returned, and an appropriate Python exception is set.
  */
 static int
-psutil_get_process_data(pid_t pid,
+psutil_get_process_data(DWORD pid,
                         enum psutil_process_data_kind kind,
                         WCHAR **pdata,
                         SIZE_T *psize) {
@@ -377,7 +377,7 @@ error:
  * AccessDenied. Requires Windows 8.1+.
  */
 static int
-psutil_cmdline_query_proc(pid_t pid, WCHAR **pdata, SIZE_T *psize) {
+psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
     ULONG bufLen = 0;
     NTSTATUS status;
@@ -470,7 +470,7 @@ error:
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_cmdline(pid_t pid, int use_peb) {
+psutil_get_cmdline(DWORD pid, int use_peb) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -531,7 +531,7 @@ out:
 
 
 PyObject *
-psutil_get_cwd(pid_t pid) {
+psutil_get_cwd(DWORD pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -555,7 +555,7 @@ out:
  * process with given pid or NULL on error.
  */
 PyObject *
-psutil_get_environ(pid_t pid) {
+psutil_get_environ(DWORD pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -582,7 +582,7 @@ out:
  * On success return 1, else 0 with Python exception already set.
  */
 int
-psutil_get_proc_info(pid_t pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
+psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                      PVOID *retBuffer) {
     static ULONG initialBufferSize = 0x4000;
     NTSTATUS status;
@@ -662,7 +662,7 @@ error:
  */
 PyObject *
 psutil_proc_info(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
     ULONG i;

@@ -167,10 +167,14 @@ psutil_setup(void) {
 
 int
 Py_PidConverter(PyObject *arg, void *addr) {
+#ifdef PSUTIL_WINDOWS
+    if ((sizeof(DWORD) == sizeof(int)) || (sizeof(DWORD) == sizeof(long))) {
+        *((DWORD *)addr) = PyLong_AsLong(arg);
+    }
+#else
     if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
         *((pid_t *)addr) = PyLong_AsLong(arg);
     }
-#ifndef PSUTIL_WINDOWS
     else if (sizeof(pid_t) == sizeof(long long)) {
         *((pid_t *)addr) = PyLong_AsLongLong(arg);
     }

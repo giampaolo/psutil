@@ -7,4 +7,4 @@
 #include <Python.h>
 #include <windows.h>
 
-PyObject* psutil_get_open_files(pid_t pid, HANDLE hProcess);
+PyObject* psutil_get_open_files(DWORD pid, HANDLE hProcess);

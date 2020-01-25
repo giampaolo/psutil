@@ -111,7 +111,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_pid_exists(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     int status;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
@@ -169,7 +169,7 @@ error:
 static PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
-    pid_t pid;
+    DWORD pid;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
         return NULL;
@@ -212,7 +212,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD ExitCode;
     DWORD retVal;
-    pid_t pid;
+    DWORD pid;
     long timeout;
 
     if (! PyArg_ParseTuple(args,"O&l", Py_PidConverter, &pid, &timeout))
@@ -397,7 +397,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
-    pid_t pid;
+    DWORD pid;
     int pid_return;
     int use_peb;
     PyObject *py_usepeb = Py_True;
@@ -426,7 +426,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     int pid_return;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
@@ -449,7 +449,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
     unsigned int size = sizeof(exe);
@@ -484,7 +484,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     int ok;
     PROCESSENTRY32W pentry;
     HANDLE hSnapShot;
@@ -522,7 +522,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
-    pid_t pid;
+    DWORD pid;
     PROCESS_MEMORY_COUNTERS_EX cnt;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
@@ -576,7 +576,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
 static int
 psutil_GetProcWsetInformation(
-        pid_t pid,
+        DWORD pid,
         HANDLE hProcess,
         PMEMORY_WORKING_SET_INFORMATION *wSetInfo)
 {
@@ -635,7 +635,7 @@ psutil_GetProcWsetInformation(
  */
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     PSUTIL_PROCESS_WS_COUNTERS wsCounters;
     PMEMORY_WORKING_SET_INFORMATION wsInfo;
@@ -706,7 +706,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     int pid_return;
 
     if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
@@ -727,7 +727,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     NTSTATUS status;
     HANDLE hProcess;
     PyObject* suspend;
@@ -758,7 +758,7 @@ static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     HANDLE hThread = NULL;
     THREADENTRY32 te32 = {0};
-    pid_t pid;
+    DWORD pid;
     int pid_return;
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
@@ -861,7 +861,7 @@ error:
 
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE processHandle;
     DWORD access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
     PyObject *py_retlist;
@@ -884,7 +884,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_username(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE processHandle = NULL;
     HANDLE tokenHandle = NULL;
     PTOKEN_USER user = NULL;
@@ -1011,7 +1011,7 @@ error:
  */
 static PyObject *
 psutil_proc_priority_get(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     DWORD priority;
     HANDLE hProcess;
 
@@ -1038,7 +1038,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_priority_set(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     int priority;
     int retval;
     HANDLE hProcess;
@@ -1067,7 +1067,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     DWORD IoPriority;
     NTSTATUS status;
@@ -1099,7 +1099,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     DWORD prio;
     HANDLE hProcess;
     NTSTATUS status;
@@ -1131,7 +1131,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     IO_COUNTERS IoCounters;
 
@@ -1163,7 +1163,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     DWORD_PTR proc_mask;
     DWORD_PTR system_mask;
@@ -1194,7 +1194,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
@@ -1227,7 +1227,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_is_suspended(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     ULONG i;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
@@ -1387,7 +1387,7 @@ error:
  */
 static PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess;
     DWORD handleCount;
 
@@ -1436,7 +1436,7 @@ static char *get_region_protection_string(ULONG protection) {
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     MEMORY_BASIC_INFORMATION basicInfo;
-    pid_t pid;
+    DWORD pid;
     HANDLE hProcess = NULL;
     PVOID baseAddress;
     WCHAR mappedFileName[MAX_PATH];
