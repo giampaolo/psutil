@@ -24,13 +24,14 @@ static const int PSUTIL_CONN_NONE = 128;
     PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
 #endif
 
-// Python 2
-#ifndef _Py_PARSE_PID
-    // Python 2: SIZEOF_PID_T not defined but _getpid() returns an int.
-    #if defined(PSUTIL_WINDOWS) && !defined(SIZEOF_PID_T)
-        #define SIZEOF_PID_T SIZEOF_INT
-    #endif
+// Python 2: SIZEOF_PID_T not defined but _getpid() returns an int.
+#if defined(PSUTIL_WINDOWS) && !defined(SIZEOF_PID_T)
+    #define SIZEOF_PID_T SIZEOF_INT
+#endif
 
+// _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
+// always present.
+#ifndef _Py_PARSE_PID
     #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
         #error "missing SIZEOF* definition"
     #endif
@@ -42,8 +43,25 @@ static const int PSUTIL_CONN_NONE = 128;
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define _Py_PARSE_PID "L"
     #else
-        #error "sizeof(pid_t) is neither sizeof(int), sizeof(long) or "
-               "sizeof(long long)"
+        #error "_Py_PARSE_PID: sizeof(pid_t) is neither sizeof(int), "
+               "sizeof(long) or sizeof(long long)"
+    #endif
+#endif
+
+#if PY_MAJOR_VERSION < 3
+    #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
+        #error "missing SIZEOF* definition"
+    #endif
+
+    #if SIZEOF_PID_T == SIZEOF_INT
+        #define PyLong_FromPid PyInt_FromLong
+    #elif SIZEOF_PID_T == SIZEOF_LONG
+        #define PyLong_FromPid PyInt_FromLong
+    #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
+        #define PyLong_FromPid PyLong_FromLongLong
+    #else
+        #error "PyLong_FromPid: sizeof(pid_t) is neither sizeof(int), "
+               "sizeof(long) or sizeof(long long)"
     #endif
 #endif
 
