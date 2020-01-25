@@ -91,7 +91,6 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
-    PyObject *py_pid = NULL;
 
     switch (proto) {
         case IPPROTO_TCP:
@@ -203,24 +202,21 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
-        py_pid = PyLong_FromPid(xf->xf_pid);
-        if (! py_pid)
-            goto error;
         py_tuple = Py_BuildValue(
-            "(iiiNNiO)",
+            "iiiNNi" _Py_PARSE_PID,
             xf->xf_fd, // fd
             family,    // family
             type,      // type
             py_laddr,  // laddr
             py_raddr,  // raddr
             status,    // status
-            py_pid); // pid
+            xf->xf_pid // pid
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_CLEAR(py_tuple);
-        Py_CLEAR(py_pid);
     }
 
     free(buf);
@@ -230,7 +226,6 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
-    Py_XDECREF(py_pid);
     free(buf);
     return 0;
 }
