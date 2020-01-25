@@ -152,7 +152,6 @@ psutil_pid_is_running(pid_t pid) {
         return 1;
     if (pid < 0)
         return 0;
-    return psutil_pid_in_pids(pid);
 
     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
 
@@ -167,9 +166,6 @@ psutil_pid_is_running(pid_t pid) {
     }
 
     CloseHandle(hProcess);
-    if ((PSUTIL_TESTING) && (psutil_pid_in_pids(pid) == 1)) {
-        PyErr_SetString(PyExc_AssertionError, "NULL handle but PID exists");
-        return -1;
-    }
-    return 0;
+    PyErr_Clear();
+    return psutil_pid_in_pids(pid);
 }
