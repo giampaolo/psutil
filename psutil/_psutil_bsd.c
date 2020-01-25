@@ -125,18 +125,8 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // TODO: RuntimeError is inappropriate here; we could return the
-    // original error instead.
-    if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        if (errno != 0) {
-            PyErr_SetFromErrno(PyExc_OSError);
-        }
-        else {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "failed to retrieve process list");
-        }
+    if (psutil_get_proc_list(&proclist, &num_processes) != 0)
         goto error;
-    }
 
     if (num_processes > 0) {
         orig_address = proclist; // save so we can free it after we're done

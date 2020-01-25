@@ -46,6 +46,21 @@
 // Utility functions
 // ============================================================================
 
+
+void
+convert_kvm_err(const char *syscall, char *errbuf) {
+    char fullmsg[8192];
+
+    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
+    if (strstr(errbuf, "Permission denied") != NULL)
+        AccessDenied(fullmsg);
+    else if (strstr(errbuf, "Operation not permitted") != NULL)
+        AccessDenied(fullmsg);
+    else
+        PyErr_Format(PyExc_RuntimeError, fullmsg);
+}
+
+
 int
 psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
@@ -133,16 +148,16 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     assert(procCount != NULL);
 
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
-
-    if (kd == NULL) {
-        return errno;
+    if (! kd) {
+        convert_kvm_err("kvm_openfiles", errbuf);
+        return 1;
     }
 
     result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
     if (result == NULL) {
+        PyErr_Format(PyExc_RuntimeError, "kvm_getprocs syscall failed");
         kvm_close(kd);
-        err(1, NULL);
-        return errno;
+        return 1;
     }
 
     *procCount = (size_t)cnt;
@@ -150,9 +165,9 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     size_t mlen = cnt * sizeof(struct kinfo_proc);
 
     if ((*procList = malloc(mlen)) == NULL) {
+        PyErr_NoMemory();
         kvm_close(kd);
-        err(1, NULL);
-        return errno;
+        return 1;
     }
 
     memcpy(*procList, result, mlen);
@@ -241,10 +256,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
     if (! kd) {
-        if (strstr(errbuf, "Permission denied") != NULL)
-            AccessDenied("kvm_openfiles");
-        else
-            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() syscall failed");
+        convert_kvm_err("kvm_openfiles()", errbuf);
         goto error;
     }
 
