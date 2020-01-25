@@ -142,7 +142,7 @@ psutil_pids(PyObject *self, PyObject *args) {
         goto error;
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
-        py_pid = Py_BuildValue("I", proclist[i]);
+        py_pid = PyLong_FromPid(proclist[i]);
         if (!py_pid)
             goto error;
         if (PyList_Append(py_retlist, py_pid))

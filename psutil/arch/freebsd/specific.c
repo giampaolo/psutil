@@ -276,7 +276,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     mib[0] = CTL_KERN;
@@ -315,7 +315,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
     pid_t pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -342,7 +342,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     // we need to re-query for thread information, so don't use *kipp
@@ -567,7 +567,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     int i, cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -616,7 +616,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
@@ -785,7 +785,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
@@ -892,7 +892,7 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     PyObject* py_retlist;
     PyObject* py_cpu_num;
 
-    if (!PyArg_ParseTuple(args, "i", &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
                              sizeof(mask), &mask);
@@ -935,7 +935,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");

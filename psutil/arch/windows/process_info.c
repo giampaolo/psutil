@@ -672,7 +672,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     long long create_time;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
