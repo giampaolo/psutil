@@ -191,8 +191,16 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
 
     def get_conn_from_sock(self, sock):
         cons = thisproc.connections(kind='all')
-        smap = dict([(c.fd, c) for c in cons])
-        return smap[sock.fileno()]
+        if NETBSD or FREEBSD:
+            # NetBSD opens a UNIX socket to /var/log/run
+            # so there may be more connections.
+            smap = dict([(c.fd, c) for c in cons])
+            return smap[sock.fileno()]
+        else:
+            self.assertEqual(len(cons), 1)
+            if cons[0].fd != -1:
+                self.assertEqual(smap[sock.fileno()].fd, sock.fileno())
+            return cons[0]
 
     def check_socket(self, sock):
         """Given a socket, makes sure it matches the one obtained

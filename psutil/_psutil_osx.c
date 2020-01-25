@@ -1836,7 +1836,6 @@ static PyMethodDef mod_methods[] = {
     void init_psutil_osx(void)
 #endif  /* PY_MAJOR_VERSION */
 {
-    PyObject *v;
 #if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
 #else
