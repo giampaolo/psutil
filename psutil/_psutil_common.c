@@ -165,30 +165,6 @@ psutil_setup(void) {
 }
 
 
-int
-Py_PidConverter(PyObject *arg, void *addr) {
-#ifdef PSUTIL_WINDOWS
-    if ((sizeof(DWORD) == sizeof(int)) || (sizeof(DWORD) == sizeof(long))) {
-        *((DWORD *)addr) = PyLong_AsLong(arg);
-    }
-#else
-    if ((sizeof(pid_t) == sizeof(int)) || (sizeof(pid_t) == sizeof(long))) {
-        *((pid_t *)addr) = PyLong_AsLong(arg);
-    }
-    else if (sizeof(pid_t) == sizeof(long long)) {
-        *((pid_t *)addr) = PyLong_AsLongLong(arg);
-    }
-#endif
-    else {
-        PyErr_SetString(PyExc_ValueError, "can't get size of pid_t");
-    }
-
-    if (PyErr_Occurred())
-        return 0;
-    return 1;
-}
-
-
 // ====================================================================
 // --- Windows
 // ====================================================================

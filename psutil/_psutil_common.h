@@ -63,7 +63,6 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
 int psutil_setup(void);
-int Py_PidConverter(PyObject *arg, void *addr);
 
 // ====================================================================
 // --- Windows

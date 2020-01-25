@@ -137,8 +137,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
 
-    if (! PyArg_ParseTuple(args, "O&OO", Py_PidConverter, &pid, &py_af_filter,
-                           &py_type_filter)) {
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid, &py_af_filter,
+                           &py_type_filter))
+    {
         goto error;
     }
 
