@@ -449,6 +449,7 @@ psutil_users(PyObject *self, PyObject *args) {
         py_pid = PyLong_FromPid(ut->ut_pid);
         if (! py_pid)
             goto error;
+
         py_tuple = Py_BuildValue(
             "(OOOfOO)",
             py_username,              // username

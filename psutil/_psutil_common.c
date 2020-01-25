@@ -235,7 +235,7 @@ psutil_loadlibs() {
     // --- Mandatory
     NtQuerySystemInformation = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
-    if (NtQuerySystemInformation == NULL)
+    if (! NtQuerySystemInformation)
         return 1;
     NtQueryInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
