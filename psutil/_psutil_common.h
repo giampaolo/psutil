@@ -25,6 +25,24 @@ static const int PSUTIL_CONN_NONE = 128;
     PyObject *PyLong_FromPid(pid_t pid);
 #endif
 
+// Python 2
+#ifndef _Py_PARSE_PID
+    #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
+        #error "missing SIZEOF* definition"
+    #endif
+
+    #if SIZEOF_PID_T == SIZEOF_INT
+        #define _Py_PARSE_PID "i"
+    #elif SIZEOF_PID_T == SIZEOF_LONG
+        #define _Py_PARSE_PID "l"
+    #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
+        #define _Py_PARSE_PID "L"
+    #else
+        #error "sizeof(pid_t) is neither sizeof(int), sizeof(long) or "
+               "sizeof(long long)"
+    #endif
+#endif
+
 // ====================================================================
 // --- Custom exceptions
 // ====================================================================

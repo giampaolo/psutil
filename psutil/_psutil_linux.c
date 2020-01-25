@@ -99,7 +99,7 @@ static PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
@@ -122,7 +122,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     int retval;
 
     if (! PyArg_ParseTuple(
-            args, "O&ii", Py_PidConverter, &pid, &ioclass, &iodata)) {
+            args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
         return NULL;
     }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
@@ -149,7 +149,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args) {
     PyObject *py_soft = NULL;
     PyObject *py_hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "O&i|OO", Py_PidConverter, &pid, &resource,
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i|OO", &pid, &resource,
                            &py_soft, &py_hard)) {
         return NULL;
     }
@@ -299,7 +299,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpu_set_t *mask = NULL;
     PyObject *py_list = NULL;
 
-    if (!PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ncpus = NCPUS_START;
     while (1) {
@@ -367,7 +367,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "O&O", Py_PidConverter, &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
