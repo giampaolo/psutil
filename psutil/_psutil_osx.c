@@ -169,7 +169,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     PyObject *py_name;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -218,7 +218,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
@@ -253,7 +253,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     pid_t pid;
     struct kinfo_proc kp;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -270,7 +270,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_vnodepathinfo pathinfo;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     if (psutil_proc_pidinfo(
@@ -292,7 +292,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     char buf[PATH_MAX];
     int ret;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
@@ -315,7 +315,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     PyObject *py_retlist = NULL;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // get the commandline, defined in arch/osx/process_info.c
@@ -332,7 +332,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     pid_t pid;
     PyObject *py_retdict = NULL;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // get the environment block, defined in arch/osx/process_info.c
@@ -435,7 +435,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     vm_region_top_info_data_t info;
     mach_port_t object_name;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     if (psutil_task_for_pid(pid, &task) != 0)
@@ -882,7 +882,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     if (psutil_task_for_pid(pid, &task) != 0)
@@ -985,7 +985,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
@@ -1090,7 +1090,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "O&OO", Py_PidConverter, &pid, &py_af_filter,
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid, &py_af_filter,
                            &py_type_filter)) {
         goto error;
     }
@@ -1279,7 +1279,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     int num;
     struct proc_fdinfo *fds_pointer;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);

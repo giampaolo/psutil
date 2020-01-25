@@ -204,7 +204,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     PyObject *py_ppid;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -370,7 +370,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     kinfo_proc kp;
     char str[1000];
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -392,7 +392,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     PyObject *py_retlist = NULL;
 
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     py_retlist = psutil_get_cmdline(pid);
     if (py_retlist == NULL)
@@ -477,7 +477,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "O&", Py_PidConverter, &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
