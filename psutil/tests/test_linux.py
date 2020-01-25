@@ -313,6 +313,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertEqual(ret.available, 0)
                 self.assertEqual(ret.slab, 0)
 
+    @retry_on_failure()
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 10%.
