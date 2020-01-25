@@ -37,7 +37,7 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // --- Global utils
 // ====================================================================
 
-PyObject* psutil_set_testing(void);
+PyObject* psutil_set_testing(PyObject *self, PyObject *args);
 void psutil_debug(const char* format, ...);
 int psutil_setup(void);
 int Py_PidConverter(PyObject *arg, void *addr);

@@ -129,7 +129,7 @@ AccessDenied(const char *syscall) {
  * Windows has no effect. Called on unit tests setup.
  */
 PyObject *
-psutil_set_testing(void) {
+psutil_set_testing(PyObject *self, PyObject *args) {
     PSUTIL_TESTING = 1;
     Py_INCREF(Py_None);
     return Py_None;
