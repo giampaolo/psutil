@@ -47,7 +47,7 @@
 // ============================================================================
 
 
-void
+static void
 convert_kvm_err(const char *syscall, char *errbuf) {
     char fullmsg[8192];
 
@@ -178,7 +178,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 }
 
 
-char **
+static char **
 _psutil_get_argv(long pid) {
     static char **argv;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
