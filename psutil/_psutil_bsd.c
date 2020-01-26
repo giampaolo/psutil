@@ -465,7 +465,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
+#if !defined(PSUTIL_OPENBSD)
         psutil_raise_for_pid(pid, "kinfo_getfile()");
+#endif
         goto error;
     }
 

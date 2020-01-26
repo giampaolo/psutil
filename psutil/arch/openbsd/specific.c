@@ -410,17 +410,15 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
-    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile()");
+    if (freep == NULL)
         return NULL;
-    }
-    free(freep);
 
+    free(freep);
     return Py_BuildValue("i", cnt);
 }
 
@@ -518,10 +516,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_for_pid(pid, "kinfo_getfile()");
         goto error;
     }
 
