@@ -106,23 +106,14 @@ psutil_pid_exists(pid_t pid) {
  * If none of this is true we giveup and raise RuntimeError(msg).
  * This will always set a Python exception and return NULL.
  */
-int
-psutil_raise_for_pid(pid_t pid, char *syscall_name) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (errno != 0) {
-        // Unlikely we get here.
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
-    }
-    else if (psutil_pid_exists(pid) == 0) {
-        psutil_debug("%s syscall failed and PID %i no longer exists; "
-                     "assume NoSuchProcess", syscall_name, pid);
-        NoSuchProcess("psutil_pid_exists");
-    }
-    else {
-        PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall_name);
-    }
-    return 0;
+void
+psutil_raise_for_pid(long pid, char *syscall) {
+    if (errno != 0)  // unlikely
+        PyErr_SetFromOSErrnoWithSyscall(syscall);
+    else if (psutil_pid_exists(pid) == 0)
+        NoSuchProcess(syscall);
+    else
+        PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall);
 }
 
 

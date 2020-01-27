@@ -93,7 +93,7 @@ OpenBSD
 ::
 
     export PKG_PATH=http://ftp.eu.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
-    pkg_add -v python3 gcc
+    pkg_add -v python gcc
     python3 -m pip install psutil
 
 NetBSD
