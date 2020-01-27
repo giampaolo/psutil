@@ -639,7 +639,7 @@ class Process(object):
             # cmdline arg (may return None).
             cmdline = self.cmdline()
             if cmdline:
-                return which(cmdline[0])
+                return which(cmdline[0]) or ""
             else:
                 return ""
 
