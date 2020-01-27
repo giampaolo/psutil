@@ -23,6 +23,7 @@ import time
 
 import psutil
 import psutil._common
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -32,12 +33,13 @@ from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._compat import ProcessLookupError
 from psutil._compat import xrange
+from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_ENVIRON
+from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -365,14 +367,14 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(cext.proc_info, os.getpid())
 
 
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestProcessDualImplementation(TestMemLeak):
 
-    if WINDOWS:
-        def test_cmdline_peb_true(self):
-            self.execute(cext.proc_cmdline, os.getpid(), use_peb=True)
+    def test_cmdline_peb_true(self):
+        self.execute(cext.proc_cmdline, os.getpid(), use_peb=True)
 
-        def test_cmdline_peb_false(self):
-            self.execute(cext.proc_cmdline, os.getpid(), use_peb=False)
+    def test_cmdline_peb_false(self):
+        self.execute(cext.proc_cmdline, os.getpid(), use_peb=False)
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
@@ -485,8 +487,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
         self.execute(psutil.virtual_memory)
 
     # TODO: remove this skip when this gets fixed
-    @unittest.skipIf(SUNOS,
-                     "worthless on SUNOS (uses a subprocess)")
+    @unittest.skipIf(SUNOS, "worthless on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
         self.execute(psutil.swap_memory)
 
@@ -519,14 +520,14 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     # --- net
 
-    @unittest.skipIf(TRAVIS and MACOS, "false positive on travis")
+    @unittest.skipIf(TRAVIS and MACOS, "false positive on TRAVIS + MACOS")
+    @unittest.skipIf(CIRRUS and FREEBSD, "false positive on CIRRUS + FREEBSD")
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         self.execute(psutil.net_io_counters, nowrap=False)
 
-    @unittest.skipIf(LINUX,
-                     "worthless on Linux (pure python)")
+    @skip_if_linux()
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         with create_sockets():
@@ -564,7 +565,6 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_boot_time(self):
         self.execute(psutil.boot_time)
 
-    # XXX - on Windows this produces a false positive
     @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
         self.execute(psutil.users)
