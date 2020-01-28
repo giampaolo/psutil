@@ -44,7 +44,7 @@
 
 
 int
-psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
+psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
     int mib[4];
     size_t size;
@@ -141,7 +141,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  *      1 for insufficient privileges.
  */
 static char
-*psutil_get_cmd_args(long pid, size_t *argsize) {
+*psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     int mib[4];
     int argmax;
     size_t size = sizeof(argmax);
@@ -183,7 +183,7 @@ static char
 
 // returns the command line as a python list object
 PyObject *
-psutil_get_cmdline(long pid) {
+psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;
     size_t pos = 0;
     size_t argsize = 0;
@@ -230,14 +230,14 @@ error:
  */
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     char pathname[PATH_MAX];
     int error;
     int mib[4];
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     mib[0] = CTL_KERN;
@@ -274,9 +274,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
-    long pid;
+    pid_t pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -291,7 +291,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // Thanks to Robert N. M. Watson:
     // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/
     //     procstat_threads.c
-    long pid;
+    pid_t pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
     struct kinfo_proc *kipp = NULL;
@@ -303,7 +303,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     // we need to re-query for thread information, so don't use *kipp
@@ -520,7 +520,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
@@ -528,7 +528,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     int i, cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -571,13 +571,13 @@ error:
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int cnt;
 
     struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
@@ -730,7 +730,7 @@ PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
     //'procstat' cmdline utility has been used as an example.
-    long pid;
+    pid_t pid;
     int ptrwidth;
     int i, cnt;
     char addr[1000];
@@ -746,7 +746,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
@@ -846,14 +846,14 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     // Get process CPU affinity.
     // Reference:
     // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
-    long pid;
+    pid_t pid;
     int ret;
     int i;
     cpuset_t mask;
     PyObject* py_retlist;
     PyObject* py_cpu_num;
 
-    if (!PyArg_ParseTuple(args, "i", &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
                              sizeof(mask), &mask);
@@ -888,7 +888,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     // Set process CPU affinity.
     // Reference:
     // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
-    long pid;
+    pid_t pid;
     int i;
     int seq_len;
     int ret;
@@ -896,7 +896,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");

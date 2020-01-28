@@ -179,7 +179,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
 PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     // Return connections opened by process.
-    long pid;
+    pid_t pid;
     int i;
     int cnt;
     struct kinfo_file *freep = NULL;
@@ -202,8 +202,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid,
+                           &py_af_filter, &py_type_filter))
+    {
         goto error;
+    }
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;

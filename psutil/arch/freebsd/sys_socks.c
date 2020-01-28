@@ -129,7 +129,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
     } while (xig->xig_gen != exig->xig_gen && retry--);
 
     for (;;) {
-	struct xfile *xf;
+        struct xfile *xf;
         int lport, rport, status, family;
 
         xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
@@ -203,19 +203,20 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
         if (!py_raddr)
             goto error;
         py_tuple = Py_BuildValue(
-            "(iiiNNii)",
+            "iiiNNi" _Py_PARSE_PID,
             xf->xf_fd, // fd
             family,    // family
             type,      // type
             py_laddr,  // laddr
             py_raddr,  // raddr
             status,    // status
-            xf->xf_pid); // pid
+            xf->xf_pid // pid
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_tuple);
     }
 
     free(buf);
@@ -286,7 +287,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
     } while (xug->xug_gen != exug->xug_gen && retry--);
 
     for (;;) {
-	struct xfile *xf;
+        struct xfile *xf;
 
         xug = (struct xunpgen *)(void *)((char *)xug + xug->xug_len);
         if (xug >= exug)

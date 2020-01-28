@@ -24,7 +24,6 @@ import psutil
 
 from psutil import AIX
 from psutil import BSD
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -1085,17 +1084,13 @@ class TestProcess(unittest.TestCase):
                         side_effect=psutil.NoSuchProcess(0, 'foo')):
             self.assertIsNone(p.parent())
 
+    @retry_on_failure()
     def test_parents(self):
         assert psutil.Process().parents()
         p1, p2 = create_proc_children_pair()
         self.assertEqual(p1.parents()[0], psutil.Process())
         self.assertEqual(p2.parents()[0], p1)
         self.assertEqual(p2.parents()[1], psutil.Process())
-        if POSIX and not FREEBSD:
-            # On FreeBSD PID 1 has an older/smaller time than PID 0 (?)
-            lowest_pid = psutil.pids()[0]
-            self.assertEqual(p1.parents()[-1].pid, lowest_pid)
-            self.assertEqual(p2.parents()[-1].pid, lowest_pid)
 
     def test_children(self):
         reap_children(recursive=True)

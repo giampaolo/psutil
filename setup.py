@@ -158,7 +158,7 @@ if WINDOWS:
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
             "wtsapi32", "ws2_32", "PowrProf", "pdh",
         ],
-        # extra_compile_args=["/Z7"],
+        # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"]
     )
 

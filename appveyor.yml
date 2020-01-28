@@ -99,12 +99,6 @@ only_commits:
     - psutil/_psutil_windows.*
     - psutil/_pswindows.py
     - psutil/arch/windows/*
-    - psutil/tests/__init__.py
-    - psutil/tests/__main__.py
-    - psutil/tests/test_memory_leaks.py
-    - psutil/tests/test_misc.py
-    - psutil/tests/test_process.py
-    - psutil/tests/test_system.py
-    - psutil/tests/test_windows.py
+    - psutil/tests/*
     - scripts/*
     - setup.py

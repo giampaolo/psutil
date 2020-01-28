@@ -1213,7 +1213,7 @@ def sensors_temperatures():
             current = float(cat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path, binary=False)
-        except (IOError, OSError, ValueError) as err:
+        except (IOError, OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
             # is a stinky broken mess.
@@ -1222,8 +1222,6 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1129
             # https://github.com/giampaolo/psutil/issues/1245
             # https://github.com/giampaolo/psutil/issues/1323
-            warnings.warn("ignoring %r for file %r" % (err, path),
-                          RuntimeWarning)
             continue
 
         high = cat(base + '_max', fallback=None)

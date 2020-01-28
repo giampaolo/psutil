@@ -58,7 +58,7 @@ enum psutil_process_data_kind {
  * -1 is returned, and an appropriate Python exception is set.
  */
 static int
-psutil_get_process_data(long pid,
+psutil_get_process_data(DWORD pid,
                         enum psutil_process_data_kind kind,
                         WCHAR **pdata,
                         SIZE_T *psize) {
@@ -377,7 +377,7 @@ error:
  * AccessDenied. Requires Windows 8.1+.
  */
 static int
-psutil_cmdline_query_proc(long pid, WCHAR **pdata, SIZE_T *psize) {
+psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     HANDLE hProcess = NULL;
     ULONG bufLen = 0;
     NTSTATUS status;
@@ -470,7 +470,7 @@ error:
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_cmdline(long pid, int use_peb) {
+psutil_get_cmdline(DWORD pid, int use_peb) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -531,7 +531,7 @@ out:
 
 
 PyObject *
-psutil_get_cwd(long pid) {
+psutil_get_cwd(DWORD pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -555,7 +555,7 @@ out:
  * process with given pid or NULL on error.
  */
 PyObject *
-psutil_get_environ(long pid) {
+psutil_get_environ(DWORD pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
@@ -672,7 +672,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     long long create_time;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;

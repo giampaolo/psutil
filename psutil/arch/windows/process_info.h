@@ -15,7 +15,7 @@
 
 int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                          PVOID *retBuffer);
-PyObject* psutil_get_cmdline(long pid, int use_peb);
-PyObject* psutil_get_cwd(long pid);
-PyObject* psutil_get_environ(long pid);
+PyObject* psutil_get_cmdline(DWORD pid, int use_peb);
+PyObject* psutil_get_cwd(DWORD pid);
+PyObject* psutil_get_environ(DWORD pid);
 PyObject* psutil_proc_info(PyObject *self, PyObject *args);

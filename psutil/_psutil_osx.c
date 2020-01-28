@@ -88,12 +88,12 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
  * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
  */
 int
-psutil_task_for_pid(long pid, mach_port_t *task)
+psutil_task_for_pid(pid_t pid, mach_port_t *task)
 {
     // See: https://github.com/giampaolo/psutil/issues/1181
     kern_return_t err = KERN_SUCCESS;
 
-    err = task_for_pid(mach_task_self(), (pid_t)pid, task);
+    err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess("task_for_pid");
@@ -133,7 +133,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     // save the address of proclist so we can free it later
     orig_address = proclist;
     for (idx = 0; idx < num_processes; idx++) {
-        py_pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
+        py_pid = PyLong_FromPid(proclist->kp_proc.p_pid);
         if (! py_pid)
             goto error;
         if (PyList_Append(py_retlist, py_pid))
@@ -164,12 +164,12 @@ error:
  */
 static PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct kinfo_proc kp;
     PyObject *py_name;
     PyObject *py_retlist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -183,8 +183,8 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     }
 
     py_retlist = Py_BuildValue(
-        "lllllllidiO",
-        (long)kp.kp_eproc.e_ppid,                  // (long) ppid
+        _Py_PARSE_PID "llllllidiO",
+        kp.kp_eproc.e_ppid,                        // (pid_t) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
         (long)kp.kp_eproc.e_pcred.p_svuid,         // (long) saved uid
@@ -215,10 +215,10 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct proc_taskinfo pti;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
@@ -250,10 +250,10 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct kinfo_proc kp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -267,10 +267,10 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct proc_vnodepathinfo pathinfo;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     if (psutil_proc_pidinfo(
@@ -288,14 +288,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     char buf[PATH_MAX];
     int ret;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     errno = 0;
-    ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
+    ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0)
             AccessDenied("automatically set for PID 0");
@@ -312,10 +312,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     PyObject *py_retlist = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // get the commandline, defined in arch/osx/process_info.c
@@ -329,10 +329,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     PyObject *py_retdict = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // get the environment block, defined in arch/osx/process_info.c
@@ -422,7 +422,7 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
  */
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     size_t len;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
@@ -435,7 +435,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     vm_region_top_info_data_t info;
     mach_port_t object_name;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     if (psutil_task_for_pid(pid, &task) != 0)
@@ -865,7 +865,7 @@ error:
  */
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int err, ret;
     kern_return_t kr;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
@@ -882,7 +882,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     if (psutil_task_for_pid(pid, &task) != 0)
@@ -968,7 +968,7 @@ error:
  */
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int pidinfo_result;
     int iterations;
     int i;
@@ -985,7 +985,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
@@ -1070,7 +1070,7 @@ error:
  */
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int pidinfo_result;
     int iterations;
     int i;
@@ -1090,8 +1090,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid, &py_af_filter,
+                           &py_type_filter)) {
         goto error;
+    }
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
@@ -1124,7 +1126,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
-            nb = proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
+            nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
@@ -1272,22 +1274,22 @@ error:
  */
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int pidinfo_result;
     int num;
     struct proc_fdinfo *fds_pointer;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0)
         return PyErr_SetFromErrno(PyExc_OSError);
 
     fds_pointer = malloc(pidinfo_result);
     if (fds_pointer == NULL)
         return PyErr_NoMemory();
-    pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, fds_pointer,
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
         free(fds_pointer);
@@ -1834,7 +1836,6 @@ static PyMethodDef mod_methods[] = {
     void init_psutil_osx(void)
 #endif  /* PY_MAJOR_VERSION */
 {
-    PyObject *v;
 #if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
 #else

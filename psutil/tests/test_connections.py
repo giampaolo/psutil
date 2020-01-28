@@ -32,6 +32,7 @@ from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_net_address
+from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_free_port
@@ -191,7 +192,7 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
     def get_conn_from_sock(self, sock):
         cons = thisproc.connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
-        if NETBSD:
+        if NETBSD or FREEBSD:
             # NetBSD opens a UNIX socket to /var/log/run
             # so there may be more connections.
             return smap[sock.fileno()]
@@ -321,8 +322,10 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 if NETBSD or FREEBSD:
                     # On NetBSD creating a UNIX socket will cause
                     # a UNIX connection to  /var/run/log.
-                    cons = [c for c in cons if c.raddr != '/var/run/log' and
-                            c.laddr]
+                    cons = [c for c in cons if c.raddr != '/var/run/log']
+                    if CIRRUS:
+                        cons = [c for c in cons if c.fd in
+                                (server.fileno(), client.fileno())]
                 self.assertEqual(len(cons), 2, msg=cons)
                 if LINUX or FREEBSD or SUNOS:
                     # remote path is never set
