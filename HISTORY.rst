@@ -17,6 +17,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1538_: [NetBSD] process cwd() may return ENOENT instead of NoSuchProcess.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
