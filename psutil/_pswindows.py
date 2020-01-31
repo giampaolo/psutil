@@ -757,7 +757,7 @@ class Process(object):
     @wrap_exceptions
     def exe(self):
         exe = cext.proc_exe(self.pid)
-        return py2_strencode(exe)
+        return convert_dos_path(exe)
 
     @wrap_exceptions
     @retry_error_partial_copy

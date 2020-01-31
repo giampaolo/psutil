@@ -33,6 +33,8 @@ typedef LONG NTSTATUS;
 #define ProcessIoPriority 33
 #undef  ProcessWow64Information
 #define ProcessWow64Information 26
+#undef  SystemProcessIdInformation
+#define SystemProcessIdInformation 88
 
 // process suspend() / resume()
 typedef enum _KTHREAD_STATE {
@@ -361,6 +363,12 @@ typedef struct _PSUTIL_PROCESS_WS_COUNTERS {
     SIZE_T NumberOfSharedPages;
     SIZE_T NumberOfShareablePages;
 } PSUTIL_PROCESS_WS_COUNTERS, *PPSUTIL_PROCESS_WS_COUNTERS;
+
+// exe()
+typedef struct _SYSTEM_PROCESS_ID_INFORMATION {
+    HANDLE ProcessId;
+    UNICODE_STRING ImageName;
+} SYSTEM_PROCESS_ID_INFORMATION, *PSYSTEM_PROCESS_ID_INFORMATION;
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()

@@ -446,34 +446,58 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process executable path.
+ * Return process executable path. Works for all processes regardless of
+ * privilege.
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE hProcess;
-    wchar_t exe[MAX_PATH];
-    unsigned int size = sizeof(exe);
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize = 0x100;
+    SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
+    PyObject *py_exe;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (NULL == hProcess)
-        return NULL;
+    if (pid == 0)
+        return AccessDenied("forced for PID 0");
 
-    memset(exe, 0, MAX_PATH);
-    if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
-        // https://github.com/giampaolo/psutil/issues/1662
-        if (GetLastError() == 0)
-            AccessDenied("QueryFullProcessImageNameW (forced EPERM)");
-        else
-            PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
-        CloseHandle(hProcess);
-        return NULL;
+    buffer = MALLOC_ZERO(bufferSize);
+    processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
+    processIdInfo.ImageName.Length = 0;
+    processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+    processIdInfo.ImageName.Buffer = buffer;
+
+    status = NtQuerySystemInformation(
+        SystemProcessIdInformation,
+        &processIdInfo,
+        sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+        NULL);
+
+    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+        // Required length is stored in MaximumLength.
+        FREE(buffer);
+        buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
+        processIdInfo.ImageName.Buffer = buffer;
+
+        status = NtQuerySystemInformation(
+            SystemProcessIdInformation,
+            &processIdInfo,
+            sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+            NULL);
     }
-    CloseHandle(hProcess);
-    return PyUnicode_FromWideChar(exe, wcslen(exe));
+
+    if (! NT_SUCCESS(status)) {
+        FREE(buffer);
+        return psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+    }
+
+    py_exe = PyUnicode_FromWideChar(processIdInfo.ImageName.Buffer,
+                                    processIdInfo.ImageName.Length / 2);
+    FREE(buffer);
+    return py_exe;
 }
 
 
