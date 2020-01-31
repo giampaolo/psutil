@@ -19,6 +19,8 @@
 typedef DWORD (WINAPI * TYPE_GetExtendedTcpTable)();
 typedef DWORD (WINAPI * TYPE_GetExtendedUdpTable)();
 
+DWORD g_dwRoomyTcpTableSize = 0;
+DWORD g_dwRoomyUdpTableSize = 0;
 
 static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
                                    ULONG family,
@@ -32,11 +34,21 @@ static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
     // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
     // and https://github.com/giampaolo/psutil/issues/1294
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = call(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
+    
+    // The call to get the table can be expensive. By pre-allocating the buffer,
+    // we take a chance to call it only once.
+    *size = g_dwRoomyTcpTableSize;
+    if (*size) {
+        *data = malloc(*size);
+    }
+    else {
+        *data = NULL;
+    }
+    
+    error = call(*data, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
+        *size = *size * 3 / 2;  // Give some buffer in case the table is growing fastely.
         *data = malloc(*size);
         if (*data == NULL) {
             error = ERROR_NOT_ENOUGH_MEMORY;
@@ -56,6 +68,7 @@ static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
         return 1;
     }
+    g_dwRoomyTcpTableSize = *size * 3 / 2;
     return error;
 }
 
@@ -72,11 +85,21 @@ static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
     // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
     // and https://github.com/giampaolo/psutil/issues/1294
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = call(NULL, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
+    
+    // The call to get the table can be expensive. By pre-allocating the buffer,
+    // we take a chance to call it only once.
+    *size = g_dwRoomyUdpTableSize;
+    if (*size) {
+        *data = malloc(*size);
+    }
+    else {
+        *data = NULL;
+    }
+    
+    error = call(*data, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
+        *size = *size * 3 / 2;  // Give some buffer in case the table is growing fastely.
         *data = malloc(*size);
         if (*data == NULL) {
             error = ERROR_NOT_ENOUGH_MEMORY;
@@ -96,6 +119,7 @@ static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
         return 1;
     }
+    g_dwRoomyUdpTableSize = *size * 3 / 2;
     return 0;
 }
 
