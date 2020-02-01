@@ -1327,10 +1327,13 @@ class TestProcess(unittest.TestCase):
             else:
                 # NtQuerySystemInformation succeeds if process is gone.
                 if WINDOWS and name in ('exe', 'name'):
+                    normcase = os.path.normcase
                     if name == 'exe':
-                        self.assertEqual(ret, PYTHON_EXE)
+                        self.assertEqual(normcase(ret), normcase(PYTHON_EXE))
                     else:
-                        self.assertEqual(ret, os.path.basename(PYTHON_EXE))
+                        self.assertEqual(
+                            normcase(ret),
+                            normcase(os.path.basename(PYTHON_EXE)))
                     continue
                 self.fail(
                     "NoSuchProcess exception not raised for %r, retval=%s" % (
