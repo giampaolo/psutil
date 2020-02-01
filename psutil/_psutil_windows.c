@@ -467,6 +467,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return AccessDenied("forced for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
+    if (! buffer)
+        return PyErr_NoMemory();
     processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
     processIdInfo.ImageName.Length = 0;
     processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
@@ -482,6 +484,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         // Required length is stored in MaximumLength.
         FREE(buffer);
         buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
+        if (! buffer)
+            return PyErr_NoMemory();
         processIdInfo.ImageName.Buffer = buffer;
 
         status = NtQuerySystemInformation(
@@ -583,6 +587,10 @@ psutil_GetProcWsetInformation(
 
     bufferSize = 0x8000;
     buffer = MALLOC_ZERO(bufferSize);
+    if (! buffer) {
+        PyErr_NoMemory();
+        return 1;
+    }
 
     while ((status = NtQueryVirtualMemory(
             hProcess,
@@ -601,6 +609,10 @@ psutil_GetProcWsetInformation(
             return 1;
         }
         buffer = MALLOC_ZERO(bufferSize);
+        if (! buffer) {
+            PyErr_NoMemory();
+            return 1;
+        }
     }
 
     if (!NT_SUCCESS(status)) {
