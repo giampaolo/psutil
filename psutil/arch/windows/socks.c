@@ -30,12 +30,12 @@
 
 static PVOID __GetExtendedTcpTable(ULONG family) {
     DWORD err;
-    PVOID table = NULL;
+    PVOID table;
     ULONG size = 0;
 
     while (1) {
-        // get table size (table = NULL)
-        GetExtendedTcpTable(table, &size, FALSE, family,
+        // get table size
+        GetExtendedTcpTable(NULL, &size, FALSE, family,
                             TCP_TABLE_OWNER_PID_ALL, 0);
 
         table = malloc(size);
@@ -49,10 +49,10 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
                                   TCP_TABLE_OWNER_PID_ALL, 0);
         if (err == NO_ERROR)
             return table;
+
+        free(table);
         if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
             psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-            free(table);
-            table = NULL;
             continue;
         }
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
@@ -63,12 +63,12 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
 
 static PVOID __GetExtendedUdpTable(ULONG family) {
     DWORD err;
-    PVOID table = NULL;
+    PVOID table;
     ULONG size = 0;
 
     while (1) {
-        // get table size (table = NULL)
-        GetExtendedUdpTable(table, &size, FALSE, family,
+        // get table size
+        GetExtendedUdpTable(NULL, &size, FALSE, family,
                             UDP_TABLE_OWNER_PID, 0);
 
         table = malloc(size);
@@ -82,10 +82,10 @@ static PVOID __GetExtendedUdpTable(ULONG family) {
                                   UDP_TABLE_OWNER_PID, 0);
         if (err == NO_ERROR)
             return table;
+
+        free(table);
         if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
             psutil_debug("GetExtendedUdpTable: retry with different bufsize");
-            free(table);
-            table = NULL;
             continue;
         }
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
