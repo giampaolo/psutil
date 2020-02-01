@@ -94,7 +94,6 @@ static PVOID __GetExtendedUdpTable(ULONG family) {
 }
 
 
-
 #define psutil_conn_decref_objs() \
     Py_DECREF(_AF_INET); \
     Py_DECREF(_AF_INET6);\
