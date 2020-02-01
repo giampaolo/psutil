@@ -206,9 +206,6 @@ def _get_py_exe():
         return exe
     else:
         exe = os.path.realpath(sys.executable)
-        if WINDOWS:
-            # avoid subprocess warnings
-            exe = exe.replace('\\', '\\\\')
         assert os.path.exists(exe), exe
         return exe
 
@@ -366,7 +363,7 @@ def create_proc_children_pair():
         s += "f.write(str(os.getpid()));"
         s += "f.close();"
         s += "time.sleep(60);"
-        p = subprocess.Popen(['%s', '-c', s])
+        p = subprocess.Popen([r'%s', '-c', s])
         p.wait()
         """ % (_TESTFN2, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag

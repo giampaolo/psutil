@@ -447,7 +447,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 /*
  * Return process executable path. Works for all processes regardless of
- * privilege.
+ * privilege. NtQuerySystemInformation has some sort of internal cache,
+ * since it succeeds even when a process is gone (but not if a PID never
+ * existed).
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {

@@ -1325,8 +1325,12 @@ class TestProcess(unittest.TestCase):
             except NotImplementedError:
                 pass
             else:
-                # NtQuerySystemInformation caches result.
+                # NtQuerySystemInformation succeeds if process is gone.
                 if WINDOWS and name in ('exe', 'name'):
+                    if name == 'exe':
+                        self.assertEqual(ret, PYTHON_EXE)
+                    else:
+                        self.assertEqual(ret, os.path.basename(PYTHON_EXE))
                     continue
                 self.fail(
                     "NoSuchProcess exception not raised for %r, retval=%s" % (

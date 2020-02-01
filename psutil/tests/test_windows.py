@@ -510,6 +510,13 @@ class TestProcess(unittest.TestCase):
                 self.assertRaises(psutil.AccessDenied, p.cwd)
         self.assertGreaterEqual(m.call_count, 5)
 
+    def test_exe(self):
+        # NtQuerySystemInformation succeeds if process is gone. Make sure
+        # it raises NSP for a non existent pid.
+        pid = psutil.pids()[-1] + 99999
+        proc = psutil._psplatform.Process(pid)
+        self.assertRaises(psutil.NoSuchProcess, proc.exe)
+
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestProcessWMI(unittest.TestCase):
