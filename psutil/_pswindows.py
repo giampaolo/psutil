@@ -721,9 +721,11 @@ class Process(object):
 
     def oneshot_enter(self):
         self.oneshot_info.cache_activate(self)
+        self.exe.cache_activate(self)
 
     def oneshot_exit(self):
         self.oneshot_info.cache_deactivate(self)
+        self.exe.cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -735,7 +737,6 @@ class Process(object):
         assert len(ret) == len(pinfo_map)
         return ret
 
-    @wrap_exceptions
     def name(self):
         """Return process name, which on Windows is always the final
         part of the executable.
@@ -746,9 +747,10 @@ class Process(object):
             return "System Idle Process"
         if self.pid == 4:
             return "System"
-        return os.path.basename(cext.proc_exe(self.pid))
+        return os.path.basename(self.exe())
 
     @wrap_exceptions
+    @memoize_when_activated
     def exe(self):
         exe = cext.proc_exe(self.pid)
         return convert_dos_path(exe)
