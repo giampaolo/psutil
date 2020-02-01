@@ -20,8 +20,11 @@ static const int PSUTIL_CONN_NONE = 128;
 // ====================================================================
 
 #if PY_MAJOR_VERSION < 3
-    PyObject* PyUnicode_DecodeFSDefault(char *s);
-    PyObject* PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size);
+    // On Python 2 we just return a plain byte string, which is never
+    // supposed to raise decoding errors, see:
+    // https://github.com/giampaolo/psutil/issues/1040
+    #define PyUnicode_DecodeFSDefault          PyString_FromString
+    #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
 #endif
 
 // Python 2: SIZEOF_PID_T not defined but _getpid() returns an int.

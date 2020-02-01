@@ -24,25 +24,6 @@ int PSUTIL_TESTING = 0;
 // ====================================================================
 
 /*
- * Backport of unicode FS APIs from Python 3.
- * On Python 2 we just return a plain byte string
- * which is never supposed to raise decoding errors.
- * See: https://github.com/giampaolo/psutil/issues/1040
- */
-#if PY_MAJOR_VERSION < 3
-PyObject *
-PyUnicode_DecodeFSDefault(char *s) {
-    return PyString_FromString(s);
-}
-
-
-PyObject *
-PyUnicode_DecodeFSDefaultAndSize(char *s, Py_ssize_t size) {
-    return PyString_FromStringAndSize(s, size);
-}
-#endif
-
-/*
  * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
  * message.
  */
