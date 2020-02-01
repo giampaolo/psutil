@@ -16,15 +16,9 @@
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
-typedef DWORD (WINAPI * TYPE_GetExtendedTcpTable)();
-typedef DWORD (WINAPI * TYPE_GetExtendedUdpTable)();
 
 
-static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
-                                   ULONG family,
-                                   PVOID *data,
-                                   DWORD *size)
-{
+static DWORD __GetExtendedTcpTable(ULONG family, PVOID *data, DWORD *size) {
     // Due to other processes being active on the machine, it's possible
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
@@ -34,7 +28,8 @@ static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    error = call(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
+    error = GetExtendedTcpTable(NULL, size, FALSE, family,
+                                TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
@@ -42,7 +37,8 @@ static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
             error = ERROR_NOT_ENOUGH_MEMORY;
             continue;
         }
-        error = call(*data, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
+        error = GetExtendedTcpTable(*data, size, FALSE, family,
+                                    TCP_TABLE_OWNER_PID_ALL, 0);
         if (error != NO_ERROR) {
             free(*data);
             *data = NULL;
@@ -60,11 +56,7 @@ static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
 }
 
 
-static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
-                                   ULONG family,
-                                   PVOID * data,
-                                   DWORD * size)
-{
+static DWORD __GetExtendedUdpTable(ULONG family, PVOID *data, DWORD *size) {
     // Due to other processes being active on the machine, it's possible
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
@@ -74,7 +66,8 @@ static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
-    error = call(NULL, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
+    error = GetExtendedUdpTable(NULL, size, FALSE, family,
+                                UDP_TABLE_OWNER_PID, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
     {
         *data = malloc(*size);
@@ -82,7 +75,8 @@ static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
             error = ERROR_NOT_ENOUGH_MEMORY;
             continue;
         }
-        error = call(*data, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
+        error = GetExtendedUdpTable(*data, size, FALSE, family,
+                                    UDP_TABLE_OWNER_PID, 0);
         if (error != NO_ERROR) {
             free(*data);
             *data = NULL;
@@ -178,8 +172,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(GetExtendedTcpTable,
-                                      AF_INET, &table, &tableSize);
+        error = __GetExtendedTcpTable(AF_INET, &table, &tableSize);
         if (error != 0)
             goto error;
         tcp4Table = table;
@@ -264,8 +257,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(GetExtendedTcpTable,
-                                      AF_INET6, &table, &tableSize);
+        error = __GetExtendedTcpTable(AF_INET6, &table, &tableSize);
         if (error != 0)
             goto error;
         tcp6Table = table;
@@ -350,8 +342,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(GetExtendedUdpTable,
-                                      AF_INET, &table, &tableSize);
+        error = __GetExtendedUdpTable(AF_INET, &table, &tableSize);
         if (error != 0)
             goto error;
         udp4Table = table;
@@ -414,8 +405,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        error = __GetExtendedUdpTable(GetExtendedUdpTable,
-                                      AF_INET6, &table, &tableSize);
+        error = __GetExtendedUdpTable(AF_INET6, &table, &tableSize);
         if (error != 0)
             goto error;
         udp6Table = table;
