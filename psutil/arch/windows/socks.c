@@ -16,53 +16,49 @@
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
+#define STATUS_UNSUCCESSFUL 0xC0000001
+
+
+// Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
+// being active on the machine, it's possible that the size of the table
+// increases between the moment where we query the size and the moment
+// where we query the data. Therefore we call them in a loop to retry if
+// that happens. See:
+// https://github.com/giampaolo/psutil/pull/1335
+// https://github.com/giampaolo/psutil/issues/1294
 
 
 static DWORD __GetExtendedTcpTable(ULONG family, PVOID *data, DWORD *size) {
-    // Due to other processes being active on the machine, it's possible
-    // that the size of the table increases between the moment where we
-    // query the size and the moment where we query the data.  Therefore, it's
-    // important to call this in a loop to retry if that happens.
-    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
-    // and https://github.com/giampaolo/psutil/issues/1294
-    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    DWORD err;
     *size = 0;
     *data = NULL;
-    error = GetExtendedTcpTable(NULL, size, FALSE, family,
-                                TCP_TABLE_OWNER_PID_ALL, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
-    {
+
+    GetExtendedTcpTable(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
+
+    while (1) {
         *data = malloc(*size);
         if (*data == NULL) {
-            error = ERROR_NOT_ENOUGH_MEMORY;
-            continue;
+            PyErr_NoMemory();
+            return 1;
         }
-        error = GetExtendedTcpTable(*data, size, FALSE, family,
-                                    TCP_TABLE_OWNER_PID_ALL, 0);
-        if (error != NO_ERROR) {
+
+        err = GetExtendedTcpTable(*data, size, FALSE, family,
+                                  TCP_TABLE_OWNER_PID_ALL, 0);
+        if (err == NO_ERROR)
+            return 0;
+        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+            psutil_debug("GetExtendedTcpTable: retry with different bufsize");
             free(*data);
             *data = NULL;
+            continue;
         }
-    }
-    if (error == ERROR_NOT_ENOUGH_MEMORY) {
-        PyErr_NoMemory();
-        return 1;
-    }
-    if (error != NO_ERROR) {
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
         return 1;
     }
-    return error;
 }
 
 
 static DWORD __GetExtendedUdpTable(ULONG family, PVOID *data, DWORD *size) {
-    // Due to other processes being active on the machine, it's possible
-    // that the size of the table increases between the moment where we
-    // query the size and the moment where we query the data.  Therefore, it's
-    // important to call this in a loop to retry if that happens.
-    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
-    // and https://github.com/giampaolo/psutil/issues/1294
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
