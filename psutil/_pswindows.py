@@ -744,15 +744,9 @@ class Process(object):
         # and process-hacker.
         if self.pid == 0:
             return "System Idle Process"
-        elif self.pid == 4:
+        if self.pid == 4:
             return "System"
-        else:
-            try:
-                # Note: this will fail with AD for most PIDs owned
-                # by another user but it's faster.
-                return py2_strencode(os.path.basename(self.exe()))
-            except AccessDenied:
-                return py2_strencode(cext.proc_name(self.pid))
+        return os.path.basename(cext.proc_exe(self.pid))
 
     @wrap_exceptions
     def exe(self):

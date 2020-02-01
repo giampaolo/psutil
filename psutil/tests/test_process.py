@@ -1325,6 +1325,9 @@ class TestProcess(unittest.TestCase):
             except NotImplementedError:
                 pass
             else:
+                # NtQuerySystemInformation caches result.
+                if WINDOWS and name in ('exe', 'name'):
+                    continue
                 self.fail(
                     "NoSuchProcess exception not raised for %r, retval=%s" % (
                         name, ret))

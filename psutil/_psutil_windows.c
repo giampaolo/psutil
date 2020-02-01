@@ -491,53 +491,17 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! NT_SUCCESS(status)) {
         FREE(buffer);
-        return psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+        if (psutil_pid_is_running(pid) == 0)
+            NoSuchProcess("NtQuerySystemInformation");
+        else
+            psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+        return NULL;
     }
 
     py_exe = PyUnicode_FromWideChar(processIdInfo.ImageName.Buffer,
                                     processIdInfo.ImageName.Length / 2);
     FREE(buffer);
     return py_exe;
-}
-
-
-/*
- * Return process base name.
- * Note: psutil_proc_exe() is attempted first because it's faster
- * but it raise AccessDenied for processes owned by other users
- * in which case we fall back on using this.
- */
-static PyObject *
-psutil_proc_name(PyObject *self, PyObject *args) {
-    DWORD pid;
-    int ok;
-    PROCESSENTRY32W pentry;
-    HANDLE hSnapShot;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
-    if (hSnapShot == INVALID_HANDLE_VALUE)
-        return PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
-    pentry.dwSize = sizeof(PROCESSENTRY32W);
-    ok = Process32FirstW(hSnapShot, &pentry);
-    if (! ok) {
-        PyErr_SetFromOSErrnoWithSyscall("Process32FirstW");
-        CloseHandle(hSnapShot);
-        return NULL;
-    }
-    while (ok) {
-        if (pentry.th32ProcessID == pid) {
-            CloseHandle(hSnapShot);
-            return PyUnicode_FromWideChar(
-                pentry.szExeFile, wcslen(pentry.szExeFile));
-        }
-        ok = Process32NextW(hSnapShot, &pentry);
-    }
-
-    CloseHandle(hSnapShot);
-    NoSuchProcess("CreateToolhelp32Snapshot loop (no PID found)");
-    return NULL;
 }
 
 
@@ -1626,8 +1590,6 @@ PsutilMethods[] = {
      "Return process environment data"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
-    {"proc_name", psutil_proc_name, METH_VARARGS,
-     "Return process name"},
     {"proc_kill", psutil_proc_kill, METH_VARARGS,
      "Kill the process identified by the given PID"},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,

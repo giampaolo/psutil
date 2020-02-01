@@ -326,20 +326,6 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_exe_and_name(self):
-        for p in psutil.process_iter():
-            # On Windows name() is never supposed to raise AccessDenied,
-            # see https://github.com/giampaolo/psutil/issues/627
-            try:
-                name = p.name()
-            except psutil.NoSuchProcess:
-                pass
-            else:
-                try:
-                    self.assertEqual(os.path.basename(p.exe()), name)
-                except psutil.Error:
-                    continue
-
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
@@ -610,16 +596,6 @@ class TestDualProcessImplementation(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         reap_children()
-    # ---
-    # same tests as above but mimicks the AccessDenied failure of
-    # the first (fast) method failing with AD.
-
-    def test_name(self):
-        name = psutil.Process(self.pid).name()
-        with mock.patch("psutil._psplatform.cext.proc_exe",
-                        side_effect=psutil.AccessDenied(os.getpid())) as fun:
-            self.assertEqual(psutil.Process(self.pid).name(), name)
-            assert fun.called
 
     def test_memory_info(self):
         mem_1 = psutil.Process(self.pid).memory_info()
