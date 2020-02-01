@@ -28,32 +28,35 @@
 // https://github.com/giampaolo/psutil/issues/1294
 
 
-static DWORD __GetExtendedTcpTable(ULONG family, PVOID *data, DWORD *size) {
+static PVOID __GetExtendedTcpTable(ULONG family) {
     DWORD err;
-    *size = 0;
-    *data = NULL;
-
-    GetExtendedTcpTable(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
+    PVOID table = NULL;
+    ULONG size = 0;
 
     while (1) {
-        *data = malloc(*size);
-        if (*data == NULL) {
+        // get table size (table = NULL)
+        GetExtendedTcpTable(table, &size, FALSE, family,
+                            TCP_TABLE_OWNER_PID_ALL, 0);
+
+        table = malloc(size);
+        if (table == NULL) {
             PyErr_NoMemory();
-            return 1;
+            return NULL;
         }
 
-        err = GetExtendedTcpTable(*data, size, FALSE, family,
+        // get connections
+        err = GetExtendedTcpTable(table, &size, FALSE, family,
                                   TCP_TABLE_OWNER_PID_ALL, 0);
         if (err == NO_ERROR)
-            return 0;
+            return table;
         if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
             psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-            free(*data);
-            *data = NULL;
+            free(table);
+            table = NULL;
             continue;
         }
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
-        return 1;
+        return NULL;
     }
 }
 
@@ -168,8 +171,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(AF_INET, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedTcpTable(AF_INET);
+        if (table == NULL)
             goto error;
         tcp4Table = table;
         for (i = 0; i < tcp4Table->dwNumEntries; i++) {
@@ -253,8 +256,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_remote = NULL;
         tableSize = 0;
 
-        error = __GetExtendedTcpTable(AF_INET6, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedTcpTable(AF_INET6);
+        if (table == NULL)
             goto error;
         tcp6Table = table;
         for (i = 0; i < tcp6Table->dwNumEntries; i++)
