@@ -61,36 +61,38 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
 }
 
 
-static DWORD __GetExtendedUdpTable(ULONG family, PVOID *data, DWORD *size) {
-    DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = GetExtendedUdpTable(NULL, size, FALSE, family,
-                                UDP_TABLE_OWNER_PID, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
-    {
-        *data = malloc(*size);
-        if (*data == NULL) {
-            error = ERROR_NOT_ENOUGH_MEMORY;
+static PVOID __GetExtendedUdpTable(ULONG family) {
+    DWORD err;
+    PVOID table = NULL;
+    ULONG size = 0;
+
+    while (1) {
+        // get table size (table = NULL)
+        GetExtendedUdpTable(table, &size, FALSE, family,
+                            UDP_TABLE_OWNER_PID, 0);
+
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        // get connections
+        err = GetExtendedUdpTable(table, &size, FALSE, family,
+                                  UDP_TABLE_OWNER_PID, 0);
+        if (err == NO_ERROR)
+            return table;
+        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+            psutil_debug("GetExtendedUdpTable: retry with different bufsize");
+            free(table);
+            table = NULL;
             continue;
         }
-        error = GetExtendedUdpTable(*data, size, FALSE, family,
-                                    UDP_TABLE_OWNER_PID, 0);
-        if (error != NO_ERROR) {
-            free(*data);
-            *data = NULL;
-        }
-    }
-    if (error == ERROR_NOT_ENOUGH_MEMORY) {
-        PyErr_NoMemory();
-        return 1;
-    }
-    if (error != NO_ERROR) {
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
-        return 1;
+        return NULL;
     }
-    return 0;
 }
+
 
 
 #define psutil_conn_decref_objs() \
@@ -109,8 +111,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     DWORD pid;
     int pid_return;
     PVOID table = NULL;
-    DWORD tableSize;
-    DWORD error;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
@@ -169,7 +169,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
 
         table = __GetExtendedTcpTable(AF_INET);
         if (table == NULL)
@@ -242,7 +241,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // TCP IPv6
@@ -254,7 +252,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
 
         table = __GetExtendedTcpTable(AF_INET6);
         if (table == NULL)
@@ -328,7 +325,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // UDP IPv4
@@ -340,9 +336,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
-        error = __GetExtendedUdpTable(AF_INET, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedUdpTable(AF_INET);
+        if (table == NULL)
             goto error;
         udp4Table = table;
         for (i = 0; i < udp4Table->dwNumEntries; i++)
@@ -390,7 +385,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // UDP IPv6
@@ -403,9 +397,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
-        error = __GetExtendedUdpTable(AF_INET6, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedUdpTable(AF_INET6);
+        if (table == NULL)
             goto error;
         udp6Table = table;
         for (i = 0; i < udp6Table->dwNumEntries; i++) {
@@ -452,7 +445,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     psutil_conn_decref_objs();
