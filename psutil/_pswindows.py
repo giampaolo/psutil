@@ -753,7 +753,11 @@ class Process(object):
     @memoize_when_activated
     def exe(self):
         exe = cext.proc_exe(self.pid)
-        return convert_dos_path(exe)
+        if not PY3:
+            exe = py2_strencode(exe)
+        if exe.startswith('\\'):
+            return convert_dos_path(exe)
+        return exe  # May be "Registry", "MemCompression", ...
 
     @wrap_exceptions
     @retry_error_partial_copy
@@ -839,7 +843,6 @@ class Process(object):
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
                 if not PY3:
-                    assert isinstance(path, unicode), type(path)
                     path = py2_strencode(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)

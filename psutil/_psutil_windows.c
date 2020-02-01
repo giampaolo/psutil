@@ -500,8 +500,14 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    py_exe = PyUnicode_FromWideChar(processIdInfo.ImageName.Buffer,
-                                    processIdInfo.ImageName.Length / 2);
+    if (processIdInfo.ImageName.Buffer == NULL) {
+        // Happens for PID 4.
+        py_exe = Py_BuildValue("s", "");
+    }
+    else {
+        py_exe = PyUnicode_FromWideChar(processIdInfo.ImageName.Buffer,
+                                        processIdInfo.ImageName.Length / 2);
+    }
     FREE(buffer);
     return py_exe;
 }
