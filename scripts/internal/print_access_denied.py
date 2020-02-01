@@ -76,7 +76,7 @@ def main():
     templ = "%-20s %-5s %-9s %s"
     s = templ % ("API", "AD", "Percent", "Outcome")
     print(hilite(s, ok=None, bold=True))
-    for methname, ads in sorted(d.items(), key=lambda x: x[1]):
+    for methname, ads in sorted(d.items(), key=lambda x: (x[1], x[0])):
         perc = (ads / tot_procs) * 100
         outcome = "SUCCESS" if not ads else "ACCESS DENIED"
         s = templ % (methname, ads, "%6.1f%%" % perc, outcome)
