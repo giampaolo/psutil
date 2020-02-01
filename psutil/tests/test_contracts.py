@@ -431,6 +431,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         if not ret:
             self.assertEqual(ret, '')
         else:
+            if WINDOWS and not ret.endswith('.exe'):
+                return  # May be "Registry", "MemCompression", ...
             assert os.path.isabs(ret), ret
             # Note: os.stat() may return False even if the file is there
             # hence we skip the test, see:

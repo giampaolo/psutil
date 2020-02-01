@@ -61,7 +61,6 @@ from psutil import BSD
 from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
-from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import APPVEYOR
@@ -75,7 +74,6 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
@@ -171,16 +169,7 @@ class _BaseFSAPIsTests(object):
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
-        if WINDOWS:
-            # On Windows name() is determined from exe() first, because
-            # it's faster; we want to overcome the internal optimization
-            # and test name() instead of exe().
-            with mock.patch("psutil._psplatform.cext.proc_exe",
-                            side_effect=psutil.AccessDenied(os.getpid())) as m:
-                name = psutil.Process(subp.pid).name()
-                assert m.called
-        else:
-            name = psutil.Process(subp.pid).name()
+        name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
         if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
@@ -319,19 +308,6 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     def expect_exact_path_match(cls):
         # Invalid unicode names are supposed to work on Python 2.
         return True
-
-
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestWinProcessName(unittest.TestCase):
-
-    def test_name_type(self):
-        # On Windows name() is determined from exe() first, because
-        # it's faster; we want to overcome the internal optimization
-        # and test name() instead of exe().
-        with mock.patch("psutil._psplatform.cext.proc_exe",
-                        side_effect=psutil.AccessDenied(os.getpid())) as m:
-            self.assertIsInstance(psutil.Process().name(), str)
-            assert m.called
 
 
 # ===================================================================

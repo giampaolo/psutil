@@ -446,74 +446,74 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process executable path.
+ * Return process executable path. Works for all processes regardless of
+ * privilege. NtQuerySystemInformation has some sort of internal cache,
+ * since it succeeds even when a process is gone (but not if a PID never
+ * existed).
  */
 static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE hProcess;
-    wchar_t exe[MAX_PATH];
-    unsigned int size = sizeof(exe);
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize = 0x100;
+    SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
+    PyObject *py_exe;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (NULL == hProcess)
-        return NULL;
+    if (pid == 0)
+        return AccessDenied("forced for PID 0");
 
-    memset(exe, 0, MAX_PATH);
-    if (QueryFullProcessImageNameW(hProcess, 0, exe, &size) == 0) {
-        // https://github.com/giampaolo/psutil/issues/1662
-        if (GetLastError() == 0)
-            AccessDenied("QueryFullProcessImageNameW (forced EPERM)");
+    buffer = MALLOC_ZERO(bufferSize);
+    if (! buffer)
+        return PyErr_NoMemory();
+    processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
+    processIdInfo.ImageName.Length = 0;
+    processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+    processIdInfo.ImageName.Buffer = buffer;
+
+    status = NtQuerySystemInformation(
+        SystemProcessIdInformation,
+        &processIdInfo,
+        sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+        NULL);
+
+    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+        // Required length is stored in MaximumLength.
+        FREE(buffer);
+        buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
+        if (! buffer)
+            return PyErr_NoMemory();
+        processIdInfo.ImageName.Buffer = buffer;
+
+        status = NtQuerySystemInformation(
+            SystemProcessIdInformation,
+            &processIdInfo,
+            sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+            NULL);
+    }
+
+    if (! NT_SUCCESS(status)) {
+        FREE(buffer);
+        if (psutil_pid_is_running(pid) == 0)
+            NoSuchProcess("NtQuerySystemInformation");
         else
-            PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
-        CloseHandle(hProcess);
+            psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
     }
-    CloseHandle(hProcess);
-    return PyUnicode_FromWideChar(exe, wcslen(exe));
-}
 
-
-/*
- * Return process base name.
- * Note: psutil_proc_exe() is attempted first because it's faster
- * but it raise AccessDenied for processes owned by other users
- * in which case we fall back on using this.
- */
-static PyObject *
-psutil_proc_name(PyObject *self, PyObject *args) {
-    DWORD pid;
-    int ok;
-    PROCESSENTRY32W pentry;
-    HANDLE hSnapShot;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
-    if (hSnapShot == INVALID_HANDLE_VALUE)
-        return PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
-    pentry.dwSize = sizeof(PROCESSENTRY32W);
-    ok = Process32FirstW(hSnapShot, &pentry);
-    if (! ok) {
-        PyErr_SetFromOSErrnoWithSyscall("Process32FirstW");
-        CloseHandle(hSnapShot);
-        return NULL;
+    if (processIdInfo.ImageName.Buffer == NULL) {
+        // Happens for PID 4.
+        py_exe = Py_BuildValue("s", "");
     }
-    while (ok) {
-        if (pentry.th32ProcessID == pid) {
-            CloseHandle(hSnapShot);
-            return PyUnicode_FromWideChar(
-                pentry.szExeFile, wcslen(pentry.szExeFile));
-        }
-        ok = Process32NextW(hSnapShot, &pentry);
+    else {
+        py_exe = PyUnicode_FromWideChar(processIdInfo.ImageName.Buffer,
+                                        processIdInfo.ImageName.Length / 2);
     }
-
-    CloseHandle(hSnapShot);
-    NoSuchProcess("CreateToolhelp32Snapshot loop (no PID found)");
-    return NULL;
+    FREE(buffer);
+    return py_exe;
 }
 
 
@@ -587,6 +587,10 @@ psutil_GetProcWsetInformation(
 
     bufferSize = 0x8000;
     buffer = MALLOC_ZERO(bufferSize);
+    if (! buffer) {
+        PyErr_NoMemory();
+        return 1;
+    }
 
     while ((status = NtQueryVirtualMemory(
             hProcess,
@@ -605,6 +609,10 @@ psutil_GetProcWsetInformation(
             return 1;
         }
         buffer = MALLOC_ZERO(bufferSize);
+        if (! buffer) {
+            PyErr_NoMemory();
+            return 1;
+        }
     }
 
     if (!NT_SUCCESS(status)) {
@@ -1602,8 +1610,6 @@ PsutilMethods[] = {
      "Return process environment data"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
-    {"proc_name", psutil_proc_name, METH_VARARGS,
-     "Return process name"},
     {"proc_kill", psutil_proc_kill, METH_VARARGS,
      "Kill the process identified by the given PID"},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,

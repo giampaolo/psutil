@@ -721,9 +721,11 @@ class Process(object):
 
     def oneshot_enter(self):
         self.oneshot_info.cache_activate(self)
+        self.exe.cache_activate(self)
 
     def oneshot_exit(self):
         self.oneshot_info.cache_deactivate(self)
+        self.exe.cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -735,7 +737,6 @@ class Process(object):
         assert len(ret) == len(pinfo_map)
         return ret
 
-    @wrap_exceptions
     def name(self):
         """Return process name, which on Windows is always the final
         part of the executable.
@@ -744,20 +745,19 @@ class Process(object):
         # and process-hacker.
         if self.pid == 0:
             return "System Idle Process"
-        elif self.pid == 4:
+        if self.pid == 4:
             return "System"
-        else:
-            try:
-                # Note: this will fail with AD for most PIDs owned
-                # by another user but it's faster.
-                return py2_strencode(os.path.basename(self.exe()))
-            except AccessDenied:
-                return py2_strencode(cext.proc_name(self.pid))
+        return os.path.basename(self.exe())
 
     @wrap_exceptions
+    @memoize_when_activated
     def exe(self):
         exe = cext.proc_exe(self.pid)
-        return py2_strencode(exe)
+        if not PY3:
+            exe = py2_strencode(exe)
+        if exe.startswith('\\'):
+            return convert_dos_path(exe)
+        return exe  # May be "Registry", "MemCompression", ...
 
     @wrap_exceptions
     @retry_error_partial_copy
@@ -843,7 +843,6 @@ class Process(object):
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
                 if not PY3:
-                    assert isinstance(path, unicode), type(path)
                     path = py2_strencode(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
