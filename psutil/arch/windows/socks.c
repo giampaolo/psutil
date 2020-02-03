@@ -16,87 +16,81 @@
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
-typedef DWORD (WINAPI * TYPE_GetExtendedTcpTable)();
-typedef DWORD (WINAPI * TYPE_GetExtendedUdpTable)();
+#define STATUS_UNSUCCESSFUL 0xC0000001
 
 
-static DWORD __GetExtendedTcpTable(TYPE_GetExtendedTcpTable call,
-                                   ULONG family,
-                                   PVOID *data,
-                                   DWORD *size)
-{
-    // Due to other processes being active on the machine, it's possible
-    // that the size of the table increases between the moment where we
-    // query the size and the moment where we query the data.  Therefore, it's
-    // important to call this in a loop to retry if that happens.
-    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
-    // and https://github.com/giampaolo/psutil/issues/1294
-    DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = call(NULL, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
-    {
-        *data = malloc(*size);
-        if (*data == NULL) {
-            error = ERROR_NOT_ENOUGH_MEMORY;
+// Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
+// being active on the machine, it's possible that the size of the table
+// increases between the moment where we query the size and the moment
+// where we query the data. Therefore we call them in a loop to retry if
+// that happens. See:
+// https://github.com/giampaolo/psutil/pull/1335
+// https://github.com/giampaolo/psutil/issues/1294
+
+
+static PVOID __GetExtendedTcpTable(ULONG family) {
+    DWORD err;
+    PVOID table;
+    ULONG size = 0;
+
+    while (1) {
+        // get table size
+        GetExtendedTcpTable(NULL, &size, FALSE, family,
+                            TCP_TABLE_OWNER_PID_ALL, 0);
+
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        // get connections
+        err = GetExtendedTcpTable(table, &size, FALSE, family,
+                                  TCP_TABLE_OWNER_PID_ALL, 0);
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+            psutil_debug("GetExtendedTcpTable: retry with different bufsize");
             continue;
         }
-        error = call(*data, size, FALSE, family, TCP_TABLE_OWNER_PID_ALL, 0);
-        if (error != NO_ERROR) {
-            free(*data);
-            *data = NULL;
-        }
-    }
-    if (error == ERROR_NOT_ENOUGH_MEMORY) {
-        PyErr_NoMemory();
-        return 1;
-    }
-    if (error != NO_ERROR) {
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
-        return 1;
+        return NULL;
     }
-    return error;
 }
 
 
-static DWORD __GetExtendedUdpTable(TYPE_GetExtendedUdpTable call,
-                                   ULONG family,
-                                   PVOID * data,
-                                   DWORD * size)
-{
-    // Due to other processes being active on the machine, it's possible
-    // that the size of the table increases between the moment where we
-    // query the size and the moment where we query the data.  Therefore, it's
-    // important to call this in a loop to retry if that happens.
-    // See https://github.com/giampaolo/psutil/pull/1335 concerning 0xC0000001 error
-    // and https://github.com/giampaolo/psutil/issues/1294
-    DWORD error = ERROR_INSUFFICIENT_BUFFER;
-    *size = 0;
-    *data = NULL;
-    error = call(NULL, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
-    while (error == ERROR_INSUFFICIENT_BUFFER || error == 0xC0000001)
-    {
-        *data = malloc(*size);
-        if (*data == NULL) {
-            error = ERROR_NOT_ENOUGH_MEMORY;
+static PVOID __GetExtendedUdpTable(ULONG family) {
+    DWORD err;
+    PVOID table;
+    ULONG size = 0;
+
+    while (1) {
+        // get table size
+        GetExtendedUdpTable(NULL, &size, FALSE, family,
+                            UDP_TABLE_OWNER_PID, 0);
+
+        table = malloc(size);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        // get connections
+        err = GetExtendedUdpTable(table, &size, FALSE, family,
+                                  UDP_TABLE_OWNER_PID, 0);
+        if (err == NO_ERROR)
+            return table;
+
+        free(table);
+        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+            psutil_debug("GetExtendedUdpTable: retry with different bufsize");
             continue;
         }
-        error = call(*data, size, FALSE, family, UDP_TABLE_OWNER_PID, 0);
-        if (error != NO_ERROR) {
-            free(*data);
-            *data = NULL;
-        }
-    }
-    if (error == ERROR_NOT_ENOUGH_MEMORY) {
-        PyErr_NoMemory();
-        return 1;
-    }
-    if (error != NO_ERROR) {
         PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
-        return 1;
+        return NULL;
     }
-    return 0;
 }
 
 
@@ -116,8 +110,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     DWORD pid;
     int pid_return;
     PVOID table = NULL;
-    DWORD tableSize;
-    DWORD error;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
@@ -176,11 +168,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
 
-        error = __GetExtendedTcpTable(GetExtendedTcpTable,
-                                      AF_INET, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedTcpTable(AF_INET);
+        if (table == NULL)
             goto error;
         tcp4Table = table;
         for (i = 0; i < tcp4Table->dwNumEntries; i++) {
@@ -250,7 +240,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // TCP IPv6
@@ -262,11 +251,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
 
-        error = __GetExtendedTcpTable(GetExtendedTcpTable,
-                                      AF_INET6, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedTcpTable(AF_INET6);
+        if (table == NULL)
             goto error;
         tcp6Table = table;
         for (i = 0; i < tcp6Table->dwNumEntries; i++)
@@ -337,7 +324,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // UDP IPv4
@@ -349,10 +335,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
-        error = __GetExtendedUdpTable(GetExtendedUdpTable,
-                                      AF_INET, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedUdpTable(AF_INET);
+        if (table == NULL)
             goto error;
         udp4Table = table;
         for (i = 0; i < udp4Table->dwNumEntries; i++)
@@ -400,7 +384,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     // UDP IPv6
@@ -413,10 +396,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
-        tableSize = 0;
-        error = __GetExtendedUdpTable(GetExtendedUdpTable,
-                                      AF_INET6, &table, &tableSize);
-        if (error != 0)
+        table = __GetExtendedUdpTable(AF_INET6);
+        if (table == NULL)
             goto error;
         udp6Table = table;
         for (i = 0; i < udp6Table->dwNumEntries; i++) {
@@ -463,7 +444,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
         free(table);
         table = NULL;
-        tableSize = 0;
     }
 
     psutil_conn_decref_objs();
