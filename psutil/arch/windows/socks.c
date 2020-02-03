@@ -18,79 +18,89 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
+ULONG g_TcpTableSize = 0;
+ULONG g_UdpTableSize = 0;
+
 
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
-// increases between the moment where we query the size and the moment
-// where we query the data. Therefore we call them in a loop to retry if
-// that happens. See:
+// increases between the moment we query the size and the moment we query
+// the data. Therefore we retry if that happens. See:
 // https://github.com/giampaolo/psutil/pull/1335
 // https://github.com/giampaolo/psutil/issues/1294
+// A global and ever increasing size is used in order to avoid calling
+// GetExtended[Tcp|Udp]Table twice per call (faster).
 
 
 static PVOID __GetExtendedTcpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
-    while (1) {
-        // get table size
-        GetExtendedTcpTable(NULL, &size, FALSE, family,
-                            TCP_TABLE_OWNER_PID_ALL, 0);
+    size = g_TcpTableSize;
+    if (size == 0) {
+        GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+        // reserve 25% more space
+        size = size + (size / 2 / 2);
+        g_TcpTableSize = size;
+    }
 
-        table = malloc(size);
-        if (table == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-
-        // get connections
-        err = GetExtendedTcpTable(table, &size, FALSE, family,
-                                  TCP_TABLE_OWNER_PID_ALL, 0);
-        if (err == NO_ERROR)
-            return table;
-
-        free(table);
-        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-            psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-            continue;
-        }
-        PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
+    table = malloc(size);
+    if (table == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
+
+    err = GetExtendedTcpTable(table, &size, FALSE, family, class, 0);
+    if (err == NO_ERROR)
+        return table;
+
+    free(table);
+    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+        psutil_debug("GetExtendedTcpTable: retry with different bufsize");
+        g_TcpTableSize = 0;
+        return __GetExtendedTcpTable(family);
+    }
+
+    PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
+    return NULL;
 }
 
 
 static PVOID __GetExtendedUdpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size = 0;
+    ULONG size;
+    UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
-    while (1) {
-        // get table size
-        GetExtendedUdpTable(NULL, &size, FALSE, family,
-                            UDP_TABLE_OWNER_PID, 0);
+    size = g_UdpTableSize;
+    if (size == 0) {
+        GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+        // reserve 25% more space
+        size = size + (size / 2 / 2);
+        g_UdpTableSize = size;
+    }
 
-        table = malloc(size);
-        if (table == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-
-        // get connections
-        err = GetExtendedUdpTable(table, &size, FALSE, family,
-                                  UDP_TABLE_OWNER_PID, 0);
-        if (err == NO_ERROR)
-            return table;
-
-        free(table);
-        if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
-            psutil_debug("GetExtendedUdpTable: retry with different bufsize");
-            continue;
-        }
-        PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
+    table = malloc(size);
+    if (table == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
+
+    err = GetExtendedUdpTable(table, &size, FALSE, family, class, 0);
+    if (err == NO_ERROR)
+        return table;
+
+    free(table);
+    if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
+        psutil_debug("GetExtendedUdpTable: retry with different bufsize");
+        g_UdpTableSize = 0;
+        return __GetExtendedUdpTable(family);
+    }
+
+    PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
+    return NULL;
 }
 
 
