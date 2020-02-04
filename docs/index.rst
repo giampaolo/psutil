@@ -186,8 +186,10 @@ CPU
 
   Return the number of logical CPUs in the system (same as `os.cpu_count`_
   in Python 3.4) or ``None`` if undetermined.
-  If *logical* is ``False`` return the number of physical cores only (hyper
-  thread CPUs are excluded) or ``None`` if undetermined.
+  *logical* cores means the number of physical cores multiplied by the number
+  of threads that can run on each core (this is known as Hyper Threading).
+  If *logical* is ``False`` return the number of physical cores only (Hyper
+  Thread CPUs are excluded) or ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
   ``None``.
   Example on a system having 2 physical hyper-thread CPU cores:
