@@ -16,6 +16,7 @@ XXXX-XX-XX
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 - 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
   raising AccessDenied).
+- 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
 
 **Bug fixes**
 
