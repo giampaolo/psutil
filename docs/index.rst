@@ -388,7 +388,7 @@ Disks
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
   parameter is ``False`` it tries to distinguish and return physical devices
   only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
-  (e.g. memory partitions such as /dev/shm).
+  (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   Named tuple's **fstype** field is a string which varies depending on the
