@@ -225,7 +225,11 @@ def disk_partitions(all=False):
             # Differently from, say, Linux, we don't have a list of
             # common fs types so the best we can do, AFAIK, is to
             # filter by filesystem having a total size > 0.
-            if not disk_usage(mountpoint).total:
+            try:
+                if not disk_usage(mountpoint).total:
+                    continue
+            except OSError:
+                # https://github.com/giampaolo/psutil/issues/1674
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)

@@ -33,6 +33,7 @@ XXXX-XX-XX
 - 1672_: properly handle PID C type.
 - 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
   improper exception if process is gone.
+- 1674_: [SunOS] disk_partitions() may raise OSError.
 
 5.6.7
 =====
@@ -54,7 +55,7 @@ XXXX-XX-XX
   renaming the command line and using inappropriate chars to separate args.
 - 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
   segfault
-  (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__). 
+  (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
 - 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
   Houghton)
