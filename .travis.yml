@@ -18,7 +18,7 @@ matrix:
         - python: 3.8
         # pypy
         # - python: pypy
-        # - python: pypy3
+        - python: pypy3
 install:
     - ./.ci/travis/install.sh
 script:
