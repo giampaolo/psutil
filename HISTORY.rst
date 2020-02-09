@@ -34,6 +34,8 @@ XXXX-XX-XX
 - 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
   improper exception if process is gone.
 - 1674_: [SunOS] disk_partitions() may raise OSError.
+- 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
+  having /proc/diskstats.
 
 5.6.7
 =====
