@@ -727,6 +727,7 @@ class TestProcess(unittest.TestCase):
             else:
                 raise
 
+    @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
         create_exe(TESTFN)
         self.addCleanup(safe_rmpath, TESTFN)
@@ -741,6 +742,7 @@ class TestProcess(unittest.TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
+    @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
         long_name = TESTFN + ("0123456789" * 2)
         create_exe(long_name)
@@ -752,6 +754,7 @@ class TestProcess(unittest.TestCase):
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")
     @unittest.skipIf(AIX, "broken on AIX")
+    @unittest.skipIf(PYPY, "broken on PYPY")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
