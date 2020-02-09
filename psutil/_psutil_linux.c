@@ -204,7 +204,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
-    const char *mtab_path;
+    char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;

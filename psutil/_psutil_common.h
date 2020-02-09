@@ -27,15 +27,22 @@ static const int PSUTIL_CONN_NONE = 128;
     #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
 #endif
 
-// Python 2: SIZEOF_PID_T not defined but _getpid() returns an int.
-#if defined(PSUTIL_WINDOWS) && !defined(SIZEOF_PID_T)
-    #define SIZEOF_PID_T SIZEOF_INT
-#endif
+// --- _Py_PARSE_PID
 
-#if !defined(_Py_PARSE_PID) || PY_MAJOR_VERSION < 3
-    #if !defined(SIZEOF_PID_T) || !defined(SIZEOF_INT) || !defined(SIZEOF_LONG)
-        #error "missing SIZEOF* definition"
-    #endif
+// SIZEOF_INT|LONG is missing on Linux + PyPy (only?)
+// SIZEOF_PID_T is missing on Windows + Python2
+// In we can't determine we assume PID is an (int).
+// On major UNIX platforms I've seen pid_t is treated as int.
+// On Windows _getpid() returns an int. We can't be 100% certain though,
+// (in that case we'd probably get compiler warnings).
+#if !defined(SIZEOF_INT)
+    #define SIZEOF_INT 4
+#endif
+#if !defined(SIZEOF_LONG)
+    #define SIZEOF_LONG 8
+#endif
+#if !defined(SIZEOF_PID_T)
+    #define SIZEOF_PID_T 4  // assume int
 #endif
 
 // _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
