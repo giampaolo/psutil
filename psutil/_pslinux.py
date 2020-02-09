@@ -1106,7 +1106,7 @@ def disk_io_counters(perdisk=False):
                     fields = f.read().strip().split()
                 name = os.path.basename(root)
                 (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                    wbytes, wtime, _, busy_time, _) = map(int, fields)
+                    wbytes, wtime, _, busy_time) = map(int, fields[:10])
                 yield (name, reads, writes, rbytes, wbytes, rtime,
                        wtime, reads_merged, writes_merged, busy_time)
 
