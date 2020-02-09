@@ -7,7 +7,7 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division
+from __future__ import division, print_function
 
 import contextlib
 import errno
@@ -66,7 +66,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
-    'bytes2human', 'conn_to_ntuple', 'hilite',
+    'bytes2human', 'conn_to_ntuple', 'hilite', 'debug',
 ]
 
 
@@ -787,3 +787,11 @@ def hilite(s, ok=True, bold=False):
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+
+
+if bool(os.getenv('PSUTIL_DEBUG', 0)):
+    def debug(msg):
+        print("psutil-debug> " + msg, file=sys.stderr)
+else:
+    def debug(msg):
+        pass

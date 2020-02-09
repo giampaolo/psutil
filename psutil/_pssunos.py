@@ -19,6 +19,7 @@ from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
 from ._common import AccessDenied
 from ._common import AF_INET6
+from ._common import debug
 from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
@@ -228,8 +229,9 @@ def disk_partitions(all=False):
             try:
                 if not disk_usage(mountpoint).total:
                     continue
-            except OSError:
+            except OSError as err:
                 # https://github.com/giampaolo/psutil/issues/1674
+                debug("skipping %r: %r" % (mountpoint, err))
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)

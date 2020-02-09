@@ -26,6 +26,7 @@ from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import AccessDenied
+from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -1253,8 +1254,7 @@ def sensors_temperatures():
                 path = os.path.join(base, 'type')
                 unit_name = cat(path, binary=False)
             except (IOError, OSError, ValueError) as err:
-                warnings.warn("ignoring %r for file %r" % (err, path),
-                              RuntimeWarning)
+                debug("ignoring %r for file %r" % (err, path))
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
