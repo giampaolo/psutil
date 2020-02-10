@@ -11,6 +11,8 @@ checking whether process memory usage keeps increasing between
 calls or over time.
 Note that this may produce false positives (especially on Windows
 for some reason).
+PyPy appears to be completely unstable for this framework, probably
+because of how its JIT handles memory, so tests are skipped.
 """
 
 from __future__ import print_function
@@ -39,7 +41,6 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
-from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -49,6 +50,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
@@ -57,14 +59,14 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
+# configurable opts
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096
 RETRY_FOR = 3
+SKIP_PYTHON_IMPL = True
 
-SKIP_PYTHON_IMPL = True if TRAVIS else False
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
-SKIP_PYTHON_IMPL = True if TRAVIS else False
 
 
 # ===================================================================
@@ -77,6 +79,7 @@ def skip_if_linux():
                            "worthless on LINUX (pure python)")
 
 
+@unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemLeak(unittest.TestCase):
     """Base framework class which calls a function many times and
     produces a failure if process memory usage keeps increasing
@@ -477,7 +480,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
 
-    @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
+    @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_getloadavg(self):
         self.execute(psutil.getloadavg)
 

@@ -113,7 +113,6 @@ __all__ = [
 
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
-WIN_VISTA = (6, 0, 0) if WINDOWS else None
 # whether we're running this test suite on a Continuous Integration service
 TRAVIS = bool(os.environ.get('TRAVIS'))
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
