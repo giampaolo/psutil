@@ -16,7 +16,7 @@ extern int PSUTIL_DEBUG;
 static const int PSUTIL_CONN_NONE = 128;
 
 // ====================================================================
-// --- Python functions and backward compatibility
+// --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
 #if PY_MAJOR_VERSION < 3
@@ -60,9 +60,14 @@ static const int PSUTIL_CONN_NONE = 128;
     #endif
 #endif
 
-#if PY_MAJOR_VERSION < 3
+// Python 2 or PyPy on Windows
+#ifndef PyLong_FromPid
     #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
-        #define PyLong_FromPid PyInt_FromLong
+        #if PY_MAJOR_VERSION >= 3
+            #define PyLong_FromPid PyLong_FromLong
+        #else
+            #define PyLong_FromPid PyInt_FromLong
+        #endif
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else
@@ -122,4 +127,9 @@ int psutil_setup(void);
     PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
     PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
+
+    #if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
+        PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
+                                                      const char *filename);
+    #endif
 #endif

@@ -96,7 +96,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 
 error:
-    PyErr_SetExcFromWindowsErr(PyExc_OSError, 0);
+    PyErr_SetFromWindowsErr(0);
     return NULL;
 }
 

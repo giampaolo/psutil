@@ -17,6 +17,7 @@ from . import _common
 from ._common import AccessDenied
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
+from ._common import debug
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import isfile_strict
@@ -80,7 +81,7 @@ __extra__all__ = [
 
 CONN_DELETE_TCB = "DELETE_TCB"
 ERROR_PARTIAL_COPY = 299
-
+PYPY = '__pypy__' in sys.builtin_module_names
 
 if enum is None:
     AF_LINK = -1
@@ -752,7 +753,18 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def exe(self):
-        exe = cext.proc_exe(self.pid)
+        if PYPY:
+            try:
+                exe = cext.proc_exe(self.pid)
+            except WindowsError as err:
+                # 24 = ERROR_TOO_MANY_OPEN_FILES. Not sure why this happens
+                # (perhaps PyPy's JIT delaying garbage collection of files?).
+                if err.errno == 24:
+                    debug("%r forced into AccessDenied" % err)
+                    raise AccessDenied(self.pid, self._name)
+                raise
+        else:
+            exe = cext.proc_exe(self.pid)
         if not PY3:
             exe = py2_strencode(exe)
         if exe.startswith('\\'):
@@ -916,9 +928,6 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        # special case for kernel process PIDs; return system boot time
-        if self.pid in (0, 4):
-            return boot_time()
         try:
             return cext.proc_create_time(self.pid)
         except OSError as err:
