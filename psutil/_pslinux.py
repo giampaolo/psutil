@@ -1868,7 +1868,7 @@ class Process(object):
                         path = path[:-10]
                 ls.append((
                     decode(addr), decode(perms), path,
-                    data[b'Rss:'],
+                    data.get(b'Rss:', 0),
                     data.get(b'Size:', 0),
                     data.get(b'Pss:', 0),
                     data.get(b'Shared_Clean:', 0),
