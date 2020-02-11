@@ -53,7 +53,6 @@ PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
     return NULL;
 
 error:
-    printf("err\n ");
     Py_XDECREF(py_exc);
     Py_XDECREF(py_winerr);
     return NULL;

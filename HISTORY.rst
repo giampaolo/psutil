@@ -18,7 +18,7 @@ XXXX-XX-XX
   raising AccessDenied).
 - 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
 - 1681_: [Linux] disk_partitions() now also shows swap partitions.
-
+- 1686_: [Windows] added support for PyPy on Windows.
 
 **Bug fixes**
 
