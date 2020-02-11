@@ -316,7 +316,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
     @retry_on_failure()
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
-        # is off by max 10%.
+        # is off by max 15%.
         from psutil._pslinux import calculate_avail_vmem
         from psutil._pslinux import open_binary
 
@@ -330,7 +330,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         if b'MemAvailable:' in mems:
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
-            self.assertLess(diff_percent, 10)
+            self.assertLess(diff_percent, 15)
 
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
@@ -1067,6 +1067,22 @@ class TestSystemDiskPartitions(unittest.TestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    @unittest.skipIf(not os.path.exists('/proc/swaps'),
+                     "/proc/swaps not available")
+    def test_swap(self):
+        types = [x.fstype for x in psutil.disk_partitions(all=False)]
+        self.assertNotIn('swap', types)
+        types = [x.fstype for x in psutil.disk_partitions(all=True)]
+        self.assertIn('swap', types)
+        for part in psutil.disk_partitions(all=True):
+            if part.fstype == 'swap':
+                assert os.path.exists(part.device), part
+                self.assertIsNone(part.mountpoint)
+                if part.opts:
+                    assert part.opts.startswith('priority=')
+                    prio = part.opts.split('=')[1]
+                    int(prio)
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskIoCounters(unittest.TestCase):
@@ -1547,25 +1563,6 @@ class TestSensorsBattery(unittest.TestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSensorsTemperatures(unittest.TestCase):
-
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
-    @unittest.skipIf(LINUX and EMPTY_TEMPERATURES, "no temperatures")
-    def test_emulate_eio_error(self):
-        def open_mock(name, *args, **kwargs):
-            if name.endswith("_input"):
-                raise OSError(errno.EIO, "")
-            elif name.endswith("temp"):
-                raise OSError(errno.EIO, "")
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                self.assertEqual(psutil.sensors_temperatures(), {})
-                assert m.called
-                self.assertIn("ignoring", str(ws[0].message))
 
     def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):

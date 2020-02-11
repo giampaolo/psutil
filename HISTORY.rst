@@ -16,10 +16,14 @@ XXXX-XX-XX
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 - 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
   raising AccessDenied).
+- 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
+- 1681_: [Linux] disk_partitions() now also shows swap partitions.
+
 
 **Bug fixes**
 
 - 1538_: [NetBSD] process cwd() may return ENOENT instead of NoSuchProcess.
+- 1627_: [Linux] Process.memory_maps() can raise KeyError.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
@@ -32,6 +36,9 @@ XXXX-XX-XX
 - 1672_: properly handle PID C type.
 - 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
   improper exception if process is gone.
+- 1674_: [SunOS] disk_partitions() may raise OSError.
+- 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
+  having /proc/diskstats.
 
 5.6.7
 =====
@@ -52,7 +59,9 @@ XXXX-XX-XX
 - 1179_: [Linux] Process cmdline() now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
 - 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
-  segfault (CVE).  (patch by Riccardo Schirone)
+  segfault
+  (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
+  (patch by Riccardo Schirone)
 - 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
   Houghton)
 

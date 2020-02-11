@@ -141,9 +141,9 @@ Both services run psutil test suite against all supported python version
 (2.6 - 3.6).
 Two icons in the home page (README) always show the build status:
 
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20macOS
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux,%20OSX,%20PyPy
     :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Linux and macOS tests (Travis)
+    :alt: Linux, macOS and PyPy3 tests (Travis)
 
 .. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil

@@ -186,8 +186,10 @@ CPU
 
   Return the number of logical CPUs in the system (same as `os.cpu_count`_
   in Python 3.4) or ``None`` if undetermined.
-  If *logical* is ``False`` return the number of physical cores only (hyper
-  thread CPUs are excluded) or ``None`` if undetermined.
+  *logical* cores means the number of physical cores multiplied by the number
+  of threads that can run on each core (this is known as Hyper Threading).
+  If *logical* is ``False`` return the number of physical cores only (Hyper
+  Thread CPUs are excluded) or ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
   ``None``.
   Example on a system having 2 physical hyper-thread CPU cores:
@@ -386,7 +388,7 @@ Disks
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
   parameter is ``False`` it tries to distinguish and return physical devices
   only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
-  (e.g. memory partitions such as /dev/shm).
+  (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   Named tuple's **fstype** field is a string which varies depending on the
@@ -402,6 +404,8 @@ Disks
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
      sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
+
+  .. versionchanged:: 5.7.0 swap partitions are shown on Linux.
 
 .. function:: disk_usage(path)
 

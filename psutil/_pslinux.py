@@ -26,6 +26,7 @@ from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import AccessDenied
+from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -1105,7 +1106,7 @@ def disk_io_counters(perdisk=False):
                     fields = f.read().strip().split()
                 name = os.path.basename(root)
                 (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                    wbytes, wtime, _, busy_time, _) = map(int, fields)
+                    wbytes, wtime, _, busy_time) = map(int, fields[:10])
                 yield (name, reads, writes, rbytes, wbytes, rtime,
                        wtime, reads_merged, writes_merged, busy_time)
 
@@ -1176,6 +1177,32 @@ def disk_partitions(all=False):
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
+
+    # swap
+    if all:
+        try:
+            f = open_text("%s/swaps" % procfs_path)
+        except FileNotFoundError:
+            pass
+        else:
+            with f:
+                f.readline()  # header
+                for line in f.readlines():
+                    fields = line.split('\t')
+                    device = fields[0].split()[0]
+                    mountp = None
+                    fstype = 'swap'
+                    # The priority column is useful when multiple swap
+                    # files are in use. The lower the priority, the
+                    # more likely the swap file is to be used.
+                    prio = fields[-1].strip()
+                    if re.match(r'(-)?\d+', prio):
+                        opts = "priority=" + prio
+                    else:
+                        opts = ''
+                    ntuple = _common.sdiskpart(device, mountp, fstype, opts)
+                    retlist.append(ntuple)
+
     return retlist
 
 
@@ -1253,8 +1280,7 @@ def sensors_temperatures():
                 path = os.path.join(base, 'type')
                 unit_name = cat(path, binary=False)
             except (IOError, OSError, ValueError) as err:
-                warnings.warn("ignoring %r for file %r" % (err, path),
-                              RuntimeWarning)
+                debug("ignoring %r for file %r" % (err, path))
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
@@ -1842,7 +1868,7 @@ class Process(object):
                         path = path[:-10]
                 ls.append((
                     decode(addr), decode(perms), path,
-                    data[b'Rss:'],
+                    data.get(b'Rss:', 0),
                     data.get(b'Size:', 0),
                     data.get(b'Pss:', 0),
                     data.get(b'Shared_Clean:', 0),
