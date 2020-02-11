@@ -1186,9 +1186,8 @@ def disk_partitions(all=False):
             pass
         else:
             with f:
-                lines = f.readlines()
-                lines.pop(0)  # header
-                for line in lines:
+                f.readline()  # header
+                for line in f.readlines():
                     fields = line.split('\t')
                     device = fields[0].split()[0]
                     mountp = None

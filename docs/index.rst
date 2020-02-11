@@ -405,7 +405,7 @@ Disks
     [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
      sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
-  .. versionchanged:: 5.7.0 swap partitions are returned on Linux.
+  .. versionchanged:: 5.7.0 swap partitions are shown on Linux.
 
 .. function:: disk_usage(path)
 
