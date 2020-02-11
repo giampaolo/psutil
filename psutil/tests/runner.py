@@ -177,6 +177,11 @@ def save_failed_tests(result):
     with open(FAILED_TESTS_FNAME, 'wt') as f:
         for t in result.errors + result.failures:
             tname = str(t[0])
+            print(tname)
+            try:
+                unittest.defaultTestLoader.loadTestsFromName(tname)
+            except Exception:
+                import pdb; pdb.set_trace()
             f.write(tname + '\n')
 
 
