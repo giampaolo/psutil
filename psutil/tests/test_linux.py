@@ -1070,6 +1070,9 @@ class TestSystemDiskPartitions(unittest.TestCase):
     @unittest.skipIf(not os.path.exists('/proc/swaps'),
                      "/proc/swaps not available")
     def test_swap(self):
+        with open('/proc/swaps') as f:
+            if not f.readline() or not f.readlines():
+                raise self.skipTest("/proc/swaps is empty")
         types = [x.fstype for x in psutil.disk_partitions(all=False)]
         self.assertNotIn('swap', types)
         types = [x.fstype for x in psutil.disk_partitions(all=True)]
