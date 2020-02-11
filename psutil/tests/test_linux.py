@@ -1067,6 +1067,22 @@ class TestSystemDiskPartitions(unittest.TestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    @unittest.skipIf(not os.path.exists('/proc/swaps'),
+                     "/proc/swaps not available")
+    def test_swap(self):
+        types = [x.fstype for x in psutil.disk_partitions(all=False)]
+        self.assertNotIn('swap', types)
+        types = [x.fstype for x in psutil.disk_partitions(all=True)]
+        self.assertIn('swap', types)
+        for part in psutil.disk_partitions(all=True):
+            if part.fstype == 'swap':
+                assert os.path.exists(part.device), part
+                self.assertIsNone(part.mountpoint)
+                if part.opts:
+                    assert part.opts.startswith('priority=')
+                    prio = part.opts.split('=')[1]
+                    int(prio)
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskIoCounters(unittest.TestCase):

@@ -1177,6 +1177,33 @@ def disk_partitions(all=False):
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
+
+    # swap
+    if all:
+        try:
+            f = open_text("%s/swaps" % procfs_path)
+        except FileNotFoundError:
+            pass
+        else:
+            with f:
+                lines = f.readlines()
+                lines.pop(0)  # header
+                for line in lines:
+                    fields = line.split('\t')
+                    device = fields[0].split()[0]
+                    mountp = None
+                    fstype = 'swap'
+                    # The priority column is useful when multiple swap
+                    # files are in use. The lower the priority, the
+                    # more likely the swap file is to be used.
+                    prio = fields[-1].strip()
+                    if re.match(r'(-)?\d+', prio):
+                        opts = "priority=" + prio
+                    else:
+                        opts = ''
+                    ntuple = _common.sdiskpart(device, mountp, fstype, opts)
+                    retlist.append(ntuple)
+
     return retlist
 
 

@@ -17,6 +17,8 @@ XXXX-XX-XX
 - 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
   raising AccessDenied).
 - 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
+- 1681_: [Linux] disk_partitions() now also shows swap partitions.
+
 
 **Bug fixes**
 
