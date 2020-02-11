@@ -281,7 +281,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
-    pid_t       pid;
+    DWORD       pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
@@ -332,7 +332,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_create_time(PyObject *self, PyObject *args) {
-    pid_t       pid;
+    DWORD       pid;
     long long   unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
