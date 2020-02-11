@@ -23,6 +23,14 @@ int PSUTIL_TESTING = 0;
 // --- Python functions and backward compatibility
 // ====================================================================
 
+#if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
+PyObject *
+PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename) {
+    PyErr_SetFromWindowsErr(ierr);
+    return NULL;
+}
+#endif
+
 /*
  * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
  * message.

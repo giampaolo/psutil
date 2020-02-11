@@ -27,6 +27,10 @@ static const int PSUTIL_CONN_NONE = 128;
     #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
 #endif
 
+#if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
+PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename);
+#endif
+
 // --- _Py_PARSE_PID
 
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
@@ -60,9 +64,14 @@ static const int PSUTIL_CONN_NONE = 128;
     #endif
 #endif
 
-#if PY_MAJOR_VERSION < 3
+// Python 2 or PyPy
+#ifndef PyLong_FromPid
     #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
-        #define PyLong_FromPid PyInt_FromLong
+        #if PY_MAJOR_VERSION >= 3
+            #define PyLong_FromPid PyLong_FromLong
+        #else
+            #define PyLong_FromPid PyInt_FromLong
+        #endif
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else
