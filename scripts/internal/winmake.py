@@ -36,6 +36,7 @@ GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
+PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
     "flake8",
@@ -43,7 +44,6 @@ DEPS = [
     "pdbpp",
     "pip",
     "pyperf",
-    "pypiwin32==219" if sys.version_info[:2] <= (3, 4) else "pypiwin32",
     "pyreadline",
     "setuptools",
     "wheel",
@@ -56,6 +56,12 @@ if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
+if PYPY:
+    pass
+elif sys.version_info[:2] <= (3, 4):
+    DEPS.append("pypiwin32==219")
+else:
+    DEPS.append("pypiwin32")
 
 _cmds = {}
 if PY3:
@@ -268,8 +274,8 @@ def upload_wheels():
 def install_pip():
     """Install pip"""
     try:
-        import pip  # NOQA
-    except ImportError:
+        sh('%s -c "import pip"' % PYTHON)
+    except SystemExit:
         if PY3:
             from urllib.request import urlopen
         else:

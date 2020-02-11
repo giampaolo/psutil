@@ -27,12 +27,14 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import PY3
+from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import unittest
 
-if WINDOWS:
+
+if WINDOWS and not PYPY:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         import win32api  # requires "pip install pypiwin32"
@@ -61,13 +63,18 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+@unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
+class TestCase(unittest.TestCase):
+    pass
+
+
 # ===================================================================
 # System APIs
 # ===================================================================
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestCpuAPIs(unittest.TestCase):
+class TestCpuAPIs(TestCase):
 
     @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
                      'NUMBER_OF_PROCESSORS env var is not available')
@@ -106,7 +113,7 @@ class TestCpuAPIs(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestSystemAPIs(unittest.TestCase):
+class TestSystemAPIs(TestCase):
 
     def test_nic_names(self):
         out = sh('ipconfig /all')
@@ -230,7 +237,7 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestSensorsBattery(unittest.TestCase):
+class TestSensorsBattery(TestCase):
 
     def test_has_battery(self):
         if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
@@ -291,7 +298,7 @@ class TestSensorsBattery(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcess(unittest.TestCase):
+class TestProcess(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -519,7 +526,7 @@ class TestProcess(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcessWMI(unittest.TestCase):
+class TestProcessWMI(TestCase):
     """Compare Process API results with WMI."""
 
     @classmethod
@@ -585,7 +592,7 @@ class TestProcessWMI(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestDualProcessImplementation(unittest.TestCase):
+class TestDualProcessImplementation(TestCase):
     """
     Certain APIs on Windows have 2 internal implementations, one
     based on documented Windows APIs, another one based
@@ -668,7 +675,7 @@ class TestDualProcessImplementation(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class RemoteProcessTestCase(unittest.TestCase):
+class RemoteProcessTestCase(TestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
     Check that this works on other processes, especially when they
@@ -764,7 +771,7 @@ class RemoteProcessTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestServices(unittest.TestCase):
+class TestServices(TestCase):
 
     def test_win_service_iter(self):
         valid_statuses = set([

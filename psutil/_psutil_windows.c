@@ -228,8 +228,10 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             // return None instead.
             Py_RETURN_NONE;
         }
-        else
-            return PyErr_SetFromWindowsErr(0);
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
     }
 
     // wait until the process has terminated
@@ -281,7 +283,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
-    pid_t       pid;
+    DWORD       pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
@@ -332,7 +334,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_create_time(PyObject *self, PyObject *args) {
-    pid_t       pid;
+    DWORD       pid;
     long long   unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
@@ -698,8 +700,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
 
-    if (! GlobalMemoryStatusEx(&memInfo))
-        return PyErr_SetFromWindowsErr(0);
+    if (! GlobalMemoryStatusEx(&memInfo)) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
     return Py_BuildValue("(LLLLLL)",
                          memInfo.ullTotalPhys,      // total
                          memInfo.ullAvailPhys,      // avail
@@ -1571,8 +1575,10 @@ static PyObject *
 psutil_sensors_battery(PyObject *self, PyObject *args) {
     SYSTEM_POWER_STATUS sps;
 
-    if (GetSystemPowerStatus(&sps) == 0)
-        return PyErr_SetFromWindowsErr(0);
+    if (GetSystemPowerStatus(&sps) == 0) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
     return Py_BuildValue(
         "iiiI",
         sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
