@@ -20,16 +20,49 @@ int PSUTIL_TESTING = 0;
 
 
 // ====================================================================
-// --- Python functions and backward compatibility
+// --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
+// PyPy on Windows
 #if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
-PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename) {
-    PyErr_SetFromWindowsErr(ierr);
+PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
+    PyObject *py_exc = NULL;
+    PyObject *py_winerr = NULL;
+
+    if (winerr == 0)
+        winerr = GetLastError();
+    if (filename == NULL) {
+        py_exc = PyObject_CallFunction(PyExc_OSError, "(is)", winerr,
+                                       strerror(winerr));
+    }
+    else {
+        py_exc = PyObject_CallFunction(PyExc_OSError, "(iss)", winerr,
+                                       strerror(winerr), filename);
+    }
+    if (py_exc == NULL)
+        return NULL;
+
+    py_winerr = Py_BuildValue("i", winerr);
+    if (py_winerr == NULL)
+        goto error;
+    if (PyObject_SetAttrString(py_exc, "winerror", py_winerr) != 0)
+        goto error;
+    PyErr_SetObject(PyExc_OSError, py_exc);
+    Py_XDECREF(py_exc);
+    return NULL;
+
+error:
+    printf("err\n ");
+    Py_XDECREF(py_exc);
+    Py_XDECREF(py_winerr);
     return NULL;
 }
 #endif
+
+// ====================================================================
+// --- Custom exceptions
+// ====================================================================
 
 /*
  * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
@@ -51,11 +84,6 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 #endif
     return NULL;
 }
-
-
-// ====================================================================
-// --- Custom exceptions
-// ====================================================================
 
 /*
  * Set OSError(errno=ESRCH, strerror="No such process (originated from")
@@ -140,6 +168,7 @@ psutil_setup(void) {
 // ====================================================================
 // --- Windows
 // ====================================================================
+
 
 #ifdef PSUTIL_WINDOWS
 #include <windows.h>

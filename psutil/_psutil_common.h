@@ -16,7 +16,7 @@ extern int PSUTIL_DEBUG;
 static const int PSUTIL_CONN_NONE = 128;
 
 // ====================================================================
-// --- Python functions and backward compatibility
+// --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
 #if PY_MAJOR_VERSION < 3
@@ -28,7 +28,8 @@ static const int PSUTIL_CONN_NONE = 128;
 #endif
 
 #if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
-PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename);
+    PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
+                                                  const char *filename);
 #endif
 
 // --- _Py_PARSE_PID
@@ -64,7 +65,7 @@ PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr, const char *filename);
     #endif
 #endif
 
-// Python 2 or PyPy
+// Python 2 or PyPy on Windows
 #ifndef PyLong_FromPid
     #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
         #if PY_MAJOR_VERSION >= 3
