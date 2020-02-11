@@ -194,6 +194,8 @@ class _BaseFSAPIsTests(object):
         if self.expect_exact_path_match():
             self.assertEqual(cwd, dname)
 
+    # For some reason  on PyPy we get an empty list (PYPY bug)
+    @unittest.skipIf(PYPY, "unsupported on PYPY")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -261,6 +263,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
+    @unittest.skipIf(PYPY, "copyload_shared_lib() unsupported on PYPY")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
