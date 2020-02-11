@@ -1111,9 +1111,12 @@ else:
         ext = ".dll"
         dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
-                os.path.splitext(x.path)[1].lower() == ext and
+                x.path.lower().endswith(ext) and
                 'python' in os.path.basename(x.path).lower() and
                 'wow64' not in x.path.lower()]
+        if PYPY and not libs:
+            libs = [x.path for x in psutil.Process().memory_maps() if
+                    'pypy' in os.path.basename(x.path).lower()]
         src = random.choice(libs)
         shutil.copyfile(src, dst)
         cfile = None
