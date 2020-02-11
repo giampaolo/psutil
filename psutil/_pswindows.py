@@ -916,9 +916,6 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        # special case for kernel process PIDs; return system boot time
-        if self.pid in (0, 4):
-            return boot_time()
         try:
             return cext.proc_create_time(self.pid)
         except OSError as err:
