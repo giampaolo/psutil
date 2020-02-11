@@ -790,8 +790,14 @@ def hilite(s, ok=True, bold=False):
 
 
 if bool(os.getenv('PSUTIL_DEBUG', 0)):
+    import inspect
+
     def debug(msg):
-        print("psutil-debug> " + msg, file=sys.stderr)
+        """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+        fname, lineno, func_name, lines, index = inspect.getframeinfo(
+            inspect.currentframe().f_back)
+        print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),
+              file=sys.stderr)
 else:
     def debug(msg):
         pass

@@ -327,6 +327,7 @@ class TestNonFSAPIS(unittest.TestCase):
         reap_children()
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
+    @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths. On Python 2 subprocess module is broken as
