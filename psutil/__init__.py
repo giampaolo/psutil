@@ -16,6 +16,7 @@ sensors) in Python. Supported platforms:
  - NetBSD
  - Sun Solaris
  - AIX
+ - Haiku
 
 Works with Python versions from 2.6 to 3.4+.
 """
@@ -82,6 +83,7 @@ from ._common import STATUS_ZOMBIE
 from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD  # NOQA
+from ._common import HAIKU
 from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD  # NOQA
@@ -176,6 +178,9 @@ elif AIX:
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
     PROCFS_PATH = "/proc"
+
+elif HAIKU:
+    from . import _pshaiku as _psplatform
 
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)

@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.join(HERE, "psutil"))
 from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
+from _common import HAIKU  # NOQA
 from _common import hilite  # NOQA
 from _common import LINUX  # NOQA
 from _common import MACOS  # NOQA
@@ -280,6 +281,16 @@ elif AIX:
             'psutil/arch/aix/common.c',
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
+        define_macros=macros)
+
+elif HAIKU:
+    macros.append(("PSUTIL_HAIKU", 1))
+    macros.append(("_DEFAULT_SOURCE", 1))
+    ext = Extension(
+        'psutil._psutil_haiku',
+        sources=sources + [
+            'psutil/_psutil_haiku.cpp'],
+        libraries=['be', 'network'],
         define_macros=macros)
 
 else:

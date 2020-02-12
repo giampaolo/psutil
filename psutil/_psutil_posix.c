@@ -40,6 +40,9 @@
     #include <sys/sockio.h>
 #elif defined(PSUTIL_AIX)
     #include <netdb.h>
+#elif defined(PSUTIL_HAIKU)
+    #include <netdb.h>
+    #include <sys/sockio.h>
 #endif
 
 #include "_psutil_common.h"
@@ -664,7 +667,8 @@ static PyMethodDef mod_methods[] = {
 #if defined(PSUTIL_BSD) || \
         defined(PSUTIL_OSX) || \
         defined(PSUTIL_SUNOS) || \
-        defined(PSUTIL_AIX)
+        defined(PSUTIL_AIX) || \
+        defined(PSUTIL_HAIKU)
     if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK)) INITERR;
 #endif
 
