@@ -49,7 +49,10 @@ static const int PSUTIL_CONN_NONE = 128;
     #define SIZEOF_LONG 8
 #endif
 #if !defined(SIZEOF_PID_T)
-    #define SIZEOF_PID_T 4  // assume int
+    #if PSUTIL_SIZEOF_PID_T != 4
+        #warning "SIZEOF_PID_T was guessed"
+    #endif
+    #define SIZEOF_PID_T PSUTIL_SIZEOF_PID_T  // set as a macro in setup.py
 #endif
 
 // _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
