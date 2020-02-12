@@ -10,54 +10,12 @@
 #include "_psutil_common.h"
 
 // ====================================================================
-// --- Global vars / constants
+// --- Global vars
 // ====================================================================
-
 
 int PSUTIL_DEBUG = 0;
 int PSUTIL_TESTING = 0;
 // PSUTIL_CONN_NONE
-
-
-// ====================================================================
-// --- Backward compatibility with missing Python.h APIs
-// ====================================================================
-
-// PyPy on Windows
-#if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
-PyObject *
-PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
-    PyObject *py_exc = NULL;
-    PyObject *py_winerr = NULL;
-
-    if (winerr == 0)
-        winerr = GetLastError();
-    if (filename == NULL) {
-        py_exc = PyObject_CallFunction(PyExc_OSError, "(is)", winerr,
-                                       strerror(winerr));
-    }
-    else {
-        py_exc = PyObject_CallFunction(PyExc_OSError, "(iss)", winerr,
-                                       strerror(winerr), filename);
-    }
-    if (py_exc == NULL)
-        return NULL;
-
-    py_winerr = Py_BuildValue("i", winerr);
-    if (py_winerr == NULL)
-        goto error;
-    if (PyObject_SetAttrString(py_exc, "winerror", py_winerr) != 0)
-        goto error;
-    PyErr_SetObject(PyExc_OSError, py_exc);
-    Py_XDECREF(py_exc);
-    return NULL;
-
-error:
-    Py_XDECREF(py_exc);
-    Py_XDECREF(py_winerr);
-    return NULL;
-}
-#endif
 
 // ====================================================================
 // --- Custom exceptions
@@ -83,6 +41,7 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
 #endif
     return NULL;
 }
+
 
 /*
  * Set OSError(errno=ESRCH, strerror="No such process (originated from")
@@ -183,6 +142,43 @@ CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
     ((((ULONG)(Status)) >> NT_FACILITY_SHIFT) & NT_FACILITY_MASK)
 #define NT_NTWIN32(status) (NT_FACILITY(Status) == FACILITY_WIN32)
 #define WIN32_FROM_NTSTATUS(Status) (((ULONG)(Status)) & 0xffff)
+
+
+// PyPy on Windows
+#if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
+PyObject *
+PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
+    PyObject *py_exc = NULL;
+    PyObject *py_winerr = NULL;
+
+    if (winerr == 0)
+        winerr = GetLastError();
+    if (filename == NULL) {
+        py_exc = PyObject_CallFunction(PyExc_OSError, "(is)", winerr,
+                                       strerror(winerr));
+    }
+    else {
+        py_exc = PyObject_CallFunction(PyExc_OSError, "(iss)", winerr,
+                                       strerror(winerr), filename);
+    }
+    if (py_exc == NULL)
+        return NULL;
+
+    py_winerr = Py_BuildValue("i", winerr);
+    if (py_winerr == NULL)
+        goto error;
+    if (PyObject_SetAttrString(py_exc, "winerror", py_winerr) != 0)
+        goto error;
+    PyErr_SetObject(PyExc_OSError, py_exc);
+    Py_XDECREF(py_exc);
+    return NULL;
+
+error:
+    Py_XDECREF(py_exc);
+    Py_XDECREF(py_winerr);
+    return NULL;
+}
+#endif
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.

@@ -32,7 +32,7 @@ static const int PSUTIL_CONN_NONE = 128;
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
 // SIZEOF_PID_T is missing on Windows + Python2.
 // In we can't determine pid_t size we assume it's an (int).
-// On major UNIX platforms I've seen pid_t is treated as int.
+// On all UNIX platforms I've seen pid_t is defined as an int.
 // _getpid() on Windows returns an int. We can't be 100% sure though,
 // (in that case we'd probably get compiler warnings).
 #if !defined(SIZEOF_INT)

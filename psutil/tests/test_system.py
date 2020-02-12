@@ -535,7 +535,7 @@ class TestSystemAPIs(unittest.TestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
-            if not WINDOWS:
+            if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
@@ -558,7 +558,7 @@ class TestSystemAPIs(unittest.TestCase):
 
         mount = find_mount_point(__file__)
         mounts = [x.mountpoint.lower() for x in
-                  psutil.disk_partitions(all=True)]
+                  psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
