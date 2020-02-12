@@ -1,24 +1,13 @@
-Setup and running tests
-=======================
+Build, setup and running tests
+===============================
 
-If you plan on hacking on psutil this is what you're supposed to do first:
-
-- clone the GIT repository:
-
-.. code-block:: bash
-
-  $ git clone git@github.com:giampaolo/psutil.git
-
-- install test deps and GIT hooks:
+Make sure to `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__
+a C compiler first, then:
 
 .. code-block:: bash
 
+  git clone git@github.com:giampaolo/psutil.git
   make setup-dev-env
-
-- run tests:
-
-.. code-block:: bash
-
   make test
 
 - bear in mind that ``make``(see `Makefile`_) is the designated tool to run
@@ -60,13 +49,7 @@ On Windows:
 
 .. code-block:: bat
 
-    set PYTHON=C:\python35\python.exe && make test
-
-...or:
-
-.. code-block:: bat
-
-    make -p 35 test
+    make -p C:\python35\python.exe test
 
 If you want to modify psutil and run a script on the fly which uses it do
 (on UNIX):

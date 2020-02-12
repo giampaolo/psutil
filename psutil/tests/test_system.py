@@ -31,9 +31,9 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
-from psutil.tests import CI_TESTING
 from psutil.tests import ASCII_FS
 from psutil.tests import check_net_address
+from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
@@ -45,6 +45,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
+from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
@@ -121,6 +122,8 @@ class TestSystemAPIs(unittest.TestCase):
         else:
             self.fail("subprocess not found")
 
+    @unittest.skipIf(PYPY and WINDOWS,
+                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
@@ -176,6 +179,8 @@ class TestSystemAPIs(unittest.TestCase):
         for p in gone:
             self.assertTrue(hasattr(p, 'returncode'))
 
+    @unittest.skipIf(PYPY and WINDOWS,
+                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
     def test_wait_procs_no_timeout(self):
         sproc1 = get_test_subprocess()
         sproc2 = get_test_subprocess()
@@ -530,7 +535,7 @@ class TestSystemAPIs(unittest.TestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
-            if not WINDOWS:
+            if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
@@ -553,7 +558,7 @@ class TestSystemAPIs(unittest.TestCase):
 
         mount = find_mount_point(__file__)
         mounts = [x.mountpoint.lower() for x in
-                  psutil.disk_partitions(all=True)]
+                  psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 

@@ -50,8 +50,10 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
 
-    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time))
-        return PyErr_SetFromWindowsErr(0);
+    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
 
     idle = (double)((HI_T * idle_time.dwHighDateTime) + \
                    (LO_T * idle_time.dwLowDateTime));
@@ -384,8 +386,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // Allocate size.
     size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
     pBuffer = (BYTE*)LocalAlloc(LPTR, size);
-    if (! pBuffer)
-        return PyErr_SetFromWindowsErr(0);
+    if (! pBuffer) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
 
     // Syscall.
     ret = CallNtPowerInformation(

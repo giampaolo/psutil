@@ -15,8 +15,28 @@
     border-right:10px !important;
 }
 
-.local-toc li ul li{
+.local-toc li ul li {
     padding-left: 20px !important;
+}
+
+.rst-content ul p {
+    margin-bottom: 0px !important;
+}
+
+.document td {
+    padding-bottom: 0px !important;
+}
+
+.document th {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+}
+
+.document th p {
+    margin-bottom: 0px !important;
+}
+
+.document th p {
 }
 
 .function .descclassname {

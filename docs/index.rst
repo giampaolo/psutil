@@ -2345,46 +2345,6 @@ Hardware constants
       >>> if psutil.version_info >= (4, 5):
       ...    pass
 
-----
-
-Unicode
-=======
-
-Starting from version 5.3.0 psutil adds unicode support, see `issue #1040`_.
-The notes below apply to *any* API returning a string such as
-:meth:`Process.exe` or :meth:`Process.cwd`, including non-filesystem related
-methods such as :meth:`Process.username` or :meth:`WindowsService.description`:
-
-* all strings are encoded by using the OS filesystem encoding
-  (``sys.getfilesystemencoding()``) which varies depending on the platform
-  (e.g. "UTF-8" on macOS, "mbcs" on Win)
-* no API call is supposed to crash with ``UnicodeDecodeError``
-* instead, in case of badly encoded data returned by the OS, the following error handlers are used to replace the corrupted characters in the string:
-    * Python 3: ``sys.getfilesystemencodeerrors()`` (PY 3.6+) or
-      ``"surrogatescape"`` on POSIX and ``"replace"`` on Windows
-    * Python 2: ``"replace"``
-* on Python 2 all APIs return bytes (``str`` type), never ``unicode``
-* on Python 2, you can go back to ``unicode`` by doing:
-
-.. code-block:: python
-
-    >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
-
-Example which filters processes with a funky name working with both Python 2
-and 3::
-
-    # -*- coding: utf-8 -*-
-    import psutil, sys
-
-    PY3 = sys.version_info[0] == 2
-    LOOKFOR = u"ƒőő"
-    for proc in psutil.process_iter(attrs=['name']):
-        name = proc.info['name']
-        if not PY3:
-            name = unicode(name, sys.getdefaultencoding(), errors="replace")
-        if LOOKFOR == name:
-             print("process %s found" % p)
-
 Recipes
 =======
 
@@ -2450,60 +2410,13 @@ Kill process tree
                                       callback=on_terminate)
       return (gone, alive)
 
-Terminate my children
----------------------
-
-This may be useful in unit tests whenever sub-processes are started.
-This will help ensure that no extra children (zombies) stick around to hog
-resources.
-
-::
-
-  import psutil
-
-  def reap_children(timeout=3):
-      "Tries hard to terminate and ultimately kill all the children of this process."
-      def on_terminate(proc):
-          print("process {} terminated with exit code {}".format(proc, proc.returncode))
-
-      procs = psutil.Process().children()
-      # send SIGTERM
-      for p in procs:
-          try:
-              p.terminate()
-          except psutil.NoSuchProcess:
-              pass
-      gone, alive = psutil.wait_procs(procs, timeout=timeout, callback=on_terminate)
-      if alive:
-          # send SIGKILL
-          for p in alive:
-              print("process {} survived SIGTERM; trying SIGKILL".format(p))
-              try:
-                  p.kill()
-              except psutil.NoSuchProcess:
-                  pass
-          gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
-          if alive:
-              # give up
-              for p in alive:
-                  print("process {} survived SIGKILL; giving up".format(p))
-
 Filtering and sorting processes
 -------------------------------
 
-This is a collection of one-liners showing how to use :func:`process_iter()` in
-order to filter for processes and sort them.
-
-Setup::
+A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them. Setup::
 
   >>> import psutil
   >>> from pprint import pprint as pp
-
-Processes having "python" in their name::
-
-  >>> pp([p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']])
-  [{'name': 'python3', 'pid': 21947},
-   {'name': 'python', 'pid': 23835}]
 
 Processes owned by user::
 
@@ -2522,11 +2435,9 @@ Processes actively running::
 
 Processes using log files::
 
-  >>> import os
-  >>> import psutil
   >>> for p in psutil.process_iter(attrs=['name', 'open_files']):
   ...      for file in p.info['open_files'] or []:
-  ...          if os.path.splitext(file.path)[1] == '.log':
+  ...          if file.path.endswith('.log'):
   ...               print("%-5s %-10s %s" % (p.pid, p.info['name'][:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
@@ -2540,33 +2451,12 @@ Processes consuming more than 500M of memory::
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
 
-Top 3 most memory consuming processes::
-
-  >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'memory_percent']), key=lambda p: p.info['memory_percent'])][-3:])
-  [(21915, {'memory_percent': 3.6815453247662737, 'name': 'sublime_text'}),
-   (3038, {'memory_percent': 6.732935429979187, 'name': 'chrome'}),
-   (3249, {'memory_percent': 8.994554843376399, 'name': 'chrome'})]
-
 Top 3 processes which consumed the most CPU time::
 
   >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(attrs=['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
   [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
-
-Top 3 processes which caused the most I/O::
-
-  >>> pp([(p.pid, p.info['name']) for p in sorted(psutil.process_iter(attrs=['name', 'io_counters']), key=lambda p: p.info['io_counters'] and p.info['io_counters'][:2])][-3:])
-  [(21915, 'sublime_text'),
-   (1871, 'pulseaudio'),
-   (1510, 'upstart')]
-
-Top 3 processes opening more file descriptors::
-
-   >>> pp([(p.pid, p.info) for p in sorted(psutil.process_iter(attrs=['name', 'num_fds']), key=lambda p: p.info['num_fds'])][-3:])
-  [(21915, {'name': 'sublime_text', 'num_fds': 105}),
-   (2721, {'name': 'chrome', 'num_fds': 185}),
-   (2650, {'name': 'chrome', 'num_fds': 354})]
 
 Bytes conversion
 ----------------
@@ -2600,27 +2490,6 @@ Bytes conversion
   100399730688
   93.5G
 
-Supported platforms
-===================
-
-These are the platforms I develop and test on:
-
-* Linux Ubuntu 18.04
-* Windows 10 (support back to Windows Vista)
-* MacOS 10.11 El Captain
-* Solaris 10
-* FreeBSD 11
-* OpenBSD 6.4
-* NetBSD 8.0
-* AIX 6.1 TL8 (maintainer `Arnon Yaari <https://github.com/wiggin15>`__)
-
-Earlier versions are supposed to work but are not tested.
-For Linux, Windows and MacOS we have continuos integration. Other platforms
-are tested manually from time to time.
-Minimum supported Windows version is Windows Vista (Windows XP and Windows
-Server 2003 are not supported).
-Supported Python versions are 3.4+, 2.7 and 2.6.
-
 FAQs
 ====
 
@@ -2638,20 +2507,29 @@ FAQs
 Running tests
 =============
 
-There are two ways of running tests. If psutil is already installed use::
+::
 
-    $ python -m psutil.tests
-
-You can use this method as a quick way to make sure psutil fully works on your
-platform. If you have a copy of the source code you can also use::
-
-    $ make test
+    $ python3 -m psutil.tests
 
 Development guide
 =================
 
-If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
+If you want to hacking on psutil (e.g. want to add a new feature or fix a bug)
 take a look at the `development guide`_.
+
+Platforms support history
+=========================
+
+* psutil 5.7.0 (2020-02): drop Windows XP & Server 2003 support
+* psutil 5.7.0 (2020-02): **PyPy** on Windows
+* psutil 5.4.0 (2017-11): **AIX**
+* psutil 3.4.1 (2016-01): **NetBSD**
+* psutil 3.3.0 (2015-11): **OpenBSD**
+* psutil 1.0.0 (2013-07): **Solaris**
+* psutil 0.1.1 (2009-03): **FreeBSD**
+* psutil 0.1.0 (2009-01): **Linux, Windows, macOS**
+
+Supported Python versions are 2.6, 2.7, 3.4+ and PyPy3.
 
 Timeline
 ========
