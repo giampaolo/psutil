@@ -27,6 +27,13 @@ static const int PSUTIL_CONN_NONE = 128;
     #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
 #endif
 
+#if defined(PSUTIL_WINDOWS) && \
+        defined(PYPY_VERSION) && \
+        !defined(PyErr_SetFromWindowsErrWithFilename)
+    PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
+                                                  const char *filename);
+#endif
+
 // --- _Py_PARSE_PID
 
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
@@ -127,9 +134,4 @@ int psutil_setup(void);
     PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
     PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
-
-    #if defined(PYPY_VERSION) && !defined(PyErr_SetFromWindowsErrWithFilename)
-        PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
-                                                      const char *filename);
-    #endif
 #endif
