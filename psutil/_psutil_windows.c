@@ -45,27 +45,6 @@ static PyObject *TimeoutAbandoned;
 
 
 /*
- * Convert a FILETIME structure to a UNIX time.
- * A FILETIME contains a 64-bit value representing the number of
- * 100-nanosecond intervals since January 1, 1601 (UTC).
- * A UNIX time is the number of seconds that have elapsed since the
- * UNIX epoch, that is the time 00:00:00 UTC on 1 January 1970
- */
-double
-psutil_FileTimeToUnixTime(FILETIME ft) {
-    ULONGLONG ull;
-
-    // 100 nanosecond intervals since January 1, 1601
-    ull = (ULONGLONG)ft.dwHighDateTime << 32;
-    ull += (ULONGLONG)ft.dwLowDateTime;
-    // change starting time to the Epoch (00:00:00 UTC, January 1, 1970)
-    ull -= 116444736000000000ull;
-    // convert nano secs to secs
-    return (double) ull / 10000000ull;
-}
-
-
-/*
  * Return the number of logical, active CPUs. Return 0 if undetermined.
  * See discussion at: https://bugs.python.org/issue33166#msg314631
  */
@@ -106,7 +85,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     GetSystemTimeAsFileTime(&fileTime);
     // Number of milliseconds that have elapsed since the system was started.
     upTime = GetTickCount64() / 1000ull;
-    return Py_BuildValue("d", psutil_FileTimeToUnixTime(fileTime) - upTime);
+    return Py_BuildValue("d", psutil_FiletimeToUnixTime(fileTime) - upTime);
 }
 
 
@@ -366,7 +345,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
-    return Py_BuildValue("d", psutil_FileTimeToUnixTime(ftCreate));
+    return Py_BuildValue("d", psutil_FiletimeToUnixTime(ftCreate));
 }
 
 
