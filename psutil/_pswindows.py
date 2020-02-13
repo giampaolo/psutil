@@ -722,10 +722,12 @@ class Process(object):
 
     def oneshot_enter(self):
         self._proc_info.cache_activate(self)
+        self._proc_times.cache_activate(self)
         self.exe.cache_activate(self)
 
     def oneshot_exit(self):
         self._proc_info.cache_deactivate(self)
+        self._proc_times.cache_deactivate(self)
         self.exe.cache_deactivate(self)
 
     @memoize_when_activated
@@ -736,6 +738,11 @@ class Process(object):
         ret = cext.proc_info(self.pid)
         assert len(ret) == len(pinfo_map)
         return ret
+
+    @memoize_when_activated
+    def _proc_times(self):
+        user, system, created = cext.proc_times(self.pid)
+        return (user, system, created)
 
     def name(self):
         """Return process name, which on Windows is always the final
@@ -928,7 +935,7 @@ class Process(object):
     @wrap_exceptions
     def create_time(self):
         try:
-            user, kernel, created = cext.proc_times(self.pid)
+            user, kernel, created = self._proc_times()
             return created
         except OSError as err:
             if is_permission_err(err):
@@ -951,7 +958,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system, created = cext.proc_times(self.pid)
+            user, system, created = self._proc_times()
         except OSError as err:
             if not is_permission_err(err):
                 raise
