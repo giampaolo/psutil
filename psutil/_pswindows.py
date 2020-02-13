@@ -721,16 +721,16 @@ class Process(object):
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self.oneshot_info.cache_activate(self)
+        self._proc_info.cache_activate(self)
         self.exe.cache_activate(self)
 
     def oneshot_exit(self):
-        self.oneshot_info.cache_deactivate(self)
+        self._proc_info.cache_deactivate(self)
         self.exe.cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
-    def oneshot_info(self):
+    def _proc_info(self):
         """Return multiple information about this process as a
         raw tuple.
         """
@@ -812,7 +812,7 @@ class Process(object):
             if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
-                info = self.oneshot_info()
+                info = self._proc_info()
                 return (
                     info[pinfo_map['num_page_faults']],
                     info[pinfo_map['peak_wset']],
@@ -933,12 +933,12 @@ class Process(object):
             return created
         except OSError as err:
             if is_permission_err(err):
-                return self.oneshot_info()[pinfo_map['create_time']]
+                return self._proc_info()[pinfo_map['create_time']]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return self.oneshot_info()[pinfo_map['num_threads']]
+        return self._proc_info()[pinfo_map['num_threads']]
 
     @wrap_exceptions
     def threads(self):
@@ -956,7 +956,7 @@ class Process(object):
         except OSError as err:
             if not is_permission_err(err):
                 raise
-            info = self.oneshot_info()
+            info = self._proc_info()
             user = info[pinfo_map['user_time']]
             system = info[pinfo_map['kernel_time']]
         # Children user/system times are not retrievable (set to 0).
@@ -1037,7 +1037,7 @@ class Process(object):
         except OSError as err:
             if not is_permission_err(err):
                 raise
-            info = self.oneshot_info()
+            info = self._proc_info()
             ret = (
                 info[pinfo_map['io_rcount']],
                 info[pinfo_map['io_wcount']],
@@ -1094,11 +1094,11 @@ class Process(object):
             return cext.proc_num_handles(self.pid)
         except OSError as err:
             if is_permission_err(err):
-                return self.oneshot_info()[pinfo_map['num_handles']]
+                return self._proc_info()[pinfo_map['num_handles']]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = self.oneshot_info()[pinfo_map['ctx_switches']]
+        ctx_switches = self._proc_info()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
         return _common.pctxsw(ctx_switches, 0)
