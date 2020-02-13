@@ -578,7 +578,8 @@ out:
  * fills the structure with various process information in one shot
  * by using NtQuerySystemInformation.
  * We use this as a fallback when faster functions fail with access
- * denied. This is slower because it iterates over all processes.
+ * denied. This is slower because it iterates over all processes
+ * but it doesn't require any privilege (also work for PID 0).
  * On success return 1, else 0 with Python exception already set.
  */
 int
@@ -669,7 +670,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     ULONG ctx_switches = 0;
     double user_time;
     double kernel_time;
-    long long create_time;
+    double create_time;
     PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -692,9 +693,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         create_time = 0;
     }
     else {
-        create_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
-        create_time += process->CreateTime.LowPart - 116444736000000000LL;
-        create_time /= 10000000;
+        create_time = psutil_LargeIntegerToUnixTime(process->CreateTime);
     }
 
     py_retlist = Py_BuildValue(
@@ -707,7 +706,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         ctx_switches,                           // num ctx switches
         user_time,                              // cpu user time
         kernel_time,                            // cpu kernel time
-        (double)create_time,                    // create time
+        create_time,                            // create time
         (int)process->NumberOfThreads,          // num threads
         // IO counters
         process->ReadOperationCount.QuadPart,   // io rcount

@@ -79,30 +79,13 @@ psutil_get_num_cpus(int fail_on_err) {
  */
 static PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
-    ULONGLONG uptime;
-    time_t pt;
+    ULONGLONG upTime;
     FILETIME fileTime;
-    ULONGLONG ll;
 
     GetSystemTimeAsFileTime(&fileTime);
-    /*
-    HUGE thanks to:
-    http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
-
-    This function converts the FILETIME structure to the 32 bit
-    Unix time structure.
-    The time_t is a 32-bit value for the number of seconds since
-    January 1, 1970. A FILETIME is a 64-bit for the number of
-    100-nanosecond periods since January 1, 1601. Convert by
-    subtracting the number of 100-nanosecond period between 01-01-1970
-    and 01-01-1601, from time_t the divide by 1e+7 to get to the same
-    base granularity.
-    */
-    ll = (((ULONGLONG)
-        (fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
-    pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
-    uptime = GetTickCount64() / 1000ull;
-    return Py_BuildValue("K", pt - uptime);
+    // Number of milliseconds that have elapsed since the system was started.
+    upTime = GetTickCount64() / 1000ull;
+    return Py_BuildValue("d", psutil_FiletimeToUnixTime(fileTime) - upTime);
 }
 
 
@@ -320,10 +303,10 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
      */
     return Py_BuildValue(
        "(dd)",
-       (double)(ftUser.dwHighDateTime * 429.4967296 + \
-                ftUser.dwLowDateTime * 1e-7),
-       (double)(ftKernel.dwHighDateTime * 429.4967296 + \
-                ftKernel.dwLowDateTime * 1e-7)
+       (double)(ftUser.dwHighDateTime * HI_T + \
+                ftUser.dwLowDateTime * LO_T),
+       (double)(ftKernel.dwHighDateTime * HI_T + \
+                ftKernel.dwLowDateTime * LO_T)
    );
 }
 
@@ -335,7 +318,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_create_time(PyObject *self, PyObject *args) {
     DWORD       pid;
-    long long   unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
@@ -363,34 +345,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
-
-    /*
-    // Make sure the process is not gone as OpenProcess alone seems to be
-    // unreliable in doing so (it seems a previous call to p.wait() makes
-    // it unreliable).
-    // This check is important as creation time is used to make sure the
-    // process is still running.
-    ret = GetExitCodeProcess(hProcess, &exitCode);
-    CloseHandle(hProcess);
-    if (ret != 0) {
-        if (exitCode != STILL_ACTIVE)
-            return NoSuchProcess("GetExitCodeProcess");
-    }
-    else {
-        // Ignore access denied as it means the process is still alive.
-        // For all other errors, we want an exception.
-        if (GetLastError() != ERROR_ACCESS_DENIED)
-            return PyErr_SetFromWindowsErr(0);
-    }
-    */
-
-    // Convert the FILETIME structure to a Unix time.
-    // It's the best I could find by googling and borrowing code here
-    // and there. The time returned has a precision of 1 second.
-    unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
-    unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
-    unix_time /= 10000000;
-    return Py_BuildValue("d", (double)unix_time);
+    return Py_BuildValue("d", psutil_FiletimeToUnixTime(ftCreate));
 }
 
 
@@ -844,10 +799,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             py_tuple = Py_BuildValue(
                 "kdd",
                 te32.th32ThreadID,
-                (double)(ftUser.dwHighDateTime * 429.4967296 + \
-                         ftUser.dwLowDateTime * 1e-7),
-                (double)(ftKernel.dwHighDateTime * 429.4967296 + \
-                         ftKernel.dwLowDateTime * 1e-7));
+                (double)(ftUser.dwHighDateTime * HI_T + \
+                         ftUser.dwLowDateTime * LO_T),
+                (double)(ftKernel.dwHighDateTime * HI_T + \
+                         ftKernel.dwLowDateTime * LO_T));
             if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))

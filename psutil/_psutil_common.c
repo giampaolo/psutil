@@ -352,6 +352,7 @@ psutil_set_winver() {
     return 0;
 }
 
+
 int
 psutil_load_globals() {
     if (psutil_loadlibs() != 0)
@@ -361,5 +362,42 @@ psutil_load_globals() {
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
     return 0;
+}
+
+
+/*
+ * Convert the hi and lo parts of a FILETIME structure or a LARGE_INTEGER
+ * to a UNIX time.
+ * A FILETIME contains a 64-bit value representing the number of
+ * 100-nanosecond intervals since January 1, 1601 (UTC).
+ * A UNIX time is the number of seconds that have elapsed since the
+ * UNIX epoch, that is the time 00:00:00 UTC on 1 January 1970.
+ */
+static double
+_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
+    ULONGLONG ret;
+
+    // 100 nanosecond intervals since January 1, 1601.
+    ret = hiPart << 32;
+    ret += loPart;
+    // Change starting time to the Epoch (00:00:00 UTC, January 1, 1970).
+    ret -= 116444736000000000ull;
+    // Convert nano secs to secs.
+    return (double) ret / 10000000ull;
+}
+
+
+double
+psutil_FiletimeToUnixTime(FILETIME ft) {
+    return _to_unix_time((ULONGLONG)ft.dwHighDateTime,
+                         (ULONGLONG)ft.dwLowDateTime);
+
+}
+
+
+double
+psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
+    return _to_unix_time((ULONGLONG)li.HighPart,
+                         (ULONGLONG)li.LowPart);
 }
 #endif  // PSUTIL_WINDOWS

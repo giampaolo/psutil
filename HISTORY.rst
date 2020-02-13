@@ -19,6 +19,8 @@ XXXX-XX-XX
 - 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
 - 1681_: [Linux] disk_partitions() now also shows swap partitions.
 - 1686_: [Windows] added support for PyPy on Windows.
+- 1693_: [Windows] boot_time() and Process.create_time() now have the precision
+  of a micro second (before the precision was of a second).
 
 **Bug fixes**
 
