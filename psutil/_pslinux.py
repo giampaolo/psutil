@@ -752,6 +752,8 @@ class Connections:
     """
 
     def __init__(self):
+        # The string represents the basename of the corresponding
+        # /proc/net/{proto_name} file.
         tcp4 = ("tcp", socket.AF_INET, socket.SOCK_STREAM)
         tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
         udp4 = ("udp", socket.AF_INET, socket.SOCK_DGRAM)
@@ -956,15 +958,14 @@ class Connections:
         else:
             inodes = self.get_all_inodes()
         ret = set()
-        for f, family, type_ in self.tmap[kind]:
+        for proto_name, family, type_ in self.tmap[kind]:
+            path = "%s/net/%s" % (self._procfs_path, proto_name)
             if family in (socket.AF_INET, socket.AF_INET6):
                 ls = self.process_inet(
-                    "%s/net/%s" % (self._procfs_path, f),
-                    family, type_, inodes, filter_pid=pid)
+                    path, family, type_, inodes, filter_pid=pid)
             else:
                 ls = self.process_unix(
-                    "%s/net/%s" % (self._procfs_path, f),
-                    family, inodes, filter_pid=pid)
+                    path, family, inodes, filter_pid=pid)
             for fd, family, type_, laddr, raddr, status, bound_pid in ls:
                 if pid:
                     conn = _common.pconn(fd, family, type_, laddr, raddr,
