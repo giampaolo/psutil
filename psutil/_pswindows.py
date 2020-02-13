@@ -929,7 +929,8 @@ class Process(object):
     @wrap_exceptions
     def create_time(self):
         try:
-            return cext.proc_create_time(self.pid)
+            user, kernel, created = cext.proc_times(self.pid)
+            return created
         except OSError as err:
             if is_permission_err(err):
                 return self.oneshot_info()[pinfo_map['create_time']]
@@ -951,7 +952,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system = cext.proc_cpu_times(self.pid)
+            user, system, created = cext.proc_times(self.pid)
         except OSError as err:
             if not is_permission_err(err):
                 raise
