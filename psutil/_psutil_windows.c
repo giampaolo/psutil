@@ -265,7 +265,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args) {
+psutil_proc_times(PyObject *self, PyObject *args) {
     DWORD       pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
@@ -302,50 +302,13 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
      * below from Python's Modules/posixmodule.c
      */
     return Py_BuildValue(
-       "(dd)",
+       "(ddd)",
        (double)(ftUser.dwHighDateTime * HI_T + \
                 ftUser.dwLowDateTime * LO_T),
        (double)(ftKernel.dwHighDateTime * HI_T + \
-                ftKernel.dwLowDateTime * LO_T)
+                ftKernel.dwLowDateTime * LO_T),
+       psutil_FiletimeToUnixTime(ftCreate)
    );
-}
-
-
-/*
- * Return a Python float indicating the process create time expressed in
- * seconds since the epoch.
- */
-static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args) {
-    DWORD       pid;
-    HANDLE      hProcess;
-    FILETIME    ftCreate, ftExit, ftKernel, ftUser;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    // special case for PIDs 0 and 4, return system boot time
-    if (0 == pid || 4 == pid)
-        return psutil_boot_time(NULL, NULL);
-
-    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (hProcess == NULL)
-        return NULL;
-    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        if (GetLastError() == ERROR_ACCESS_DENIED) {
-            // usually means the process has died so we throw a
-            // NoSuchProcess here
-            NoSuchProcess("GetProcessTimes");
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
-        CloseHandle(hProcess);
-        return NULL;
-    }
-
-    CloseHandle(hProcess);
-    return Py_BuildValue("d", psutil_FiletimeToUnixTime(ftCreate));
 }
 
 
@@ -1573,11 +1536,8 @@ PsutilMethods[] = {
      "Return path of the process executable"},
     {"proc_kill", psutil_proc_kill, METH_VARARGS,
      "Kill the process identified by the given PID"},
-    {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
+    {"proc_times", psutil_proc_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
-    {"proc_create_time", psutil_proc_create_time, METH_VARARGS,
-     "Return a float indicating the process create time expressed in "
-     "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
