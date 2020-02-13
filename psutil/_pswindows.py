@@ -935,7 +935,7 @@ class Process(object):
     @wrap_exceptions
     def create_time(self):
         try:
-            user, kernel, created = self._proc_times()
+            user, system, created = self._proc_times()
             return created
         except OSError as err:
             if is_permission_err(err):
