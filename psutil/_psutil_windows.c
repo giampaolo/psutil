@@ -324,10 +324,10 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
      */
     return Py_BuildValue(
        "(dd)",
-       (double)(ftUser.dwHighDateTime * 429.4967296 + \
-                ftUser.dwLowDateTime * 1e-7),
-       (double)(ftKernel.dwHighDateTime * 429.4967296 + \
-                ftKernel.dwLowDateTime * 1e-7)
+       (double)(ftUser.dwHighDateTime * HI_T + \
+                ftUser.dwLowDateTime * LO_T),
+       (double)(ftKernel.dwHighDateTime * HI_T + \
+                ftKernel.dwLowDateTime * LO_T)
    );
 }
 
@@ -820,10 +820,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             py_tuple = Py_BuildValue(
                 "kdd",
                 te32.th32ThreadID,
-                (double)(ftUser.dwHighDateTime * 429.4967296 + \
-                         ftUser.dwLowDateTime * 1e-7),
-                (double)(ftKernel.dwHighDateTime * 429.4967296 + \
-                         ftKernel.dwLowDateTime * 1e-7));
+                (double)(ftUser.dwHighDateTime * HI_T + \
+                         ftUser.dwLowDateTime * LO_T),
+                (double)(ftKernel.dwHighDateTime * HI_T + \
+                         ftKernel.dwLowDateTime * LO_T));
             if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
