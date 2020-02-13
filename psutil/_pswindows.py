@@ -728,7 +728,6 @@ class Process(object):
         self._proc_info.cache_deactivate(self)
         self.exe.cache_deactivate(self)
 
-    @wrap_exceptions
     @memoize_when_activated
     def _proc_info(self):
         """Return multiple information about this process as a
