@@ -38,10 +38,10 @@ static const int PSUTIL_CONN_NONE = 128;
 
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
 // SIZEOF_PID_T is missing on Windows + Python2.
-// In we can't determine pid_t size we assume it's an (int).
-// On all UNIX platforms I've seen pid_t is defined as an int.
-// _getpid() on Windows returns an int. We can't be 100% sure though,
-// (in that case we'd probably get compiler warnings).
+// In this case we guess it from setup.py. It's not 100% bullet proof,
+// If wrong we'll probably get compiler warnings.
+// FWIW on all UNIX platforms I've seen pid_t is defined as an int.
+// _getpid() on Windows also returns an int.
 #if !defined(SIZEOF_INT)
     #define SIZEOF_INT 4
 #endif
@@ -49,9 +49,6 @@ static const int PSUTIL_CONN_NONE = 128;
     #define SIZEOF_LONG 8
 #endif
 #if !defined(SIZEOF_PID_T)
-    #if PSUTIL_SIZEOF_PID_T != 4
-        #warning "SIZEOF_PID_T was guessed"
-    #endif
     #define SIZEOF_PID_T PSUTIL_SIZEOF_PID_T  // set as a macro in setup.py
 #endif
 

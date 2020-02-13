@@ -56,7 +56,7 @@ if BSD:
 # Needed to determine _Py_PARSE_PID in case it's missing (Python 2, PyPy).
 # Taken from Lib/test/test_fcntl.py.
 # XXX: not bullet proof as the (long long) case is missing.
-if struct.calcsize('l') == 8:
+if struct.calcsize('l') <= 8:
     macros.append(('PSUTIL_SIZEOF_PID_T', '4'))  # int
 else:
     macros.append(('PSUTIL_SIZEOF_PID_T', '8'))  # long
