@@ -722,9 +722,9 @@ class TestDiskAPIs(unittest.TestCase):
         ls = psutil.disk_swaps()
         self.assertIsInstance(ls, list)
         if not ls:
-            raise self.skipTest("no swap disks")
+            raise self.skipTest("no swap locations")
         for swap in ls:
-            assert os.path.exists(swap.path)
+            assert os.path.exists(swap.path), swap.path
             self.assertGreaterEqual(swap.total, 0)
             self.assertGreaterEqual(swap.used, 0)
             if LINUX:
