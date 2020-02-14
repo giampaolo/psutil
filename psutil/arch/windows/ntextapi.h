@@ -35,6 +35,8 @@ typedef LONG NTSTATUS;
 #define ProcessWow64Information 26
 #undef  SystemProcessIdInformation
 #define SystemProcessIdInformation 88
+#undef  SystemPagefileInformation
+#define SystemPagefileInformation 18
 
 // process suspend() / resume()
 typedef enum _KTHREAD_STATE {

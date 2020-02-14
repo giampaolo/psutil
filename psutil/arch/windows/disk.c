@@ -345,6 +345,16 @@ error:
 
 
 /*
+ * Return information about the disk page files as a list.
+ * A page file is basically the same thing as a swap partition.
+ */
+PyObject *
+psutil_disk_swaps(PyObject *self, PyObject *args) {
+    return Py_BuildValue("i", 77);
+}
+
+
+/*
  Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
  and return the corresponding drive letter (e.g. "C:\\").
  If no match is found return an empty string.

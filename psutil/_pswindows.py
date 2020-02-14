@@ -274,6 +274,10 @@ def disk_partitions(all):
     return [_common.sdiskpart(*x) for x in rawlist]
 
 
+def disk_swaps():
+    return cext.disk_swaps()
+
+
 # =====================================================================
 # --- CPU
 # =====================================================================
