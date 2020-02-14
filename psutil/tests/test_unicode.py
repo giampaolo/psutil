@@ -305,6 +305,8 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
+@unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
+                 "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_name = TESTFN_UNICODE
@@ -322,6 +324,8 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(PYPY, "unreliable on PYPY")
+@unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
+                 "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
     funky_name = INVALID_NAME

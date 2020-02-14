@@ -625,14 +625,14 @@ class TestDualProcessImplementation(TestCase):
 
     def test_create_time(self):
         ctime = psutil.Process(self.pid).create_time()
-        with mock.patch("psutil._psplatform.cext.proc_create_time",
+        with mock.patch("psutil._psplatform.cext.proc_times",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
             self.assertEqual(psutil.Process(self.pid).create_time(), ctime)
             assert fun.called
 
     def test_cpu_times(self):
         cpu_times_1 = psutil.Process(self.pid).cpu_times()
-        with mock.patch("psutil._psplatform.cext.proc_cpu_times",
+        with mock.patch("psutil._psplatform.cext.proc_times",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
             cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
