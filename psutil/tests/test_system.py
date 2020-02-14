@@ -737,6 +737,11 @@ class TestDiskAPIs(unittest.TestCase):
                 self.assertEqual(swap._fields, fields)
                 self.assertGreaterEqual(swap.peak, 0)
 
+        if LINUX:
+            self.assertEqual(
+                psutil.swap_memory().total,
+                sum([x.total for x in psutil.disk_swaps()]))
+
 
 class TestNetAPIs(unittest.TestCase):
 
