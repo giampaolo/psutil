@@ -353,8 +353,14 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     NTSTATUS status;
     PVOID buffer;
     ULONG bufferSize = 0x200;
-    PSYSTEM_PAGEFILE_INFORMATION pagefile = NULL;
+    PSYSTEM_PAGEFILE_INFORMATION pInfo;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
+    if (! py_retlist)
+        return NULL;
+
+    // Enumerate page files.
     buffer = MALLOC_ZERO(bufferSize);
     while ((status = NtQuerySystemInformation(
         SystemPageFileInformation,
@@ -369,11 +375,39 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
 
     if (! NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
-        return NULL;
+        goto error;
+    }
+
+    // Traverse the resulting struct.
+    pInfo = (SYSTEM_PAGEFILE_INFORMATION *)buffer;
+    while (TRUE) {
+        // entry
+        py_tuple = Py_BuildValue(
+            "kkk",
+            pInfo->TotalSize * PSUTIL_SYSTEM_INFO.dwPageSize,
+            pInfo->TotalInUse * PSUTIL_SYSTEM_INFO.dwPageSize,
+            pInfo->PeakUsage * PSUTIL_SYSTEM_INFO.dwPageSize
+        );
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_CLEAR(py_tuple);
+        // end of list
+        if (pInfo->NextEntryOffset == 0)
+            break;
+        // point to next struct
+        pInfo = (SYSTEM_PAGEFILE_INFORMATION *) \
+            ((BYTE *)pInfo + pInfo->NextEntryOffset);
     }
 
     FREE(buffer);
-    return Py_BuildValue("i", 77);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 

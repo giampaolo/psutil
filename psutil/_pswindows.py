@@ -165,6 +165,10 @@ scputimes = namedtuple('scputimes',
                        ['user', 'system', 'idle', 'interrupt', 'dpc'])
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+# psutil.disk_swaps()
+sdiskswaps = namedtuple(
+    'sdiskswaps', ['path', 'total', 'used',  # common to all platforms
+                   'peak'])                  # Windows specific
 # psutil.Process.memory_info()
 pmem = namedtuple(
     'pmem', ['rss', 'vms',
@@ -275,7 +279,12 @@ def disk_partitions(all):
 
 
 def disk_swaps():
-    return cext.disk_swaps()
+    """Return disk page files information."""
+    ret = []
+    for total, used, peak in cext.disk_swaps():
+        nt = sdiskswaps("path", total, used, peak)
+        ret.append(nt)
+    return ret
 
 
 # =====================================================================

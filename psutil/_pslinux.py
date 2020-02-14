@@ -184,7 +184,7 @@ sdiskio = namedtuple(
                 'busy_time'])
 # psutil.disk_swaps()
 sdiskswaps = namedtuple(
-    'sdiskswaps', ['path', 'total', 'used', 'fstype', 'opts'])
+    'sdiskswaps', ['path', 'total', 'used', 'fstype', 'priority'])
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
@@ -1205,12 +1205,12 @@ def disk_swaps():
                 fstype = name_and_type.split()[-1]
                 # "/dev/nvme0n1p3   partition" -> "/dev/nvme0n1p3"
                 path = name_and_type.rstrip(fstype).strip()
-                total, used, priority = map(int, other_fields.split('\t'))
                 # The priority column is useful when multiple swap
                 # files are in use. The lower the priority, the
                 # more likely the swap file is to be used.
-                opts = "priority=%i" % priority
-                nt = sdiskswaps(path, total, used, fstype, opts)
+                total, used, priority = map(int, other_fields.split('\t'))
+                nt = sdiskswaps(path, total, used,  # common
+                                fstype, priority)   # linux only
                 retlist.append(nt)
         return retlist
 
