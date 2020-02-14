@@ -380,33 +380,38 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     }
 
     // Traverse the resulting struct.
+    // A TotalSize of 0 is used to indicate that there are no pagefiles.
     pInfo = (SYSTEM_PAGEFILE_INFORMATION *)buffer;
-    while (TRUE) {
-        // entry
-        py_path = PyUnicode_FromWideChar(
-            pInfo->PageFileName.Buffer,
-            wcslen(pInfo->PageFileName.Buffer));
-        if (! py_path)
-            goto error;
-        py_tuple = Py_BuildValue(
-            "Okkk",
-            py_path,
-            pInfo->TotalSize * PSUTIL_SYSTEM_INFO.dwPageSize,
-            pInfo->TotalInUse * PSUTIL_SYSTEM_INFO.dwPageSize,
-            pInfo->PeakUsage * PSUTIL_SYSTEM_INFO.dwPageSize
-        );
-        if (!py_tuple)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
-        Py_CLEAR(py_path);
-        // end of list
-        if (pInfo->NextEntryOffset == 0)
-            break;
-        // point to next struct
-        pInfo = (SYSTEM_PAGEFILE_INFORMATION *) \
-            ((BYTE *)pInfo + pInfo->NextEntryOffset);
+    if (pInfo->TotalSize != 0) {
+        while (TRUE) {
+            // construct python list
+            py_path = PyUnicode_FromWideChar(
+                pInfo->PageFileName.Buffer,
+                wcslen(pInfo->PageFileName.Buffer));
+            if (! py_path)
+                goto error;
+
+            py_tuple = Py_BuildValue(
+                "Okkk",
+                py_path,
+                pInfo->TotalSize * PSUTIL_SYSTEM_INFO.dwPageSize,
+                pInfo->TotalInUse * PSUTIL_SYSTEM_INFO.dwPageSize,
+                pInfo->PeakUsage * PSUTIL_SYSTEM_INFO.dwPageSize
+            );
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_path);
+
+            // end of list
+            if (pInfo->NextEntryOffset == 0)
+                break;
+            // point to next struct
+            pInfo = (SYSTEM_PAGEFILE_INFORMATION *) \
+                ((BYTE *)pInfo + pInfo->NextEntryOffset);
+        }
     }
 
     FREE(buffer);

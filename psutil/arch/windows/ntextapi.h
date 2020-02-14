@@ -18,7 +18,6 @@ typedef LONG NTSTATUS;
 #define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
 #define STATUS_NOT_FOUND ((NTSTATUS)0xC0000225L)
 #define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
-#define STATUS_INSUFFICIENT_RESOURCES ((NTSTATUS)0xC000009AL)
 
 // ================================================================
 // Enums
