@@ -1195,7 +1195,6 @@ psutil_users(PyObject *self, PyObject *args) {
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
-    long long unix_time;
     WINSTATION_INFO station_info;
     ULONG returnLen;
     PyObject *py_tuple = NULL;
@@ -1271,18 +1270,15 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        unix_time = ((LONGLONG)station_info.ConnectTime.dwHighDateTime) << 32;
-        unix_time += \
-            station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
-        unix_time /= 10000000;
-
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
         if (py_username == NULL)
             goto error;
-        py_tuple = Py_BuildValue("OOd",
-                                 py_username,
-                                 py_address,
-                                 (double)unix_time);
+        py_tuple = Py_BuildValue(
+            "OOd",
+            py_username,
+            py_address,
+            psutil_FiletimeToUnixTime(station_info.ConnectTime)
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
