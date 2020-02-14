@@ -355,6 +355,7 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     ULONG bufferSize = 0x200;
     PSYSTEM_PAGEFILE_INFORMATION pInfo;
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (! py_retlist)
@@ -382,8 +383,14 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     pInfo = (SYSTEM_PAGEFILE_INFORMATION *)buffer;
     while (TRUE) {
         // entry
+        py_path = PyUnicode_FromWideChar(
+            pInfo->PageFileName.Buffer,
+            wcslen(pInfo->PageFileName.Buffer));
+        if (! py_path)
+            goto error;
         py_tuple = Py_BuildValue(
-            "kkk",
+            "Okkk",
+            py_path,
             pInfo->TotalSize * PSUTIL_SYSTEM_INFO.dwPageSize,
             pInfo->TotalInUse * PSUTIL_SYSTEM_INFO.dwPageSize,
             pInfo->PeakUsage * PSUTIL_SYSTEM_INFO.dwPageSize
@@ -393,6 +400,7 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_CLEAR(py_tuple);
+        Py_CLEAR(py_path);
         // end of list
         if (pInfo->NextEntryOffset == 0)
             break;
@@ -406,6 +414,7 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     return NULL;
 }

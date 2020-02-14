@@ -200,6 +200,9 @@ def convert_dos_path(s):
     into:
         "C:\Windows\systemew\file.txt"
     """
+    # "\??\" refers to \GLOBAL??\. Just remove it.
+    if s.startswith("\\??\\"):
+        return s[4:]
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.win32_QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive):]
@@ -281,8 +284,10 @@ def disk_partitions(all):
 def disk_swaps():
     """Return disk page files information."""
     ret = []
-    for total, used, peak in cext.disk_swaps():
-        nt = sdiskswaps("path", total, used, peak)
+    rawlist = cext.disk_swaps()
+    for dospath, total, used, peak in rawlist:
+        path = convert_dos_path(dospath)
+        nt = sdiskswaps(path, total, used, peak)
         ret.append(nt)
     return ret
 
