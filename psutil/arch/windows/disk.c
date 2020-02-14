@@ -351,7 +351,7 @@ error:
 PyObject *
 psutil_disk_swaps(PyObject *self, PyObject *args) {
     NTSTATUS status;
-    PVOID buffer;
+    PVOID buffer = NULL;
     ULONG bufferSize = 0x200;
     PSYSTEM_PAGEFILE_INFORMATION pInfo;
     PyObject *py_tuple = NULL;
@@ -408,7 +408,7 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
             // end of list
             if (pInfo->NextEntryOffset == 0)
                 break;
-            // point to next struct
+            // set pointer to the next pInfo struct
             pInfo = (SYSTEM_PAGEFILE_INFORMATION *) \
                 ((BYTE *)pInfo + pInfo->NextEntryOffset);
         }
@@ -418,6 +418,8 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    if (buffer != NULL)
+        FREE(buffer);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
