@@ -166,9 +166,9 @@ scputimes = namedtuple('scputimes',
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 # psutil.disk_swaps()
-sdiskswaps = namedtuple(
-    'sdiskswaps', ['path', 'total', 'used',  # common to all platforms
-                   'peak'])                  # Windows specific
+sdiskswap = namedtuple(
+    'sdiskswap', ['path', 'total', 'used',  # common to all platforms
+                  'peak'])                  # Windows specific
 # psutil.Process.memory_info()
 pmem = namedtuple(
     'pmem', ['rss', 'vms',
@@ -287,7 +287,7 @@ def disk_swaps():
     rawlist = cext.disk_swaps()
     for dospath, total, used, peak in rawlist:
         path = convert_dos_path(dospath)
-        nt = sdiskswaps(path, total, used, peak)
+        nt = sdiskswap(path, total, used, peak)
         ret.append(nt)
     return ret
 

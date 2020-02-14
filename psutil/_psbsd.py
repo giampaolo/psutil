@@ -151,6 +151,8 @@ svmem = namedtuple(
 # psutil.cpu_times()
 scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+# psutil.disk_swaps()
+sdiskswap = namedtuple('sdiskswap', ['path', 'total', 'used'])
 # psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
 # psutil.Process.memory_full_info()
@@ -336,6 +338,10 @@ def disk_partitions(all=False):
 
 disk_usage = _psposix.disk_usage
 disk_io_counters = cext.disk_io_counters
+if hasattr(cext, "disk_swaps"):
+    def disk_swaps():
+        """Return disk page files information."""
+        return [sdiskswap(*x) for x in cext.disk_swaps()]
 
 
 # =====================================================================

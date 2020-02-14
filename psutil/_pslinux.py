@@ -183,8 +183,8 @@ sdiskio = namedtuple(
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
 # psutil.disk_swaps()
-sdiskswaps = namedtuple(
-    'sdiskswaps', ['path', 'total', 'used', 'fstype', 'priority'])
+sdiskswap = namedtuple(
+    'sdiskswap', ['path', 'total', 'used', 'fstype', 'priority'])
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
@@ -1209,8 +1209,8 @@ def disk_swaps():
                 # files are in use. The lower the priority, the
                 # more likely the swap file is to be used.
                 total, used, priority = map(int, other_fields.split('\t'))
-                nt = sdiskswaps(path, total, used,  # common
-                                fstype, priority)   # linux only
+                nt = sdiskswap(path, total, used,  # common
+                               fstype, priority)   # linux only
                 retlist.append(nt)
         return retlist
 

@@ -691,6 +691,55 @@ error:
 }
 
 
+#define NSWAP 16
+
+/*
+ * Enumerate swap locations.
+ */
+static PyObject *
+psutil_disk_swaps(PyObject *self, PyObject *args) {
+    kvm_t *kd;
+    int n;
+    int i;
+    struct kvm_swap kswap[NSWAP];
+    int pagesize = getpagesize();
+    PyObject *py_tuple;
+    PyObject *py_retlist;
+
+    n = kvm_getswapinfo(
+        kd, kswap, sizeof kswap / sizeof kswap[0], SWIF_DEV_PREFIX);
+    if (n == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    // For some reason if we don't create the list here kvm_getswapinfo()
+    // returns 0.
+    py_retlist = PyList_New(0);
+    if (! py_retlist)
+        goto error;
+
+    for (i = 0; i < n; ++i) {
+        py_tuple = Py_BuildValue(
+            "sII",
+            kswap[i].ksw_devname,
+            kswap[i].ksw_total * pagesize,
+            kswap[i].ksw_used * pagesize
+        );
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_CLEAR(py_tuple);
+    }
+
+    return py_retlist;
+
+error:
+    return NULL;
+}
+
+
 /*
  * Return a Python list of named tuples with overall network I/O information
  */
@@ -976,6 +1025,8 @@ static PyMethodDef mod_methods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return a list of tuples including device, mount point and "
      "fs type for all partitions mounted on the system."},
+    {"disk_swaps", psutil_disk_swaps, METH_VARARGS,
+     "Enumerate swap partitions/files."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
