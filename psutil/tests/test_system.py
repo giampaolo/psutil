@@ -727,10 +727,15 @@ class TestDiskAPIs(unittest.TestCase):
             assert os.path.exists(swap.path)
             self.assertGreaterEqual(swap.total, 0)
             self.assertGreaterEqual(swap.used, 0)
-            self.assertIn(swap.fstype, ("partition", "swapfile"))
-            self.assertIsInstance(swap.opts, str)
             if LINUX:
-                assert swap.opts.startswith('priority=')
+                fields = ('path', 'total', 'used', 'fstype', 'priority')
+                self.assertEqual(swap._fields, fields)
+                self.assertIn(swap.fstype, ("partition", "swapfile"))
+                self.assertIsInstance(swap.priority, int)
+            elif WINDOWS:
+                fields = ('path', 'total', 'used', 'peak')
+                self.assertEqual(swap._fields, fields)
+                self.assertGreaterEqual(swap.peak, 0)
 
 
 class TestNetAPIs(unittest.TestCase):

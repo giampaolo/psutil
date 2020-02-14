@@ -40,6 +40,7 @@ from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_DISK_SWAPS
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
@@ -514,6 +515,10 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @skip_if_linux()
     def test_disk_io_counters(self):
         self.execute(psutil.disk_io_counters, nowrap=False)
+
+    @unittest.skipIf(not HAS_DISK_SWAPS, "not supported")
+    def test_disk_swaps(self):
+        self.execute(psutil.disk_swaps)
 
     # --- proc
 
