@@ -18,6 +18,7 @@ typedef LONG NTSTATUS;
 #define STATUS_ACCESS_DENIED ((NTSTATUS)0xC0000022L)
 #define STATUS_NOT_FOUND ((NTSTATUS)0xC0000225L)
 #define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
+#define STATUS_INSUFFICIENT_RESOURCES ((NTSTATUS)0xC000009AL)
 
 // ================================================================
 // Enums
@@ -35,8 +36,8 @@ typedef LONG NTSTATUS;
 #define ProcessWow64Information 26
 #undef  SystemProcessIdInformation
 #define SystemProcessIdInformation 88
-#undef  SystemPagefileInformation
-#define SystemPagefileInformation 18
+#undef  SystemPageFileInformation
+#define SystemPageFileInformation 18
 
 // process suspend() / resume()
 typedef enum _KTHREAD_STATE {
@@ -371,6 +372,14 @@ typedef struct _SYSTEM_PROCESS_ID_INFORMATION {
     HANDLE ProcessId;
     UNICODE_STRING ImageName;
 } SYSTEM_PROCESS_ID_INFORMATION, *PSYSTEM_PROCESS_ID_INFORMATION;
+
+typedef struct _SYSTEM_PAGEFILE_INFORMATION {
+    ULONG NextEntryOffset;
+    ULONG TotalSize;
+    ULONG TotalInUse;
+    ULONG PeakUsage;
+    UNICODE_STRING PageFileName;
+} SYSTEM_PAGEFILE_INFORMATION, *PSYSTEM_PAGEFILE_INFORMATION;
 
 // ====================================================================
 // PEB structs for cmdline(), cwd(), environ()

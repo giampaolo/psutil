@@ -350,6 +350,29 @@ error:
  */
 PyObject *
 psutil_disk_swaps(PyObject *self, PyObject *args) {
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize = 0x200;
+    PSYSTEM_PAGEFILE_INFORMATION pagefile = NULL;
+
+    buffer = MALLOC_ZERO(bufferSize);
+    while ((status = NtQuerySystemInformation(
+        SystemPageFileInformation,
+        buffer,
+        bufferSize,
+        NULL)) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        FREE(buffer);
+        bufferSize *= 2;
+        buffer = MALLOC_ZERO(bufferSize);
+    }
+
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+        return NULL;
+    }
+
+    FREE(buffer);
     return Py_BuildValue("i", 77);
 }
 
