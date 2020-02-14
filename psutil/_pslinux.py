@@ -184,7 +184,7 @@ sdiskio = namedtuple(
                 'busy_time'])
 # psutil.disk_swaps()
 sdiskswap = namedtuple(
-    'sdiskswap', ['path', 'total', 'used', 'fstype', 'priority'])
+    'sdiskswap', _common.sdiskswap._fields + ('fstype', 'priority'))
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])

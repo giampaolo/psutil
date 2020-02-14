@@ -167,8 +167,7 @@ scputimes = namedtuple('scputimes',
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 # psutil.disk_swaps()
 sdiskswap = namedtuple(
-    'sdiskswap', ['path', 'total', 'used',  # common to all platforms
-                  'peak'])                  # Windows specific
+    'sdiskswap', _common.sdiskswap._fields + ('peak', ))
 # psutil.Process.memory_info()
 pmem = namedtuple(
     'pmem', ['rss', 'vms',

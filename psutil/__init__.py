@@ -2086,13 +2086,12 @@ disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 if hasattr(_psplatform, "disk_swaps"):
 
     def disk_swaps():
-        """Return a list of swap partitions or swap files as a namedtuple
-        including:
+        """Enumerate swap partitions and swap files as a list of namedtuples:
 
         - path: the path of the swap partition/file on disk
         - total: total swap partition/file size
         - used: used swap partition/file size
-        - type: either "partition" or "swapfile"
+        - fstype (Linux): either "partition" or "swapfile"
         - priority (Linux): makes sense when multiple swap files are in
           use. The lower the priority, the more likely the swap file is
           to be used.

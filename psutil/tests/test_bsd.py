@@ -490,8 +490,8 @@ class FreeBSDSystemTestCase(unittest.TestCase):
         paths = []
         for i, line in enumerate(lines):
             paths.append(line.split()[0])
-        self.assertEqual(sorted(paths), sorted
-                         ([x.path for x in psutil.disk_swaps()]))
+        self.assertEqual(sorted(paths),
+                         sorted([x.path for x in psutil.disk_swaps()]))
 
 
 # =====================================================================
