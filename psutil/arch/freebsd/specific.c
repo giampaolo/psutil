@@ -1075,3 +1075,70 @@ error:
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+#define NSWAP 16
+
+/*
+ * Enumerate swap locations.
+ */
+static PyObject *
+psutil_disk_swaps(PyObject *self, PyObject *args) {
+    struct kvm_swap ksw;
+    struct xswdev xsw;
+    size_t mibsize;
+    size_t size;
+    char path[PATH_MAX];
+    int mib[NSWAP];
+    int n;
+    int pagesize = getpagesize();
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (! py_retlist)
+        return NULL;
+
+    mibsize = sizeof(mib) / sizeof(mib[0]);
+    if (sysctlnametomib("vm.swap_info", mib, &mibsize) == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("sysctlnametomib");
+        goto error;
+    }
+
+    for (n=0; ; ++n) {
+        mib[mibsize] = n;
+        size = sizeof(xsw);
+
+        if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) == -1) {
+            if (errno == ENOENT)
+                break;
+            PyErr_SetFromOSErrnoWithSyscall("sysctl");
+            goto error;
+        }
+
+        if (xsw.xsw_dev == NODEV)
+            strlcpy(path, "[nodev]", sizeof(path));
+        else if (xsw.xsw_flags & SWIF_DEV_PREFIX)
+            strlcpy(path, devname(xsw.xsw_dev, S_IFCHR), sizeof(path));
+        else
+            sprintf(path, "%s%s", _PATH_DEV, devname(xsw.xsw_dev, S_IFCHR));
+
+        py_tuple = Py_BuildValue(
+            "(sii)",
+            path,
+            xsw.xsw_nblks * pagesize,  // total
+            xsw.xsw_used * pagesize    // used
+        );
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_CLEAR(py_tuple);
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
