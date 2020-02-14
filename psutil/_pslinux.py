@@ -1209,6 +1209,8 @@ def disk_swaps():
                 # files are in use. The lower the priority, the
                 # more likely the swap file is to be used.
                 total, used, priority = map(int, other_fields.split('\t'))
+                total *= 1024
+                used *= 1024
                 nt = sdiskswaps(path, total, used,  # common
                                 fstype, priority)   # linux only
                 retlist.append(nt)
