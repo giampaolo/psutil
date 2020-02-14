@@ -698,33 +698,49 @@ error:
  */
 static PyObject *
 psutil_disk_swaps(PyObject *self, PyObject *args) {
-    kvm_t *kd;
+    struct kvm_swap ksw;
+    struct xswdev xsw;
+    size_t mibsize;
+    size_t size;
+    char path[PATH_MAX];
+    int mib[NSWAP];
     int n;
-    int i;
-    struct kvm_swap kswap[NSWAP];
     int pagesize = getpagesize();
-    PyObject *py_tuple;
-    PyObject *py_retlist;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
-    n = kvm_getswapinfo(
-        kd, kswap, sizeof kswap / sizeof kswap[0], SWIF_DEV_PREFIX);
-    if (n == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (! py_retlist)
         return NULL;
+
+    mibsize = sizeof(mib) / sizeof(mib[0]);
+    if (sysctlnametomib("vm.swap_info", mib, &mibsize) == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("sysctlnametomib");
+        goto error;
     }
 
-    // For some reason if we don't create the list here kvm_getswapinfo()
-    // returns 0.
-    py_retlist = PyList_New(0);
-    if (! py_retlist)
-        goto error;
+    for (n=0; ; ++n) {
+        mib[mibsize] = n;
+        size = sizeof(xsw);
 
-    for (i = 0; i < n; ++i) {
+        if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) == -1) {
+            if (errno == ENOENT)
+                break;
+            PyErr_SetFromOSErrnoWithSyscall("sysctl");
+            goto error;
+        }
+
+        if (xsw.xsw_dev == NODEV)
+            strlcpy(path, "[nodev]", sizeof(path));
+        else if (xsw.xsw_flags & SWIF_DEV_PREFIX)
+            strlcpy(path, devname(xsw.xsw_dev, S_IFCHR), sizeof(path));
+        else
+            sprintf(path, "%s%s", _PATH_DEV, devname(xsw.xsw_dev, S_IFCHR));
+
         py_tuple = Py_BuildValue(
-            "sII",
-            kswap[i].ksw_devname,
-            kswap[i].ksw_total * pagesize,
-            kswap[i].ksw_used * pagesize
+            "(sii)",
+            path,
+            xsw.xsw_nblks * pagesize,  // total
+            xsw.xsw_used * pagesize    // used
         );
         if (!py_tuple)
             goto error;
@@ -736,6 +752,8 @@ psutil_disk_swaps(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     return NULL;
 }
 
