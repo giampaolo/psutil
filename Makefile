@@ -17,7 +17,7 @@ DEPS = \
 	pyperf \
 	requests \
 	setuptools \
-	sphinx==2.2.2 \
+	sphinx \
 	twine \
 	unittest2 \
 	virtualenv \

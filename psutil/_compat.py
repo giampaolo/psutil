@@ -54,6 +54,8 @@ if PY3:
 else:
     # https://github.com/PythonCharmers/python-future/blob/exceptions/
     #     src/future/types/exceptions/pep3151.py
+    import platform
+
     _singleton = object()
 
     def instance_checking_exception(base_exception=Exception):
@@ -107,6 +109,16 @@ else:
     @instance_checking_exception(EnvironmentError)
     def FileExistsError(inst):
         return getattr(inst, 'errno', _singleton) == errno.EEXIST
+
+    if platform.python_implementation() != "CPython":
+        try:
+            raise OSError(errno.EEXIST, "perm")
+        except FileExistsError:
+            pass
+        except OSError:
+            raise RuntimeError(
+                "broken / incompatible Python implementation, see: "
+                "https://github.com/giampaolo/psutil/issues/1659")
 
 
 # --- stdlib additions
