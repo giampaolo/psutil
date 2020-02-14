@@ -20,6 +20,7 @@
 #include <sys/proc.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <paths.h>  // _PATH_DEV
 #include <sys/vmmeter.h>  // needed for vmtotal struct
 #include <devstat.h>  // for swap mem
 #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
@@ -1082,7 +1083,7 @@ error:
 /*
  * Enumerate swap locations.
  */
-static PyObject *
+PyObject *
 psutil_disk_swaps(PyObject *self, PyObject *args) {
     struct kvm_swap ksw;
     struct xswdev xsw;
