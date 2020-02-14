@@ -965,8 +965,10 @@ static PyMethodDef mod_methods[] = {
      "Return number of logical CPUs on the system"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory usage statistics"},
+#if !defined(PSUTIL_OPENBSD)
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
      "Return swap mem stats"},
+#endif
     {"cpu_times", psutil_cpu_times, METH_VARARGS,
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
@@ -976,7 +978,7 @@ static PyMethodDef mod_methods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return a list of tuples including device, mount point and "
      "fs type for all partitions mounted on the system."},
-#if defined(PSUTIL_FREEBSD)
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
     {"disk_swaps", psutil_disk_swaps, METH_VARARGS,
      "Enumerate swap partitions/files."},
 #endif

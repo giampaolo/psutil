@@ -202,7 +202,14 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    total, used, free, sin, sout = cext.swap_mem()
+    if OPENBSD:
+        total = used = sin = sout = 0
+        for swap in cext.disk_swaps():
+            total += swap[1]
+            used += swap[2]
+        free = total - used
+    else:
+        total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
@@ -336,7 +343,10 @@ def disk_partitions(all=False):
 
 disk_usage = _psposix.disk_usage
 disk_io_counters = cext.disk_io_counters
+
+# FreeBSD, OpenBSD
 if hasattr(cext, "disk_swaps"):
+
     def disk_swaps():
         """Return disk page files information."""
         return [_common.sdiskswap(*x) for x in cext.disk_swaps()]

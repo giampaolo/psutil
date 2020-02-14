@@ -355,10 +355,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
+psutil_disk_swaps(PyObject *self, PyObject *args) {
     struct swapent *swdev;
     int nswap, i;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (! py_retlist)
+        return NULL;
 
     if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -375,26 +379,28 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // Total things up.
-    swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
+            py_tuple = Py_BuildValue(
+                "(sLL)",
+                swdev[i].se_path,
+                swdev[i].se_nblks * DEV_BSIZE,  // total
+                swdev[i].se_inuse * DEV_BSIZE
+            );
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_CLEAR(py_tuple);
         }
     }
 
     free(swdev);
-    return Py_BuildValue("(LLLII)",
-                         swap_total * DEV_BSIZE,
-                         (swap_total - swap_free) * DEV_BSIZE,
-                         swap_free * DEV_BSIZE,
-                         // swap in / swap out is not supported as the
-                         // swapent struct does not provide any info
-                         // about it.
-                         0, 0);
+    return py_retlist;
 
 error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     free(swdev);
     return NULL;
 }
