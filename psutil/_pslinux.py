@@ -182,6 +182,9 @@ sdiskio = namedtuple(
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
+# psutil.disk_swaps()
+sdiskswaps = namedtuple(
+    'sdiskswaps', ['path', 'total', 'used', 'fstype', 'opts'])
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
@@ -1180,6 +1183,36 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
 
     return retlist
+
+
+def disk_swaps():
+    """Return swap partitions (or swap files)."""
+    retlist = []
+    try:
+        f = open_text("%s/swaps" % get_procfs_path())
+    except FileNotFoundError:
+        return retlist
+    else:
+        with f:
+            lines = f.readlines()
+            lines.pop(0)  # header
+            for line in lines:
+                # Format is confusing:
+                #   Filename              Type\tSize    Used    Priority
+                #   /dev/nvme0n1p3   partition\t11718652    2724    -2
+                line = line.strip()
+                name_and_type, _, other_fields = line.partition('\t')
+                fstype = name_and_type.split()[-1]
+                # "/dev/nvme0n1p3   partition" -> "/dev/nvme0n1p3"
+                path = name_and_type.rstrip(fstype).strip()
+                total, used, priority = map(int, other_fields.split('\t'))
+                # The priority column is useful when multiple swap
+                # files are in use. The lower the priority, the
+                # more likely the swap file is to be used.
+                opts = "priority=%i" % priority
+                nt = sdiskswaps(path, total, used, fstype, opts)
+                retlist.append(nt)
+        return retlist
 
 
 # =====================================================================

@@ -39,6 +39,7 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_DISK_SWAPS
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -715,6 +716,21 @@ class TestDiskAPIs(unittest.TestCase):
             self.assertIsNone(psutil.disk_io_counters(perdisk=False))
             self.assertEqual(psutil.disk_io_counters(perdisk=True), {})
             assert m.called
+
+    @unittest.skipIf(not HAS_DISK_SWAPS, "not supported")
+    def test_disk_swaps(self):
+        ls = psutil.disk_swaps()
+        self.assertIsInstance(ls, list)
+        if not ls:
+            raise self.skipTest("no swap disks")
+        for swap in ls:
+            assert os.path.exists(swap.path)
+            self.assertGreaterEqual(swap.total, 0)
+            self.assertGreaterEqual(swap.used, 0)
+            self.assertIn(swap.fstype, ("partition", "swapfile"))
+            self.assertIsInstance(swap.opts, str)
+            if LINUX:
+                assert swap.opts.startswith('priority=')
 
 
 class TestNetAPIs(unittest.TestCase):
