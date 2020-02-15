@@ -18,8 +18,8 @@ XXXX-XX-XX
   raising AccessDenied).
 - 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
 - 1686_: [Windows] added support for PyPy on Windows.
-- 1693_: [Windows] boot_time() and Process.create_time() now have the precision
-  of a micro second (before the precision was of a second).
+- 1693_: [Windows] boot_time(), Process.create_time() and users()'s login time
+  now have 1 micro second precision (before the precision was of 1 second).
 
 **Bug fixes**
 
