@@ -12,6 +12,7 @@ Unit test runner, providing new features on top of unittest module:
 """
 
 from __future__ import print_function
+import optparse
 import os
 import sys
 import unittest
@@ -145,3 +146,17 @@ def run(name=None, last_failed=False):
         save_failed_tests(result)
         success = result.wasSuccessful()
         sys.exit(0 if success else 1)
+
+
+def main():
+    usage = "python3 -m psutil.tests [opts]"
+    parser = optparse.OptionParser(usage=usage, description="run unit tests")
+    parser.add_option("--last-failed",
+                      action="store_true", default=False,
+                      help="only run last failed tests")
+    opts, args = parser.parse_args()
+    run(last_failed=opts.last_failed)
+
+
+if __name__ == '__main__':
+    main()

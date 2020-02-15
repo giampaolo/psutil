@@ -20,9 +20,9 @@ python setup.py develop
 
 # run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
-    PSUTIL_TESTING=1 python -Wa -m coverage run psutil/tests/__main__.py
+    PSUTIL_TESTING=1 python -Wa -m coverage run psutil/tests/runner.py
 else
-    PSUTIL_TESTING=1 python -Wa psutil/tests/__main__.py
+    PSUTIL_TESTING=1 python -Wa psutil/tests/runner.py
 fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then

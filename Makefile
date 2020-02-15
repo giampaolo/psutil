@@ -3,7 +3,7 @@
 # You can set the variables below from the command line.
 
 PYTHON = python3
-TSCRIPT = psutil/tests/__main__.py
+TSCRIPT = psutil/tests/runner.py
 ARGS =
 # List of nice-to-have dev libs.
 DEPS = \
@@ -155,7 +155,7 @@ test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSyste
 
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) -c "import psutil.tests.runner as r; r.run(last_failed=True)"
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) --last-failed
 
 test-coverage:  ## Run test coverage.
 	${MAKE} install
