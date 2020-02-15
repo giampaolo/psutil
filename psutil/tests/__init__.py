@@ -809,6 +809,14 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
+def unittest_serial_run(klass):
+    """A decorator to mark a TestCase class. When running parallel tests,
+    class' unit tests will be run serially (1 process).
+    """
+    assert issubclass(klass, unittest.TestCase), klass
+    klass._unittest_serial_run = True
+
+
 def retry_on_failure(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.
