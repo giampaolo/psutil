@@ -108,24 +108,15 @@ def _iter_testmod_classes():
                 yield obj
 
 
-def get_suite(name=None):
-    """Collect all tests and return a TestSuite instance.
-    *ignore* is a callback function receiving a TestClass object.
-    If it returns True that TestClass will be skipped.
-    """
+def get_suite():
     suite = unittest.TestSuite()
-    if name:
-        name = os.path.splitext(os.path.basename(name))[0]
-        test = unittest.defaultTestLoader.loadTestsFromName(name)
+    for obj in _iter_testmod_classes():
+        test = loadTestsFromTestCase(obj)
         suite.addTest(test)
-    else:
-        for obj in _iter_testmod_classes():
-            test = loadTestsFromTestCase(obj)
-            suite.addTest(test)
     return suite
 
 
-def get_parallel_suite(name=None):
+def get_parallel_suite():
     ser = unittest.TestSuite()
     par = unittest.TestSuite()
     for obj in _iter_testmod_classes():
@@ -137,7 +128,7 @@ def get_parallel_suite(name=None):
     return (ser, par)
 
 
-def get_suite_from_failed():
+def get_failed_suite():
     # ...from previously failed test run
     suite = unittest.TestSuite()
     if not os.path.isfile(FAILED_TESTS_FNAME):
@@ -159,10 +150,8 @@ def save_failed_tests(result):
             f.write(tname + '\n')
 
 
-def run(name=None, last_failed=False):
-    setup_tests()
+def run(suite):
     runner = ColouredRunner(verbosity=VERBOSITY)
-    suite = get_suite_from_failed() if last_failed else get_suite(name)
     try:
         result = runner.run(suite)
     except (KeyboardInterrupt, SystemExit) as err:
@@ -175,13 +164,14 @@ def run(name=None, last_failed=False):
         sys.exit(0 if success else 1)
 
 
-def run_parallel():
-    setup_tests()
+def run_parallel(suite_ser, suite_par):
     # runner = ColouredRunner(verbosity=VERBOSITY)
     # serial, parallel = get_parallel_suite()
+    pass
 
 
 def main():
+    setup_tests()
     usage = "python3 -m psutil.tests [opts]"
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("--last-failed",
@@ -192,9 +182,13 @@ def main():
                       help="run tests in parallel")
     opts, args = parser.parse_args()
     if opts.parallel and not opts.last_failed:
-        run_parallel()
+        run_parallel(*get_parallel_suite())
     else:
-        run(last_failed=opts.last_failed)
+        if opts.last_failed:
+            suite = get_failed_suite()
+        else:
+            suite = get_suite()
+        run(suite)
 
 
 if __name__ == '__main__':
