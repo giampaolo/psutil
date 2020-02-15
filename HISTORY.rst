@@ -41,6 +41,8 @@ XXXX-XX-XX
 - 1674_: [SunOS] disk_partitions() may raise OSError.
 - 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
   having /proc/diskstats.
+- 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
+  PSUTIL_HAVE_IOPRIO not being defined.  (patch by Anselm Kruis)
 
 5.6.7
 =====
