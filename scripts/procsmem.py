@@ -64,7 +64,7 @@ def main():
         with p.oneshot():
             try:
                 mem = p.memory_full_info()
-                info = p.as_dict(attrs=["cmdline", "username"])
+                info = p.as_dict(["cmdline", "username"])
             except psutil.AccessDenied:
                 ad_pids.append(p.pid)
             except psutil.NoSuchProcess:

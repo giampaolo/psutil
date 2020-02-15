@@ -880,7 +880,7 @@ Functions
   Example::
 
     >>> import psutil
-    >>> for proc in psutil.process_iter(('pid', 'name', 'username')):
+    >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
     ...     print(proc.info)
     ...
     {'name': 'systemd', 'pid': 1, 'username': 'root'}
@@ -891,7 +891,7 @@ Functions
   A dict comprehensions to create a ``{pid: info, ...}`` data structure::
 
     >>> import psutil
-    >>> procs = {p.pid: p.info for p in psutil.process_iter(('name', 'username'))}
+    >>> procs = {p.pid: p.info for p in psutil.process_iter(['name', 'username'])}
     >>> procs
     {1: {'name': 'systemd', 'username': 'root'},
      2: {'name': 'kthreadd', 'username': 'root'},
@@ -900,7 +900,7 @@ Functions
 
   Get new processes since last call::
 
-    >>> for proc in psutil.process_iter(('pid', 'name'), new_only=True):
+    >>> for proc in psutil.process_iter(['pid', 'name'], new_only=True):
     ...     print(proc.info)
     ...
 
@@ -2349,7 +2349,7 @@ Check string against :meth:`Process.name()`:
   def find_procs_by_name(name):
       "Return a list of processes matching 'name'."
       ls = []
-      for p in psutil.process_iter(attrs=['name']):
+      for p in psutil.process_iter(['name']):
           if p.info['name'] == name:
               ls.append(p)
       return ls
@@ -2365,7 +2365,7 @@ A bit more advanced, check string against :meth:`Process.name()`,
   def find_procs_by_name(name):
       "Return a list of processes matching 'name'."
       ls = []
-      for p in psutil.process_iter(attrs=["name", "exe", "cmdline"]):
+      for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if name == p.info['name'] or \
                   p.info['exe'] and os.path.basename(p.info['exe']) == name or \
                   p.info['cmdline'] and p.info['cmdline'][0] == name:
@@ -2410,21 +2410,21 @@ A collection of code samples showing how to use :func:`process_iter()` to filter
 Processes owned by user::
 
   >>> import getpass
-  >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(attrs=['name', 'username']) if p.info['username'] == getpass.getuser()])
+  >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(['name', 'username']) if p.info['username'] == getpass.getuser()])
   (16832, 'bash'),
   (19772, 'ssh'),
   (20492, 'python')]
 
 Processes actively running::
 
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(attrs=['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
+  >>> pp([(p.pid, p.info) for p in psutil.process_iter(['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
   [(1150, {'name': 'Xorg', 'status': 'running'}),
    (1776, {'name': 'unity-panel-service', 'status': 'running'}),
    (20492, {'name': 'python', 'status': 'running'})]
 
 Processes using log files::
 
-  >>> for p in psutil.process_iter(attrs=['name', 'open_files']):
+  >>> for p in psutil.process_iter(['name', 'open_files']):
   ...      for file in p.info['open_files'] or []:
   ...          if file.path.endswith('.log'):
   ...               print("%-5s %-10s %s" % (p.pid, p.info['name'][:10], file.path))
@@ -2435,14 +2435,14 @@ Processes using log files::
 
 Processes consuming more than 500M of memory::
 
-  >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(attrs=['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
+  >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
 
 Top 3 processes which consumed the most CPU time::
 
-  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(attrs=['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
+  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
   [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]

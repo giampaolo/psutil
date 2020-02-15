@@ -18,7 +18,7 @@ import sys
 
 def pidof(pgname):
     pids = []
-    for proc in psutil.process_iter(attrs=['name', 'cmdline']):
+    for proc in psutil.process_iter(['name', 'cmdline']):
         # search for matches in the process name and cmdline
         if proc.info['name'] == pgname or \
                 proc.info['cmdline'] and proc.info['cmdline'][0] == pgname:

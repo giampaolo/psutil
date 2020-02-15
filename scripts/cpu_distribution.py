@@ -84,7 +84,7 @@ def main():
 
         # processes
         procs = collections.defaultdict(list)
-        for p in psutil.process_iter(attrs=['name', 'cpu_num']):
+        for p in psutil.process_iter(['name', 'cpu_num']):
             procs[p.info['cpu_num']].append(p.info['name'][:5])
 
         curr_line = 3

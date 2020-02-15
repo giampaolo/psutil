@@ -456,7 +456,7 @@ Further process APIs
 .. code-block:: python
 
     >>> import psutil
-    >>> for proc in psutil.process_iter(attrs=['pid', 'name']):
+    >>> for proc in psutil.process_iter(['pid', 'name']):
     ...     print(proc.info)
     ...
     {'pid': 1, 'name': 'systemd'}
