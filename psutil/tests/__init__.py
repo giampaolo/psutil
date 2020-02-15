@@ -135,12 +135,7 @@ if TRAVIS or APPVEYOR:
 
 # --- files
 
-TESTFILE_PREFIX = '$testfn'
-if os.name == 'java':
-    # Jython disallows @ in module names
-    TESTFILE_PREFIX = '$psutil-test-'
-else:
-    TESTFILE_PREFIX = '@psutil-test-'
+TESTFILE_PREFIX = '@psutil-test-%s' % os.getpid()
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 # Disambiguate TESTFN for parallel testing, while letting it remain a valid
 # module name.
