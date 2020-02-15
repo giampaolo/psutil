@@ -104,6 +104,7 @@ Make a pull request
 - commit your changes: ``git commit -am 'add some feature'``
 - push to the branch: ``git push origin new-feature``
 - create a new pull request by via github web interface
+- remember to update `HISTORY.rst`_ and `CREDITS`_ files.
 
 Continuous integration
 ======================
@@ -187,3 +188,5 @@ These are notes for myself (Giampaolo):
 .. _`RsT syntax`: http://docutils.sourceforge.net/docs/user/rst/quickref.htm
 .. _`sphinx`: http://sphinx-doc.org
 .. _`Travis`: https://travis-ci.org/giampaolo/psuti
+.. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
+.. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
