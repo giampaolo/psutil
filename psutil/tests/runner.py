@@ -148,6 +148,10 @@ def run(name=None, last_failed=False):
         sys.exit(0 if success else 1)
 
 
+def run_parallel():
+    run()
+
+
 def main():
     usage = "python3 -m psutil.tests [opts]"
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
@@ -158,7 +162,10 @@ def main():
                       action="store_true", default=False,
                       help="run tests in parallel")
     opts, args = parser.parse_args()
-    run(last_failed=opts.last_failed)
+    if opts.parallel and not opts.last_failed:
+        run_parallel()
+    else:
+        run(last_failed=opts.last_failed)
 
 
 if __name__ == '__main__':
