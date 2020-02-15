@@ -43,10 +43,9 @@ else:
 PY3 = sys.version_info[0] == 3
 
 __all__ = [
-    # constants
+    # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
     'SUNOS', 'WINDOWS',
-    'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
@@ -58,6 +57,8 @@ __all__ = [
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
     'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
     'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
+    # other constants
+    'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
@@ -66,7 +67,9 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
-    'bytes2human', 'conn_to_ntuple', 'hilite', 'debug',
+    'bytes2human', 'conn_to_ntuple', 'debug',
+    # shell utils
+    'hilite', 'term_supports_colors', 'print_color',
 ]
 
 
@@ -757,36 +760,76 @@ else:
         return s
 
 
-def _term_supports_colors(file=sys.stdout):
-    if hasattr(_term_supports_colors, "ret"):
-        return _term_supports_colors.ret
+# =====================================================================
+# --- shell utils
+# =====================================================================
+
+
+@memoize
+def term_supports_colors(file=sys.stdout):
+    if os.name == 'nt':
+        return True
     try:
         import curses
         assert file.isatty()
         curses.setupterm()
         assert curses.tigetnum("colors") > 0
     except Exception:
-        _term_supports_colors.ret = False
         return False
     else:
-        _term_supports_colors.ret = True
-    return _term_supports_colors.ret
+        return True
 
 
-def hilite(s, ok=True, bold=False):
+def hilite(s, color="green", bold=False):
     """Return an highlighted version of 'string'."""
-    if not _term_supports_colors():
+    if not term_supports_colors():
         return s
     attr = []
-    if ok is None:  # no color
-        pass
-    elif ok:   # green
-        attr.append('32')
-    else:   # red
-        attr.append('31')
+    colors = dict(green='32', red='91', brown='33')
+    colors[None] = '29'
+    try:
+        color = colors[color]
+    except KeyError:
+        raise ValueError("invalid color %r; choose between %r" % (
+            list(colors.keys())))
+    attr.append(color)
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+
+
+def print_color(s, color="green", bold=False, file=sys.stdout):
+    """Print a colorized version of string."""
+    if not term_supports_colors():
+        print(s, file=file)
+    elif POSIX:
+        print(hilite(s, color, bold), file=file)
+    else:
+        import ctypes
+
+        DEFAULT_COLOR = 7
+        GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
+        SetConsoleTextAttribute = \
+            ctypes.windll.Kernel32.SetConsoleTextAttribute
+
+        colors = dict(green=2, red=4, brown=6)
+        colors[None] = DEFAULT_COLOR
+        try:
+            color = colors[color]
+        except KeyError:
+            raise ValueError("invalid color %r; choose between %r" % (
+                color, list(colors.keys())))
+        if bold and color <= 7:
+            color += 8
+
+        handle_id = -12 if file is sys.stderr else -11
+        GetStdHandle.restype = ctypes.c_ulong
+        handle = GetStdHandle(handle_id)
+        SetConsoleTextAttribute(handle, color)
+        try:
+            print(s, file=file)
+        finally:
+            SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
 
 if bool(os.getenv('PSUTIL_DEBUG', 0)):

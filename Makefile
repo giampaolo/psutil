@@ -11,20 +11,24 @@ DEPS = \
 	check-manifest \
 	coverage \
 	flake8 \
-	futures \
-	ipaddress \
-	mock==1.0.1 \
 	pyperf \
 	requests \
 	setuptools \
-	sphinx \
 	twine \
-	unittest2 \
 	virtualenv \
 	wheel
 
+ifeq ($(PYTHON), $(filter $(PYTHON), python python2 python2.7))
+	DEPS += \
+		futures \
+		ipaddress \
+		mock==1.0.1 \
+		unittest2
+endif
+
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
+INSTALL_OPTS = `$(PYTHON) -c \
+	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1 PSUTIL_DEBUG=1
 
 all: test
@@ -197,7 +201,7 @@ wheel:  ## Generate wheel.
 	$(PYTHON) setup.py bdist_wheel
 
 win-download-wheels:  ## Download wheels hosted on appveyor.
-	$(TEST_PREFIX) $(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
+	$(TEST_PREFIX) $(PYTHON) scripts/internal/win_download_wheels.py --user giampaolo --project psutil
 
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist

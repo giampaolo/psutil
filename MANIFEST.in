@@ -1,3 +1,4 @@
+include .cirrus.yml
 include .coveragerc
 include .gitignore
 include CREDITS
@@ -114,7 +115,6 @@ include scripts/internal/README
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
-include scripts/internal/download_exes.py
 include scripts/internal/fix_flake8.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/print_access_denied.py
@@ -122,7 +122,7 @@ include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py
 include scripts/internal/print_timeline.py
 include scripts/internal/purge_installation.py
-include scripts/internal/scriptutils.py
+include scripts/internal/win_download_wheels.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

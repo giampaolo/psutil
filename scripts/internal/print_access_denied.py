@@ -50,7 +50,7 @@ from collections import defaultdict
 import time
 
 import psutil
-from scriptutils import hilite
+from psutil._common import print_color
 
 
 def main():
@@ -75,13 +75,12 @@ def main():
     # print
     templ = "%-20s %-5s %-9s %s"
     s = templ % ("API", "AD", "Percent", "Outcome")
-    print(hilite(s, ok=None, bold=True))
+    print_color(s, color=None, bold=True)
     for methname, ads in sorted(d.items(), key=lambda x: (x[1], x[0])):
         perc = (ads / tot_procs) * 100
         outcome = "SUCCESS" if not ads else "ACCESS DENIED"
         s = templ % (methname, ads, "%6.1f%%" % perc, outcome)
-        s = hilite(s, ok=not ads)
-        print(s)
+        print_color(s, "red" if ads else None)
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
     print("Totals: access-denied=%s (%s%%), calls=%s, processes=%s, "

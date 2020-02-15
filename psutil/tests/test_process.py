@@ -311,7 +311,6 @@ class TestProcess(unittest.TestCase):
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
-
         # test reads
         io1 = p.io_counters()
         with open(PYTHON_EXE, 'rb') as f:
