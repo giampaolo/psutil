@@ -861,24 +861,26 @@ Functions
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
-  Every instance is only created once and then cached into an internal table
-  which is updated every time an element is yielded.
-  Cached :class:`Process` instances are checked for identity so that you're
-  safe in case a PID has been reused by another process, in which case the
-  cached instance is updated.
-  This is preferred over :func:`psutil.pids()` for iterating over processes.
-  Sorting order in which processes are returned is based on their PID.
+  This should be preferred over :func:`psutil.pids()` to iterate over processes
+  as it's safe from race condition.
+
+  Every :class:`Process` instance is only created once, and then cached for the
+  next time :func:`psutil.process_iter()` is called (if PID is still alive).
+  Also it makes sure process PIDs are not reused.
+
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
-  If *attrs* is specified :meth:`Process.as_dict()` is called internally and
-  the resulting dict is stored as a ``info`` attribute which is attached to the
-  returned :class:`Process`  instances.
+  If *attrs* is specified :meth:`Process.as_dict()` result will be stored as a
+  ``info`` attribute attached to the returned :class:`Process` instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
+
   If *new_only* is true this function will yield only new processes which
   appeared since the last time it was called.
-  Example usage::
+  Sorting order in which processes are returned is based on their PID.
+
+  Example::
 
     >>> import psutil
-    >>> for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
+    >>> for proc in psutil.process_iter(('pid', 'name', 'username')):
     ...     print(proc.info)
     ...
     {'name': 'systemd', 'pid': 1, 'username': 'root'}
@@ -886,30 +888,19 @@ Functions
     {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
     ...
 
-  Example of a dict comprehensions to create a ``{pid: info, ...}`` data
-  structure::
+  A dict comprehensions to create a ``{pid: info, ...}`` data structure::
 
     >>> import psutil
-    >>> procs = {p.pid: p.info for p in psutil.process_iter(attrs=['name', 'username'])}
+    >>> procs = {p.pid: p.info for p in psutil.process_iter(('name', 'username'))}
     >>> procs
     {1: {'name': 'systemd', 'username': 'root'},
      2: {'name': 'kthreadd', 'username': 'root'},
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
 
-  Example showing how to filter processes by name (see also
-  `process filtering <#filtering-and-sorting-processes>`__ section for more
-  examples)::
+  Get new processes since last call::
 
-    >>> import psutil
-    >>> [p.info for p in psutil.process_iter(attrs=['pid', 'name']) if 'python' in p.info['name']]
-    [{'name': 'python3', 'pid': 21947},
-     {'name': 'python', 'pid': 23835}]
-
-  Get new processes only (since last call)::
-
-    >>> import psutil
-    >>> for proc in psutil.process_iter(attrs=['pid', 'name'], new_only=True):
+    >>> for proc in psutil.process_iter(('pid', 'name'), new_only=True):
     ...     print(proc.info)
     ...
 
