@@ -36,6 +36,7 @@ from psutil.tests import TOX
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
+loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
 
 
 # =====================================================================
@@ -107,7 +108,7 @@ def _iter_testmod_classes():
                 yield obj
 
 
-def get_suite(name=None, ignore=None):
+def get_suite(name=None):
     """Collect all tests and return a TestSuite instance.
     *ignore* is a callback function receiving a TestClass object.
     If it returns True that TestClass will be skipped.
@@ -119,9 +120,21 @@ def get_suite(name=None, ignore=None):
         suite.addTest(test)
     else:
         for obj in _iter_testmod_classes():
-            test = unittest.defaultTestLoader.loadTestsFromTestCase(obj)
+            test = loadTestsFromTestCase(obj)
             suite.addTest(test)
     return suite
+
+
+def get_parallel_suite(name=None):
+    ser = unittest.TestSuite()
+    par = unittest.TestSuite()
+    for obj in _iter_testmod_classes():
+        test = loadTestsFromTestCase(obj)
+        if getattr(obj, '_unittest_serial_run', False):
+            ser.addTest(test)
+        else:
+            par.addTest(test)
+    return (ser, par)
 
 
 def get_suite_from_failed():
@@ -163,7 +176,9 @@ def run(name=None, last_failed=False):
 
 
 def run_parallel():
-    run()
+    setup_tests()
+    # runner = ColouredRunner(verbosity=VERBOSITY)
+    # serial, parallel = get_parallel_suite()
 
 
 def main():

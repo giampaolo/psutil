@@ -53,6 +53,7 @@ from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import unittest_serial_run
 
 
 # ===================================================================
@@ -305,6 +306,7 @@ class TestMiscAPIs(unittest.TestCase):
             self.assertIs(getattr(psutil, name), False, msg=name)
 
 
+@unittest_serial_run
 class TestMemoryAPIs(unittest.TestCase):
 
     def test_virtual_memory(self):
