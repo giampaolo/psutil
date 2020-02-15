@@ -154,6 +154,9 @@ def main():
     parser.add_option("--last-failed",
                       action="store_true", default=False,
                       help="only run last failed tests")
+    parser.add_option("--parallel",
+                      action="store_true", default=False,
+                      help="run tests in parallel")
     opts, args = parser.parse_args()
     run(last_failed=opts.last_failed)
 
