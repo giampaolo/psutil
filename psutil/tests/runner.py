@@ -28,6 +28,7 @@ import psutil
 from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
+from psutil.tests import import_module_by_path
 from psutil.tests import safe_rmpath
 from psutil.tests import TOX
 
@@ -92,18 +93,23 @@ def setup_tests():
 
 
 def get_suite(name=None):
+    loader = unittest.defaultTestLoader
     suite = unittest.TestSuite()
     if name is None:
-        testmods = [os.path.splitext(x)[0] for x in os.listdir(HERE)
-                    if x.endswith('.py') and x.startswith('test_') and not
-                    x.startswith('test_memory_leaks')]
+        testmod_paths = [os.path.join(HERE, x) for x in os.listdir(HERE)
+                         if x.endswith('.py') and x.startswith('test_') and not
+                         x.endswith('test_memory_leaks.py')]
         if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
-            testmods = [x for x in testmods if not x.endswith((
-                        "osx", "posix", "linux"))]
-        for tm in testmods:
-            # ...so that the full test paths are printed on screen
-            tm = "psutil.tests.%s" % tm
-            suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
+            testmod_paths = [x for x in testmod_paths if not x.endswith((
+                             "osx.py", "posix.py", "linux.py"))]
+        for path in testmod_paths:
+            mod = import_module_by_path(path)
+            for name in dir(mod):
+                obj = getattr(mod, name)
+                if isinstance(obj, type) and \
+                        issubclass(obj, unittest.TestCase):
+                    test = loader.loadTestsFromTestCase(obj)
+                    suite.addTest(test)
     else:
         name = os.path.splitext(os.path.basename(name))[0]
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
