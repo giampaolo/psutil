@@ -548,7 +548,7 @@ error:
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
-#ifdef PSUTIL_HAVE_IOPRIO
+#if PSUTIL_HAVE_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
