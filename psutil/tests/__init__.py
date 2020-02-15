@@ -815,6 +815,7 @@ def unittest_serial_run(klass):
     """
     assert issubclass(klass, unittest.TestCase), klass
     klass._unittest_serial_run = True
+    return klass
 
 
 def retry_on_failure(retries=NO_RETRIES):
