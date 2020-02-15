@@ -86,13 +86,6 @@ class ColouredRunner(TextTestRunner):
 # =====================================================================
 
 
-def setup_tests():
-    if 'PSUTIL_TESTING' not in os.environ:
-        # This won't work on Windows but set_testing() below will do it.
-        os.environ['PSUTIL_TESTING'] = '1'
-    psutil._psplatform.cext.set_testing()
-
-
 def _iter_testmod_classes():
     testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
                 if x.endswith('.py') and x.startswith('test_') and not
@@ -140,7 +133,7 @@ def get_failed_suite():
     return suite
 
 
-def save_failed_tests(result):
+def _save_failed_tests(result):
     if result.wasSuccessful():
         return safe_rmpath(FAILED_TESTS_FNAME)
     with open(FAILED_TESTS_FNAME, 'wt') as f:
@@ -159,7 +152,7 @@ def run(suite):
         runner.result.printErrors()
         sys.exit(1)
     else:
-        save_failed_tests(result)
+        _save_failed_tests(result)
         success = result.wasSuccessful()
         sys.exit(0 if success else 1)
 
@@ -170,8 +163,15 @@ def run_parallel(suite_ser, suite_par):
     pass
 
 
+def _setup():
+    if 'PSUTIL_TESTING' not in os.environ:
+        # This won't work on Windows but set_testing() below will do it.
+        os.environ['PSUTIL_TESTING'] = '1'
+    psutil._psplatform.cext.set_testing()
+
+
 def main():
-    setup_tests()
+    _setup()
     usage = "python3 -m psutil.tests [opts]"
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("--last-failed",
