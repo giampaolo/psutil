@@ -95,7 +95,10 @@ def setup_tests():
 def get_suite(name=None):
     loader = unittest.defaultTestLoader
     suite = unittest.TestSuite()
-    if name is None:
+    if name:
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+    else:
         testmod_paths = [os.path.join(HERE, x) for x in os.listdir(HERE)
                          if x.endswith('.py') and x.startswith('test_') and not
                          x.endswith('test_memory_leaks.py')]
@@ -110,9 +113,6 @@ def get_suite(name=None):
                         issubclass(obj, unittest.TestCase):
                     test = loader.loadTestsFromTestCase(obj)
                     suite.addTest(test)
-    else:
-        name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
     return suite
 
 
