@@ -92,27 +92,35 @@ def setup_tests():
     psutil._psplatform.cext.set_testing()
 
 
-def get_suite(name=None):
-    loader = unittest.defaultTestLoader
+def _iter_testmod_classes():
+    testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
+                if x.endswith('.py') and x.startswith('test_') and not
+                x.endswith('test_memory_leaks.py')]
+    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
+        testmods = [x for x in testmods if not x.endswith((
+                    "osx.py", "posix.py", "linux.py"))]
+    for path in testmods:
+        mod = import_module_by_path(path)
+        for name in dir(mod):
+            obj = getattr(mod, name)
+            if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
+                yield obj
+
+
+def get_suite(name=None, ignore=None):
+    """Collect all tests and return a TestSuite instance.
+    *ignore* is a callback function receiving a TestClass object.
+    If it returns True that TestClass will be skipped.
+    """
     suite = unittest.TestSuite()
     if name:
         name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+        test = unittest.defaultTestLoader.loadTestsFromName(name)
+        suite.addTest(test)
     else:
-        testmod_paths = [os.path.join(HERE, x) for x in os.listdir(HERE)
-                         if x.endswith('.py') and x.startswith('test_') and not
-                         x.endswith('test_memory_leaks.py')]
-        if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
-            testmod_paths = [x for x in testmod_paths if not x.endswith((
-                             "osx.py", "posix.py", "linux.py"))]
-        for path in testmod_paths:
-            mod = import_module_by_path(path)
-            for name in dir(mod):
-                obj = getattr(mod, name)
-                if isinstance(obj, type) and \
-                        issubclass(obj, unittest.TestCase):
-                    test = loader.loadTestsFromTestCase(obj)
-                    suite.addTest(test)
+        for obj in _iter_testmod_classes():
+            test = unittest.defaultTestLoader.loadTestsFromTestCase(obj)
+            suite.addTest(test)
     return suite
 
 
