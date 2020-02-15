@@ -873,8 +873,8 @@ Functions
   ``info`` attribute attached to the returned :class:`Process` instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
 
-  If *new_only* is true this function will yield only new processes which
-  appeared since the last time it was called.
+  If *new_only* is true this function will take into consideration only
+  new PIDs which appeared since the last time it was was called.
   Sorting order in which processes are returned is based on their PID.
 
   Example::
@@ -898,7 +898,7 @@ Functions
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
 
-  Get new processes since last call::
+  Get only new processes since last call::
 
     >>> for proc in psutil.process_iter(['pid', 'name'], new_only=True):
     ...     print(proc.info)
