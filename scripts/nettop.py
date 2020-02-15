@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # $Id: iotop.py 1160 2011-10-14 18:50:36Z g.rodola@gmail.com $
 #
