@@ -91,7 +91,7 @@ class ColouredRunner(TextTestRunner):
 class _Runner:
 
     def __init__(self):
-        self.suite = unittest.TestSuite()
+        self._failed_tnames = set()
 
     def _iter_testmod_classes(self):
         testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
@@ -134,14 +134,13 @@ class _Runner:
         with open(FAILED_TESTS_FNAME, 'rt') as f:
             names = f.read().split()
         for n in names:
-            suite.addTest(unittest.defaultTestLoader.loadTestsFromName(n))
+            test = unittest.defaultTestLoader.loadTestsFromName(n)
+            suite.addTest(test)
         return suite
 
-    def _save_failed_tests(self, result):
-        with open(FAILED_TESTS_FNAME, 'at') as f:
-            for t in result.errors + result.failures:
-                tname = str(t[0])
-                unittest.defaultTestLoader.loadTestsFromName(tname)
+    def _save_failed_tests(self):
+        with open(FAILED_TESTS_FNAME, 'wt') as f:
+            for tname in self._failed_tnames:
                 f.write(tname + '\n')
 
     # --- runners
@@ -154,20 +153,25 @@ class _Runner:
             print("received %s" % err.__class__.__name__, file=sys.stderr)
             result = runner.result
         if not result.wasSuccessful():
-            self._save_failed_tests(result)
+            for t in result.errors + result.failures:
+                tname = t[0].id()
+                self._failed_tnames.add(tname)
         return result
 
     def _finalize(self, success):
         if success:
             safe_rmpath(FAILED_TESTS_FNAME)
         else:
-            sys.exit(1)
+            self._save_failed_tests()
 
     def run(self, suite=None):
         if suite is None:
             suite = self.get_suite()
         res = self._run(suite)
         self._finalize(res.wasSuccessful())
+        if not res.wasSuccessful():
+            print_color("FAILED", "red")
+            sys.exit(1)
 
     def run_failed(self):
         self.run(self.get_lastfail_suite())
@@ -209,6 +213,7 @@ class _Runner:
         print("Ran %s tests in %.3fs" % (par.testsRun + ser.testsRun,
                                          par_elapsed + ser_elapsed))
         ok = par.wasSuccessful() and ser.wasSuccessful()
+        self._finalize(ok)
         if not ok:
             print_color("FAILED", "red")
             sys.exit(1)
