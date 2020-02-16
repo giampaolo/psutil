@@ -49,13 +49,15 @@ from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
+from psutil.tests import unittest_serial_run
 
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
-class Base(object):
+@unittest_serial_run
+class _ConnTestCase(unittest.TestCase):
 
     def setUp(self):
         safe_rmpath(TESTFN)
@@ -168,7 +170,7 @@ class Base(object):
         check_status(conn)
 
 
-class TestBase(Base, unittest.TestCase):
+class TestBasicOperations(_ConnTestCase):
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_system(self):
@@ -186,7 +188,8 @@ class TestBase(Base, unittest.TestCase):
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
-class TestUnconnectedSockets(Base, unittest.TestCase):
+@unittest_serial_run
+class TestUnconnectedSockets(_ConnTestCase):
     """Tests sockets which are open but not connected to anything."""
 
     def get_conn_from_sock(self, sock):
@@ -284,7 +287,8 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
                 self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-class TestConnectedSocket(Base, unittest.TestCase):
+@unittest_serial_run
+class TestConnectedSocket(_ConnTestCase):
     """Test socket pairs which are are actually connected to
     each other.
     """
@@ -348,7 +352,7 @@ class TestConnectedSocket(Base, unittest.TestCase):
                 client.close()
 
 
-class TestFilters(Base, unittest.TestCase):
+class TestFilters(_ConnTestCase):
 
     def test_filters(self):
         def check(kind, families, types):
@@ -548,7 +552,7 @@ class TestFilters(Base, unittest.TestCase):
 
 
 @unittest.skipIf(SKIP_SYSCONS, "requires root")
-class TestSystemWideConnections(Base, unittest.TestCase):
+class TestSystemWideConnections(_ConnTestCase):
     """Tests for net_connections()."""
 
     def test_it(self):

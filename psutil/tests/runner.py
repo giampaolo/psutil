@@ -15,6 +15,8 @@ from __future__ import print_function
 import optparse
 import os
 import sys
+import textwrap
+import time
 import unittest
 from unittest import TestResult
 from unittest import TextTestResult
@@ -136,7 +138,7 @@ def get_failed_suite():
 def _save_failed_tests(result):
     if result.wasSuccessful():
         return safe_rmpath(FAILED_TESTS_FNAME)
-    with open(FAILED_TESTS_FNAME, 'wt') as f:
+    with open(FAILED_TESTS_FNAME, 'at') as f:
         for t in result.errors + result.failures:
             tname = str(t[0])
             unittest.defaultTestLoader.loadTestsFromName(tname)
@@ -157,10 +159,48 @@ def run(suite):
         sys.exit(0 if success else 1)
 
 
-def run_parallel(suite_ser, suite_par):
+def run_parallel(ser_suite, par_suite):
     # runner = ColouredRunner(verbosity=VERBOSITY)
     # serial, parallel = get_parallel_suite()
-    pass
+    from concurrencytest import ConcurrentTestSuite, fork_for_tests
+    runner = ColouredRunner(verbosity=VERBOSITY)
+    par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(4))
+
+    # # run parallel
+    t = time.time()
+    par = runner.run(par_suite)
+    par_elapsed = time.time() - t
+
+    # run serial
+    t = time.time()
+    ser = runner.run(ser_suite)
+    ser_elapsed = time.time() - t
+
+    # print
+    par_fails, par_errs, par_skips = map(len, (par.failures,
+                                               par.errors,
+                                               par.skipped))
+    ser_fails, ser_errs, ser_skips = map(len, (ser.failures,
+                                               ser.errors,
+                                               ser.skipped))
+    print(textwrap.dedent("""
+        +-----------+----------+----------+----------+----------+----------+
+        |           |    total | failures |   errors |  skipped |     time |
+        +-----------+----------+----------+----------+----------+----------+
+        | parallel  |      %3s |      %3s |      %3s |      %3s |    %.2fs |
+        +-----------+----------+----------+----------+----------+----------+
+        | serial    |      %3s |      %3s |      %3s |      %3s |    %.2fs |
+        +-----------+----------+----------+----------+----------+----------+
+        """ % (par.testsRun, par_fails, par_errs, par_skips, par_elapsed,
+               ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed,)))
+    ok = par.wasSuccessful() and ser.wasSuccessful()
+    msg = "%s (ran %s tests in %.3fs)" % (
+        hilite("OK", "green") if ok else hilite("FAILED", "red"),
+        par.testsRun + ser.testsRun,
+        par_elapsed + ser_elapsed)
+    print(msg)
+    if not ok:
+        sys.exit(1)
 
 
 def _setup():
@@ -181,6 +221,10 @@ def main():
                       action="store_true", default=False,
                       help="run tests in parallel")
     opts, args = parser.parse_args()
+
+    if not opts.last_failed:
+        safe_rmpath(FAILED_TESTS_FNAME)
+
     if opts.parallel and not opts.last_failed:
         run_parallel(*get_parallel_suite())
     else:

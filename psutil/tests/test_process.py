@@ -67,12 +67,14 @@ from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
+from psutil.tests import unittest_serial_run
 
 
 # ===================================================================
 # --- psutil.Process class tests
 # ===================================================================
 
+@unittest_serial_run
 class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
