@@ -189,6 +189,7 @@ class _Runner():
         ser_fails, ser_errs, ser_skips = map(len, (ser.failures,
                                                    ser.errors,
                                                    ser.skipped))
+        print("-" * 70)
         print(textwrap.dedent("""
             +----------+----------+----------+----------+----------+----------+
             |          |    total | failures |   errors |  skipped |     time |
@@ -199,13 +200,11 @@ class _Runner():
             +----------+----------+----------+----------+----------+----------+
             """ % (par.testsRun, par_fails, par_errs, par_skips, par_elapsed,
                    ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed)))
+        print("Ran %s tests in %.3fs" % (par.testsRun + ser.testsRun,
+                                         par_elapsed + ser_elapsed))
         ok = par.wasSuccessful() and ser.wasSuccessful()
-        msg = "%s (ran %s tests in %.3fs)" % (
-            hilite("OK", "green") if ok else hilite("FAILED", "red"),
-            par.testsRun + ser.testsRun,
-            par_elapsed + ser_elapsed)
-        print(msg)
         if not ok:
+            print_color("FAILED", "red")
             sys.exit(1)
 
 
