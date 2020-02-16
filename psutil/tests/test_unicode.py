@@ -107,6 +107,7 @@ from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
+from psutil.tests import unittest_serial_run
 import psutil
 
 
@@ -161,6 +162,7 @@ else:
 # ===================================================================
 
 
+@unittest_serial_run
 class _BaseFSAPIsTests(object):
     funky_name = None
 

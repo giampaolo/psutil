@@ -813,7 +813,7 @@ def unittest_serial_run(klass):
     """A decorator to mark a TestCase class. When running parallel tests,
     class' unit tests will be run serially (1 process).
     """
-    assert issubclass(klass, unittest.TestCase), klass
+    # assert issubclass(klass, unittest.TestCase), klass
     klass._unittest_serial_run = True
     return klass
 
