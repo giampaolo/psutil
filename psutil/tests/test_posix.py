@@ -58,8 +58,7 @@ def ps(fmt, pid=None):
             cmd.append('ax')
 
     if SUNOS:
-        fmt_map = {'command', 'comm',
-                   'start', 'stime'}
+        fmt_map = set(('command', 'comm', 'start', 'stime'))
         fmt = fmt_map.get(fmt, fmt)
 
     cmd.extend(['-o', fmt])
