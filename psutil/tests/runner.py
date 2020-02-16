@@ -95,7 +95,11 @@ class _Runner:
     def __init__(self):
         self._failed_tnames = set()
 
-    def _iter_testmod_classes(self):
+    @staticmethod
+    def _iter_testmod_classes():
+        """Iterate over all test files in this directory and return
+        all TestCase classes in them.
+        """
         testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
                     if x.endswith('.py') and x.startswith('test_') and not
                     x.endswith('test_memory_leaks.py')]
@@ -118,15 +122,15 @@ class _Runner:
         return suite
 
     def get_parallel_suite(self):
-        ser = unittest.TestSuite()
-        par = unittest.TestSuite()
+        serial = unittest.TestSuite()
+        parallel = unittest.TestSuite()
         for obj in self._iter_testmod_classes():
             test = loadTestsFromTestCase(obj)
             if getattr(obj, '_unittest_serial_run', False):
-                ser.addTest(test)
+                serial.addTest(test)
             else:
-                par.addTest(test)
-        return (ser, par)
+                parallel.addTest(test)
+        return (serial, parallel)
 
     def get_lastfail_suite(self):
         # ...from previously failed test run
@@ -140,7 +144,7 @@ class _Runner:
             suite.addTest(test)
         return suite
 
-    def _save_failed_tests(self):
+    def _save_lastfailed(self):
         with open(FAILED_TESTS_FNAME, 'wt') as f:
             for tname in self._failed_tnames:
                 f.write(tname + '\n')
@@ -164,7 +168,7 @@ class _Runner:
         if success:
             safe_rmpath(FAILED_TESTS_FNAME)
         else:
-            self._save_failed_tests()
+            self._save_lastfailed()
 
     def run(self, suite=None):
         """Run tests serially (1 process)."""
