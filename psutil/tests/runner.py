@@ -159,10 +159,12 @@ class _Runner():
         if not res.wasSuccessful():
             sys.exit(1)
 
+    def run_failed(self):
+        self.run(self.get_failed_suite())
+
     def run_parallel(self):
-        # runner = ColouredRunner(verbosity=VERBOSITY)
-        # serial, parallel = get_parallel_suite()
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
+
         ser_suite, par_suite = self.get_parallel_suite()
         par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(4))
 
@@ -237,7 +239,7 @@ def main():
         _runner.run_parallel()
     else:
         if opts.last_failed:
-            suite = _runner.get_failed_suite()
+            _runner.run_failed()
         else:
             suite = _runner.get_suite()
         _runner.run(suite)
