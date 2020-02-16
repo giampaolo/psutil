@@ -201,6 +201,13 @@ class _Runner():
             sys.exit(1)
 
 
+def run_from_name(name):
+    suite = unittest.TestSuite()
+    name = os.path.splitext(os.path.basename(name))[0]
+    suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+    _Runner().run(suite)
+
+
 def _setup():
     if 'PSUTIL_TESTING' not in os.environ:
         # This won't work on Windows but set_testing() below will do it.
