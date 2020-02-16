@@ -66,13 +66,6 @@ sources = ['psutil/_psutil_common.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
-tests_require = []
-if sys.version_info[:2] <= (2, 6):
-    tests_require.append('unittest2')
-if sys.version_info[:2] <= (2, 7):
-    tests_require.append('mock')
-if sys.version_info[:2] <= (3, 2):
-    tests_require.append('ipaddress')
 
 extras_require = {}
 if sys.version_info[:2] <= (3, 3):
@@ -393,8 +386,6 @@ def main():
     if setuptools is not None:
         kwargs.update(
             python_requires=">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
-            test_suite="psutil.tests.get_suite",
-            tests_require=tests_require,
             extras_require=extras_require,
             zip_safe=False,
         )
