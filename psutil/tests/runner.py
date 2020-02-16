@@ -136,8 +136,6 @@ def get_failed_suite():
 
 
 def _save_failed_tests(result):
-    if result.wasSuccessful():
-        return safe_rmpath(FAILED_TESTS_FNAME)
     with open(FAILED_TESTS_FNAME, 'at') as f:
         for t in result.errors + result.failures:
             tname = str(t[0])
@@ -145,18 +143,22 @@ def _save_failed_tests(result):
             f.write(tname + '\n')
 
 
-def run(suite):
+def _run(suite):
     runner = ColouredRunner(verbosity=VERBOSITY)
     try:
         result = runner.run(suite)
     except (KeyboardInterrupt, SystemExit) as err:
         print("received %s" % err.__class__.__name__, file=sys.stderr)
-        runner.result.printErrors()
-        sys.exit(1)
-    else:
+        result = runner.result
+    if not result.wasSuccessful():
         _save_failed_tests(result)
-        success = result.wasSuccessful()
-        sys.exit(0 if success else 1)
+    return result
+
+
+def run(suite):
+    res = _run(suite)
+    if not res.wasSuccessful():
+        sys.exit(1)
 
 
 def run_parallel(ser_suite, par_suite):
@@ -221,10 +223,8 @@ def main():
                       action="store_true", default=False,
                       help="run tests in parallel")
     opts, args = parser.parse_args()
-
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
-
     if opts.parallel and not opts.last_failed:
         run_parallel(*get_parallel_suite())
     else:
