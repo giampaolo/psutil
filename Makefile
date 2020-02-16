@@ -9,6 +9,7 @@ ARGS =
 DEPS = \
 	argparse \
 	check-manifest \
+	concurrencytest \
 	coverage \
 	flake8 \
 	pyperf \

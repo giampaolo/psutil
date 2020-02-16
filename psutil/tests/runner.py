@@ -167,6 +167,7 @@ class _Runner:
             self._save_failed_tests()
 
     def run(self, suite=None):
+        """Run tests serially (1 process)."""
         if suite is None:
             suite = self.get_suite()
         res = self._run(suite)
@@ -175,10 +176,21 @@ class _Runner:
             print_color("FAILED", "red")
             sys.exit(1)
 
-    def run_failed(self):
+    def run_lastfailed(self):
+        """Run tests which failed in the last run."""
         self.run(self.get_lastfail_suite())
 
+    def run_from_name(self, name):
+        """Run test by name, e.g.:
+        "test_linux.TestSystemCPUStats.test_ctx_switches"
+        """
+        suite = unittest.TestSuite()
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+        self.run(suite)
+
     def run_parallel(self):
+        """Run tests in parallel."""
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
         ser_suite, par_suite = self.get_parallel_suite()
@@ -220,12 +232,6 @@ class _Runner:
             print_color("FAILED", "red")
             sys.exit(1)
 
-    def run_from_name(self, name):
-        suite = unittest.TestSuite()
-        name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-        self.run(suite)
-
 
 _runner = _Runner()
 run_from_name = _runner.run_from_name
@@ -256,7 +262,7 @@ def main():
         _runner.run_parallel()
     else:
         if opts.last_failed:
-            _runner.run_failed()
+            _runner.run_lastfailed()
         else:
             _runner.run()
 
