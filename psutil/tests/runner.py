@@ -38,6 +38,8 @@ from psutil.tests import TOX
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
+NPROCS = psutil.cpu_count()
+
 loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
 
 
@@ -180,7 +182,7 @@ class _Runner:
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
         ser_suite, par_suite = self.get_parallel_suite()
-        par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(4))
+        par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NPROCS))
 
         # # run parallel
         t = time.time()
