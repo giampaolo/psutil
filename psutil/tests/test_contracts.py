@@ -43,6 +43,7 @@ from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import warn
+from psutil.tests import unittest_serial_run
 import psutil
 
 
@@ -184,6 +185,7 @@ class TestAvailProcessAPIs(unittest.TestCase):
 # ===================================================================
 
 
+@unittest_serial_run
 class TestDeprecations(unittest.TestCase):
 
     def test_memory_info_ex(self):

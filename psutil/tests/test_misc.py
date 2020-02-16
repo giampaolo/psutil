@@ -71,6 +71,7 @@ from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
+from psutil.tests import unittest_serial_run
 import psutil
 import psutil.tests
 
@@ -944,6 +945,7 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
+@unittest_serial_run
 class TestProcessUtils(unittest.TestCase):
 
     def test_reap_children(self):
