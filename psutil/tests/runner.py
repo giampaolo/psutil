@@ -141,6 +141,8 @@ class _Runner():
                 unittest.defaultTestLoader.loadTestsFromName(tname)
                 f.write(tname + '\n')
 
+    # --- runners
+
     def _run(self, suite):
         runner = ColouredRunner(verbosity=VERBOSITY)
         try:
@@ -156,6 +158,12 @@ class _Runner():
         res = self._run(suite)
         if not res.wasSuccessful():
             sys.exit(1)
+
+    def run_from_name(self, name):
+        suite = unittest.TestSuite()
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+        self.run(suite)
 
     def run_parallel(self, ser_suite, par_suite):
         # runner = ColouredRunner(verbosity=VERBOSITY)
@@ -201,11 +209,8 @@ class _Runner():
             sys.exit(1)
 
 
-def run_from_name(name):
-    suite = unittest.TestSuite()
-    name = os.path.splitext(os.path.basename(name))[0]
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-    _Runner().run(suite)
+_runner = _Runner()
+run_from_name = _runner.run_from_name
 
 
 def _setup():
@@ -227,17 +232,16 @@ def main():
                       help="run tests in parallel")
     opts, args = parser.parse_args()
 
-    runner = _Runner()
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
     if opts.parallel and not opts.last_failed:
-        runner.run_parallel(*runner.get_parallel_suite())
+        _runner.run_parallel(*_runner.get_parallel_suite())
     else:
         if opts.last_failed:
-            suite = runner.get_failed_suite()
+            suite = _runner.get_failed_suite()
         else:
-            suite = runner.get_suite()
-        runner.run(suite)
+            suite = _runner.get_suite()
+        _runner.run(suite)
 
 
 if __name__ == '__main__':
