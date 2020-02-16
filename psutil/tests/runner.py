@@ -159,27 +159,20 @@ class _Runner():
         if not res.wasSuccessful():
             sys.exit(1)
 
-    def run_from_name(self, name):
-        suite = unittest.TestSuite()
-        name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-        self.run(suite)
-
     def run_parallel(self, ser_suite, par_suite):
         # runner = ColouredRunner(verbosity=VERBOSITY)
         # serial, parallel = get_parallel_suite()
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
-        runner = ColouredRunner(verbosity=VERBOSITY)
         par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(4))
 
         # # run parallel
         t = time.time()
-        par = runner.run(par_suite)
+        par = self._run(par_suite)
         par_elapsed = time.time() - t
 
         # run serial
         t = time.time()
-        ser = runner.run(ser_suite)
+        ser = self._run(ser_suite)
         ser_elapsed = time.time() - t
 
         # print
@@ -206,6 +199,12 @@ class _Runner():
         if not ok:
             print_color("FAILED", "red")
             sys.exit(1)
+
+    def run_from_name(self, name):
+        suite = unittest.TestSuite()
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
+        self.run(suite)
 
 
 _runner = _Runner()
