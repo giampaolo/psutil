@@ -31,6 +31,7 @@ from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
 from psutil.tests import import_module_by_path
+from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import TOX
 
@@ -200,10 +201,14 @@ class _Runner:
         ser_suite, par_suite = self.get_parallel_suite()
         par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NPROCS))
 
-        # # run parallel
+        # run parallel
         t = time.time()
         par = self._run(par_suite)
         par_elapsed = time.time() - t
+
+        reap_children(recursive=True)
+        orphans = psutil.Process().children()
+        assert not orphans, orphans
 
         # run serial
         t = time.time()
