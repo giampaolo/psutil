@@ -88,7 +88,10 @@ class ColouredRunner(TextTestRunner):
 # =====================================================================
 
 
-class _Runner():
+class _Runner:
+
+    def __init__(self):
+        self.suite = unittest.TestSuite()
 
     def _iter_testmod_classes(self):
         testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
@@ -123,7 +126,7 @@ class _Runner():
                 par.addTest(test)
         return (ser, par)
 
-    def get_failed_suite(self):
+    def get_lastfail_suite(self):
         # ...from previously failed test run
         suite = unittest.TestSuite()
         if not os.path.isfile(FAILED_TESTS_FNAME):
@@ -154,13 +157,20 @@ class _Runner():
             self._save_failed_tests(result)
         return result
 
-    def run(self, suite):
-        res = self._run(suite)
-        if not res.wasSuccessful():
+    def _finalize(self, success):
+        if success:
+            safe_rmpath(FAILED_TESTS_FNAME)
+        else:
             sys.exit(1)
 
+    def run(self, suite=None):
+        if suite is None:
+            suite = self.get_suite()
+        res = self._run(suite)
+        self._finalize(res.wasSuccessful())
+
     def run_failed(self):
-        self.run(self.get_failed_suite())
+        self.run(self.get_lastfail_suite())
 
     def run_parallel(self):
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
@@ -241,8 +251,7 @@ def main():
         if opts.last_failed:
             _runner.run_failed()
         else:
-            suite = _runner.get_suite()
-        _runner.run(suite)
+            _runner.run()
 
 
 if __name__ == '__main__':
