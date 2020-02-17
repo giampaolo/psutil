@@ -17,15 +17,13 @@ DEPS = \
 	twine \
 	virtualenv \
 	wheel
-
-ifeq ($(PYTHON), $(filter $(PYTHON), python python2 python2.7))
-	DEPS += \
-		futures \
-		ipaddress \
-		mock==1.0.1 \
-		unittest2
-endif
-
+PY2_DEPS = \
+	futures \
+	ipaddress \
+	mock==1.0.1 \
+	unittest2
+DEPS += `$(PYTHON) -c \
+	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
