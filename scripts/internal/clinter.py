@@ -35,15 +35,17 @@ def check_line(path, line, idx, lines):
         if not eof:
             nextline = lines[idx + 1]
             # "#" is a pre-processor line
-            if nextline != '\n' and nextline.strip()[0] != '#':
+            if nextline != '\n' and \
+                    nextline.strip()[0] != '#' and \
+                    nextline.strip()[:2] != '*/':
                 warn(path, line, lineno, "expected 1 blank line")
     # minus initial white spaces
     s = s.lstrip()
-    if s.startswith('//') and s[2] != ' ':
+    if s.startswith('//') and s[2] != ' ' and line.strip() != '//':
         warn(path, line, lineno, "no space after // comment")
     if eof:
-        if lines[idx - 1] == '\n':
-            warn(path, line, lineno, "blank line at EOF")
+        if not line.endswith('\n'):
+            warn(path, line, lineno, "no blank line at EOF")
 
 
 def process(path):

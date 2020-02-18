@@ -192,8 +192,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             // XXX we get here on FreeBSD when processing 'lo' / AF_INET6
             // broadcast. Not sure what to do other than returning None.
             // ifconfig does not show anything BTW.
-            //PyErr_Format(PyExc_RuntimeError, gai_strerror(err));
-            //return NULL;
+            // PyErr_Format(PyExc_RuntimeError, gai_strerror(err));
+            // return NULL;
             Py_INCREF(Py_None);
             return Py_None;
         }

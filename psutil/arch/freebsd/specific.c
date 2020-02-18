@@ -729,7 +729,7 @@ error:
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
-    //'procstat' cmdline utility has been used as an example.
+    // 'procstat' cmdline utility has been used as an example.
     pid_t pid;
     int ptrwidth;
     int i, cnt;
