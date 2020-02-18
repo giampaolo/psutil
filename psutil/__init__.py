@@ -1407,7 +1407,7 @@ _pmap = {}
 _lock = threading.Lock()
 
 
-def process_iter(attrs=None, ad_value=None, new_only=False):
+def process_iter(attrs=None, ad_value=None):
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -1428,8 +1428,6 @@ def process_iter(attrs=None, ad_value=None, new_only=False):
     If *attrs* is an empty list it will retrieve all process info
     (slow).
 
-    If *new_only* is true this function will take into consideration
-    only new PIDs which appeared since the last time it was called.
     """
     def add(pid):
         proc = Process(pid)
@@ -1452,8 +1450,6 @@ def process_iter(attrs=None, ad_value=None, new_only=False):
 
     with _lock:
         ls = list(dict.fromkeys(new_pids).items())
-        if not new_only:
-            ls += list(_pmap.items())
         ls.sort()
 
     for pid, proc in ls:

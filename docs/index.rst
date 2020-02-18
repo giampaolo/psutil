@@ -857,7 +857,7 @@ Functions
   .. versionchanged::
     5.6.0 PIDs are returned in sorted order
 
-.. function:: process_iter(attrs=None, ad_value=None, new_only=False)
+.. function:: process_iter(attrs=None, ad_value=None)
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
@@ -873,8 +873,6 @@ Functions
   ``info`` attribute attached to the returned :class:`Process` instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
 
-  If *new_only* is true this function will take into consideration only
-  new PIDs which appeared since the last time it was was called.
   Sorting order in which processes are returned is based on their PID.
 
   Example::
@@ -898,17 +896,8 @@ Functions
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
 
-  Get only new processes since last call::
-
-    >>> for proc in psutil.process_iter(['pid', 'name'], new_only=True):
-    ...     print(proc.info)
-    ...
-
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
-
-  .. versionchanged::
-    5.7.0 added "new_only" parameter.
 
 .. function:: pid_exists(pid)
 
