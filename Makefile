@@ -11,6 +11,7 @@ DEPS = \
 	check-manifest \
 	coverage \
 	flake8 \
+	flake8-print \
 	pyperf \
 	requests \
 	setuptools \
@@ -28,6 +29,11 @@ DEPS += `$(PYTHON) -c \
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+FLAKE8_ARGS = --per-file-ignores='\
+	setup.py:T001 \
+	scripts/*:T001 \
+	psutil/tests/runner.py:T001 \
+	psutil/tests/test_memory_leaks.py:T001'
 
 all: test
 
@@ -170,7 +176,7 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 lint-py:  ## Run Python (flake8) linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 $(FLAKE8_ARGS)
 
 lint-c:  ## Run  C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
