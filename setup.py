@@ -378,7 +378,6 @@ def main():
             'Topic :: System :: Networking :: Monitoring',
             'Topic :: System :: Networking',
             'Topic :: System :: Operating System',
-            'Topic :: System :: Power (UPS)'
             'Topic :: System :: Systems Administration',
             'Topic :: Utilities',
         ],
