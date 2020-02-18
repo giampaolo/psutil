@@ -401,7 +401,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         }
 
         // is up?
-        if((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
+        if ((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
                 pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL) &&
                 pIfRow->dwAdminStatus == 1 ) {
             py_is_up = Py_True;

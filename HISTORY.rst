@@ -1,13 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.7.0 (unreleased)
-==================
+5.7.0
+=====
 
-XXXX-XX-XX
+2020-12-18
 
 **Enhancements**
 
-- 1637_: [SunOS] Add partial support for old SunOS 5.10 Update 0 to 3.
+- 1637_: [SunOS] add partial support for old SunOS 5.10 Update 0 to 3.
 - 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
   directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
@@ -16,6 +16,7 @@ XXXX-XX-XX
 - 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
   raising AccessDenied).
 - 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
+- 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
 - 1693_: [Windows] boot_time(), Process.create_time() and users()'s login time
   now have 1 micro second precision (before the precision was of 1 second).
