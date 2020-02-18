@@ -2492,8 +2492,7 @@ Running tests
 Development guide
 =================
 
-If you want to hacking on psutil (e.g. want to add a new feature or fix a bug)
-take a look at the `development guide`_.
+If you want to develop psutil take a look at the `development guide`_.
 
 Platforms support history
 =========================

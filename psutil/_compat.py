@@ -117,7 +117,7 @@ else:
             pass
         except OSError:
             raise RuntimeError(
-                "broken / incompatible Python implementation, see: "
+                "broken or incompatible Python implementation, see: "
                 "https://github.com/giampaolo/psutil/issues/1659")
 
 

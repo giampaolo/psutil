@@ -1,6 +1,6 @@
-freebsd_12_1_py3_task:
+freebsd_13_py3_task:
   freebsd_instance:
-    image: freebsd-12-1-release-amd64
+    image: freebsd-13-0-snap
   env:
     CIRRUS: 1
   install_script:
@@ -14,9 +14,9 @@ freebsd_12_1_py3_task:
     - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_access_denied.py
     - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_api_speed.py
 
-freebsd_12_1_py2_task:
+freebsd_11_py2_task:
   freebsd_instance:
-    image: freebsd-12-1-release-amd64
+    image: freebsd-11-3-snap
   env:
     CIRRUS: 1
   install_script:
