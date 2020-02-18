@@ -36,7 +36,7 @@ Some useful make commands:
     make test           # run unit tests
     make test-memleaks  # run memory leak tests
     make test-coverage  # run test coverage
-    make flake8         # run PEP8 linter
+    make lint           # run Python (PEP8) and C linters
 
 There are some differences between ``make`` on UNIX and Windows.
 For instance, to run a specific Python version. On UNIX:

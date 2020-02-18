@@ -169,11 +169,11 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-flake8:  ## flake8 linter.
+lint:  ## Run Python (flake8) and C linters.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 	@git ls-files | grep \\.[c.h]$ | xargs $(PYTHON) scripts/internal/clinter.py
 
-fix-flake8:  ## Attempt to automaticall fix some flake8 issues.
+fix-lint:  ## Attempt to automatically fix some lint issues.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
 
 # ===================================================================
