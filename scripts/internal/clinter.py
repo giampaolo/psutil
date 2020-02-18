@@ -39,10 +39,17 @@ def check_line(path, line, idx, lines):
                     nextline.strip()[0] != '#' and \
                     nextline.strip()[:2] != '*/':
                 warn(path, line, lineno, "expected 1 blank line")
-    # minus initial white spaces
-    s = s.lstrip()
-    if s.startswith('//') and s[2] != ' ' and line.strip() != '//':
+
+    sls = s.lstrip()
+    if sls.startswith('//') and sls[2] != ' ' and line.strip() != '//':
         warn(path, line, lineno, "no space after // comment")
+
+    # e.g. "if(..." after keywords
+    keywords = ("if", "else", "while", "do", "enum", "for")
+    for kw in keywords:
+        if sls.startswith(kw + '('):
+            warn(path, line, lineno, "missing space between %r and '('" % kw)
+    # eof
     if eof:
         if not line.endswith('\n'):
             warn(path, line, lineno, "no blank line at EOF")
