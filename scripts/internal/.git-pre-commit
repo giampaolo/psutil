@@ -77,6 +77,8 @@ def main():
     out = sh("git diff --cached --name-only")
     py_files = [x for x in out.split('\n') if x.endswith('.py') and
                 os.path.exists(x)]
+    c_files = [x for x in out.split('\n') if x.endswith(('.c', '.h')) and
+               os.path.exists(x)]
 
     lineno = 0
     kw = {'encoding': 'utf8'} if sys.version_info[0] == 3 else {}
@@ -100,7 +102,7 @@ def main():
                     print("%s:%s %s" % (path, lineno, line))
                     return exit("commit aborted: bare except clause")
 
-    # flake8
+    # Python linter
     if py_files:
         try:
             import flake8  # NOQA
@@ -108,12 +110,22 @@ def main():
             return exit("commit aborted: flake8 is not installed; "
                         "run 'make setup-dev-env'")
 
-        # XXX: we should scape spaces and possibly other amenities here
+        # XXX: we should escape spaces and possibly other amenities here
         ret = subprocess.call(
             "%s -m flake8 %s" % (sys.executable, " ".join(py_files)),
             shell=True)
         if ret != 0:
             return exit("commit aborted: python code is not flake8 compliant")
+
+    # C linter
+    if c_files:
+        # XXX: we should escape spaces and possibly other amenities here
+        cmd = "%s scripts/internal/clinter.py %s" % (
+            sys.executable, " ".join(c_files))
+        print(cmd)
+        ret = subprocess.call(cmd, shell=True)
+        if ret != 0:
+            return exit("commit aborted: C code didn't pass style check")
 
 
 main()
