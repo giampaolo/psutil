@@ -1427,7 +1427,6 @@ def process_iter(attrs=None, ad_value=None):
     to returned Process instance.
     If *attrs* is an empty list it will retrieve all process info
     (slow).
-
     """
     def add(pid):
         proc = Process(pid)
@@ -1449,8 +1448,8 @@ def process_iter(attrs=None, ad_value=None):
         remove(pid)
 
     with _lock:
-        ls = list(dict.fromkeys(new_pids).items())
-        ls.sort()
+        ls = sorted(list(_pmap.items()) +
+                    list(dict.fromkeys(new_pids).items()))
 
     for pid, proc in ls:
         try:
