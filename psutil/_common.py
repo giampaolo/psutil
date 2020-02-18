@@ -790,7 +790,7 @@ def hilite(s, color="green", bold=False):
     try:
         color = colors[color]
     except KeyError:
-        raise ValueError("invalid color %r; choose between %r" % (
+        raise ValueError("invalid color %r; choose between %s" % (
             list(colors.keys())))
     attr.append(color)
     if bold:
