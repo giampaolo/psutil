@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""A super simple linter to checj C syntax."""
+"""A super simple linter to check C syntax."""
 
 from __future__ import print_function
 import argparse
@@ -43,6 +43,8 @@ def check_line(path, line, idx, lines):
     sls = s.lstrip()
     if sls.startswith('//') and sls[2] != ' ' and line.strip() != '//':
         warn(path, line, lineno, "no space after // comment")
+    if sls.startswith("#") and sls[1:2] == " ":
+        warn(path, line, lineno, "space after #")
 
     # e.g. "if(..." after keywords
     keywords = ("if", "else", "while", "do", "enum", "for")
