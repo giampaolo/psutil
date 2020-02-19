@@ -11,6 +11,7 @@ DEPS = \
 	check-manifest \
 	coverage \
 	flake8 \
+	flake8-print \
 	pyperf \
 	requests \
 	setuptools \
@@ -170,7 +171,7 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 lint-py:  ## Run Python (flake8) linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
 
 lint-c:  ## Run  C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -186,17 +187,17 @@ fix-lint:  ## Attempt to automatically fix some Python lint issues.
 # GIT
 # ===================================================================
 
-git-tag-release:  ## Git-tag a new release.
-	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
-	git push --follow-tags
-
 install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../scripts/internal/.git-pre-commit .git/hooks/pre-commit
+	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Distribution
 # ===================================================================
+
+git-tag-release:  ## Git-tag a new release.
+	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git push --follow-tags
 
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
@@ -225,6 +226,9 @@ check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 
+tidelift-relnotes:  ## upload release notes from HISTORY
+	$(PYTHON) scripts/internal/tidelift.py
+
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} check-sdist
 	${MAKE} install
@@ -245,6 +249,7 @@ release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
+	${MAKE} tidelift-relnotes
 
 check-manifest:  ## Inspect MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v $(ARGS)

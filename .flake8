@@ -1,0 +1,10 @@
+# Configuration file for flake 8. This is used by "make lint" and by the
+# GIT commit hook script.
+# T001 = print() statement
+
+[flake8]
+per-file-ignores =
+   setup.py:T001
+   scripts/*:T001
+   psutil/tests/runner.py:T001
+   psutil/tests/test_memory_leaks.py:T001

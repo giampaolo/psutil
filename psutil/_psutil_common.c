@@ -391,7 +391,6 @@ double
 psutil_FiletimeToUnixTime(FILETIME ft) {
     return _to_unix_time((ULONGLONG)ft.dwHighDateTime,
                          (ULONGLONG)ft.dwLowDateTime);
-
 }
 
 
