@@ -1,6 +1,6 @@
 freebsd_13_py3_task:
   freebsd_instance:
-    image: freebsd-13-0-release-amd64
+    image: freebsd-12-1-release-amd64
   env:
     CIRRUS: 1
   install_script:
@@ -16,7 +16,7 @@ freebsd_13_py3_task:
 
 freebsd_11_py2_task:
   freebsd_instance:
-    image: freebsd-11-3-release-amd64
+    image: freebsd-12-1-release-amd64
   env:
     CIRRUS: 1
   install_script:
