@@ -11,8 +11,8 @@ freebsd_13_py3_task:
     - make install
     - make test
     - make test-memleaks
-    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_access_denied.py
-    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_api_speed.py
+    - make print-access-denied
+    - make print-api-speed
 
 freebsd_11_py2_task:
   freebsd_instance:
@@ -27,5 +27,5 @@ freebsd_11_py2_task:
     - make install
     - make test
     - make test-memleaks
-    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_access_denied.py
-    - PSUTIL_TESTING=1 python3 -Wa scripts/internal/print_api_speed.py
+    - make print-access-denied
+    - make print-api-speed
