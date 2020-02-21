@@ -9,6 +9,7 @@ Put your Tidelift API token in a file first:
 ~/.tidelift.token
 """
 
+from __future__ import print_function
 import os
 import requests
 import psutil
@@ -16,13 +17,13 @@ from psutil.tests import import_module_by_path
 
 
 def upload_relnotes(package, version, text, token):
-    url = f"https://api.tidelift.com/external-api/" + \
-          f"lifting/pypi/{package}/release-notes/{version}"
+    url = "https://api.tidelift.com/external-api/" + \
+          "lifting/pypi/%s/release-notes/%s" % (package, version)
     res = requests.put(
         url=url,
         data=text.encode('utf8'),
-        headers={"Authorization": f"Bearer: {token}"})
-    print(f"{version}: {res.status_code} {res.text}")
+        headers={"Authorization": "Bearer: %s" % token})
+    print(version, res.status_code, res.text)
     res.raise_for_status()
 
 
