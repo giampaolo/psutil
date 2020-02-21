@@ -368,9 +368,9 @@ class TestSystemAPIs(unittest.TestCase):
     @retry_on_failure()
     def test_users(self):
         out = sh("who")
-        lines = out.split('\n')
-        if not lines:
+        if not out.strip():
             raise self.skipTest("no users on this system")
+        lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
         self.assertEqual(len(users), len(psutil.users()))
