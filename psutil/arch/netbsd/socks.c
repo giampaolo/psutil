@@ -154,7 +154,7 @@ psutil_get_files(void) {
     // debug
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
-            printf("%d\n", k->kif->ki_pid);
+            printf("%d\n", k->kif->ki_pid);  // NOQA
     }
     */
 
@@ -206,17 +206,6 @@ psutil_get_sockets(const char *name) {
         kpcb->kpcb = &kp[j];
         SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
     }
-
-    /*
-    // debug
-    struct kif *k;
-    struct kpcb *k;
-    SLIST_FOREACH(k, &kpcbhead, kpcbs) {
-            printf("ki_type: %d\n", k->kpcb->ki_type);
-            printf("ki_family: %d\n", k->kpcb->ki_family);
-    }
-    */
-
     return 0;
 }
 

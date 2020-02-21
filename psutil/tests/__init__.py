@@ -819,7 +819,7 @@ def retry_on_failure(retries=NO_RETRIES):
     actually failing.
     """
     def logfun(exc):
-        print("%r, retrying" % exc, file=sys.stderr)
+        print("%r, retrying" % exc, file=sys.stderr)  # NOQA
 
     return retry(exception=AssertionError, timeout=None, retries=retries,
                  logfun=logfun)

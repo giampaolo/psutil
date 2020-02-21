@@ -224,7 +224,6 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "5.7.0"
@@ -2348,7 +2347,7 @@ def test():  # pragma: no cover
     templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",  # NOQA
                    "STATUS", "START", "TIME", "CMDLINE"))
     for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
@@ -2398,7 +2397,7 @@ def test():  # pragma: no cover
             ctime,
             cputime,
             cmdline)
-        print(line[:get_terminal_size()[0]])
+        print(line[:get_terminal_size()[0]])  # NOQA
 
 
 del memoize, memoize_when_activated, division, deprecated_method

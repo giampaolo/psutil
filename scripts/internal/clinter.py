@@ -43,16 +43,19 @@ def check_line(path, line, idx, lines):
     sls = s.lstrip()
     if sls.startswith('//') and sls[2] != ' ' and line.strip() != '//':
         warn(path, line, lineno, "no space after // comment")
-
     # e.g. "if(..." after keywords
     keywords = ("if", "else", "while", "do", "enum", "for")
     for kw in keywords:
         if sls.startswith(kw + '('):
             warn(path, line, lineno, "missing space between %r and '('" % kw)
     # eof
-    if eof:
-        if not line.endswith('\n'):
-            warn(path, line, lineno, "no blank line at EOF")
+    if eof and not line.endswith('\n'):
+        warn(path, line, lineno, "no blank line at EOF")
+
+    ss = s.strip()
+    if ss.startswith(("printf(", "printf (", )):
+        if not ss.endswith(("// NOQA", "//  NOQA")):
+            warn(path, line, lineno, "printf() statement")
 
 
 def process(path):
