@@ -13,7 +13,8 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
-make install
+make clean
+make install PYTHON=python
 
 echo "Testing on Python $PYVER"
 $PYTHON -m pip freeze
