@@ -1096,6 +1096,8 @@ class TestSystemNetConnections(unittest.TestCase):
                 return ""
 
         orig_readlink = psutil._pslinux.readlink
+        connections = psutil._pslinux.Connections()
+        connections._procfs_path = psutil._common.get_procfs_path()
 
         p1 = get_test_subprocess()
         p2 = get_test_subprocess()
@@ -1115,10 +1117,45 @@ class TestSystemNetConnections(unittest.TestCase):
                 new=lambda path: mock_readlink(
                     path, mock_paths_links_map, orig_readlink)):
 
-            namespaces = psutil._pslinux.Connections.network_namespaces()
+            namespaces = connections.network_namespaces()
 
         self.assertIn(mock_inode1, namespaces)
         self.assertIn(mock_inode2, namespaces)
+
+    def test_detect_connections_no_ns_folder(self):
+        def mock_process_inet(orig_method, *args):
+            return orig_method(*args)
+
+        def mock_readlink(path, orig_method):
+            if path.endswith("/ns/net"):
+                raise FileNotFoundError(
+                            errno.ENOENT, os.strerror(errno.ENOENT), path)
+            try:
+                return orig_method(path)
+            except PermissionError:
+                return ""
+
+        orig_process_inet = psutil._pslinux.Connections.process_inet
+        orig_readlink = psutil._pslinux.readlink
+        connections = psutil._pslinux.Connections()
+
+        with mock.patch(
+                "psutil._pslinux.readlink",
+                new=lambda path: mock_readlink(
+                    path, orig_readlink)), \
+                mock.patch(
+                    "psutil._pslinux.Connections.process_inet",
+                    mock.Mock(
+                        wraps=lambda *args, **kwargs: mock_process_inet(
+                            orig_process_inet, *args))) as m, \
+                mock.patch(
+                    "psutil._pslinux.Connections.get_proc_inodes",
+                    return_value={1: [2, 3]}):
+            connections.retrieve('tcp4')
+            m.assert_called_once_with('/proc/net/tcp', socket.AF_INET,
+                                      socket.SOCK_STREAM,
+                                      {1: [2, 3]}, filter_pid=None)
+
 
 # =====================================================================
 # --- system disks

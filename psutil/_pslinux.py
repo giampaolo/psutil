@@ -10,6 +10,7 @@ import base64
 import collections
 import errno
 import functools
+import itertools
 import glob
 import os
 import re
@@ -72,7 +73,6 @@ __extra__all__ = [
 # --- globals
 # =====================================================================
 
-# TODO remove this comment
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
@@ -867,12 +867,11 @@ class Connections:
                     raise
         return _common.addr(ip, port)
 
-    @staticmethod
-    def network_namespaces():
+    def network_namespaces(self):
         net_namespaces = defaultdict(list)
         for pid in pids():
             try:
-                ns = readlink("%s/%s/ns/net" % (get_procfs_path(), pid))
+                ns = readlink("%s/%s/ns/net" % (self._procfs_path, pid))
             except (FileNotFoundError, ProcessLookupError, PermissionError):
                 continue
             except OSError as err:
@@ -886,56 +885,46 @@ class Connections:
                     net_namespaces[ns].append(pid)
         return net_namespaces
 
-    def process_inet(self, file_name, family, type_, inodes, filter_pid=None):
+    @staticmethod
+    def process_inet(file, family, type_, inodes, filter_pid=None):
         """Parse /proc/*/net/tcp* and /proc/*/net/udp* files."""
-        net_ns = Connections.network_namespaces()
-        files = []
-        if filter_pid is None:
-            for k in net_ns.keys():
-                files.append("%s/%s/net/%s" % (self._procfs_path, net_ns[k][0],
-                             file_name))
-        else:
-            files.append("%s/%s/net/%s" % (self._procfs_path, filter_pid,
-                         file_name))
-
-        for file in files:
-            if file.endswith('6') and not os.path.exists(file):
-                # IPv6 not supported
-                continue
-            with open_text(file, buffering=BIGFILE_BUFFERING) as f:
-                f.readline()  # skip the first line
-                for lineno, line in enumerate(f, 1):
+        if file.endswith('6') and not os.path.exists(file):
+            # IPv6 not supported
+            return
+        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
+            f.readline()  # skip the first line
+            for lineno, line in enumerate(f, 1):
+                try:
+                    _, laddr, raddr, status, _, _, _, _, _, inode = \
+                        line.split()[:10]
+                except ValueError:
+                    raise RuntimeError(
+                        "error while parsing %s; malformed line %s %r" % (
+                            file, lineno, line))
+                if inode in inodes:
+                    # # We assume inet sockets are unique, so we error
+                    # # out if there are multiple references to the
+                    # # same inode. We won't do this for UNIX sockets.
+                    # if len(inodes[inode]) > 1 and
+                    #    family != socket.AF_UNIX:
+                    #     raise ValueError("ambiguos inode with multiple "
+                    #                      "PIDs references")
+                    pid, fd = inodes[inode][0]
+                else:
+                    pid, fd = None, -1
+                if filter_pid is not None and filter_pid != pid:
+                    continue
+                else:
+                    if type_ == socket.SOCK_STREAM:
+                        status = TCP_STATUSES[status]
+                    else:
+                        status = _common.CONN_NONE
                     try:
-                        _, laddr, raddr, status, _, _, _, _, _, inode = \
-                            line.split()[:10]
-                    except ValueError:
-                        raise RuntimeError(
-                            "error while parsing %s; malformed line %s %r" % (
-                                file, lineno, line))
-                    if inode in inodes:
-                        # # We assume inet sockets are unique, so we error
-                        # # out if there are multiple references to the
-                        # # same inode. We won't do this for UNIX sockets.
-                        # if len(inodes[inode]) > 1 and
-                        #    family != socket.AF_UNIX:
-                        #     raise ValueError("ambiguos inode with multiple "
-                        #                      "PIDs references")
-                        pid, fd = inodes[inode][0]
-                    else:
-                        pid, fd = None, -1
-                    if filter_pid is not None and filter_pid != pid:
+                        laddr = Connections.decode_address(laddr, family)
+                        raddr = Connections.decode_address(raddr, family)
+                    except _Ipv6UnsupportedError:
                         continue
-                    else:
-                        if type_ == socket.SOCK_STREAM:
-                            status = TCP_STATUSES[status]
-                        else:
-                            status = _common.CONN_NONE
-                        try:
-                            laddr = Connections.decode_address(laddr, family)
-                            raddr = Connections.decode_address(raddr, family)
-                        except _Ipv6UnsupportedError:
-                            continue
-                        yield (fd, family, type_, laddr, raddr, status, pid)
+                    yield (fd, family, type_, laddr, raddr, status, pid)
 
     @staticmethod
     def process_unix(file, family, inodes, filter_pid=None):
@@ -991,8 +980,20 @@ class Connections:
         for proto_name, family, type_ in self.tmap[kind]:
             path = "%s/net/%s" % (self._procfs_path, proto_name)
             if family in (socket.AF_INET, socket.AF_INET6):
-                ls = self.process_inet(
-                    path, family, type_, inodes, filter_pid=pid)
+                files = []
+                if pid is None:
+                    net_ns = self.network_namespaces()
+                    if net_ns:
+                        for k in net_ns.keys():
+                            files.append("%s/%s/net/%s" % (self._procfs_path,
+                                         net_ns[k][0], proto_name))
+                    else:
+                        files = [path]
+                else:
+                    files.append("%s/%s/net/%s" % (self._procfs_path, pid,
+                                 proto_name))
+                ls = itertools.chain(*[self.process_inet(
+                    f, family, type_, inodes, filter_pid=pid) for f in files])
             else:
                 ls = self.process_unix(
                     path, family, inodes, filter_pid=pid)
