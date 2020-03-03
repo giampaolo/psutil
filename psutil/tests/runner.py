@@ -39,7 +39,7 @@ from psutil.tests import TOX
 HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
-NPROCS = psutil.cpu_count()
+NWORKERS = psutil.cpu_count() or 1
 
 loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
 
@@ -199,9 +199,10 @@ class _Runner:
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
         ser_suite, par_suite = self.get_parallel_suite()
-        par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NPROCS))
+        par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NWORKERS))
 
         # run parallel
+        print("starting parallel tests using %s workers" % NWORKERS)
         t = time.time()
         par = self._run(par_suite)
         par_elapsed = time.time() - t
@@ -233,8 +234,8 @@ class _Runner:
             +----------+----------+----------+----------+----------+----------+
             """ % (par.testsRun, par_fails, par_errs, par_skips, par_elapsed,
                    ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed)))
-        print("Ran %s tests in %.3fs" % (par.testsRun + ser.testsRun,
-                                         par_elapsed + ser_elapsed))
+        print("Ran %s tests in %.3fs using %s workers" % (
+            par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
         ok = par.wasSuccessful() and ser.wasSuccessful()
         self._finalize(ok)
         if not ok:
