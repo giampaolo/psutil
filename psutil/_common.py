@@ -790,7 +790,7 @@ def hilite(s, color="green", bold=False):
     try:
         color = colors[color]
     except KeyError:
-        raise ValueError("invalid color %r; choose between %r" % (
+        raise ValueError("invalid color %r; choose between %s" % (
             list(colors.keys())))
     attr.append(color)
     if bold:
@@ -801,9 +801,9 @@ def hilite(s, color="green", bold=False):
 def print_color(s, color="green", bold=False, file=sys.stdout):
     """Print a colorized version of string."""
     if not term_supports_colors():
-        print(s, file=file)
+        print(s, file=file)  # NOQA
     elif POSIX:
-        print(hilite(s, color, bold), file=file)
+        print(hilite(s, color, bold), file=file)  # NOQA
     else:
         import ctypes
 
@@ -827,7 +827,7 @@ def print_color(s, color="green", bold=False, file=sys.stdout):
         handle = GetStdHandle(handle_id)
         SetConsoleTextAttribute(handle, color)
         try:
-            print(s, file=file)
+            print(s, file=file)    # NOQA
         finally:
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
@@ -839,7 +839,7 @@ if bool(os.getenv('PSUTIL_DEBUG', 0)):
         """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
-        print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),
+        print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
 else:
     def debug(msg):

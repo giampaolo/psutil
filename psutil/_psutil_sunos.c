@@ -496,7 +496,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
                          info.pr_inblk,
                          info.pr_oublk);
 }
- */
+*/
 
 
 /*

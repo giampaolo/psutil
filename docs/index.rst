@@ -857,7 +857,7 @@ Functions
   .. versionchanged::
     5.6.0 PIDs are returned in sorted order
 
-.. function:: process_iter(attrs=None, ad_value=None, new_only=False)
+.. function:: process_iter(attrs=None, ad_value=None)
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
@@ -873,8 +873,6 @@ Functions
   ``info`` attribute attached to the returned :class:`Process` instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
 
-  If *new_only* is true this function will take into consideration only
-  new PIDs which appeared since the last time it was was called.
   Sorting order in which processes are returned is based on their PID.
 
   Example::
@@ -898,17 +896,8 @@ Functions
      3: {'name': 'ksoftirqd/0', 'username': 'root'},
      ...}
 
-  Get only new processes since last call::
-
-    >>> for proc in psutil.process_iter(['pid', 'name'], new_only=True):
-    ...     print(proc.info)
-    ...
-
   .. versionchanged::
     5.3.0 added "attrs" and "ad_value" parameters.
-
-  .. versionchanged::
-    5.7.0 added "new_only" parameter.
 
 .. function:: pid_exists(pid)
 
@@ -2503,8 +2492,7 @@ Running tests
 Development guide
 =================
 
-If you want to hacking on psutil (e.g. want to add a new feature or fix a bug)
-take a look at the `development guide`_.
+If you want to develop psutil take a look at the `development guide`_.
 
 Platforms support history
 =========================
@@ -2523,6 +2511,10 @@ Supported Python versions are 2.6, 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2020-02-18:
+  `5.7.0 <https://pypi.org/project/psutil/5.7.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#570>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.6.7...release-5.7.0#files_bucket>`__
 - 2019-11-26:
   `5.6.7 <https://pypi.org/project/psutil/5.6.7/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#567>`__ -

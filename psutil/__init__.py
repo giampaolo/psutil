@@ -224,7 +224,6 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "5.7.0"
@@ -1407,7 +1406,7 @@ _pmap = {}
 _lock = threading.Lock()
 
 
-def process_iter(attrs=None, ad_value=None, new_only=False):
+def process_iter(attrs=None, ad_value=None):
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -1427,9 +1426,6 @@ def process_iter(attrs=None, ad_value=None, new_only=False):
     to returned Process instance.
     If *attrs* is an empty list it will retrieve all process info
     (slow).
-
-    If *new_only* is true this function will take into consideration
-    only new PIDs which appeared since the last time it was called.
     """
     def add(pid):
         proc = Process(pid)
@@ -1451,10 +1447,8 @@ def process_iter(attrs=None, ad_value=None, new_only=False):
         remove(pid)
 
     with _lock:
-        ls = list(dict.fromkeys(new_pids).items())
-        if not new_only:
-            ls += list(_pmap.items())
-        ls.sort()
+        ls = sorted(list(_pmap.items()) +
+                    list(dict.fromkeys(new_pids).items()))
 
     for pid, proc in ls:
         try:
@@ -2353,7 +2347,7 @@ def test():  # pragma: no cover
     templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",  # NOQA
                    "STATUS", "START", "TIME", "CMDLINE"))
     for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
@@ -2403,7 +2397,7 @@ def test():  # pragma: no cover
             ctime,
             cputime,
             cmdline)
-        print(line[:get_terminal_size()[0]])
+        print(line[:get_terminal_size()[0]])  # NOQA
 
 
 del memoize, memoize_when_activated, division, deprecated_method

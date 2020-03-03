@@ -107,22 +107,6 @@ class TestProcessAPIs(unittest.TestCase):
                 self.assertGreaterEqual(p.info['pid'], 0)
             assert m.called
 
-    def test_process_iter_new_only(self):
-        ls1 = list(psutil.process_iter(attrs=['pid']))
-        ls2 = list(psutil.process_iter(attrs=['pid'], new_only=True))
-        self.assertGreater(len(ls1), len(ls2))
-        # assume no more than 3 new processes were created in the meantime
-        self.assertIn(len(ls2), [0, 1, 2, 3, 4, 5])
-
-        sproc = get_test_subprocess()
-        ls = list(psutil.process_iter(attrs=['pid'], new_only=True))
-        self.assertIn(len(ls2), [0, 1, 2, 3, 4, 5])
-        for p in ls:
-            if p.pid == sproc.pid:
-                break
-        else:
-            self.fail("subprocess not found")
-
     @unittest.skipIf(PYPY and WINDOWS,
                      "get_test_subprocess() unreliable on PYPY + WINDOWS")
     def test_wait_procs(self):

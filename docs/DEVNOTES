@@ -158,10 +158,11 @@ BUGFIXES
 
 - #600: windows / open_files(): support network file handles.
 
-REJECTED
-========
+REJECTED IDEAS
+==============
 
 - #550: threads per core
+- #1667: process_iter(new_only=True)
 
 INCONSISTENCIES
 ===============

@@ -11,8 +11,8 @@
 #include <Python.h>
 
 #if !defined(_LP64) && _FILE_OFFSET_BITS == 64
-#  undef _FILE_OFFSET_BITS
-#  undef _LARGEFILE64_SOURCE
+    #undef _FILE_OFFSET_BITS
+    #undef _LARGEFILE64_SOURCE
 #endif
 
 #include <sys/types.h>
