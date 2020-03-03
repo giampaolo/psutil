@@ -113,6 +113,10 @@ test:  ## Run all tests.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT)
 
+test-parallel:  ## Run all tests in parallel.
+	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) --parallel
+
 test-process:  ## Run process-related API tests.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_process.py
