@@ -2260,7 +2260,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
     __all__.append("sensors_temperatures")
 
 
-# Linux, macOS
+# Linux
 if hasattr(_psplatform, "sensors_fans"):
 
     def sensors_fans():
