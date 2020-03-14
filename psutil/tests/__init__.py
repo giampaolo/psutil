@@ -174,7 +174,7 @@ HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 try:
     HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 except Exception:
-    HAS_BATTERY = True
+    HAS_BATTERY = False
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
