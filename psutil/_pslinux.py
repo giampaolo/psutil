@@ -361,7 +361,6 @@ def calculate_avail_vmem(mems):
             if line.startswith(b'low'):
                 watermark_low += int(line.split()[1])
     watermark_low *= PAGESIZE
-    watermark_low = watermark_low
 
     avail = free - watermark_low
     pagecache = lru_active_file + lru_inactive_file
