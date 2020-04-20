@@ -26,6 +26,7 @@ import psutil
 from psutil import LINUX
 from psutil._compat import basestring
 from psutil._compat import FileNotFoundError
+from psutil._compat import PermissionError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
@@ -48,7 +49,7 @@ from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
-
+from psutil.tests import get_test_subprocess
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
@@ -57,7 +58,6 @@ SIOCGIFHWADDR = 0x8927
 if LINUX:
     SECTOR_SIZE = 512
 EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
-
 # =====================================================================
 # --- utils
 # =====================================================================
@@ -972,7 +972,6 @@ class TestSystemNetIOCounters(unittest.TestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetConnections(unittest.TestCase):
-
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
@@ -996,6 +995,166 @@ class TestSystemNetConnections(unittest.TestCase):
                 """)) as m:
             psutil.net_connections(kind='unix')
             assert m.called
+
+    def test_detect_connections_other_net_namespaces(self):
+        # see: https://github.com/giampaolo/psutil/issues/1611
+        def mock_get_proc_inodes(self, pid, mock_pids, orig_method):
+            try:
+                inodes = orig_method(self, pid)
+                if pid in mock_pids:
+                    inode, fd = mock_pids[pid]
+                    inodes[inode].append((pid, fd))
+                return inodes
+            except PermissionError:
+                return []
+
+        orig_get_proc_inodes = psutil._pslinux.Connections.get_proc_inodes
+
+        p1 = get_test_subprocess()
+        p2 = get_test_subprocess()
+
+        # - Mock contents of /proc/net/tcp to contain a single entry (as
+        #  if there is only one connection in our network namespace).
+        # - Mock p1 as if having a single connection in the same network
+        #  namespace as our process (/proc/<p1 pid>/net/tcp has same content
+        #  as /proc/net/tcp),
+        # - Mock p2 as if having a single connection in a different network
+        #  namespace (/proc/<p2 pid>/net/tcp has a single entry which differs
+        #  from the one in /proc/net/tcp)
+        mock_inodes = {p1.pid: ("4694301", 3), p2.pid: ("4694398", 4)}
+        with mock.patch(
+                "psutil._pslinux.Connections.get_proc_inodes",
+                new=lambda s, pid: mock_get_proc_inodes(
+                    s, pid, mock_inodes, orig_get_proc_inodes)),\
+                mock_open_content(
+                    "/proc/%d/net/tcp" % p2.pid,
+                    textwrap.dedent(
+                        """
+                        sl  local_address rem_address   st tx_queue """
+                        """rx_queue tr tm->when retrnsmt   uid"""
+                        """timeout inode
+                        0: 020011AC:92B8 0201A8C0:0016 01 """
+                        """00000000:00000000 02:000AAE03 00000000     """
+                        """0        0 4694398 2 """
+                        """ffff9819a9287000 22 4 30 10 -1
+                        """)),\
+                mock_open_content(
+                    "/proc/%d/net/tcp" % p1.pid,
+                    textwrap.dedent(
+                        """
+                        sl  local_address rem_address   st tx_queue """
+                        """rx_queue tr tm->when retrnsmt   uid"""
+                        """timeout inode
+                        0: 020011AC:92B8 0201A8C0:0016 01 """
+                        """00000000:00000000 02:000AAE03 00000000     """
+                        """0        0 4694301 2 """
+                        """ffff9819a9287000 22 4 30 10 -1
+                        """)),\
+                mock_open_content(
+                    "/proc/net/tcp",
+                    textwrap.dedent(
+                        """
+                        sl  local_address rem_address   st tx_queue """
+                        """rx_queue tr tm->when retrnsmt   uid"""
+                        """timeout inode
+                        0: 020011AC:92B8 0201A8C0:0016 01 """
+                        """00000000:00000000 02:000AAE03 00000000     """
+                        """0        0 4694301 2 """
+                        """ffff9819a9287000 22 4 30 10 -1
+                        """)):
+            conn_p1 = psutil._pslinux.Connections().retrieve(
+               kind='tcp4',
+               pid=p1.pid)
+            conn_p2 = psutil._pslinux.Connections().retrieve(
+               kind='tcp4',
+               pid=p2.pid)
+
+        # Sanity checks on retrieved data
+        self.assertEqual(conn_p1[0].laddr.ip, '172.17.0.2')
+        self.assertEqual(conn_p1[0].laddr.port, 37560)
+        self.assertEqual(conn_p1[0].raddr.ip, '192.168.1.2')
+        self.assertEqual(conn_p1[0].raddr.port, 22)
+        self.assertEqual(conn_p2[0].laddr.ip, '172.17.0.2')
+        self.assertEqual(conn_p2[0].laddr.port, 37560)
+        self.assertEqual(conn_p2[0].raddr.ip, '192.168.1.2')
+        self.assertEqual(conn_p2[0].raddr.port, 22)
+
+        # Detect connection in other namespace
+        self.assertEqual(len(conn_p1), 1)
+
+        # Detect connection in namespace other than ours
+        self.assertEqual(len(conn_p2), 1)
+
+    def test_network_namespaces(self):
+        def mock_readlink(path, paths_links_map, orig_method):
+            if path in paths_links_map:
+                return paths_links_map[path]
+
+            try:
+                return orig_method(path)
+            except PermissionError:
+                return ""
+
+        orig_readlink = psutil._pslinux.readlink
+        connections = psutil._pslinux.Connections()
+        connections._procfs_path = psutil._common.get_procfs_path()
+
+        p1 = get_test_subprocess()
+        p2 = get_test_subprocess()
+
+        mock_inode1 = '7258461850'
+        mock_inode2 = '3650844375'
+        mock_paths_links_map = {
+                "%s/%s/ns/net" % (
+                    psutil._common.get_procfs_path(), p1.pid
+                    ): "net:[%s]" % mock_inode1,
+                "%s/%s/ns/net" % (
+                    psutil._common.get_procfs_path(), p2.pid
+                    ): "net:[%s]" % mock_inode2
+                }
+        with mock.patch(
+                "psutil._pslinux.readlink",
+                new=lambda path: mock_readlink(
+                    path, mock_paths_links_map, orig_readlink)):
+
+            namespaces = connections.network_namespaces()
+
+        self.assertIn(mock_inode1, namespaces)
+        self.assertIn(mock_inode2, namespaces)
+
+    def test_detect_connections_no_ns_folder(self):
+        def mock_process_inet(orig_method, *args):
+            return orig_method(*args)
+
+        def mock_readlink(path, orig_method):
+            if path.endswith("/ns/net"):
+                raise FileNotFoundError(
+                            errno.ENOENT, os.strerror(errno.ENOENT), path)
+            try:
+                return orig_method(path)
+            except PermissionError:
+                return ""
+
+        orig_process_inet = psutil._pslinux.Connections.process_inet
+        orig_readlink = psutil._pslinux.readlink
+        connections = psutil._pslinux.Connections()
+
+        with mock.patch(
+                "psutil._pslinux.readlink",
+                new=lambda path: mock_readlink(
+                    path, orig_readlink)), \
+                mock.patch(
+                    "psutil._pslinux.Connections.process_inet",
+                    mock.Mock(
+                        wraps=lambda *args, **kwargs: mock_process_inet(
+                            orig_process_inet, *args))) as m, \
+                mock.patch(
+                    "psutil._pslinux.Connections.get_proc_inodes",
+                    return_value={1: [2, 3]}):
+            connections.retrieve('tcp4')
+            m.assert_called_once_with('/proc/net/tcp', socket.AF_INET,
+                                      socket.SOCK_STREAM,
+                                      {1: [2, 3]}, filter_pid=None)
 
 
 # =====================================================================
@@ -1354,7 +1513,7 @@ class TestMisc(unittest.TestCase):
             self.assertRaises(IOError, psutil.cpu_times, percpu=True)
             self.assertRaises(IOError, psutil.boot_time)
             # self.assertRaises(IOError, psutil.pids)
-            self.assertRaises(IOError, psutil.net_connections)
+            # self.assertRaises(IOError, psutil.net_connections)
             self.assertRaises(IOError, psutil.net_io_counters)
             self.assertRaises(IOError, psutil.net_if_stats)
             # self.assertRaises(IOError, psutil.disk_io_counters)

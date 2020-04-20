@@ -10,6 +10,7 @@ import base64
 import collections
 import errno
 import functools
+import itertools
 import glob
 import os
 import re
@@ -71,7 +72,6 @@ __extra__all__ = [
 # =====================================================================
 # --- globals
 # =====================================================================
-
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
@@ -866,9 +866,27 @@ class Connections:
                     raise
         return _common.addr(ip, port)
 
+    def network_namespaces(self):
+        net_namespaces = defaultdict(list)
+        for pid in pids():
+            try:
+                ns = readlink("%s/%s/ns/net" % (self._procfs_path, pid))
+            except (FileNotFoundError, ProcessLookupError, PermissionError):
+                continue
+            except OSError as err:
+                if err.errno == errno.EINVAL:
+                    # not a link
+                    continue
+                raise
+            else:
+                if ns.startswith('net:['):
+                    ns = ns[5:][:-1]
+                    net_namespaces[ns].append(pid)
+        return net_namespaces
+
     @staticmethod
     def process_inet(file, family, type_, inodes, filter_pid=None):
-        """Parse /proc/net/tcp* and /proc/net/udp* files."""
+        """Parse /proc/*/net/tcp* and /proc/*/net/udp* files."""
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
@@ -886,7 +904,8 @@ class Connections:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
                     # # same inode. We won't do this for UNIX sockets.
-                    # if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
+                    # if len(inodes[inode]) > 1 and
+                    #    family != socket.AF_UNIX:
                     #     raise ValueError("ambiguos inode with multiple "
                     #                      "PIDs references")
                     pid, fd = inodes[inode][0]
@@ -960,8 +979,20 @@ class Connections:
         for proto_name, family, type_ in self.tmap[kind]:
             path = "%s/net/%s" % (self._procfs_path, proto_name)
             if family in (socket.AF_INET, socket.AF_INET6):
-                ls = self.process_inet(
-                    path, family, type_, inodes, filter_pid=pid)
+                files = []
+                if pid is None:
+                    net_ns = self.network_namespaces()
+                    if net_ns:
+                        for k in net_ns.keys():
+                            files.append("%s/%s/net/%s" % (self._procfs_path,
+                                         net_ns[k][0], proto_name))
+                    else:
+                        files = [path]
+                else:
+                    files.append("%s/%s/net/%s" % (self._procfs_path, pid,
+                                 proto_name))
+                ls = itertools.chain(*[self.process_inet(
+                    f, family, type_, inodes, filter_pid=pid) for f in files])
             else:
                 ls = self.process_unix(
                     path, family, inodes, filter_pid=pid)
