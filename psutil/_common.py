@@ -798,12 +798,12 @@ def hilite(s, color="green", bold=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
-def print_color(s, color="green", bold=False, file=sys.stdout):
+def print_color(s, color="green", bold=False, file=sys.stdout, end='\n'):
     """Print a colorized version of string."""
     if not term_supports_colors():
-        print(s, file=file)  # NOQA
+        print(s, file=file, end=end)  # NOQA
     elif POSIX:
-        print(hilite(s, color, bold), file=file)  # NOQA
+        print(hilite(s, color, bold), file=file, end=end)  # NOQA
     else:
         import ctypes
 
@@ -827,7 +827,7 @@ def print_color(s, color="green", bold=False, file=sys.stdout):
         handle = GetStdHandle(handle_id)
         SetConsoleTextAttribute(handle, color)
         try:
-            print(s, file=file)    # NOQA
+            print(s, file=file, end=end)    # NOQA
         finally:
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 

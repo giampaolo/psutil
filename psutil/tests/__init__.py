@@ -43,6 +43,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import supports_ipv6
+from psutil._common import print_color
 from psutil._compat import ChildProcessError
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
@@ -850,35 +851,40 @@ class TestMemoryLeak(unittest.TestCase):
     def _call_many_times(self, times, fun):
         # Get 2 distinct memory samples, before and after having
         # called fun repeadetly, and return the diff.
+        gc.collect()
         mem1 = self._get_mem()
         for x in xrange(times):
-            self._call(fun)
-            del x
+            ret = self._call(fun)
+            del x, ret
         gc.collect()
         mem2 = self._get_mem()
         self.assertEqual(gc.garbage, [])
-        memdiff = mem2 - mem1
-        assert memdiff >= 0, memdiff
-        return memdiff
+        diff = mem2 - mem1
+        if diff < 0:
+            self._log("negative memory diff -%s" % (bytes2human(abs(diff))))
+        return diff
 
     def _call_for(self, secs, fun):
         # Get 2 distinct memory samples, before and after having
         # called fun repeadetly for N secs, and return the diff.
         stop_at = time.time() + secs
         ncalls = 0
+        gc.collect()
         mem1 = self._get_mem()
         while time.time() <= stop_at:
-            self._call(fun)
+            ret = self._call(fun)  # NOQA
+            del ret
             ncalls += 1
         gc.collect()
         mem2 = self._get_mem()
         self.assertEqual(gc.garbage, [])
-        memdiff = mem2 - mem1
-        assert memdiff >= 0, memdiff
-        return (memdiff, ncalls)
+        diff = mem2 - mem1
+        if diff < 0:
+            self._log("negative memory diff -%s" % (bytes2human(abs(diff))))
+        return (diff, ncalls)
 
     def _log(self, msg):
-        print(msg, file=sys.stderr)  # NOQA
+        print_color(msg, color="brown", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
                 tolerance=tolerance, retry_for=retry_for):
