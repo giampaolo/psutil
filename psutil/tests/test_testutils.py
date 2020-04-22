@@ -40,6 +40,7 @@ from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import tcp_socketpair
 from psutil.tests import TESTFN
+from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
@@ -311,6 +312,41 @@ class TestNetUtils(unittest.TestCase):
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
+
+
+class TestMemLeakClass(TestMemoryLeak):
+
+    def test_times(self):
+        def fun():
+            cnt['cnt'] += 1
+        cnt = {'cnt': 0}
+        self.execute(fun, times=1, warmup_times=0)
+        self.assertEqual(cnt['cnt'], 1)
+        self.execute(fun, times=10, warmup_times=0)
+        self.assertEqual(cnt['cnt'], 11)
+
+    def test_warmup_times(self):
+        def fun():
+            cnt['cnt'] += 1
+        cnt = {'cnt': 0}
+        self.execute(fun, times=1, warmup_times=10)
+        self.assertEqual(cnt['cnt'], 11)
+
+    def test_param_err(self):
+        self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
+        self.assertRaises(ValueError, self.execute, lambda: 0, times=-1)
+        self.assertRaises(ValueError, self.execute, lambda: 0, warmup_times=-1)
+        self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
+        self.assertRaises(ValueError, self.execute, lambda: 0, retry_for=-1)
+
+    def test_leak(self):
+        def fun():
+            ls.append("x" * 24 * 1024)
+        ls = []
+        times = 100
+        self.assertRaises(AssertionError, self.execute, fun, times=times,
+                          warmup_times=0, retry_for=None)
+        self.assertEqual(len(ls), times)
 
 
 class TestOtherUtils(unittest.TestCase):

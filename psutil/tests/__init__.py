@@ -880,10 +880,14 @@ class TestMemoryLeak(unittest.TestCase):
     def execute(self, fun, times=times, warmup_times=warmup_times,
                 tolerance=tolerance, retry_for=retry_for):
         """Test a callable."""
-        assert times >= 1, times
-        assert warmup_times >= 0, warmup_times
-        assert tolerance >= 0, tolerance
-        assert retry_for >= 0, retry_for
+        if times <= 0:
+            raise ValueError("times must be > 0")
+        if warmup_times < 0:
+            raise ValueError("warmup_times must be >= 0")
+        if tolerance is not None and tolerance < 0:
+            raise ValueError("tolerance must be >= 0")
+        if retry_for is not None and retry_for < 0:
+            raise ValueError("retry_for must be >= 0")
 
         # warm up
         self._call_many_times(warmup_times, fun)
