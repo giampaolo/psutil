@@ -832,7 +832,7 @@ class TestMemoryLeak(unittest.TestCase):
     times = 1200
     warmup_times = 10
     tolerance = 4096  # memory
-    retry_for = 3  # seconds
+    retry_for = 3.0  # seconds
 
     def setUp(self):
         self._thisproc = psutil.Process()
@@ -877,6 +877,9 @@ class TestMemoryLeak(unittest.TestCase):
         assert memdiff >= 0, memdiff
         return (memdiff, ncalls)
 
+    def _log(self, msg):
+        print(msg, file=sys.stderr)  # NOQA
+
     def execute(self, fun, times=times, warmup_times=warmup_times,
                 tolerance=tolerance, retry_for=retry_for):
         """Test a callable."""
@@ -908,7 +911,7 @@ class TestMemoryLeak(unittest.TestCase):
             if not retry_for:
                 raise self.fail(msg)
             else:
-                print(msg, file=sys.stderr)  # NOQA
+                self._log(msg)
 
             diff2, ncalls = self._call_for(retry_for, fun)
             if diff2 > diff1:
