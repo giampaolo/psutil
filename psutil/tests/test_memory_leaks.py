@@ -17,10 +17,7 @@ because of how its JIT handles memory, so tests are skipped.
 
 from __future__ import print_function
 import functools
-import gc
 import os
-import sys
-import time
 
 import psutil
 import psutil._common
@@ -31,9 +28,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import bytes2human
 from psutil._compat import ProcessLookupError
-from psutil._compat import xrange
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
@@ -49,14 +44,13 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
+from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
-
 
 SKIP_PYTHON_IMPL = True
 cext = psutil._psplatform.cext
@@ -71,111 +65,6 @@ thisproc = psutil.Process()
 def skip_if_linux():
     return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
                            "worthless on LINUX (pure python)")
-
-
-@unittest.skipIf(PYPY, "unreliable on PYPY")
-class TestMemoryLeak(unittest.TestCase):
-    """Base framework class which calls a function many times and
-    produces a failure if process memory usage keeps increasing
-    between calls or over time.
-    """
-    # Configurable class attrs
-    times = 1200
-    warmup_times = 10
-    tolerance = 4096  # memory
-    retry_for = 3  # seconds
-
-    def setUp(self):
-        self._thisproc = psutil.Process()
-        gc.collect()
-
-    def _get_mem(self):
-        # USS is the closest thing we have to "real" memory usage and it
-        # should be less likely to produce false positives.
-        mem = self._thisproc.memory_full_info()
-        return getattr(mem, "uss", mem.rss)
-
-    def _call(self, fun):
-        return fun()
-
-    def _call_many_times(self, times, fun):
-        # Get 2 distinct memory samples, before and after having
-        # called fun repeadetly, and return the diff.
-        mem1 = self._get_mem()
-        for x in xrange(times):
-            self._call(fun)
-            del x
-        gc.collect()
-        mem2 = self._get_mem()
-        self.assertEqual(gc.garbage, [])
-        memdiff = mem2 - mem1
-        assert memdiff >= 0, memdiff
-        return memdiff
-
-    def _call_for(self, secs, fun):
-        # Get 2 distinct memory samples, before and after having
-        # called fun repeadetly for N secs, and return the diff.
-        stop_at = time.time() + secs
-        ncalls = 0
-        mem1 = self._get_mem()
-        while time.time() <= stop_at:
-            self._call(fun)
-            ncalls += 1
-        gc.collect()
-        mem2 = self._get_mem()
-        self.assertEqual(gc.garbage, [])
-        memdiff = mem2 - mem1
-        assert memdiff >= 0, memdiff
-        return (memdiff, ncalls)
-
-    def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for):
-        """Test a callable."""
-        assert times >= 1, times
-        assert warmup_times >= 0, warmup_times
-        assert tolerance >= 0, tolerance
-        assert retry_for >= 0, retry_for
-
-        # warm up
-        self._call_many_times(warmup_times, fun)
-
-        # Get 2 distinct memory samples, before and after having
-        # called fun repeadetly.
-        diff1 = self._call_many_times(times, fun)
-
-        if diff1 > tolerance:
-            # This doesn't necessarily mean we have a leak yet.
-            # At this point we assume that after having called the
-            # function so many times the memory usage is stabilized
-            # and if there are no leaks it should not increase
-            # anymore. Let's keep calling fun for N more seconds and
-            # fail if we notice any difference.
-            msg = "+%s after %s calls; try calling fun for another %s secs" % (
-                bytes2human(diff1), times, retry_for)
-            if not retry_for:
-                raise self.fail(msg)
-            else:
-                print(msg, file=sys.stderr)
-
-            diff2, ncalls = self._call_for(retry_for, fun)
-            if diff2 > diff1:
-                # failure
-                msg = "+%s after %s calls; " % (bytes2human(diff1), times)
-                msg += "+%s after another %s calls; " % (
-                    bytes2human(diff2), ncalls)
-                msg += "total: +%s" % bytes2human(diff1 + diff2)
-                raise self.fail(msg)
-
-    def execute_w_exc(self, exc, fun, times=times, warmup_times=warmup_times,
-                      tolerance=tolerance, retry_for=retry_for):
-        """Convenience function to test a callable while making sure it
-        raises an exception.
-        """
-        def call():
-            self.assertRaises(exc, fun)
-
-        self.execute(call, times=times, warmup_times=warmup_times,
-                     tolerance=tolerance, retry_for=retry_for)
 
 
 # ===================================================================
