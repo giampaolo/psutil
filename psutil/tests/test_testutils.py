@@ -12,6 +12,7 @@ Tests for testing utils (psutil.tests namespace).
 import collections
 import contextlib
 import errno
+import io
 import os
 import socket
 import stat
@@ -19,9 +20,11 @@ import stat
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
-from psutil._common import supports_ipv6
-from psutil._common import open_text
 from psutil._common import open_binary
+from psutil._common import open_text
+from psutil._common import supports_ipv6
+from psutil._compat import PY3
+from psutil._compat import redirect_stderr
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
@@ -36,6 +39,7 @@ from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import tcp_socketpair
@@ -346,6 +350,27 @@ class TestMemLeakClass(TestMemoryLeak):
         times = 100
         self.assertRaises(AssertionError, self.execute, fun, times=times,
                           warmup_times=0, retry_for=None)
+        self.assertEqual(len(ls), times)
+
+    @retry_on_failure(retries=20)  # 2 secs
+    def test_leak_with_retry(self, ls=[]):
+        def fun():
+            ls.append("x" * 24 * 1024)
+        times = 100
+        f = io.StringIO() if PY3 else io.BytesIO()
+        with redirect_stderr(f):
+            self.assertRaises(AssertionError, self.execute, fun, times=times,
+                              warmup_times=0, retry_for=0.1)
+        self.assertIn("try calling fun for another", f.getvalue())
+        self.assertGreater(len(ls), times)
+
+    def test_tolerance(self):
+        def fun():
+            ls.append("x" * 24 * 1024)
+        ls = []
+        times = 100
+        self.execute(fun, times=times, warmup_times=0,
+                     tolerance=200 * 1024 * 1024)
         self.assertEqual(len(ls), times)
 
 
