@@ -20,7 +20,6 @@ import functools
 import gc
 import os
 import sys
-import threading
 import time
 
 import psutil
@@ -59,12 +58,7 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
-# configurable opts
-LOOPS = 1000
-MEMORY_TOLERANCE = 4096
-RETRY_FOR = 3
 SKIP_PYTHON_IMPL = True
-
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
@@ -80,98 +74,108 @@ def skip_if_linux():
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-class TestMemLeak(unittest.TestCase):
+class TestMemoryLeak(unittest.TestCase):
     """Base framework class which calls a function many times and
     produces a failure if process memory usage keeps increasing
     between calls or over time.
     """
-    tolerance = MEMORY_TOLERANCE
-    loops = LOOPS
-    retry_for = RETRY_FOR
+    # Configurable class attrs
+    times = 1200
+    warmup_times = 10
+    tolerance = 4096  # memory
+    retry_for = 3  # seconds
 
     def setUp(self):
+        self._thisproc = psutil.Process()
         gc.collect()
 
-    def execute(self, fun, *args, **kwargs):
-        """Test a callable."""
-        def call_many_times():
-            for x in xrange(loops):
-                self._call(fun, *args, **kwargs)
-            del x
-            gc.collect()
+    def _get_mem(self):
+        # USS is the closest thing we have to "real" memory usage and it
+        # should be less likely to produce false positives.
+        mem = self._thisproc.memory_full_info()
+        return getattr(mem, "uss", mem.rss)
 
-        tolerance = kwargs.pop('tolerance_', None) or self.tolerance
-        loops = kwargs.pop('loops_', None) or self.loops
-        retry_for = kwargs.pop('retry_for_', None) or self.retry_for
+    def _call(self, fun):
+        return fun()
+
+    def _call_many_times(self, times, fun):
+        # Get 2 distinct memory samples, before and after having
+        # called fun repeadetly, and return the diff.
+        mem1 = self._get_mem()
+        for x in xrange(times):
+            self._call(fun)
+            del x
+        gc.collect()
+        mem2 = self._get_mem()
+        self.assertEqual(gc.garbage, [])
+        memdiff = mem2 - mem1
+        assert memdiff >= 0, memdiff
+        return memdiff
+
+    def _call_for(self, secs, fun):
+        # Get 2 distinct memory samples, before and after having
+        # called fun repeadetly for N secs, and return the diff.
+        stop_at = time.time() + secs
+        ncalls = 0
+        mem1 = self._get_mem()
+        while time.time() <= stop_at:
+            self._call(fun)
+            ncalls += 1
+        gc.collect()
+        mem2 = self._get_mem()
+        self.assertEqual(gc.garbage, [])
+        memdiff = mem2 - mem1
+        assert memdiff >= 0, memdiff
+        return (memdiff, ncalls)
+
+    def execute(self, fun, times=times, warmup_times=warmup_times,
+                tolerance=tolerance, retry_for=retry_for):
+        """Test a callable."""
+        assert times >= 1, times
+        assert warmup_times >= 0, warmup_times
+        assert tolerance >= 0, tolerance
+        assert retry_for >= 0, retry_for
 
         # warm up
-        for x in range(10):
-            self._call(fun, *args, **kwargs)
-        self.assertEqual(gc.garbage, [])
-        self.assertEqual(threading.active_count(), 1)
-        self.assertEqual(thisproc.children(), [])
+        self._call_many_times(warmup_times, fun)
 
         # Get 2 distinct memory samples, before and after having
         # called fun repeadetly.
-        # step 1
-        call_many_times()
-        mem1 = self._get_mem()
-        # step 2
-        call_many_times()
-        mem2 = self._get_mem()
+        diff1 = self._call_many_times(times, fun)
 
-        diff1 = mem2 - mem1
         if diff1 > tolerance:
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
             # function so many times the memory usage is stabilized
             # and if there are no leaks it should not increase
-            # anymore.
-            # Let's keep calling fun for 3 more seconds and fail if
-            # we notice any difference.
-            ncalls = 0
-            stop_at = time.time() + retry_for
-            while time.time() <= stop_at:
-                self._call(fun, *args, **kwargs)
-                ncalls += 1
+            # anymore. Let's keep calling fun for N more seconds and
+            # fail if we notice any difference.
+            msg = "+%s after %s calls; try calling fun for another %s secs" % (
+                bytes2human(diff1), times, retry_for)
+            if not retry_for:
+                raise self.fail(msg)
+            else:
+                print(msg, file=sys.stderr)
 
-            del stop_at
-            gc.collect()
-            mem3 = self._get_mem()
-            diff2 = mem3 - mem2
-
-            if mem3 > mem2:
+            diff2, ncalls = self._call_for(retry_for, fun)
+            if diff2 > diff1:
                 # failure
-                extra_proc_mem = bytes2human(diff1 + diff2)
-                print("exta proc mem: %s" % extra_proc_mem, file=sys.stderr)
-                msg = "+%s after %s calls, +%s after another %s calls, "
-                msg += "+%s extra proc mem"
-                msg = msg % (
-                    bytes2human(diff1), loops, bytes2human(diff2), ncalls,
-                    extra_proc_mem)
-                self.fail(msg)
+                msg = "+%s after %s calls; " % (bytes2human(diff1), times)
+                msg += "+%s after another %s calls; " % (
+                    bytes2human(diff2), ncalls)
+                msg += "total: +%s" % bytes2human(diff1 + diff2)
+                raise self.fail(msg)
 
-    def execute_w_exc(self, exc, fun, *args, **kwargs):
-        """Convenience function which tests a callable raising
-        an exception.
+    def execute_w_exc(self, exc, fun, times=times, warmup_times=warmup_times,
+                      tolerance=tolerance, retry_for=retry_for):
+        """Convenience function to test a callable while making sure it
+        raises an exception.
         """
         def call():
-            self.assertRaises(exc, fun, *args, **kwargs)
+            self.assertRaises(exc, fun)
 
-        self.execute(call)
-
-    @staticmethod
-    def _get_mem():
-        # By using USS memory it seems it's less likely to bump
-        # into false positives.
-        if LINUX or WINDOWS or MACOS:
-            return thisproc.memory_full_info().uss
-        else:
-            return thisproc.memory_info().rss
-
-    @staticmethod
-    def _call(fun, *args, **kwargs):
-        fun(*args, **kwargs)
+        self.execute(call, times=times, warmup_times=warmup_times,
+                     tolerance=tolerance, retry_for=retry_for)
 
 
 # ===================================================================
@@ -179,7 +183,7 @@ class TestMemLeak(unittest.TestCase):
 # ===================================================================
 
 
-class TestProcessObjectLeaks(TestMemLeak):
+class TestProcessObjectLeaks(TestMemoryLeak):
     """Test leaks of Process class methods."""
 
     proc = thisproc
@@ -232,7 +236,7 @@ class TestProcessObjectLeaks(TestMemLeak):
 
     def test_nice_set(self):
         niceness = thisproc.nice()
-        self.execute(self.proc.nice, niceness)
+        self.execute(lambda: self.proc.nice(niceness))
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
     def test_ionice_get(self):
@@ -242,9 +246,9 @@ class TestProcessObjectLeaks(TestMemLeak):
     def test_ionice_set(self):
         if WINDOWS:
             value = thisproc.ionice()
-            self.execute(self.proc.ionice, value)
+            self.execute(lambda: self.proc.ionice(value))
         else:
-            self.execute(self.proc.ionice, psutil.IOPRIO_CLASS_NONE)
+            self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
 
@@ -322,9 +326,10 @@ class TestProcessObjectLeaks(TestMemLeak):
     @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
-        self.execute(self.proc.cpu_affinity, affinity)
+        self.execute(lambda: self.proc.cpu_affinity(affinity))
         if not TRAVIS:
-            self.execute_w_exc(ValueError, self.proc.cpu_affinity, [-1])
+            self.execute_w_exc(
+                ValueError, lambda: self.proc.cpu_affinity([-1]))
 
     @skip_if_linux()
     def test_open_files(self):
@@ -340,14 +345,14 @@ class TestProcessObjectLeaks(TestMemLeak):
     @unittest.skipIf(not LINUX, "LINUX only")
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
-        self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE)
+        self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE))
 
     @unittest.skipIf(not LINUX, "LINUX only")
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
-        self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)
-        self.execute_w_exc(OSError, self.proc.rlimit, -1)
+        self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
+        self.execute_w_exc(OSError, lambda: self.proc.rlimit(-1))
 
     @skip_if_linux()
     # Windows implementation is based on a single system-wide
@@ -359,7 +364,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(self.proc.connections, kind)
+            self.execute(lambda: self.proc.connections(kind))
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -371,13 +376,13 @@ class TestProcessObjectLeaks(TestMemLeak):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcessDualImplementation(TestMemLeak):
+class TestProcessDualImplementation(TestMemoryLeak):
 
     def test_cmdline_peb_true(self):
-        self.execute(cext.proc_cmdline, os.getpid(), use_peb=True)
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
 
     def test_cmdline_peb_false(self):
-        self.execute(cext.proc_cmdline, os.getpid(), use_peb=False)
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
@@ -400,9 +405,9 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
         super(TestTerminatedProcessLeaks, cls).tearDownClass()
         reap_children()
 
-    def _call(self, fun, *args, **kwargs):
+    def _call(self, fun):
         try:
-            fun(*args, **kwargs)
+            fun()
         except psutil.NoSuchProcess:
             pass
 
@@ -439,7 +444,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 # ===================================================================
 
 
-class TestModuleFunctionsLeaks(TestMemLeak):
+class TestModuleFunctionsLeaks(TestMemoryLeak):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
@@ -457,11 +462,11 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     @skip_if_linux()
     def test_cpu_count_logical(self):
-        self.execute(psutil.cpu_count, logical=True)
+        self.execute(lambda: psutil.cpu_count(logical=True))
 
     @skip_if_linux()
     def test_cpu_count_physical(self):
-        self.execute(psutil.cpu_count, logical=False)
+        self.execute(lambda: psutil.cpu_count(logical=False))
 
     @skip_if_linux()
     def test_cpu_times(self):
@@ -469,7 +474,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
     @skip_if_linux()
     def test_per_cpu_times(self):
-        self.execute(psutil.cpu_times, percpu=True)
+        self.execute(lambda: psutil.cpu_times(percpu=True))
 
     @skip_if_linux()
     def test_cpu_stats(self):
@@ -497,14 +502,14 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "worthless on POSIX (pure python)")
     def test_pid_exists(self):
-        self.execute(psutil.pid_exists, os.getpid())
+        self.execute(lambda: psutil.pid_exists(os.getpid()))
 
     # --- disk
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "worthless on POSIX (pure python)")
     def test_disk_usage(self):
-        self.execute(psutil.disk_usage, '.')
+        self.execute(lambda: psutil.disk_usage('.'))
 
     def test_disk_partitions(self):
         self.execute(psutil.disk_partitions)
@@ -513,7 +518,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
                      '/proc/diskstats not available on this Linux version')
     @skip_if_linux()
     def test_disk_io_counters(self):
-        self.execute(psutil.disk_io_counters, nowrap=False)
+        self.execute(lambda: psutil.disk_io_counters(nowrap=False))
 
     # --- proc
 
@@ -528,7 +533,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
-        self.execute(psutil.net_io_counters, nowrap=False)
+        self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skip_if_linux()
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
@@ -539,7 +544,7 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_net_if_addrs(self):
         # Note: verified that on Windows this was a false positive.
         self.execute(psutil.net_if_addrs,
-                     tolerance_=80 * 1024 if WINDOWS else None)
+                     tolerance=80 * 1024 if WINDOWS else 4096)
 
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
@@ -584,15 +589,15 @@ class TestModuleFunctionsLeaks(TestMemLeak):
 
         def test_win_service_get_config(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(cext.winservice_query_config, name)
+            self.execute(lambda: cext.winservice_query_config(name))
 
         def test_win_service_get_status(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(cext.winservice_query_status, name)
+            self.execute(lambda: cext.winservice_query_status(name))
 
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
-            self.execute(cext.winservice_query_descr, name)
+            self.execute(lambda: cext.winservice_query_descr(name))
 
 
 if __name__ == '__main__':
