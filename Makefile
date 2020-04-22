@@ -124,6 +124,10 @@ test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_misc.py
 
+test-testutils:  ## Run test utils tests.
+	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_testutils.py
+
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_unicode.py
