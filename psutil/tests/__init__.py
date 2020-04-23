@@ -9,12 +9,12 @@ Test utilities.
 """
 
 from __future__ import print_function
-
 import atexit
 import contextlib
 import ctypes
 import errno
 import functools
+import gc
 import os
 import random
 import re
@@ -40,7 +40,9 @@ from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import bytes2human
 from psutil._common import supports_ipv6
+from psutil._common import print_color
 from psutil._compat import ChildProcessError
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
@@ -48,6 +50,7 @@ from psutil._compat import PY3
 from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
+from psutil._compat import xrange
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # requires "pip install unittest2"
@@ -84,7 +87,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure',
+    'retry_on_failure', 'TestMemoryLeak',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -806,7 +809,8 @@ class TestCase(unittest.TestCase):
 
 
 # override default unittest.TestCase
-unittest.TestCase = TestCase
+if 'PSUTIL_TESTING' in os.environ:
+    unittest.TestCase = TestCase
 
 
 def unittest_serial_run(klass):
@@ -816,6 +820,120 @@ def unittest_serial_run(klass):
     # assert issubclass(klass, unittest.TestCase), klass
     klass._unittest_serial_run = True
     return klass
+
+
+@unittest.skipIf(PYPY, "unreliable on PYPY")
+class TestMemoryLeak(unittest.TestCase):
+    """Test framework class for detecting function memory leaks (typically
+    functions implemented in C).
+    It does so by calling a function many times, and checks whether the
+    process memory usage increased before and after having called the
+    function repeadetly.
+    Note that sometimes this may produce false positives.
+    PyPy appears to be completely unstable for this framework, probably
+    because of how its JIT handles memory, so tests on PYPY are
+    automatically skipped.
+    """
+    # Configurable class attrs.
+    times = 1200
+    warmup_times = 10
+    tolerance = 4096  # memory
+    retry_for = 3.0  # seconds
+    verbose = True
+
+    def setUp(self):
+        self._thisproc = psutil.Process()
+        gc.collect()
+
+    def _get_mem(self):
+        # USS is the closest thing we have to "real" memory usage and it
+        # should be less likely to produce false positives.
+        mem = self._thisproc.memory_full_info()
+        return getattr(mem, "uss", mem.rss)
+
+    def _call(self, fun):
+        return fun()
+
+    def _itercall(self, fun, iterator):
+        """Get 2 distinct memory samples, before and after having
+        called fun repeadetly, and return the memory difference.
+        """
+        ncalls = 0
+        gc.collect()
+        mem1 = self._get_mem()
+        for x in iterator:
+            ret = self._call(fun)
+            ncalls += 1
+            del x, ret
+        gc.collect()
+        mem2 = self._get_mem()
+        self.assertEqual(gc.garbage, [])
+        diff = mem2 - mem1
+        if diff < 0:
+            self._log("negative memory diff -%s" % (bytes2human(abs(diff))))
+        return (diff, ncalls)
+
+    def _call_ntimes(self, fun, times):
+        return self._itercall(fun, xrange(times))[0]
+
+    def _call_for(self, fun, secs):
+        def iterator(secs):
+            stop_at = time.time() + secs
+            while time.time() < stop_at:
+                yield
+        return self._itercall(fun, iterator(secs))
+
+    def _log(self, msg):
+        if self.verbose:
+            print_color(msg, color="yellow", file=sys.stderr)
+
+    def execute(self, fun, times=times, warmup_times=warmup_times,
+                tolerance=tolerance, retry_for=retry_for):
+        """Test a callable."""
+        if times <= 0:
+            raise ValueError("times must be > 0")
+        if warmup_times < 0:
+            raise ValueError("warmup_times must be >= 0")
+        if tolerance is not None and tolerance < 0:
+            raise ValueError("tolerance must be >= 0")
+        if retry_for is not None and retry_for < 0:
+            raise ValueError("retry_for must be >= 0")
+
+        # warm up
+        self._call_ntimes(fun, warmup_times)
+        mem1 = self._call_ntimes(fun, times)
+
+        if mem1 > tolerance:
+            # This doesn't necessarily mean we have a leak yet.
+            # At this point we assume that after having called the
+            # function so many times the memory usage is stabilized
+            # and if there are no leaks it should not increase
+            # anymore. Let's keep calling fun for N more seconds and
+            # fail if we notice any difference (ignore tolerance).
+            msg = "+%s after %s calls; try calling fun for another %s secs" % (
+                bytes2human(mem1), times, retry_for)
+            if not retry_for:
+                raise self.fail(msg)
+            else:
+                self._log(msg)
+
+            mem2, ncalls = self._call_for(fun, retry_for)
+            if mem2 > mem1:
+                # failure
+                msg = "+%s memory increase after %s calls; " % (
+                    bytes2human(mem1), times)
+                msg += "+%s after another %s calls over %s secs" % (
+                    bytes2human(mem2), ncalls, retry_for)
+                raise self.fail(msg)
+
+    def execute_w_exc(self, exc, fun, **kwargs):
+        """Convenience method to test a callable while making sure it
+        raises an exception on every call.
+        """
+        def call():
+            self.assertRaises(exc, fun)
+
+        self.execute(call, **kwargs)
 
 
 def retry_on_failure(retries=NO_RETRIES):

@@ -1,9 +1,19 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.7.1 (unreleased)
+==================
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
+  (patch by Michał Górny)
+
 5.7.0
 =====
 
-2020-12-18
+2020-02-18
 
 **Enhancements**
 

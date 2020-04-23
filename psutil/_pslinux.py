@@ -361,7 +361,6 @@ def calculate_avail_vmem(mems):
             if line.startswith(b'low'):
                 watermark_low += int(line.split()[1])
     watermark_low *= PAGESIZE
-    watermark_low = watermark_low
 
     avail = free - watermark_low
     pagecache = lru_active_file + lru_inactive_file
@@ -716,7 +715,7 @@ elif os.path.exists("/proc/cpuinfo"):
         with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
             for line in f:
                 if line.lower().startswith(b'cpu mhz'):
-                    key, value = line.split(b'\t:', 1)
+                    key, value = line.split(b':', 1)
                     ret.append(_common.scpufreq(float(value), 0., 0.))
         return ret
 

@@ -226,7 +226,7 @@ __all__ = [
 
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.7.0"
+__version__ = "5.7.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -2260,7 +2260,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
     __all__.append("sensors_temperatures")
 
 
-# Linux, macOS
+# Linux
 if hasattr(_psplatform, "sensors_fans"):
 
     def sensors_fans():

@@ -751,7 +751,7 @@ Sensors
 
   See also `fans.py`_  and `sensors.py`_ for an example application.
 
-  Availability: Linux, macOS
+  Availability: Linux
 
   .. versionadded:: 5.2.0
 
