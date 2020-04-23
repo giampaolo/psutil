@@ -5,13 +5,14 @@
 """Module which provides compatibility with older Python versions."""
 
 import collections
+import contextlib
 import errno
 import functools
 import os
 import sys
 
 __all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "lru_cache", "which", "get_terminal_size",
+           "lru_cache", "which", "get_terminal_size", "redirect_stderr",
            "FileNotFoundError", "PermissionError", "ProcessLookupError",
            "InterruptedError", "ChildProcessError", "FileExistsError"]
 
@@ -343,3 +344,17 @@ except ImportError:
                 return (res[1], res[0])
             except Exception:
                 return fallback
+
+
+# python 3.4
+try:
+    from contextlib import redirect_stderr
+except ImportError:
+    @contextlib.contextmanager
+    def redirect_stderr(target):
+        original = sys.stderr
+        try:
+            sys.stderr = target
+            yield
+        finally:
+            sys.stderr = original

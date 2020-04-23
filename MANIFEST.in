@@ -103,6 +103,7 @@ include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
 include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
+include psutil/tests/test_testutils.py
 include psutil/tests/test_unicode.py
 include psutil/tests/test_windows.py
 include scripts/battery.py
