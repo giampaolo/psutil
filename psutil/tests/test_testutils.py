@@ -210,6 +210,7 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
+@unittest_serial_run
 class TestProcessUtils(unittest.TestCase):
 
     def test_reap_children(self):
