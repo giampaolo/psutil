@@ -785,7 +785,7 @@ def hilite(s, color="green", bold=False):
     if not term_supports_colors():
         return s
     attr = []
-    colors = dict(green='32', red='91', brown='33')
+    colors = dict(green='32', red='91', brown='33', yellow='93')
     colors[None] = '29'
     try:
         color = colors[color]
@@ -812,7 +812,7 @@ def print_color(s, color="green", bold=False, file=sys.stdout):
         SetConsoleTextAttribute = \
             ctypes.windll.Kernel32.SetConsoleTextAttribute
 
-        colors = dict(green=2, red=4, brown=6)
+        colors = dict(green=2, red=4, brown=6, yellow=6)
         colors[None] = DEFAULT_COLOR
         try:
             color = colors[color]
