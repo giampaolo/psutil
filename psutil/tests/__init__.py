@@ -835,9 +835,11 @@ class TestMemoryLeak(unittest.TestCase):
     warmup_times = 10
     tolerance = 4096  # memory
     retry_for = 3.0  # seconds
+    verbose = True
 
     def setUp(self):
         self._thisproc = psutil.Process()
+        gc.collect()
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
@@ -877,7 +879,8 @@ class TestMemoryLeak(unittest.TestCase):
         return self._itercall(fun, iterator(secs))
 
     def _log(self, msg):
-        print_color(msg, color="brown", file=sys.stderr)
+        if self.verbose:
+            print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
                 tolerance=tolerance, retry_for=retry_for):
@@ -894,13 +897,14 @@ class TestMemoryLeak(unittest.TestCase):
         # warm up
         self._call_ntimes(fun, warmup_times)
         mem1 = self._call_ntimes(fun, times)
+
         if mem1 > tolerance:
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
             # function so many times the memory usage is stabilized
             # and if there are no leaks it should not increase
             # anymore. Let's keep calling fun for N more seconds and
-            # fail if we notice any difference.
+            # fail if we notice any difference (ignore tolerance).
             msg = "+%s after %s calls; try calling fun for another %s secs" % (
                 bytes2human(mem1), times, retry_for)
             if not retry_for:
