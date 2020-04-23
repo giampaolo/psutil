@@ -9,7 +9,6 @@ Test utilities.
 """
 
 from __future__ import print_function
-
 import atexit
 import contextlib
 import ctypes
@@ -830,7 +829,7 @@ class TestMemoryLeak(unittest.TestCase):
     because of how its JIT handles memory, so tests on PYPY are
     automatically skipped.
     """
-    # Configurable class attrs
+    # Configurable class attrs.
     times = 1200
     warmup_times = 10
     tolerance = 4096  # memory
@@ -852,7 +851,8 @@ class TestMemoryLeak(unittest.TestCase):
 
     def _itercall(self, fun, iterator):
         """Get 2 distinct memory samples, before and after having
-        called fun repeadetly, and return the memory difference."""
+        called fun repeadetly, and return the memory difference.
+        """
         ncalls = 0
         gc.collect()
         mem1 = self._get_mem()

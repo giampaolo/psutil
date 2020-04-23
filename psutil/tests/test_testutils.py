@@ -324,10 +324,10 @@ class TestMemLeakClass(TestMemoryLeak):
         def fun():
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
-        self.execute(fun, times=1, warmup_times=0)
-        self.assertEqual(cnt['cnt'], 1)
-        self.execute(fun, times=10, warmup_times=0)
+        self.execute(fun, times=1, warmup_times=10)
         self.assertEqual(cnt['cnt'], 11)
+        self.execute(fun, times=10, warmup_times=10)
+        self.assertEqual(cnt['cnt'], 31)
 
     def test_warmup_times(self):
         def fun():
@@ -349,8 +349,8 @@ class TestMemLeakClass(TestMemoryLeak):
         ls = []
         times = 100
         self.assertRaises(AssertionError, self.execute, fun, times=times,
-                          warmup_times=0, retry_for=None)
-        self.assertEqual(len(ls), times)
+                          warmup_times=10, retry_for=None)
+        self.assertEqual(len(ls), times + 10)
 
     @retry_on_failure(retries=20)  # 2 secs
     def test_leak_with_retry(self, ls=[]):
@@ -360,7 +360,7 @@ class TestMemLeakClass(TestMemoryLeak):
         f = io.StringIO() if PY3 else io.BytesIO()
         with redirect_stderr(f):
             self.assertRaises(AssertionError, self.execute, fun, times=times,
-                              warmup_times=0, retry_for=0.1)
+                              retry_for=0.1)
         self.assertIn("try calling fun for another", f.getvalue())
         self.assertGreater(len(ls), times)
 
@@ -372,6 +372,20 @@ class TestMemLeakClass(TestMemoryLeak):
         self.execute(fun, times=times, warmup_times=0,
                      tolerance=200 * 1024 * 1024)
         self.assertEqual(len(ls), times)
+
+    def test_execute_w_exc(self):
+        def fun():
+            1 / 0
+        self.execute_w_exc(ZeroDivisionError, fun, times=2000, warmup_times=20,
+                           tolerance=4096, retry_for=3)
+
+        with self.assertRaises(ZeroDivisionError):
+            self.execute_w_exc(OSError, fun)
+
+        def fun():
+            pass
+        with self.assertRaises(AssertionError):
+            self.execute_w_exc(ZeroDivisionError, fun)
 
 
 class TestOtherUtils(unittest.TestCase):
