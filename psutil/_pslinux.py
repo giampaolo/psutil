@@ -846,7 +846,7 @@ class Connections:
             # old version - let's keep it, just in case...
             # ip = ip.decode('hex')
             # return socket.inet_ntop(socket.AF_INET6,
-            #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
+            #          ''.join(ip[i:i+4][::-1] for i in range(0, 16, 4)))
             ip = base64.b16decode(ip)
             try:
                 # see: https://github.com/giampaolo/psutil/issues/201

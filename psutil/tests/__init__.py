@@ -41,16 +41,16 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import bytes2human
-from psutil._common import supports_ipv6
 from psutil._common import print_color
+from psutil._common import supports_ipv6
 from psutil._compat import ChildProcessError
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
+from psutil._compat import range
 from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
-from psutil._compat import xrange
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # requires "pip install unittest2"
@@ -869,7 +869,7 @@ class TestMemoryLeak(unittest.TestCase):
         return (diff, ncalls)
 
     def _call_ntimes(self, fun, times):
-        return self._itercall(fun, xrange(times))[0]
+        return self._itercall(fun, range(times))[0]
 
     def _call_for(self, fun, secs):
         def iterator(secs):

@@ -11,7 +11,7 @@ import functools
 import os
 import sys
 
-__all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
+__all__ = ["PY3", "long", "range", "unicode", "basestring", "u", "b",
            "lru_cache", "which", "get_terminal_size", "redirect_stderr",
            "FileNotFoundError", "PermissionError", "ProcessLookupError",
            "InterruptedError", "ChildProcessError", "FileExistsError"]
@@ -23,6 +23,7 @@ if PY3:
     xrange = range
     unicode = str
     basestring = str
+    range = range
 
     def u(s):
         return s
@@ -31,7 +32,7 @@ if PY3:
         return s.encode("latin-1")
 else:
     long = long
-    xrange = xrange
+    range = xrange
     unicode = unicode
     basestring = basestring
 
