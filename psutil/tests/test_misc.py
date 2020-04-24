@@ -42,7 +42,6 @@ from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
-from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 import psutil
@@ -624,9 +623,7 @@ class TestWrapNumbers(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(TOX, "can't test on TOX")
-# See: https://travis-ci.org/giampaolo/psutil/jobs/295224806
-@unittest.skipIf(TRAVIS and not os.path.exists(SCRIPTS_DIR),
+@unittest.skipIf(not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
