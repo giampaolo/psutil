@@ -785,7 +785,7 @@ def get_testfn(suffix=""):
     while True:
         prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
         name = tempfile.mktemp(prefix=prefix, suffix=suffix)
-        if not os.path.isdir(name):
+        if not os.path.exists(name):  # also include dirs
             _testfiles_created.add(name)
             return name
 
@@ -812,8 +812,9 @@ class TestCase(unittest.TestCase):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
-# override default unittest.TestCase
-unittest.TestCase = TestCase
+# monkey patch default unittest.TestCase
+if 'PSUTIL_TESTING' in os.environ:
+    unittest.TestCase = TestCase
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")

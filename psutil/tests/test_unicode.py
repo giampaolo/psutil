@@ -166,7 +166,6 @@ class _BaseFSAPIsTests(object):
     @classmethod
     def tearDownClass(cls):
         reap_children()
-        safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
