@@ -2,7 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Module which provides compatibility with older Python versions."""
+"""Module which provides compatibility with older Python versions.
+This is more future-compatible rather than the opposite (prefer latest
+Python 3 way of doing things).
+"""
 
 import collections
 import contextlib
@@ -12,10 +15,21 @@ import os
 import sys
 import types
 
-__all__ = ["PY3", "long", "range", "super", "unicode", "basestring", "u", "b",
-           "lru_cache", "which", "get_terminal_size", "redirect_stderr",
-           "FileNotFoundError", "PermissionError", "ProcessLookupError",
-           "InterruptedError", "ChildProcessError", "FileExistsError"]
+__all__ = [
+    # constants
+    "PY3",
+    # builtins
+    "long", "range", "super", "unicode", "basestring",
+    # literals
+    "u", "b",
+    # collections module
+    "lru_cache", "redirect_stderr",
+    # shutil module
+    "which", "get_terminal_size",
+    # python 3 exceptions
+    "FileNotFoundError", "PermissionError", "ProcessLookupError",
+    "InterruptedError", "ChildProcessError", "FileExistsError"]
+
 
 PY3 = sys.version_info[0] == 3
 _SENTINEL = object()
@@ -48,7 +62,7 @@ else:
 # --- builtins
 
 
-# Python 3 new super().
+# Python 3 super().
 # Taken from "future" package.
 # Credit: Ryan Kelly
 if PY3:
