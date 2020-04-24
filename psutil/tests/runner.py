@@ -92,10 +92,7 @@ class ColouredRunner(TextTestRunner):
 # =====================================================================
 
 
-class _Runner:
-
-    def __init__(self):
-        self._failed_tnames = set()
+class SuiteLoader:
 
     @staticmethod
     def _iter_testmod_classes():
@@ -146,6 +143,13 @@ class _Runner:
             suite.addTest(test)
         return suite
 
+
+class Runner:
+
+    def __init__(self):
+        self.loader = SuiteLoader()
+        self._failed_tnames = set()
+
     def _save_lastfailed(self):
         with open(FAILED_TESTS_FNAME, 'wt') as f:
             for tname in self._failed_tnames:
@@ -178,7 +182,7 @@ class _Runner:
     def run(self, suite=None):
         """Run tests serially (1 process)."""
         if suite is None:
-            suite = self.get_suite()
+            suite = self.loader.get_suite()
         res = self._run(suite)
         self._finalize(res.wasSuccessful())
         if not res.wasSuccessful():
@@ -187,7 +191,7 @@ class _Runner:
 
     def run_lastfailed(self):
         """Run tests which failed in the last run."""
-        self.run(self.get_lastfail_suite())
+        self.run(self.loader.get_lastfail_suite())
 
     def run_from_name(self, name):
         """Run test by name, e.g.:
@@ -202,7 +206,7 @@ class _Runner:
         """Run tests in parallel."""
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
-        ser_suite, par_suite = self.get_parallel_suite()
+        ser_suite, par_suite = self.loader.get_parallel_suite()
         par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NWORKERS))
 
         # run parallel
@@ -247,8 +251,8 @@ class _Runner:
             sys.exit(1)
 
 
-_runner = _Runner()
-run_from_name = _runner.run_from_name
+runner = Runner()
+run_from_name = runner.run_from_name
 
 
 def _setup():
@@ -273,12 +277,12 @@ def main():
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
     if opts.parallel and not opts.last_failed:
-        _runner.run_parallel()
+        runner.run_parallel()
     else:
         if opts.last_failed:
-            _runner.run_lastfailed()
+            runner.run_lastfailed()
         else:
-            _runner.run()
+            runner.run()
 
 
 if __name__ == '__main__':
