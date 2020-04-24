@@ -30,6 +30,7 @@ import psutil
 from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
+from psutil.tests import APPVEYOR
 from psutil.tests import import_module_by_path
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
@@ -153,7 +154,10 @@ class _Runner:
     # --- runners
 
     def _run(self, suite):
-        runner = ColouredRunner(verbosity=VERBOSITY)
+        if APPVEYOR:
+            runner = TextTestRunner(verbosity=VERBOSITY)
+        else:
+            runner = ColouredRunner(verbosity=VERBOSITY)
         try:
             result = runner.run(suite)
         except (KeyboardInterrupt, SystemExit) as err:
