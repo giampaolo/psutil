@@ -43,7 +43,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
@@ -126,9 +125,6 @@ class TestRetryDecorator(unittest.TestCase):
 
 class TestSyncTestUtils(unittest.TestCase):
 
-    def tearDown(self):
-        safe_rmpath(TESTFN)
-
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
@@ -136,26 +132,30 @@ class TestSyncTestUtils(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
-        with open(TESTFN, 'w') as f:
+        testfn = self.get_testfn()
+        with open(testfn, 'w') as f:
             f.write('foo')
-        wait_for_file(TESTFN)
-        assert not os.path.exists(TESTFN)
+        wait_for_file(testfn)
+        assert not os.path.exists(testfn)
 
     def test_wait_for_file_empty(self):
-        with open(TESTFN, 'w'):
+        testfn = self.get_testfn()
+        with open(testfn, 'w'):
             pass
-        wait_for_file(TESTFN, empty=True)
-        assert not os.path.exists(TESTFN)
+        wait_for_file(testfn, empty=True)
+        assert not os.path.exists(testfn)
 
     def test_wait_for_file_no_file(self):
+        testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(IOError, wait_for_file, TESTFN)
+            self.assertRaises(IOError, wait_for_file, testfn)
 
     def test_wait_for_file_no_delete(self):
-        with open(TESTFN, 'w') as f:
+        testfn = self.get_testfn()
+        with open(testfn, 'w') as f:
             f.write('foo')
-        wait_for_file(TESTFN, delete=False)
-        assert os.path.exists(TESTFN)
+        wait_for_file(testfn, delete=False)
+        assert os.path.exists(testfn)
 
     def test_call_until(self):
         ret = call_until(lambda: 1, "ret == 1")
@@ -163,11 +163,6 @@ class TestSyncTestUtils(unittest.TestCase):
 
 
 class TestFSTestUtils(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
-
-    tearDown = setUp
 
     def test_open_text(self):
         with open_text(__file__) as f:
@@ -178,34 +173,37 @@ class TestFSTestUtils(unittest.TestCase):
             self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
+        testfn = self.get_testfn()
+        safe_mkdir(testfn)
+        assert os.path.isdir(testfn)
+        safe_mkdir(testfn)
+        assert os.path.isdir(testfn)
 
     def test_safe_rmpath(self):
         # test file is removed
-        open(TESTFN, 'w').close()
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
+        testfn = self.get_testfn()
+        open(testfn, 'w').close()
+        safe_rmpath(testfn)
+        assert not os.path.exists(testfn)
         # test no exception if path does not exist
-        safe_rmpath(TESTFN)
+        safe_rmpath(testfn)
         # test dir is removed
-        os.mkdir(TESTFN)
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
+        os.mkdir(testfn)
+        safe_rmpath(testfn)
+        assert not os.path.exists(testfn)
         # test other exceptions are raised
         with mock.patch('psutil.tests.os.stat',
                         side_effect=OSError(errno.EINVAL, "")) as m:
             with self.assertRaises(OSError):
-                safe_rmpath(TESTFN)
+                safe_rmpath(testfn)
             assert m.called
 
     def test_chdir(self):
+        testfn = self.get_testfn()
         base = os.getcwd()
-        os.mkdir(TESTFN)
-        with chdir(TESTFN):
-            self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
+        os.mkdir(testfn)
+        with chdir(testfn):
+            self.assertEqual(os.getcwd(), os.path.join(base, testfn))
         self.assertEqual(os.getcwd(), base)
 
 

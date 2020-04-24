@@ -39,11 +39,9 @@ from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
-from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
@@ -58,14 +56,12 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 class Base(object):
 
     def setUp(self):
-        safe_rmpath(TESTFN)
         if not (NETBSD or FREEBSD):
             # process opens a UNIX socket to /var/log/run.
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
     def tearDown(self):
-        safe_rmpath(TESTFN)
         reap_children()
         if not (FREEBSD or NETBSD):
             # Make sure we closed all resources.
@@ -436,7 +432,7 @@ class TestFilters(Base, unittest.TestCase):
         """)
 
         from string import Template
-        testfile = os.path.basename(TESTFN)
+        testfile = self.get_testfn()
         tcp4_template = Template(tcp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         udp4_template = Template(udp_template).substitute(
@@ -583,8 +579,10 @@ class TestSystemWideConnections(Base, unittest.TestCase):
             expected = len(socks)
         pids = []
         times = 10
+        fnames = []
         for i in range(times):
-            fname = os.path.realpath(TESTFN) + str(i)
+            fname = self.get_testfn()
+            fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os
                 from psutil.tests import create_sockets
@@ -595,11 +593,9 @@ class TestSystemWideConnections(Base, unittest.TestCase):
                 """ % fname)
             sproc = pyrun(src)
             pids.append(sproc.pid)
-            self.addCleanup(safe_rmpath, fname)
 
         # sync
-        for i in range(times):
-            fname = TESTFN + str(i)
+        for fname in fnames:
             wait_for_file(fname)
 
         syscons = [x for x in psutil.net_connections(kind='all') if x.pid

@@ -74,6 +74,7 @@ etc.) and make sure that:
 """
 
 import os
+import tempfile
 import traceback
 import warnings
 from contextlib import closing
@@ -154,11 +155,12 @@ def subprocess_supports_unicode(name):
 
 
 class _BaseFSAPIsTests(object):
-    funky_name = None
+    funky_suffix = None
 
     @classmethod
     def setUpClass(cls):
-        safe_rmpath(cls.funky_name)
+        cls.funky_name = tempfile.mktemp(prefix=TESTFN_PREFIX,
+                                         suffix=cls.funky_suffix)
         create_exe(cls.funky_name)
 
     @classmethod
@@ -166,11 +168,10 @@ class _BaseFSAPIsTests(object):
         reap_children()
         safe_rmpath(cls.funky_name)
 
-    def tearDown(self):
-        reap_children()
-
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
+
+    # ---
 
     def test_proc_exe(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
@@ -301,16 +302,15 @@ class _BaseFSAPIsTests(object):
                  "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
-    funky_name = TESTFN_UNICODE
+    funky_suffix = os.path.basename(TESTFN_UNICODE)
 
-    @classmethod
-    def expect_exact_path_match(cls):
+    def expect_exact_path_match(self):
         # Do not expect psutil to correctly handle unicode paths on
         # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(cls.funky_name, str) else u('.')
+        here = '.' if isinstance(self.funky_name, str) else u('.')
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return cls.funky_name in os.listdir(here)
+            return self.funky_name in os.listdir(here)
 
 
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
@@ -320,7 +320,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
-    funky_name = TESTFN_INVALID_UNICODE
+    funky_suffix = os.path.basename(TESTFN_INVALID_UNICODE)
 
     @classmethod
     def expect_exact_path_match(cls):

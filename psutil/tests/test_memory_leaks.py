@@ -224,6 +224,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     @skip_if_linux()
     def test_open_files(self):
         safe_rmpath(TESTFN)  # needed after UNIX socket test has run
+        self.addCleanup(safe_rmpath, TESTFN)
         with open(TESTFN, 'w'):
             self.execute(self.proc.open_files)
 

@@ -43,7 +43,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import TESTFN
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -1643,20 +1642,16 @@ class TestSensorsFans(unittest.TestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestProcess(unittest.TestCase):
 
-    def setUp(self):
-        safe_rmpath(TESTFN)
-
-    tearDown = setUp
-
     def test_memory_full_info(self):
+        testfn = self.get_testfn()
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
                 time.sleep(10)
-            """ % TESTFN)
+            """ % testfn)
         sproc = pyrun(src)
         self.addCleanup(reap_children)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
+        call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
         p = psutil.Process(sproc.pid)
         time.sleep(.1)
         mem = p.memory_full_info()
@@ -1706,39 +1701,40 @@ class TestProcess(unittest.TestCase):
     # On PYPY file descriptors are not closed fast enough.
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_open_files_mode(self):
-        def get_test_file():
+        def get_test_file(fname):
             p = psutil.Process()
             giveup_at = time.time() + 2
             while True:
                 for file in p.open_files():
-                    if file.path == os.path.abspath(TESTFN):
+                    if file.path == os.path.abspath(fname):
                         return file
                     elif time.time() > giveup_at:
                         break
             raise RuntimeError("timeout looking for test file")
 
         #
-        with open(TESTFN, "w"):
-            self.assertEqual(get_test_file().mode, "w")
-        with open(TESTFN, "r"):
-            self.assertEqual(get_test_file().mode, "r")
-        with open(TESTFN, "a"):
-            self.assertEqual(get_test_file().mode, "a")
+        testfn = self.get_testfn()
+        with open(testfn, "w"):
+            self.assertEqual(get_test_file(testfn).mode, "w")
+        with open(testfn, "r"):
+            self.assertEqual(get_test_file(testfn).mode, "r")
+        with open(testfn, "a"):
+            self.assertEqual(get_test_file(testfn).mode, "a")
         #
-        with open(TESTFN, "r+"):
-            self.assertEqual(get_test_file().mode, "r+")
-        with open(TESTFN, "w+"):
-            self.assertEqual(get_test_file().mode, "r+")
-        with open(TESTFN, "a+"):
-            self.assertEqual(get_test_file().mode, "a+")
+        with open(testfn, "r+"):
+            self.assertEqual(get_test_file(testfn).mode, "r+")
+        with open(testfn, "w+"):
+            self.assertEqual(get_test_file(testfn).mode, "r+")
+        with open(testfn, "a+"):
+            self.assertEqual(get_test_file(testfn).mode, "a+")
         # note: "x" bit is not supported
         if PY3:
-            safe_rmpath(TESTFN)
-            with open(TESTFN, "x"):
-                self.assertEqual(get_test_file().mode, "w")
-            safe_rmpath(TESTFN)
-            with open(TESTFN, "x+"):
-                self.assertEqual(get_test_file().mode, "r+")
+            safe_rmpath(testfn)
+            with open(testfn, "x"):
+                self.assertEqual(get_test_file(testfn).mode, "w")
+            safe_rmpath(testfn)
+            with open(testfn, "x+"):
+                self.assertEqual(get_test_file(testfn).mode, "r+")
 
     def test_open_files_file_gone(self):
         # simulates a file which gets deleted during open_files()
@@ -2104,13 +2100,13 @@ class TestUtils(unittest.TestCase):
             assert m.called
 
     def test_cat(self):
-        fname = os.path.abspath(TESTFN)
-        with open(fname, "wt") as f:
+        testfn = self.get_testfn()
+        with open(testfn, "wt") as f:
             f.write("foo ")
-        self.assertEqual(psutil._psplatform.cat(TESTFN, binary=False), "foo")
-        self.assertEqual(psutil._psplatform.cat(TESTFN, binary=True), b"foo")
+        self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")
+        self.assertEqual(psutil._psplatform.cat(testfn, binary=True), b"foo")
         self.assertEqual(
-            psutil._psplatform.cat(TESTFN + '??', fallback="bar"), "bar")
+            psutil._psplatform.cat(testfn + '??', fallback="bar"), "bar")
 
 
 if __name__ == '__main__':

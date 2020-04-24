@@ -48,8 +48,6 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import safe_rmpath
-from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -61,9 +59,6 @@ from psutil.tests import unittest
 
 
 class TestProcessAPIs(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -595,11 +590,11 @@ class TestDiskAPIs(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
 
+    @unittest.skipIf(not ASCII_FS, "not an ASCII fs")
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
-        if ASCII_FS:
-            with self.assertRaises(UnicodeEncodeError):
-                psutil.disk_usage(TESTFN_UNICODE)
+        with self.assertRaises(UnicodeEncodeError):
+            psutil.disk_usage(TESTFN_UNICODE)
 
     def test_disk_usage_bytes(self):
         psutil.disk_usage(b'.')

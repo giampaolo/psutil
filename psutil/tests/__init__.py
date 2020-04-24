@@ -389,7 +389,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFN_PREFIX) if MACOS else TESTFN
+    unix_file = tempfile.mktemp(prefix=TESTFN_PREFIX)
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -814,6 +814,11 @@ class TestCase(unittest.TestCase):
     # add support for the new name.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
+    def get_testfn(self, suffix=""):
+        name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix)
+        self.addCleanup(safe_rmpath, name)
+        return name
 
 
 # override default unittest.TestCase
