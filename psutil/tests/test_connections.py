@@ -46,7 +46,6 @@ from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
@@ -267,19 +266,17 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_tcp(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
-                conn = self.check_socket(sock)
-                assert not conn.raddr
-                self.assertEqual(conn.status, psutil.CONN_NONE)
+        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_udp(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
-                conn = self.check_socket(sock)
-                assert not conn.raddr
-                self.assertEqual(conn.status, psutil.CONN_NONE)
+        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
 class TestConnectedSocket(Base, unittest.TestCase):
@@ -311,39 +308,39 @@ class TestConnectedSocket(Base, unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
-        with unix_socket_path() as name:
-            server, client = unix_socketpair(name)
-            try:
-                cons = thisproc.connections(kind='unix')
-                assert not (cons[0].laddr and cons[0].raddr)
-                assert not (cons[1].laddr and cons[1].raddr)
-                if NETBSD or FREEBSD:
-                    # On NetBSD creating a UNIX socket will cause
-                    # a UNIX connection to  /var/run/log.
-                    cons = [c for c in cons if c.raddr != '/var/run/log']
-                    if CIRRUS:
-                        cons = [c for c in cons if c.fd in
-                                (server.fileno(), client.fileno())]
-                self.assertEqual(len(cons), 2, msg=cons)
-                if LINUX or FREEBSD or SUNOS:
-                    # remote path is never set
-                    self.assertEqual(cons[0].raddr, "")
-                    self.assertEqual(cons[1].raddr, "")
-                    # one local address should though
-                    self.assertEqual(name, cons[0].laddr or cons[1].laddr)
-                elif OPENBSD:
-                    # No addresses whatsoever here.
-                    for addr in (cons[0].laddr, cons[0].raddr,
-                                 cons[1].laddr, cons[1].raddr):
-                        self.assertEqual(addr, "")
-                else:
-                    # On other systems either the laddr or raddr
-                    # of both peers are set.
-                    self.assertEqual(cons[0].laddr or cons[1].laddr, name)
-                    self.assertEqual(cons[0].raddr or cons[1].raddr, name)
-            finally:
-                server.close()
-                client.close()
+        testfn = get_testfn()
+        server, client = unix_socketpair(testfn)
+        try:
+            cons = thisproc.connections(kind='unix')
+            assert not (cons[0].laddr and cons[0].raddr)
+            assert not (cons[1].laddr and cons[1].raddr)
+            if NETBSD or FREEBSD:
+                # On NetBSD creating a UNIX socket will cause
+                # a UNIX connection to  /var/run/log.
+                cons = [c for c in cons if c.raddr != '/var/run/log']
+                if CIRRUS:
+                    cons = [c for c in cons if c.fd in
+                            (server.fileno(), client.fileno())]
+            self.assertEqual(len(cons), 2, msg=cons)
+            if LINUX or FREEBSD or SUNOS:
+                # remote path is never set
+                self.assertEqual(cons[0].raddr, "")
+                self.assertEqual(cons[1].raddr, "")
+                # one local address should though
+                self.assertEqual(testfn, cons[0].laddr or cons[1].laddr)
+            elif OPENBSD:
+                # No addresses whatsoever here.
+                for addr in (cons[0].laddr, cons[0].raddr,
+                             cons[1].laddr, cons[1].raddr):
+                    self.assertEqual(addr, "")
+            else:
+                # On other systems either the laddr or raddr
+                # of both peers are set.
+                self.assertEqual(cons[0].laddr or cons[1].laddr, testfn)
+                self.assertEqual(cons[0].raddr or cons[1].raddr, testfn)
+        finally:
+            server.close()
+            client.close()
 
 
 class TestFilters(Base, unittest.TestCase):

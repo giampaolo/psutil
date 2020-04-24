@@ -107,7 +107,6 @@ from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 import psutil
 
 
@@ -226,20 +225,20 @@ class _BaseFSAPIsTests(object):
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
-        with unix_socket_path(suffix=suffix) as name:
-            try:
-                sock = bind_unix_socket(name)
-            except UnicodeEncodeError:
-                if PY3:
-                    raise
-                else:
-                    raise unittest.SkipTest("not supported")
-            with closing(sock):
-                conn = psutil.Process().connections('unix')[0]
-                self.assertIsInstance(conn.laddr, str)
-                # AF_UNIX addr not set on OpenBSD
-                if not OPENBSD and not CIRRUS:  # XXX
-                    self.assertEqual(conn.laddr, name)
+        name = get_testfn(suffix=suffix)
+        try:
+            sock = bind_unix_socket(name)
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
+        with closing(sock):
+            conn = psutil.Process().connections('unix')[0]
+            self.assertIsInstance(conn.laddr, str)
+            # AF_UNIX addr not set on OpenBSD
+            if not OPENBSD and not CIRRUS:  # XXX
+                self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
@@ -252,21 +251,21 @@ class _BaseFSAPIsTests(object):
             raise ValueError("connection not found")
 
         suffix = os.path.basename(self.funky_name)
-        with unix_socket_path(suffix=suffix) as name:
-            try:
-                sock = bind_unix_socket(name)
-            except UnicodeEncodeError:
-                if PY3:
-                    raise
-                else:
-                    raise unittest.SkipTest("not supported")
-            with closing(sock):
-                cons = psutil.net_connections(kind='unix')
-                # AF_UNIX addr not set on OpenBSD
-                if not OPENBSD:
-                    conn = find_sock(cons)
-                    self.assertIsInstance(conn.laddr, str)
-                    self.assertEqual(conn.laddr, name)
+        name = get_testfn(suffix=suffix)
+        try:
+            sock = bind_unix_socket(name)
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
+        with closing(sock):
+            cons = psutil.net_connections(kind='unix')
+            # AF_UNIX addr not set on OpenBSD
+            if not OPENBSD:
+                conn = find_sock(cons)
+                self.assertIsInstance(conn.laddr, str)
+                self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         dname = self.funky_name + "2"

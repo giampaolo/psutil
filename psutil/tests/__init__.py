@@ -99,8 +99,8 @@ __all__ = [
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
     'check_net_address',
-    'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
-    'tcp_socketpair', 'unix_socketpair', 'create_sockets',
+    'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
+    'unix_socketpair', 'create_sockets',
     # compat
     'reload_module', 'import_module_by_path',
     # others
@@ -989,22 +989,6 @@ def get_free_port(host='127.0.0.1'):
         return sock.getsockname()[1]
 
 
-@contextlib.contextmanager
-def unix_socket_path(suffix=""):
-    """A context manager which returns a non-existent file name
-    and tries to delete it on exit.
-    """
-    assert psutil.POSIX
-    path = get_testfn(suffix=suffix)
-    try:
-        yield path
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
 def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
     """Binds a generic socket."""
     if addr is None and family in (AF_INET, AF_INET6):
@@ -1095,8 +1079,8 @@ def create_sockets():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
         if POSIX and HAS_CONNECTIONS_UNIX:
-            fname1 = unix_socket_path().__enter__()
-            fname2 = unix_socket_path().__enter__()
+            fname1 = get_testfn()
+            fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
             s3 = bind_unix_socket(fname2, type=socket.SOCK_DGRAM)
             # self.addCleanup(safe_rmpath, fname1)
@@ -1107,10 +1091,6 @@ def create_sockets():
     finally:
         for s in socks:
             s.close()
-        if fname1 is not None:
-            safe_rmpath(fname1)
-        if fname2 is not None:
-            safe_rmpath(fname2)
 
 
 def check_net_address(addr, family):

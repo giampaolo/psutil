@@ -46,7 +46,6 @@ from psutil.tests import safe_rmpath
 from psutil.tests import tcp_socketpair
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
@@ -255,19 +254,19 @@ class TestNetUtils(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.family, socket.AF_UNIX)
-                self.assertEqual(sock.type, socket.SOCK_STREAM)
-                self.assertEqual(sock.getsockname(), name)
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
+        name = get_testfn()
+        sock = bind_unix_socket(name)
+        with contextlib.closing(sock):
+            self.assertEqual(sock.family, socket.AF_UNIX)
+            self.assertEqual(sock.type, socket.SOCK_STREAM)
+            self.assertEqual(sock.getsockname(), name)
+            assert os.path.exists(name)
+            assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.type, socket.SOCK_DGRAM)
+        name = get_testfn()
+        sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
+        with contextlib.closing(sock):
+            self.assertEqual(sock.type, socket.SOCK_DGRAM)
 
     def tcp_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
@@ -287,18 +286,18 @@ class TestNetUtils(unittest.TestCase):
         p = psutil.Process()
         num_fds = p.num_fds()
         assert not p.connections(kind='unix')
-        with unix_socket_path() as name:
-            server, client = unix_socketpair(name)
-            try:
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
-                self.assertEqual(p.num_fds() - num_fds, 2)
-                self.assertEqual(len(p.connections(kind='unix')), 2)
-                self.assertEqual(server.getsockname(), name)
-                self.assertEqual(client.getpeername(), name)
-            finally:
-                client.close()
-                server.close()
+        name = get_testfn()
+        server, client = unix_socketpair(name)
+        try:
+            assert os.path.exists(name)
+            assert stat.S_ISSOCK(os.stat(name).st_mode)
+            self.assertEqual(p.num_fds() - num_fds, 2)
+            self.assertEqual(len(p.connections(kind='unix')), 2)
+            self.assertEqual(server.getsockname(), name)
+            self.assertEqual(client.getpeername(), name)
+        finally:
+            client.close()
+            server.close()
 
     def test_create_sockets(self):
         with create_sockets() as socks:
