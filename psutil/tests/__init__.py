@@ -347,7 +347,8 @@ def create_proc_children_pair():
     The 2 processes are fully initialized and will live for 60 secs
     and are registered for cleanup on reap_children().
     """
-    testfn = get_testfn()
+    # must be relative on Windows
+    testfn = os.path.basename(get_testfn(dir=os.getcwd()))
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         s = "import os, time;"
@@ -775,7 +776,7 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def get_testfn(suffix=""):
+def get_testfn(suffix="", dir=None):
     """Return an absolute pathname of a file or dir that did not
     exist at the time this call is made. Also schedule it for safe
     deletion at interpreter exit. It's technically racy but probably
@@ -784,7 +785,7 @@ def get_testfn(suffix=""):
     timer = getattr(time, 'perf_counter', time.time)
     while True:
         prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
-        name = tempfile.mktemp(prefix=prefix, suffix=suffix)
+        name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
             _testfiles_created.add(name)
             return name

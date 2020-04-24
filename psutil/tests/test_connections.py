@@ -10,6 +10,7 @@ import contextlib
 import errno
 import os
 import socket
+import string
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -432,15 +433,15 @@ class TestFilters(Base, unittest.TestCase):
             time.sleep(60)
         """)
 
-        from string import Template
-        testfile = get_testfn()
-        tcp4_template = Template(tcp_template).substitute(
+        # must be relative on Windows
+        testfile = os.path.basename(get_testfn(dir=os.getcwd()))
+        tcp4_template = string.Template(tcp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        udp4_template = Template(udp_template).substitute(
+        udp4_template = string.Template(udp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        tcp6_template = Template(tcp_template).substitute(
+        tcp6_template = string.Template(tcp_template).substitute(
             family=int(AF_INET6), addr="::1", testfn=testfile)
-        udp6_template = Template(udp_template).substitute(
+        udp6_template = string.Template(udp_template).substitute(
             family=int(AF_INET6), addr="::1", testfn=testfile)
 
         # launch various subprocess instantiating a socket of various
