@@ -73,7 +73,7 @@ else:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
+    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
     'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
     'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
@@ -138,19 +138,22 @@ if TRAVIS or APPVEYOR:
 
 # --- files
 
-TESTFILE_PREFIX = '$testfn'
+# Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFILE_PREFIX = '$psutil-test-'
+    TESTFN_PREFIX = '$psutil-test-%s-' % os.getpid()
 else:
-    TESTFILE_PREFIX = '@psutil-test-'
-TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
-# Disambiguate TESTFN for parallel testing, while letting it remain a valid
-# module name.
-TESTFN = TESTFN + str(os.getpid())
+    TESTFN_PREFIX = '@psutil-test-%s-' % os.getpid()
+TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFN_PREFIX)
+TESTFN_UNICODE = TESTFN + u("-ƒőő")
+# An invalid unicode string.
+if PY3:
+    TESTFN_INVALID_UNICODE = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
+        'utf8', 'surrogateescape')
+else:
+    TESTFN_INVALID_UNICODE = TESTFN + "f\xc0\x80"
 
 _TESTFN = TESTFN + '-internal'
-TESTFN_UNICODE = TESTFN + u("-ƒőő")
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
@@ -227,9 +230,9 @@ def cleanup_test_files():
     DEVNULL.close()
     for name in os.listdir(u('.')):
         if isinstance(name, unicode):
-            prefix = u(TESTFILE_PREFIX)
+            prefix = u(TESTFN_PREFIX)
         else:
-            prefix = TESTFILE_PREFIX
+            prefix = TESTFN_PREFIX
         if name.startswith(prefix):
             try:
                 safe_rmpath(name)
@@ -386,7 +389,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if MACOS else TESTFN
+    unix_file = tempfile.mktemp(prefix=TESTFN_PREFIX) if MACOS else TESTFN
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -428,7 +431,7 @@ def pyrun(src, **kwds):
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
     with tempfile.NamedTemporaryFile(
-            prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
+            prefix=TESTFN_PREFIX, mode="wt", delete=False) as f:
         _testfiles_created.add(f.name)
         f.write(src)
         f.flush()
@@ -787,7 +790,7 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
+def unique_filename(prefix=TESTFN_PREFIX, suffix=""):
     return tempfile.mktemp(prefix=prefix, suffix=suffix)
 
 
@@ -1196,7 +1199,7 @@ def is_namedtuple(x):
 
 if POSIX:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    def copyload_shared_lib(dst_prefix=TESTFN_PREFIX):
         """Ctx manager which picks up a random shared CO lib used
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
@@ -1216,7 +1219,7 @@ if POSIX:
             safe_rmpath(dst)
 else:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    def copyload_shared_lib(dst_prefix=TESTFN_PREFIX):
         """Ctx manager which picks up a random shared DLL lib used
         by this process, copies it in another location and loads it
         in memory via ctypes.

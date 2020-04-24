@@ -101,8 +101,8 @@ from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFILE_PREFIX
-from psutil.tests import TESTFN
+from psutil.tests import TESTFN_INVALID_UNICODE
+from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -146,14 +146,6 @@ def subprocess_supports_unicode(name):
         return True
     finally:
         reap_children()
-
-
-# An invalid unicode string.
-if PY3:
-    INVALID_NAME = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-        'utf8', 'surrogateescape')
-else:
-    INVALID_NAME = TESTFN + "f\xc0\x80"
 
 
 # ===================================================================
@@ -255,7 +247,7 @@ class _BaseFSAPIsTests(object):
     def test_net_connections(self):
         def find_sock(cons):
             for conn in cons:
-                if os.path.basename(conn.laddr).startswith(TESTFILE_PREFIX):
+                if os.path.basename(conn.laddr).startswith(TESTFN_PREFIX):
                     return conn
             raise ValueError("connection not found")
 
@@ -295,7 +287,7 @@ class _BaseFSAPIsTests(object):
             libpaths = [normpath(x.path)
                         for x in psutil.Process().memory_maps()]
             # ...just to have a clearer msg in case of failure
-            libpaths = [x for x in libpaths if TESTFILE_PREFIX in x]
+            libpaths = [x for x in libpaths if TESTFN_PREFIX in x]
             self.assertIn(normpath(funky_path), libpaths)
             for path in libpaths:
                 self.assertIsInstance(path, str)
@@ -324,11 +316,11 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-@unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
+@unittest.skipIf(not subprocess_supports_unicode(TESTFN_INVALID_UNICODE),
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
-    funky_name = INVALID_NAME
+    funky_name = TESTFN_INVALID_UNICODE
 
     @classmethod
     def expect_exact_path_match(cls):
