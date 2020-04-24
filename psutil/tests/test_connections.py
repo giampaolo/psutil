@@ -41,6 +41,7 @@ from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
+from psutil.tests import serialtest
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
@@ -48,14 +49,13 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
-from psutil.tests import unittest_serial_run
 
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
-@unittest_serial_run
+@serialtest
 class _ConnTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -185,7 +185,7 @@ class TestBasicOperations(_ConnTestCase):
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
-@unittest_serial_run
+@serialtest
 class TestUnconnectedSockets(_ConnTestCase):
     """Tests sockets which are open but not connected to anything."""
 
@@ -282,7 +282,7 @@ class TestUnconnectedSockets(_ConnTestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-@unittest_serial_run
+@serialtest
 class TestConnectedSocket(_ConnTestCase):
     """Test socket pairs which are are actually connected to
     each other.

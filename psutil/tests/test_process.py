@@ -57,6 +57,7 @@ from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
+from psutil.tests import serialtest
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
@@ -64,14 +65,13 @@ from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
-from psutil.tests import unittest_serial_run
 
 
 # ===================================================================
 # --- psutil.Process class tests
 # ===================================================================
 
-@unittest_serial_run
+@serialtest
 class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
