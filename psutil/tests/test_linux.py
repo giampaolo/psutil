@@ -29,6 +29,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -1643,7 +1644,7 @@ class TestSensorsFans(unittest.TestCase):
 class TestProcess(unittest.TestCase):
 
     def test_memory_full_info(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
@@ -1713,7 +1714,7 @@ class TestProcess(unittest.TestCase):
             raise RuntimeError("timeout looking for test file")
 
         #
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, "w"):
             self.assertEqual(get_test_file(testfn).mode, "w")
         with open(testfn, "r"):
@@ -2100,7 +2101,7 @@ class TestUtils(unittest.TestCase):
             assert m.called
 
     def test_cat(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, "wt") as f:
             f.write("foo ")
         self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")

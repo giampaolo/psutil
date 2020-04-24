@@ -92,7 +92,7 @@ __all__ = [
     'install_pip', 'install_test_deps',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
-    'unique_filename',
+    'get_testfn',
     # os
     'get_winver', 'get_kernel_version',
     # sync primitives
@@ -790,10 +790,19 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def unique_filename(prefix=TESTFN_PREFIX, suffix=""):
-    name = tempfile.mktemp(prefix=prefix, suffix=suffix)
-    _testfiles_created.add(name)
-    return name
+def get_testfn(prefix=TESTFN_PREFIX, suffix=""):
+    """Return an absolute pathname of a file or dir that did not
+    exist at the time this call is made. Also schedule it for safe
+    deletion at interpreter exit. It's technically racy but probably
+    not really due to the time variant.
+    """
+    timer = getattr(time, 'perf_counter', time.time)
+    while True:
+        prefix = "%s%.9f-" % (prefix, timer())
+        name = tempfile.mktemp(prefix=prefix, suffix=suffix)
+        if not os.path.isdir(name):
+            _testfiles_created.add(name)
+            return name
 
 
 # ===================================================================
@@ -816,13 +825,6 @@ class TestCase(unittest.TestCase):
     # add support for the new name.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
-
-    def get_testfn(self, suffix=""):
-        """Return an absolute pathname of a file that did not exist at
-        the time the call is made."""
-        name = unique_filename(suffix=suffix)
-        self.addCleanup(safe_rmpath, name)
-        return name
 
 
 # override default unittest.TestCase
@@ -1006,7 +1008,7 @@ def unix_socket_path(suffix=""):
     and tries to delete it on exit.
     """
     assert psutil.POSIX
-    path = unique_filename(suffix=suffix)
+    path = get_testfn(suffix=suffix)
     try:
         yield path
     finally:

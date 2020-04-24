@@ -36,6 +36,7 @@ from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_free_port
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
@@ -432,7 +433,7 @@ class TestFilters(Base, unittest.TestCase):
         """)
 
         from string import Template
-        testfile = self.get_testfn()
+        testfile = get_testfn()
         tcp4_template = Template(tcp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         udp4_template = Template(udp_template).substitute(
@@ -581,7 +582,7 @@ class TestSystemWideConnections(Base, unittest.TestCase):
         times = 10
         fnames = []
         for i in range(times):
-            fname = self.get_testfn()
+            fname = get_testfn()
             fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os

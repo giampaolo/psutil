@@ -44,6 +44,7 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_zombie_proc
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -456,7 +457,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -478,7 +479,7 @@ class TestProcess(unittest.TestCase):
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -725,7 +726,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         create_exe(testfn)
         cmdline = [testfn] + (["0123456789"] * 20)
         sproc = get_test_subprocess(cmdline)
@@ -740,7 +741,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
-        testfn = self.get_testfn(suffix="0123456789" * 2)
+        testfn = get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
         sproc = get_test_subprocess(testfn)
         p = psutil.Process(sproc.pid)
@@ -754,7 +755,7 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = self.get_testfn(suffix='foo bar )')
+        funky_path = get_testfn(suffix='foo bar )')
         create_exe(funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
@@ -945,7 +946,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
         # current process
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(testfn in files)
@@ -985,7 +986,7 @@ class TestProcess(unittest.TestCase):
     def test_open_files_2(self):
         # test fd and path fields
         normcase = os.path.normcase
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, 'w') as fileobj:
             p = psutil.Process()
             for file in p.open_files():
@@ -1008,7 +1009,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         p = psutil.Process()
         start = p.num_fds()
         file = open(testfn, 'w')
@@ -1500,7 +1501,7 @@ class TestProcess(unittest.TestCase):
                 return execve("/bin/cat", argv, envp);
             }
             """)
-        path = self.get_testfn()
+        path = get_testfn()
         create_exe(path, c_code=code)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,

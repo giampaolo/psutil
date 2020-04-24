@@ -36,6 +36,7 @@ from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -585,7 +586,7 @@ class TestDiskAPIs(unittest.TestCase):
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
-        fname = self.get_fname()
+        fname = get_testfn()
         with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
 

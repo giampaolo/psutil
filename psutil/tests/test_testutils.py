@@ -34,6 +34,7 @@ from psutil.tests import create_sockets
 from psutil.tests import create_zombie_proc
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
@@ -132,26 +133,26 @@ class TestSyncTestUtils(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_empty(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, 'w'):
             pass
         wait_for_file(testfn, empty=True)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_no_file(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
             self.assertRaises(IOError, wait_for_file, testfn)
 
     def test_wait_for_file_no_delete(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn, delete=False)
@@ -173,7 +174,7 @@ class TestFSTestUtils(unittest.TestCase):
             self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         safe_mkdir(testfn)
         assert os.path.isdir(testfn)
         safe_mkdir(testfn)
@@ -181,7 +182,7 @@ class TestFSTestUtils(unittest.TestCase):
 
     def test_safe_rmpath(self):
         # test file is removed
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         open(testfn, 'w').close()
         safe_rmpath(testfn)
         assert not os.path.exists(testfn)
@@ -199,7 +200,7 @@ class TestFSTestUtils(unittest.TestCase):
             assert m.called
 
     def test_chdir(self):
-        testfn = self.get_testfn()
+        testfn = get_testfn()
         base = os.getcwd()
         os.mkdir(testfn)
         with chdir(testfn):
