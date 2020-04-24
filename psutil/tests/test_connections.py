@@ -10,6 +10,7 @@ import contextlib
 import errno
 import os
 import socket
+import string
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -36,17 +37,15 @@ from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_free_port
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
-from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import unittest_serial_run
@@ -60,14 +59,12 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 class _ConnTestCase(unittest.TestCase):
 
     def setUp(self):
-        safe_rmpath(TESTFN)
         if not (NETBSD or FREEBSD):
             # process opens a UNIX socket to /var/log/run.
             cons = thisproc.connections(kind='all')
             assert not cons, cons
 
     def tearDown(self):
-        safe_rmpath(TESTFN)
         reap_children()
         if not (FREEBSD or NETBSD):
             # Make sure we closed all resources.
@@ -272,19 +269,17 @@ class TestUnconnectedSockets(_ConnTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_tcp(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
-                conn = self.check_socket(sock)
-                assert not conn.raddr
-                self.assertEqual(conn.status, psutil.CONN_NONE)
+        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_udp(self):
-        with unix_socket_path() as name:
-            with closing(bind_unix_socket(name, type=SOCK_STREAM)) as sock:
-                conn = self.check_socket(sock)
-                assert not conn.raddr
-                self.assertEqual(conn.status, psutil.CONN_NONE)
+        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+            conn = self.check_socket(sock)
+            assert not conn.raddr
+            self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
 @unittest_serial_run
@@ -317,39 +312,39 @@ class TestConnectedSocket(_ConnTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
-        with unix_socket_path() as name:
-            server, client = unix_socketpair(name)
-            try:
-                cons = thisproc.connections(kind='unix')
-                assert not (cons[0].laddr and cons[0].raddr)
-                assert not (cons[1].laddr and cons[1].raddr)
-                if NETBSD or FREEBSD:
-                    # On NetBSD creating a UNIX socket will cause
-                    # a UNIX connection to  /var/run/log.
-                    cons = [c for c in cons if c.raddr != '/var/run/log']
-                    if CIRRUS:
-                        cons = [c for c in cons if c.fd in
-                                (server.fileno(), client.fileno())]
-                self.assertEqual(len(cons), 2, msg=cons)
-                if LINUX or FREEBSD or SUNOS:
-                    # remote path is never set
-                    self.assertEqual(cons[0].raddr, "")
-                    self.assertEqual(cons[1].raddr, "")
-                    # one local address should though
-                    self.assertEqual(name, cons[0].laddr or cons[1].laddr)
-                elif OPENBSD:
-                    # No addresses whatsoever here.
-                    for addr in (cons[0].laddr, cons[0].raddr,
-                                 cons[1].laddr, cons[1].raddr):
-                        self.assertEqual(addr, "")
-                else:
-                    # On other systems either the laddr or raddr
-                    # of both peers are set.
-                    self.assertEqual(cons[0].laddr or cons[1].laddr, name)
-                    self.assertEqual(cons[0].raddr or cons[1].raddr, name)
-            finally:
-                server.close()
-                client.close()
+        testfn = get_testfn()
+        server, client = unix_socketpair(testfn)
+        try:
+            cons = thisproc.connections(kind='unix')
+            assert not (cons[0].laddr and cons[0].raddr)
+            assert not (cons[1].laddr and cons[1].raddr)
+            if NETBSD or FREEBSD:
+                # On NetBSD creating a UNIX socket will cause
+                # a UNIX connection to  /var/run/log.
+                cons = [c for c in cons if c.raddr != '/var/run/log']
+                if CIRRUS:
+                    cons = [c for c in cons if c.fd in
+                            (server.fileno(), client.fileno())]
+            self.assertEqual(len(cons), 2, msg=cons)
+            if LINUX or FREEBSD or SUNOS:
+                # remote path is never set
+                self.assertEqual(cons[0].raddr, "")
+                self.assertEqual(cons[1].raddr, "")
+                # one local address should though
+                self.assertEqual(testfn, cons[0].laddr or cons[1].laddr)
+            elif OPENBSD:
+                # No addresses whatsoever here.
+                for addr in (cons[0].laddr, cons[0].raddr,
+                             cons[1].laddr, cons[1].raddr):
+                    self.assertEqual(addr, "")
+            else:
+                # On other systems either the laddr or raddr
+                # of both peers are set.
+                self.assertEqual(cons[0].laddr or cons[1].laddr, testfn)
+                self.assertEqual(cons[0].raddr or cons[1].raddr, testfn)
+        finally:
+            server.close()
+            client.close()
 
 
 class TestFilters(_ConnTestCase):
@@ -439,15 +434,15 @@ class TestFilters(_ConnTestCase):
             time.sleep(60)
         """)
 
-        from string import Template
-        testfile = os.path.basename(TESTFN)
-        tcp4_template = Template(tcp_template).substitute(
+        # must be relative on Windows
+        testfile = os.path.basename(get_testfn(dir=os.getcwd()))
+        tcp4_template = string.Template(tcp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        udp4_template = Template(udp_template).substitute(
+        udp4_template = string.Template(udp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        tcp6_template = Template(tcp_template).substitute(
+        tcp6_template = string.Template(tcp_template).substitute(
             family=int(AF_INET6), addr="::1", testfn=testfile)
-        udp6_template = Template(udp_template).substitute(
+        udp6_template = string.Template(udp_template).substitute(
             family=int(AF_INET6), addr="::1", testfn=testfile)
 
         # launch various subprocess instantiating a socket of various
@@ -587,23 +582,25 @@ class TestSystemWideConnections(_ConnTestCase):
             expected = len(socks)
         pids = []
         times = 10
+        fnames = []
         for i in range(times):
-            fname = os.path.realpath(TESTFN) + str(i)
+            fname = get_testfn()
+            fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os
-                from psutil.tests import create_sockets
+                from psutil.tests import create_sockets, cleanup_test_files
                 with create_sockets():
                     with open(r'%s', 'w') as f:
-                        f.write(str(os.getpid()))
+                        f.write("hello")
+                    # 2 UNIX test socket files are created
+                    cleanup_test_files()
                     time.sleep(60)
                 """ % fname)
             sproc = pyrun(src)
             pids.append(sproc.pid)
-            self.addCleanup(safe_rmpath, fname)
 
         # sync
-        for i in range(times):
-            fname = TESTFN + str(i)
+        for fname in fnames:
             wait_for_file(fname)
 
         syscons = [x for x in psutil.net_connections(kind='all') if x.pid

@@ -34,6 +34,7 @@ from psutil.tests import create_sockets
 from psutil.tests import create_zombie_proc
 from psutil.tests import get_free_port
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
@@ -43,11 +44,9 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unittest_serial_run
-from psutil.tests import unix_socket_path
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
@@ -127,9 +126,6 @@ class TestRetryDecorator(unittest.TestCase):
 
 class TestSyncTestUtils(unittest.TestCase):
 
-    def tearDown(self):
-        safe_rmpath(TESTFN)
-
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
@@ -137,26 +133,30 @@ class TestSyncTestUtils(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
-        with open(TESTFN, 'w') as f:
+        testfn = get_testfn()
+        with open(testfn, 'w') as f:
             f.write('foo')
-        wait_for_file(TESTFN)
-        assert not os.path.exists(TESTFN)
+        wait_for_file(testfn)
+        assert not os.path.exists(testfn)
 
     def test_wait_for_file_empty(self):
-        with open(TESTFN, 'w'):
+        testfn = get_testfn()
+        with open(testfn, 'w'):
             pass
-        wait_for_file(TESTFN, empty=True)
-        assert not os.path.exists(TESTFN)
+        wait_for_file(testfn, empty=True)
+        assert not os.path.exists(testfn)
 
     def test_wait_for_file_no_file(self):
+        testfn = get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(IOError, wait_for_file, TESTFN)
+            self.assertRaises(IOError, wait_for_file, testfn)
 
     def test_wait_for_file_no_delete(self):
-        with open(TESTFN, 'w') as f:
+        testfn = get_testfn()
+        with open(testfn, 'w') as f:
             f.write('foo')
-        wait_for_file(TESTFN, delete=False)
-        assert os.path.exists(TESTFN)
+        wait_for_file(testfn, delete=False)
+        assert os.path.exists(testfn)
 
     def test_call_until(self):
         ret = call_until(lambda: 1, "ret == 1")
@@ -164,11 +164,6 @@ class TestSyncTestUtils(unittest.TestCase):
 
 
 class TestFSTestUtils(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
-
-    tearDown = setUp
 
     def test_open_text(self):
         with open_text(__file__) as f:
@@ -179,34 +174,37 @@ class TestFSTestUtils(unittest.TestCase):
             self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
+        testfn = get_testfn()
+        safe_mkdir(testfn)
+        assert os.path.isdir(testfn)
+        safe_mkdir(testfn)
+        assert os.path.isdir(testfn)
 
     def test_safe_rmpath(self):
         # test file is removed
-        open(TESTFN, 'w').close()
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
+        testfn = get_testfn()
+        open(testfn, 'w').close()
+        safe_rmpath(testfn)
+        assert not os.path.exists(testfn)
         # test no exception if path does not exist
-        safe_rmpath(TESTFN)
+        safe_rmpath(testfn)
         # test dir is removed
-        os.mkdir(TESTFN)
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
+        os.mkdir(testfn)
+        safe_rmpath(testfn)
+        assert not os.path.exists(testfn)
         # test other exceptions are raised
         with mock.patch('psutil.tests.os.stat',
                         side_effect=OSError(errno.EINVAL, "")) as m:
             with self.assertRaises(OSError):
-                safe_rmpath(TESTFN)
+                safe_rmpath(testfn)
             assert m.called
 
     def test_chdir(self):
+        testfn = get_testfn()
         base = os.getcwd()
-        os.mkdir(TESTFN)
-        with chdir(TESTFN):
-            self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
+        os.mkdir(testfn)
+        with chdir(testfn):
+            self.assertEqual(os.getcwd(), os.path.join(base, testfn))
         self.assertEqual(os.getcwd(), base)
 
 
@@ -258,19 +256,19 @@ class TestNetUtils(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.family, socket.AF_UNIX)
-                self.assertEqual(sock.type, socket.SOCK_STREAM)
-                self.assertEqual(sock.getsockname(), name)
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
+        name = get_testfn()
+        sock = bind_unix_socket(name)
+        with contextlib.closing(sock):
+            self.assertEqual(sock.family, socket.AF_UNIX)
+            self.assertEqual(sock.type, socket.SOCK_STREAM)
+            self.assertEqual(sock.getsockname(), name)
+            assert os.path.exists(name)
+            assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.type, socket.SOCK_DGRAM)
+        name = get_testfn()
+        sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
+        with contextlib.closing(sock):
+            self.assertEqual(sock.type, socket.SOCK_DGRAM)
 
     def tcp_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
@@ -290,18 +288,18 @@ class TestNetUtils(unittest.TestCase):
         p = psutil.Process()
         num_fds = p.num_fds()
         assert not p.connections(kind='unix')
-        with unix_socket_path() as name:
-            server, client = unix_socketpair(name)
-            try:
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
-                self.assertEqual(p.num_fds() - num_fds, 2)
-                self.assertEqual(len(p.connections(kind='unix')), 2)
-                self.assertEqual(server.getsockname(), name)
-                self.assertEqual(client.getpeername(), name)
-            finally:
-                client.close()
-                server.close()
+        name = get_testfn()
+        server, client = unix_socketpair(name)
+        try:
+            assert os.path.exists(name)
+            assert stat.S_ISSOCK(os.stat(name).st_mode)
+            self.assertEqual(p.num_fds() - num_fds, 2)
+            self.assertEqual(len(p.connections(kind='unix')), 2)
+            self.assertEqual(server.getsockname(), name)
+            self.assertEqual(client.getpeername(), name)
+        finally:
+            client.close()
+            server.close()
 
     def test_create_sockets(self):
         with create_sockets() as socks:

@@ -86,27 +86,27 @@ from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import APPVEYOR
-from psutil.tests import CIRRUS
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
+from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import INVALID_UNICODE_SUFFIX
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFILE_PREFIX
-from psutil.tests import TESTFN
-from psutil.tests import TESTFN_UNICODE
+from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
+from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
 from psutil.tests import unittest_serial_run
 import psutil
 
@@ -131,12 +131,13 @@ def safe_rmpath(path):
         return _safe_rmpath(path)
 
 
-def subprocess_supports_unicode(name):
+def subprocess_supports_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
     """
     if PY3:
         return True
+    name = get_testfn(suffix=suffix)
     try:
         safe_rmpath(name)
         create_exe(name)
@@ -149,14 +150,6 @@ def subprocess_supports_unicode(name):
         reap_children()
 
 
-# An invalid unicode string.
-if PY3:
-    INVALID_NAME = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-        'utf8', 'surrogateescape')
-else:
-    INVALID_NAME = TESTFN + "f\xc0\x80"
-
-
 # ===================================================================
 # FS APIs
 # ===================================================================
@@ -164,23 +157,21 @@ else:
 
 @unittest_serial_run
 class _BaseFSAPIsTests(object):
-    funky_name = None
+    funky_suffix = None
 
     @classmethod
     def setUpClass(cls):
-        safe_rmpath(cls.funky_name)
+        cls.funky_name = get_testfn(suffix=cls.funky_suffix)
         create_exe(cls.funky_name)
 
     @classmethod
     def tearDownClass(cls):
         reap_children()
-        safe_rmpath(cls.funky_name)
-
-    def tearDown(self):
-        reap_children()
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
+
+    # ---
 
     def test_proc_exe(self):
         subp = get_test_subprocess(cmd=[self.funky_name])
@@ -236,20 +227,20 @@ class _BaseFSAPIsTests(object):
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
-        with unix_socket_path(suffix=suffix) as name:
-            try:
-                sock = bind_unix_socket(name)
-            except UnicodeEncodeError:
-                if PY3:
-                    raise
-                else:
-                    raise unittest.SkipTest("not supported")
-            with closing(sock):
-                conn = psutil.Process().connections('unix')[0]
-                self.assertIsInstance(conn.laddr, str)
-                # AF_UNIX addr not set on OpenBSD
-                if not OPENBSD and not CIRRUS:  # XXX
-                    self.assertEqual(conn.laddr, name)
+        name = get_testfn(suffix=suffix)
+        try:
+            sock = bind_unix_socket(name)
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
+        with closing(sock):
+            conn = psutil.Process().connections('unix')[0]
+            self.assertIsInstance(conn.laddr, str)
+            # AF_UNIX addr not set on OpenBSD
+            if not OPENBSD and not CIRRUS:  # XXX
+                self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
@@ -257,26 +248,26 @@ class _BaseFSAPIsTests(object):
     def test_net_connections(self):
         def find_sock(cons):
             for conn in cons:
-                if os.path.basename(conn.laddr).startswith(TESTFILE_PREFIX):
+                if os.path.basename(conn.laddr).startswith(TESTFN_PREFIX):
                     return conn
             raise ValueError("connection not found")
 
         suffix = os.path.basename(self.funky_name)
-        with unix_socket_path(suffix=suffix) as name:
-            try:
-                sock = bind_unix_socket(name)
-            except UnicodeEncodeError:
-                if PY3:
-                    raise
-                else:
-                    raise unittest.SkipTest("not supported")
-            with closing(sock):
-                cons = psutil.net_connections(kind='unix')
-                # AF_UNIX addr not set on OpenBSD
-                if not OPENBSD:
-                    conn = find_sock(cons)
-                    self.assertIsInstance(conn.laddr, str)
-                    self.assertEqual(conn.laddr, name)
+        name = get_testfn(suffix=suffix)
+        try:
+            sock = bind_unix_socket(name)
+        except UnicodeEncodeError:
+            if PY3:
+                raise
+            else:
+                raise unittest.SkipTest("not supported")
+        with closing(sock):
+            cons = psutil.net_connections(kind='unix')
+            # AF_UNIX addr not set on OpenBSD
+            if not OPENBSD:
+                conn = find_sock(cons)
+                self.assertIsInstance(conn.laddr, str)
+                self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         dname = self.funky_name + "2"
@@ -291,13 +282,13 @@ class _BaseFSAPIsTests(object):
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
-        with copyload_shared_lib(dst_prefix=self.funky_name) as funky_path:
+        with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
             def normpath(p):
                 return os.path.realpath(os.path.normcase(p))
             libpaths = [normpath(x.path)
                         for x in psutil.Process().memory_maps()]
             # ...just to have a clearer msg in case of failure
-            libpaths = [x for x in libpaths if TESTFILE_PREFIX in x]
+            libpaths = [x for x in libpaths if TESTFN_PREFIX in x]
             self.assertIn(normpath(funky_path), libpaths)
             for path in libpaths:
                 self.assertIsInstance(path, str)
@@ -307,30 +298,29 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
+@unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
                  "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
-    funky_name = TESTFN_UNICODE
+    funky_suffix = UNICODE_SUFFIX
 
-    @classmethod
-    def expect_exact_path_match(cls):
+    def expect_exact_path_match(self):
         # Do not expect psutil to correctly handle unicode paths on
         # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(cls.funky_name, str) else u('.')
+        here = '.' if isinstance(self.funky_name, str) else u('.')
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return cls.funky_name in os.listdir(here)
+            return self.funky_name in os.listdir(here)
 
 
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-@unittest.skipIf(not subprocess_supports_unicode(INVALID_NAME),
+@unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
-    funky_name = INVALID_NAME
+    funky_suffix = INVALID_UNICODE_SUFFIX
 
     @classmethod
     def expect_exact_path_match(cls):
@@ -358,7 +348,7 @@ class TestNonFSAPIS(unittest.TestCase):
         # we use "è", which is part of the extended ASCII table
         # (unicode point <= 255).
         env = os.environ.copy()
-        funky_str = TESTFN_UNICODE if PY3 else 'è'
+        funky_str = UNICODE_SUFFIX if PY3 else 'è'
         env['FUNNY_ARG'] = funky_str
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)

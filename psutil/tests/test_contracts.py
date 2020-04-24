@@ -27,6 +27,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
+from psutil._compat import range
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_kernel_version
@@ -36,9 +37,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
-from psutil.tests import safe_rmpath
 from psutil.tests import SKIP_SYSCONS
-from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import warn
@@ -192,9 +191,6 @@ class TestSystemAPITypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.proc = psutil.Process()
-
-    def tearDown(self):
-        safe_rmpath(TESTFN)
 
     def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
         assert is_namedtuple(nt)
@@ -620,7 +616,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def cpu_affinity(self, ret, proc):
         self.assertIsInstance(ret, list)
         assert ret != [], ret
-        cpus = range(psutil.cpu_count())
+        cpus = list(range(psutil.cpu_count()))
         for n in ret:
             self.assertIsInstance(n, int)
             self.assertIn(n, cpus)

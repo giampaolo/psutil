@@ -29,9 +29,11 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
+from psutil._compat import super
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
@@ -45,9 +47,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import reap_children
-from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFN
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -222,8 +222,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @skip_if_linux()
     def test_open_files(self):
-        safe_rmpath(TESTFN)  # needed after UNIX socket test has run
-        with open(TESTFN, 'w'):
+        with open(get_testfn(), 'w'):
             self.execute(self.proc.open_files)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
@@ -283,7 +282,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
     @classmethod
     def setUpClass(cls):
-        super(TestTerminatedProcessLeaks, cls).setUpClass()
+        super().setUpClass()
         p = get_test_subprocess()
         cls.proc = psutil.Process(p.pid)
         cls.proc.kill()
@@ -291,7 +290,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestTerminatedProcessLeaks, cls).tearDownClass()
+        super().tearDownClass()
         reap_children()
 
     def _call(self, fun):
