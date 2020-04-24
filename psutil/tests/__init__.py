@@ -793,7 +793,7 @@ def get_testfn(suffix="", dir=None):
         name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
             _testfiles_created.add(name)
-            return name
+            return os.path.realpath(name)  # needed for OSX
 
 
 # ===================================================================
