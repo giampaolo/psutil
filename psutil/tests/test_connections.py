@@ -584,10 +584,12 @@ class TestSystemWideConnections(Base, unittest.TestCase):
             fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os
-                from psutil.tests import create_sockets
+                from psutil.tests import create_sockets, cleanup_test_files
                 with create_sockets():
                     with open(r'%s', 'w') as f:
-                        f.write(str(os.getpid()))
+                        f.write("hello")
+                    # 2 UNIX test socket files are created
+                    cleanup_test_files()
                     time.sleep(60)
                 """ % fname)
             sproc = pyrun(src)
