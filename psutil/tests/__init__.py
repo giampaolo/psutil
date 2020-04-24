@@ -222,10 +222,15 @@ _pids_started = set()
 _testfiles_created = set()
 
 
+# --- exit funs (first is executed last)
+
+atexit.register(DEVNULL.close)
+
+
 @atexit.register
 def cleanup_test_files():
-    DEVNULL.close()
-    for path in _testfiles_created:
+    while _testfiles_created:
+        path = _testfiles_created.pop()
         try:
             safe_rmpath(path)
         except Exception:
