@@ -389,7 +389,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFN_PREFIX)
+    unix_file = get_testfn()
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -430,9 +430,7 @@ def pyrun(src, **kwds):
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
-    with tempfile.NamedTemporaryFile(
-            prefix=TESTFN_PREFIX, mode="wt", delete=False) as f:
-        _testfiles_created.add(f.name)
+    with open(get_testfn(), 'wt') as f:
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
@@ -775,8 +773,7 @@ def create_exe(outpath, c_code=None):
                 }
                 """)
         assert isinstance(c_code, str), c_code
-        with tempfile.NamedTemporaryFile(
-                suffix='.c', delete=False, mode='wt') as f:
+        with open(get_testfn(suffix='.c'), 'wt') as f:
             f.write(c_code)
         try:
             subprocess.check_call(["gcc", f.name, "-o", outpath])
@@ -1218,7 +1215,7 @@ if POSIX:
         """
         exe = 'pypy' if PYPY else 'python'
         ext = ".so"
-        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 os.path.splitext(x.path)[1] == ext and
                 exe in x.path.lower()]
@@ -1240,7 +1237,7 @@ else:
         from ctypes import wintypes
         from ctypes import WinError
         ext = ".dll"
-        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(prefix=dst_prefix, suffix=ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 x.path.lower().endswith(ext) and
                 'python' in os.path.basename(x.path).lower() and
