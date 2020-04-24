@@ -20,6 +20,7 @@ import random
 import re
 import select
 import shutil
+import signal
 import socket
 import stat
 import subprocess
@@ -220,27 +221,6 @@ AF_UNIX = getattr(socket, "AF_UNIX", object())
 _subprocesses_started = set()
 _pids_started = set()
 _testfiles_created = set()
-
-
-# --- exit funs (first is executed last)
-
-atexit.register(DEVNULL.close)
-
-
-@atexit.register
-def cleanup_test_files():
-    while _testfiles_created:
-        path = _testfiles_created.pop()
-        try:
-            safe_rmpath(path)
-        except Exception:
-            traceback.print_exc()
-
-
-# this is executed first
-@atexit.register
-def cleanup_test_procs():
-    reap_children(recursive=True)
 
 
 # ===================================================================
@@ -1238,3 +1218,36 @@ else:
                 if ret == 0:
                     WinError()
             safe_rmpath(dst)
+
+
+# ===================================================================
+# --- Exit funs (first is executed last)
+# ===================================================================
+
+
+atexit.register(DEVNULL.close)
+
+
+@atexit.register
+def cleanup_test_files():
+    while _testfiles_created:
+        path = _testfiles_created.pop()
+        try:
+            safe_rmpath(path)
+        except Exception:
+            traceback.print_exc()
+
+
+# this is executed first
+@atexit.register
+def cleanup_test_procs():
+    reap_children(recursive=True)
+
+
+# atexit module does not execute exit functions in case of SIGTERM, which
+# gets sent to test subprocesses, which is a problem if they import this
+# modul. With this it will. See:
+# http://grodola.blogspot.com/
+#     2016/02/how-to-always-execute-exit-functions-in-py.html
+if POSIX and 'PSUTIL_TESTING' in os.environ:
+    signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))
