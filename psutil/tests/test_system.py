@@ -15,7 +15,6 @@ import shutil
 import signal
 import socket
 import sys
-import tempfile
 import time
 
 import psutil
@@ -586,7 +585,7 @@ class TestDiskAPIs(unittest.TestCase):
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
-        fname = tempfile.mktemp()
+        fname = self.get_fname()
         with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
 

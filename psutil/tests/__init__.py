@@ -791,7 +791,9 @@ def create_exe(outpath, c_code=None):
 
 
 def unique_filename(prefix=TESTFN_PREFIX, suffix=""):
-    return tempfile.mktemp(prefix=prefix, suffix=suffix)
+    name = tempfile.mktemp(prefix=prefix, suffix=suffix)
+    _testfiles_created.add(name)
+    return name
 
 
 # ===================================================================
@@ -816,7 +818,9 @@ class TestCase(unittest.TestCase):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
     def get_testfn(self, suffix=""):
-        name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix)
+        """Return an absolute pathname of a file that did not exist at
+        the time the call is made."""
+        name = unique_filename(suffix=suffix)
         self.addCleanup(safe_rmpath, name)
         return name
 
