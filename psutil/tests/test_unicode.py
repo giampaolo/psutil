@@ -86,10 +86,10 @@ from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import APPVEYOR
-from psutil.tests import CIRRUS
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
+from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
@@ -97,12 +97,12 @@ from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import INVALID_UNICODE_SUFFIX
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
-from psutil.tests import TESTFN_INVALID_UNICODE
 from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
@@ -316,11 +316,11 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-@unittest.skipIf(not subprocess_supports_unicode(TESTFN_INVALID_UNICODE),
+@unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
                  "subprocess can't deal with invalid unicode")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, invalid path name."""
-    funky_suffix = os.path.basename(TESTFN_INVALID_UNICODE)
+    funky_suffix = INVALID_UNICODE_SUFFIX
 
     @classmethod
     def expect_exact_path_match(cls):

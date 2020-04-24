@@ -74,8 +74,8 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'TESTFN', 'UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
-    'VALID_PROC_STATUSES',
+    'TESTFN', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS',
+    'CIRRUS', 'CI_TESTING', 'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -148,10 +148,9 @@ TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFN_PREFIX)
 UNICODE_SUFFIX = u("-ƒőő")
 # An invalid unicode string.
 if PY3:
-    TESTFN_INVALID_UNICODE = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
-        'utf8', 'surrogateescape')
+    INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
 else:
-    TESTFN_INVALID_UNICODE = TESTFN + "f\xc0\x80"
+    INVALID_UNICODE_SUFFIX = "f\xc0\x80"
 
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
