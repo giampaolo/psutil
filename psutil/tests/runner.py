@@ -28,6 +28,7 @@ import psutil
 from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
+from psutil.tests import APPVEYOR
 from psutil.tests import safe_rmpath
 from psutil.tests import TOX
 
@@ -134,7 +135,10 @@ def save_failed_tests(result):
 
 def run(name=None, last_failed=False):
     setup_tests()
-    runner = ColouredRunner(verbosity=VERBOSITY)
+    if APPVEYOR:
+        runner = TextTestRunner(verbosity=VERBOSITY)
+    else:
+        runner = ColouredRunner(verbosity=VERBOSITY)
     suite = get_suite_from_failed() if last_failed else get_suite(name)
     try:
         result = runner.run(suite)

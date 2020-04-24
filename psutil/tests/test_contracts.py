@@ -37,9 +37,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
-from psutil.tests import safe_rmpath
 from psutil.tests import SKIP_SYSCONS
-from psutil.tests import TESTFN
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import warn
@@ -193,9 +191,6 @@ class TestSystemAPITypes(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.proc = psutil.Process()
-
-    def tearDown(self):
-        safe_rmpath(TESTFN)
 
     def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
         assert is_namedtuple(nt)

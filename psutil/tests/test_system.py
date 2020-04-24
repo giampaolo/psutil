@@ -15,7 +15,6 @@ import shutil
 import signal
 import socket
 import sys
-import tempfile
 import time
 
 import psutil
@@ -37,6 +36,7 @@ from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -48,10 +48,8 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import safe_rmpath
-from psutil.tests import TESTFN
-from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
+from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
 
@@ -61,9 +59,6 @@ from psutil.tests import unittest
 
 
 class TestProcessAPIs(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -591,15 +586,15 @@ class TestDiskAPIs(unittest.TestCase):
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
-        fname = tempfile.mktemp()
+        fname = get_testfn()
         with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
 
+    @unittest.skipIf(not ASCII_FS, "not an ASCII fs")
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
-        if ASCII_FS:
-            with self.assertRaises(UnicodeEncodeError):
-                psutil.disk_usage(TESTFN_UNICODE)
+        with self.assertRaises(UnicodeEncodeError):
+            psutil.disk_usage(UNICODE_SUFFIX)
 
     def test_disk_usage_bytes(self):
         psutil.disk_usage(b'.')

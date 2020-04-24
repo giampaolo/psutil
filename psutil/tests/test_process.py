@@ -15,7 +15,6 @@ import signal
 import socket
 import subprocess
 import sys
-import tempfile
 import textwrap
 import time
 import types
@@ -44,6 +43,7 @@ from psutil.tests import create_proc_children_pair
 from psutil.tests import create_zombie_proc
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -57,12 +57,9 @@ from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import TESTFILE_PREFIX
-from psutil.tests import TESTFN
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -75,9 +72,6 @@ from psutil.tests import wait_for_pid
 
 class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -328,7 +322,7 @@ class TestProcess(unittest.TestCase):
 
         # test writes
         io1 = p.io_counters()
-        with tempfile.TemporaryFile(prefix=TESTFILE_PREFIX) as f:
+        with open(get_testfn(), 'wb') as f:
             if PY3:
                 f.write(bytes("x" * 1000000, 'ascii'))
             else:
@@ -461,16 +455,17 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
+        testfn = get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
-            with open(TESTFN, "wb") as f:
+            with open(testfn, "wb") as f:
                 f.write(b"X" * 1024)
             # write() or flush() doesn't always cause the exception
             # but close() will.
             with self.assertRaises(IOError) as exc:
-                with open(TESTFN, "wb") as f:
+                with open(testfn, "wb") as f:
                     f.write(b"X" * 1025)
             self.assertEqual(exc.exception.errno if PY3 else exc.exception[0],
                              errno.EFBIG)
@@ -482,12 +477,13 @@ class TestProcess(unittest.TestCase):
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
+        testfn = get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
             p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
-            with open(TESTFN, "wb") as f:
+            with open(testfn, "wb") as f:
                 f.write(b"X" * 2048)
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
@@ -728,9 +724,9 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
-        create_exe(TESTFN)
-        self.addCleanup(safe_rmpath, TESTFN)
-        cmdline = [TESTFN] + (["0123456789"] * 20)
+        testfn = get_testfn()
+        create_exe(testfn)
+        cmdline = [testfn] + (["0123456789"] * 20)
         sproc = get_test_subprocess(cmdline)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.cmdline(), cmdline)
@@ -743,12 +739,11 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
-        long_name = TESTFN + ("0123456789" * 2)
-        create_exe(long_name)
-        self.addCleanup(safe_rmpath, long_name)
-        sproc = get_test_subprocess(long_name)
+        testfn = get_testfn(suffix="0123456789" * 2)
+        create_exe(testfn)
+        sproc = get_test_subprocess(testfn)
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.name(), os.path.basename(long_name))
+        self.assertEqual(p.name(), os.path.basename(testfn))
 
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")
@@ -758,19 +753,8 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-
-        def rm():
-            # Try to limit occasional failures on Appveyor:
-            # https://ci.appveyor.com/project/giampaolo/psutil/build/1350/
-            #     job/lbo3bkju55le850n
-            try:
-                safe_rmpath(funky_path)
-            except OSError:
-                pass
-
-        funky_path = TESTFN + 'foo bar )'
+        funky_path = get_testfn(suffix='foo bar )')
         create_exe(funky_path)
-        self.addCleanup(rm)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]
@@ -960,35 +944,36 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
         # current process
+        testfn = get_testfn()
         p = psutil.Process()
         files = p.open_files()
-        self.assertFalse(TESTFN in files)
-        with open(TESTFN, 'wb') as f:
+        self.assertFalse(testfn in files)
+        with open(testfn, 'wb') as f:
             f.write(b'x' * 1024)
             f.flush()
             # give the kernel some time to see the new file
             files = call_until(p.open_files, "len(ret) != %i" % len(files))
             filenames = [os.path.normcase(x.path) for x in files]
-            self.assertIn(os.path.normcase(TESTFN), filenames)
+            self.assertIn(os.path.normcase(testfn), filenames)
             if LINUX:
                 for file in files:
-                    if file.path == TESTFN:
+                    if file.path == testfn:
                         self.assertEqual(file.position, 1024)
         for file in files:
             assert os.path.isfile(file.path), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % testfn
         sproc = get_test_subprocess([PYTHON_EXE, "-c", cmdline])
         p = psutil.Process(sproc.pid)
 
         for x in range(100):
             filenames = [os.path.normcase(x.path) for x in p.open_files()]
-            if TESTFN in filenames:
+            if testfn in filenames:
                 break
             time.sleep(.01)
         else:
-            self.assertIn(os.path.normcase(TESTFN), filenames)
+            self.assertIn(os.path.normcase(testfn), filenames)
         for file in filenames:
             assert os.path.isfile(file), file
 
@@ -999,7 +984,8 @@ class TestProcess(unittest.TestCase):
     def test_open_files_2(self):
         # test fd and path fields
         normcase = os.path.normcase
-        with open(TESTFN, 'w') as fileobj:
+        testfn = get_testfn()
+        with open(testfn, 'w') as fileobj:
             p = psutil.Process()
             for file in p.open_files():
                 if normcase(file.path) == normcase(fileobj.name) or \
@@ -1021,9 +1007,10 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
+        testfn = get_testfn()
         p = psutil.Process()
         start = p.num_fds()
-        file = open(TESTFN, 'w')
+        file = open(testfn, 'w')
         self.addCleanup(file.close)
         self.assertEqual(p.num_fds(), start + 1)
         sock = socket.socket()
@@ -1512,9 +1499,8 @@ class TestProcess(unittest.TestCase):
                 return execve("/bin/cat", argv, envp);
             }
             """)
-        path = TESTFN
+        path = get_testfn()
         create_exe(path, c_code=code)
-        self.addCleanup(safe_rmpath, path)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -1559,7 +1545,6 @@ if POSIX and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
-            safe_rmpath(TESTFN)
             TestProcess.setUp(self)
             os.setegid(1000)
             os.seteuid(1000)
