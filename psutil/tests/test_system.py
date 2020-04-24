@@ -48,8 +48,8 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
+from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
 
@@ -594,7 +594,7 @@ class TestDiskAPIs(unittest.TestCase):
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
         with self.assertRaises(UnicodeEncodeError):
-            psutil.disk_usage(TESTFN_UNICODE)
+            psutil.disk_usage(UNICODE_SUFFIX)
 
     def test_disk_usage_bytes(self):
         psutil.disk_usage(b'.')

@@ -104,8 +104,8 @@ from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN_INVALID_UNICODE
 from psutil.tests import TESTFN_PREFIX
-from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
+from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 from psutil.tests import unix_socket_path
 import psutil
@@ -131,12 +131,13 @@ def safe_rmpath(path):
         return _safe_rmpath(path)
 
 
-def subprocess_supports_unicode(name):
+def subprocess_supports_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
     """
     if PY3:
         return True
+    name = get_testfn(suffix=suffix)
     try:
         safe_rmpath(name)
         create_exe(name)
@@ -297,11 +298,11 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
 @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
 @unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(not subprocess_supports_unicode(TESTFN_UNICODE),
+@unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
                  "subprocess can't deal with unicode")
 class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
-    funky_suffix = os.path.basename(TESTFN_UNICODE)
+    funky_suffix = UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
         # Do not expect psutil to correctly handle unicode paths on
@@ -347,7 +348,7 @@ class TestNonFSAPIS(unittest.TestCase):
         # we use "è", which is part of the extended ASCII table
         # (unicode point <= 255).
         env = os.environ.copy()
-        funky_str = TESTFN_UNICODE if PY3 else 'è'
+        funky_str = UNICODE_SUFFIX if PY3 else 'è'
         env['FUNNY_ARG'] = funky_str
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)

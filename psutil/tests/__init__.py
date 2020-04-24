@@ -74,7 +74,7 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
+    'TESTFN', 'UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
     'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -145,7 +145,7 @@ if os.name == 'java':
 else:
     TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFN_PREFIX)
-TESTFN_UNICODE = TESTFN + u("-ƒőő")
+UNICODE_SUFFIX = u("-ƒőő")
 # An invalid unicode string.
 if PY3:
     TESTFN_INVALID_UNICODE = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
