@@ -141,9 +141,9 @@ if TRAVIS or APPVEYOR:
 # Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFN_PREFIX = '$psutil-test-%s-' % os.getpid()
+    TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
 else:
-    TESTFN_PREFIX = '@psutil-test-%s-' % os.getpid()
+    TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFN_PREFIX)
 TESTFN_UNICODE = TESTFN + u("-ƒőő")
 # An invalid unicode string.
@@ -790,7 +790,7 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def get_testfn(prefix=TESTFN_PREFIX, suffix=""):
+def get_testfn(prefix=None, suffix=""):
     """Return an absolute pathname of a file or dir that did not
     exist at the time this call is made. Also schedule it for safe
     deletion at interpreter exit. It's technically racy but probably
@@ -798,7 +798,8 @@ def get_testfn(prefix=TESTFN_PREFIX, suffix=""):
     """
     timer = getattr(time, 'perf_counter', time.time)
     while True:
-        prefix = "%s%.9f-" % (prefix, timer())
+        if not prefix:
+            prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
         name = tempfile.mktemp(prefix=prefix, suffix=suffix)
         if not os.path.isdir(name):
             _testfiles_created.add(name)
@@ -1008,7 +1009,7 @@ def unix_socket_path(suffix=""):
     and tries to delete it on exit.
     """
     assert psutil.POSIX
-    path = get_testfn(suffix=suffix)
+    path = get_testfn(prefix=TESTFN_PREFIX, suffix=suffix)
     try:
         yield path
     finally:

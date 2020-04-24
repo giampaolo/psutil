@@ -15,7 +15,6 @@ import signal
 import socket
 import subprocess
 import sys
-import tempfile
 import textwrap
 import time
 import types
@@ -61,7 +60,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import TESTFN_PREFIX
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -324,7 +322,7 @@ class TestProcess(unittest.TestCase):
 
         # test writes
         io1 = p.io_counters()
-        with tempfile.TemporaryFile(prefix=TESTFN_PREFIX) as f:
+        with open(get_testfn(), 'wb') as f:
             if PY3:
                 f.write(bytes("x" * 1000000, 'ascii'))
             else:

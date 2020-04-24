@@ -74,7 +74,6 @@ etc.) and make sure that:
 """
 
 import os
-import tempfile
 import traceback
 import warnings
 from contextlib import closing
@@ -94,6 +93,7 @@ from psutil.tests import chdir
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_test_subprocess
+from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
@@ -159,8 +159,7 @@ class _BaseFSAPIsTests(object):
 
     @classmethod
     def setUpClass(cls):
-        cls.funky_name = tempfile.mktemp(prefix=TESTFN_PREFIX,
-                                         suffix=cls.funky_suffix)
+        cls.funky_name = get_testfn(suffix=cls.funky_suffix)
         create_exe(cls.funky_name)
 
     @classmethod
