@@ -153,7 +153,6 @@ if PY3:
 else:
     TESTFN_INVALID_UNICODE = TESTFN + "f\xc0\x80"
 
-_TESTFN = TESTFN + '-internal'
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
@@ -336,14 +335,15 @@ def get_test_subprocess(cmd=None, **kwds):
         CREATE_NO_WINDOW = 0x8000000
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
-        safe_rmpath(_TESTFN)
+        testfn = get_testfn()
+        safe_rmpath(testfn)
         pyline = "from time import sleep;" \
                  "open(r'%s', 'w').close();" \
-                 "sleep(60);" % _TESTFN
+                 "sleep(60);" % testfn
         cmd = [PYTHON_EXE, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
-        wait_for_file(_TESTFN, delete=True, empty=True)
+        wait_for_file(testfn, delete=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -359,7 +359,7 @@ def create_proc_children_pair():
     The 2 processes are fully initialized and will live for 60 secs
     and are registered for cleanup on reap_children().
     """
-    _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
+    testfn = get_testfn()
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         s = "import os, time;"
@@ -369,7 +369,7 @@ def create_proc_children_pair():
         s += "time.sleep(60);"
         p = subprocess.Popen([r'%s', '-c', s])
         p.wait()
-        """ % (_TESTFN2, PYTHON_EXE))
+        """ % (testfn, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
     # set (which is the default) a "conhost.exe" extra process will be
     # spawned as a child. We don't want that.
@@ -378,8 +378,8 @@ def create_proc_children_pair():
     else:
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
-    data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    safe_rmpath(_TESTFN2)
+    data = wait_for_file(testfn, delete=False, empty=False)
+    safe_rmpath(testfn)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
