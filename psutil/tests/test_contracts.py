@@ -27,6 +27,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import long
+from psutil._compat import range
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_kernel_version
@@ -620,7 +621,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def cpu_affinity(self, ret, proc):
         self.assertIsInstance(ret, list)
         assert ret != [], ret
-        cpus = range(psutil.cpu_count())
+        cpus = list(range(psutil.cpu_count()))
         for n in ret:
             self.assertIsInstance(n, int)
             self.assertIn(n, cpus)

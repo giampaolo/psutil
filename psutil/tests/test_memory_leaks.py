@@ -29,6 +29,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
+from psutil._compat import super
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_test_subprocess
@@ -283,7 +284,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
     @classmethod
     def setUpClass(cls):
-        super(TestTerminatedProcessLeaks, cls).setUpClass()
+        super().setUpClass()
         p = get_test_subprocess()
         cls.proc = psutil.Process(p.pid)
         cls.proc.kill()
@@ -291,7 +292,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestTerminatedProcessLeaks, cls).tearDownClass()
+        super().tearDownClass()
         reap_children()
 
     def _call(self, fun):
