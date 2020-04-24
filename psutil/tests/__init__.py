@@ -15,6 +15,7 @@ import ctypes
 import errno
 import functools
 import gc
+import inspect
 import os
 import random
 import re
@@ -803,7 +804,8 @@ def serialtest(klass):
     class' unit tests will be run serially (1 process).
     """
     # assert issubclass(klass, unittest.TestCase), klass
-    klass._serialtest = True
+    assert inspect.isclass(klass), klass
+    klass.__serialtest = True
     return klass
 
 

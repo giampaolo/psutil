@@ -128,7 +128,7 @@ class _Runner:
         parallel = unittest.TestSuite()
         for obj in self._iter_testmod_classes():
             test = loadTestsFromTestCase(obj)
-            if getattr(obj, '_serialtest', False):
+            if getattr(obj, '__serialtest', False):
                 serial.addTest(test)
             else:
                 parallel.addTest(test)
