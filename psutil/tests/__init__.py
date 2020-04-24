@@ -74,8 +74,8 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'TESTFN', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS',
-    'CIRRUS', 'CI_TESTING', 'VALID_PROC_STATUSES',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
+    'CI_TESTING', 'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -136,7 +136,7 @@ if TRAVIS or APPVEYOR:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
 
-# --- files
+# --- file names
 
 # Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
@@ -144,7 +144,6 @@ if os.name == 'java':
     TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
 else:
     TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
-TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFN_PREFIX)
 UNICODE_SUFFIX = u("-ƒőő")
 # An invalid unicode string.
 if PY3:
@@ -226,16 +225,6 @@ _testfiles_created = set()
 @atexit.register
 def cleanup_test_files():
     DEVNULL.close()
-    for name in os.listdir(u('.')):
-        if isinstance(name, unicode):
-            prefix = u(TESTFN_PREFIX)
-        else:
-            prefix = TESTFN_PREFIX
-        if name.startswith(prefix):
-            try:
-                safe_rmpath(name)
-            except Exception:
-                traceback.print_exc()
     for path in _testfiles_created:
         try:
             safe_rmpath(path)
@@ -1207,7 +1196,7 @@ def is_namedtuple(x):
 
 if POSIX:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFN_PREFIX):
+    def copyload_shared_lib(dst_prefix=None):
         """Ctx manager which picks up a random shared CO lib used
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
@@ -1227,7 +1216,7 @@ if POSIX:
             safe_rmpath(dst)
 else:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFN_PREFIX):
+    def copyload_shared_lib(dst_prefix=None):
         """Ctx manager which picks up a random shared DLL lib used
         by this process, copies it in another location and loads it
         in memory via ctypes.
