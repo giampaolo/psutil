@@ -73,9 +73,9 @@ else:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFILE_PREFIX',
-    'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS', 'CIRRUS', 'CI_TESTING',
-    'VALID_PROC_STATUSES',
+    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
+    'CI_TESTING', 'VALID_PROC_STATUSES',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -92,15 +92,15 @@ __all__ = [
     'install_pip', 'install_test_deps',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
-    'unique_filename',
+    'get_testfn',
     # os
     'get_winver', 'get_kernel_version',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
     'check_net_address',
-    'get_free_port', 'unix_socket_path', 'bind_socket', 'bind_unix_socket',
-    'tcp_socketpair', 'unix_socketpair', 'create_sockets',
+    'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
+    'unix_socketpair', 'create_sockets',
     # compat
     'reload_module', 'import_module_by_path',
     # others
@@ -136,21 +136,21 @@ if TRAVIS or APPVEYOR:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
 
-# --- files
+# --- file names
 
-TESTFILE_PREFIX = '$testfn'
+# Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFILE_PREFIX = '$psutil-test-'
+    TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
 else:
-    TESTFILE_PREFIX = '@psutil-test-'
-TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
-# Disambiguate TESTFN for parallel testing, while letting it remain a valid
-# module name.
-TESTFN = TESTFN + str(os.getpid())
+    TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
+UNICODE_SUFFIX = u("-ƒőő")
+# An invalid unicode string.
+if PY3:
+    INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
+else:
+    INVALID_UNICODE_SUFFIX = "f\xc0\x80"
 
-_TESTFN = TESTFN + '-internal'
-TESTFN_UNICODE = TESTFN + u("-ƒőő")
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
@@ -222,20 +222,15 @@ _pids_started = set()
 _testfiles_created = set()
 
 
+# --- exit funs (first is executed last)
+
+atexit.register(DEVNULL.close)
+
+
 @atexit.register
 def cleanup_test_files():
-    DEVNULL.close()
-    for name in os.listdir(u('.')):
-        if isinstance(name, unicode):
-            prefix = u(TESTFILE_PREFIX)
-        else:
-            prefix = TESTFILE_PREFIX
-        if name.startswith(prefix):
-            try:
-                safe_rmpath(name)
-            except Exception:
-                traceback.print_exc()
-    for path in _testfiles_created:
+    while _testfiles_created:
+        path = _testfiles_created.pop()
         try:
             safe_rmpath(path)
         except Exception:
@@ -333,14 +328,15 @@ def get_test_subprocess(cmd=None, **kwds):
         CREATE_NO_WINDOW = 0x8000000
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
-        safe_rmpath(_TESTFN)
+        testfn = get_testfn()
+        safe_rmpath(testfn)
         pyline = "from time import sleep;" \
                  "open(r'%s', 'w').close();" \
-                 "sleep(60);" % _TESTFN
+                 "sleep(60);" % testfn
         cmd = [PYTHON_EXE, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
-        wait_for_file(_TESTFN, delete=True, empty=True)
+        wait_for_file(testfn, delete=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -356,7 +352,8 @@ def create_proc_children_pair():
     The 2 processes are fully initialized and will live for 60 secs
     and are registered for cleanup on reap_children().
     """
-    _TESTFN2 = os.path.basename(_TESTFN) + '2'  # need to be relative
+    # must be relative on Windows
+    testfn = os.path.basename(get_testfn(dir=os.getcwd()))
     s = textwrap.dedent("""\
         import subprocess, os, sys, time
         s = "import os, time;"
@@ -366,7 +363,7 @@ def create_proc_children_pair():
         s += "time.sleep(60);"
         p = subprocess.Popen([r'%s', '-c', s])
         p.wait()
-        """ % (_TESTFN2, PYTHON_EXE))
+        """ % (testfn, PYTHON_EXE))
     # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
     # set (which is the default) a "conhost.exe" extra process will be
     # spawned as a child. We don't want that.
@@ -375,8 +372,8 @@ def create_proc_children_pair():
     else:
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
-    data = wait_for_file(_TESTFN2, delete=False, empty=False)
-    safe_rmpath(_TESTFN2)
+    data = wait_for_file(testfn, delete=False, empty=False)
+    safe_rmpath(testfn)
     child2_pid = int(data)
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
@@ -386,7 +383,7 @@ def create_proc_children_pair():
 def create_zombie_proc():
     """Create a zombie process and return its PID."""
     assert psutil.POSIX
-    unix_file = tempfile.mktemp(prefix=TESTFILE_PREFIX) if MACOS else TESTFN
+    unix_file = get_testfn()
     src = textwrap.dedent("""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
@@ -427,9 +424,7 @@ def pyrun(src, **kwds):
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
-    with tempfile.NamedTemporaryFile(
-            prefix=TESTFILE_PREFIX, mode="wt", delete=False) as f:
-        _testfiles_created.add(f.name)
+    with open(get_testfn(), 'wt') as f:
         f.write(src)
         f.flush()
         subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
@@ -772,8 +767,7 @@ def create_exe(outpath, c_code=None):
                 }
                 """)
         assert isinstance(c_code, str), c_code
-        with tempfile.NamedTemporaryFile(
-                suffix='.c', delete=False, mode='wt') as f:
+        with open(get_testfn(suffix='.c'), 'wt') as f:
             f.write(c_code)
         try:
             subprocess.check_call(["gcc", f.name, "-o", outpath])
@@ -787,8 +781,19 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def unique_filename(prefix=TESTFILE_PREFIX, suffix=""):
-    return tempfile.mktemp(prefix=prefix, suffix=suffix)
+def get_testfn(suffix="", dir=None):
+    """Return an absolute pathname of a file or dir that did not
+    exist at the time this call is made. Also schedule it for safe
+    deletion at interpreter exit. It's technically racy but probably
+    not really due to the time variant.
+    """
+    timer = getattr(time, 'perf_counter', time.time)
+    while True:
+        prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
+        name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
+        if not os.path.exists(name):  # also include dirs
+            _testfiles_created.add(name)
+            return os.path.realpath(name)  # needed for OSX
 
 
 # ===================================================================
@@ -813,8 +818,9 @@ class TestCase(unittest.TestCase):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
-# override default unittest.TestCase
-unittest.TestCase = TestCase
+# monkey patch default unittest.TestCase
+if 'PSUTIL_TESTING' in os.environ:
+    unittest.TestCase = TestCase
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
@@ -988,22 +994,6 @@ def get_free_port(host='127.0.0.1'):
         return sock.getsockname()[1]
 
 
-@contextlib.contextmanager
-def unix_socket_path(suffix=""):
-    """A context manager which returns a non-existent file name
-    and tries to delete it on exit.
-    """
-    assert psutil.POSIX
-    path = unique_filename(suffix=suffix)
-    try:
-        yield path
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
 def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
     """Binds a generic socket."""
     if addr is None and family in (AF_INET, AF_INET6):
@@ -1094,8 +1084,8 @@ def create_sockets():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
         if POSIX and HAS_CONNECTIONS_UNIX:
-            fname1 = unix_socket_path().__enter__()
-            fname2 = unix_socket_path().__enter__()
+            fname1 = get_testfn()
+            fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
             s3 = bind_unix_socket(fname2, type=socket.SOCK_DGRAM)
             # self.addCleanup(safe_rmpath, fname1)
@@ -1106,10 +1096,6 @@ def create_sockets():
     finally:
         for s in socks:
             s.close()
-        if fname1 is not None:
-            safe_rmpath(fname1)
-        if fname2 is not None:
-            safe_rmpath(fname2)
 
 
 def check_net_address(addr, family):
@@ -1196,14 +1182,14 @@ def is_namedtuple(x):
 
 if POSIX:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared CO lib used
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
         """
         exe = 'pypy' if PYPY else 'python'
         ext = ".so"
-        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 os.path.splitext(x.path)[1] == ext and
                 exe in x.path.lower()]
@@ -1216,7 +1202,7 @@ if POSIX:
             safe_rmpath(dst)
 else:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=TESTFILE_PREFIX):
+    def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared DLL lib used
         by this process, copies it in another location and loads it
         in memory via ctypes.
@@ -1225,7 +1211,7 @@ else:
         from ctypes import wintypes
         from ctypes import WinError
         ext = ".dll"
-        dst = tempfile.mktemp(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 x.path.lower().endswith(ext) and
                 'python' in os.path.basename(x.path).lower() and
