@@ -113,14 +113,14 @@ class SuiteLoader:
                         issubclass(obj, unittest.TestCase):
                     yield obj
 
-    def get_suite(self):
+    def all(self):
         suite = unittest.TestSuite()
         for obj in self._iter_testmod_classes():
             test = loadTestsFromTestCase(obj)
             suite.addTest(test)
         return suite
 
-    def get_parallel_suite(self):
+    def parallel(self):
         serial = unittest.TestSuite()
         parallel = unittest.TestSuite()
         for obj in self._iter_testmod_classes():
@@ -131,7 +131,7 @@ class SuiteLoader:
                 parallel.addTest(test)
         return (serial, parallel)
 
-    def get_lastfail_suite(self):
+    def last_failed(self):
         # ...from previously failed test run
         suite = unittest.TestSuite()
         if not os.path.isfile(FAILED_TESTS_FNAME):
@@ -148,12 +148,13 @@ class Runner:
 
     def __init__(self):
         self.loader = SuiteLoader()
-        self._failed_tnames = set()
+        self.failed_tnames = set()
 
-    def _save_lastfailed(self):
-        with open(FAILED_TESTS_FNAME, 'wt') as f:
-            for tname in self._failed_tnames:
-                f.write(tname + '\n')
+    def _save_last_failed(self):
+        if self.failed_tnames:
+            with open(FAILED_TESTS_FNAME, 'wt') as f:
+                for tname in self.failed_tnames:
+                    f.write(tname + '\n')
 
     # --- runners
 
@@ -170,28 +171,28 @@ class Runner:
         if not result.wasSuccessful():
             for t in result.errors + result.failures:
                 tname = t[0].id()
-                self._failed_tnames.add(tname)
+                self.failed_tnames.add(tname)
         return result
 
     def _finalize(self, success):
         if success:
             safe_rmpath(FAILED_TESTS_FNAME)
         else:
-            self._save_lastfailed()
+            self._save_last_failed()
 
     def run(self, suite=None):
         """Run tests serially (1 process)."""
         if suite is None:
-            suite = self.loader.get_suite()
+            suite = self.loader.all()
         res = self._run(suite)
         self._finalize(res.wasSuccessful())
         if not res.wasSuccessful():
             print_color("FAILED", "red")
             sys.exit(1)
 
-    def run_lastfailed(self):
+    def run_last_failed(self):
         """Run tests which failed in the last run."""
-        self.run(self.loader.get_lastfail_suite())
+        self.run(self.loader.last_failed())
 
     def run_from_name(self, name):
         """Run test by name, e.g.:
@@ -206,7 +207,7 @@ class Runner:
         """Run tests in parallel."""
         from concurrencytest import ConcurrentTestSuite, fork_for_tests
 
-        ser_suite, par_suite = self.loader.get_parallel_suite()
+        ser_suite, par_suite = self.loader.parallel()
         par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NWORKERS))
 
         # run parallel
@@ -280,7 +281,7 @@ def main():
         runner.run_parallel()
     else:
         if opts.last_failed:
-            runner.run_lastfailed()
+            runner.run_last_failed()
         else:
             runner.run()
 
