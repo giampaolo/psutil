@@ -282,7 +282,7 @@ class _BaseFSAPIsTests(object):
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
-        with copyload_shared_lib(dst_prefix=self.funky_name) as funky_path:
+        with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
             def normpath(p):
                 return os.path.realpath(os.path.normcase(p))
             libpaths = [normpath(x.path)

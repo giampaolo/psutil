@@ -775,7 +775,7 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def get_testfn(prefix=None, suffix=""):
+def get_testfn(suffix=""):
     """Return an absolute pathname of a file or dir that did not
     exist at the time this call is made. Also schedule it for safe
     deletion at interpreter exit. It's technically racy but probably
@@ -783,8 +783,7 @@ def get_testfn(prefix=None, suffix=""):
     """
     timer = getattr(time, 'perf_counter', time.time)
     while True:
-        if not prefix:
-            prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
+        prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
         name = tempfile.mktemp(prefix=prefix, suffix=suffix)
         if not os.path.isdir(name):
             _testfiles_created.add(name)
@@ -994,7 +993,7 @@ def unix_socket_path(suffix=""):
     and tries to delete it on exit.
     """
     assert psutil.POSIX
-    path = get_testfn(prefix=TESTFN_PREFIX, suffix=suffix)
+    path = get_testfn(suffix=suffix)
     try:
         yield path
     finally:
@@ -1196,14 +1195,14 @@ def is_namedtuple(x):
 
 if POSIX:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=None):
+    def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared CO lib used
         by this process, copies it in another location and loads it
         in memory via ctypes. Return the new absolutized path.
         """
         exe = 'pypy' if PYPY else 'python'
         ext = ".so"
-        dst = get_testfn(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 os.path.splitext(x.path)[1] == ext and
                 exe in x.path.lower()]
@@ -1216,7 +1215,7 @@ if POSIX:
             safe_rmpath(dst)
 else:
     @contextlib.contextmanager
-    def copyload_shared_lib(dst_prefix=None):
+    def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared DLL lib used
         by this process, copies it in another location and loads it
         in memory via ctypes.
@@ -1225,7 +1224,7 @@ else:
         from ctypes import wintypes
         from ctypes import WinError
         ext = ".dll"
-        dst = get_testfn(prefix=dst_prefix, suffix=ext)
+        dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if
                 x.path.lower().endswith(ext) and
                 'python' in os.path.basename(x.path).lower() and
