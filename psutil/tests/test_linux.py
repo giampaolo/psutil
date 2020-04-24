@@ -28,7 +28,6 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
-from psutil.tests import get_tempfn
 from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
@@ -1218,7 +1217,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(int(vmstat_value), int(psutil_value))
 
     def test_no_procfs_on_import(self):
-        my_procfs = get_tempfn()
+        my_procfs = get_testfn()
+        os.mkdir(my_procfs)
 
         with open(os.path.join(my_procfs, 'stat'), 'w') as f:
             f.write('cpu   0 0 0 0 0 0 0 0 0 0\n')
@@ -1346,7 +1346,8 @@ class TestMisc(unittest.TestCase):
             assert m.called
 
     def test_procfs_path(self):
-        tdir = get_tempfn()
+        tdir = get_testfn()
+        os.mkdir(tdir)
         try:
             psutil.PROCFS_PATH = tdir
             self.assertRaises(IOError, psutil.virtual_memory)
@@ -1362,7 +1363,6 @@ class TestMisc(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, psutil.Process)
         finally:
             psutil.PROCFS_PATH = "/proc"
-            os.rmdir(tdir)
 
     def test_issue_687(self):
         # In case of thread ID:
@@ -1742,7 +1742,7 @@ class TestProcess(unittest.TestCase):
         # execution
         p = psutil.Process()
         files = p.open_files()
-        with open(get_tempfn(), 'w'):
+        with open(get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             with mock.patch('psutil._pslinux.os.readlink',
@@ -1763,7 +1763,7 @@ class TestProcess(unittest.TestCase):
         # https://travis-ci.org/giampaolo/psutil/jobs/225694530
         p = psutil.Process()
         files = p.open_files()
-        with open(get_tempfn(), 'w'):
+        with open(get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
