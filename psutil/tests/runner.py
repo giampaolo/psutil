@@ -224,9 +224,12 @@ class Runner:
         par = self._run(par_suite)
         par_elapsed = time.time() - t
 
-        reap_children(recursive=True)
+        # cleanup workers and test subprocesses
         orphans = psutil.Process().children()
-        assert not orphans, orphans
+        gone, alive = psutil.wait_procs(orphans, timeout=3)
+        if alive:
+            print_color("alive processes %s" % alive, "red")
+            reap_children()
 
         # run serial
         t = time.time()
