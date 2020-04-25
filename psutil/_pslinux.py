@@ -619,12 +619,12 @@ def cpu_count_logical():
 def cpu_count_physical():
     """Return the number of physical cores in the system."""
     # Method #1
-    core_ids = set()
+    thread_siblings_lists = set()
     for path in glob.glob(
-            "/sys/devices/system/cpu/cpu[0-9]*/topology/core_id"):
+            "/sys/devices/system/cpu/cpu[0-9]*/topology/thread_siblings_list"):
         with open_binary(path) as f:
-            core_ids.add(int(f.read()))
-    result = len(core_ids)
+            thread_siblings_lists.add(f.read())
+    result = len(thread_siblings_lists)
     if result != 0:
         return result
 
