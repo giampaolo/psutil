@@ -16,10 +16,6 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     fi
 
     case "${PYVER}" in
-        # py26)
-        #     pyenv install 2.6.9
-        #     pyenv virtualenv 2.6.9 psutil
-        #     ;;
         py27)
             pyenv install 2.7.16
             pyenv virtualenv 2.7.16 psutil

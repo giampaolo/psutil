@@ -277,7 +277,7 @@ def _setup():
 
 def main():
     _setup()
-    usage = "python3 -m psutil.tests [opts]"
+    usage = "python3 -m psutil.tests [opts] [test-name]"
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("--last-failed",
                       action="store_true", default=False,
@@ -290,7 +290,13 @@ def main():
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
 
-    if opts.last_failed:
+    # test-by-name
+    if args:
+        if len(args) > 1:
+            parser.print_usage()
+            return sys.exit(1)
+        return runner.run_from_name(args[0])
+    elif opts.last_failed:
         runner.run_last_failed()
     elif not opts.parallel:
         runner.run()
