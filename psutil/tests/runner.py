@@ -164,34 +164,38 @@ class Runner:
     def __init__(self):
         self.loader = SuiteLoader()
         self.failed_tnames = set()
+        if APPVEYOR:
+            self.runner = TextTestRunner(verbosity=VERBOSITY)
+        else:
+            self.runner = ColouredRunner(verbosity=VERBOSITY)
 
-    def _save_last_failed(self):
+    def _write_last_failed(self):
         if self.failed_tnames:
             with open(FAILED_TESTS_FNAME, 'wt') as f:
                 for tname in self.failed_tnames:
                     f.write(tname + '\n')
 
-    def _run(self, suite):
-        if APPVEYOR:
-            runner = TextTestRunner(verbosity=VERBOSITY)
-        else:
-            runner = ColouredRunner(verbosity=VERBOSITY)
-        try:
-            result = runner.run(suite)
-        except (KeyboardInterrupt, SystemExit) as err:
-            print("received %s" % err.__class__.__name__, file=sys.stderr)
-            result = runner.result
+    def _save_result(self, result):
         if not result.wasSuccessful():
             for t in result.errors + result.failures:
                 tname = t[0].id()
                 self.failed_tnames.add(tname)
+
+    def _run(self, suite):
+        try:
+            result = self.runner.run(suite)
+        except (KeyboardInterrupt, SystemExit):
+            result = self.runner.result
+            result.printErrors()
+            return sys.exit(1)
+        self._save_result(result)
         return result
 
     def _finalize(self, success):
         if success:
             safe_rmpath(FAILED_TESTS_FNAME)
         else:
-            self._save_last_failed()
+            self._write_last_failed()
             print_color("FAILED", "red")
             sys.exit(1)
 
