@@ -48,7 +48,7 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import serialtest
+from psutil.tests import serialrun
 from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
@@ -59,7 +59,7 @@ from psutil.tests import unittest
 # ===================================================================
 
 
-@serialtest
+@serialrun
 class TestProcessAPIs(unittest.TestCase):
 
     def tearDown(self):

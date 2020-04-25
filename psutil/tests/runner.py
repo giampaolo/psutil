@@ -125,7 +125,7 @@ class SuiteLoader:
         parallel = unittest.TestSuite()
         for obj in self._iter_testmod_classes():
             test = loadTestsFromTestCase(obj)
-            if getattr(obj, '__serialtest', False):
+            if getattr(obj, '_serialrun', False):
                 serial.addTest(test)
             else:
                 parallel.addTest(test)
@@ -141,6 +141,12 @@ class SuiteLoader:
         for n in names:
             test = unittest.defaultTestLoader.loadTestsFromName(n)
             suite.addTest(test)
+        return suite
+
+    def from_name(self, name):
+        suite = unittest.TestSuite()
+        name = os.path.splitext(os.path.basename(name))[0]
+        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
         return suite
 
 
@@ -179,6 +185,8 @@ class Runner:
             safe_rmpath(FAILED_TESTS_FNAME)
         else:
             self._save_last_failed()
+            print_color("FAILED", "red")
+            sys.exit(1)
 
     def run(self, suite=None):
         """Run tests serially (1 process)."""
@@ -186,9 +194,6 @@ class Runner:
             suite = self.loader.all()
         res = self._run(suite)
         self._finalize(res.wasSuccessful())
-        if not res.wasSuccessful():
-            print_color("FAILED", "red")
-            sys.exit(1)
 
     def run_last_failed(self):
         """Run tests which failed in the last run."""
@@ -198,10 +203,7 @@ class Runner:
         """Run test by name, e.g.:
         "test_linux.TestSystemCPUStats.test_ctx_switches"
         """
-        suite = unittest.TestSuite()
-        name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-        self.run(suite)
+        self.run(self.loader.from_name(name))
 
     def run_parallel(self):
         """Run tests in parallel."""
@@ -247,9 +249,6 @@ class Runner:
             par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
         ok = par.wasSuccessful() and ser.wasSuccessful()
         self._finalize(ok)
-        if not ok:
-            print_color("FAILED", "red")
-            sys.exit(1)
 
 
 runner = Runner()

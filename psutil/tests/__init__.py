@@ -799,13 +799,13 @@ class TestCase(unittest.TestCase):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
-def serialtest(klass):
+def serialrun(klass):
     """A decorator to mark a TestCase class. When running parallel tests,
     class' unit tests will be run serially (1 process).
     """
     # assert issubclass(klass, unittest.TestCase), klass
     assert inspect.isclass(klass), klass
-    klass.__serialtest = True
+    klass._serialrun = True
     return klass
 
 

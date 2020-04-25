@@ -43,7 +43,7 @@ from psutil.tests import retry
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
-from psutil.tests import serialtest
+from psutil.tests import serialrun
 from psutil.tests import tcp_socketpair
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
@@ -208,7 +208,7 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
-@serialtest
+@serialrun
 class TestProcessUtils(unittest.TestCase):
 
     def test_reap_children(self):
@@ -318,7 +318,7 @@ class TestNetUtils(unittest.TestCase):
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
-@serialtest
+@serialrun
 class TestMemLeakClass(TestMemoryLeak):
 
     def test_times(self):
