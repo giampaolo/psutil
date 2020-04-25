@@ -58,8 +58,7 @@ loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
 class ColouredResult(TextTestResult):
 
     def _print_color(self, s, color, bold=False):
-        file = sys.stderr if color == "red" else sys.stdout
-        print_color(s, color, bold=bold, file=file)
+        print_color(s, color, bold=bold, file=self.stream)
 
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)

@@ -1643,6 +1643,7 @@ class TestSensorsFans(unittest.TestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestProcess(unittest.TestCase):
 
+    @retry_on_failure()
     def test_memory_full_info(self):
         testfn = get_testfn()
         src = textwrap.dedent("""

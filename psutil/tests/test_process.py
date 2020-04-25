@@ -57,7 +57,6 @@ from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import serialrun
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
@@ -71,7 +70,7 @@ from psutil.tests import wait_for_pid
 # --- psutil.Process class tests
 # ===================================================================
 
-@serialrun
+
 class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
@@ -297,7 +296,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdin.isatty() or sys.stdout.isatty():
+        if sys.stdout.isatty():
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:

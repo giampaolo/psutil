@@ -48,7 +48,6 @@ from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import serialrun
 from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
@@ -59,7 +58,6 @@ from psutil.tests import unittest
 # ===================================================================
 
 
-@serialrun
 class TestProcessAPIs(unittest.TestCase):
 
     def tearDown(self):
@@ -195,13 +193,6 @@ class TestProcessAPIs(unittest.TestCase):
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
-
-    def test_pids(self):
-        pidslist = psutil.pids()
-        procslist = [x.pid for x in psutil.process_iter()]
-        # make sure every pid is unique
-        self.assertEqual(sorted(set(pidslist)), pidslist)
-        self.assertEqual(pidslist, procslist)
 
 
 class TestMiscAPIs(unittest.TestCase):
