@@ -26,6 +26,11 @@ try:
 except ImportError:
     ctypes = None
 
+try:
+    import concurrencytest  # pip install concurrencytest
+except ImportError:
+    concurrencytest = None
+
 import psutil
 from psutil._common import hilite
 from psutil._common import print_color
@@ -209,10 +214,9 @@ class Runner:
 
     def run_parallel(self):
         """Run tests in parallel."""
-        from concurrencytest import ConcurrentTestSuite, fork_for_tests
-
         ser_suite, par_suite = self.loader.parallel()
-        par_suite = ConcurrentTestSuite(par_suite, fork_for_tests(NWORKERS))
+        par_suite = concurrencytest.ConcurrentTestSuite(
+            par_suite, concurrencytest.fork_for_tests(NWORKERS))
 
         # run parallel
         print("starting parallel tests using %s workers" % NWORKERS)
@@ -278,13 +282,21 @@ def main():
 
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
-    if opts.parallel and not opts.last_failed:
-        runner.run_parallel()
+
+    if opts.last_failed:
+        runner.run_last_failed()
+    elif not opts.parallel:
+        runner.run()
+    # parallel
+    elif concurrencytest is None:
+        print_color("concurrencytest module is not installed; "
+                    "running serial tests instead", "red")
+        runner.run()
+    elif NWORKERS == 1:
+        print_color("only 1 CPU; running serial tests instead", "red")
+        runner.run()
     else:
-        if opts.last_failed:
-            runner.run_last_failed()
-        else:
-            runner.run()
+        runner.run_parallel()
 
 
 if __name__ == '__main__':
