@@ -94,18 +94,22 @@ class ColouredRunner(TextTestRunner):
 
 class SuiteLoader:
 
-    @staticmethod
-    def _iter_testmod_classes():
+    testdir = HERE
+    skip_files = ['test_memory_leaks.py']
+    if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
+        skip_files.extend(['test_osx.py', 'test_linux.py', 'test_posix.py'])
+
+    def _get_testmods(self):
+        return [os.path.join(self.testdir, x)
+                for x in os.listdir(self.testdir)
+                if x.startswith('test_') and x.endswith('.py') and
+                x not in self.skip_files]
+
+    def _iter_testmod_classes(self):
         """Iterate over all test files in this directory and return
         all TestCase classes in them.
         """
-        testmods = [os.path.join(HERE, x) for x in os.listdir(HERE)
-                    if x.endswith('.py') and x.startswith('test_') and not
-                    x.endswith('test_memory_leaks.py')]
-        if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
-            testmods = [x for x in testmods if not x.endswith((
-                        "osx.py", "posix.py", "linux.py"))]
-        for path in testmods:
+        for path in self._get_testmods():
             mod = import_module_by_path(path)
             for name in dir(mod):
                 obj = getattr(mod, name)
@@ -161,8 +165,6 @@ class Runner:
             with open(FAILED_TESTS_FNAME, 'wt') as f:
                 for tname in self.failed_tnames:
                     f.write(tname + '\n')
-
-    # --- runners
 
     def _run(self, suite):
         if APPVEYOR:
