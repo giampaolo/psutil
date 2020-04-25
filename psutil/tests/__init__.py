@@ -799,6 +799,10 @@ class TestCase(unittest.TestCase):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
 
+# monkey patch default unittest.TestCase
+unittest.TestCase = TestCase
+
+
 def serialrun(klass):
     """A decorator to mark a TestCase class. When running parallel tests,
     class' unit tests will be run serially (1 process).
@@ -1250,15 +1254,10 @@ def cleanup_test_procs():
     reap_children(recursive=True)
 
 
-if 'PSUTIL_TESTING' in os.environ:
-    # atexit module does not execute exit functions in case of SIGTERM, which
-    # gets sent to test subprocesses, which is a problem if they import this
-    # modul. With this it will. See:
-    # http://grodola.blogspot.com/
-    #     2016/02/how-to-always-execute-exit-functions-in-py.html
-    if POSIX:
-        signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))
-
-    # automatically monkey patch default unittest.TestCase for whoever
-    # import this module
-    unittest.TestCase = TestCase
+# atexit module does not execute exit functions in case of SIGTERM, which
+# gets sent to test subprocesses, which is a problem if they import this
+# modul. With this it will. See:
+# http://grodola.blogspot.com/
+#     2016/02/how-to-always-execute-exit-functions-in-py.html
+if POSIX:
+    signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))

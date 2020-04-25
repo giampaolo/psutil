@@ -75,7 +75,7 @@ class ColouredResult(TextTestResult):
 
     def addSkip(self, test, reason):
         TestResult.addSkip(self, test, reason)
-        self._print_color("skipped: %s" % reason, "brown")
+        self._print_color("skipped: %s" % reason.strip(), "brown")
 
     def printErrorList(self, flavour, errors):
         flavour = hilite(flavour, "red", bold=flavour == 'ERROR')
