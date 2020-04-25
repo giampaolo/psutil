@@ -181,15 +181,16 @@ class Runner:
                 tname = t[0].id()
                 self.failed_tnames.add(tname)
 
-    def _run(self, suite):
+    def _run(self, suite, parallel=False):
         try:
             result = self.runner.run(suite)
         except (KeyboardInterrupt, SystemExit):
             result = self.runner.result
             result.printErrors()
-            return sys.exit(1)
-        self._save_result(result)
-        return result
+            raise sys.exit(1)
+        else:
+            self._save_result(result)
+            return result
 
     def _finalize(self, success):
         if success:
@@ -203,8 +204,8 @@ class Runner:
         """Run tests serially (1 process)."""
         if suite is None:
             suite = self.loader.all()
-        res = self._run(suite)
-        self._finalize(res.wasSuccessful())
+        result = self._run(suite)
+        self._finalize(result.wasSuccessful())
 
     def run_last_failed(self):
         """Run tests which failed in the last run."""
