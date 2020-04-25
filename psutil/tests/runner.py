@@ -12,6 +12,7 @@ Unit test runner, providing new features on top of unittest module:
 """
 
 from __future__ import print_function
+import atexit
 import optparse
 import os
 import sys
@@ -216,11 +217,23 @@ class Runner:
         """
         self.run(self.loader.from_name(name))
 
+    def _parallelize_suite(self, suite):
+        def fdopen(*args, **kwds):
+            stream = orig_fdopen(*args, **kwds)
+            atexit.register(stream.close)
+            return stream
+
+        # Monkey patch concurrencytest lib bug (fdopen() stream not closed).
+        # https://github.com/cgoldberg/concurrencytest/issues/11
+        orig_fdopen = os.fdopen
+        concurrencytest.os.fdopen = fdopen
+        forker = concurrencytest.fork_for_tests(NWORKERS)
+        return concurrencytest.ConcurrentTestSuite(suite, forker)
+
     def run_parallel(self):
         """Run tests in parallel."""
         ser_suite, par_suite = self.loader.parallel()
-        par_suite = concurrencytest.ConcurrentTestSuite(
-            par_suite, concurrencytest.fork_for_tests(NWORKERS))
+        par_suite = self._parallelize_suite(par_suite)
 
         # run parallel
         print("starting parallel tests using %s workers" % NWORKERS)
@@ -230,7 +243,7 @@ class Runner:
 
         # cleanup workers and test subprocesses
         orphans = psutil.Process().children()
-        gone, alive = psutil.wait_procs(orphans, timeout=3)
+        gone, alive = psutil.wait_procs(orphans, timeout=1)
         if alive:
             print_color("alive processes %s" % alive, "red")
             reap_children()
