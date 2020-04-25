@@ -81,8 +81,8 @@ class ColouredResult(TextTestResult):
         TextTestResult.printErrorList(self, flavour, errors)
 
 
-class ColouredRunner(TextTestRunner):
-    resultclass = ColouredResult if term_supports_colors() else TextTestResult
+class ColouredTextRunner(TextTestRunner):
+    resultclass = ColouredResult
 
     def _makeResult(self):
         # Store result instance so that it can be accessed on
@@ -163,10 +163,10 @@ class Runner:
     def __init__(self):
         self.loader = SuiteLoader()
         self.failed_tnames = set()
-        if APPVEYOR:
-            self.runner = TextTestRunner(verbosity=VERBOSITY)
+        if term_supports_colors() and not APPVEYOR:
+            self.runner = ColouredTextRunner(verbosity=VERBOSITY)
         else:
-            self.runner = ColouredRunner(verbosity=VERBOSITY)
+            self.runner = TextTestRunner(verbosity=VERBOSITY)
 
     def _write_last_failed(self):
         if self.failed_tnames:
@@ -180,7 +180,7 @@ class Runner:
                 tname = t[0].id()
                 self.failed_tnames.add(tname)
 
-    def _run(self, suite, parallel=False):
+    def _run(self, suite):
         try:
             result = self.runner.run(suite)
         except (KeyboardInterrupt, SystemExit):
