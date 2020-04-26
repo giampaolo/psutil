@@ -5,6 +5,10 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1729_: parallel tests on UNIX (make test-parallel).
+
 **Bug fixes**
 
 - 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.

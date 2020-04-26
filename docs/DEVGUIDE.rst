@@ -31,12 +31,13 @@ Some useful make commands:
 
 .. code-block:: bash
 
-    make install        # install
-    make setup-dev-env  # install useful dev libs (flake8, unittest2, etc.)
-    make test           # run unit tests
-    make test-memleaks  # run memory leak tests
-    make test-coverage  # run test coverage
-    make lint           # run Python (PEP8) and C linters
+    make install
+    make setup-dev-env   # install useful dev libs (flake8, unittest2, etc.)
+    make test            # run unit tests
+    make test-parallel   # faster
+    make test-memleaks
+    make test-coverage
+    make lint            # Python (PEP8) and C linters
 
 There are some differences between ``make`` on UNIX and Windows.
 For instance, to run a specific Python version. On UNIX:
