@@ -73,7 +73,7 @@ else:
 
 __all__ = [
     # constants
-    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
+    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'SYSMEM_TOLERANCE', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
     'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
     'CI_TESTING', 'VALID_PROC_STATUSES',
@@ -128,7 +128,7 @@ CI_TESTING = TRAVIS or APPVEYOR or CIRRUS
 # how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
 # bytes tolerance for system-wide memory related tests
-MEMORY_TOLERANCE = 500 * 1024  # 500KB
+SYSMEM_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid

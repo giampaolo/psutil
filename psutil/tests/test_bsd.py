@@ -22,7 +22,7 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
-from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
@@ -279,37 +279,37 @@ class FreeBSDSystemTestCase(unittest.TestCase):
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().active, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_vmem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().inactive, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_vmem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().wired, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_vmem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().cached, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_vmem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
         self.assertAlmostEqual(psutil.virtual_memory().free, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         self.assertAlmostEqual(psutil.virtual_memory().buffers, syst,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     # --- virtual_memory(); tests against muse
 
@@ -323,42 +323,42 @@ class FreeBSDSystemTestCase(unittest.TestCase):
     def test_muse_vmem_active(self):
         num = muse('Active')
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_on_failure()
     def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_on_failure()
     def test_muse_vmem_wired(self):
         num = muse('Wired')
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_on_failure()
     def test_muse_vmem_cached(self):
         num = muse('Cache')
         self.assertAlmostEqual(psutil.virtual_memory().cached, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_on_failure()
     def test_muse_vmem_free(self):
         num = muse('Free')
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
     @retry_on_failure()
     def test_muse_vmem_buffers(self):
         num = muse('Buffer')
         self.assertAlmostEqual(psutil.virtual_memory().buffers, num,
-                               delta=MEMORY_TOLERANCE)
+                               delta=SYSMEM_TOLERANCE)
 
     def test_cpu_stats_ctx_switches(self):
         self.assertAlmostEqual(psutil.cpu_stats().ctx_switches,
@@ -387,17 +387,17 @@ class FreeBSDSystemTestCase(unittest.TestCase):
     def test_swapmem_free(self):
         total, used, free = self.parse_swapinfo()
         self.assertAlmostEqual(
-            psutil.swap_memory().free, free, delta=MEMORY_TOLERANCE)
+            psutil.swap_memory().free, free, delta=SYSMEM_TOLERANCE)
 
     def test_swapmem_used(self):
         total, used, free = self.parse_swapinfo()
         self.assertAlmostEqual(
-            psutil.swap_memory().used, used, delta=MEMORY_TOLERANCE)
+            psutil.swap_memory().used, used, delta=SYSMEM_TOLERANCE)
 
     def test_swapmem_total(self):
         total, used, free = self.parse_swapinfo()
         self.assertAlmostEqual(
-            psutil.swap_memory().total, total, delta=MEMORY_TOLERANCE)
+            psutil.swap_memory().total, total, delta=SYSMEM_TOLERANCE)
 
     # --- others
 
@@ -511,27 +511,27 @@ class NetBSDTestCase(unittest.TestCase):
     def test_vmem_free(self):
         self.assertAlmostEqual(
             psutil.virtual_memory().free, self.parse_meminfo("MemFree:"),
-            delta=MEMORY_TOLERANCE)
+            delta=SYSMEM_TOLERANCE)
 
     def test_vmem_buffers(self):
         self.assertAlmostEqual(
             psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"),
-            delta=MEMORY_TOLERANCE)
+            delta=SYSMEM_TOLERANCE)
 
     def test_vmem_shared(self):
         self.assertAlmostEqual(
             psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"),
-            delta=MEMORY_TOLERANCE)
+            delta=SYSMEM_TOLERANCE)
 
     def test_swapmem_total(self):
         self.assertAlmostEqual(
             psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"),
-            delta=MEMORY_TOLERANCE)
+            delta=SYSMEM_TOLERANCE)
 
     def test_swapmem_free(self):
         self.assertAlmostEqual(
             psutil.swap_memory().free, self.parse_meminfo("SwapFree:"),
-            delta=MEMORY_TOLERANCE)
+            delta=SYSMEM_TOLERANCE)
 
     def test_swapmem_used(self):
         smem = psutil.swap_memory()

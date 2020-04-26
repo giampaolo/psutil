@@ -33,7 +33,7 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
-from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
@@ -211,7 +211,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         free_value = free.used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            free_value, psutil_value, delta=SYSMEM_TOLERANCE,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -220,14 +220,14 @@ class TestSystemVirtualMemory(unittest.TestCase):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     # https://travis-ci.org/giampaolo/psutil/jobs/226719664
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -236,7 +236,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     # https://travis-ci.org/giampaolo/psutil/jobs/227242952
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -245,7 +245,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_shared(self):
@@ -255,7 +255,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            free_value, psutil_value, delta=SYSMEM_TOLERANCE,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @retry_on_failure()
@@ -270,7 +270,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
             free_value = int(lines[1].split()[-1])
             psutil_value = psutil.virtual_memory().available
             self.assertAlmostEqual(
-                free_value, psutil_value, delta=MEMORY_TOLERANCE,
+                free_value, psutil_value, delta=SYSMEM_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
     def test_warnings_on_misses(self):
@@ -508,21 +508,21 @@ class TestSystemSwapMemory(unittest.TestCase):
         free_value = free_swap().total
         psutil_value = psutil.swap_memory().total
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     @retry_on_failure()
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
 
     def test_missing_sin_sout(self):
         with mock.patch('psutil._common.open', create=True) as m:
@@ -572,7 +572,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         total *= unit_multiplier
         free *= unit_multiplier
         self.assertEqual(swap.total, total)
-        self.assertAlmostEqual(swap.free, free, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(swap.free, free, delta=SYSMEM_TOLERANCE)
 
     def test_emulate_meminfo_has_no_metrics(self):
         # Emulate a case where /proc/meminfo provides no swap metrics
