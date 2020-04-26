@@ -1643,6 +1643,7 @@ class TestSensorsFans(unittest.TestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestProcess(unittest.TestCase):
 
+    @retry_on_failure()
     def test_memory_full_info(self):
         testfn = get_testfn()
         src = textwrap.dedent("""
@@ -2111,5 +2112,5 @@ class TestUtils(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

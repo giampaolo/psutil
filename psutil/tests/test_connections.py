@@ -41,6 +41,7 @@ from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import pyrun
 from psutil.tests import reap_children
+from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
@@ -54,7 +55,8 @@ thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
-class Base(object):
+@serialrun
+class _ConnTestCase(unittest.TestCase):
 
     def setUp(self):
         if not (NETBSD or FREEBSD):
@@ -165,7 +167,7 @@ class Base(object):
         check_status(conn)
 
 
-class TestBase(Base, unittest.TestCase):
+class TestBasicOperations(_ConnTestCase):
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_system(self):
@@ -183,7 +185,8 @@ class TestBase(Base, unittest.TestCase):
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
-class TestUnconnectedSockets(Base, unittest.TestCase):
+@serialrun
+class TestUnconnectedSockets(_ConnTestCase):
     """Tests sockets which are open but not connected to anything."""
 
     def get_conn_from_sock(self, sock):
@@ -279,7 +282,8 @@ class TestUnconnectedSockets(Base, unittest.TestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-class TestConnectedSocket(Base, unittest.TestCase):
+@serialrun
+class TestConnectedSocket(_ConnTestCase):
     """Test socket pairs which are are actually connected to
     each other.
     """
@@ -343,7 +347,7 @@ class TestConnectedSocket(Base, unittest.TestCase):
             client.close()
 
 
-class TestFilters(Base, unittest.TestCase):
+class TestFilters(_ConnTestCase):
 
     def test_filters(self):
         def check(kind, families, types):
@@ -543,7 +547,7 @@ class TestFilters(Base, unittest.TestCase):
 
 
 @unittest.skipIf(SKIP_SYSCONS, "requires root")
-class TestSystemWideConnections(Base, unittest.TestCase):
+class TestSystemWideConnections(_ConnTestCase):
     """Tests for net_connections()."""
 
     def test_it(self):
@@ -630,5 +634,5 @@ class TestMisc(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

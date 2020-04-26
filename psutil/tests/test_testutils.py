@@ -43,6 +43,7 @@ from psutil.tests import retry
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
+from psutil.tests import serialrun
 from psutil.tests import tcp_socketpair
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
@@ -316,6 +317,7 @@ class TestNetUtils(unittest.TestCase):
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
+@serialrun
 class TestMemLeakClass(TestMemoryLeak):
 
     def test_times(self):

@@ -70,6 +70,7 @@ from psutil.tests import wait_for_pid
 # --- psutil.Process class tests
 # ===================================================================
 
+
 class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
@@ -295,7 +296,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdin.isatty() or sys.stdout.isatty():
+        if sys.stdout.isatty():
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:
@@ -1624,5 +1625,5 @@ class TestPopen(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

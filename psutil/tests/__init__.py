@@ -15,6 +15,7 @@ import ctypes
 import errno
 import functools
 import gc
+import inspect
 import os
 import random
 import re
@@ -799,8 +800,17 @@ class TestCase(unittest.TestCase):
 
 
 # monkey patch default unittest.TestCase
-if 'PSUTIL_TESTING' in os.environ:
-    unittest.TestCase = TestCase
+unittest.TestCase = TestCase
+
+
+def serialrun(klass):
+    """A decorator to mark a TestCase class. When running parallel tests,
+    class' unit tests will be run serially (1 process).
+    """
+    # assert issubclass(klass, unittest.TestCase), klass
+    assert inspect.isclass(klass), klass
+    klass._serialrun = True
+    return klass
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
@@ -1249,5 +1259,5 @@ def cleanup_test_procs():
 # modul. With this it will. See:
 # http://grodola.blogspot.com/
 #     2016/02/how-to-always-execute-exit-functions-in-py.html
-if POSIX and 'PSUTIL_TESTING' in os.environ:
+if POSIX:
     signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))
