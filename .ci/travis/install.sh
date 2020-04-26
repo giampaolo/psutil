@@ -16,10 +16,6 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     fi
 
     case "${PYVER}" in
-        # py26)
-        #     pyenv install 2.6.9
-        #     pyenv virtualenv 2.6.9 psutil
-        #     ;;
         py27)
             pyenv install 2.7.16
             pyenv virtualenv 2.7.16 psutil
@@ -33,10 +29,8 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
-if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]] || [[ $PYVER == 'py26' ]]; then
-    pip install -U ipaddress unittest2 argparse mock==1.0.1
-elif [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
+if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
     pip install -U ipaddress mock
 fi
 
-pip install -U coverage coveralls flake8 setuptools
+pip install -U coverage coveralls flake8 setuptools concurrencytest

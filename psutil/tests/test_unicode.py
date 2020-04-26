@@ -102,6 +102,7 @@ from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
+from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
@@ -154,6 +155,7 @@ def subprocess_supports_unicode(suffix):
 # ===================================================================
 
 
+@serialrun
 class _BaseFSAPIsTests(object):
     funky_suffix = None
 
@@ -358,5 +360,5 @@ class TestNonFSAPIS(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

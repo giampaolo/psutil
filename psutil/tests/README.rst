@@ -10,7 +10,8 @@ Instructions for running tests
   on psutil::
 
     make setup-dev-env  # install missing third-party deps
-    make test
+    make test           # serial run
+    make test-parallel  # parallel run
 
 * To run tests on all supported Python versions install tox
   (``pip install tox``) then run ``tox`` from within psutil root directory.

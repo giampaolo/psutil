@@ -9,6 +9,7 @@ ARGS =
 DEPS = \
 	argparse \
 	check-manifest \
+	concurrencytest \
 	coverage \
 	flake8 \
 	flake8-print \
@@ -112,6 +113,10 @@ test:  ## Run all tests.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT)
 
+test-parallel:  ## Run all tests in parallel.
+	${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) --parallel
+
 test-process:  ## Run process-related API tests.
 	${MAKE} install
 	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_process.py
@@ -154,7 +159,7 @@ test-memleaks:  ## Memory leak tests.
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} install
-	@$(TEST_PREFIX) $(PYTHON) -m unittest -v $(ARGS)
+	@$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} install

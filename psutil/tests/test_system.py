@@ -194,13 +194,6 @@ class TestProcessAPIs(unittest.TestCase):
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
-    def test_pids(self):
-        pidslist = psutil.pids()
-        procslist = [x.pid for x in psutil.process_iter()]
-        # make sure every pid is unique
-        self.assertEqual(sorted(set(pidslist)), pidslist)
-        self.assertEqual(pidslist, procslist)
-
 
 class TestMiscAPIs(unittest.TestCase):
 
@@ -895,5 +888,5 @@ class TestSensorsAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)
