@@ -83,8 +83,8 @@ __all__ = [
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # subprocesses
-    'pyrun', 'reap_children', 'get_test_subprocess', 'create_zombie_proc',
-    'create_proc_children_pair',
+    'pyrun', 'terminate', 'reap_children', 'get_test_subprocess',
+    'create_zombie_proc', 'create_proc_children_pair',
     # threads
     'ThreadTask'
     # test utils
@@ -381,10 +381,9 @@ def create_zombie_proc():
                     pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
-    with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
+    sock = bind_unix_socket(unix_file)
+    with contextlib.closing(sock):
         sock.settimeout(GLOBAL_TIMEOUT)
-        sock.bind(unix_file)
-        sock.listen(5)
         pyrun(src)
         conn, _ = sock.accept()
         try:
@@ -441,6 +440,66 @@ def sh(cmd, **kwds):
     return stdout
 
 
+def _assert_no_pid(pid):
+    # This is here to make sure wait_procs() behaves properly and
+    # investigate:
+    # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
+    #     jiq2cgd6stsbtn60
+    assert not psutil.pid_exists(pid), pid
+    assert pid not in psutil.pids(), pid
+    try:
+        p = psutil.Process(pid)
+    except psutil.NoSuchProcess:
+        pass
+    else:
+        assert 0, "%s is still alive" % p
+
+
+def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
+    """Terminate and flush a psutil.Process, psutil.Popen or
+    subprocess.Popen instance.
+    """
+    if isinstance(proc_or_pid, int):
+        try:
+            proc = psutil.Process(proc_or_pid)
+        except psutil.NoSuchProcess:
+            return
+    else:
+        proc = proc_or_pid
+
+    if isinstance(proc, subprocess.Popen):
+        try:
+            proc.send_signal(sig)
+        except OSError as err:
+            if WINDOWS and err.winerror == 6:  # "invalid handle"
+                pass
+            elif err.errno != errno.ESRCH:
+                raise
+        if proc.stdout:
+            proc.stdout.close()
+        if proc.stderr:
+            proc.stderr.close()
+        try:
+            # Flushing a BufferedWriter may raise an error.
+            if proc.stdin:
+                proc.stdin.close()
+        finally:
+            if wait_w_timeout:
+                try:
+                    proc.wait(wait_w_timeout)
+                except ChildProcessError:
+                    pass
+    else:
+        try:
+            proc.send_signal(sig)
+        except psutil.NoSuchProcess:
+            _assert_no_pid(proc.pid)
+        else:
+            if wait_w_timeout:
+                proc.wait(wait_w_timeout)
+                _assert_no_pid(proc.pid)
+
+
 def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
     and ensure that no zombies stick around to hog resources and
@@ -449,87 +508,45 @@ def reap_children(recursive=False):
     If resursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
-    # This is here to make sure wait_procs() behaves properly and
-    # investigate:
-    # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
-    #     jiq2cgd6stsbtn60
-    def assert_gone(pid):
-        assert not psutil.pid_exists(pid), pid
-        assert pid not in psutil.pids(), pid
-        try:
-            p = psutil.Process(pid)
-            assert not p.is_running(), pid
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            assert 0, "pid %s is not gone" % pid
-
-    # Get the children here, before terminating the children sub
-    # processes as we don't want to lose the intermediate reference
-    # in case of grandchildren.
+    # If recursive, get the children here before terminating them, as
+    # we don't want to lose the intermediate reference pointing to the
+    # grandchildren.
     if recursive:
         children = set(psutil.Process().children(recursive=True))
     else:
         children = set()
 
-    # Terminate subprocess.Popen instances "cleanly" by closing their
-    # fds and wiat()ing for them in order to avoid zombies.
+    # Terminate subprocess.Popen.
     while _subprocesses_started:
         subp = _subprocesses_started.pop()
         _pids_started.add(subp.pid)
-        try:
-            subp.terminate()
-        except OSError as err:
-            if WINDOWS and err.winerror == 6:  # "invalid handle"
-                pass
-            elif err.errno != errno.ESRCH:
-                raise
-        if subp.stdout:
-            subp.stdout.close()
-        if subp.stderr:
-            subp.stderr.close()
-        try:
-            # Flushing a BufferedWriter may raise an error.
-            if subp.stdin:
-                subp.stdin.close()
-        finally:
-            # Wait for the process to terminate, to avoid zombies.
-            try:
-                subp.wait()
-            except ChildProcessError:
-                pass
+        terminate(subp)
 
-    # Terminate started pids.
+    # Collect started pids.
     while _pids_started:
         pid = _pids_started.pop()
         try:
             p = psutil.Process(pid)
         except psutil.NoSuchProcess:
-            assert_gone(pid)
+            _assert_no_pid(pid)
         else:
             children.add(p)
 
     # Terminate children.
     if children:
         for p in children:
-            try:
-                p.terminate()
-            except psutil.NoSuchProcess:
-                pass
+            terminate(p, wait_w_timeout=None)
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
-            try:
-                p.kill()
-            except psutil.NoSuchProcess:
-                pass
+            terminate(p, wait_w_timeout=None, sig=signal.SIGKILL)
         gone, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
         if alive:
             for p in alive:
                 warn("process %r survived kill()" % p)
 
         for p in children:
-            assert_gone(p.pid)
+            _assert_no_pid(p.pid)
 
 
 # ===================================================================
