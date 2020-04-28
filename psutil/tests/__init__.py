@@ -290,7 +290,7 @@ def _reap_children_on_err(fun):
 @_reap_children_on_err
 def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
-    return it as subprocess.Popen instance.
+    return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
     By default stdin and stdout are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
