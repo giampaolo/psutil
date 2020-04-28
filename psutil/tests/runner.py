@@ -256,6 +256,8 @@ class Runner:
         ser_elapsed = time.time() - t
 
         # print
+        if not par.wasSuccessful():
+            par.printErrors()  # print them again at the bottom
         par_fails, par_errs, par_skips = map(len, (par.failures,
                                                    par.errors,
                                                    par.skipped))

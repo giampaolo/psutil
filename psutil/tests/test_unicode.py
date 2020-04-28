@@ -98,12 +98,14 @@ from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import INVALID_UNICODE_SUFFIX
+from psutil.tests import ProcessTestCase
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath as _safe_rmpath
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
+from psutil.tests import terminate
 from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
@@ -138,16 +140,18 @@ def subprocess_supports_unicode(suffix):
     if PY3:
         return True
     name = get_testfn(suffix=suffix)
+    sproc = None
     try:
         safe_rmpath(name)
         create_exe(name)
-        get_test_subprocess(cmd=[name])
+        sproc = get_test_subprocess(cmd=[name])
     except UnicodeEncodeError:
         return False
     else:
         return True
     finally:
-        reap_children()
+        if sproc is not None:
+            terminate(sproc)
 
 
 # ===================================================================
@@ -174,7 +178,7 @@ class _BaseFSAPIsTests(object):
     # ---
 
     def test_proc_exe(self):
-        subp = get_test_subprocess(cmd=[self.funky_name])
+        subp = self.get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
         self.assertIsInstance(exe, str)
@@ -183,14 +187,14 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     def test_proc_name(self):
-        subp = get_test_subprocess(cmd=[self.funky_name])
+        subp = self.get_test_subprocess(cmd=[self.funky_name])
         name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
         if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        subp = get_test_subprocess(cmd=[self.funky_name])
+        subp = self.get_test_subprocess(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
         for part in cmdline:
@@ -300,7 +304,7 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
                  "subprocess can't deal with unicode")
-class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
+class TestFSAPIs(_BaseFSAPIsTests, ProcessTestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_suffix = UNICODE_SUFFIX
 
@@ -318,7 +322,7 @@ class TestFSAPIs(_BaseFSAPIsTests, unittest.TestCase):
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 @unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
                  "subprocess can't deal with invalid unicode")
-class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
+class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, ProcessTestCase):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
@@ -333,7 +337,7 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, unittest.TestCase):
 # ===================================================================
 
 
-class TestNonFSAPIS(unittest.TestCase):
+class TestNonFSAPIS(ProcessTestCase):
     """Unicode tests for non fs-related APIs."""
 
     def tearDown(self):
@@ -350,7 +354,7 @@ class TestNonFSAPIS(unittest.TestCase):
         env = os.environ.copy()
         funky_str = UNICODE_SUFFIX if PY3 else 'è'
         env['FUNNY_ARG'] = funky_str
-        sproc = get_test_subprocess(env=env)
+        sproc = self.get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
         env = p.environ()
         for k, v in env.items():

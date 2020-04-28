@@ -26,11 +26,13 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
+from psutil.tests import ProcessTestCase
 from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import terminate
 from psutil.tests import unittest
 
 
@@ -298,7 +300,7 @@ class TestSensorsBattery(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcess(TestCase):
+class TestProcess(ProcessTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -306,7 +308,7 @@ class TestProcess(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     def test_issue_24(self):
         p = psutil.Process(0)
@@ -382,7 +384,7 @@ class TestProcess(TestCase):
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
-        p = psutil.Process(get_test_subprocess().pid)
+        p = psutil.Process(self.get_test_subprocess().pid)
         p.send_signal(signal.CTRL_C_EVENT)
         p.send_signal(signal.CTRL_BREAK_EVENT)
         p.kill()
@@ -609,7 +611,7 @@ class TestDualProcessImplementation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     def test_memory_info(self):
         mem_1 = psutil.Process(self.pid).memory_info()
@@ -675,7 +677,7 @@ class TestDualProcessImplementation(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class RemoteProcessTestCase(TestCase):
+class RemoteProcessTestCase(ProcessTestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
     Check that this works on other processes, especially when they
@@ -717,17 +719,18 @@ class RemoteProcessTestCase(TestCase):
     def setUp(self):
         env = os.environ.copy()
         env["THINK_OF_A_NUMBER"] = str(os.getpid())
-        self.proc32 = get_test_subprocess([self.python32] + self.test_args,
-                                          env=env,
-                                          stdin=subprocess.PIPE)
-        self.proc64 = get_test_subprocess([self.python64] + self.test_args,
-                                          env=env,
-                                          stdin=subprocess.PIPE)
+        self.proc32 = self.get_test_subprocess(
+            [self.python32] + self.test_args,
+            env=env,
+            stdin=subprocess.PIPE)
+        self.proc64 = self.get_test_subprocess(
+            [self.python64] + self.test_args,
+            env=env,
+            stdin=subprocess.PIPE)
 
     def tearDown(self):
         self.proc32.communicate()
         self.proc64.communicate()
-        reap_children()
 
     @classmethod
     def tearDownClass(cls):

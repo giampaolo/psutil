@@ -39,8 +39,7 @@ from psutil.tests import enum
 from psutil.tests import get_free_port
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import pyrun
-from psutil.tests import reap_children
+from psutil.tests import ProcessTestCase
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
@@ -56,7 +55,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
 @serialrun
-class _ConnTestCase(unittest.TestCase):
+class _ConnTestCase(ProcessTestCase):
 
     def setUp(self):
         if not (NETBSD or FREEBSD):
@@ -65,7 +64,6 @@ class _ConnTestCase(unittest.TestCase):
             assert not cons, cons
 
     def tearDown(self):
-        reap_children()
         if not (FREEBSD or NETBSD):
             # Make sure we closed all resources.
             # NetBSD opens a UNIX socket to /var/log/run.
@@ -447,14 +445,14 @@ class TestFilters(_ConnTestCase):
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
-        tcp4_proc = pyrun(tcp4_template)
+        tcp4_proc = self.pyrun(tcp4_template)
         tcp4_addr = eval(wait_for_file(testfile))
-        udp4_proc = pyrun(udp4_template)
+        udp4_proc = self.pyrun(udp4_template)
         udp4_addr = eval(wait_for_file(testfile))
         if supports_ipv6():
-            tcp6_proc = pyrun(tcp6_template)
+            tcp6_proc = self.pyrun(tcp6_template)
             tcp6_addr = eval(wait_for_file(testfile))
-            udp6_proc = pyrun(udp6_template)
+            udp6_proc = self.pyrun(udp6_template)
             udp6_addr = eval(wait_for_file(testfile))
         else:
             tcp6_proc = None
@@ -596,7 +594,7 @@ class TestSystemWideConnections(_ConnTestCase):
                     cleanup_test_files()
                     time.sleep(60)
                 """ % fname)
-            sproc = pyrun(src)
+            sproc = self.pyrun(src)
             pids.append(sproc.pid)
 
         # sync

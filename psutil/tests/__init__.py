@@ -45,7 +45,6 @@ from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-from psutil._compat import ChildProcessError
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
@@ -89,7 +88,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak',
+    'retry_on_failure', 'TestMemoryLeak', 'ProcessTestCase',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -291,7 +290,7 @@ def _reap_children_on_err(fun):
 @_reap_children_on_err
 def get_test_subprocess(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
-    return it as subprocess.Popen instance.
+    return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
     By default stdin and stdout are redirected to /dev/null.
     It also attemps to make sure the process is in a reasonably
@@ -353,9 +352,7 @@ def create_proc_children_pair():
     else:
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
-    data = wait_for_file(testfn, delete=False, empty=False)
-    safe_rmpath(testfn)
-    child2_pid = int(data)
+    child2_pid = int(wait_for_file(testfn, delete=True, empty=False))
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
     return (child1, child2)
@@ -458,44 +455,37 @@ def _assert_no_pid(pid):
         assert 0, "%s is still alive" % p
 
 
-def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
-    """Terminate and flush a psutil.Process, psutil.Popen or
-    subprocess.Popen instance.
+def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
+    """Terminate a process and wait() for it.
+    Process can be a PID or an instance of psutil.Process(),
+    subprocess.Popen() or psutil.Popen().
+    If it's a subprocess.Popen() or psutil.Popen() instance also closes
+    its stdin / stdout / stderr fds.
+    PID is wait()ed even if the process is already gone (kills zombies).
+    Does nothing if the process does not exist.
+    Return process exit status.
     """
-    def wait(proc, timeout=None):
-        if sys.version_info < (3, 3) and not \
-                isinstance(proc, (psutil.Process, psutil.Popen)):
-            # subprocess.Popen instance + no timeout arg.
+    if POSIX:
+        from psutil._psposix import wait_pid
+
+    def wait(proc, timeout):
+        if sys.version_info < (3, 3) and \
+                isinstance(proc, subprocess.Popen) and \
+                not isinstance(proc, psutil.Popen):
+            # subprocess.Popen instance: emulate missing timeout arg.
+            ret = None
             try:
                 ret = psutil.Process(proc.pid).wait(timeout)
             except psutil.NoSuchProcess:
-                pass
-            else:
-                proc.returncode = ret
-                return ret
+                # Needed to kill zombies.
+                if POSIX:
+                    ret = wait_pid(proc.pid, timeout)
+            proc.returncode = ret
+            return ret
         else:
             return proc.wait(timeout)
 
-    if isinstance(proc_or_pid, int):
-        try:
-            proc = psutil.Process(proc_or_pid)
-        except psutil.NoSuchProcess:
-            return
-    else:
-        proc = proc_or_pid
-
-    if isinstance(proc, (psutil.Process, psutil.Popen)):
-        try:
-            proc.send_signal(sig)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(proc.pid)
-        else:
-            if wait_w_timeout:
-                ret = wait(proc, wait_w_timeout)
-                _assert_no_pid(proc.pid)
-                return ret
-    else:
-        # subprocess.Popen instance
+    def term_subproc(proc, timeout):
         try:
             proc.send_signal(sig)
         except OSError as err:
@@ -503,72 +493,80 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
                 pass
             elif err.errno != errno.ESRCH:
                 raise
-        except psutil.NoSuchProcess:  # psutil.Popen
+        return wait(proc, timeout)
+
+    def term_psproc(proc, timeout):
+        try:
+            proc.send_signal(sig)
+        except psutil.NoSuchProcess:
             pass
+        return wait(proc, timeout)
+
+    def term_pid(pid, timeout):
+        try:
+            proc = psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            # Needed to kill zombies.
+            if POSIX:
+                return wait_pid(pid, timeout)
+        else:
+            return term_psproc(proc, timeout)
+
+    def flush_popen(proc):
         if proc.stdout:
             proc.stdout.close()
         if proc.stderr:
             proc.stderr.close()
-        try:
-            # Flushing a BufferedWriter may raise an error.
-            if proc.stdin:
-                proc.stdin.close()
-        finally:
-            if wait_w_timeout:
-                try:
-                    return wait(proc, wait_w_timeout)
-                except ChildProcessError:
-                    pass
-                _assert_no_pid(proc.pid)
+        # Flushing a BufferedWriter may raise an error.
+        if proc.stdin:
+            proc.stdin.close()
+
+    p = proc_or_pid
+    try:
+        if isinstance(p, int):
+            return term_pid(p, wait_timeout)
+        elif isinstance(p, (psutil.Process, psutil.Popen)):
+            return term_psproc(p, wait_timeout)
+        elif isinstance(p, subprocess.Popen):
+            return term_subproc(p, wait_timeout)
+        else:
+            raise TypeError("wrong type %r" % p)
+    finally:
+        if isinstance(p, (subprocess.Popen, psutil.Popen)):
+            flush_popen(p)
+        _assert_no_pid(p if isinstance(p, int) else p.pid)
 
 
 def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
-    and ensure that no zombies stick around to hog resources and
-    create problems  when looking for refleaks.
-
+    and any children currently running, ensuring that no processes stick
+    around to hog resources.
     If resursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
-    # If recursive, get the children here before terminating them, as
-    # we don't want to lose the intermediate reference pointing to the
-    # grandchildren.
-    if recursive:
-        children = set(psutil.Process().children(recursive=True))
-    else:
-        children = set()
+    # Get the children here before terminating them, as in case of
+    # recursive=True we don't want to lose the intermediate reference
+    # pointing to the grandchildren.
+    children = psutil.Process().children(recursive=recursive)
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
         subp = _subprocesses_started.pop()
-        _pids_started.add(subp.pid)
         terminate(subp)
 
     # Collect started pids.
     while _pids_started:
         pid = _pids_started.pop()
-        try:
-            p = psutil.Process(pid)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(pid)
-        else:
-            children.add(p)
+        terminate(pid)
 
     # Terminate children.
     if children:
         for p in children:
-            terminate(p, wait_w_timeout=None)
+            terminate(p, wait_timeout=None)
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
-            terminate(p, wait_w_timeout=None, sig=signal.SIGKILL)
-        gone, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
-        if alive:
-            for p in alive:
-                warn("process %r survived kill()" % p)
-
-        for p in children:
-            _assert_no_pid(p.pid)
+            terminate(p, sig=signal.SIGKILL)
 
 
 # ===================================================================
@@ -774,6 +772,7 @@ def chdir(dirname):
 def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
+    _testfiles_created.add(outpath)
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
@@ -842,14 +841,37 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-def serialrun(klass):
-    """A decorator to mark a TestCase class. When running parallel tests,
-    class' unit tests will be run serially (1 process).
+class ProcessTestCase(TestCase):
+    """Test class providing auto-cleanup wrappers on top of process
+    test utilities.
     """
-    # assert issubclass(klass, unittest.TestCase), klass
-    assert inspect.isclass(klass), klass
-    klass._serialrun = True
-    return klass
+
+    def get_test_subprocess(self, *args, **kwds):
+        sproc = get_test_subprocess(*args, **kwds)
+        self.addCleanup(terminate, sproc)
+        return sproc
+
+    def create_proc_children_pair(self):
+        child1, child2 = create_proc_children_pair()
+        self.addCleanup(terminate, child1)
+        self.addCleanup(terminate, child2)
+        return (child1, child2)
+
+    def create_zombie_proc(self):
+        parent, zombie = create_zombie_proc()
+        self.addCleanup(terminate, zombie)
+        self.addCleanup(terminate, parent)  # executed first
+        return (parent, zombie)
+
+    def pyrun(self, *args, **kwds):
+        sproc = pyrun(*args, **kwds)
+        self.addCleanup(terminate, sproc)
+        return sproc
+
+    def get_testfn(self, suffix="", dir=None):
+        fname = get_testfn(suffix=suffix, dir=suffix)
+        self.addCleanup(safe_rmpath(fname))
+        return fname
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
@@ -964,6 +986,16 @@ class TestMemoryLeak(unittest.TestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+def serialrun(klass):
+    """A decorator to mark a TestCase class. When running parallel tests,
+    class' unit tests will be run serially (1 process).
+    """
+    # assert issubclass(klass, unittest.TestCase), klass
+    assert inspect.isclass(klass), klass
+    klass._serialrun = True
+    return klass
 
 
 def retry_on_failure(retries=NO_RETRIES):
