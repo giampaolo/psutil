@@ -327,7 +327,7 @@ Process management
     >>>
     >>> p = psutil.Process(7055)
     >>> p
-    psutil.Process(pid=7055, name='python', started='09:04:44')
+    psutil.Process(pid=7055, name='python3', status='running', started='09:04:44')
     >>> p.name()
     'python'
     >>> p.exe()
@@ -342,15 +342,15 @@ Process management
     >>> p.ppid()
     7054
     >>> p.children(recursive=True)
-    [psutil.Process(pid=29835, name='python2.7', started='11:45:38'),
-     psutil.Process(pid=29836, name='python2.7', started='11:43:39')]
+    [psutil.Process(pid=29835, name='python3', status='sleeping', started='11:45:38'),
+     psutil.Process(pid=29836, name='python3', status='waking', started='11:43:39')]
     >>>
     >>> p.parent()
-    psutil.Process(pid=4699, name='bash', started='09:06:44')
+    psutil.Process(pid=4699, name='bash', status='sleeping', started='09:06:44')
     >>> p.parents()
     [psutil.Process(pid=4699, name='bash', started='09:06:44'),
-     psutil.Process(pid=4689, name='gnome-terminal-server', started='0:06:44'),
-     psutil.Process(pid=1, name='systemd', started='05:56:55')]
+     psutil.Process(pid=4689, name='gnome-terminal-server', status='sleeping', started='0:06:44'),
+     psutil.Process(pid=1, name='systemd', status='sleeping', started='05:56:55')]
     >>>
     >>> p.status()
     'running'

@@ -61,7 +61,9 @@ class TestMisc(unittest.TestCase):
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
         self.assertIn("name=", r)
+        self.assertIn("status=", r)
         self.assertIn(p.name(), r)
+        self.assertIn("status='running'", r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
             p = psutil.Process()

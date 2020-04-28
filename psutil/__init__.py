@@ -397,20 +397,22 @@ class Process(object):
         except AttributeError:
             info = {}  # Python 2.6
         info["pid"] = self.pid
-        try:
-            info["name"] = self.name()
-            if self._create_time:
-                info['started'] = _pprint_secs(self._create_time)
-        except ZombieProcess:
-            info["status"] = "zombie"
-        except NoSuchProcess:
-            info["status"] = "terminated"
-        except AccessDenied:
-            pass
-        return "%s.%s(%s)" % (
-            self.__class__.__module__,
-            self.__class__.__name__,
-            ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
+        with self.oneshot():
+            try:
+                info["name"] = self.name()
+                info["status"] = self.status()
+                if self._create_time:
+                    info['started'] = _pprint_secs(self._create_time)
+            except ZombieProcess:
+                info["status"] = "zombie"
+            except NoSuchProcess:
+                info["status"] = "terminated"
+            except AccessDenied:
+                pass
+            return "%s.%s(%s)" % (
+                self.__class__.__module__,
+                self.__class__.__name__,
+                ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
 
     __repr__ = __str__
 
