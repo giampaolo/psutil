@@ -459,7 +459,7 @@ def _assert_no_pid(pid):
 
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     """Terminate a process and wait() for it.
-    This can be a PID or an instance of psutil.Process(),
+    Process can be a PID or an instance of psutil.Process(),
     subprocess.Popen() or psutil.Popen().
     If it's a subprocess.Popen() or psutil.Popen() instance also closes
     its stdin / stdout / stderr fds.
@@ -532,7 +532,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         elif isinstance(p, subprocess.Popen):
             return term_subproc(p, wait_timeout)
         else:
-            raise TypeError("wrong type %s" % p)
+            raise TypeError("wrong type %r" % p)
     finally:
         if isinstance(p, (subprocess.Popen, psutil.Popen)):
             flush_popen(p)

@@ -22,10 +22,10 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
-from psutil.tests import SYSMEM_TOLERANCE
-from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import SYSMEM_TOLERANCE
+from psutil.tests import terminate
 from psutil.tests import unittest
 from psutil.tests import which
 
@@ -81,7 +81,7 @@ class BSDTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     @unittest.skipIf(NETBSD, "-o lstart doesn't work on NETBSD")
     def test_process_create_time(self):
@@ -156,7 +156,7 @@ class FreeBSDProcessTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     @retry_on_failure()
     def test_memory_maps(self):

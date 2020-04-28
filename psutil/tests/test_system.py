@@ -175,7 +175,6 @@ class TestProcessAPIs(ProcessTestCase):
         self.assertEqual(psutil.pid_exists(0), 0 in psutil.pids())
 
     def test_pid_exists_2(self):
-        # reap_children()
         pids = psutil.pids()
         for pid in pids:
             try:
