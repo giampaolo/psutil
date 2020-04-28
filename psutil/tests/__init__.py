@@ -352,9 +352,7 @@ def create_proc_children_pair():
     else:
         subp = pyrun(s)
     child1 = psutil.Process(subp.pid)
-    data = wait_for_file(testfn, delete=False, empty=False)
-    safe_rmpath(testfn)
-    child2_pid = int(data)
+    child2_pid = int(wait_for_file(testfn, delete=True, empty=False))
     _pids_started.add(child2_pid)
     child2 = psutil.Process(child2_pid)
     return (child1, child2)
