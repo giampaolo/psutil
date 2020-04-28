@@ -34,15 +34,14 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import mock
+from psutil.tests import ProcessTestCase
 from psutil.tests import PYPY
-from psutil.tests import pyrun
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import SYSMEM_TOLERANCE
-from psutil.tests import terminate
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -1641,7 +1640,7 @@ class TestSensorsFans(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestProcess(unittest.TestCase):
+class TestProcess(ProcessTestCase):
 
     @retry_on_failure()
     def test_memory_full_info(self):
@@ -1651,8 +1650,7 @@ class TestProcess(unittest.TestCase):
             with open("%s", "w") as f:
                 time.sleep(10)
             """ % testfn)
-        sproc = pyrun(src)
-        self.addCleanup(terminate, sproc)
+        sproc = self.pyrun(src)
         call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
         p = psutil.Process(sproc.pid)
         time.sleep(.1)

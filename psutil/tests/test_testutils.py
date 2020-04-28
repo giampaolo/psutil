@@ -16,6 +16,7 @@ import io
 import os
 import socket
 import stat
+import subprocess
 
 from psutil import FREEBSD
 from psutil import NETBSD
@@ -29,15 +30,14 @@ from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
-from psutil.tests import create_proc_children_pair
 from psutil.tests import create_sockets
-from psutil.tests import create_zombie_proc
 from psutil.tests import get_free_port
-from psutil.tests import get_test_subprocess
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
+from psutil.tests import ProcessTestCase
+from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry
 from psutil.tests import retry_on_failure
@@ -209,10 +209,10 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
-class TestProcessUtils(unittest.TestCase):
+class TestProcessUtils(ProcessTestCase):
 
     def test_reap_children(self):
-        subp = get_test_subprocess()
+        subp = self.get_test_subprocess()
         p = psutil.Process(subp.pid)
         assert p.is_running()
         reap_children()
@@ -221,7 +221,7 @@ class TestProcessUtils(unittest.TestCase):
         assert not psutil.tests._subprocesses_started
 
     def test_create_proc_children_pair(self):
-        p1, p2 = create_proc_children_pair()
+        p1, p2 = self.create_proc_children_pair()
         self.assertNotEqual(p1.pid, p2.pid)
         assert p1.is_running()
         assert p2.is_running()
@@ -241,10 +241,31 @@ class TestProcessUtils(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
-        parent, zombie = create_zombie_proc()
-        self.addCleanup(terminate, zombie)
-        self.addCleanup(terminate, parent)  # executed first
+        parent, zombie = self.create_zombie_proc()
         self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
+
+    def terminate(self):
+        # by subprocess.Popen
+        p = self.get_test_subprocess()
+        terminate(p)
+        assert not psutil.pid_exists(p.pid)
+        terminate(p)
+        # by psutil.Process
+        p = psutil.Process(self.get_test_subprocess().pid)
+        terminate(p)
+        assert not psutil.pid_exists(p.pid)
+        terminate(p)
+        # by psutil.Popen
+        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        terminate(p)
+        assert not psutil.pid_exists(p.pid)
+        terminate(p)
+        # by PID
+        pid = self.get_test_subprocess()
+        terminate(pid)
+        assert not psutil.pid_exists(pid)
+        terminate(pid)
 
 
 class TestNetUtils(unittest.TestCase):
@@ -397,5 +418,5 @@ class TestOtherUtils(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

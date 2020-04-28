@@ -459,8 +459,11 @@ def _assert_no_pid(pid):
 
 
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
-    """Terminate and flush a psutil.Process, psutil.Popen or
-    subprocess.Popen instance.
+    """Terminate a process, which can be an instance of psutil.Process(),
+    subprocess.Popen(), psutil.Popen() or a process PID (int).
+    If it's a subprocess.Popen() or psutil.Popen() instance also flushes
+    its stdin/out/err fds.
+    Does nothing if the process does not exist.
     """
     def wait(proc, timeout=None):
         if sys.version_info < (3, 3) and not \
@@ -480,7 +483,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
         try:
             proc = psutil.Process(proc_or_pid)
         except psutil.NoSuchProcess:
-            return
+            _assert_no_pid(proc_or_pid)
     else:
         proc = proc_or_pid
 
