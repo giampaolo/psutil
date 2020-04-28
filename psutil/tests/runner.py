@@ -155,7 +155,8 @@ class SuiteLoader:
 
     def from_name(self, name):
         suite = unittest.TestSuite()
-        name = os.path.splitext(os.path.basename(name))[0]
+        if name.endswith('.py'):
+            name = os.path.splitext(os.path.basename(name))[0]
         suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
         return suite
 

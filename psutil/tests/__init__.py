@@ -459,6 +459,20 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
     """Terminate and flush a psutil.Process, psutil.Popen or
     subprocess.Popen instance.
     """
+    def wait(proc, timeout=None):
+        if sys.version_info < (3, 3) and not \
+                isinstance(proc, (psutil.Process, psutil.Popen)):
+            # subprocess.Popen instance + no timeout arg.
+            try:
+                ret = psutil.Process(proc.pid).wait(timeout)
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                proc.returncode = ret
+                return ret
+        else:
+            return proc.wait(timeout)
+
     if isinstance(proc_or_pid, int):
         try:
             proc = psutil.Process(proc_or_pid)
@@ -467,7 +481,18 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
     else:
         proc = proc_or_pid
 
-    if isinstance(proc, subprocess.Popen):
+    if isinstance(proc, (psutil.Process, psutil.Popen)):
+        try:
+            proc.send_signal(sig)
+        except psutil.NoSuchProcess:
+            _assert_no_pid(proc.pid)
+        else:
+            if wait_w_timeout:
+                ret = wait(proc, wait_w_timeout)
+                _assert_no_pid(proc.pid)
+                return ret
+    else:
+        # subprocess.Popen instance
         try:
             proc.send_signal(sig)
         except OSError as err:
@@ -475,6 +500,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
                 pass
             elif err.errno != errno.ESRCH:
                 raise
+        except psutil.NoSuchProcess:  # psutil.Popen
+            pass
         if proc.stdout:
             proc.stdout.close()
         if proc.stderr:
@@ -486,17 +513,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
         finally:
             if wait_w_timeout:
                 try:
-                    proc.wait(wait_w_timeout)
+                    return wait(proc, wait_w_timeout)
                 except ChildProcessError:
                     pass
-    else:
-        try:
-            proc.send_signal(sig)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(proc.pid)
-        else:
-            if wait_w_timeout:
-                proc.wait(wait_w_timeout)
                 _assert_no_pid(proc.pid)
 
 

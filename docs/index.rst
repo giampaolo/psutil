@@ -1966,15 +1966,8 @@ Popen class
 
   A more convenient interface to stdlib `subprocess.Popen`_.
   It starts a sub process and you deal with it exactly as when using
-  `subprocess.Popen`_.
-  but in addition it also provides all the methods of :class:`psutil.Process`
-  class.
-  For method names common to both classes such as
-  :meth:`send_signal() <psutil.Process.send_signal()>`,
-  :meth:`terminate() <psutil.Process.terminate()>` and
-  :meth:`kill() <psutil.Process.kill()>`
-  :class:`psutil.Process` implementation takes precedence.
-  For a complete documentation refer to subprocess module documentation.
+  `subprocess.Popen`_, but in addition it also provides all the methods of
+  :class:`psutil.Process` class as a unified interface.
 
   .. note::
 
@@ -1999,16 +1992,25 @@ Popen class
   0
   >>>
 
+  *timeout* parameter of `subprocess.Popen.wait`_  is backported for Python < 3.3.
   :class:`psutil.Popen` objects are supported as context managers via the with
-  statement: on exit, standard file descriptors are closed, and the process
-  is waited for. This is supported on all Python versions.
+  statement (added to Python 3.2). On exit, standard file descriptors are
+  closed, and the process is waited for. This is supported on all Python
+  versions.
 
   >>> import psutil, subprocess
   >>> with psutil.Popen(["ifconfig"], stdout=subprocess.PIPE) as proc:
   >>>     log.write(proc.stdout.read())
 
 
-  .. versionchanged:: 4.4.0 added context manager support
+  .. versionchanged:: 4.4.0 added context manager support.
+
+  .. versionchanged:: 5.7.1 inherit from `subprocess.Popen`_ instead of
+    :class:`psutil.Process`.
+
+  .. versionchanged:: 5.7.1 backporint `subprocess.Popen.wait`_ **timeout**
+    parameter on old Python versions.
+
 
 Windows services
 ================
@@ -2882,6 +2884,7 @@ Timeline
 .. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
 .. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+.. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
 .. _Tidelift security contact: https://tidelift.com/security

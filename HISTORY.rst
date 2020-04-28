@@ -8,6 +8,8 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1729_: parallel tests on UNIX (make test-parallel).
+- 1736_: psutil.Popen now inherits from subprocess.Popen instead of
+  psutil.Process. Also, wait(timeout=...) parameter is backported to Python 2.7.
 
 **Bug fixes**
 
