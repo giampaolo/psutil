@@ -1338,7 +1338,7 @@ class TestProcess(unittest.TestCase):
                 pass
 
         zpid = create_zombie_proc()
-        self.addCleanup(reap_children, recursive=True)
+        self.addCleanup(reap_children)
         # A zombie process should always be instantiable
         zproc = psutil.Process(zpid)
         # ...and at least its status always be querable
@@ -1348,7 +1348,7 @@ class TestProcess(unittest.TestCase):
         # ...and as_dict() shouldn't crash
         zproc.as_dict()
         # if cmdline succeeds it should be an empty list
-        ret = succeed_or_zombie_p_exc(zproc.suspend)
+        ret = succeed_or_zombie_p_exc(zproc.cmdline)
         if ret is not None:
             self.assertEqual(ret, [])
 

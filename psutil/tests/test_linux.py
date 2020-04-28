@@ -33,16 +33,16 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
-from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
-from psutil.tests import reap_children
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
+from psutil.tests import SYSMEM_TOLERANCE
+from psutil.tests import terminate
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -1652,7 +1652,7 @@ class TestProcess(unittest.TestCase):
                 time.sleep(10)
             """ % testfn)
         sproc = pyrun(src)
-        self.addCleanup(reap_children)
+        self.addCleanup(terminate, sproc)
         call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
         p = psutil.Process(sproc.pid)
         time.sleep(.1)
