@@ -774,6 +774,7 @@ def chdir(dirname):
 def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
+    _testfiles_created.add(outpath)
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
@@ -842,14 +843,37 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-def serialrun(klass):
-    """A decorator to mark a TestCase class. When running parallel tests,
-    class' unit tests will be run serially (1 process).
+class ProcessTestCase(TestCase):
+    """Test class providing auto-cleanup wrappers on top of process
+    test utilities.
     """
-    # assert issubclass(klass, unittest.TestCase), klass
-    assert inspect.isclass(klass), klass
-    klass._serialrun = True
-    return klass
+
+    def get_test_subprocess(self, *args, **kwds):
+        sproc = get_test_subprocess(*args, **kwds)
+        self.addCleanup(terminate, sproc)
+        return sproc
+
+    def create_proc_children_pair(self):
+        child1, child2 = create_proc_children_pair()
+        self.addCleanup(terminate, child1)
+        self.addCleanup(terminate, child2)
+        return (child1, child2)
+
+    def create_zombie_proc(self):
+        parent, zombie = create_zombie_proc()
+        self.addCleanup(terminate, zombie)
+        self.addCleanup(terminate, parent)  # executed first
+        return (parent, zombie)
+
+    def pyrun(self, *args, **kwds):
+        sproc = pyrun(*args, **kwds)
+        self.addCleanup(terminate, sproc)
+        return sproc
+
+    def get_testfn(self, suffix="", dir=None):
+        fname = get_testfn(suffix=suffix, dir=suffix)
+        self.addCleanup(safe_rmpath(fname))
+        return fname
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
@@ -964,6 +988,16 @@ class TestMemoryLeak(unittest.TestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+def serialrun(klass):
+    """A decorator to mark a TestCase class. When running parallel tests,
+    class' unit tests will be run serially (1 process).
+    """
+    # assert issubclass(klass, unittest.TestCase), klass
+    assert inspect.isclass(klass), klass
+    klass._serialrun = True
+    return klass
 
 
 def retry_on_failure(retries=NO_RETRIES):
