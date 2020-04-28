@@ -362,7 +362,10 @@ def create_proc_children_pair():
 
 
 def create_zombie_proc():
-    """Create a zombie process and return its PID."""
+    """Create a zombie process and return a (parent, zombie) process tuple.
+    In order to kill the zombie parent must be terminate()d first, then
+    zombie must be wait()ed on.
+    """
     assert psutil.POSIX
     unix_file = get_testfn()
     src = textwrap.dedent("""\
@@ -384,15 +387,15 @@ def create_zombie_proc():
     sock = bind_unix_socket(unix_file)
     with contextlib.closing(sock):
         sock.settimeout(GLOBAL_TIMEOUT)
-        pyrun(src)
+        parent = pyrun(src)
         conn, _ = sock.accept()
         try:
             select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
             zpid = int(conn.recv(1024))
             _pids_started.add(zpid)
-            zproc = psutil.Process(zpid)
-            call_until(lambda: zproc.status(), "ret == psutil.STATUS_ZOMBIE")
-            return zpid
+            zombie = psutil.Process(zpid)
+            call_until(lambda: zombie.status(), "ret == psutil.STATUS_ZOMBIE")
+            return (parent, zombie)
         finally:
             conn.close()
 

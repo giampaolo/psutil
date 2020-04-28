@@ -60,6 +60,7 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
+from psutil.tests import terminate
 from psutil.tests import ThreadTask
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -1337,10 +1338,11 @@ class TestProcess(unittest.TestCase):
             except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
-        zpid = create_zombie_proc()
-        self.addCleanup(reap_children)
+        parent, zombie = create_zombie_proc()
+        self.addCleanup(terminate, zombie)
+        self.addCleanup(terminate, parent)  # executed first
         # A zombie process should always be instantiable
-        zproc = psutil.Process(zpid)
+        zproc = psutil.Process(zombie.pid)
         # ...and at least its status always be querable
         self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
         # ...and it should be considered 'running'
@@ -1392,15 +1394,15 @@ class TestProcess(unittest.TestCase):
         # rid of a zombie is to kill its parent.
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
-        self.assertTrue(psutil.pid_exists(zpid))
+        self.assertTrue(psutil.pid_exists(zproc.pid))
         if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
             # Maybe they upgraded MACOS version?
             # https://travis-ci.org/giampaolo/psutil/jobs/310896404
-            self.assertIn(zpid, psutil.pids())
-            self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+            self.assertIn(zproc.pid, psutil.pids())
+            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
             psutil._pmap = {}
-            self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):

@@ -19,6 +19,7 @@ from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import terminate
 from psutil.tests import unittest
 
 
@@ -105,12 +106,13 @@ class TestZombieProcessAPIs(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        zpid = create_zombie_proc()
-        cls.p = psutil.Process(zpid)
+        cls.parent, cls.zombie = create_zombie_proc()
+        cls.p = psutil.Process(cls.zombie.pid)
 
     @classmethod
     def tearDownClass(cls):
-        reap_children(recursive=True)
+        terminate(cls.parent)
+        terminate(cls.zombie)
 
     def test_pidtask_info(self):
         self.assertEqual(self.p.status(), psutil.STATUS_ZOMBIE)

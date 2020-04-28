@@ -45,6 +45,7 @@ from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
 from psutil.tests import tcp_socketpair
+from psutil.tests import terminate
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
@@ -240,10 +241,10 @@ class TestProcessUtils(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
-        zpid = create_zombie_proc()
-        self.addCleanup(reap_children, recursive=True)
-        p = psutil.Process(zpid)
-        self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
+        parent, zombie = create_zombie_proc()
+        self.addCleanup(terminate, zombie)
+        self.addCleanup(terminate, parent)  # executed first
+        self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
 
 
 class TestNetUtils(unittest.TestCase):
