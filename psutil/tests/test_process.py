@@ -1341,10 +1341,6 @@ class TestProcess(ProcessTestCase):
         self.assertTrue(zproc.is_running())
         # ...and as_dict() shouldn't crash
         zproc.as_dict()
-        # if cmdline succeeds it should be an empty list
-        ret = succeed_or_zombie_p_exc(zproc.cmdline)
-        if ret is not None:
-            self.assertEqual(ret, [])
 
         if hasattr(zproc, "rlimit"):
             succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
