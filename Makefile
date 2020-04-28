@@ -158,8 +158,8 @@ test-memleaks:  ## Memory leak tests.
 	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_memory_leaks.py
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
-	${MAKE} install
-	@$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
+	# ${MAKE} install
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} install

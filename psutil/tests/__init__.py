@@ -459,6 +459,18 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
     """Terminate and flush a psutil.Process, psutil.Popen or
     subprocess.Popen instance.
     """
+    def wait(proc, timeout=None):
+        if isinstance(proc, subprocess.Popen) and sys.version_info < (3, 3):
+            try:
+                ret = psutil.Process(proc.pid).wait(timeout)
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                proc.returncode = ret
+                return ret
+        else:
+            return proc.wait(timeout)
+
     if isinstance(proc_or_pid, int):
         try:
             proc = psutil.Process(proc_or_pid)
@@ -486,7 +498,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
         finally:
             if wait_w_timeout:
                 try:
-                    proc.wait(wait_w_timeout)
+                    wait(proc, wait_w_timeout)
                 except ChildProcessError:
                     pass
     else:
@@ -496,7 +508,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
             _assert_no_pid(proc.pid)
         else:
             if wait_w_timeout:
-                proc.wait(wait_w_timeout)
+                wait(proc, wait_w_timeout)
                 _assert_no_pid(proc.pid)
 
 
