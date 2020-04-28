@@ -1592,6 +1592,7 @@ class TestPopen(unittest.TestCase):
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()
+        proc.wait(timeout=3)
 
     def test_ctx_manager(self):
         with psutil.Popen([PYTHON_EXE, "-V"],
