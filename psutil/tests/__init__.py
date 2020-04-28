@@ -88,7 +88,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak',
+    'retry_on_failure', 'TestMemoryLeak', 'ProcessTestCase',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -539,35 +539,25 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
 
 def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
-    and ensure that no zombies stick around to hog resources and
-    create problems  when looking for refleaks.
-
+    and any children currently running, ensuring that no processes stick
+    around to hog resources.
     If resursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
-    # If recursive, get the children here before terminating them, as
-    # we don't want to lose the intermediate reference pointing to the
-    # grandchildren.
-    if recursive:
-        children = set(psutil.Process().children(recursive=True))
-    else:
-        children = set()
+    # Get the children here before terminating them, as in case of
+    # recursive=True we don't want to lose the intermediate reference
+    # pointing to the grandchildren.
+    children = psutil.Process().children(recursive=recursive)
 
     # Terminate subprocess.Popen.
     while _subprocesses_started:
         subp = _subprocesses_started.pop()
-        _pids_started.add(subp.pid)
         terminate(subp)
 
     # Collect started pids.
     while _pids_started:
         pid = _pids_started.pop()
-        try:
-            p = psutil.Process(pid)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(pid)
-        else:
-            children.add(p)
+        terminate(pid)
 
     # Terminate children.
     if children:
@@ -576,14 +566,7 @@ def reap_children(recursive=False):
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
-            terminate(p, wait_timeout=None, sig=signal.SIGKILL)
-        gone, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
-        if alive:
-            for p in alive:
-                warn("process %r survived kill()" % p)
-
-        for p in children:
-            _assert_no_pid(p.pid)
+            terminate(p, sig=signal.SIGKILL)
 
 
 # ===================================================================
