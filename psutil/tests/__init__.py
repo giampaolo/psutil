@@ -458,11 +458,12 @@ def _assert_no_pid(pid):
 
 
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
-    """Terminate a process and wait() for it (always).
+    """Terminate a process and wait() for it.
     This can be a PID or an instance of psutil.Process(),
     subprocess.Popen() or psutil.Popen().
     If it's a subprocess.Popen() or psutil.Popen() instance also closes
     its stdin / stdout / stderr fds.
+    PID is wait()ed even if the process is already gone (kills zombies).
     Does nothing if the process does not exist.
     Return process exit status.
     """
@@ -470,16 +471,19 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         from psutil._psposix import wait_pid
 
     def wait(proc, timeout):
-        if sys.version_info < (3, 3) and not \
-                isinstance(proc, (psutil.Process, psutil.Popen)):
-            # subprocess.Popen instance + no timeout arg.
+        if sys.version_info < (3, 3) and \
+                isinstance(proc, subprocess.Popen) and \
+                not isinstance(proc, psutil.Popen):
+            # subprocess.Popen instance: emulate missing timeout arg.
+            ret = None
             try:
                 ret = psutil.Process(proc.pid).wait(timeout)
             except psutil.NoSuchProcess:
-                pass
-            else:
-                proc.returncode = ret
-                return ret
+                # Needed to kill zombies.
+                if POSIX:
+                    ret = wait_pid(proc.pid, timeout)
+            proc.returncode = ret
+            return ret
         else:
             return proc.wait(timeout)
 
