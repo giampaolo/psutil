@@ -460,7 +460,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
     subprocess.Popen instance.
     """
     def wait(proc, timeout=None):
-        if isinstance(proc, subprocess.Popen) and sys.version_info < (3, 3):
+        if sys.version_info < (3, 3) and not \
+                isinstance(proc, (psutil.Process, psutil.Popen)):
+            # subprocess.Popen instance + no timeout arg.
             try:
                 ret = psutil.Process(proc.pid).wait(timeout)
             except psutil.NoSuchProcess:
@@ -479,7 +481,18 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
     else:
         proc = proc_or_pid
 
-    if isinstance(proc, subprocess.Popen):
+    if isinstance(proc, (psutil.Process, psutil.Popen)):
+        try:
+            proc.send_signal(sig)
+        except psutil.NoSuchProcess:
+            _assert_no_pid(proc.pid)
+        else:
+            if wait_w_timeout:
+                ret = wait(proc, wait_w_timeout)
+                _assert_no_pid(proc.pid)
+                return ret
+    else:
+        # subprocess.Popen instance
         try:
             proc.send_signal(sig)
         except OSError as err:
@@ -500,17 +513,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
         finally:
             if wait_w_timeout:
                 try:
-                    wait(proc, wait_w_timeout)
+                    return wait(proc, wait_w_timeout)
                 except ChildProcessError:
                     pass
-    else:
-        try:
-            proc.send_signal(sig)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(proc.pid)
-        else:
-            if wait_w_timeout:
-                wait(proc, wait_w_timeout)
                 _assert_no_pid(proc.pid)
 
 
