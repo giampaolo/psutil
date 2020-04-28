@@ -82,33 +82,31 @@ class TestProcess(ProcessTestCase):
 
     def test_kill(self):
         sproc = self.get_test_subprocess()
-        test_pid = sproc.pid
-        p = psutil.Process(test_pid)
+        p = psutil.Process(sproc.pid)
         p.kill()
-        sig = p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid))
+        code = p.wait()
+        self.assertFalse(psutil.pid_exists(sproc.pid))
         if POSIX:
-            self.assertEqual(sig, -signal.SIGKILL)
+            self.assertEqual(code, -signal.SIGKILL)
 
     def test_terminate(self):
         sproc = self.get_test_subprocess()
-        test_pid = sproc.pid
-        p = psutil.Process(test_pid)
+        p = psutil.Process(sproc.pid)
         p.terminate()
-        sig = p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid))
+        code = p.wait()
+        self.assertFalse(psutil.pid_exists(sproc.pid))
         if POSIX:
-            self.assertEqual(sig, -signal.SIGTERM)
+            self.assertEqual(code, -signal.SIGTERM)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
         sproc = self.get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.send_signal(sig)
-        exit_sig = p.wait()
+        code = p.wait()
         self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
-            self.assertEqual(exit_sig, -sig)
+            self.assertEqual(code, -sig)
             #
             sproc = self.get_test_subprocess()
             p = psutil.Process(sproc.pid)
