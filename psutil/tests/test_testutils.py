@@ -244,7 +244,7 @@ class TestProcessUtils(ProcessTestCase):
         parent, zombie = self.create_zombie_proc()
         self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
 
-    def terminate(self):
+    def test_terminate(self):
         # by subprocess.Popen
         p = self.get_test_subprocess()
         terminate(p)
@@ -262,10 +262,16 @@ class TestProcessUtils(ProcessTestCase):
         assert not psutil.pid_exists(p.pid)
         terminate(p)
         # by PID
-        pid = self.get_test_subprocess()
+        pid = self.get_test_subprocess().pid
         terminate(pid)
         assert not psutil.pid_exists(pid)
         terminate(pid)
+        # zombie
+        parent, zombie = self.create_zombie_proc()
+        terminate(parent)
+        terminate(zombie)
+        assert not psutil.pid_exists(parent.pid)
+        assert not psutil.pid_exists(zombie.pid)
 
 
 class TestNetUtils(unittest.TestCase):

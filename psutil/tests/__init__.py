@@ -45,7 +45,6 @@ from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-from psutil._compat import ChildProcessError
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
@@ -458,14 +457,19 @@ def _assert_no_pid(pid):
         assert 0, "%s is still alive" % p
 
 
-def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
-    """Terminate a process, which can be an instance of psutil.Process(),
-    subprocess.Popen(), psutil.Popen() or a process PID (int).
-    If it's a subprocess.Popen() or psutil.Popen() instance also flushes
-    its stdin/out/err fds.
+def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
+    """Terminate a process and wait() for it (always).
+    This can be a PID or an instance of psutil.Process(),
+    subprocess.Popen() or psutil.Popen().
+    If it's a subprocess.Popen() or psutil.Popen() instance also closes
+    its stdin / stdout / stderr fds.
     Does nothing if the process does not exist.
+    Return process exit status.
     """
-    def wait(proc, timeout=None):
+    if POSIX:
+        from psutil._psposix import wait_pid
+
+    def wait(proc, timeout):
         if sys.version_info < (3, 3) and not \
                 isinstance(proc, (psutil.Process, psutil.Popen)):
             # subprocess.Popen instance + no timeout arg.
@@ -479,26 +483,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
         else:
             return proc.wait(timeout)
 
-    if isinstance(proc_or_pid, int):
-        try:
-            proc = psutil.Process(proc_or_pid)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(proc_or_pid)
-    else:
-        proc = proc_or_pid
-
-    if isinstance(proc, (psutil.Process, psutil.Popen)):
-        try:
-            proc.send_signal(sig)
-        except psutil.NoSuchProcess:
-            _assert_no_pid(proc.pid)
-        else:
-            if wait_w_timeout:
-                ret = wait(proc, wait_w_timeout)
-                _assert_no_pid(proc.pid)
-                return ret
-    else:
-        # subprocess.Popen instance
+    def term_subproc(proc, timeout):
         try:
             proc.send_signal(sig)
         except OSError as err:
@@ -506,23 +491,48 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
                 pass
             elif err.errno != errno.ESRCH:
                 raise
-        except psutil.NoSuchProcess:  # psutil.Popen
+        return wait(proc, timeout)
+
+    def term_psproc(proc, timeout):
+        try:
+            proc.send_signal(sig)
+        except psutil.NoSuchProcess:
             pass
+        return wait(proc, timeout)
+
+    def term_pid(pid, timeout):
+        try:
+            proc = psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            # Needed to kill zombies.
+            if POSIX:
+                return wait_pid(pid, timeout)
+        else:
+            return term_psproc(proc, timeout)
+
+    def flush_popen(proc):
         if proc.stdout:
             proc.stdout.close()
         if proc.stderr:
             proc.stderr.close()
-        try:
-            # Flushing a BufferedWriter may raise an error.
-            if proc.stdin:
-                proc.stdin.close()
-        finally:
-            if wait_w_timeout:
-                try:
-                    return wait(proc, wait_w_timeout)
-                except ChildProcessError:
-                    pass
-                _assert_no_pid(proc.pid)
+        # Flushing a BufferedWriter may raise an error.
+        if proc.stdin:
+            proc.stdin.close()
+
+    p = proc_or_pid
+    try:
+        if isinstance(p, int):
+            return term_pid(p, wait_timeout)
+        elif isinstance(p, (psutil.Process, psutil.Popen)):
+            return term_psproc(p, wait_timeout)
+        elif isinstance(p, subprocess.Popen):
+            return term_subproc(p, wait_timeout)
+        else:
+            raise TypeError("wrong type %s" % p)
+    finally:
+        if isinstance(p, (subprocess.Popen, psutil.Popen)):
+            flush_popen(p)
+        _assert_no_pid(p if isinstance(p, int) else p.pid)
 
 
 def reap_children(recursive=False):
@@ -560,11 +570,11 @@ def reap_children(recursive=False):
     # Terminate children.
     if children:
         for p in children:
-            terminate(p, wait_w_timeout=None)
+            terminate(p, wait_timeout=None)
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
-            terminate(p, wait_w_timeout=None, sig=signal.SIGKILL)
+            terminate(p, wait_timeout=None, sig=signal.SIGKILL)
         gone, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
         if alive:
             for p in alive:
