@@ -487,6 +487,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_w_timeout=GLOBAL_TIMEOUT):
                 pass
             elif err.errno != errno.ESRCH:
                 raise
+        except psutil.NoSuchProcess:  # psutil.Popen
+            pass
         if proc.stdout:
             proc.stdout.close()
         if proc.stderr:

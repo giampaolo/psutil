@@ -1274,6 +1274,14 @@ class Process(object):
         return self._proc.wait(timeout)
 
 
+# The valid attr names which can be processed by Process.as_dict().
+_as_dict_attrnames = set(
+    [x for x in dir(Process) if not x.startswith('_') and x not in
+     ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
+      'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
+      'memory_info_ex', 'oneshot']])
+
+
 # =====================================================================
 # --- Popen class
 # =====================================================================
@@ -1374,14 +1382,6 @@ class Popen(subprocess.Popen):
             return ret
         else:
             return super(Popen, self).wait(timeout)
-
-
-# The valid attr names which can be processed by Process.as_dict().
-_as_dict_attrnames = set(
-    [x for x in dir(Process) if not x.startswith('_') and x not in
-     ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-      'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'memory_info_ex', 'oneshot']])
 
 
 # =====================================================================
