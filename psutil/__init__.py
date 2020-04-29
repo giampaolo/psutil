@@ -1240,12 +1240,23 @@ class Process(object):
     def terminate(self):
         """Terminate the process with SIGTERM pre-emptively checking
         whether PID has been reused.
-        On Windows this is an alias for kill().
+        On Windows this will only work for processes spawned through psutil
+        or started using
+           kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP.
         """
         if POSIX:
             self._send_signal(signal.SIGTERM)
         else:  # pragma: no cover
-            self._proc.kill()
+            def sigint_boomerang_handler(signum, frame):
+                if signum != signal.SIGINT:
+                    exit(1)
+                pass
+            original_sigint_handler = signal.getsignal(signal.SIGINT)
+            signal.signal(signal.SIGINT, sigint_boomerang_handler)
+            self.send_signal(signal.CTRL_BREAK_EVENT)
+            self.wait()
+            # restore original handler
+            signal.signal(signal.SIGINT, original_sigint_handler)
 
     @_assert_pid_not_reused
     def kill(self):
@@ -1320,6 +1331,9 @@ class Popen(subprocess.Popen):
     you don't accidentally terminate another process, fixing
     http://bugs.python.org/issue6973.
 
+    On Windows it will issue subprocess.CREATE_NEW_PROCESS_GROUP in 
+    order to be able to use terminate() on single processes.
+
     For a complete documentation refer to:
     http://docs.python.org/3/library/subprocess.html
     """
@@ -1329,6 +1343,8 @@ class Popen(subprocess.Popen):
         # spawned by subprocess.Popen terminates too quickly, see:
         # https://github.com/giampaolo/psutil/issues/193
         self.__psproc = None
+        if WINDOWS:
+            kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
         subprocess.Popen.__init__(self, *args, **kwargs)
         self.__psproc = Process(self.pid)
         self.__psproc._init(self.pid, _ignore_nsp=True)
