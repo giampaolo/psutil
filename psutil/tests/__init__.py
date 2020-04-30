@@ -335,7 +335,7 @@ def create_proc_children_pair():
     The 2 processes are fully initialized and will live for 60 secs
     and are registered for cleanup on reap_children().
     """
-    # must be relative on Windows
+    tfile = None
     testfn = get_testfn(dir=os.getcwd())
     try:
         s = textwrap.dedent("""\
@@ -352,9 +352,9 @@ def create_proc_children_pair():
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
         if WINDOWS:
-            subp = pyrun(s, creationflags=0)
+            subp, tfile = pyrun(s, creationflags=0)
         else:
-            subp = pyrun(s)
+            subp, tfile = pyrun(s)
         child = psutil.Process(subp.pid)
         grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
         _pids_started.add(grandchild_pid)
@@ -362,6 +362,8 @@ def create_proc_children_pair():
         return (child, grandchild)
     finally:
         safe_rmpath(testfn)
+        if tfile is not None:
+            safe_rmpath(tfile)
 
 
 def create_zombie_proc():
@@ -387,10 +389,11 @@ def create_zombie_proc():
                     pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
+    tfile = None
     sock = bind_unix_socket(unix_file)
     try:
         sock.settimeout(GLOBAL_TIMEOUT)
-        parent = pyrun(src)
+        parent, tfile = pyrun(src)
         conn, _ = sock.accept()
         try:
             select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
@@ -404,21 +407,28 @@ def create_zombie_proc():
     finally:
         sock.close()
         safe_rmpath(unix_file)
+        if tfile is not None:
+            safe_rmpath(tfile)
 
 
 @_reap_children_on_err
 def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
-    Returns a subprocess.Popen instance.
+    Returns a subprocess.Popen instance and the test file where the source
+    code was written.
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
-    with open(get_testfn(), 'wt') as f:
-        f.write(src)
-        f.flush()
+    srcfile = get_testfn()
+    try:
+        with open(srcfile, 'wt') as f:
+            f.write(src)
         subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
-    return subp
+        return (subp, srcfile)
+    except Exception:
+        safe_rmpath(srcfile)
+        raise
 
 
 @_reap_children_on_err
@@ -878,8 +888,9 @@ class PsutilTestCase(TestCase):
         return (parent, zombie)
 
     def pyrun(self, *args, **kwds):
-        sproc = pyrun(*args, **kwds)
-        self.addCleanup(terminate, sproc)
+        sproc, srcfile = pyrun(*args, **kwds)
+        self.addCleanup(safe_rmpath, srcfile)
+        self.addCleanup(terminate, sproc)  # executed first
         return sproc
 
 
@@ -1166,6 +1177,9 @@ def create_sockets():
     finally:
         for s in socks:
             s.close()
+        for fname in (fname1, fname2):
+            if fname is not None:
+                safe_rmpath(fname)
 
 
 def check_net_address(addr, family):
