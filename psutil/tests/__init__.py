@@ -336,29 +336,32 @@ def create_proc_children_pair():
     and are registered for cleanup on reap_children().
     """
     # must be relative on Windows
-    testfn = os.path.basename(get_testfn(dir=os.getcwd()))
-    s = textwrap.dedent("""\
-        import subprocess, os, sys, time
-        s = "import os, time;"
-        s += "f = open('%s', 'w');"
-        s += "f.write(str(os.getpid()));"
-        s += "f.close();"
-        s += "time.sleep(60);"
-        p = subprocess.Popen([r'%s', '-c', s])
-        p.wait()
-        """ % (testfn, PYTHON_EXE))
-    # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
-    # set (which is the default) a "conhost.exe" extra process will be
-    # spawned as a child. We don't want that.
-    if WINDOWS:
-        subp = pyrun(s, creationflags=0)
-    else:
-        subp = pyrun(s)
-    child = psutil.Process(subp.pid)
-    grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
-    _pids_started.add(grandchild_pid)
-    grandchild = psutil.Process(grandchild_pid)
-    return (child, grandchild)
+    testfn = get_testfn(dir=os.getcwd())
+    try:
+        s = textwrap.dedent("""\
+            import subprocess, os, sys, time
+            s = "import os, time;"
+            s += "f = open('%s', 'w');"
+            s += "f.write(str(os.getpid()));"
+            s += "f.close();"
+            s += "time.sleep(60);"
+            p = subprocess.Popen([r'%s', '-c', s])
+            p.wait()
+            """ % (os.path.basename(testfn), PYTHON_EXE))
+        # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
+        # set (which is the default) a "conhost.exe" extra process will be
+        # spawned as a child. We don't want that.
+        if WINDOWS:
+            subp = pyrun(s, creationflags=0)
+        else:
+            subp = pyrun(s)
+        child = psutil.Process(subp.pid)
+        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        _pids_started.add(grandchild_pid)
+        grandchild = psutil.Process(grandchild_pid)
+        return (child, grandchild)
+    finally:
+        safe_rmpath(testfn)
 
 
 def create_zombie_proc():
