@@ -138,12 +138,12 @@ def subprocess_supports_unicode(suffix):
     """
     if PY3:
         return True
-    name = get_testfn(suffix=suffix)
+    testfn = get_testfn(suffix=suffix)
     sproc = None
     try:
-        safe_rmpath(name)
-        create_exe(name)
-        sproc = get_test_subprocess(cmd=[name])
+        safe_rmpath(testfn)
+        create_exe(testfn)
+        sproc = get_test_subprocess(cmd=[testfn])
     except UnicodeEncodeError:
         return False
     else:
@@ -151,6 +151,7 @@ def subprocess_supports_unicode(suffix):
     finally:
         if sproc is not None:
             terminate(sproc)
+        safe_rmpath(testfn)
 
 
 # ===================================================================
