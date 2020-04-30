@@ -847,8 +847,8 @@ class PsutilTestCase(TestCase):
     """
 
     def get_testfn(self, suffix="", dir=None):
-        fname = get_testfn(suffix=suffix, dir=suffix)
-        self.addCleanup(safe_rmpath(fname))
+        fname = get_testfn(suffix=suffix, dir=dir)
+        self.addCleanup(safe_rmpath, fname)
         return fname
 
     def get_test_subprocess(self, *args, **kwds):

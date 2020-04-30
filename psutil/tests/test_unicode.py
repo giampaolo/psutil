@@ -102,7 +102,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath as _safe_rmpath
+from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import terminate
@@ -113,8 +113,9 @@ from psutil.tests import unittest
 import psutil
 
 
-def safe_rmpath(path):
-    if APPVEYOR:
+if APPVEYOR:
+
+    def safe_rmpath(path):  # NOQA
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
         # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
@@ -126,11 +127,9 @@ def safe_rmpath(path):
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
         try:
-            return _safe_rmpath(path)
+            return safe_rmpath(path)
         except WindowsError:
             traceback.print_exc()
-    else:
-        return _safe_rmpath(path)
 
 
 def subprocess_supports_unicode(suffix):
@@ -171,6 +170,7 @@ class _BaseFSAPIsTests(object):
     @classmethod
     def tearDownClass(cls):
         reap_children()
+        safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
@@ -231,7 +231,7 @@ class _BaseFSAPIsTests(object):
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
-        name = get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -257,7 +257,7 @@ class _BaseFSAPIsTests(object):
             raise ValueError("connection not found")
 
         suffix = os.path.basename(self.funky_name)
-        name = get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:

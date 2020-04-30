@@ -32,7 +32,6 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
@@ -134,26 +133,26 @@ class TestSyncTestUtils(PsutilTestCase):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_empty(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w'):
             pass
         wait_for_file(testfn, empty=True)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_no_file(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
             self.assertRaises(IOError, wait_for_file, testfn)
 
     def test_wait_for_file_no_delete(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn, delete=False)
@@ -175,7 +174,7 @@ class TestFSTestUtils(PsutilTestCase):
             self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         safe_mkdir(testfn)
         assert os.path.isdir(testfn)
         safe_mkdir(testfn)
@@ -183,7 +182,7 @@ class TestFSTestUtils(PsutilTestCase):
 
     def test_safe_rmpath(self):
         # test file is removed
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         open(testfn, 'w').close()
         safe_rmpath(testfn)
         assert not os.path.exists(testfn)
@@ -201,7 +200,7 @@ class TestFSTestUtils(PsutilTestCase):
             assert m.called
 
     def test_chdir(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         base = os.getcwd()
         os.mkdir(testfn)
         with chdir(testfn):
@@ -284,7 +283,7 @@ class TestNetUtils(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
-        name = get_testfn()
+        name = self.get_testfn()
         sock = bind_unix_socket(name)
         with contextlib.closing(sock):
             self.assertEqual(sock.family, socket.AF_UNIX)
@@ -293,7 +292,7 @@ class TestNetUtils(PsutilTestCase):
             assert os.path.exists(name)
             assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
-        name = get_testfn()
+        name = self.get_testfn()
         sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
         with contextlib.closing(sock):
             self.assertEqual(sock.type, socket.SOCK_DGRAM)
@@ -316,7 +315,7 @@ class TestNetUtils(PsutilTestCase):
         p = psutil.Process()
         num_fds = p.num_fds()
         assert not p.connections(kind='unix')
-        name = get_testfn()
+        name = self.get_testfn()
         server, client = unix_socketpair(name)
         try:
             assert os.path.exists(name)

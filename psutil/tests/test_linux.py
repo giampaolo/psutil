@@ -1216,7 +1216,7 @@ class TestMisc(PsutilTestCase):
         self.assertEqual(int(vmstat_value), int(psutil_value))
 
     def test_no_procfs_on_import(self):
-        my_procfs = get_testfn()
+        my_procfs = self.get_testfn()
         os.mkdir(my_procfs)
 
         with open(os.path.join(my_procfs, 'stat'), 'w') as f:
@@ -1345,7 +1345,7 @@ class TestMisc(PsutilTestCase):
             assert m.called
 
     def test_procfs_path(self):
-        tdir = get_testfn()
+        tdir = self.get_testfn()
         os.mkdir(tdir)
         try:
             psutil.PROCFS_PATH = tdir
@@ -1644,7 +1644,7 @@ class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     def test_memory_full_info(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
@@ -1713,7 +1713,7 @@ class TestProcess(PsutilTestCase):
             raise RuntimeError("timeout looking for test file")
 
         #
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, "w"):
             self.assertEqual(get_test_file(testfn).mode, "w")
         with open(testfn, "r"):
@@ -2100,7 +2100,7 @@ class TestUtils(PsutilTestCase):
             assert m.called
 
     def test_cat(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, "wt") as f:
             f.write("foo ")
         self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")

@@ -449,7 +449,7 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -471,7 +471,7 @@ class TestProcess(PsutilTestCase):
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -718,7 +718,7 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         create_exe(testfn)
         cmdline = [testfn] + (["0123456789"] * 20)
         sproc = self.get_test_subprocess(cmdline)
@@ -733,7 +733,7 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
-        testfn = get_testfn(suffix="0123456789" * 2)
+        testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
         sproc = self.get_test_subprocess(testfn)
         p = psutil.Process(sproc.pid)
@@ -747,7 +747,7 @@ class TestProcess(PsutilTestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = get_testfn(suffix='foo bar )')
+        funky_path = self.get_testfn(suffix='foo bar )')
         create_exe(funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
@@ -938,7 +938,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
         # current process
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(testfn in files)
@@ -978,7 +978,7 @@ class TestProcess(PsutilTestCase):
     def test_open_files_2(self):
         # test fd and path fields
         normcase = os.path.normcase
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as fileobj:
             p = psutil.Process()
             for file in p.open_files():
@@ -1001,7 +1001,7 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         start = p.num_fds()
         file = open(testfn, 'w')
@@ -1488,7 +1488,7 @@ class TestProcess(PsutilTestCase):
                 return execve("/bin/cat", argv, envp);
             }
             """)
-        path = get_testfn()
+        path = self.get_testfn()
         create_exe(path, c_code=code)
         sproc = self.get_test_subprocess(
             [path], stdin=subprocess.PIPE, stderr=subprocess.PIPE)

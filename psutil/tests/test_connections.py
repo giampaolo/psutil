@@ -310,7 +310,7 @@ class TestConnectedSocket(_ConnTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         server, client = unix_socketpair(testfn)
         try:
             cons = thisproc.connections(kind='unix')
@@ -582,7 +582,7 @@ class TestSystemWideConnections(_ConnTestCase):
         times = 10
         fnames = []
         for i in range(times):
-            fname = get_testfn()
+            fname = self.get_testfn()
             fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os
