@@ -1528,14 +1528,14 @@ if POSIX and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
-            super().setUp(self)
+            super().setUp()
             os.setegid(1000)
             os.seteuid(1000)
 
         def tearDown(self):
             os.setegid(self.PROCESS_UID)
             os.seteuid(self.PROCESS_GID)
-            super().tearDown(self)
+            super().tearDown()
 
         def test_nice(self):
             try:
