@@ -7,9 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1729_: parallel tests on UNIX (make test-parallel).
-- 1736_: psutil.Popen now inherits from subprocess.Popen instead of
-  psutil.Process. Also, wait(timeout=...) parameter is backported to Python 2.7.
+- 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
 - 1741_: "make build/install" is now run in parallel and it's about 15% faster
   on UNIX.
 

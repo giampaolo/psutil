@@ -1289,12 +1289,12 @@ _as_dict_attrnames = set(
 # =====================================================================
 
 
-class Popen(subprocess.Popen):
+class Popen(Process):
     """A more convenient interface to stdlib subprocess.Popen class.
     It starts a sub process and deals with it exactly as when using
-    subprocess.Popen class, but in addition it also provides all the
-    methods of psutil.Process class as a unified interface:
-
+    subprocess.Popen class but in addition also provides all the
+    properties and methods of psutil.Process class as a unified
+    interface:
       >>> import psutil
       >>> from subprocess import PIPE
       >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
@@ -1310,16 +1310,12 @@ class Popen(subprocess.Popen):
       >>> p.wait(timeout=2)
       0
       >>>
-
-    In addition, it backports the following functionality:
-    * "with" statement (Python 3.2)
-    * wait(timeout=...) parameter (Python 3.3)
-
+    For method names common to both classes such as kill(), terminate()
+    and wait(), psutil.Process implementation takes precedence.
     Unlike subprocess.Popen this class pre-emptively checks whether PID
-    has been reused on send_signal(), terminate() and kill(), so that
+    has been reused on send_signal(), terminate() and kill() so that
     you don't accidentally terminate another process, fixing
     http://bugs.python.org/issue6973.
-
     For a complete documentation refer to:
     http://docs.python.org/3/library/subprocess.html
     """
@@ -1328,21 +1324,21 @@ class Popen(subprocess.Popen):
         # Explicitly avoid to raise NoSuchProcess in case the process
         # spawned by subprocess.Popen terminates too quickly, see:
         # https://github.com/giampaolo/psutil/issues/193
-        self.__psproc = None
-        subprocess.Popen.__init__(self, *args, **kwargs)
-        self.__psproc = Process(self.pid)
-        self.__psproc._init(self.pid, _ignore_nsp=True)
+        self.__subproc = subprocess.Popen(*args, **kwargs)
+        self._init(self.__subproc.pid, _ignore_nsp=True)
 
     def __dir__(self):
-        return sorted(set(dir(subprocess.Popen) + dir(Process)))
+        return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
-    # Introduced in Python 3.2.
-    if not hasattr(subprocess.Popen, '__enter__'):
+    def __enter__(self):
+        if hasattr(self.__subproc, '__enter__'):
+            self.__subproc.__enter__()
+        return self
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args, **kwargs):
+    def __exit__(self, *args, **kwargs):
+        if hasattr(self.__subproc, '__exit__'):
+            return self.__subproc.__exit__(*args, **kwargs)
+        else:
             if self.stdout:
                 self.stdout.close()
             if self.stderr:
@@ -1360,30 +1356,21 @@ class Popen(subprocess.Popen):
             return object.__getattribute__(self, name)
         except AttributeError:
             try:
-                return object.__getattribute__(self.__psproc, name)
+                return object.__getattribute__(self.__subproc, name)
             except AttributeError:
                 raise AttributeError("%s instance has no attribute '%s'"
                                      % (self.__class__.__name__, name))
 
-    def send_signal(self, sig):
-        return self.__psproc.send_signal(sig)
-
-    def terminate(self):
-        return self.__psproc.terminate()
-
-    def kill(self):
-        return self.__psproc.kill()
-
     def wait(self, timeout=None):
-        if sys.version_info < (3, 3):
-            # backport of timeout parameter
-            if self.returncode is not None:
-                return self.returncode
-            ret = self.__psproc.wait(timeout)
-            self.returncode = ret
-            return ret
-        else:
-            return super(Popen, self).wait(timeout)
+        if self.__subproc.returncode is not None:
+            return self.__subproc.returncode
+        # Note: using psutil's wait() on UNIX should make no difference.
+        # On Windows it does, because PID can still be alive (see
+        # _pswindows.py counterpart addressing this). On Python 2.7 we don't
+        # have timeout arg, so this acts as a backport.
+        ret = Process.wait(self, timeout)
+        self.__subproc.returncode = ret
+        return ret
 
 
 # =====================================================================
