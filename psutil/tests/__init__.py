@@ -354,11 +354,11 @@ def create_proc_children_pair():
         subp = pyrun(s, creationflags=0)
     else:
         subp = pyrun(s)
-    child1 = psutil.Process(subp.pid)
-    child2_pid = int(wait_for_file(testfn, delete=True, empty=False))
-    _pids_started.add(child2_pid)
-    child2 = psutil.Process(child2_pid)
-    return (child1, child2)
+    child = psutil.Process(subp.pid)
+    grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+    _pids_started.add(grandchild_pid)
+    grandchild = psutil.Process(grandchild_pid)
+    return (child, grandchild)
 
 
 def create_zombie_proc():
