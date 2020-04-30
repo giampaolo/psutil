@@ -1027,12 +1027,9 @@ class TestProcess(PsutilTestCase):
     def test_ppid(self):
         if hasattr(os, 'getppid'):
             self.assertEqual(psutil.Process().ppid(), os.getppid())
-        this_parent = os.getpid()
         sproc = self.get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.ppid(), this_parent)
-        # no other process is supposed to have us as parent
-        reap_children(recursive=True)
+        self.assertEqual(p.ppid(), os.getpid())
         if APPVEYOR:
             # Occasional failures, see:
             # https://ci.appveyor.com/project/giampaolo/psutil/build/
@@ -1042,13 +1039,12 @@ class TestProcess(PsutilTestCase):
             if p.pid == sproc.pid:
                 continue
             # XXX: sometimes this fails on Windows; not sure why.
-            self.assertNotEqual(p.ppid(), this_parent, msg=p)
+            self.assertNotEqual(p.ppid(), os.getpid(), msg=p)
 
     def test_parent(self):
-        this_parent = os.getpid()
         sproc = self.get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.parent().pid, this_parent)
+        self.assertEqual(p.parent().pid, os.getpid())
 
         lowest_pid = psutil.pids()[0]
         self.assertIsNone(psutil.Process(lowest_pid).parent())
@@ -1075,7 +1071,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(grandchild.parents()[1], psutil.Process())
 
     def test_children(self):
-        reap_children(recursive=True)
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
