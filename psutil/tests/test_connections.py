@@ -39,7 +39,7 @@ from psutil.tests import enum
 from psutil.tests import get_free_port
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
@@ -55,7 +55,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
 @serialrun
-class _ConnTestCase(ProcessTestCase):
+class _ConnTestCase(PsutilTestCase):
 
     def setUp(self):
         if not (NETBSD or FREEBSD):
@@ -610,7 +610,7 @@ class TestSystemWideConnections(_ConnTestCase):
             self.assertEqual(len(p.connections('all')), expected)
 
 
-class TestMisc(unittest.TestCase):
+class TestMisc(PsutilTestCase):
 
     def test_connection_constants(self):
         ints = []

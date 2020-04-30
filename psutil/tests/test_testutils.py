@@ -36,7 +36,7 @@ from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry
@@ -59,7 +59,7 @@ import psutil.tests
 # ===================================================================
 
 
-class TestRetryDecorator(unittest.TestCase):
+class TestRetryDecorator(PsutilTestCase):
 
     @mock.patch('time.sleep')
     def test_retry_success(self, sleep):
@@ -125,7 +125,7 @@ class TestRetryDecorator(unittest.TestCase):
         self.assertRaises(ValueError, retry, retries=5, timeout=1)
 
 
-class TestSyncTestUtils(unittest.TestCase):
+class TestSyncTestUtils(PsutilTestCase):
 
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
@@ -164,7 +164,7 @@ class TestSyncTestUtils(unittest.TestCase):
         self.assertEqual(ret, 1)
 
 
-class TestFSTestUtils(unittest.TestCase):
+class TestFSTestUtils(PsutilTestCase):
 
     def test_open_text(self):
         with open_text(__file__) as f:
@@ -209,7 +209,7 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
-class TestProcessUtils(ProcessTestCase):
+class TestProcessUtils(PsutilTestCase):
 
     def test_reap_children(self):
         subp = self.get_test_subprocess()
@@ -275,7 +275,7 @@ class TestProcessUtils(ProcessTestCase):
             assert not psutil.pid_exists(zombie.pid)
 
 
-class TestNetUtils(unittest.TestCase):
+class TestNetUtils(PsutilTestCase):
 
     def bind_socket(self):
         port = get_free_port()
@@ -417,7 +417,7 @@ class TestMemLeakClass(TestMemoryLeak):
             self.execute_w_exc(ZeroDivisionError, fun)
 
 
-class TestOtherUtils(unittest.TestCase):
+class TestOtherUtils(PsutilTestCase):
 
     def test_is_namedtuple(self):
         assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))

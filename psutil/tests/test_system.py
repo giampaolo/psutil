@@ -44,7 +44,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
 from psutil.tests import TRAVIS
@@ -57,7 +57,7 @@ from psutil.tests import unittest
 # ===================================================================
 
 
-class TestProcessAPIs(ProcessTestCase):
+class TestProcessAPIs(PsutilTestCase):
 
     def test_process_iter(self):
         self.assertIn(os.getpid(), [x.pid for x in psutil.process_iter()])
@@ -190,7 +190,7 @@ class TestProcessAPIs(ProcessTestCase):
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
 
-class TestMiscAPIs(unittest.TestCase):
+class TestMiscAPIs(PsutilTestCase):
 
     def test_boot_time(self):
         bt = psutil.boot_time()
@@ -272,7 +272,7 @@ class TestMiscAPIs(unittest.TestCase):
             self.assertIs(getattr(psutil, name), False, msg=name)
 
 
-class TestMemoryAPIs(unittest.TestCase):
+class TestMemoryAPIs(PsutilTestCase):
 
     def test_virtual_memory(self):
         mem = psutil.virtual_memory()
@@ -309,7 +309,7 @@ class TestMemoryAPIs(unittest.TestCase):
         assert mem.sout >= 0, mem
 
 
-class TestCpuAPIs(unittest.TestCase):
+class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_count_logical(self):
         logical = psutil.cpu_count()
@@ -550,7 +550,7 @@ class TestCpuAPIs(unittest.TestCase):
             self.assertGreaterEqual(load, 0.0)
 
 
-class TestDiskAPIs(unittest.TestCase):
+class TestDiskAPIs(PsutilTestCase):
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
@@ -684,7 +684,7 @@ class TestDiskAPIs(unittest.TestCase):
             assert m.called
 
 
-class TestNetAPIs(unittest.TestCase):
+class TestNetAPIs(PsutilTestCase):
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
@@ -829,7 +829,7 @@ class TestNetAPIs(unittest.TestCase):
             assert m.called
 
 
-class TestSensorsAPIs(unittest.TestCase):
+class TestSensorsAPIs(PsutilTestCase):
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):

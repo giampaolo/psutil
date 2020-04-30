@@ -37,6 +37,7 @@ from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import import_module_by_path
 from psutil.tests import mock
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
@@ -53,7 +54,7 @@ import psutil.tests
 # ===================================================================
 
 
-class TestMisc(unittest.TestCase):
+class TestMisc(PsutilTestCase):
 
     def test_process__repr__(self, func=repr):
         p = psutil.Process()
@@ -386,7 +387,7 @@ class TestMisc(unittest.TestCase):
 nt = collections.namedtuple('foo', 'a b c')
 
 
-class TestWrapNumbers(unittest.TestCase):
+class TestWrapNumbers(PsutilTestCase):
 
     def setUp(self):
         wrap_numbers.cache_clear()
@@ -627,7 +628,7 @@ class TestWrapNumbers(unittest.TestCase):
 
 @unittest.skipIf(not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
-class TestScripts(unittest.TestCase):
+class TestScripts(PsutilTestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod

@@ -88,7 +88,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak', 'ProcessTestCase',
+    'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -841,10 +841,15 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-class ProcessTestCase(TestCase):
+class PsutilTestCase(TestCase):
     """Test class providing auto-cleanup wrappers on top of process
     test utilities.
     """
+
+    def get_testfn(self, suffix="", dir=None):
+        fname = get_testfn(suffix=suffix, dir=suffix)
+        self.addCleanup(safe_rmpath(fname))
+        return fname
 
     def get_test_subprocess(self, *args, **kwds):
         sproc = get_test_subprocess(*args, **kwds)
@@ -853,8 +858,8 @@ class ProcessTestCase(TestCase):
 
     def create_proc_children_pair(self):
         child1, child2 = create_proc_children_pair()
-        self.addCleanup(terminate, child1)
         self.addCleanup(terminate, child2)
+        self.addCleanup(terminate, child1)  # executed first
         return (child1, child2)
 
     def create_zombie_proc(self):
@@ -868,14 +873,9 @@ class ProcessTestCase(TestCase):
         self.addCleanup(terminate, sproc)
         return sproc
 
-    def get_testfn(self, suffix="", dir=None):
-        fname = get_testfn(suffix=suffix, dir=suffix)
-        self.addCleanup(safe_rmpath(fname))
-        return fname
-
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-class TestMemoryLeak(unittest.TestCase):
+class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks (typically
     functions implemented in C).
     It does so by calling a function many times, and checks whether the

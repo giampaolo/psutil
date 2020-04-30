@@ -50,7 +50,7 @@ from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
@@ -69,7 +69,7 @@ from psutil.tests import wait_for_pid
 # ===================================================================
 
 
-class TestProcess(ProcessTestCase):
+class TestProcess(PsutilTestCase):
     """Tests for psutil.Process class."""
 
     def test_pid(self):
@@ -1560,7 +1560,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
-class TestPopen(unittest.TestCase):
+class TestPopen(PsutilTestCase):
     """Tests for psutil.Popen class."""
 
     @classmethod

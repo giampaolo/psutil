@@ -26,7 +26,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import reap_children
@@ -66,7 +66,7 @@ def wrap_exceptions(fun):
 
 
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
-class TestCase(unittest.TestCase):
+class TestCase(PsutilTestCase):
     pass
 
 
@@ -300,7 +300,7 @@ class TestSensorsBattery(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcess(ProcessTestCase):
+class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -677,7 +677,7 @@ class TestDualProcessImplementation(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class RemoteProcessTestCase(ProcessTestCase):
+class RemotePsutilTestCase(PsutilTestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
     Check that this works on other processes, especially when they

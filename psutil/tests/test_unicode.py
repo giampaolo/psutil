@@ -98,7 +98,7 @@ from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import INVALID_UNICODE_SUFFIX
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
@@ -304,7 +304,7 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
                  "subprocess can't deal with unicode")
-class TestFSAPIs(_BaseFSAPIsTests, ProcessTestCase):
+class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_suffix = UNICODE_SUFFIX
 
@@ -322,7 +322,7 @@ class TestFSAPIs(_BaseFSAPIsTests, ProcessTestCase):
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 @unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
                  "subprocess can't deal with invalid unicode")
-class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, ProcessTestCase):
+class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
@@ -337,7 +337,7 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, ProcessTestCase):
 # ===================================================================
 
 
-class TestNonFSAPIS(ProcessTestCase):
+class TestNonFSAPIS(PsutilTestCase):
     """Unicode tests for non fs-related APIs."""
 
     def tearDown(self):
