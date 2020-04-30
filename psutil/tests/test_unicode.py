@@ -114,7 +114,6 @@ import psutil
 
 
 if APPVEYOR:
-
     def safe_rmpath(path):  # NOQA
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
@@ -138,8 +137,8 @@ def subprocess_supports_unicode(suffix):
     """
     if PY3:
         return True
-    testfn = get_testfn(suffix=suffix)
     sproc = None
+    testfn = get_testfn(suffix=suffix)
     try:
         safe_rmpath(testfn)
         create_exe(testfn)

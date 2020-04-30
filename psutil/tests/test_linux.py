@@ -28,7 +28,6 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
-from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -1741,7 +1740,7 @@ class TestProcess(PsutilTestCase):
         # execution
         p = psutil.Process()
         files = p.open_files()
-        with open(get_testfn(), 'w'):
+        with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             with mock.patch('psutil._pslinux.os.readlink',
@@ -1762,7 +1761,7 @@ class TestProcess(PsutilTestCase):
         # https://travis-ci.org/giampaolo/psutil/jobs/225694530
         p = psutil.Process()
         files = p.open_files()
-        with open(get_testfn(), 'w'):
+        with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'

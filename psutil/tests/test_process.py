@@ -40,7 +40,6 @@ from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import enum
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -316,7 +315,7 @@ class TestProcess(PsutilTestCase):
 
         # test writes
         io1 = p.io_counters()
-        with open(get_testfn(), 'wb') as f:
+        with open(self.get_testfn(), 'wb') as f:
             if PY3:
                 f.write(bytes("x" * 1000000, 'ascii'))
             else:

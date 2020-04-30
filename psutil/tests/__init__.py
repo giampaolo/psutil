@@ -30,7 +30,6 @@ import tempfile
 import textwrap
 import threading
 import time
-import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -220,7 +219,6 @@ AF_UNIX = getattr(socket, "AF_UNIX", object())
 
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles_created = set()
 
 
 # ===================================================================
@@ -791,7 +789,6 @@ def chdir(dirname):
 def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
-    _testfiles_created.add(outpath)
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
@@ -830,7 +827,6 @@ def get_testfn(suffix="", dir=None):
         prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
         name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
-            _testfiles_created.add(name)
             return os.path.realpath(name)  # needed for OSX
 
 
@@ -1169,8 +1165,6 @@ def create_sockets():
             fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
             s3 = bind_unix_socket(fname2, type=socket.SOCK_DGRAM)
-            # self.addCleanup(safe_rmpath, fname1)
-            # self.addCleanup(safe_rmpath, fname2)
             for s in (s1, s2, s3):
                 socks.append(s)
         yield socks
@@ -1330,16 +1324,6 @@ else:
 
 
 atexit.register(DEVNULL.close)
-
-
-@atexit.register
-def cleanup_test_files():
-    while _testfiles_created:
-        path = _testfiles_created.pop()
-        try:
-            safe_rmpath(path)
-        except Exception:
-            traceback.print_exc()
 
 
 # this is executed first
