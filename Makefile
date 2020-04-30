@@ -2,10 +2,12 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
+# Configurable.
 PYTHON = python3
-TSCRIPT = psutil/tests/runner.py
 ARGS =
-# List of nice-to-have dev libs.
+TSCRIPT = psutil/tests/runner.py
+
+# Internal.
 DEPS = \
 	argparse \
 	check-manifest \
@@ -26,6 +28,12 @@ PY2_DEPS = \
 	unittest2
 DEPS += `$(PYTHON) -c \
 	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
+# "python3 setup.py build" can be parallelized on Python >= 3.6.
+BUILD_OPTS = `$(PYTHON) -c \
+	"import sys, os; \
+	py36 = sys.version_info[:2] >= (3, 6); \
+	cpus = os.cpu_count() or 1 if py36 else 1; \
+	print('--parallel %s' % cpus if cpus > 1 else '')"`
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
@@ -62,14 +70,13 @@ clean:  ## Remove all build files.
 
 _:
 
-build: _  ## Compile without installing.
+build: _  ## Compile (in parallel) without installing.
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
 	$(PYTHON) -c "import setuptools"
-	PYTHONWARNINGS=all $(PYTHON) setup.py build
-	@# copies compiled *.so files in ./psutil directory in order to allow
-	@# "import psutil" when using the interactive interpreter from within
-	@# this directory.
-	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i
+	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
+	@# to allow "import psutil" when using the interactive interpreter from
+	@# within  this directory.
+	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
@@ -111,51 +118,51 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 
 test:  ## Run all tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT)
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) --parallel
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --parallel
 
 test-process:  ## Run process-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_process.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_system.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_misc.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_misc.py
 
 test-testutils:  ## Run test utils tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_testutils.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_unicode.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_contracts.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
 
 test-connections:  ## Test net_connections() and Process.connections().
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_connections.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_posix.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) psutil/tests/test_memory_leaks.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memory_leaks.py
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} install
@@ -163,7 +170,7 @@ test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSyste
 
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} install
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) --last-failed
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
 
 test-coverage:  ## Run test coverage.
 	${MAKE} install

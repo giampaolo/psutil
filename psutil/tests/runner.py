@@ -10,6 +10,14 @@ Unit test runner, providing new features on top of unittest module:
 - parallel run (UNIX only)
 - print failures/tracebacks on CTRL+C
 - re-run failed tests only (make test-failed)
+
+Invocation examples:
+- make test
+- make test-failed
+
+Parallel:
+- make test-parallel
+- make test-process ARGS=--parallel
 """
 
 from __future__ import print_function
@@ -20,9 +28,6 @@ import sys
 import textwrap
 import time
 import unittest
-from unittest import TestResult
-from unittest import TextTestResult
-from unittest import TextTestRunner
 try:
     import ctypes
 except ImportError:
@@ -37,6 +42,7 @@ import psutil
 from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
+from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import import_module_by_path
 from psutil.tests import reap_children
@@ -44,61 +50,15 @@ from psutil.tests import safe_rmpath
 from psutil.tests import TOX
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
 VERBOSITY = 1 if TOX else 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
 NWORKERS = psutil.cpu_count() or 1
 
+HERE = os.path.abspath(os.path.dirname(__file__))
 loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
 
 
-# =====================================================================
-# --- unittest subclasses
-# =====================================================================
-
-
-class ColouredResult(TextTestResult):
-
-    def _print_color(self, s, color, bold=False):
-        print_color(s, color, bold=bold, file=self.stream)
-
-    def addSuccess(self, test):
-        TestResult.addSuccess(self, test)
-        self._print_color("OK", "green")
-
-    def addError(self, test, err):
-        TestResult.addError(self, test, err)
-        self._print_color("ERROR", "red", bold=True)
-
-    def addFailure(self, test, err):
-        TestResult.addFailure(self, test, err)
-        self._print_color("FAIL", "red")
-
-    def addSkip(self, test, reason):
-        TestResult.addSkip(self, test, reason)
-        self._print_color("skipped: %s" % reason.strip(), "brown")
-
-    def printErrorList(self, flavour, errors):
-        flavour = hilite(flavour, "red", bold=flavour == 'ERROR')
-        TextTestResult.printErrorList(self, flavour, errors)
-
-
-class ColouredTextRunner(TextTestRunner):
-    resultclass = ColouredResult
-
-    def _makeResult(self):
-        # Store result instance so that it can be accessed on
-        # KeyboardInterrupt.
-        self.result = TextTestRunner._makeResult(self)
-        return self.result
-
-
-# =====================================================================
-# --- public API
-# =====================================================================
-
-
-class SuiteLoader:
+class TestLoader:
 
     testdir = HERE
     skip_files = ['test_memory_leaks.py']
@@ -130,17 +90,6 @@ class SuiteLoader:
             suite.addTest(test)
         return suite
 
-    def parallel(self):
-        serial = unittest.TestSuite()
-        parallel = unittest.TestSuite()
-        for obj in self._iter_testmod_classes():
-            test = loadTestsFromTestCase(obj)
-            if getattr(obj, '_serialrun', False):
-                serial.addTest(test)
-            else:
-                parallel.addTest(test)
-        return (serial, parallel)
-
     def last_failed(self):
         # ...from previously failed test run
         suite = unittest.TestSuite()
@@ -154,22 +103,57 @@ class SuiteLoader:
         return suite
 
     def from_name(self, name):
-        suite = unittest.TestSuite()
         if name.endswith('.py'):
             name = os.path.splitext(os.path.basename(name))[0]
-        suite.addTest(unittest.defaultTestLoader.loadTestsFromName(name))
-        return suite
+        return unittest.defaultTestLoader.loadTestsFromName(name)
 
 
-class Runner:
+class ColouredResult(unittest.TextTestResult):
 
-    def __init__(self):
-        self.loader = SuiteLoader()
+    def _print_color(self, s, color, bold=False):
+        print_color(s, color, bold=bold, file=self.stream)
+
+    def addSuccess(self, test):
+        unittest.TestResult.addSuccess(self, test)
+        self._print_color("OK", "green")
+
+    def addError(self, test, err):
+        unittest.TestResult.addError(self, test, err)
+        self._print_color("ERROR", "red", bold=True)
+
+    def addFailure(self, test, err):
+        unittest.TestResult.addFailure(self, test, err)
+        self._print_color("FAIL", "red")
+
+    def addSkip(self, test, reason):
+        unittest.TestResult.addSkip(self, test, reason)
+        self._print_color("skipped: %s" % reason.strip(), "brown")
+
+    def printErrorList(self, flavour, errors):
+        flavour = hilite(flavour, "red", bold=flavour == 'ERROR')
+        super().printErrorList(flavour, errors)
+
+
+class ColouredTextRunner(unittest.TextTestRunner):
+    """
+    A coloured text runner which also prints failed tests on KeyboardInterrupt
+    and save failed tests in a file so that they can be re-run.
+    """
+
+    if term_supports_colors() and not APPVEYOR:
+        resultclass = ColouredResult
+    else:
+        resultclass = unittest.TextTestResult
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.failed_tnames = set()
-        if term_supports_colors() and not APPVEYOR:
-            self.runner = ColouredTextRunner(verbosity=VERBOSITY)
-        else:
-            self.runner = TextTestRunner(verbosity=VERBOSITY)
+
+    def _makeResult(self):
+        # Store result instance so that it can be accessed on
+        # KeyboardInterrupt.
+        self.result = super()._makeResult()
+        return self.result
 
     def _write_last_failed(self):
         if self.failed_tnames:
@@ -185,7 +169,7 @@ class Runner:
 
     def _run(self, suite):
         try:
-            result = self.runner.run(suite)
+            result = super().run(suite)
         except (KeyboardInterrupt, SystemExit):
             result = self.runner.result
             result.printErrors()
@@ -194,32 +178,25 @@ class Runner:
             self._save_result(result)
             return result
 
-    def _finalize(self, success):
+    def _exit(self, success):
         if success:
+            print_color("SUCCESS", "green", bold=True)
             safe_rmpath(FAILED_TESTS_FNAME)
+            sys.exit(0)
         else:
+            print_color("FAILED", "red", bold=True)
             self._write_last_failed()
-            print_color("FAILED", "red")
             sys.exit(1)
 
-    def run(self, suite=None):
-        """Run tests serially (1 process)."""
-        if suite is None:
-            suite = self.loader.all()
+    def run(self, suite):
         result = self._run(suite)
-        self._finalize(result.wasSuccessful())
+        self._exit(result.wasSuccessful())
 
-    def run_last_failed(self):
-        """Run tests which failed in the last run."""
-        self.run(self.loader.last_failed())
 
-    def run_from_name(self, name):
-        """Run test by name, e.g.:
-        "test_linux.TestSystemCPUStats.test_ctx_switches"
-        """
-        self.run(self.loader.from_name(name))
+class ParallelRunner(ColouredTextRunner):
 
-    def _parallelize_suite(self, suite):
+    @staticmethod
+    def _parallelize(suite):
         def fdopen(*args, **kwds):
             stream = orig_fdopen(*args, **kwds)
             atexit.register(stream.close)
@@ -232,18 +209,33 @@ class Runner:
         forker = concurrencytest.fork_for_tests(NWORKERS)
         return concurrencytest.ConcurrentTestSuite(suite, forker)
 
-    def run_parallel(self):
-        """Run tests in parallel."""
-        ser_suite, par_suite = self.loader.parallel()
-        par_suite = self._parallelize_suite(par_suite)
+    @staticmethod
+    def _split_suite(suite):
+        serial = unittest.TestSuite()
+        parallel = unittest.TestSuite()
+        for test in suite._tests:
+            if test.countTestCases() == 0:
+                continue
+            test_class = test._tests[0].__class__
+            if getattr(test_class, '_serialrun', False):
+                serial.addTest(loadTestsFromTestCase(test_class))
+            else:
+                parallel.addTest(loadTestsFromTestCase(test_class))
+        return (serial, parallel)
+
+    def run(self, suite):
+        ser_suite, par_suite = self._split_suite(suite)
+        par_suite = self._parallelize(par_suite)
 
         # run parallel
-        print("starting parallel tests using %s workers" % NWORKERS)
+        print_color("starting parallel tests using %s workers" % NWORKERS,
+                    "green", bold=True)
         t = time.time()
         par = self._run(par_suite)
         par_elapsed = time.time() - t
 
-        # cleanup workers and test subprocesses
+        # At this point we should have N zombies (the workers), which
+        # will disappear with wait().
         orphans = psutil.Process().children()
         gone, alive = psutil.wait_procs(orphans, timeout=1)
         if alive:
@@ -256,7 +248,7 @@ class Runner:
         ser_elapsed = time.time() - t
 
         # print
-        if not par.wasSuccessful():
+        if not par.wasSuccessful() and ser_suite.countTestCases() > 0:
             par.printErrors()  # print them again at the bottom
         par_fails, par_errs, par_skips = map(len, (par.failures,
                                                    par.errors,
@@ -264,7 +256,6 @@ class Runner:
         ser_fails, ser_errs, ser_skips = map(len, (ser.failures,
                                                    ser.errors,
                                                    ser.skipped))
-        print("-" * 70)
         print(textwrap.dedent("""
             +----------+----------+----------+----------+----------+----------+
             |          |    total | failures |   errors |  skipped |     time |
@@ -278,14 +269,33 @@ class Runner:
         print("Ran %s tests in %.3fs using %s workers" % (
             par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
         ok = par.wasSuccessful() and ser.wasSuccessful()
-        self._finalize(ok)
+        self._exit(ok)
 
 
-runner = Runner()
-run_from_name = runner.run_from_name
+def get_runner(parallel=False):
+    def warn(msg):
+        print_color(msg + " Running serial tests instead.",
+                    "red", file=sys.stderr)
+    if parallel:
+        if psutil.WINDOWS:
+            warn("Can't run parallel tests on Windows.")
+        elif concurrencytest is None:
+            warn("concurrencytest module is not installed.")
+        elif NWORKERS == 1:
+            warn("Only 1 CPU available.")
+        else:
+            return ParallelRunner(verbosity=VERBOSITY)
+    return ColouredTextRunner(verbosity=VERBOSITY)
 
 
-def _setup():
+# Used by test_*,py modules.
+def run_from_name(name):
+    suite = TestLoader().from_name(name)
+    runner = get_runner()
+    runner.run(suite)
+
+
+def setup():
     if 'PSUTIL_TESTING' not in os.environ:
         # This won't work on Windows but set_testing() below will do it.
         os.environ['PSUTIL_TESTING'] = '1'
@@ -293,7 +303,7 @@ def _setup():
 
 
 def main():
-    _setup()
+    setup()
     usage = "python3 -m psutil.tests [opts] [test-name]"
     parser = optparse.OptionParser(usage=usage, description="run unit tests")
     parser.add_option("--last-failed",
@@ -307,26 +317,22 @@ def main():
     if not opts.last_failed:
         safe_rmpath(FAILED_TESTS_FNAME)
 
-    # test-by-name
+    # loader
+    loader = TestLoader()
     if args:
         if len(args) > 1:
             parser.print_usage()
             return sys.exit(1)
-        return runner.run_from_name(args[0])
+        else:
+            suite = loader.from_name(args[0])
     elif opts.last_failed:
-        runner.run_last_failed()
-    elif not opts.parallel:
-        runner.run()
-    # parallel
-    elif concurrencytest is None:
-        print_color("concurrencytest module is not installed; "
-                    "running serial tests instead", "red")
-        runner.run()
-    elif NWORKERS == 1:
-        print_color("only 1 CPU; running serial tests instead", "red")
-        runner.run()
+        suite = loader.last_failed()
     else:
-        runner.run_parallel()
+        suite = loader.all()
+
+    # runner
+    runner = get_runner(opts.parallel)
+    runner.run(suite)
 
 
 if __name__ == '__main__':
