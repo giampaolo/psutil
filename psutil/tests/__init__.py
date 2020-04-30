@@ -309,14 +309,17 @@ def get_test_subprocess(cmd=None, **kwds):
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
         testfn = get_testfn()
-        safe_rmpath(testfn)
-        pyline = "from time import sleep;" \
-                 "open(r'%s', 'w').close();" \
-                 "sleep(60);" % testfn
-        cmd = [PYTHON_EXE, "-c", pyline]
-        sproc = subprocess.Popen(cmd, **kwds)
-        _subprocesses_started.add(sproc)
-        wait_for_file(testfn, delete=True, empty=True)
+        try:
+            safe_rmpath(testfn)
+            pyline = "from time import sleep;" \
+                     "open(r'%s', 'w').close();" \
+                     "sleep(60);" % testfn
+            cmd = [PYTHON_EXE, "-c", pyline]
+            sproc = subprocess.Popen(cmd, **kwds)
+            _subprocesses_started.add(sproc)
+            wait_for_file(testfn, delete=True, empty=True)
+        finally:
+            safe_rmpath(testfn)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
