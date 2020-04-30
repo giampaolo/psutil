@@ -13,7 +13,7 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
-# run tests (with coverage)
+# Install + run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
     make test-coverage PYTHON=python
 else
@@ -22,12 +22,12 @@ fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
     # run mem leaks test
-    make test-memleaks PYTHON=python
+    PSUTIL_TESTING=1 python -Wa psutil/tests/test_memory_leaks.py
     # run linter (on Linux only)
     if [[ "$(uname -s)" != 'Darwin' ]]; then
         make lint PYTHON=python
     fi
 fi
 
-make print-access-denied PYTHON=python
-make print-api-speed PYTHON=python
+PSUTIL_TESTING=1 python -Wa scripts/internal/print_access_denied.py
+PSUTIL_TESTING=1 python -Wa scripts/internal/print_api_speed.py
