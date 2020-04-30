@@ -11,13 +11,14 @@
 import re
 
 from psutil import AIX
+from psutil.tests import PsutilTestCase
 from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
 
 
 @unittest.skipIf(not AIX, "AIX only")
-class AIXSpecificTestCase(unittest.TestCase):
+class AIXSpecificTestCase(PsutilTestCase):
 
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')

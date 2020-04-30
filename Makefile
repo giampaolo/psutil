@@ -59,7 +59,7 @@ clean:  ## Remove all build files.
 	rm -rf \
 		*.core \
 		*.egg-info \
-		*\$testfn* \
+		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
 		.tox \

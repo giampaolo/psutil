@@ -15,9 +15,10 @@ from psutil import MACOS
 from psutil.tests import create_zombie_proc
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
-from psutil.tests import SYSMEM_TOLERANCE
+from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import terminate
 from psutil.tests import unittest
 
@@ -76,7 +77,7 @@ def human2bytes(s):
 
 
 @unittest.skipIf(not MACOS, "MACOS only")
-class TestProcess(unittest.TestCase):
+class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -102,7 +103,7 @@ class TestProcess(unittest.TestCase):
 
 # TODO: probably needs removal (duplicate)
 @unittest.skipIf(not MACOS, "MACOS only")
-class TestZombieProcessAPIs(unittest.TestCase):
+class TestZombieProcessAPIs(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -160,7 +161,7 @@ class TestZombieProcessAPIs(unittest.TestCase):
 
 
 @unittest.skipIf(not MACOS, "MACOS only")
-class TestSystemAPIs(unittest.TestCase):
+class TestSystemAPIs(PsutilTestCase):
 
     # --- disk
 

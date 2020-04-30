@@ -10,12 +10,13 @@ import os
 
 import psutil
 from psutil import SUNOS
+from psutil.tests import PsutilTestCase
 from psutil.tests import sh
 from psutil.tests import unittest
 
 
 @unittest.skipIf(not SUNOS, "SUNOS only")
-class SunOSSpecificTestCase(unittest.TestCase):
+class SunOSSpecificTestCase(PsutilTestCase):
 
     def test_swap_memory(self):
         out = sh('env PATH=/usr/sbin:/sbin:%s swap -l' % os.environ['PATH'])

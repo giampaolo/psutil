@@ -98,11 +98,10 @@ from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import INVALID_UNICODE_SUFFIX
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
-from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath as _safe_rmpath
+from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import terminate
@@ -113,8 +112,8 @@ from psutil.tests import unittest
 import psutil
 
 
-def safe_rmpath(path):
-    if APPVEYOR:
+if APPVEYOR:
+    def safe_rmpath(path):  # NOQA
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
         # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
@@ -125,12 +124,11 @@ def safe_rmpath(path):
         # https://github.com/giampaolo/psutil/blob/
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
+        from psutil.tests import safe_rmpath as _rm
         try:
-            return _safe_rmpath(path)
+            return _rm(path)
         except WindowsError:
             traceback.print_exc()
-    else:
-        return _safe_rmpath(path)
 
 
 def subprocess_supports_unicode(suffix):
@@ -139,12 +137,12 @@ def subprocess_supports_unicode(suffix):
     """
     if PY3:
         return True
-    name = get_testfn(suffix=suffix)
     sproc = None
+    testfn = get_testfn(suffix=suffix)
     try:
-        safe_rmpath(name)
-        create_exe(name)
-        sproc = get_test_subprocess(cmd=[name])
+        safe_rmpath(testfn)
+        create_exe(testfn)
+        sproc = get_test_subprocess(cmd=[testfn])
     except UnicodeEncodeError:
         return False
     else:
@@ -152,6 +150,7 @@ def subprocess_supports_unicode(suffix):
     finally:
         if sproc is not None:
             terminate(sproc)
+        safe_rmpath(testfn)
 
 
 # ===================================================================
@@ -170,7 +169,7 @@ class _BaseFSAPIsTests(object):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
         raise NotImplementedError("must be implemented in subclass")
@@ -231,7 +230,7 @@ class _BaseFSAPIsTests(object):
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
         suffix = os.path.basename(self.funky_name)
-        name = get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -257,7 +256,7 @@ class _BaseFSAPIsTests(object):
             raise ValueError("connection not found")
 
         suffix = os.path.basename(self.funky_name)
-        name = get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -304,7 +303,7 @@ class _BaseFSAPIsTests(object):
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
                  "subprocess can't deal with unicode")
-class TestFSAPIs(_BaseFSAPIsTests, ProcessTestCase):
+class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_suffix = UNICODE_SUFFIX
 
@@ -322,7 +321,7 @@ class TestFSAPIs(_BaseFSAPIsTests, ProcessTestCase):
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 @unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
                  "subprocess can't deal with invalid unicode")
-class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, ProcessTestCase):
+class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
@@ -337,11 +336,8 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, ProcessTestCase):
 # ===================================================================
 
 
-class TestNonFSAPIS(ProcessTestCase):
+class TestNonFSAPIS(PsutilTestCase):
     """Unicode tests for non fs-related APIs."""
-
-    def tearDown(self):
-        reap_children()
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")

@@ -27,6 +27,7 @@ from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
@@ -126,7 +127,7 @@ def ps_vsz(pid):
 
 
 @unittest.skipIf(not POSIX, "POSIX only")
-class TestProcess(unittest.TestCase):
+class TestProcess(PsutilTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
     @classmethod
@@ -326,7 +327,7 @@ class TestProcess(unittest.TestCase):
 
 
 @unittest.skipIf(not POSIX, "POSIX only")
-class TestSystemAPIs(unittest.TestCase):
+class TestSystemAPIs(PsutilTestCase):
     """Test some system APIs."""
 
     @retry_on_failure()

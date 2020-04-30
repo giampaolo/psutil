@@ -22,6 +22,7 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
+from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import SYSMEM_TOLERANCE
@@ -72,7 +73,7 @@ def muse(field):
 
 
 @unittest.skipIf(not BSD, "BSD only")
-class BSDTestCase(unittest.TestCase):
+class BSDTestCase(PsutilTestCase):
     """Generic tests common to all BSD variants."""
 
     @classmethod
@@ -148,7 +149,7 @@ class BSDTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
-class FreeBSDProcessTestCase(unittest.TestCase):
+class FreeBSDPsutilTestCase(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -238,7 +239,7 @@ class FreeBSDProcessTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
-class FreeBSDSystemTestCase(unittest.TestCase):
+class FreeBSDSystemTestCase(PsutilTestCase):
 
     @staticmethod
     def parse_swapinfo():
@@ -479,7 +480,7 @@ class FreeBSDSystemTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not OPENBSD, "OPENBSD only")
-class OpenBSDTestCase(unittest.TestCase):
+class OpenBSDTestCase(PsutilTestCase):
 
     def test_boot_time(self):
         s = sysctl('kern.boottime')
@@ -494,7 +495,7 @@ class OpenBSDTestCase(unittest.TestCase):
 
 
 @unittest.skipIf(not NETBSD, "NETBSD only")
-class NetBSDTestCase(unittest.TestCase):
+class NetBSDTestCase(PsutilTestCase):
 
     @staticmethod
     def parse_meminfo(look_for):

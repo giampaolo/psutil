@@ -22,14 +22,14 @@ import warnings
 import psutil
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
+from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PY3
 from psutil.tests import PYPY
-from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import terminate
@@ -66,7 +66,7 @@ def wrap_exceptions(fun):
 
 
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
-class TestCase(unittest.TestCase):
+class TestCase(PsutilTestCase):
     pass
 
 
@@ -300,7 +300,7 @@ class TestSensorsBattery(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcess(ProcessTestCase):
+class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -537,7 +537,7 @@ class TestProcessWMI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     def test_name(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -677,7 +677,7 @@ class TestDualProcessImplementation(TestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class RemoteProcessTestCase(ProcessTestCase):
+class RemoteProcessTestCase(PsutilTestCase):
     """Certain functions require calling ReadProcessMemory.
     This trivially works when called on the current process.
     Check that this works on other processes, especially when they
@@ -696,6 +696,7 @@ class RemoteProcessTestCase(ProcessTestCase):
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT)
             output, _ = proc.communicate()
+            proc.wait()
             if output == str(not IS_64_BIT):
                 return filename
 
@@ -717,6 +718,7 @@ class RemoteProcessTestCase(ProcessTestCase):
     test_args = ["-c", "import sys; sys.stdin.read()"]
 
     def setUp(self):
+        super().setUp()
         env = os.environ.copy()
         env["THINK_OF_A_NUMBER"] = str(os.getpid())
         self.proc32 = self.get_test_subprocess(
@@ -729,12 +731,9 @@ class RemoteProcessTestCase(ProcessTestCase):
             stdin=subprocess.PIPE)
 
     def tearDown(self):
+        super().tearDown()
         self.proc32.communicate()
         self.proc64.communicate()
-
-    @classmethod
-    def tearDownClass(cls):
-        reap_children()
 
     def test_cmdline_32(self):
         p = psutil.Process(self.proc32.pid)

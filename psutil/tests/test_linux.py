@@ -28,13 +28,12 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
-from psutil.tests import get_testfn
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
@@ -188,7 +187,7 @@ def mock_open_exception(for_path, exc):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemVirtualMemory(unittest.TestCase):
+class TestSystemVirtualMemory(PsutilTestCase):
 
     def test_total(self):
         # free_value = free_physmem().total
@@ -494,7 +493,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemSwapMemory(unittest.TestCase):
+class TestSystemSwapMemory(PsutilTestCase):
 
     @staticmethod
     def meminfo_has_swap_info():
@@ -588,7 +587,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUTimes(unittest.TestCase):
+class TestSystemCPUTimes(PsutilTestCase):
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_fields(self):
@@ -610,7 +609,7 @@ class TestSystemCPUTimes(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUCountLogical(unittest.TestCase):
+class TestSystemCPUCountLogical(PsutilTestCase):
 
     @unittest.skipIf(not os.path.exists("/sys/devices/system/cpu/online"),
                      "/sys/devices/system/cpu/online does not exist")
@@ -674,7 +673,7 @@ class TestSystemCPUCountLogical(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUCountPhysical(unittest.TestCase):
+class TestSystemCPUCountPhysical(PsutilTestCase):
 
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
@@ -695,7 +694,7 @@ class TestSystemCPUCountPhysical(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUFrequency(unittest.TestCase):
+class TestSystemCPUFrequency(PsutilTestCase):
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
@@ -843,7 +842,7 @@ class TestSystemCPUFrequency(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUStats(unittest.TestCase):
+class TestSystemCPUStats(PsutilTestCase):
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
     def test_ctx_switches(self):
@@ -859,7 +858,7 @@ class TestSystemCPUStats(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestLoadAvg(unittest.TestCase):
+class TestLoadAvg(PsutilTestCase):
 
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
@@ -878,7 +877,7 @@ class TestLoadAvg(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemNetIfAddrs(unittest.TestCase):
+class TestSystemNetIfAddrs(PsutilTestCase):
 
     def test_ips(self):
         for name, addrs in psutil.net_if_addrs().items():
@@ -907,7 +906,7 @@ class TestSystemNetIfAddrs(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemNetIfStats(unittest.TestCase):
+class TestSystemNetIfStats(PsutilTestCase):
 
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
@@ -923,7 +922,7 @@ class TestSystemNetIfStats(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemNetIOCounters(unittest.TestCase):
+class TestSystemNetIOCounters(PsutilTestCase):
 
     @retry_on_failure()
     def test_against_ifconfig(self):
@@ -969,7 +968,7 @@ class TestSystemNetIOCounters(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemNetConnections(unittest.TestCase):
+class TestSystemNetConnections(PsutilTestCase):
 
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
@@ -1002,7 +1001,7 @@ class TestSystemNetConnections(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemDiskPartitions(unittest.TestCase):
+class TestSystemDiskPartitions(PsutilTestCase):
 
     @unittest.skipIf(not hasattr(os, 'statvfs'), "os.statvfs() not available")
     @skip_on_not_implemented()
@@ -1067,7 +1066,7 @@ class TestSystemDiskPartitions(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemDiskIoCounters(unittest.TestCase):
+class TestSystemDiskIoCounters(PsutilTestCase):
 
     def test_emulate_kernel_2_4(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
@@ -1208,7 +1207,7 @@ class TestSystemDiskIoCounters(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestMisc(unittest.TestCase):
+class TestMisc(PsutilTestCase):
 
     def test_boot_time(self):
         vmstat_value = vmstat('boot time')
@@ -1216,7 +1215,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(int(vmstat_value), int(psutil_value))
 
     def test_no_procfs_on_import(self):
-        my_procfs = get_testfn()
+        my_procfs = self.get_testfn()
         os.mkdir(my_procfs)
 
         with open(os.path.join(my_procfs, 'stat'), 'w') as f:
@@ -1345,7 +1344,7 @@ class TestMisc(unittest.TestCase):
             assert m.called
 
     def test_procfs_path(self):
-        tdir = get_testfn()
+        tdir = self.get_testfn()
         os.mkdir(tdir)
         try:
             psutil.PROCFS_PATH = tdir
@@ -1397,7 +1396,7 @@ class TestMisc(unittest.TestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 @unittest.skipIf(not HAS_BATTERY, "no battery")
-class TestSensorsBattery(unittest.TestCase):
+class TestSensorsBattery(PsutilTestCase):
 
     @unittest.skipIf(not which("acpi"), "acpi utility not available")
     def test_percent(self):
@@ -1545,7 +1544,7 @@ class TestSensorsBattery(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSensorsTemperatures(unittest.TestCase):
+class TestSensorsTemperatures(PsutilTestCase):
 
     def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):
@@ -1611,7 +1610,7 @@ class TestSensorsTemperatures(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSensorsFans(unittest.TestCase):
+class TestSensorsFans(PsutilTestCase):
 
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
@@ -1640,11 +1639,11 @@ class TestSensorsFans(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestProcess(ProcessTestCase):
+class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     def test_memory_full_info(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
@@ -1713,7 +1712,7 @@ class TestProcess(ProcessTestCase):
             raise RuntimeError("timeout looking for test file")
 
         #
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, "w"):
             self.assertEqual(get_test_file(testfn).mode, "w")
         with open(testfn, "r"):
@@ -1741,7 +1740,7 @@ class TestProcess(ProcessTestCase):
         # execution
         p = psutil.Process()
         files = p.open_files()
-        with open(get_testfn(), 'w'):
+        with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             with mock.patch('psutil._pslinux.os.readlink',
@@ -1762,7 +1761,7 @@ class TestProcess(ProcessTestCase):
         # https://travis-ci.org/giampaolo/psutil/jobs/225694530
         p = psutil.Process()
         files = p.open_files()
-        with open(get_testfn(), 'w'):
+        with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -2009,7 +2008,7 @@ class TestProcess(ProcessTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestProcessAgainstStatus(unittest.TestCase):
+class TestProcessAgainstStatus(PsutilTestCase):
     """/proc/pid/stat and /proc/pid/status have many values in common.
     Whenever possible, psutil uses /proc/pid/stat (it's faster).
     For all those cases we check that the value found in
@@ -2092,7 +2091,7 @@ class TestProcessAgainstStatus(unittest.TestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestUtils(unittest.TestCase):
+class TestUtils(PsutilTestCase):
 
     def test_readlink(self):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
@@ -2100,7 +2099,7 @@ class TestUtils(unittest.TestCase):
             assert m.called
 
     def test_cat(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, "wt") as f:
             f.write("foo ")
         self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")
