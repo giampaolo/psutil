@@ -180,23 +180,23 @@ class TestProcess(PsutilTestCase):
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct
         # child.
-        p1, p2 = self.create_proc_children_pair()
-        self.assertRaises(psutil.TimeoutExpired, p1.wait, 0.01)
-        self.assertRaises(psutil.TimeoutExpired, p2.wait, 0.01)
+        child, grandchild = self.create_proc_children_pair()
+        self.assertRaises(psutil.TimeoutExpired, child.wait, 0.01)
+        self.assertRaises(psutil.TimeoutExpired, grandchild.wait, 0.01)
         # We also terminate the direct child otherwise the
         # grandchild will hang until the parent is gone.
-        p1.terminate()
-        p2.terminate()
-        ret1 = p1.wait()
-        ret2 = p2.wait()
+        child.terminate()
+        grandchild.terminate()
+        child_ret = child.wait()
+        grandchild_ret = grandchild.wait()
         if POSIX:
-            self.assertEqual(ret1, -signal.SIGTERM)
+            self.assertEqual(child_ret, -signal.SIGTERM)
             # For processes which are not our children we're supposed
             # to get None.
-            self.assertEqual(ret2, None)
+            self.assertEqual(grandchild_ret, None)
         else:
-            self.assertEqual(ret1, signal.SIGTERM)
-            self.assertEqual(ret1, signal.SIGTERM)
+            self.assertEqual(child_ret, signal.SIGTERM)
+            self.assertEqual(child_ret, signal.SIGTERM)
 
     def test_wait_timeout_0(self):
         sproc = self.get_test_subprocess()
@@ -1055,9 +1055,9 @@ class TestProcess(PsutilTestCase):
         self.assertIsNone(psutil.Process(lowest_pid).parent())
 
     def test_parent_multi(self):
-        p1, p2 = self.create_proc_children_pair()
-        self.assertEqual(p2.parent(), p1)
-        self.assertEqual(p1.parent(), psutil.Process())
+        child, grandchild = self.create_proc_children_pair()
+        self.assertEqual(grandchild.parent(), child)
+        self.assertEqual(child.parent(), psutil.Process())
 
     def test_parent_disappeared(self):
         # Emulate a case where the parent process disappeared.
@@ -1070,10 +1070,10 @@ class TestProcess(PsutilTestCase):
     @retry_on_failure()
     def test_parents(self):
         assert psutil.Process().parents()
-        p1, p2 = self.create_proc_children_pair()
-        self.assertEqual(p1.parents()[0], psutil.Process())
-        self.assertEqual(p2.parents()[0], p1)
-        self.assertEqual(p2.parents()[1], psutil.Process())
+        child, grandchild = self.create_proc_children_pair()
+        self.assertEqual(child.parents()[0], psutil.Process())
+        self.assertEqual(grandchild.parents()[0], child)
+        self.assertEqual(grandchild.parents()[1], psutil.Process())
 
     def test_children(self):
         reap_children(recursive=True)
@@ -1094,14 +1094,14 @@ class TestProcess(PsutilTestCase):
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
         # p1 (our child) spawned p2 (our grandchild).
-        p1, p2 = self.create_proc_children_pair()
+        child, grandchild = self.create_proc_children_pair()
         p = psutil.Process()
-        self.assertEqual(p.children(), [p1])
-        self.assertEqual(p.children(recursive=True), [p1, p2])
+        self.assertEqual(p.children(), [child])
+        self.assertEqual(p.children(recursive=True), [child, grandchild])
         # If the intermediate process is gone there's no way for
         # children() to recursively find it.
-        p1.terminate()
-        p1.wait()
+        child.terminate()
+        child.wait()
         self.assertEqual(p.children(recursive=True), [])
 
     def test_children_duplicates(self):
@@ -1123,16 +1123,16 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_parents_and_children(self):
-        p1, p2 = self.create_proc_children_pair()
+        child, grandchild = self.create_proc_children_pair()
         me = psutil.Process()
         # forward
         children = me.children(recursive=True)
         self.assertEqual(len(children), 2)
-        self.assertEqual(children[0], p1)
-        self.assertEqual(children[1], p2)
+        self.assertEqual(children[0], child)
+        self.assertEqual(children[1], grandchild)
         # backward
-        parents = p2.parents()
-        self.assertEqual(parents[0], p1)
+        parents = grandchild.parents()
+        self.assertEqual(parents[0], child)
         self.assertEqual(parents[1], me)
 
     def test_suspend_resume(self):

@@ -224,6 +224,8 @@ class TestProcessUtils(PsutilTestCase):
         self.assertNotEqual(child.pid, grandchild.pid)
         assert child.is_running()
         assert grandchild.is_running()
+        children = psutil.Process().children()
+        self.assertEqual(children, [child])
         children = psutil.Process().children(recursive=True)
         self.assertEqual(len(children), 2)
         self.assertIn(child, children)
