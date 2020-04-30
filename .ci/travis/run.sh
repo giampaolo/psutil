@@ -13,11 +13,16 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
-# Install + run tests (with coverage)
+# install psutil
+make clean
+python setup.py build
+python setup.py develop
+
+# run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
-    make test-coverage PYTHON=python
+    PSUTIL_TESTING=1 python -Wa -m coverage run psutil/tests/runner.py
 else
-    make test PYTHON=python
+    PSUTIL_TESTING=1 python -Wa psutil/tests/runner.py --parallel
 fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
