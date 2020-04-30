@@ -220,23 +220,23 @@ class TestProcessUtils(PsutilTestCase):
         assert not psutil.tests._subprocesses_started
 
     def test_create_proc_children_pair(self):
-        p1, p2 = self.create_proc_children_pair()
-        self.assertNotEqual(p1.pid, p2.pid)
-        assert p1.is_running()
-        assert p2.is_running()
+        child, grandchild = self.create_proc_children_pair()
+        self.assertNotEqual(child.pid, grandchild.pid)
+        assert child.is_running()
+        assert grandchild.is_running()
         children = psutil.Process().children(recursive=True)
         self.assertEqual(len(children), 2)
-        self.assertIn(p1, children)
-        self.assertIn(p2, children)
-        self.assertEqual(p1.ppid(), os.getpid())
-        self.assertEqual(p2.ppid(), p1.pid)
+        self.assertIn(child, children)
+        self.assertIn(grandchild, children)
+        self.assertEqual(child.ppid(), os.getpid())
+        self.assertEqual(grandchild.ppid(), child.pid)
 
-        # make sure both of them are cleaned up
-        reap_children()
-        assert not p1.is_running()
-        assert not p2.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
+        terminate(child)
+        assert not child.is_running()
+        assert grandchild.is_running()
+
+        terminate(grandchild)
+        assert not grandchild.is_running()
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
