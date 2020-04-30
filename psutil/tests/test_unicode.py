@@ -100,7 +100,6 @@ from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import INVALID_UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
-from psutil.tests import reap_children
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
@@ -169,7 +168,6 @@ class _BaseFSAPIsTests(object):
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
         safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
@@ -339,9 +337,6 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
 
 class TestNonFSAPIS(PsutilTestCase):
     """Unicode tests for non fs-related APIs."""
-
-    def tearDown(self):
-        reap_children()
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")
