@@ -53,9 +53,19 @@ from psutil.tests import TOX
 VERBOSITY = 1 if TOX else 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
 NWORKERS = psutil.cpu_count() or 1
+USE_COLORS = term_supports_colors() and not APPVEYOR
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
+
+
+def cprint(msg, color, bold=False, file=None):
+    if file is None:
+        file = sys.stderr if color == 'red' else sys.stdout
+    if USE_COLORS:
+        print_color(msg, color, bold=bold, file=file)
+    else:
+        print(msg, file=file)
 
 
 class TestLoader:
@@ -110,24 +120,21 @@ class TestLoader:
 
 class ColouredResult(unittest.TextTestResult):
 
-    def _print_color(self, s, color, bold=False):
-        print_color(s, color, bold=bold)
-
     def addSuccess(self, test):
         unittest.TestResult.addSuccess(self, test)
-        self._print_color("OK", "green")
+        cprint("OK", "green")
 
     def addError(self, test, err):
         unittest.TestResult.addError(self, test, err)
-        self._print_color("ERROR", "red", bold=True)
+        cprint("ERROR", "red", bold=True)
 
     def addFailure(self, test, err):
         unittest.TestResult.addFailure(self, test, err)
-        self._print_color("FAIL", "red")
+        cprint("FAIL", "red")
 
     def addSkip(self, test, reason):
         unittest.TestResult.addSkip(self, test, reason)
-        self._print_color("skipped: %s" % reason.strip(), "brown")
+        cprint("skipped: %s" % reason.strip(), "brown")
 
     def printErrorList(self, flavour, errors):
         flavour = hilite(flavour, "red", bold=flavour == 'ERROR')
@@ -139,11 +146,7 @@ class ColouredTextRunner(unittest.TextTestRunner):
     A coloured text runner which also prints failed tests on KeyboardInterrupt
     and save failed tests in a file so that they can be re-run.
     """
-
-    if term_supports_colors() and not APPVEYOR:
-        resultclass = ColouredResult
-    else:
-        resultclass = unittest.TextTestResult
+    resultclass = ColouredResult if USE_COLORS else unittest.TextTestResult
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -180,11 +183,11 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def _exit(self, success):
         if success:
-            print_color("SUCCESS", "green", bold=True)
+            cprint("SUCCESS", "green", bold=True)
             safe_rmpath(FAILED_TESTS_FNAME)
             sys.exit(0)
         else:
-            print_color("FAILED", "red", bold=True)
+            cprint("FAILED", "red", bold=True)
             self._write_last_failed()
             sys.exit(1)
 
@@ -228,8 +231,8 @@ class ParallelRunner(ColouredTextRunner):
         par_suite = self._parallelize(par_suite)
 
         # run parallel
-        print_color("starting parallel tests using %s workers" % NWORKERS,
-                    "green", bold=True)
+        cprint("starting parallel tests using %s workers" % NWORKERS,
+               "green", bold=True)
         t = time.time()
         par = self._run(par_suite)
         par_elapsed = time.time() - t
@@ -239,7 +242,7 @@ class ParallelRunner(ColouredTextRunner):
         orphans = psutil.Process().children()
         gone, alive = psutil.wait_procs(orphans, timeout=1)
         if alive:
-            print_color("alive processes %s" % alive, "red")
+            cprint("alive processes %s" % alive, "red")
             reap_children()
 
         # run serial
@@ -274,8 +277,7 @@ class ParallelRunner(ColouredTextRunner):
 
 def get_runner(parallel=False):
     def warn(msg):
-        print_color(msg + " Running serial tests instead.",
-                    "red", file=sys.stderr)
+        cprint(msg + " Running serial tests instead.", "red")
     if parallel:
         if psutil.WINDOWS:
             warn("Can't run parallel tests on Windows.")
