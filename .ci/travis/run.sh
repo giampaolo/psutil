@@ -15,9 +15,9 @@ fi
 
 # run tests (with coverage)
 if [[ $PYVER == '2.7' ]] && [[ "$(uname -s)" != 'Darwin' ]]; then
-    make test PYTHON=python
+    make test-coverage PYTHON=python
 else
-    make test-parallel PYTHON=python
+    make test PYTHON=python
 fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then

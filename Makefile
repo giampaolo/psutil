@@ -71,9 +71,9 @@ _:
 build: _  ## Compile (in parallel) without installing.
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
 	$(PYTHON) -c "import setuptools"
-	@# build_ext copies compiled *.so files in ./psutil directory in order to
-	@# allow "import psutil" when using the interactive interpreter from within
-	@# this directory.
+	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
+	@# to allow "import psutil" when using the interactive interpreter from
+	@# within  this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
