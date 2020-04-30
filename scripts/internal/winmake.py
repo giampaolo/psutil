@@ -31,7 +31,7 @@ if APPVEYOR:
     PYTHON = sys.executable
 else:
     PYTHON = os.getenv('PYTHON', sys.executable)
-TEST_SCRIPT = 'psutil\\tests\\runner.py'
+RUNNER_PY = 'psutil\\tests\\runner.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -397,7 +397,7 @@ def lint():
     sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
-def test(script=TEST_SCRIPT):
+def test(script=RUNNER_PY):
     """Run tests"""
     install()
     test_setup()
@@ -411,7 +411,7 @@ def coverage():
     # Note: coverage options are controlled by .coveragerc file
     install()
     test_setup()
-    sh("%s -m coverage run %s" % (PYTHON, TEST_SCRIPT))
+    sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -477,8 +477,7 @@ def test_failed():
     """Re-run tests which failed on last run."""
     install()
     test_setup()
-    sh('%s -c "import psutil.tests.runner as r; r.run(last_failed=True)"' % (
-        PYTHON))
+    sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
 
 
 def test_memleaks():

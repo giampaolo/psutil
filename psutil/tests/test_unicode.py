@@ -124,8 +124,9 @@ if APPVEYOR:
         # https://github.com/giampaolo/psutil/blob/
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
+        from psutil.tests import safe_rmpath as _rm
         try:
-            return safe_rmpath(path)
+            return _rm(path)
         except WindowsError:
             traceback.print_exc()
 
