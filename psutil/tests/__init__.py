@@ -385,7 +385,7 @@ def create_zombie_proc():
                 s.sendall(pid)
         """ % unix_file)
     sock = bind_unix_socket(unix_file)
-    with contextlib.closing(sock):
+    try:
         sock.settimeout(GLOBAL_TIMEOUT)
         parent = pyrun(src)
         conn, _ = sock.accept()
@@ -398,6 +398,9 @@ def create_zombie_proc():
             return (parent, zombie)
         finally:
             conn.close()
+    finally:
+        sock.close()
+        safe_rmpath(unix_file)
 
 
 @_reap_children_on_err
