@@ -1366,7 +1366,7 @@ class Popen(Process):
             return self.__subproc.returncode
         # Note: using psutil's wait() on UNIX should make no difference.
         # On Windows it does, because PID can still be alive (see
-        # _pswindows.py counterpart addressing this). On Python 2.7 we don't
+        # _pswindows.py counterpart addressing this). Python 2.7 doesn't
         # have timeout arg, so this acts as a backport.
         ret = Process.wait(self, timeout)
         self.__subproc.returncode = ret
