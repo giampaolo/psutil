@@ -26,6 +26,12 @@ PY2_DEPS = \
 	unittest2
 DEPS += `$(PYTHON) -c \
 	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
+# "python3 setup.py build" can be parallelized on Python >= 3.6.
+BUILD_OPTS = `$(PYTHON) -c \
+	"import sys, os; \
+	py36 = sys.version_info[:2] >= (3, 6); \
+	cpus = os.cpu_count() or 1 if py36 else 1; \
+	print('--parallel %s' % cpus if cpus > 1 else '')"`
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
@@ -62,14 +68,13 @@ clean:  ## Remove all build files.
 
 _:
 
-build: _  ## Compile without installing.
+build: _  ## Compile (in parallel) without installing.
 	# make sure setuptools is installed (needed for 'develop' / edit mode)
 	$(PYTHON) -c "import setuptools"
-	PYTHONWARNINGS=all $(PYTHON) setup.py build
-	@# copies compiled *.so files in ./psutil directory in order to allow
-	@# "import psutil" when using the interactive interpreter from within
+	@# build_ext copies compiled *.so files in ./psutil directory in order to
+	@# allow "import psutil" when using the interactive interpreter from within
 	@# this directory.
-	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i
+	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
