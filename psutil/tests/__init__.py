@@ -30,7 +30,6 @@ import tempfile
 import textwrap
 import threading
 import time
-import traceback
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -88,7 +87,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak', 'ProcessTestCase',
+    'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -220,7 +219,6 @@ AF_UNIX = getattr(socket, "AF_UNIX", object())
 
 _subprocesses_started = set()
 _pids_started = set()
-_testfiles_created = set()
 
 
 # ===================================================================
@@ -309,14 +307,17 @@ def get_test_subprocess(cmd=None, **kwds):
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
         testfn = get_testfn()
-        safe_rmpath(testfn)
-        pyline = "from time import sleep;" \
-                 "open(r'%s', 'w').close();" \
-                 "sleep(60);" % testfn
-        cmd = [PYTHON_EXE, "-c", pyline]
-        sproc = subprocess.Popen(cmd, **kwds)
-        _subprocesses_started.add(sproc)
-        wait_for_file(testfn, delete=True, empty=True)
+        try:
+            safe_rmpath(testfn)
+            pyline = "from time import sleep;" \
+                     "open(r'%s', 'w').close();" \
+                     "sleep(60);" % testfn
+            cmd = [PYTHON_EXE, "-c", pyline]
+            sproc = subprocess.Popen(cmd, **kwds)
+            _subprocesses_started.add(sproc)
+            wait_for_file(testfn, delete=True, empty=True)
+        finally:
+            safe_rmpath(testfn)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
@@ -332,30 +333,35 @@ def create_proc_children_pair():
     The 2 processes are fully initialized and will live for 60 secs
     and are registered for cleanup on reap_children().
     """
-    # must be relative on Windows
-    testfn = os.path.basename(get_testfn(dir=os.getcwd()))
-    s = textwrap.dedent("""\
-        import subprocess, os, sys, time
-        s = "import os, time;"
-        s += "f = open('%s', 'w');"
-        s += "f.write(str(os.getpid()));"
-        s += "f.close();"
-        s += "time.sleep(60);"
-        p = subprocess.Popen([r'%s', '-c', s])
-        p.wait()
-        """ % (testfn, PYTHON_EXE))
-    # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
-    # set (which is the default) a "conhost.exe" extra process will be
-    # spawned as a child. We don't want that.
-    if WINDOWS:
-        subp = pyrun(s, creationflags=0)
-    else:
-        subp = pyrun(s)
-    child1 = psutil.Process(subp.pid)
-    child2_pid = int(wait_for_file(testfn, delete=True, empty=False))
-    _pids_started.add(child2_pid)
-    child2 = psutil.Process(child2_pid)
-    return (child1, child2)
+    tfile = None
+    testfn = get_testfn(dir=os.getcwd())
+    try:
+        s = textwrap.dedent("""\
+            import subprocess, os, sys, time
+            s = "import os, time;"
+            s += "f = open('%s', 'w');"
+            s += "f.write(str(os.getpid()));"
+            s += "f.close();"
+            s += "time.sleep(60);"
+            p = subprocess.Popen([r'%s', '-c', s])
+            p.wait()
+            """ % (os.path.basename(testfn), PYTHON_EXE))
+        # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
+        # set (which is the default) a "conhost.exe" extra process will be
+        # spawned as a child. We don't want that.
+        if WINDOWS:
+            subp, tfile = pyrun(s, creationflags=0)
+        else:
+            subp, tfile = pyrun(s)
+        child = psutil.Process(subp.pid)
+        grandchild_pid = int(wait_for_file(testfn, delete=True, empty=False))
+        _pids_started.add(grandchild_pid)
+        grandchild = psutil.Process(grandchild_pid)
+        return (child, grandchild)
+    finally:
+        safe_rmpath(testfn)
+        if tfile is not None:
+            safe_rmpath(tfile)
 
 
 def create_zombie_proc():
@@ -381,10 +387,11 @@ def create_zombie_proc():
                     pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
+    tfile = None
     sock = bind_unix_socket(unix_file)
-    with contextlib.closing(sock):
+    try:
         sock.settimeout(GLOBAL_TIMEOUT)
-        parent = pyrun(src)
+        parent, tfile = pyrun(src)
         conn, _ = sock.accept()
         try:
             select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
@@ -395,21 +402,31 @@ def create_zombie_proc():
             return (parent, zombie)
         finally:
             conn.close()
+    finally:
+        sock.close()
+        safe_rmpath(unix_file)
+        if tfile is not None:
+            safe_rmpath(tfile)
 
 
 @_reap_children_on_err
 def pyrun(src, **kwds):
     """Run python 'src' code string in a separate interpreter.
-    Returns a subprocess.Popen instance.
+    Returns a subprocess.Popen instance and the test file where the source
+    code was written.
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
-    with open(get_testfn(), 'wt') as f:
-        f.write(src)
-        f.flush()
+    srcfile = get_testfn()
+    try:
+        with open(srcfile, 'wt') as f:
+            f.write(src)
         subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
-    return subp
+        return (subp, srcfile)
+    except Exception:
+        safe_rmpath(srcfile)
+        raise
 
 
 @_reap_children_on_err
@@ -772,7 +789,6 @@ def chdir(dirname):
 def create_exe(outpath, c_code=None):
     """Creates an executable file in the given location."""
     assert not os.path.exists(outpath), outpath
-    _testfiles_created.add(outpath)
     if c_code:
         if not which("gcc"):
             raise ValueError("gcc is not installed")
@@ -811,7 +827,6 @@ def get_testfn(suffix="", dir=None):
         prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
         name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
-            _testfiles_created.add(name)
             return os.path.realpath(name)  # needed for OSX
 
 
@@ -841,10 +856,15 @@ class TestCase(unittest.TestCase):
 unittest.TestCase = TestCase
 
 
-class ProcessTestCase(TestCase):
+class PsutilTestCase(TestCase):
     """Test class providing auto-cleanup wrappers on top of process
     test utilities.
     """
+
+    def get_testfn(self, suffix="", dir=None):
+        fname = get_testfn(suffix=suffix, dir=dir)
+        self.addCleanup(safe_rmpath, fname)
+        return fname
 
     def get_test_subprocess(self, *args, **kwds):
         sproc = get_test_subprocess(*args, **kwds)
@@ -853,8 +873,8 @@ class ProcessTestCase(TestCase):
 
     def create_proc_children_pair(self):
         child1, child2 = create_proc_children_pair()
-        self.addCleanup(terminate, child1)
         self.addCleanup(terminate, child2)
+        self.addCleanup(terminate, child1)  # executed first
         return (child1, child2)
 
     def create_zombie_proc(self):
@@ -864,18 +884,14 @@ class ProcessTestCase(TestCase):
         return (parent, zombie)
 
     def pyrun(self, *args, **kwds):
-        sproc = pyrun(*args, **kwds)
-        self.addCleanup(terminate, sproc)
+        sproc, srcfile = pyrun(*args, **kwds)
+        self.addCleanup(safe_rmpath, srcfile)
+        self.addCleanup(terminate, sproc)  # executed first
         return sproc
-
-    def get_testfn(self, suffix="", dir=None):
-        fname = get_testfn(suffix=suffix, dir=suffix)
-        self.addCleanup(safe_rmpath(fname))
-        return fname
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
-class TestMemoryLeak(unittest.TestCase):
+class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks (typically
     functions implemented in C).
     It does so by calling a function many times, and checks whether the
@@ -1149,14 +1165,15 @@ def create_sockets():
             fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
             s3 = bind_unix_socket(fname2, type=socket.SOCK_DGRAM)
-            # self.addCleanup(safe_rmpath, fname1)
-            # self.addCleanup(safe_rmpath, fname2)
             for s in (s1, s2, s3):
                 socks.append(s)
         yield socks
     finally:
         for s in socks:
             s.close()
+        for fname in (fname1, fname2):
+            if fname is not None:
+                safe_rmpath(fname)
 
 
 def check_net_address(addr, family):
@@ -1307,16 +1324,6 @@ else:
 
 
 atexit.register(DEVNULL.close)
-
-
-@atexit.register
-def cleanup_test_files():
-    while _testfiles_created:
-        path = _testfiles_created.pop()
-        try:
-            safe_rmpath(path)
-        except Exception:
-            traceback.print_exc()
 
 
 # this is executed first

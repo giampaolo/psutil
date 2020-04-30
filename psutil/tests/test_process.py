@@ -34,13 +34,13 @@ from psutil import WINDOWS
 from psutil._common import open_text
 from psutil._compat import long
 from psutil._compat import PY3
+from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
 from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import enum
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -50,7 +50,7 @@ from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
@@ -69,7 +69,7 @@ from psutil.tests import wait_for_pid
 # ===================================================================
 
 
-class TestProcess(ProcessTestCase):
+class TestProcess(PsutilTestCase):
     """Tests for psutil.Process class."""
 
     def test_pid(self):
@@ -180,23 +180,23 @@ class TestProcess(ProcessTestCase):
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct
         # child.
-        p1, p2 = self.create_proc_children_pair()
-        self.assertRaises(psutil.TimeoutExpired, p1.wait, 0.01)
-        self.assertRaises(psutil.TimeoutExpired, p2.wait, 0.01)
+        child, grandchild = self.create_proc_children_pair()
+        self.assertRaises(psutil.TimeoutExpired, child.wait, 0.01)
+        self.assertRaises(psutil.TimeoutExpired, grandchild.wait, 0.01)
         # We also terminate the direct child otherwise the
         # grandchild will hang until the parent is gone.
-        p1.terminate()
-        p2.terminate()
-        ret1 = p1.wait()
-        ret2 = p2.wait()
+        child.terminate()
+        grandchild.terminate()
+        child_ret = child.wait()
+        grandchild_ret = grandchild.wait()
         if POSIX:
-            self.assertEqual(ret1, -signal.SIGTERM)
+            self.assertEqual(child_ret, -signal.SIGTERM)
             # For processes which are not our children we're supposed
             # to get None.
-            self.assertEqual(ret2, None)
+            self.assertEqual(grandchild_ret, None)
         else:
-            self.assertEqual(ret1, signal.SIGTERM)
-            self.assertEqual(ret1, signal.SIGTERM)
+            self.assertEqual(child_ret, signal.SIGTERM)
+            self.assertEqual(child_ret, signal.SIGTERM)
 
     def test_wait_timeout_0(self):
         sproc = self.get_test_subprocess()
@@ -316,7 +316,7 @@ class TestProcess(ProcessTestCase):
 
         # test writes
         io1 = p.io_counters()
-        with open(get_testfn(), 'wb') as f:
+        with open(self.get_testfn(), 'wb') as f:
             if PY3:
                 f.write(bytes("x" * 1000000, 'ascii'))
             else:
@@ -449,7 +449,7 @@ class TestProcess(ProcessTestCase):
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -471,7 +471,7 @@ class TestProcess(ProcessTestCase):
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
@@ -718,7 +718,7 @@ class TestProcess(ProcessTestCase):
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         create_exe(testfn)
         cmdline = [testfn] + (["0123456789"] * 20)
         sproc = self.get_test_subprocess(cmdline)
@@ -733,7 +733,7 @@ class TestProcess(ProcessTestCase):
 
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
-        testfn = get_testfn(suffix="0123456789" * 2)
+        testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
         sproc = self.get_test_subprocess(testfn)
         p = psutil.Process(sproc.pid)
@@ -747,7 +747,7 @@ class TestProcess(ProcessTestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = get_testfn(suffix='foo bar )')
+        funky_path = self.get_testfn(suffix='foo bar )')
         create_exe(funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
@@ -938,7 +938,7 @@ class TestProcess(ProcessTestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
         # current process
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(testfn in files)
@@ -978,7 +978,7 @@ class TestProcess(ProcessTestCase):
     def test_open_files_2(self):
         # test fd and path fields
         normcase = os.path.normcase
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as fileobj:
             p = psutil.Process()
             for file in p.open_files():
@@ -1001,7 +1001,7 @@ class TestProcess(ProcessTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         p = psutil.Process()
         start = p.num_fds()
         file = open(testfn, 'w')
@@ -1028,12 +1028,9 @@ class TestProcess(ProcessTestCase):
     def test_ppid(self):
         if hasattr(os, 'getppid'):
             self.assertEqual(psutil.Process().ppid(), os.getppid())
-        this_parent = os.getpid()
         sproc = self.get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.ppid(), this_parent)
-        # no other process is supposed to have us as parent
-        reap_children(recursive=True)
+        self.assertEqual(p.ppid(), os.getpid())
         if APPVEYOR:
             # Occasional failures, see:
             # https://ci.appveyor.com/project/giampaolo/psutil/build/
@@ -1043,21 +1040,20 @@ class TestProcess(ProcessTestCase):
             if p.pid == sproc.pid:
                 continue
             # XXX: sometimes this fails on Windows; not sure why.
-            self.assertNotEqual(p.ppid(), this_parent, msg=p)
+            self.assertNotEqual(p.ppid(), os.getpid(), msg=p)
 
     def test_parent(self):
-        this_parent = os.getpid()
         sproc = self.get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.parent().pid, this_parent)
+        self.assertEqual(p.parent().pid, os.getpid())
 
         lowest_pid = psutil.pids()[0]
         self.assertIsNone(psutil.Process(lowest_pid).parent())
 
     def test_parent_multi(self):
-        p1, p2 = self.create_proc_children_pair()
-        self.assertEqual(p2.parent(), p1)
-        self.assertEqual(p1.parent(), psutil.Process())
+        child, grandchild = self.create_proc_children_pair()
+        self.assertEqual(grandchild.parent(), child)
+        self.assertEqual(child.parent(), psutil.Process())
 
     def test_parent_disappeared(self):
         # Emulate a case where the parent process disappeared.
@@ -1070,13 +1066,12 @@ class TestProcess(ProcessTestCase):
     @retry_on_failure()
     def test_parents(self):
         assert psutil.Process().parents()
-        p1, p2 = self.create_proc_children_pair()
-        self.assertEqual(p1.parents()[0], psutil.Process())
-        self.assertEqual(p2.parents()[0], p1)
-        self.assertEqual(p2.parents()[1], psutil.Process())
+        child, grandchild = self.create_proc_children_pair()
+        self.assertEqual(child.parents()[0], psutil.Process())
+        self.assertEqual(grandchild.parents()[0], child)
+        self.assertEqual(grandchild.parents()[1], psutil.Process())
 
     def test_children(self):
-        reap_children(recursive=True)
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
@@ -1094,14 +1089,14 @@ class TestProcess(ProcessTestCase):
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
         # p1 (our child) spawned p2 (our grandchild).
-        p1, p2 = self.create_proc_children_pair()
+        child, grandchild = self.create_proc_children_pair()
         p = psutil.Process()
-        self.assertEqual(p.children(), [p1])
-        self.assertEqual(p.children(recursive=True), [p1, p2])
+        self.assertEqual(p.children(), [child])
+        self.assertEqual(p.children(recursive=True), [child, grandchild])
         # If the intermediate process is gone there's no way for
         # children() to recursively find it.
-        p1.terminate()
-        p1.wait()
+        child.terminate()
+        child.wait()
         self.assertEqual(p.children(recursive=True), [])
 
     def test_children_duplicates(self):
@@ -1123,16 +1118,16 @@ class TestProcess(ProcessTestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_parents_and_children(self):
-        p1, p2 = self.create_proc_children_pair()
+        child, grandchild = self.create_proc_children_pair()
         me = psutil.Process()
         # forward
         children = me.children(recursive=True)
         self.assertEqual(len(children), 2)
-        self.assertEqual(children[0], p1)
-        self.assertEqual(children[1], p2)
+        self.assertEqual(children[0], child)
+        self.assertEqual(children[1], grandchild)
         # backward
-        parents = p2.parents()
-        self.assertEqual(parents[0], p1)
+        parents = grandchild.parents()
+        self.assertEqual(parents[0], child)
         self.assertEqual(parents[1], me)
 
     def test_suspend_resume(self):
@@ -1488,7 +1483,7 @@ class TestProcess(ProcessTestCase):
                 return execve("/bin/cat", argv, envp);
             }
             """)
-        path = get_testfn()
+        path = self.get_testfn()
         create_exe(path, c_code=code)
         sproc = self.get_test_subprocess(
             [path], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -1533,14 +1528,14 @@ if POSIX and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
-            TestProcess.setUp(self)
+            super().setUp(self)
             os.setegid(1000)
             os.seteuid(1000)
 
         def tearDown(self):
             os.setegid(self.PROCESS_UID)
             os.seteuid(self.PROCESS_GID)
-            TestProcess.tearDown(self)
+            super().tearDown(self)
 
         def test_nice(self):
             try:
@@ -1560,7 +1555,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
-class TestPopen(unittest.TestCase):
+class TestPopen(PsutilTestCase):
     """Tests for psutil.Popen class."""
 
     @classmethod

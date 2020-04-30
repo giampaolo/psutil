@@ -37,9 +37,8 @@ from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_free_port
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
@@ -55,7 +54,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
 @serialrun
-class _ConnTestCase(ProcessTestCase):
+class _ConnTestCase(PsutilTestCase):
 
     def setUp(self):
         if not (NETBSD or FREEBSD):
@@ -267,14 +266,16 @@ class TestUnconnectedSockets(_ConnTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_tcp(self):
-        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+        testfn = self.get_testfn()
+        with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix_udp(self):
-        with closing(bind_unix_socket(get_testfn(), type=SOCK_STREAM)) as sock:
+        testfn = self.get_testfn()
+        with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_NONE)
@@ -310,7 +311,7 @@ class TestConnectedSocket(_ConnTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_unix(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         server, client = unix_socketpair(testfn)
         try:
             cons = thisproc.connections(kind='unix')
@@ -433,7 +434,7 @@ class TestFilters(_ConnTestCase):
         """)
 
         # must be relative on Windows
-        testfile = os.path.basename(get_testfn(dir=os.getcwd()))
+        testfile = os.path.basename(self.get_testfn(dir=os.getcwd()))
         tcp4_template = string.Template(tcp_template).substitute(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         udp4_template = string.Template(udp_template).substitute(
@@ -582,16 +583,14 @@ class TestSystemWideConnections(_ConnTestCase):
         times = 10
         fnames = []
         for i in range(times):
-            fname = get_testfn()
+            fname = self.get_testfn()
             fnames.append(fname)
             src = textwrap.dedent("""\
                 import time, os
-                from psutil.tests import create_sockets, cleanup_test_files
+                from psutil.tests import create_sockets
                 with create_sockets():
                     with open(r'%s', 'w') as f:
                         f.write("hello")
-                    # 2 UNIX test socket files are created
-                    cleanup_test_files()
                     time.sleep(60)
                 """ % fname)
             sproc = self.pyrun(src)
@@ -610,7 +609,7 @@ class TestSystemWideConnections(_ConnTestCase):
             self.assertEqual(len(p.connections('all')), expected)
 
 
-class TestMisc(unittest.TestCase):
+class TestMisc(PsutilTestCase):
 
     def test_connection_constants(self):
         ints = []

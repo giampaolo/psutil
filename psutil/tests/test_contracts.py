@@ -37,6 +37,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
+from psutil.tests import PsutilTestCase
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
@@ -51,7 +52,7 @@ import psutil
 # Make sure code reflects what doc promises in terms of APIs
 # availability.
 
-class TestAvailConstantsAPIs(unittest.TestCase):
+class TestAvailConstantsAPIs(PsutilTestCase):
 
     def test_PROCFS_PATH(self):
         self.assertEqual(hasattr(psutil, "PROCFS_PATH"),
@@ -105,7 +106,7 @@ class TestAvailConstantsAPIs(unittest.TestCase):
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
 
 
-class TestAvailSystemAPIs(unittest.TestCase):
+class TestAvailSystemAPIs(PsutilTestCase):
 
     def test_win_service_iter(self):
         self.assertEqual(hasattr(psutil, "win_service_iter"), WINDOWS)
@@ -132,7 +133,7 @@ class TestAvailSystemAPIs(unittest.TestCase):
                          LINUX or WINDOWS or FREEBSD or MACOS)
 
 
-class TestAvailProcessAPIs(unittest.TestCase):
+class TestAvailProcessAPIs(PsutilTestCase):
 
     def test_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
@@ -182,7 +183,7 @@ class TestAvailProcessAPIs(unittest.TestCase):
 # ===================================================================
 
 
-class TestSystemAPITypes(unittest.TestCase):
+class TestSystemAPITypes(PsutilTestCase):
     """Check the return types of system related APIs.
     Mainly we want to test we never return unicode on Python 2, see:
     https://github.com/giampaolo/psutil/issues/1039
@@ -312,7 +313,7 @@ class TestSystemAPITypes(unittest.TestCase):
 # ===================================================================
 
 
-class TestFetchAllProcesses(unittest.TestCase):
+class TestFetchAllProcesses(PsutilTestCase):
     """Test which iterates over all running processes and performs
     some sanity checks against Process API's returned values.
     """

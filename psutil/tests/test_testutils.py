@@ -32,11 +32,10 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
-from psutil.tests import ProcessTestCase
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry
@@ -59,7 +58,7 @@ import psutil.tests
 # ===================================================================
 
 
-class TestRetryDecorator(unittest.TestCase):
+class TestRetryDecorator(PsutilTestCase):
 
     @mock.patch('time.sleep')
     def test_retry_success(self, sleep):
@@ -125,7 +124,7 @@ class TestRetryDecorator(unittest.TestCase):
         self.assertRaises(ValueError, retry, retries=5, timeout=1)
 
 
-class TestSyncTestUtils(unittest.TestCase):
+class TestSyncTestUtils(PsutilTestCase):
 
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
@@ -134,26 +133,26 @@ class TestSyncTestUtils(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
 
     def test_wait_for_file(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_empty(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w'):
             pass
         wait_for_file(testfn, empty=True)
         assert not os.path.exists(testfn)
 
     def test_wait_for_file_no_file(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
             self.assertRaises(IOError, wait_for_file, testfn)
 
     def test_wait_for_file_no_delete(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         with open(testfn, 'w') as f:
             f.write('foo')
         wait_for_file(testfn, delete=False)
@@ -164,7 +163,7 @@ class TestSyncTestUtils(unittest.TestCase):
         self.assertEqual(ret, 1)
 
 
-class TestFSTestUtils(unittest.TestCase):
+class TestFSTestUtils(PsutilTestCase):
 
     def test_open_text(self):
         with open_text(__file__) as f:
@@ -175,7 +174,7 @@ class TestFSTestUtils(unittest.TestCase):
             self.assertEqual(f.mode, 'rb')
 
     def test_safe_mkdir(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         safe_mkdir(testfn)
         assert os.path.isdir(testfn)
         safe_mkdir(testfn)
@@ -183,7 +182,7 @@ class TestFSTestUtils(unittest.TestCase):
 
     def test_safe_rmpath(self):
         # test file is removed
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         open(testfn, 'w').close()
         safe_rmpath(testfn)
         assert not os.path.exists(testfn)
@@ -201,7 +200,7 @@ class TestFSTestUtils(unittest.TestCase):
             assert m.called
 
     def test_chdir(self):
-        testfn = get_testfn()
+        testfn = self.get_testfn()
         base = os.getcwd()
         os.mkdir(testfn)
         with chdir(testfn):
@@ -209,7 +208,7 @@ class TestFSTestUtils(unittest.TestCase):
         self.assertEqual(os.getcwd(), base)
 
 
-class TestProcessUtils(ProcessTestCase):
+class TestProcessUtils(PsutilTestCase):
 
     def test_reap_children(self):
         subp = self.get_test_subprocess()
@@ -221,23 +220,25 @@ class TestProcessUtils(ProcessTestCase):
         assert not psutil.tests._subprocesses_started
 
     def test_create_proc_children_pair(self):
-        p1, p2 = self.create_proc_children_pair()
-        self.assertNotEqual(p1.pid, p2.pid)
-        assert p1.is_running()
-        assert p2.is_running()
+        child, grandchild = self.create_proc_children_pair()
+        self.assertNotEqual(child.pid, grandchild.pid)
+        assert child.is_running()
+        assert grandchild.is_running()
+        children = psutil.Process().children()
+        self.assertEqual(children, [child])
         children = psutil.Process().children(recursive=True)
         self.assertEqual(len(children), 2)
-        self.assertIn(p1, children)
-        self.assertIn(p2, children)
-        self.assertEqual(p1.ppid(), os.getpid())
-        self.assertEqual(p2.ppid(), p1.pid)
+        self.assertIn(child, children)
+        self.assertIn(grandchild, children)
+        self.assertEqual(child.ppid(), os.getpid())
+        self.assertEqual(grandchild.ppid(), child.pid)
 
-        # make sure both of them are cleaned up
-        reap_children()
-        assert not p1.is_running()
-        assert not p2.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
+        terminate(child)
+        assert not child.is_running()
+        assert grandchild.is_running()
+
+        terminate(grandchild)
+        assert not grandchild.is_running()
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_create_zombie_proc(self):
@@ -275,7 +276,7 @@ class TestProcessUtils(ProcessTestCase):
             assert not psutil.pid_exists(zombie.pid)
 
 
-class TestNetUtils(unittest.TestCase):
+class TestNetUtils(PsutilTestCase):
 
     def bind_socket(self):
         port = get_free_port()
@@ -284,7 +285,7 @@ class TestNetUtils(unittest.TestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
-        name = get_testfn()
+        name = self.get_testfn()
         sock = bind_unix_socket(name)
         with contextlib.closing(sock):
             self.assertEqual(sock.family, socket.AF_UNIX)
@@ -293,7 +294,7 @@ class TestNetUtils(unittest.TestCase):
             assert os.path.exists(name)
             assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
-        name = get_testfn()
+        name = self.get_testfn()
         sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
         with contextlib.closing(sock):
             self.assertEqual(sock.type, socket.SOCK_DGRAM)
@@ -316,7 +317,7 @@ class TestNetUtils(unittest.TestCase):
         p = psutil.Process()
         num_fds = p.num_fds()
         assert not p.connections(kind='unix')
-        name = get_testfn()
+        name = self.get_testfn()
         server, client = unix_socketpair(name)
         try:
             assert os.path.exists(name)
@@ -417,7 +418,7 @@ class TestMemLeakClass(TestMemoryLeak):
             self.execute_w_exc(ZeroDivisionError, fun)
 
 
-class TestOtherUtils(unittest.TestCase):
+class TestOtherUtils(PsutilTestCase):
 
     def test_is_namedtuple(self):
         assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
