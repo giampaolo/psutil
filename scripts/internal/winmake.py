@@ -227,8 +227,13 @@ def build():
     # edit mode).
     sh('%s -c "import setuptools"' % PYTHON)
 
+    # "build_ext -i" copies compiled *.pyd files in ./psutil directory in
+    # order to allow "import psutil" when using the interactive interpreter
+    # from within psutil root directory.
+    cmd = [PYTHON, "setup.py", "build_ext", "-i"]
+    if sys.version_info[:2] >= (3, 6) and os.cpu_count() or 1 > 1:
+        cmd += ['--parallel', str(os.cpu_count())]
     # Print coloured warnings in real time.
-    cmd = [PYTHON, "setup.py", "build"]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
         for line in iter(p.stdout.readline, b''):
@@ -250,10 +255,6 @@ def build():
         p.terminate()
         p.wait()
 
-    # Copies compiled *.pyd files in ./psutil directory in order to
-    # allow "import psutil" when using the interactive interpreter
-    # from within this directory.
-    sh("%s setup.py build_ext -i" % PYTHON)
     # Make sure it actually worked.
     sh('%s -c "import psutil"' % PYTHON)
     win_colorprint("build + import successful", GREEN)

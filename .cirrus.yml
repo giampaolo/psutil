@@ -9,7 +9,7 @@ freebsd_13_py3_task:
     - python3 -m pip install --user setuptools concurrencytest
     - make clean
     - make install
-    - make test-parallel
+    - make test
     - make test-memleaks
     - make print-access-denied
     - make print-api-speed
@@ -25,7 +25,7 @@ freebsd_11_py2_task:
     - python2.7 -m pip install --user setuptools ipaddress mock concurrencytest
     - make clean
     - make install
-    - make test-parallel
+    - make test
     - make test-memleaks
     - make print-access-denied
     - make print-api-speed
