@@ -267,11 +267,12 @@ class TestProcessUtils(ProcessTestCase):
         assert not psutil.pid_exists(pid)
         terminate(pid)
         # zombie
-        parent, zombie = self.create_zombie_proc()
-        terminate(parent)
-        terminate(zombie)
-        assert not psutil.pid_exists(parent.pid)
-        assert not psutil.pid_exists(zombie.pid)
+        if POSIX:
+            parent, zombie = self.create_zombie_proc()
+            terminate(parent)
+            terminate(zombie)
+            assert not psutil.pid_exists(parent.pid)
+            assert not psutil.pid_exists(zombie.pid)
 
 
 class TestNetUtils(unittest.TestCase):
