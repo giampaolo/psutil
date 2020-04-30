@@ -397,13 +397,11 @@ def lint():
     sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
 
 
-def test(script=RUNNER_PY):
+def test(name=""):
     """Run tests"""
     install()
     test_setup()
-    cmdline = "%s %s" % (PYTHON, script)
-    safe_print(cmdline)
-    sh(cmdline)
+    sh("%s %s %s" % (PYTHON, RUNNER_PY, name))
 
 
 def coverage():
