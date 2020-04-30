@@ -111,7 +111,7 @@ class TestLoader:
 class ColouredResult(unittest.TextTestResult):
 
     def _print_color(self, s, color, bold=False):
-        print_color(s, color, bold=bold, file=self.stream)
+        print_color(s, color, bold=bold)
 
     def addSuccess(self, test):
         unittest.TestResult.addSuccess(self, test)
