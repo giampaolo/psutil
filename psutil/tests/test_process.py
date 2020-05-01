@@ -121,7 +121,7 @@ class TestProcess(PsutilTestCase):
             with mock.patch('psutil.os.kill',
                             side_effect=OSError(errno.EPERM, "")):
                 with self.assertRaises(psutil.AccessDenied):
-                    psutil.Process().send_signal(sig)
+                    p.send_signal(sig)
             # Sending a signal to process with PID 0 is not allowed as
             # it would affect every process in the process group of
             # the calling process (os.getpid()) instead of PID 0").
@@ -440,8 +440,8 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit(self):
-        testfn = self.get_testfn()
         p = psutil.Process()
+        testfn = self.get_testfn()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
@@ -462,13 +462,12 @@ class TestProcess(PsutilTestCase):
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
-        testfn = self.get_testfn()
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
         try:
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
             p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
-            with open(testfn, "wb") as f:
+            with open(self.get_testfn(), "wb") as f:
                 f.write(b"X" * 2048)
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
@@ -578,8 +577,9 @@ class TestProcess(PsutilTestCase):
             self.assertGreaterEqual(getattr(mem, name), 0)
 
     def test_memory_full_info(self):
+        p = psutil.Process()
         total = psutil.virtual_memory().total
-        mem = psutil.Process().memory_full_info()
+        mem = p.memory_full_info()
         for name in mem._fields:
             value = getattr(mem, name)
             self.assertGreaterEqual(value, 0, msg=(name, value))
@@ -636,11 +636,12 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     def test_memory_maps_lists_lib(self):
         # Make sure a newly loaded shared lib is listed.
+        p = psutil.Process()
         with copyload_shared_lib() as path:
             def normpath(p):
                 return os.path.realpath(os.path.normcase(p))
             libpaths = [normpath(x.path)
-                        for x in psutil.Process().memory_maps()]
+                        for x in p.memory_maps()]
             self.assertIn(normpath(path), libpaths)
 
     def test_memory_percent(self):
@@ -691,8 +692,7 @@ class TestProcess(PsutilTestCase):
         cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
         p = self.get_test_process(cmdline)
         try:
-            self.assertEqual(' '.join(p.cmdline()),
-                             ' '.join(cmdline))
+            self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
         except AssertionError:
             # XXX - most of the times the underlying sysctl() call on Net
             # and Open BSD returns a truncated string.
@@ -700,8 +700,7 @@ class TestProcess(PsutilTestCase):
             # like this is a kernel bug.
             # XXX - AIX truncates long arguments in /proc/pid/cmdline
             if NETBSD or OPENBSD or AIX:
-                self.assertEqual(
-                    psutil.Process(p.pid).cmdline()[0], PYTHON_EXE)
+                self.assertEqual(p.cmdline()[0], PYTHON_EXE)
             else:
                 raise
 
@@ -919,9 +918,8 @@ class TestProcess(PsutilTestCase):
     # can't find any process file on Appveyor
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
-        # current process
-        testfn = self.get_testfn()
         p = psutil.Process()
+        testfn = self.get_testfn()
         files = p.open_files()
         self.assertFalse(testfn in files)
         with open(testfn, 'wb') as f:
@@ -958,10 +956,10 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files_2(self):
         # test fd and path fields
+        p = psutil.Process()
         normcase = os.path.normcase
         testfn = self.get_testfn()
         with open(testfn, 'w') as fileobj:
-            p = psutil.Process()
             for file in p.open_files():
                 if normcase(file.path) == normcase(fileobj.name) or \
                         file.fd == fileobj.fileno():
@@ -982,8 +980,8 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_num_fds(self):
-        testfn = self.get_testfn()
         p = psutil.Process()
+        testfn = self.get_testfn()
         start = p.num_fds()
         file = open(testfn, 'w')
         self.addCleanup(file.close)
@@ -1007,8 +1005,9 @@ class TestProcess(PsutilTestCase):
         self.fail("num ctx switches still the same after 50.000 iterations")
 
     def test_ppid(self):
+        p = psutil.Process()
         if hasattr(os, 'getppid'):
-            self.assertEqual(psutil.Process().ppid(), os.getppid())
+            self.assertEqual(p.ppid(), os.getppid())
         p = self.get_test_process()
         self.assertEqual(p.ppid(), os.getpid())
         if APPVEYOR:
@@ -1025,9 +1024,10 @@ class TestProcess(PsutilTestCase):
         self.assertIsNone(psutil.Process(lowest_pid).parent())
 
     def test_parent_multi(self):
+        parent = psutil.Process()
         child, grandchild = self.create_proc_children_pair()
         self.assertEqual(grandchild.parent(), child)
-        self.assertEqual(child.parent(), psutil.Process())
+        self.assertEqual(child.parent(), parent)
 
     def test_parent_disappeared(self):
         # Emulate a case where the parent process disappeared.
@@ -1038,22 +1038,23 @@ class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     def test_parents(self):
-        assert psutil.Process().parents()
+        parent = psutil.Process()
+        assert parent.parents()
         child, grandchild = self.create_proc_children_pair()
-        self.assertEqual(child.parents()[0], psutil.Process())
+        self.assertEqual(child.parents()[0], parent)
         self.assertEqual(grandchild.parents()[0], child)
-        self.assertEqual(grandchild.parents()[1], psutil.Process())
+        self.assertEqual(grandchild.parents()[1], parent)
 
     def test_children(self):
-        p = psutil.Process()
-        self.assertEqual(p.children(), [])
-        self.assertEqual(p.children(recursive=True), [])
+        parent = psutil.Process()
+        self.assertEqual(parent.children(), [])
+        self.assertEqual(parent.children(recursive=True), [])
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
         sproc = self.get_test_process(creationflags=0)._sproc
-        children1 = p.children()
-        children2 = p.children(recursive=True)
+        children1 = parent.children()
+        children2 = parent.children(recursive=True)
         for children in (children1, children2):
             self.assertEqual(len(children), 1)
             self.assertEqual(children[0].pid, sproc.pid)
@@ -1062,15 +1063,15 @@ class TestProcess(PsutilTestCase):
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
         # p1 (our child) spawned p2 (our grandchild).
+        parent = psutil.Process()
         child, grandchild = self.create_proc_children_pair()
-        p = psutil.Process()
-        self.assertEqual(p.children(), [child])
-        self.assertEqual(p.children(recursive=True), [child, grandchild])
+        self.assertEqual(parent.children(), [child])
+        self.assertEqual(parent.children(recursive=True), [child, grandchild])
         # If the intermediate process is gone there's no way for
         # children() to recursively find it.
         child.terminate()
         child.wait()
-        self.assertEqual(p.children(recursive=True), [])
+        self.assertEqual(parent.children(recursive=True), [])
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children
@@ -1091,17 +1092,17 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_parents_and_children(self):
+        parent = psutil.Process()
         child, grandchild = self.create_proc_children_pair()
-        me = psutil.Process()
         # forward
-        children = me.children(recursive=True)
+        children = parent.children(recursive=True)
         self.assertEqual(len(children), 2)
         self.assertEqual(children[0], child)
         self.assertEqual(children[1], grandchild)
         # backward
         parents = grandchild.parents()
         self.assertEqual(parents[0], child)
-        self.assertEqual(parents[1], me)
+        self.assertEqual(parents[1], parent)
 
     def test_suspend_resume(self):
         p = self.get_test_process()
@@ -1164,8 +1165,8 @@ class TestProcess(PsutilTestCase):
             p.as_dict(['foo', 'bar'])
 
     def test_oneshot(self):
+        p = psutil.Process()
         with mock.patch("psutil._psplatform.Process.cpu_times") as m:
-            p = psutil.Process()
             with p.oneshot():
                 p.cpu_times()
                 p.cpu_times()
@@ -1179,9 +1180,9 @@ class TestProcess(PsutilTestCase):
     def test_oneshot_twice(self):
         # Test the case where the ctx manager is __enter__ed twice.
         # The second __enter__ is supposed to resut in a NOOP.
+        p = psutil.Process()
         with mock.patch("psutil._psplatform.Process.cpu_times") as m1:
             with mock.patch("psutil._psplatform.Process.oneshot_enter") as m2:
-                p = psutil.Process()
                 with p.oneshot():
                     p.cpu_times()
                     p.cpu_times()
