@@ -200,8 +200,8 @@ class ParallelRunner(ColouredTextRunner):
 
     @staticmethod
     def _parallelize(suite):
-        def fdopen(*args, **kwds):
-            stream = orig_fdopen(*args, **kwds)
+        def fdopen(fd, mode, *kwds):
+            stream = orig_fdopen(fd, mode)
             atexit.register(stream.close)
             return stream
 
@@ -221,9 +221,9 @@ class ParallelRunner(ColouredTextRunner):
                 continue
             test_class = test._tests[0].__class__
             if getattr(test_class, '_serialrun', False):
-                serial.addTest(loadTestsFromTestCase(test_class))
+                serial.addTest(test)
             else:
-                parallel.addTest(loadTestsFromTestCase(test_class))
+                parallel.addTest(test)
         return (serial, parallel)
 
     def run(self, suite):
