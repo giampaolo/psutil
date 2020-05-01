@@ -48,6 +48,7 @@ from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import range
+from psutil._compat import super
 from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
