@@ -24,7 +24,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import CI_TESTING
 from psutil.tests import get_kernel_version
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
@@ -132,9 +132,8 @@ class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess([PYTHON_EXE, "-E", "-O"],
-                                      stdin=subprocess.PIPE).pid
-        # wait_for_pid(cls.pid)
+        cls.pid = spawn_testproc([PYTHON_EXE, "-E", "-O"],
+                                 stdin=subprocess.PIPE).pid
 
     @classmethod
     def tearDownClass(cls):

@@ -48,6 +48,7 @@ from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import range
+from psutil._compat import super
 from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
@@ -81,8 +82,8 @@ __all__ = [
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # subprocesses
-    'pyrun', 'terminate', 'reap_children', 'get_test_subprocess',
-    'create_zombie_proc', 'create_proc_children_pair',
+    'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
+    'spawn_children_pair',
     # threads
     'ThreadTask'
     # test utils
@@ -230,7 +231,7 @@ class ThreadTask(threading.Thread):
     """A thread task which does nothing expect staying alive."""
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        super().__init__()
         self._running = False
         self._interval = 0.001
         self._flag = threading.Event()
@@ -286,7 +287,7 @@ def _reap_children_on_err(fun):
 
 
 @_reap_children_on_err
-def get_test_subprocess(cmd=None, **kwds):
+def spawn_testproc(cmd=None, **kwds):
     """Creates a python subprocess which does nothing for 60 secs and
     return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
@@ -326,7 +327,7 @@ def get_test_subprocess(cmd=None, **kwds):
 
 
 @_reap_children_on_err
-def create_proc_children_pair():
+def spawn_children_pair():
     """Create a subprocess which creates another one as in:
     A (us) -> B (child) -> C (grandchild).
     Return a (child, grandchild) tuple.
@@ -364,7 +365,7 @@ def create_proc_children_pair():
             safe_rmpath(tfile)
 
 
-def create_zombie_proc():
+def spawn_zombie():
     """Create a zombie process and return a (parent, zombie) process tuple.
     In order to kill the zombie parent must be terminate()d first, then
     zombie must be wait()ed on.
@@ -421,7 +422,7 @@ def pyrun(src, **kwds):
     try:
         with open(srcfile, 'wt') as f:
             f.write(src)
-        subp = get_test_subprocess([PYTHON_EXE, f.name], **kwds)
+        subp = spawn_testproc([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
         return (subp, srcfile)
     except Exception:
@@ -857,19 +858,19 @@ class PsutilTestCase(TestCase):
         self.addCleanup(safe_rmpath, fname)
         return fname
 
-    def get_test_subprocess(self, *args, **kwds):
-        sproc = get_test_subprocess(*args, **kwds)
+    def spawn_testproc(self, *args, **kwds):
+        sproc = spawn_testproc(*args, **kwds)
         self.addCleanup(terminate, sproc)
         return sproc
 
-    def create_proc_children_pair(self):
-        child1, child2 = create_proc_children_pair()
+    def spawn_children_pair(self):
+        child1, child2 = spawn_children_pair()
         self.addCleanup(terminate, child2)
         self.addCleanup(terminate, child1)  # executed first
         return (child1, child2)
 
-    def create_zombie_proc(self):
-        parent, zombie = create_zombie_proc()
+    def spawn_zombie(self):
+        parent, zombie = spawn_zombie()
         self.addCleanup(terminate, zombie)
         self.addCleanup(terminate, parent)  # executed first
         return (parent, zombie)

@@ -32,7 +32,7 @@ from psutil._compat import ProcessLookupError
 from psutil._compat import super
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
@@ -282,7 +282,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        p = get_test_subprocess()
+        p = spawn_testproc()
         cls.proc = psutil.Process(p.pid)
         cls.proc.kill()
         cls.proc.wait()

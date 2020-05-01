@@ -20,7 +20,7 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
 from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
@@ -78,7 +78,7 @@ class BSDTestCase(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -153,7 +153,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
