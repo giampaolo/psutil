@@ -1959,24 +1959,18 @@ Process class
     >>> p.terminate()
     >>> p.wait()
 
-Popen class
------------
-
 .. class:: Popen(*args, **kwargs)
 
-  A more convenient interface to stdlib `subprocess.Popen`_.
-  It starts a sub process and you deal with it exactly as when using
-  `subprocess.Popen`_, but in addition it also provides all the methods of
-  :class:`psutil.Process` class as a unified interface.
-
-  .. note::
-
-    Unlike `subprocess.Popen`_ this class preemptively checks whether PID has
-    been reused on
-    :meth:`send_signal() <psutil.Process.send_signal()>`,
-    :meth:`terminate() <psutil.Process.terminate()>` and
-    :meth:`kill() <psutil.Process.kill()>`
-    so that you can't accidentally terminate another process, fixing `BPO-6973`_.
+  Starts a sub-process via `subprocess.Popen`_, and in addition it provides
+  all the methods of :class:`psutil.Process` in a single class.
+  For method names common to both classes such as
+  :meth:`send_signal() <psutil.Process.send_signal()>`,
+  :meth:`terminate() <psutil.Process.terminate()>`,
+  :meth:`kill() <psutil.Process.kill()>` and
+  :meth:`wait() <psutil.Process.wait()>`
+  :class:`psutil.Process` implementation takes precedence.
+  This may have some advantages, like making sure PID has not been reused,
+  fixing `BPO-6973`_.
 
   >>> import psutil
   >>> from subprocess import PIPE
@@ -1992,25 +1986,10 @@ Popen class
   0
   >>>
 
-  *timeout* parameter of `subprocess.Popen.wait`_  is backported for Python < 3.3.
-  :class:`psutil.Popen` objects are supported as context managers via the with
-  statement (added to Python 3.2). On exit, standard file descriptors are
-  closed, and the process is waited for. This is supported on all Python
-  versions.
+  .. versionchanged:: 4.4.0 added context manager support
 
-  >>> import psutil, subprocess
-  >>> with psutil.Popen(["ifconfig"], stdout=subprocess.PIPE) as proc:
-  >>>     log.write(proc.stdout.read())
-
-
-  .. versionchanged:: 4.4.0 added context manager support.
-
-  .. versionchanged:: 5.7.1 inherit from `subprocess.Popen`_ instead of
-    :class:`psutil.Process`.
-
-  .. versionchanged:: 5.7.1 backporint `subprocess.Popen.wait`_ **timeout**
-    parameter on old Python versions.
-
+  .. versionchanged:: 5.7.1 wait() invokes :meth:`wait() <psutil.Process.wait()>`
+    instead of `subprocess.Popen.wait`_.
 
 Windows services
 ================

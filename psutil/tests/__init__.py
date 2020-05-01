@@ -486,21 +486,12 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         from psutil._psposix import wait_pid
 
     def wait(proc, timeout):
-        if sys.version_info < (3, 3) and \
-                isinstance(proc, subprocess.Popen) and \
-                not isinstance(proc, psutil.Popen):
-            # subprocess.Popen instance: emulate missing timeout arg.
-            ret = None
-            try:
-                ret = psutil.Process(proc.pid).wait(timeout)
-            except psutil.NoSuchProcess:
-                # Needed to kill zombies.
-                if POSIX:
-                    ret = wait_pid(proc.pid, timeout)
-            proc.returncode = ret
-            return ret
-        else:
-            return proc.wait(timeout)
+        try:
+            return psutil.Process(proc.pid).wait(timeout)
+        except psutil.NoSuchProcess:
+            # Needed to kill zombies.
+            if POSIX:
+                return wait_pid(proc.pid, timeout)
 
     def term_subproc(proc, timeout):
         try:
