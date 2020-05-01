@@ -216,10 +216,16 @@ class ParallelRunner(ColouredTextRunner):
     def _split_suite(suite):
         serial = unittest.TestSuite()
         parallel = unittest.TestSuite()
-        for test in suite._tests:
+        for test in suite:
             if test.countTestCases() == 0:
                 continue
-            test_class = test._tests[0].__class__
+            elif isinstance(test, unittest.TestSuite):
+                test_class = test._tests[0].__class__
+            elif isinstance(test, unittest.TestCase):
+                test_class = test
+            else:
+                raise TypeError("can't recognize type %r" % test)
+
             if getattr(test_class, '_serialrun', False):
                 serial.addTest(test)
             else:
