@@ -88,24 +88,31 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc()
         p.kill()
         code = p.wait()
-        self.assertFalse(psutil.pid_exists(p.pid))
-        if POSIX:
+        if WINDOWS:
+            self.assertEqual(code, signal.SIGTERM)
+        else:
             self.assertEqual(code, -signal.SIGKILL)
+        assert not p.is_running()
+        assert not psutil.pid_exists(p.pid)
 
     def test_terminate(self):
         p = self.spawn_psproc()
         p.terminate()
         code = p.wait()
-        self.assertFalse(psutil.pid_exists(p.pid))
-        if POSIX:
+        if WINDOWS:
+            self.assertEqual(code, signal.SIGTERM)
+        else:
             self.assertEqual(code, -signal.SIGTERM)
+        assert not p.is_running()
+        assert not psutil.pid_exists(p.pid)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
         p = self.spawn_psproc()
         p.send_signal(sig)
         code = p.wait()
-        self.assertFalse(psutil.pid_exists(p.pid))
+        assert not p.is_running()
+        assert not psutil.pid_exists(p.pid)
         if POSIX:
             self.assertEqual(code, -sig)
             #
@@ -129,47 +136,21 @@ class TestProcess(PsutilTestCase):
                 p = psutil.Process(0)
                 self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
 
-    def test_wait(self):
-        # check exit code signal
-        p = self.spawn_psproc()
-        p.kill()
-        code = p.wait()
-        if POSIX:
-            self.assertEqual(code, -signal.SIGKILL)
-        else:
-            self.assertEqual(code, signal.SIGTERM)
-        self.assertFalse(p.is_running())
-
-        p = self.spawn_psproc()
-        p.terminate()
-        code = p.wait()
-        if POSIX:
-            self.assertEqual(code, -signal.SIGTERM)
-        else:
-            self.assertEqual(code, signal.SIGTERM)
-        self.assertFalse(p.is_running())
-
+    def test_wait_sysexit(self):
         # check sys.exit() code
-        code = "import time, sys; time.sleep(0.01); sys.exit(5);"
-        p = self.spawn_psproc([PYTHON_EXE, "-c", code])
+        pycode = "import time, sys; time.sleep(0.01); sys.exit(5);"
+        p = self.spawn_psproc([PYTHON_EXE, "-c", pycode])
         self.assertEqual(p.wait(), 5)
-        self.assertFalse(p.is_running())
+        assert not p.is_running()
 
-        # Test wait() issued twice.
+    def test_wait_issued_twice(self):
         # It is not supposed to raise NSP when the process is gone.
         # On UNIX this should return None, on Windows it should keep
         # returning the exit code.
-        p = self.spawn_psproc([PYTHON_EXE, "-c", code])
+        pycode = "import time, sys; time.sleep(0.01); sys.exit(5);"
+        p = self.spawn_psproc([PYTHON_EXE, "-c", pycode])
         self.assertEqual(p.wait(), 5)
         self.assertIn(p.wait(), (5, None))
-
-        # test timeout
-        p = self.spawn_psproc()
-        p.name()
-        self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
-
-        # timeout < 0 not allowed
-        self.assertRaises(ValueError, p.wait, -1)
 
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct
@@ -192,24 +173,31 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(child_ret, signal.SIGTERM)
             self.assertEqual(child_ret, signal.SIGTERM)
 
-    def test_wait_timeout_0(self):
+    def test_wait_timeout(self):
+        p = self.spawn_psproc()
+        p.name()
+        self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
+        self.assertRaises(ValueError, p.wait, -1)
+
+    def test_wait_timeout_nonblocking(self):
         p = self.spawn_psproc()
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
         p.kill()
         stop_at = time.time() + 2
-        while True:
+        while time.time() < stop_at:
             try:
                 code = p.wait(0)
-            except psutil.TimeoutExpired:
-                if time.time() >= stop_at:
-                    raise
-            else:
                 break
+            except psutil.TimeoutExpired:
+                pass
+        else:
+            raise self.fail('timeout')
         if POSIX:
             self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, signal.SIGTERM)
-        self.assertFalse(p.is_running())
+        assert not p.is_running()
 
     def test_cpu_percent(self):
         p = psutil.Process()
@@ -921,7 +909,7 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         testfn = self.get_testfn()
         files = p.open_files()
-        self.assertFalse(testfn in files)
+        self.assertNotIn(testfn, files)
         with open(testfn, 'wb') as f:
             f.write(b'x' * 1024)
             f.flush()
@@ -1303,7 +1291,7 @@ class TestProcess(PsutilTestCase):
         # ...and at least its status always be querable
         self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
         # ...and it should be considered 'running'
-        self.assertTrue(zproc.is_running())
+        assert zproc.is_running()
         # ...and as_dict() shouldn't crash
         zproc.as_dict()
 
@@ -1347,7 +1335,7 @@ class TestProcess(PsutilTestCase):
         # rid of a zombie is to kill its parent.
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
-        self.assertTrue(psutil.pid_exists(zproc.pid))
+        assert psutil.pid_exists(zproc.pid)
         if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
             # Maybe they upgraded MACOS version?
@@ -1414,7 +1402,7 @@ class TestProcess(PsutilTestCase):
 
         if not OPENBSD:
             self.assertIn(0, psutil.pids())
-            self.assertTrue(psutil.pid_exists(0))
+            assert psutil.pid_exists(0)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -1461,7 +1449,7 @@ class TestProcess(PsutilTestCase):
             [path], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         p = psutil.Process(sproc.pid)
         wait_for_pid(p.pid)
-        self.assertTrue(p.is_running())
+        assert p.is_running()
         # Wait for process to exec or exit.
         self.assertEqual(sproc.stderr.read(), b"")
         self.assertEqual(p.environ(), {"A": "1", "C": "3"})
