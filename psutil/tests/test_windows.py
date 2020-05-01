@@ -24,7 +24,7 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
 from psutil.tests import APPVEYOR
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
@@ -304,7 +304,7 @@ class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -384,7 +384,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
-        p = psutil.Process(self.get_test_subprocess().pid)
+        p = psutil.Process(self.spawn_testproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
         p.send_signal(signal.CTRL_BREAK_EVENT)
         p.kill()
@@ -533,7 +533,7 @@ class TestProcessWMI(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -607,7 +607,7 @@ class TestDualProcessImplementation(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -721,11 +721,11 @@ class RemoteProcessTestCase(PsutilTestCase):
         super().setUp()
         env = os.environ.copy()
         env["THINK_OF_A_NUMBER"] = str(os.getpid())
-        self.proc32 = self.get_test_subprocess(
+        self.proc32 = self.spawn_testproc(
             [self.python32] + self.test_args,
             env=env,
             stdin=subprocess.PIPE)
-        self.proc64 = self.get_test_subprocess(
+        self.proc64 = self.spawn_testproc(
             [self.python64] + self.test_args,
             env=env,
             stdin=subprocess.PIPE)

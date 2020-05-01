@@ -211,7 +211,7 @@ class TestFSTestUtils(PsutilTestCase):
 class TestProcessUtils(PsutilTestCase):
 
     def test_reap_children(self):
-        subp = self.get_test_subprocess()
+        subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         assert p.is_running()
         reap_children()
@@ -219,8 +219,8 @@ class TestProcessUtils(PsutilTestCase):
         assert not psutil.tests._pids_started
         assert not psutil.tests._subprocesses_started
 
-    def test_create_proc_children_pair(self):
-        child, grandchild = self.create_proc_children_pair()
+    def test_spawn_children_pair(self):
+        child, grandchild = self.spawn_children_pair()
         self.assertNotEqual(child.pid, grandchild.pid)
         assert child.is_running()
         assert grandchild.is_running()
@@ -241,18 +241,18 @@ class TestProcessUtils(PsutilTestCase):
         assert not grandchild.is_running()
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    def test_create_zombie_proc(self):
-        parent, zombie = self.create_zombie_proc()
+    def test_spawn_zombie(self):
+        parent, zombie = self.spawn_zombie()
         self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
 
     def test_terminate(self):
         # by subprocess.Popen
-        p = self.get_test_subprocess()
+        p = self.spawn_testproc()
         terminate(p)
         assert not psutil.pid_exists(p.pid)
         terminate(p)
         # by psutil.Process
-        p = psutil.Process(self.get_test_subprocess().pid)
+        p = psutil.Process(self.spawn_testproc().pid)
         terminate(p)
         assert not psutil.pid_exists(p.pid)
         terminate(p)
@@ -263,13 +263,13 @@ class TestProcessUtils(PsutilTestCase):
         assert not psutil.pid_exists(p.pid)
         terminate(p)
         # by PID
-        pid = self.get_test_subprocess().pid
+        pid = self.spawn_testproc().pid
         terminate(pid)
         assert not psutil.pid_exists(pid)
         terminate(pid)
         # zombie
         if POSIX:
-            parent, zombie = self.create_zombie_proc()
+            parent, zombie = self.spawn_zombie()
             terminate(parent)
             terminate(zombie)
             assert not psutil.pid_exists(parent.pid)

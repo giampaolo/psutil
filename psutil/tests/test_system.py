@@ -60,7 +60,7 @@ class TestProcessAPIs(PsutilTestCase):
 
     def test_process_iter(self):
         self.assertIn(os.getpid(), [x.pid for x in psutil.process_iter()])
-        sproc = self.get_test_subprocess()
+        sproc = self.spawn_testproc()
         self.assertIn(sproc.pid, [x.pid for x in psutil.process_iter()])
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -96,15 +96,15 @@ class TestProcessAPIs(PsutilTestCase):
             assert m.called
 
     @unittest.skipIf(PYPY and WINDOWS,
-                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
+                     "spawn_testproc() unreliable on PYPY + WINDOWS")
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
 
         pids = []
-        sproc1 = self.get_test_subprocess()
-        sproc2 = self.get_test_subprocess()
-        sproc3 = self.get_test_subprocess()
+        sproc1 = self.spawn_testproc()
+        sproc2 = self.spawn_testproc()
+        sproc3 = self.spawn_testproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         self.assertRaises(ValueError, psutil.wait_procs, procs, timeout=-1)
         self.assertRaises(TypeError, psutil.wait_procs, procs, callback=1)
@@ -153,18 +153,18 @@ class TestProcessAPIs(PsutilTestCase):
             self.assertTrue(hasattr(p, 'returncode'))
 
     @unittest.skipIf(PYPY and WINDOWS,
-                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
+                     "spawn_testproc() unreliable on PYPY + WINDOWS")
     def test_wait_procs_no_timeout(self):
-        sproc1 = self.get_test_subprocess()
-        sproc2 = self.get_test_subprocess()
-        sproc3 = self.get_test_subprocess()
+        sproc1 = self.spawn_testproc()
+        sproc2 = self.spawn_testproc()
+        sproc3 = self.spawn_testproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         for p in procs:
             p.terminate()
         gone, alive = psutil.wait_procs(procs)
 
     def test_pid_exists(self):
-        sproc = self.get_test_subprocess()
+        sproc = self.spawn_testproc()
         self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()

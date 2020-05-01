@@ -92,7 +92,7 @@ from psutil.tests import chdir
 from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
@@ -142,7 +142,7 @@ def subprocess_supports_unicode(suffix):
     try:
         safe_rmpath(testfn)
         create_exe(testfn)
-        sproc = get_test_subprocess(cmd=[testfn])
+        sproc = spawn_testproc(cmd=[testfn])
     except UnicodeEncodeError:
         return False
     else:
@@ -177,7 +177,7 @@ class _BaseFSAPIsTests(object):
     # ---
 
     def test_proc_exe(self):
-        subp = self.get_test_subprocess(cmd=[self.funky_name])
+        subp = self.spawn_testproc(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         exe = p.exe()
         self.assertIsInstance(exe, str)
@@ -186,14 +186,14 @@ class _BaseFSAPIsTests(object):
                              os.path.normcase(self.funky_name))
 
     def test_proc_name(self):
-        subp = self.get_test_subprocess(cmd=[self.funky_name])
+        subp = self.spawn_testproc(cmd=[self.funky_name])
         name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
         if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        subp = self.get_test_subprocess(cmd=[self.funky_name])
+        subp = self.spawn_testproc(cmd=[self.funky_name])
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
         for part in cmdline:
@@ -350,7 +350,7 @@ class TestNonFSAPIS(PsutilTestCase):
         env = os.environ.copy()
         funky_str = UNICODE_SUFFIX if PY3 else 'è'
         env['FUNNY_ARG'] = funky_str
-        sproc = self.get_test_subprocess(env=env)
+        sproc = self.spawn_testproc(env=env)
         p = psutil.Process(sproc.pid)
         env = p.environ()
         for k, v in env.items():

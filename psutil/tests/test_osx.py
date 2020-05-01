@@ -12,8 +12,8 @@ import time
 
 import psutil
 from psutil import MACOS
-from psutil.tests import create_zombie_proc
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_zombie
+from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
 from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
@@ -81,7 +81,7 @@ class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -107,7 +107,7 @@ class TestZombieProcessAPIs(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.parent, cls.zombie = create_zombie_proc()
+        cls.parent, cls.zombie = spawn_zombie()
 
     @classmethod
     def tearDownClass(cls):
