@@ -21,7 +21,6 @@ Works with Python versions from 2.6 to 3.4+.
 """
 
 from __future__ import division
-
 import collections
 import contextlib
 import datetime
@@ -39,9 +38,7 @@ except ImportError:
 
 from . import _common
 from ._common import AccessDenied
-from ._common import deprecated_method
 from ._common import Error
-from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
@@ -51,19 +48,6 @@ from ._compat import long
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import PY3 as _PY3
-
-from ._common import STATUS_DEAD
-from ._common import STATUS_DISK_SLEEP
-from ._common import STATUS_IDLE
-from ._common import STATUS_LOCKED
-from ._common import STATUS_PARKED
-from ._common import STATUS_RUNNING
-from ._common import STATUS_SLEEPING
-from ._common import STATUS_STOPPED
-from ._common import STATUS_TRACING_STOP
-from ._common import STATUS_WAITING
-from ._common import STATUS_WAKING
-from ._common import STATUS_ZOMBIE
 
 from ._common import CONN_CLOSE
 from ._common import CONN_CLOSE_WAIT
@@ -80,6 +64,20 @@ from ._common import CONN_TIME_WAIT
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import POWER_TIME_UNKNOWN
+from ._common import POWER_TIME_UNLIMITED
+from ._common import STATUS_DEAD
+from ._common import STATUS_DISK_SLEEP
+from ._common import STATUS_IDLE
+from ._common import STATUS_LOCKED
+from ._common import STATUS_PARKED
+from ._common import STATUS_RUNNING
+from ._common import STATUS_SLEEPING
+from ._common import STATUS_STOPPED
+from ._common import STATUS_TRACING_STOP
+from ._common import STATUS_WAITING
+from ._common import STATUS_WAKING
+from ._common import STATUS_ZOMBIE
 
 from ._common import AIX
 from ._common import BSD
@@ -224,15 +222,14 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
+AF_LINK = _psplatform.AF_LINK
+
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "5.7.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
-AF_LINK = _psplatform.AF_LINK
-POWER_TIME_UNLIMITED = _common.POWER_TIME_UNLIMITED
-POWER_TIME_UNKNOWN = _common.POWER_TIME_UNKNOWN
 _TOTAL_PHYMEM = None
 _LOWEST_PID = None
 
@@ -1070,7 +1067,7 @@ class Process(object):
         """
         return self._proc.memory_info()
 
-    @deprecated_method(replacement="memory_info")
+    @_common.deprecated_method(replacement="memory_info")
     def memory_info_ex(self):
         return self.memory_info()
 
@@ -2402,7 +2399,7 @@ def test():  # pragma: no cover
         print(line[:get_terminal_size()[0]])  # NOQA
 
 
-del memoize, memoize_when_activated, division, deprecated_method
+del memoize_when_activated, division
 if sys.version_info[0] < 3:
     del num, x
 
