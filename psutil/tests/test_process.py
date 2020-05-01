@@ -74,9 +74,9 @@ class TestProcess(PsutilTestCase):
 
     def get_test_process(self, *args, **kwargs):
         sproc = self.get_test_subprocess(*args, **kwargs)
-        p = psutil.Process(sproc.pid)
-        p._sproc = sproc
-        return p
+        return psutil.Process(sproc.pid)
+
+    # ---
 
     def test_pid(self):
         p = psutil.Process()
@@ -1052,13 +1052,13 @@ class TestProcess(PsutilTestCase):
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
-        sproc = self.get_test_process(creationflags=0)._sproc
+        child = self.get_test_process(creationflags=0)
         children1 = parent.children()
         children2 = parent.children(recursive=True)
         for children in (children1, children2):
             self.assertEqual(len(children), 1)
-            self.assertEqual(children[0].pid, sproc.pid)
-            self.assertEqual(children[0].ppid(), os.getpid())
+            self.assertEqual(children[0].pid, child.pid)
+            self.assertEqual(children[0].ppid(), parent.pid)
 
     def test_children_recursive(self):
         # Test children() against two sub processes, p1 and p2, where
@@ -1457,15 +1457,16 @@ class TestProcess(PsutilTestCase):
             """)
         path = self.get_testfn()
         create_exe(path, c_code=code)
-        p = self.get_test_process(
+        sproc = self.get_test_subprocess(
             [path], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = psutil.Process(sproc.pid)
         wait_for_pid(p.pid)
         self.assertTrue(p.is_running())
         # Wait for process to exec or exit.
-        self.assertEqual(p._sproc.stderr.read(), b"")
+        self.assertEqual(sproc.stderr.read(), b"")
         self.assertEqual(p.environ(), {"A": "1", "C": "3"})
-        p._sproc.communicate()
-        self.assertEqual(p._sproc.returncode, 0)
+        sproc.communicate()
+        self.assertEqual(sproc.returncode, 0)
 
 
 # ===================================================================
@@ -1474,6 +1475,7 @@ class TestProcess(PsutilTestCase):
 
 
 if POSIX and os.getuid() == 0:
+
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
@@ -1485,7 +1487,7 @@ if POSIX and os.getuid() == 0:
             PROCESS_GID = os.getgid()
 
         def __init__(self, *args, **kwargs):
-            TestProcess.__init__(self, *args, **kwargs)
+            super().__init__(*args, **kwargs)
             # re-define all existent test methods in order to
             # ignore AccessDenied exceptions
             for attr in [x for x in dir(self) if x.startswith('test')]:
@@ -1516,8 +1518,8 @@ if POSIX and os.getuid() == 0:
             else:
                 self.fail("exception not raised")
 
+        @unittest.skipIf(1, "causes problem as root")
         def test_zombie_process(self):
-            # causes problems if test test suite is run as root
             pass
 
 
