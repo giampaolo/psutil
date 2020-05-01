@@ -30,7 +30,7 @@ def rmpath(path):
 
 def main():
     locations = [site.getusersitepackages()]
-    locations.extend(site.getsitepackages())
+    locations += site.getsitepackages()
     for root in locations:
         if os.path.isdir(root):
             for name in os.listdir(root):

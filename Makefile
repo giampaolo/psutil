@@ -71,17 +71,17 @@ clean:  ## Remove all build files.
 _:
 
 build: _  ## Compile (in parallel) without installing.
-	# make sure setuptools is installed (needed for 'develop' / edit mode)
-	$(PYTHON) -c "import setuptools"
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
-	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
+	# make sure setuptools is installed (needed for 'develop' / edit mode)
+	$(PYTHON) -c "import setuptools"
 	${MAKE} build
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
+	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil || true
@@ -117,63 +117,63 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 # ===================================================================
 
 test:  ## Run all tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --parallel
 
 test-process:  ## Run process-related API tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
 
 test-system:  ## Run system-related API tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_misc.py
 
 test-testutils:  ## Run test utils tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
 
 test-connections:  ## Test net_connections() and Process.connections().
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memory_leaks.py
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-failed:  ## Re-run tests which failed on last run
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
 
 test-coverage:  ## Run test coverage.
-	${MAKE} install
+	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
 	$(TEST_PREFIX) $(PYTHON) -m coverage run $(TSCRIPT)
@@ -284,11 +284,11 @@ print-timeline:  ## Print releases' timeline.
 	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
-	${MAKE} install
+	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	${MAKE} install
+	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 # ===================================================================
@@ -299,11 +299,11 @@ grep-todos:  ## Look for TODOs in the source files.
 	git grep -EIn "TODO|FIXME|XXX"
 
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/bench_oneshot.py
 
 bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
-	${MAKE} install
+	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
 check-broken-links:  ## Look for broken links in source files.

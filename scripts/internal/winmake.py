@@ -399,7 +399,7 @@ def lint():
 
 def test(name=""):
     """Run tests"""
-    install()
+    build()
     test_setup()
     sh("%s %s %s" % (PYTHON, RUNNER_PY, name))
 
@@ -407,7 +407,7 @@ def test(name=""):
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
-    install()
+    build()
     test_setup()
     sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
     sh("%s -m coverage report" % PYTHON)
@@ -417,70 +417,70 @@ def coverage():
 
 def test_process():
     """Run process tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 def test_system():
     """Run system tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 def test_platform():
     """Run windows only tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 def test_misc():
     """Run misc tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 def test_unicode():
     """Run unicode tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 def test_connections():
     """Run connections tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 def test_contracts():
     """Run contracts tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 def test_by_name(name):
     """Run test by name"""
-    install()
+    build()
     test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
 def test_failed():
     """Re-run tests which failed on last run."""
-    install()
+    build()
     test_setup()
     sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
 
 
 def test_memleaks():
     """Run memory leaks tests"""
-    install()
+    build()
     test_setup()
     sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
@@ -509,14 +509,14 @@ def bench_oneshot_2():
 
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
-    install()
+    build()
     test_setup()
     sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
 
 
 def print_api_speed():
     """Benchmark all API calls."""
-    install()
+    build()
     test_setup()
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
