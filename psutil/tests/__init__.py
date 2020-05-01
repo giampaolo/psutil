@@ -230,7 +230,7 @@ class ThreadTask(threading.Thread):
     """A thread task which does nothing expect staying alive."""
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        super().__init__()
         self._running = False
         self._interval = 0.001
         self._flag = threading.Event()
