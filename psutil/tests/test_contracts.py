@@ -352,16 +352,22 @@ class TestFetchAllProcesses(PsutilTestCase):
     Uses a process pool to get info about all processes.
     """
 
+    def setUp(self):
+        self.pool = multiprocessing.Pool()
+
+    def tearDown(self):
+        self.pool.terminate()
+        self.pool.join()
+
     def test_all(self):
         # Fixes "can't pickle <function proc_info>: it's not the
         # same object as test_contracts.proc_info".
         from psutil.tests.test_contracts import proc_info
 
-        with multiprocessing.Pool() as pool:
-            for info in pool.imap_unordered(proc_info, psutil.pids()):
-                for name, value in info.items():
-                    meth = getattr(self, name)
-                    meth(value, info)
+        for info in self.pool.imap_unordered(proc_info, psutil.pids()):
+            for name, value in info.items():
+                meth = getattr(self, name)
+                meth(value, info)
 
     def cmdline(self, ret, info):
         self.assertIsInstance(ret, list)
