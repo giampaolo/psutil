@@ -1321,7 +1321,7 @@ class Popen(Process):
       ('hi\n', None)
       >>> p.terminate()
       >>> p.wait(timeout=2)
-      <Exitcode.EX_OK: 0>
+      0
       >>>
     """
 
