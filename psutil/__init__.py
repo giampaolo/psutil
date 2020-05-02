@@ -1296,11 +1296,18 @@ _as_dict_attrnames = set(
 
 
 class Popen(Process):
-    """A more convenient interface to stdlib subprocess.Popen class.
-    It starts a sub process and deals with it exactly as when using
-    subprocess.Popen class but in addition also provides all the
-    properties and methods of psutil.Process class as a unified
-    interface:
+    """Same as subprocess.Popen, but in addition it provides all
+    psutil.Process methods in a single class.
+    For the following methods which are common to both classes, psutil
+    implementation takes precedence:
+
+    * send_signal()
+    * terminate()
+    * kill()
+
+    This is done in order to avoid killing another process in case its
+    PID has been reused, fixing BPO-6973.
+
       >>> import psutil
       >>> from subprocess import PIPE
       >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
@@ -1314,16 +1321,8 @@ class Popen(Process):
       ('hi\n', None)
       >>> p.terminate()
       >>> p.wait(timeout=2)
-      0
+      <Exitcode.EX_OK: 0>
       >>>
-    For method names common to both classes such as kill(), terminate()
-    and wait(), psutil.Process implementation takes precedence.
-    Unlike subprocess.Popen this class pre-emptively checks whether PID
-    has been reused on send_signal(), terminate() and kill() so that
-    you don't accidentally terminate another process, fixing
-    http://bugs.python.org/issue6973.
-    For a complete documentation refer to:
-    http://docs.python.org/3/library/subprocess.html
     """
 
     def __init__(self, *args, **kwargs):
@@ -1366,6 +1365,13 @@ class Popen(Process):
             except AttributeError:
                 raise AttributeError("%s instance has no attribute '%s'"
                                      % (self.__class__.__name__, name))
+
+    def wait(self, timeout=None):
+        if self.__subproc.returncode is not None:
+            return self.__subproc.returncode
+        ret = super(Popen, self).wait(timeout)
+        self.__subproc.returncode = ret
+        return ret
 
 
 # =====================================================================

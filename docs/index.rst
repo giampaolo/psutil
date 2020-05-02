@@ -1980,16 +1980,15 @@ Process class
 
 .. class:: Popen(*args, **kwargs)
 
-  Starts a sub-process via `subprocess.Popen`_, and in addition it provides
-  all the methods of :class:`psutil.Process` in a single class.
-  For method names common to both classes such as
+  Same as `subprocess.Popen`_ but in addition it provides all
+  :class:`psutil.Process` methods in a single class.
+  For the following methods which are common to both classes, psutil
+  implementation takes precedence:
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>`,
-  :meth:`kill() <psutil.Process.kill()>` and
-  :meth:`wait() <psutil.Process.wait()>`
-  :class:`psutil.Process` implementation takes precedence.
-  This may have some advantages, like making sure PID has not been reused,
-  fixing `BPO-6973`_.
+  :meth:`kill() <psutil.Process.kill()>`.
+  This is done in order to avoid killing another process in case its PID has
+  been reused, fixing  `BPO-6973`_.
 
   >>> import psutil
   >>> from subprocess import PIPE
@@ -2006,9 +2005,6 @@ Process class
   >>>
 
   .. versionchanged:: 4.4.0 added context manager support
-
-  .. versionchanged:: 5.7.1 wait() invokes :meth:`wait() <psutil.Process.wait()>`
-    instead of `subprocess.Popen.wait`_.
 
 Windows services
 ================
