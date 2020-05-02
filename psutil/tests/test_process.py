@@ -154,15 +154,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(code, 5)
         self.assertProcessGone(p)
 
-    def test_wait_signaled(self):
-        p = self.spawn_psproc()
-        p.send_signal(signal.SIGTERM)
-        if WINDOWS:
-            self.assertEqual(p.wait(), signal.SIGTERM)
-        else:
-            # test waitpid() + WIFSIGNALED -> WTERMSIG
-            self.assertEqual(p.wait(), -signal.SIGTERM)
-
     def test_wait_stopped(self):
         p = self.spawn_psproc()
         if POSIX:
