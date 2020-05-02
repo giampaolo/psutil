@@ -1276,7 +1276,7 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        if self._exitcode != _SENTINEL:
+        if self._exitcode is not _SENTINEL:
             return self._exitcode
         self._exitcode = self._proc.wait(timeout)
         return self._exitcode
