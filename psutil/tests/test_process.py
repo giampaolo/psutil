@@ -1371,8 +1371,15 @@ class TestProcess(PsutilTestCase):
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
             return
 
-        # test all methods
         p = psutil.Process(0)
+        self.assertRaises(ValueError, p.wait)
+        self.assertRaises(ValueError, p.terminate)
+        self.assertRaises(ValueError, p.suspend)
+        self.assertRaises(ValueError, p.resume)
+        self.assertRaises(ValueError, p.kill)
+        self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
+
+        # test all methods
         for name in psutil._as_dict_attrnames:
             if name == 'pid':
                 continue

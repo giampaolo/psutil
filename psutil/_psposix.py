@@ -47,7 +47,12 @@ def pid_exists(pid):
         return True
 
 
-def wait_pid(pid, timeout=None, proc_name=None):
+def wait_pid(pid, timeout=None, proc_name=None,
+             _waitpid=os.waitpid,
+             _timer=getattr(time, 'monotonic', time.time),
+             _min=min,
+             _sleep=time.sleep,
+             _pid_exists=pid_exists):
     """Wait for a process PID to terminate.
 
     If the process terminated normally by calling exit(3) or _exit(2),
@@ -65,21 +70,21 @@ def wait_pid(pid, timeout=None, proc_name=None):
     If *timeout* != None and process is still alive raise TimeoutExpired.
     timeout=0 is also possible (either return immediately or raise).
     """
-    assert pid > 0, pid
-    timer = getattr(time, 'monotonic', time.time)
+    if pid <= 0:
+        raise ValueError("can't wait for PID 0")  # see "man waitpid"
     interval = 0.0001
-    flags = os.WUNTRACED | os.WCONTINUED
+    flags = 0
     if timeout is not None:
         flags |= os.WNOHANG
-        stop_at = timer() + timeout
+        stop_at = _timer() + timeout
 
     def sleep(interval):
         # Sleep for some time and return a new increased interval.
         if timeout is not None:
-            if timer() >= stop_at:
+            if _timer() >= stop_at:
                 raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-        time.sleep(interval)
-        return min(interval * 2, 0.04)
+        _sleep(interval)
+        return _min(interval * 2, 0.04)
 
     # See: https://linux.die.net/man/2/waitpid
     while True:
@@ -94,7 +99,7 @@ def wait_pid(pid, timeout=None, proc_name=None):
             # - PID never existed in the first place
             # In both cases we'll eventually return None as we
             # can't determine its exit status code.
-            while pid_exists(pid):
+            while _pid_exists(pid):
                 interval = sleep(interval)
             return
         else:
@@ -111,18 +116,18 @@ def wait_pid(pid, timeout=None, proc_name=None):
                 # Process exited due to a signal != SIGSTOP. Return the
                 # negative value of that signal.
                 return -os.WTERMSIG(status)
-            elif os.WIFSTOPPED(status):
-                # Process was stopped via SIGSTOP or is being traced, and
-                # waitpid() was called with WUNTRACED flag. Anyway, it's
-                # still alive. From now on waitpid() will keep returning
-                # (0, 0) until the process state doesn't change.
-                interval = sleep(interval)
-                continue
-            elif os.WIFCONTINUED(status):
-                # Process was resumed via SIGCONT and waitpid() was called
-                # with WCONTINUED flag.
-                interval = sleep(interval)
-                continue
+            # elif os.WIFSTOPPED(status):
+            #     # Process was stopped via SIGSTOP or is being traced, and
+            #     # waitpid() was called with WUNTRACED flag. Anyway, it's
+            #     # still alive. From now on waitpid() will keep returning
+            #     # (0, 0) until the process state doesn't change.
+            #     interval = sleep(interval)
+            #     continue
+            # elif os.WIFCONTINUED(status):
+            #     # Process was resumed via SIGCONT and waitpid() was called
+            #     # with WCONTINUED flag.
+            #     interval = sleep(interval)
+            #     continue
             else:
                 # Should never happen.
                 raise ValueError("unknown process exit status %r" % status)
