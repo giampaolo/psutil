@@ -134,7 +134,7 @@ def wait_pid(pid, timeout=None, proc_name=None,
                 # Process terminated normally by calling exit(3) or _exit(2),
                 # or by returning from main(). The return value is the
                 # positive integer passed to *exit().
-                os.WEXITSTATUS(status)
+                return os.WEXITSTATUS(status)
             elif os.WIFSIGNALED(status):
                 # Process exited due to a signal. Return the negative value
                 # of that signal.
