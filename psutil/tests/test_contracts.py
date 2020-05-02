@@ -10,10 +10,11 @@ Some of these are duplicates of tests test_system.py and test_process.py
 """
 
 import errno
+import multiprocessing
 import os
 import stat
 import time
-import multiprocessing
+import traceback
 
 from psutil import AIX
 from psutil import BSD
@@ -336,7 +337,8 @@ def proc_info(pid):
                     info['rlimit'] = p.rlimit(psutil.RLIMIT_NOFILE)
                 except psutil.AccessDenied:
                     pass
-    except psutil.NoSuchProcess:
+    except psutil.NoSuchProcess as err:
+        assert err.pid == pid
         return {}
     else:
         for k, v in info.copy().items():
@@ -364,10 +366,26 @@ class TestFetchAllProcesses(PsutilTestCase):
         # same object as test_contracts.proc_info".
         from psutil.tests.test_contracts import proc_info
 
+        failures = []
         for info in self.pool.imap_unordered(proc_info, psutil.pids()):
             for name, value in info.items():
                 meth = getattr(self, name)
-                meth(value, info)
+                try:
+                    meth(value, info)
+                except AssertionError:
+                    s = '\n' + '=' * 70 + '\n'
+                    s += "FAIL: test_%s pid=%s, ret=%s\n" % (
+                        name, info['pid'], repr(value))
+                    s += '-' * 70
+                    s += "\n%s" % traceback.format_exc()
+                    s = "\n".join((" " * 4) + i for i in s.splitlines())
+                    s += '\n'
+                    failures.append(s)
+                else:
+                    if value not in (0, 0.0, [], None, '', {}):
+                        assert value, value
+        if failures:
+            raise self.fail(''.join(failures))
 
     def cmdline(self, ret, info):
         self.assertIsInstance(ret, list)
