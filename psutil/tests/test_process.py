@@ -136,21 +136,44 @@ class TestProcess(PsutilTestCase):
                 p = psutil.Process(0)
                 self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
 
-    def test_wait_sysexit(self):
-        # check sys.exit() code
-        pycode = "import time, sys; time.sleep(0.01); sys.exit(5);"
-        p = self.spawn_psproc([PYTHON_EXE, "-c", pycode])
-        self.assertEqual(p.wait(), 5)
-        assert not p.is_running()
+    def test_wait_exited(self):
+        # Test waitpid() + WIFEXITED -> WEXITSTATUS.
+        # normal return, same as exit(0)
+        cmd = [PYTHON_EXE, "-c", "pass"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 0)
+        # exit(1), implicit in case of error
+        cmd = [PYTHON_EXE, "-c", "1 / 0"]
+        code = self.spawn_psproc(cmd, stderr=subprocess.PIPE).wait()
+        self.assertEqual(code, 1)
+        # via sys.exit()
+        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 5)
+        # via os._exit()
+        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 5)
 
-    def test_wait_issued_twice(self):
-        # It is not supposed to raise NSP when the process is gone.
-        # On UNIX this should return None, on Windows it should keep
-        # returning the exit code.
-        pycode = "import time, sys; time.sleep(0.01); sys.exit(5);"
-        p = self.spawn_psproc([PYTHON_EXE, "-c", pycode])
-        self.assertEqual(p.wait(), 5)
-        self.assertIn(p.wait(), (5, None))
+    def test_wait_signaled(self):
+        # Test waitpid() + WIFSIGNALED -> WTERMSIG.
+        p = self.spawn_psproc()
+        p.send_signal(signal.SIGTERM)
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+        self.assertIsNone(p.wait(0))
+
+    def test_wait_stopped(self):
+        # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
+        p = self.spawn_psproc()
+        p.send_signal(signal.SIGSTOP)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+        p.send_signal(signal.SIGCONT)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+        p.send_signal(signal.SIGTERM)
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+        self.assertIsNone(p.wait(0))
 
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct
@@ -1516,58 +1539,6 @@ if POSIX and os.getuid() == 0:
         @unittest.skipIf(1, "causes problem as root")
         def test_zombie_process(self):
             pass
-
-
-# ===================================================================
-# --- psutil.Process.wait() tests
-# ===================================================================
-
-
-@unittest.skipIf(not POSIX, "POSIX only")
-class TestProcessWait(PsutilTestCase):
-    """Tests for psutil.Process class."""
-
-    def spawn_psproc(self, *args, **kwargs):
-        sproc = self.spawn_testproc(*args, **kwargs)
-        return psutil.Process(sproc.pid)
-
-    def test_wait_exited(self):
-        # Test waitpid() + WIFEXITED -> WEXITSTATUS.
-        # normal return, same as exit(0)
-        cmd = [PYTHON_EXE, "-c", "pass"]
-        code = self.spawn_psproc(cmd).wait()
-        self.assertEqual(code, 0)
-        # exit(1), implicit in case of error
-        cmd = [PYTHON_EXE, "-c", "1 / 0"]
-        code = self.spawn_psproc(cmd, stderr=subprocess.PIPE).wait()
-        self.assertEqual(code, 1)
-        # via sys.exit()
-        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
-        code = self.spawn_psproc(cmd).wait()
-        self.assertEqual(code, 5)
-        # via os._exit()
-        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
-        code = self.spawn_psproc(cmd).wait()
-        self.assertEqual(code, 5)
-
-    def test_wait_signaled(self):
-        # Test waitpid() + WIFSIGNALED -> WTERMSIG.
-        p = self.spawn_psproc()
-        p.send_signal(signal.SIGTERM)
-        code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
-
-    def test_wait_stopped(self):
-        # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
-        p = self.spawn_psproc()
-        p.send_signal(signal.SIGSTOP)
-        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
-        p.send_signal(signal.SIGCONT)
-        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
-        p.send_signal(signal.SIGTERM)
-        code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
-        self.assertIsNone(p.wait(0))
 
 
 # ===================================================================

@@ -121,6 +121,8 @@ def wait_pid(pid, timeout=None, proc_name=None,
             #     # waitpid() was called with WUNTRACED flag. Anyway, it's
             #     # still alive. From now on waitpid() will keep returning
             #     # (0, 0) until the process state doesn't change.
+            #     # This can be important to catch since stopped PIDs can't
+            #     # be terminated by SIGTERM.
             #     interval = sleep(interval)
             #     continue
             # elif os.WIFCONTINUED(status):
