@@ -10,16 +10,24 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
 - 1741_: "make build/install" is now run in parallel and it's about 15% faster
   on UNIX.
-- XXXX_: Process.wait() on POSIX returns an enum, showing the negative signal
+- 1747_: `Process.wait()` on POSIX returns an enum, showing the negative signal
   which was used to terminate the process.
-- XXXX_: Process.wait() return value is cached so that the exit code can be
+  ```
+  >>> import psutil
+  >>> p = psutil.Process(9891)
+  >>> p.terminate()
+  >>> p.wait()
+  <Negsignal.SIGTERM: -15>
+  ```
+- 1747_: `Process.wait()` return value is cached so that the exit code can be
   retrieved on then next call.
-- XXXX_: Process provides more info about the process on str() and repr()
-  (status and exit code). Example:
+- 1747_: Process provides more info about the process on str() and repr()
+  (status and exit code).
+  ```
   >>> proc
   psutil.Process(pid=12739, name='python3', status='terminated',
                  exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
-
+  ```
 **Bug fixes**
 
 - 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
