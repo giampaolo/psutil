@@ -159,9 +159,8 @@ class TestProcess(PsutilTestCase):
         # Test waitpid() + WIFSIGNALED -> WTERMSIG.
         p = self.spawn_psproc()
         p.send_signal(signal.SIGTERM)
-        code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
-        self.assertIsNone(p.wait(0))
+        self.assertEqual(p.wait(), -signal.SIGTERM)
+        self.assertEqual(p.wait(), -signal.SIGTERM)
 
     def test_wait_stopped(self):
         # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
@@ -171,9 +170,8 @@ class TestProcess(PsutilTestCase):
         p.send_signal(signal.SIGCONT)
         self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
         p.send_signal(signal.SIGTERM)
-        code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
-        self.assertIsNone(p.wait(0))
+        self.assertEqual(p.wait(), -signal.SIGTERM)
+        self.assertEqual(p.wait(), -signal.SIGTERM)
 
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct

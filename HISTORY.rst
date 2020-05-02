@@ -10,6 +10,8 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
 - 1741_: "make build/install" is now run in parallel and it's about 15% faster
   on UNIX.
+- XXXX_: Process.wait() return value is cached so that the exit code can be
+  retrieved on then next call.
 
 **Bug fixes**
 

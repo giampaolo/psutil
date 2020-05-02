@@ -232,6 +232,7 @@ version_info = tuple([int(num) for num in __version__.split('.')])
 _timer = getattr(time, 'monotonic', time.time)
 _TOTAL_PHYMEM = None
 _LOWEST_PID = None
+_SENTINEL = object()
 
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
@@ -364,6 +365,7 @@ class Process(object):
         self._proc = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
+        self._exitcode = _SENTINEL
         # cache creation time for later use in is_running() method
         try:
             self.create_time()
@@ -1270,7 +1272,10 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        return self._proc.wait(timeout)
+        if self._exitcode != _SENTINEL:
+            return self._exitcode
+        self._exitcode = self._proc.wait(timeout)
+        return self._exitcode
 
 
 # The valid attr names which can be processed by Process.as_dict().

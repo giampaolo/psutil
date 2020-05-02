@@ -373,6 +373,7 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, retry_for=-1)
 
+    @retry_on_failure()
     def test_leak(self):
         def fun():
             ls.append("x" * 24 * 1024)
