@@ -59,28 +59,14 @@ if enum is not None and hasattr(signal, "Signals"):
     Negsignal = enum.IntEnum(
         'Negsignal', dict([(x.name, -x.value) for x in signal.Signals]))
 
-    Exitcode = enum.IntEnum(
-        'Exitcode', dict([(x, getattr(os, x)) for x in dir(os)
-                          if x.startswith('EX_') and x.isupper()]))
-
     def negsig_to_enum(num):
         """Convert a negative signal value to an enum."""
         try:
             return Negsignal(num)
         except ValueError:
             return num
-
-    def exitcode_to_enum(num):
-        """Convert an exit code to an enum."""
-        try:
-            return Exitcode(num)
-        except ValueError:
-            return num
 else:
     def negsig_to_enum(num):
-        return num
-
-    def exitcode_to_enum(num):
         return num
 
 
@@ -148,18 +134,18 @@ def wait_pid(pid, timeout=None, proc_name=None,
                 # Process terminated normally by calling exit(3) or _exit(2),
                 # or by returning from main(). The return value is the
                 # positive integer passed to *exit().
-                return exitcode_to_enum(os.WEXITSTATUS(status))
+                os.WEXITSTATUS(status)
             elif os.WIFSIGNALED(status):
-                # Process exited due to a signal != SIGSTOP. Return the
-                # negative value of that signal.
+                # Process exited due to a signal. Return the negative value
+                # of that signal.
                 return negsig_to_enum(-os.WTERMSIG(status))
             # elif os.WIFSTOPPED(status):
             #     # Process was stopped via SIGSTOP or is being traced, and
-            #     # waitpid() was called with WUNTRACED flag. Anyway, it's
-            #     # still alive. From now on waitpid() will keep returning
-            #     # (0, 0) until the process state doesn't change.
-            #     # This can be important to catch since stopped PIDs can't
-            #     # be terminated by SIGTERM.
+            #     # waitpid() was called with WUNTRACED flag. PID is still
+            #     # alive. From now on waitpid() will keep returning (0, 0)
+            #     # until the process state doesn't change.
+            #     # It may make sense to catch/enable this since stopped PIDs
+            #     # ignore SIGTERM.
             #     interval = sleep(interval)
             #     continue
             # elif os.WIFCONTINUED(status):

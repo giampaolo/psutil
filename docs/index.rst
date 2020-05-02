@@ -1974,9 +1974,8 @@ Process class
     .. versionchanged:: 5.7.1 return value is cached (instead of returning
       ``None``).
 
-    .. versionchanged:: 5.7.1 on POSIX return an `enum`_, showing either the
-      signal which was used to terminate the process or the exit code (if
-      standard).
+    .. versionchanged:: 5.7.1 on POSIX, in case of negative signal, return it
+      as a human readable `enum`_.
 
 .. class:: Popen(*args, **kwargs)
 
@@ -2001,7 +2000,7 @@ Process class
   >>> p.communicate()
   ('hello\n', None)
   >>> p.wait(timeout=2)
-  <Exitcode.EX_OK: 0>
+  0
   >>>
 
   .. versionchanged:: 4.4.0 added context manager support
