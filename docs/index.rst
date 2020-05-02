@@ -1943,21 +1943,40 @@ Process class
 
   .. method:: wait(timeout=None)
 
-    Wait for process termination and if the process is a child of the current
-    one also return the exit code, else ``None``. On Windows there's
-    no such limitation (exit code is always returned). If the process is
-    already terminated immediately return ``None`` instead of raising
-    :class:`NoSuchProcess`.
+    Wait for a process PID to terminate. The details about the return value
+    differ on UNIX and Windows.
+
+    *On UNIX*: if the process terminated normally, the return value is a
+    positive integer >= 0 indicating the exit code.
+    If the process was terminated by a signal return the negated value of the
+    signal which caused the termination (e.g. ``-SIGTERM``).
+    If PID is not a children of `os.getpid`_ (current process) just wait until
+    the process disappears and return ``None``.
+    If PID does not exist return ``None`` immediately.
+
+    *On Windows*: always return the exit code, which is a positive integer as
+    returned by `GetExitCodeProcess`_.
+
     *timeout* is expressed in seconds. If specified and the process is still
     alive raise :class:`TimeoutExpired` exception.
     ``timeout=0`` can be used in non-blocking apps: it will either return
     immediately or raise :class:`TimeoutExpired`.
+
+    The return value is cached.
     To wait for multiple processes use :func:`psutil.wait_procs()`.
 
     >>> import psutil
     >>> p = psutil.Process(9891)
     >>> p.terminate()
     >>> p.wait()
+    <Negsignal.SIGTERM: -15>
+
+    .. versionchanged:: 5.7.1 return value is cached (instead of returning
+      ``None``).
+
+    .. versionchanged:: 5.7.1 on POSIX return an `enum`_, showing either the
+      signal which was used to terminate the process or the exit code (if
+      standard).
 
 .. class:: Popen(*args, **kwargs)
 
@@ -1983,7 +2002,7 @@ Process class
   >>> p.communicate()
   ('hello\n', None)
   >>> p.wait(timeout=2)
-  0
+  <Exitcode.EX_OK: 0>
   >>>
 
   .. versionchanged:: 4.4.0 added context manager support
@@ -2818,11 +2837,12 @@ Timeline
 .. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-.. _`enums`: https://docs.python.org/3/library/enum.html#module-enum
+.. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py

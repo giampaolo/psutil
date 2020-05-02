@@ -138,7 +138,8 @@ class TestProcess(PsutilTestCase):
         self.assertProcessGone(p)
         # exit(1), implicit in case of error
         cmd = [PYTHON_EXE, "-c", "1 / 0"]
-        code = self.spawn_psproc(cmd, stderr=subprocess.PIPE).wait()
+        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
+        code = p.wait()
         self.assertEqual(code, 1)
         self.assertProcessGone(p)
         # via sys.exit()
@@ -1567,7 +1568,6 @@ class TestPopen(PsutilTestCase):
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()
-        proc.wait(timeout=3)
 
     def test_ctx_manager(self):
         with psutil.Popen([PYTHON_EXE, "-V"],

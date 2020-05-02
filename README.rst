@@ -438,7 +438,7 @@ Process management
     >>> p.terminate()
     >>> p.kill()
     >>> p.wait(timeout=3)
-    0
+    <Exitcode.EX_OK: 0>
     >>>
     >>> psutil.test()
     USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND

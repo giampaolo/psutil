@@ -53,18 +53,34 @@ def pid_exists(pid):
         return True
 
 
+# Python 3.5 signals enum (contributed by me ^^):
+# https://bugs.python.org/issue21076
 if enum is not None and hasattr(signal, "Signals"):
-    Negsigs = enum.IntEnum(
-        'Negsigs', dict([(x.name, -x.value) for x in signal.Signals]))
+    Negsignal = enum.IntEnum(
+        'Negsignal', dict([(x.name, -x.value) for x in signal.Signals]))
+
+    Exitcode = enum.IntEnum(
+        'Exitcode', dict([(x, getattr(os, x)) for x in dir(os)
+                          if x.startswith('EX_') and x.isupper()]))
 
     def negsig_to_enum(num):
         """Convert a negative signal value to an enum."""
         try:
-            return Negsigs(num)
+            return Negsignal(num)
+        except ValueError:
+            return num
+
+    def exitcode_to_enum(num):
+        """Convert an exit code to an enum."""
+        try:
+            return Exitcode(num)
         except ValueError:
             return num
 else:
     def negsig_to_enum(num):
+        return num
+
+    def exitcode_to_enum(num):
         return num
 
 
@@ -132,7 +148,7 @@ def wait_pid(pid, timeout=None, proc_name=None,
                 # Process terminated normally by calling exit(3) or _exit(2),
                 # or by returning from main(). The return value is the
                 # positive integer passed to *exit().
-                return os.WEXITSTATUS(status)
+                return exitcode_to_enum(os.WEXITSTATUS(status))
             elif os.WIFSIGNALED(status):
                 # Process exited due to a signal != SIGSTOP. Return the
                 # negative value of that signal.
