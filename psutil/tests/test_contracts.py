@@ -358,7 +358,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         from psutil.tests.test_contracts import proc_info
 
         with multiprocessing.Pool() as pool:
-            for info in pool.map(proc_info, psutil.pids()):
+            for info in pool.imap_unordered(proc_info, psutil.pids()):
                 for name, value in info.items():
                     meth = getattr(self, name)
                     meth(value, info)
