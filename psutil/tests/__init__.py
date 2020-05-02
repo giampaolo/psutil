@@ -494,9 +494,16 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             if POSIX:
                 return wait_pid(proc.pid, timeout)
 
+    def sendsig(proc, sig):
+        # If the process received SIGSTOP, SIGCONT is necessary first,
+        # otherwise SIGTERM won't work.
+        if POSIX and sig != signal.SIGKILL:
+            proc.send_signal(signal.SIGCONT)
+        proc.send_signal(sig)
+
     def term_subproc(proc, timeout):
         try:
-            proc.send_signal(sig)
+            sendsig(proc, sig)
         except OSError as err:
             if WINDOWS and err.winerror == 6:  # "invalid handle"
                 pass
@@ -506,7 +513,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
 
     def term_psproc(proc, timeout):
         try:
-            proc.send_signal(sig)
+            sendsig(proc, sig)
         except psutil.NoSuchProcess:
             pass
         return wait(proc, timeout)

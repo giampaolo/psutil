@@ -1516,6 +1516,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestProcessWait(PsutilTestCase):
     """Tests for psutil.Process class."""
 
@@ -1549,10 +1550,18 @@ class TestProcessWait(PsutilTestCase):
         code = p.wait()
         self.assertEqual(code, -signal.SIGTERM)
 
-    # def test_wait_stopped(self):
-    #     p = self.spawn_psproc()
-    #     p.send_signal(signal.SIGSTOP)
-    #     code = p.wait(timeout=0.0001)
+    def test_wait_stopped(self):
+        # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
+        p = self.spawn_psproc()
+        p.send_signal(signal.SIGSTOP)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+        p.send_signal(signal.SIGCONT)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+        p.send_signal(signal.SIGTERM)
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+        self.assertIsNone(p.wait(0))
+
 
 # ===================================================================
 # --- psutil.Popen tests
