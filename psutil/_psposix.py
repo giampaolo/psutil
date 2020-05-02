@@ -6,6 +6,7 @@
 
 import glob
 import os
+import signal
 import sys
 import time
 
@@ -20,6 +21,11 @@ from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import PY3
 from ._compat import unicode
+
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 
 __all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
@@ -45,6 +51,21 @@ def pid_exists(pid):
     # (EINVAL, EPERM, ESRCH)
     else:
         return True
+
+
+if enum is not None and hasattr(signal, "Signals"):
+    Negsigs = enum.IntEnum(
+        'Negsigs', dict([(x.name, -x.value) for x in signal.Signals]))
+
+    def negsig_to_enum(num):
+        """Convert a negative signal value to an enum."""
+        try:
+            return Negsigs(num)
+        except ValueError:
+            return num
+else:
+    def negsig_to_enum(num):
+        return num
 
 
 def wait_pid(pid, timeout=None, proc_name=None,
@@ -115,7 +136,7 @@ def wait_pid(pid, timeout=None, proc_name=None,
             elif os.WIFSIGNALED(status):
                 # Process exited due to a signal != SIGSTOP. Return the
                 # negative value of that signal.
-                return -os.WTERMSIG(status)
+                return negsig_to_enum(-os.WTERMSIG(status))
             # elif os.WIFSTOPPED(status):
             #     # Process was stopped via SIGSTOP or is being traced, and
             #     # waitpid() was called with WUNTRACED flag. Anyway, it's

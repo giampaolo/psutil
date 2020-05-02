@@ -10,13 +10,15 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
 - 1741_: "make build/install" is now run in parallel and it's about 15% faster
   on UNIX.
+- XXXX_: Process.wait() on POSIX returns an enum, showing the negative signal
+  which was used to terminate the process.
 - XXXX_: Process.wait() return value is cached so that the exit code can be
   retrieved on then next call.
 - XXXX_: Process provides more info about the process on str() and repr()
   (status and exit code). Example:
   >>> proc
-  psutil.Process(pid=12739, name='python3', status='terminated', exitcode=-9,
-                 started='15:08:20')
+  psutil.Process(pid=12739, name='python3', status='terminated',
+                 exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
 
 **Bug fixes**
 

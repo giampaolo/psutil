@@ -65,10 +65,10 @@ class TestMisc(PsutilTestCase):
         self.assertIn("status=", r)
         self.assertNotIn("exitcode=", r)
         p.terminate()
-        code = p.wait()
+        p.wait()
         r = func(p)
         self.assertIn("status='terminated'", r)
-        self.assertIn("exitcode=%s" % code, r)
+        self.assertIn("exitcode=", r)
 
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
