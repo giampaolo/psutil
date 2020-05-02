@@ -1363,17 +1363,6 @@ class Popen(Process):
                 raise AttributeError("%s instance has no attribute '%s'"
                                      % (self.__class__.__name__, name))
 
-    def wait(self, timeout=None):
-        if self.__subproc.returncode is not None:
-            return self.__subproc.returncode
-        # Note: using psutil's wait() on UNIX should make no difference.
-        # On Windows it does, because PID can still be alive (see
-        # _pswindows.py counterpart addressing this). Python 2.7 doesn't
-        # have timeout arg, so this acts as a backport.
-        ret = Process.wait(self, timeout)
-        self.__subproc.returncode = ret
-        return ret
-
 
 # =====================================================================
 # --- system processes related functions

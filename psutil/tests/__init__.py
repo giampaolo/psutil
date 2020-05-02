@@ -883,7 +883,7 @@ class PsutilTestCase(TestCase):
         if isinstance(proc, (psutil.Process, psutil.Popen)):
             assert not proc.is_running()
             self.assertRaises(psutil.NoSuchProcess, proc.status)
-        proc.wait(timeout=0)  # assert not raise TimeoutExpired
+            proc.wait(timeout=0)  # assert not raise TimeoutExpired
         self.assertPidGone(proc.pid)
 
 
