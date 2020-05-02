@@ -1512,6 +1512,49 @@ if POSIX and os.getuid() == 0:
 
 
 # ===================================================================
+# --- psutil.Process.wait() tests
+# ===================================================================
+
+
+class TestProcessWait(PsutilTestCase):
+    """Tests for psutil.Process class."""
+
+    def spawn_psproc(self, *args, **kwargs):
+        sproc = self.spawn_testproc(*args, **kwargs)
+        return psutil.Process(sproc.pid)
+
+    def test_wait_exited(self):
+        # Test waitpid() + WIFEXITED -> WEXITSTATUS.
+        # normal return, same as exit(0)
+        cmd = [PYTHON_EXE, "-c", "pass"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 0)
+        # exit(1), implicit in case of error
+        cmd = [PYTHON_EXE, "-c", "1 / 0"]
+        code = self.spawn_psproc(cmd, stderr=subprocess.PIPE).wait()
+        self.assertEqual(code, 1)
+        # via sys.exit()
+        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 5)
+        # via os._exit()
+        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
+        code = self.spawn_psproc(cmd).wait()
+        self.assertEqual(code, 5)
+
+    def test_wait_signaled(self):
+        # Test waitpid() + WIFSIGNALED -> WTERMSIG.
+        p = self.spawn_psproc()
+        p.send_signal(signal.SIGTERM)
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+
+    # def test_wait_stopped(self):
+    #     p = self.spawn_psproc()
+    #     p.send_signal(signal.SIGSTOP)
+    #     code = p.wait(timeout=0.0001)
+
+# ===================================================================
 # --- psutil.Popen tests
 # ===================================================================
 

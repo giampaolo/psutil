@@ -48,38 +48,38 @@ def pid_exists(pid):
 
 
 def wait_pid(pid, timeout=None, proc_name=None):
-    """Wait for process with pid 'pid' to terminate and return its
-    exit status code as an integer.
+    """Wait for a process PID to terminate and return its exit code.
+    This is >= 0 if it exited "normally" (including on error), else
+    it's the negated value of the signal which caused the termination
+    (e.g. -SIGTERM).
 
-    If pid is not a children of os.getpid() (current process) just
-    waits until the process disappears and return None.
+    If PID is not a children of os.getpid() (current process) just
+    wait until the process disappears and return None.
 
-    If pid does not exist at all return None immediately.
+    If PID does not exist at all return None immediately.
 
     Raise TimeoutExpired on timeout expired.
     """
-    def check_timeout(delay):
+    assert pid > 0, pid
+    timer = getattr(time, 'monotonic', time.time)
+    interval = 0.0001
+    flags = 0
+    if timeout is not None:
+        stop_at = timer() + timeout
+        flags = os.WNOHANG  # return immediately if PID still exists
+
+    def sleep(interval):
         if timeout is not None:
             if timer() >= stop_at:
                 raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-        time.sleep(delay)
-        return min(delay * 2, 0.04)
+        time.sleep(interval)
+        return min(interval * 2, 0.04)
 
-    timer = getattr(time, 'monotonic', time.time)
-    if timeout is not None:
-        def waitcall():
-            return os.waitpid(pid, os.WNOHANG)
-        stop_at = timer() + timeout
-    else:
-        def waitcall():
-            return os.waitpid(pid, 0)
-
-    delay = 0.0001
     while True:
         try:
-            retpid, status = waitcall()
+            retpid, status = os.waitpid(pid, flags)
         except InterruptedError:
-            delay = check_timeout(delay)
+            interval = sleep(interval)
         except ChildProcessError:
             # This has two meanings:
             # - pid is not a child of os.getpid() in which case
@@ -87,19 +87,17 @@ def wait_pid(pid, timeout=None, proc_name=None):
             # - pid never existed in the first place
             # In both cases we'll eventually return None as we
             # can't determine its exit status code.
-            while True:
-                if pid_exists(pid):
-                    delay = check_timeout(delay)
-                else:
-                    return
+            while pid_exists(pid):
+                interval = sleep(interval)
+            return
         else:
+            # WNOHANG was used, PID is still running
             if retpid == 0:
-                # WNOHANG was used, pid is still running
-                delay = check_timeout(delay)
+                interval = sleep(interval)
                 continue
             # process exited due to a signal; return the integer of
             # that signal
-            if os.WIFSIGNALED(status):
+            elif os.WIFSIGNALED(status):
                 return -os.WTERMSIG(status)
             # process exited using exit(2) system call; return the
             # integer exit(2) system call has been called with
