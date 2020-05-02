@@ -57,20 +57,25 @@ import psutil.tests
 class TestMisc(PsutilTestCase):
 
     def test_process__repr__(self, func=repr):
-        p = psutil.Process()
+        p = psutil.Process(self.spawn_testproc().pid)
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name=", r)
+        self.assertIn("name='%s'" % p.name(), r)
         self.assertIn("status=", r)
-        self.assertIn(p.name(), r)
-        self.assertIn("status='running'", r)
+        self.assertNotIn("exitcode=", r)
+        p.terminate()
+        code = p.wait()
+        r = func(p)
+        self.assertIn("status='terminated'", r)
+        self.assertIn("exitcode=%s" % code, r)
+
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
             p = psutil.Process()
             r = func(p)
             self.assertIn("pid=%s" % p.pid, r)
-            self.assertIn("zombie", r)
+            self.assertIn("status='zombie'", r)
             self.assertNotIn("name=", r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.NoSuchProcess(os.getpid())):
@@ -303,7 +308,10 @@ class TestMisc(PsutilTestCase):
         else:
             with self.assertRaises(Exception):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                sock.bind(("::1", 0))
+                try:
+                    sock.bind(("::1", 0))
+                finally:
+                    sock.close()
 
     def test_isfile_strict(self):
         from psutil._common import isfile_strict

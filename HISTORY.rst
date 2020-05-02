@@ -12,6 +12,11 @@ XXXX-XX-XX
   on UNIX.
 - XXXX_: Process.wait() return value is cached so that the exit code can be
   retrieved on then next call.
+- XXXX_: Process provides more info about the process on str() and repr()
+  (status and exit code). Example:
+  >>> proc
+  psutil.Process(pid=12739, name='python3', status='terminated', exitcode=-9,
+                 started='15:08:20')
 
 **Bug fixes**
 

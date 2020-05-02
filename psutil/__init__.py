@@ -396,18 +396,22 @@ class Process(object):
         except AttributeError:
             info = {}  # Python 2.6
         info["pid"] = self.pid
+        if self._name:
+            info['name'] = self._name
         with self.oneshot():
             try:
                 info["name"] = self.name()
                 info["status"] = self.status()
-                if self._create_time:
-                    info['started'] = _pprint_secs(self._create_time)
             except ZombieProcess:
                 info["status"] = "zombie"
             except NoSuchProcess:
                 info["status"] = "terminated"
             except AccessDenied:
                 pass
+            if self._exitcode not in (_SENTINEL, None):
+                info["exitcode"] = self._exitcode
+            if self._create_time:
+                info['started'] = _pprint_secs(self._create_time)
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
                 self.__class__.__name__,
