@@ -92,8 +92,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(code, signal.SIGTERM)
         else:
             self.assertEqual(code, -signal.SIGKILL)
-        assert not p.is_running()
-        assert not psutil.pid_exists(p.pid)
+        self.assertProcessGone(p)
 
     def test_terminate(self):
         p = self.spawn_psproc()
@@ -103,75 +102,87 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(code, signal.SIGTERM)
         else:
             self.assertEqual(code, -signal.SIGTERM)
-        assert not p.is_running()
-        assert not psutil.pid_exists(p.pid)
+        self.assertProcessGone(p)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
         p = self.spawn_psproc()
         p.send_signal(sig)
         code = p.wait()
-        assert not p.is_running()
-        assert not psutil.pid_exists(p.pid)
-        if POSIX:
+        if WINDOWS:
+            self.assertEqual(code, sig)
+        else:
             self.assertEqual(code, -sig)
-            #
-            p = self.spawn_psproc()
-            p.send_signal(sig)
-            with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.ESRCH, "")):
-                with self.assertRaises(psutil.NoSuchProcess):
-                    p.send_signal(sig)
-            #
-            p = self.spawn_psproc()
-            p.send_signal(sig)
-            with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.EPERM, "")):
-                with self.assertRaises(psutil.AccessDenied):
-                    p.send_signal(sig)
-            # Sending a signal to process with PID 0 is not allowed as
-            # it would affect every process in the process group of
-            # the calling process (os.getpid()) instead of PID 0").
-            if 0 in psutil.pids():
-                p = psutil.Process(0)
-                self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
+        self.assertProcessGone(p)
+
+    @unittest.skipIf(not POSIX, "not POSIX")
+    def test_send_signal_mocked(self):
+        sig = signal.SIGTERM
+        p = self.spawn_psproc()
+        with mock.patch('psutil.os.kill',
+                        side_effect=OSError(errno.ESRCH, "")):
+            self.assertRaises(psutil.NoSuchProcess, p.send_signal, sig)
+
+        p = self.spawn_psproc()
+        with mock.patch('psutil.os.kill',
+                        side_effect=OSError(errno.EPERM, "")):
+            self.assertRaises(psutil.AccessDenied, p.send_signal, sig)
 
     def test_wait_exited(self):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
         # normal return, same as exit(0)
         cmd = [PYTHON_EXE, "-c", "pass"]
-        code = self.spawn_psproc(cmd).wait()
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
         self.assertEqual(code, 0)
+        self.assertProcessGone(p)
         # exit(1), implicit in case of error
         cmd = [PYTHON_EXE, "-c", "1 / 0"]
         code = self.spawn_psproc(cmd, stderr=subprocess.PIPE).wait()
         self.assertEqual(code, 1)
+        self.assertProcessGone(p)
         # via sys.exit()
         cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
-        code = self.spawn_psproc(cmd).wait()
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
         self.assertEqual(code, 5)
+        self.assertProcessGone(p)
         # via os._exit()
         cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
-        code = self.spawn_psproc(cmd).wait()
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
         self.assertEqual(code, 5)
+        self.assertProcessGone(p)
 
     def test_wait_signaled(self):
-        # Test waitpid() + WIFSIGNALED -> WTERMSIG.
         p = self.spawn_psproc()
         p.send_signal(signal.SIGTERM)
-        self.assertEqual(p.wait(), -signal.SIGTERM)
-        self.assertEqual(p.wait(), -signal.SIGTERM)
+        if WINDOWS:
+            self.assertEqual(p.wait(), signal.SIGTERM)
+        else:
+            # test waitpid() + WIFSIGNALED -> WTERMSIG
+            self.assertEqual(p.wait(), -signal.SIGTERM)
 
     def test_wait_stopped(self):
-        # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
         p = self.spawn_psproc()
-        p.send_signal(signal.SIGSTOP)
-        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
-        p.send_signal(signal.SIGCONT)
-        self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
-        p.send_signal(signal.SIGTERM)
-        self.assertEqual(p.wait(), -signal.SIGTERM)
-        self.assertEqual(p.wait(), -signal.SIGTERM)
+        if POSIX:
+            # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
+            # Note: if a process is stopped it ignores SIGTERM.
+            p.send_signal(signal.SIGSTOP)
+            self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+            p.send_signal(signal.SIGCONT)
+            self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+            p.send_signal(signal.SIGTERM)
+            self.assertEqual(p.wait(), -signal.SIGTERM)
+            self.assertEqual(p.wait(), -signal.SIGTERM)
+        else:
+            p.suspend()
+            self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+            p.resume()
+            self.assertRaises(psutil.TimeoutExpired, p.wait, timeout=0.001)
+            p.terminate()
+            self.assertEqual(p.wait(), signal.SIGTERM)
+            self.assertEqual(p.wait(), signal.SIGTERM)
 
     def test_wait_non_children(self):
         # Test wait() against a process which is not our direct
@@ -218,7 +229,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(code, -signal.SIGKILL)
         else:
             self.assertEqual(code, signal.SIGTERM)
-        assert not p.is_running()
+        self.assertProcessGone(p)
 
     def test_cpu_percent(self):
         p = psutil.Process()
@@ -1234,7 +1245,7 @@ class TestProcess(PsutilTestCase):
         p.wait()
         if WINDOWS:
             call_until(psutil.pids, "%s not in ret" % p.pid)
-        assert not p.is_running()
+        self.assertProcessGone(p)
 
         if WINDOWS:
             with self.assertRaises(psutil.NoSuchProcess):
@@ -1393,12 +1404,13 @@ class TestProcess(PsutilTestCase):
             return
 
         p = psutil.Process(0)
-        self.assertRaises(ValueError, p.wait)
-        self.assertRaises(ValueError, p.terminate)
-        self.assertRaises(ValueError, p.suspend)
-        self.assertRaises(ValueError, p.resume)
-        self.assertRaises(ValueError, p.kill)
-        self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
+        exc = psutil.AccessDenied if WINDOWS else ValueError
+        self.assertRaises(exc, p.wait)
+        self.assertRaises(exc, p.terminate)
+        self.assertRaises(exc, p.suspend)
+        self.assertRaises(exc, p.resume)
+        self.assertRaises(exc, p.kill)
+        self.assertRaises(exc, p.send_signal, signal.SIGTERM)
 
         # test all methods
         for name in psutil._as_dict_attrnames:

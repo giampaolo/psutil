@@ -888,6 +888,18 @@ class PsutilTestCase(TestCase):
         self.addCleanup(terminate, sproc)  # executed first
         return sproc
 
+    def assertPidGone(self, pid):
+        assert not psutil.pid_exists(pid), pid
+        self.assertNotIn(pid, psutil.pids())
+
+    def assertProcessGone(self, proc):
+        self.assertRaises(psutil.NoSuchProcess, psutil.Process, proc.pid)
+        if isinstance(proc, (psutil.Process, psutil.Popen)):
+            assert not proc.is_running()
+            self.assertRaises(psutil.NoSuchProcess, proc.status)
+        proc.wait(timeout=0)  # assert not raise TimeoutExpired
+        self.assertPidGone(proc.pid)
+
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
