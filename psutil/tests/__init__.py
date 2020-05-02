@@ -458,21 +458,6 @@ def sh(cmd, **kwds):
     return stdout
 
 
-def _assert_no_pid(pid):
-    # This is here to make sure wait_procs() behaves properly and
-    # investigate:
-    # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
-    #     jiq2cgd6stsbtn60
-    assert not psutil.pid_exists(pid), pid
-    assert pid not in psutil.pids(), pid
-    try:
-        p = psutil.Process(pid)
-    except psutil.NoSuchProcess:
-        pass
-    else:
-        assert 0, "%s is still alive" % p
-
-
 def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     """Terminate a process and wait() for it.
     Process can be a PID or an instance of psutil.Process(),
@@ -494,9 +479,16 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             if POSIX:
                 return wait_pid(proc.pid, timeout)
 
+    def sendsig(proc, sig):
+        # If the process received SIGSTOP, SIGCONT is necessary first,
+        # otherwise SIGTERM won't work.
+        if POSIX and sig != signal.SIGKILL:
+            proc.send_signal(signal.SIGCONT)
+        proc.send_signal(sig)
+
     def term_subproc(proc, timeout):
         try:
-            proc.send_signal(sig)
+            sendsig(proc, sig)
         except OSError as err:
             if WINDOWS and err.winerror == 6:  # "invalid handle"
                 pass
@@ -506,7 +498,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
 
     def term_psproc(proc, timeout):
         try:
-            proc.send_signal(sig)
+            sendsig(proc, sig)
         except psutil.NoSuchProcess:
             pass
         return wait(proc, timeout)
@@ -543,7 +535,8 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     finally:
         if isinstance(p, (subprocess.Popen, psutil.Popen)):
             flush_popen(p)
-        _assert_no_pid(p if isinstance(p, int) else p.pid)
+        pid = p if isinstance(p, int) else p.pid
+        assert not psutil.pid_exists(pid), pid
 
 
 def reap_children(recursive=False):
@@ -880,6 +873,15 @@ class PsutilTestCase(TestCase):
         self.addCleanup(safe_rmpath, srcfile)
         self.addCleanup(terminate, sproc)  # executed first
         return sproc
+
+    def assertProcessGone(self, proc):
+        self.assertRaises(psutil.NoSuchProcess, psutil.Process, proc.pid)
+        if isinstance(proc, (psutil.Process, psutil.Popen)):
+            assert not proc.is_running()
+            self.assertRaises(psutil.NoSuchProcess, proc.status)
+            proc.wait(timeout=0)  # assert not raise TimeoutExpired
+        assert not psutil.pid_exists(proc.pid), proc.pid
+        self.assertNotIn(proc.pid, psutil.pids())
 
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")

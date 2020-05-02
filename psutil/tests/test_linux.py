@@ -1362,6 +1362,7 @@ class TestMisc(PsutilTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    @retry_on_failure()
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False

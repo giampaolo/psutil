@@ -232,6 +232,7 @@ version_info = tuple([int(num) for num in __version__.split('.')])
 _timer = getattr(time, 'monotonic', time.time)
 _TOTAL_PHYMEM = None
 _LOWEST_PID = None
+_SENTINEL = object()
 
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
@@ -364,6 +365,7 @@ class Process(object):
         self._proc = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
+        self._exitcode = _SENTINEL
         # cache creation time for later use in is_running() method
         try:
             self.create_time()
@@ -394,18 +396,22 @@ class Process(object):
         except AttributeError:
             info = {}  # Python 2.6
         info["pid"] = self.pid
+        if self._name:
+            info['name'] = self._name
         with self.oneshot():
             try:
                 info["name"] = self.name()
                 info["status"] = self.status()
-                if self._create_time:
-                    info['started'] = _pprint_secs(self._create_time)
             except ZombieProcess:
                 info["status"] = "zombie"
             except NoSuchProcess:
                 info["status"] = "terminated"
             except AccessDenied:
                 pass
+            if self._exitcode not in (_SENTINEL, None):
+                info["exitcode"] = self._exitcode
+            if self._create_time:
+                info['started'] = _pprint_secs(self._create_time)
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
                 self.__class__.__name__,
@@ -1270,7 +1276,10 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        return self._proc.wait(timeout)
+        if self._exitcode is not _SENTINEL:
+            return self._exitcode
+        self._exitcode = self._proc.wait(timeout)
+        return self._exitcode
 
 
 # The valid attr names which can be processed by Process.as_dict().
@@ -1287,11 +1296,18 @@ _as_dict_attrnames = set(
 
 
 class Popen(Process):
-    """A more convenient interface to stdlib subprocess.Popen class.
-    It starts a sub process and deals with it exactly as when using
-    subprocess.Popen class but in addition also provides all the
-    properties and methods of psutil.Process class as a unified
-    interface:
+    """Same as subprocess.Popen, but in addition it provides all
+    psutil.Process methods in a single class.
+    For the following methods which are common to both classes, psutil
+    implementation takes precedence:
+
+    * send_signal()
+    * terminate()
+    * kill()
+
+    This is done in order to avoid killing another process in case its
+    PID has been reused, fixing BPO-6973.
+
       >>> import psutil
       >>> from subprocess import PIPE
       >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
@@ -1307,14 +1323,6 @@ class Popen(Process):
       >>> p.wait(timeout=2)
       0
       >>>
-    For method names common to both classes such as kill(), terminate()
-    and wait(), psutil.Process implementation takes precedence.
-    Unlike subprocess.Popen this class pre-emptively checks whether PID
-    has been reused on send_signal(), terminate() and kill() so that
-    you don't accidentally terminate another process, fixing
-    http://bugs.python.org/issue6973.
-    For a complete documentation refer to:
-    http://docs.python.org/3/library/subprocess.html
     """
 
     def __init__(self, *args, **kwargs):
@@ -1361,11 +1369,7 @@ class Popen(Process):
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
             return self.__subproc.returncode
-        # Note: using psutil's wait() on UNIX should make no difference.
-        # On Windows it does, because PID can still be alive (see
-        # _pswindows.py counterpart addressing this). Python 2.7 doesn't
-        # have timeout arg, so this acts as a backport.
-        ret = Process.wait(self, timeout)
+        ret = super(Popen, self).wait(timeout)
         self.__subproc.returncode = ret
         return ret
 

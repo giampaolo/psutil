@@ -12,6 +12,7 @@ Some of these are duplicates of tests test_system.py and test_process.py
 import errno
 import multiprocessing
 import os
+import signal
 import stat
 import time
 import traceback
@@ -254,9 +255,9 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(ifname, str)
             for addr in addrs:
                 if enum is not None:
-                    assert isinstance(addr.family, enum.IntEnum), addr
+                    self.assertIsInstance(addr.family, enum.IntEnum)
                 else:
-                    assert isinstance(addr.family, int), addr
+                    self.assertIsInstance(addr.family, int)
                 self.assertIsInstance(addr.address, str)
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
@@ -669,6 +670,20 @@ class TestFetchAllProcesses(PsutilTestCase):
         for k, v in ret.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
+
+
+class TestProcessWaitType(PsutilTestCase):
+
+    @unittest.skipIf(not POSIX, "not POSIX")
+    def test_negative_signal(self):
+        p = psutil.Process(self.spawn_testproc().pid)
+        p.terminate()
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+        if enum is not None:
+            self.assertIsInstance(code, enum.IntEnum)
+        else:
+            self.assertIsInstance(code, int)
 
 
 if __name__ == '__main__':
