@@ -1029,13 +1029,15 @@ class process_namespace:
     else:
         setters.append(('nice', (psutil.NORMAL_PRIORITY_CLASS, ), {}))
     if HAS_RLIMIT:
-        setters.append(('rlimit', (psutil.RLIMIT_NOFILE, (255, 255)), {}))
+        _default = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
+        setters.append(('rlimit', (psutil.RLIMIT_NOFILE, _default), {}))
+        del _default
     if HAS_IONICE:
         if LINUX:
-            setters.append(('ionice', (), {'ioclass': psutil.IOPRIO_CLASS_IDLE,
+            setters.append(('ionice', (), {'ioclass': psutil.IOPRIO_CLASS_NONE,
                                            'value': 0}))
         else:
-            setters.append(('ionice', (psutil.IOPRIO_HIGH, ), {}))
+            setters.append(('ionice', (psutil.IOPRIO_NORMAL, ), {}))
     if HAS_CPU_AFFINITY:
         setters.append(('cpu_affinity', ([0], ), {}))
 

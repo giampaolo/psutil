@@ -32,7 +32,6 @@ from psutil._compat import ProcessLookupError
 from psutil._compat import super
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
-from psutil.tests import spawn_testproc
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
@@ -46,7 +45,9 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
+from psutil.tests import spawn_testproc
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -480,6 +481,41 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
+
+
+# =====================================================================
+# --- num_fds() and num_handles()
+# =====================================================================
+
+
+class TestUnclosedFdsOrHandles(unittest.TestCase):
+    """Call a function N times (twice) and make sure the number of
+    file descriptors (POSIX) or handles (Windows) didn't increase.
+    Basically this is to discover forgotten close(2) and CloseHandle
+    syscalls.
+    """
+
+    def test_process(self):
+        p = psutil.Process()
+        failures = []
+        ns = process_namespace
+        for fun_name, args, kwds in ns.getters + ns.setters:
+            fun = getattr(p, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            try:
+                num1 = p.num_fds() if POSIX else p.num_handles()
+                for x in range(2):
+                    fun()
+                num2 = p.num_fds() if POSIX else p.num_handles()
+            except psutil.AccessDenied:
+                pass
+            else:
+                if abs(num2 - num1) > 1:
+                    fail = "failure while processing Process.%s method " \
+                           "(before=%s, after=%s)" % (fun_name, num1, num2)
+                    failures.append(fail)
+        if failures:
+            self.fail('\n' + '\n'.join(failures))
 
 
 if __name__ == '__main__':
