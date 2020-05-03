@@ -362,7 +362,7 @@ def proc_info(pid):
     info = {'pid': proc.pid}
     ns = process_namespace(proc)
     with proc.oneshot():
-        for fun, fun_name in ns.iter(*ns.getters, clear_cache=False):
+        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
             try:
                 info[fun_name] = fun()
             except psutil.NoSuchProcess as exc:

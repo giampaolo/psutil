@@ -426,12 +426,12 @@ class TestTestingUtils(PsutilTestCase):
     def test_process_namespace(self):
         p = psutil.Process()
         ns = process_namespace(p)
-        fun = [x for x in ns.iter(*ns.getters) if x[1] == 'ppid'][0][0]
+        fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
         self.assertEqual(fun(), p.ppid())
 
     def test_system_namespace(self):
         ns = system_namespace
-        fun = [x for x in ns.iter(*ns.getters) if x[1] == 'net_if_addrs'][0][0]
+        fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
         self.assertEqual(fun(), psutil.net_if_addrs())
 
 

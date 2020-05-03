@@ -77,7 +77,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     def test_coverage(self):
         p = psutil.Process()
         ns = process_namespace(p)
-        for fun, name in ns.iter(*ns.getters + ns.setters):
+        for fun, name in ns.iter(ns.getters + ns.setters):
             assert hasattr(self, "test_" + name), name
 
     @skip_if_linux()
@@ -327,7 +327,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     def test_coverage(self):
         ns = system_namespace
-        for fun, name in ns.iter(*ns.all):
+        for fun, name in ns.iter(ns.all):
             assert hasattr(self, "test_" + name), name
 
     # --- cpu
@@ -506,11 +506,11 @@ class TestUnclosedFdsOrHandles(unittest.TestCase):
     def test_process_apis(self):
         p = psutil.Process()
         ns = process_namespace(p)
-        self.execute(ns.iter(*ns.getters + ns.setters))
+        self.execute(ns.iter(ns.getters + ns.setters))
 
     def test_system_apis(self):
         ns = system_namespace
-        self.execute(ns.iter(*ns.all))
+        self.execute(ns.iter(ns.all))
 
 
 if __name__ == '__main__':

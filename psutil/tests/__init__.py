@@ -1021,7 +1021,7 @@ class process_namespace:
     Usage:
 
     >>> ns = process_namespace(proc)
-    >>> for fun, name in ns.iter(*ns.getters):
+    >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
     utils = [
@@ -1113,11 +1113,11 @@ class process_namespace:
     def __init__(self, proc):
         self._proc = proc
 
-    def iter(self, *tuples, clear_cache=True):
+    def iter(self, ls, clear_cache=True):
         """Given a list of tuples yields a set of (fun, fun_name) tuples
         in random order.
         """
-        ls = list(tuples)
+        ls = list(ls)
         random.shuffle(ls)
         for fun_name, args, kwds in ls:
             if clear_cache:
@@ -1149,7 +1149,7 @@ class system_namespace:
     Usage:
 
     >>> ns = system_namespace
-    >>> for fun, name in ns.iter(*ns.getters):
+    >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
     getters = [
@@ -1196,11 +1196,11 @@ class system_namespace:
     all = getters
 
     @staticmethod
-    def iter(*tuples):
+    def iter(ls):
         """Given a list of tuples yields a set of (fun, fun_name) tuples
         in random order.
         """
-        ls = list(tuples)
+        ls = list(ls)
         random.shuffle(ls)
         for fun_name, args, kwds in ls:
             fun = getattr(psutil, fun_name)

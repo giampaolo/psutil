@@ -1259,7 +1259,7 @@ class TestProcess(PsutilTestCase):
         self.assertProcessGone(p)
 
         ns = process_namespace(p)
-        for fun, name in ns.iter(*ns.all):
+        for fun, name in ns.iter(ns.all):
             assert_raises_nsp(fun, name)
 
         # NtQuerySystemInformation succeeds even if process is gone.
@@ -1295,7 +1295,7 @@ class TestProcess(PsutilTestCase):
         # ...and all other APIs should be able to deal with it
 
         ns = process_namespace(zproc)
-        for fun, name in ns.iter(*ns.all):
+        for fun, name in ns.iter(ns.all):
             succeed_or_zombie_p_exc(fun)
 
         assert psutil.pid_exists(zproc.pid)
