@@ -348,8 +348,8 @@ def proc_info(pid):
 
     def do_wait():
         try:
-            info['wait'] = proc.wait(0)
-        except psutil.TimeoutExpired as exc:
+            proc.wait(0)
+        except psutil.Error as exc:
             check_exception(exc, proc, name, ppid)
 
     try:
@@ -385,10 +385,6 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         self.pool = multiprocessing.Pool()
-        if POSIX:
-            self.spawn_zombie()
-            parent, zombie = self.spawn_zombie()
-            parent.terminate()
 
     def tearDown(self):
         self.pool.terminate()
