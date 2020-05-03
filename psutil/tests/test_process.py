@@ -8,6 +8,7 @@
 
 import collections
 import errno
+import functools
 import getpass
 import itertools
 import os
@@ -50,6 +51,7 @@ from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
 from psutil.tests import mock
+from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
@@ -1232,74 +1234,41 @@ class TestProcess(PsutilTestCase):
         # >>> time.sleep(2)  # time-consuming task, process dies in meantime
         # >>> proc.name()
         # Refers to Issue #15
-        p = self.spawn_psproc()
-        p.terminate()
-        p.wait()
-        if WINDOWS:
-            call_until(psutil.pids, "%s not in ret" % p.pid)
-        self.assertProcessGone(p)
-
-        if WINDOWS:
-            with self.assertRaises(psutil.NoSuchProcess):
-                p.send_signal(signal.CTRL_C_EVENT)
-            with self.assertRaises(psutil.NoSuchProcess):
-                p.send_signal(signal.CTRL_BREAK_EVENT)
-
-        excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'oneshot', 'memory_info_ex']
-        if LINUX and not HAS_RLIMIT:
-            excluded_names.append('rlimit')
-        for name in dir(p):
-            if (name.startswith('_') or
-                    name in excluded_names):
-                continue
+        def assert_raises_nsp(fun, fun_name):
             try:
-                meth = getattr(p, name)
-                # get/set methods
-                if name == 'nice':
-                    if POSIX:
-                        ret = meth(1)
-                    else:
-                        ret = meth(psutil.NORMAL_PRIORITY_CLASS)
-                elif name == 'ionice':
-                    ret = meth()
-                    ret = meth(2)
-                elif name == 'rlimit':
-                    ret = meth(psutil.RLIMIT_NOFILE)
-                    ret = meth(psutil.RLIMIT_NOFILE, (5, 5))
-                elif name == 'cpu_affinity':
-                    ret = meth()
-                    ret = meth([0])
-                elif name == 'send_signal':
-                    ret = meth(signal.SIGTERM)
-                else:
-                    ret = meth()
-            except psutil.ZombieProcess:
-                self.fail("ZombieProcess for %r was not supposed to happen" %
-                          name)
+                ret = fun()
+            except psutil.ZombieProcess:  # differentiate from NSP
+                raise
             except psutil.NoSuchProcess:
                 pass
             except psutil.AccessDenied:
-                if OPENBSD and name in ('threads', 'num_threads'):
-                    pass
-                else:
-                    raise
-            except NotImplementedError:
-                pass
+                if OPENBSD and fun_name in ('threads', 'num_threads'):
+                    return
+                raise
             else:
-                # NtQuerySystemInformation succeeds if process is gone.
-                if WINDOWS and name in ('exe', 'name'):
-                    normcase = os.path.normcase
-                    if name == 'exe':
-                        self.assertEqual(normcase(ret), normcase(PYTHON_EXE))
-                    else:
-                        self.assertEqual(
-                            normcase(ret),
-                            normcase(os.path.basename(PYTHON_EXE)))
-                    continue
-                self.fail(
-                    "NoSuchProcess exception not raised for %r, retval=%s" % (
-                        name, ret))
+                # NtQuerySystemInformation succeeds even if process is gone.
+                if WINDOWS and fun_name in ('exe', 'name'):
+                    return
+                raise self.fail("%r didn't raise NSP and returned %r "
+                                "instead" % (fun, ret))
+
+        p = self.spawn_psproc()
+        p.terminate()
+        p.wait()
+        if WINDOWS:  # XXX
+            call_until(psutil.pids, "%s not in ret" % p.pid)
+        self.assertProcessGone(p)
+
+        for name, args, kwds in process_namespace.all:
+            process_namespace.clear_cache(p)
+            fun = getattr(p, name)
+            fun = functools.partial(fun, *args, **kwds)
+            assert_raises_nsp(fun, name)
+
+        # NtQuerySystemInformation succeeds even if process is gone.
+        if WINDOWS:
+            normcase = os.path.normcase
+            self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):

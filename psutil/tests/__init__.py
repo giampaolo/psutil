@@ -37,6 +37,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
+from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
@@ -89,6 +90,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
+    'process_namespace',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -996,6 +998,66 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+class process_namespace:
+    """A container that lists all the method names of the Process class
+    + some reasonable parameters to be called with.
+    Utilities such as parent(), children() and as_dict() are excluded.
+    Used by those tests who wish to call all Process methods in one shot
+    (and e.g. make sure they all raise NoSuchProcess).
+    """
+
+    # getters
+    getters = []
+    for name in psutil._as_dict_attrnames:
+        if name == 'rlimit':
+            getters.append((name, (psutil.RLIMIT_NOFILE, ), {}))
+        elif name == 'memory_maps':
+            getters.append((name, (), {'grouped': False}))
+        elif name == 'connections':
+            getters.append((name, (), {'kind': 'all'}))
+        elif name == 'pid':
+            continue
+        else:
+            getters.append((name, (), {}))
+
+    # setters
+    setters = []
+    if POSIX:
+        setters.append(('nice', (0, ), {}))
+    else:
+        setters.append(('nice', (psutil.NORMAL_PRIORITY_CLASS, ), {}))
+    if HAS_RLIMIT:
+        setters.append(('rlimit', (psutil.RLIMIT_NOFILE, (255, 255)), {}))
+    if HAS_IONICE:
+        if LINUX:
+            setters.append(('ionice', (), {'ioclass': psutil.IOPRIO_CLASS_IDLE,
+                                           'value': 0}))
+        else:
+            setters.append(('ionice', (psutil.IOPRIO_HIGH, ), {}))
+    if HAS_CPU_AFFINITY:
+        setters.append(('cpu_affinity', ([0], ), {}))
+
+    # killers
+    killers = [
+        ('send_signal', (signal.SIGTERM, ), {}),
+        ('suspend', (), {}),
+        ('resume', (), {}),
+        ('terminate', (), {}),
+        ('kill', (), {})]
+    if WINDOWS:
+        killers.append(('send_signal', (signal.CTRL_C_EVENT, ), {}))
+        killers.append(('send_signal', (signal.CTRL_BREAK_EVENT, ), {}))
+
+    # all
+    all = getters + setters + killers
+    del name
+
+    @staticmethod
+    def clear_cache(proc):
+        """Clear the cache of a Process instance."""
+        proc._init(proc.pid, _ignore_nsp=True)
 
 
 def serialrun(klass):
