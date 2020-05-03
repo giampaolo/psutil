@@ -1002,6 +1002,15 @@ class TestMemoryLeak(PsutilTestCase):
         self.execute(call, **kwargs)
 
 
+def _get_eligible_cpu():
+    p = psutil.Process()
+    if hasattr(p, "cpu_num"):
+        return p.cpu_num()
+    elif hasattr(p, "cpu_affinity"):
+        return p.cpu_affinity()[0]
+    return 0
+
+
 class process_namespace:
     """A container that lists all the method names of the Process class
     + some reasonable parameters to be called with.
@@ -1086,7 +1095,7 @@ class process_namespace:
         else:
             setters += [('ionice', (psutil.IOPRIO_NORMAL, ), {})]
     if HAS_CPU_AFFINITY:
-        setters += [('cpu_affinity', ([0], ), {})]
+        setters += [('cpu_affinity', ([_get_eligible_cpu()], ), {})]
 
     killers = [
         ('send_signal', (signal.SIGTERM, ), {}),

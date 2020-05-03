@@ -1269,9 +1269,9 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
-        def succeed_or_zombie_p_exc(fun, *args, **kwargs):
+        def succeed_or_zombie_p_exc(fun):
             try:
-                return fun(*args, **kwargs)
+                return fun()
             except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
@@ -1284,39 +1284,7 @@ class TestProcess(PsutilTestCase):
         assert zproc.is_running()
         # ...and as_dict() shouldn't crash
         zproc.as_dict()
-
-        if hasattr(zproc, "rlimit"):
-            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
-            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
-                                    (5, 5))
-        # set methods
-        succeed_or_zombie_p_exc(zproc.parent)
-        if hasattr(zproc, 'cpu_affinity'):
-            try:
-                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
-            except ValueError as err:
-                if TRAVIS and LINUX and "not eligible" in str(err):
-                    # https://travis-ci.org/giampaolo/psutil/jobs/279890461
-                    pass
-                else:
-                    raise
-
-        succeed_or_zombie_p_exc(zproc.nice, 0)
-        if hasattr(zproc, 'ionice'):
-            if LINUX:
-                succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
-            else:
-                succeed_or_zombie_p_exc(zproc.ionice, 0)  # Windows
-        if hasattr(zproc, 'rlimit'):
-            succeed_or_zombie_p_exc(zproc.rlimit,
-                                    psutil.RLIMIT_NOFILE, (5, 5))
-        succeed_or_zombie_p_exc(zproc.suspend)
-        succeed_or_zombie_p_exc(zproc.resume)
-        succeed_or_zombie_p_exc(zproc.terminate)
-        succeed_or_zombie_p_exc(zproc.kill)
-
-        # ...its parent should 'see' it
-        # edit: not true on BSD and MACOS
+        # ...its parent should 'see' it (edit: not true on BSD and MACOS
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
         # self.assertIn(zpid, descendants)
@@ -1325,6 +1293,11 @@ class TestProcess(PsutilTestCase):
         # rid of a zombie is to kill its parent.
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
+
+        ns = process_namespace(zproc)
+        for fun, name in ns.iter(*ns.all):
+            succeed_or_zombie_p_exc(fun)
+
         assert psutil.pid_exists(zproc.pid)
         if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
