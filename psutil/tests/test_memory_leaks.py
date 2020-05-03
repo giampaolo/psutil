@@ -48,6 +48,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
+from psutil.tests import system_namespace
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -484,38 +485,44 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
 
 # =====================================================================
-# --- num_fds() and num_handles()
+# --- File descriptors and handlers
 # =====================================================================
 
 
 class TestUnclosedFdsOrHandles(unittest.TestCase):
-    """Call a function N times (twice) and make sure the number of
-    file descriptors (POSIX) or handles (Windows) didn't increase.
-    Basically this is to discover forgotten close(2) and CloseHandle
-    syscalls.
+    """Call a function N times (twice) and make sure the number of file
+    descriptors (POSIX) or handles (Windows) does not increase. Done in
+    order to discover forgotten close(2) and CloseHandle syscalls.
     """
+    times = 2
 
-    def test_process(self):
+    def execute(self, iterator):
         p = psutil.Process()
         failures = []
-        ns = process_namespace
-        for fun_name, args, kwds in ns.getters + ns.setters:
-            fun = getattr(p, fun_name)
-            fun = functools.partial(fun, *args, **kwds)
+        for fun, fun_name in iterator:
+            before = p.num_fds() if POSIX else p.num_handles()
             try:
-                num1 = p.num_fds() if POSIX else p.num_handles()
-                for x in range(2):
+                for x in range(self.times):
                     fun()
-                num2 = p.num_fds() if POSIX else p.num_handles()
-            except psutil.AccessDenied:
-                pass
+            except psutil.Error:
+                continue
             else:
-                if abs(num2 - num1) > 1:
-                    fail = "failure while processing Process.%s method " \
-                           "(before=%s, after=%s)" % (fun_name, num1, num2)
+                after = p.num_fds() if POSIX else p.num_handles()
+                if abs(after - before) > 0:
+                    fail = "failure while calling %s function " \
+                           "(before=%s, after=%s)" % (fun, before, after)
                     failures.append(fail)
         if failures:
             self.fail('\n' + '\n'.join(failures))
+
+    def test_process_apis(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        self.execute(ns.iter(*ns.getters + ns.setters))
+
+    def test_system_apis(self):
+        ns = system_namespace
+        self.execute(ns.iter(*ns.all))
 
 
 if __name__ == '__main__':

@@ -90,7 +90,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
-    'process_namespace',
+    'process_namespace', 'system_namespace',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -1102,6 +1102,71 @@ class process_namespace:
 
 
 process_namespace._test_this()
+
+
+class system_namespace:
+    """A container that lists all the system-realted APIs in psutil
+    namespace.  Utilities such as cpu_percent() are excluded.
+    Usage:
+
+    >>> ns = system_namespace
+    >>> for fun, name in ns.iter(*ns.getters):
+    ...    fun()
+    """
+    getters = [
+        ('pids', (), {}),
+        ('pid_exists', (os.getpid(), ), {}),
+        ('cpu_count', (), {'logical': True}),
+        ('cpu_count', (), {'logical': False}),
+        ('cpu_times', (), {'percpu': False}),
+        ('cpu_times', (), {'percpu': True}),
+        ('cpu_stats', (), {}),
+        ('virtual_memory', (), {}),
+        ('swap_memory', (), {}),
+        ('disk_usage', (os.getcwd(), ), {}),
+        ('disk_partitions', (), {'all': True}),
+        ('disk_io_counters', (), {'perdisk': True}),
+        ('net_io_counters', (), {'pernic': True}),
+        ('net_connections', (), {'kind': 'all'}),
+        ('net_if_addrs', (), {}),
+        ('net_if_stats', (), {}),
+        ('boot_time', (), {}),
+        ('users', (), {}),
+    ]
+    if HAS_CPU_FREQ:
+        getters.append(('cpu_freq', (), {'percpu': True}))
+    if HAS_GETLOADAVG:
+        getters.append(('getloadavg', (), {}))
+    if HAS_SENSORS_TEMPERATURES:
+        getters.append(('sensors_temperatures', (), {}))
+    if HAS_SENSORS_FANS:
+        getters.append(('sensors_fans', (), {}))
+    if HAS_SENSORS_BATTERY:
+        getters.append(('sensors_battery', (), {}))
+    if WINDOWS:
+        getters.append(('win_service_iter', (), {}))
+        getters.append(('win_service_get', ('alg', ), {}))
+
+    ignored = [
+        ('process_iter', (), {}),
+        ('wait_procs', ([psutil.Process()], ), {}),
+        ('cpu_percent', (), {}),
+        ('cpu_times_percent', (), {}),
+    ]
+
+    all = getters
+
+    @staticmethod
+    def iter(*tuples):
+        """Given a list of tuples yields a set of (fun, fun_name) tuples
+        in random order.
+        """
+        ls = list(tuples)
+        random.shuffle(ls)
+        for fun_name, args, kwds in ls:
+            fun = getattr(psutil, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            yield (fun, fun_name)
 
 
 def serialrun(klass):
