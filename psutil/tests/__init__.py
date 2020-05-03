@@ -1008,8 +1008,13 @@ class process_namespace:
     Utilities such as parent(), children() and as_dict() are excluded.
     Used by those tests who wish to call all Process methods in one shot
     (and e.g. make sure they all raise NoSuchProcess).
-    """
 
+    Usage:
+
+    >>> ns = process_namespace(proc)
+    >>> for fun, name in ns.iter(*ns.getters):
+    ...    fun()
+    """
     getters = []
     for _name in psutil._as_dict_attrnames:
         if _name == 'rlimit':
@@ -1066,10 +1071,24 @@ class process_namespace:
     all = getters + setters + killers
     del _name
 
-    @staticmethod
-    def clear_cache(proc):
+    def __init__(self, proc):
+        self._proc = proc
+
+    def iter(self, *tuples):
+        """Given a list of tuples yields a set of (fun, fun_name) tuples
+        in random order.
+        """
+        ls = list(tuples)
+        random.shuffle(ls)
+        for fun_name, args, kwds in ls:
+            self.clear_cache()
+            fun = getattr(self._proc, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            yield (fun, fun_name)
+
+    def clear_cache(self):
         """Clear the cache of a Process instance."""
-        proc._init(proc.pid, _ignore_nsp=True)
+        self._proc._init(self._proc.pid, _ignore_nsp=True)
 
     @classmethod
     def _test_this(cls):

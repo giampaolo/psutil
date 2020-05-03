@@ -8,7 +8,6 @@
 
 import collections
 import errno
-import functools
 import getpass
 import itertools
 import os
@@ -1259,10 +1258,8 @@ class TestProcess(PsutilTestCase):
             call_until(psutil.pids, "%s not in ret" % p.pid)
         self.assertProcessGone(p)
 
-        for name, args, kwds in process_namespace.all:
-            process_namespace.clear_cache(p)
-            fun = getattr(p, name)
-            fun = functools.partial(fun, *args, **kwds)
+        ns = process_namespace(p)
+        for fun, name in ns.iter(*ns.all):
             assert_raises_nsp(fun, name)
 
         # NtQuerySystemInformation succeeds even if process is gone.
