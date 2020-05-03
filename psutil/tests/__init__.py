@@ -1018,15 +1018,18 @@ class process_namespace:
     utils = [
         ('cpu_percent', (), {}),
         ('memory_percent', (), {}),
-        # ('as_dict', (), {}),
-        # ('children', (), {'recursive': True}),
-        # ('is_running', (), {}),
-        # ('memory_info_ex', (), {}),
-        # ('oneshot', (), {}),
-        # ('parent', (), {}),
-        # ('parents', (), {}),
-        # ('pid', (), {}),
-        # ('wait', (0, ), {}),
+    ]
+
+    ignored = [
+        ('as_dict', (), {}),
+        ('children', (), {'recursive': True}),
+        ('is_running', (), {}),
+        ('memory_info_ex', (), {}),
+        ('oneshot', (), {}),
+        ('parent', (), {}),
+        ('parents', (), {}),
+        ('pid', (), {}),
+        ('wait', (0, ), {}),
     ]
 
     getters = [
@@ -1120,9 +1123,8 @@ class process_namespace:
 
     @classmethod
     def _test(cls):
-        ignored = set(['pid', 'children', 'is_running', 'oneshot', 'as_dict',
-                       'wait', 'memory_info_ex', 'parent', 'parents'])
         this = set([x[0] for x in cls.all])
+        ignored = set([x[0] for x in cls.ignored])
         klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
         leftout = (this | ignored) ^ klass
         if leftout:
@@ -1142,24 +1144,24 @@ class system_namespace:
     ...    fun()
     """
     getters = [
-        ('pids', (), {}),
-        ('pid_exists', (os.getpid(), ), {}),
-        ('cpu_count', (), {'logical': True}),
+        ('boot_time', (), {}),
         ('cpu_count', (), {'logical': False}),
+        ('cpu_count', (), {'logical': True}),
+        ('cpu_stats', (), {}),
         ('cpu_times', (), {'percpu': False}),
         ('cpu_times', (), {'percpu': True}),
-        ('cpu_stats', (), {}),
-        ('virtual_memory', (), {}),
-        ('swap_memory', (), {}),
-        ('disk_usage', (os.getcwd(), ), {}),
-        ('disk_partitions', (), {'all': True}),
         ('disk_io_counters', (), {'perdisk': True}),
-        ('net_io_counters', (), {'pernic': True}),
+        ('disk_partitions', (), {'all': True}),
+        ('disk_usage', (os.getcwd(), ), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
-        ('boot_time', (), {}),
+        ('net_io_counters', (), {'pernic': True}),
+        ('pid_exists', (os.getpid(), ), {}),
+        ('pids', (), {}),
+        ('swap_memory', (), {}),
         ('users', (), {}),
+        ('virtual_memory', (), {}),
     ]
     if HAS_CPU_FREQ:
         getters.append(('cpu_freq', (), {'percpu': True}))
@@ -1195,6 +1197,20 @@ class system_namespace:
             fun = getattr(psutil, fun_name)
             fun = functools.partial(fun, *args, **kwds)
             yield (fun, fun_name)
+
+    @classmethod
+    def _test(cls):
+        this = set([x[0] for x in cls.all])
+        ignored = set([x[0] for x in cls.ignored])
+        # there's a separate test for __all__
+        mod = set([x for x in dir(psutil) if x.islower() and x[0] != '_' and
+                   x in psutil.__all__ and callable(getattr(psutil, x))])
+        leftout = (this | ignored) ^ mod
+        if leftout:
+            raise ValueError("uncovered psutil mod name(s): %r" % leftout)
+
+
+system_namespace._test()
 
 
 def serialrun(klass):
