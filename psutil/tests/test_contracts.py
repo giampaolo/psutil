@@ -10,6 +10,7 @@ Some of these are duplicates of tests test_system.py and test_process.py
 """
 
 import errno
+import functools
 import multiprocessing
 import os
 import signal
@@ -36,12 +37,11 @@ from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_kernel_version
 from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
+from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import serialrun
 from psutil.tests import SKIP_SYSCONS
@@ -184,7 +184,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
 
 # ===================================================================
-# --- System API types
+# --- API types
 # ===================================================================
 
 
@@ -313,39 +313,69 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(user.pid, (int, type(None)))
 
 
+class TestProcessWaitType(PsutilTestCase):
+
+    @unittest.skipIf(not POSIX, "not POSIX")
+    def test_negative_signal(self):
+        p = psutil.Process(self.spawn_testproc().pid)
+        p.terminate()
+        code = p.wait()
+        self.assertEqual(code, -signal.SIGTERM)
+        if enum is not None:
+            self.assertIsInstance(code, enum.IntEnum)
+        else:
+            self.assertIsInstance(code, int)
+
+
 # ===================================================================
 # --- Featch all processes test
 # ===================================================================
 
 
 def proc_info(pid):
-    # This function runs in a subprocess.
-    AD_SENTINEL = object()
-    names = psutil._as_dict_attrnames.copy()
-    if HAS_MEMORY_MAPS:
-        names.remove('memory_maps')
+    tcase = PsutilTestCase()
+
+    def check_exception(exc, proc, name, ppid):
+        tcase.assertEqual(exc.pid, pid)
+        tcase.assertEqual(exc.name, name)
+        if isinstance(exc, psutil.ZombieProcess):
+            # XXX investigate zombie/ppid relation on POSIX
+            # tcase.assertEqual(exc.ppid, ppid)
+            pass
+        elif isinstance(exc, psutil.NoSuchProcess):
+            tcase.assertProcessGone(proc)
+        str(exc)
+        assert exc.msg
+
+    def do_wait():
+        try:
+            info['wait'] = proc.wait(0)
+        except psutil.TimeoutExpired as exc:
+            check_exception(exc, proc, name, ppid)
+
     try:
-        p = psutil.Process(pid)
-        with p.oneshot():
-            info = p.as_dict(names, ad_value=AD_SENTINEL)
-            if HAS_MEMORY_MAPS:
-                try:
-                    info['memory_maps'] = p.memory_maps(grouped=False)
-                except psutil.AccessDenied:
-                    pass
-            if HAS_RLIMIT:
-                try:
-                    info['rlimit'] = p.rlimit(psutil.RLIMIT_NOFILE)
-                except psutil.AccessDenied:
-                    pass
-    except psutil.NoSuchProcess as err:
-        assert err.pid == pid
+        proc = psutil.Process(pid)
+        d = proc.as_dict(['ppid', 'name'])
+    except psutil.NoSuchProcess:
         return {}
-    else:
-        for k, v in info.copy().items():
-            if v is AD_SENTINEL:
-                del info[k]
-        return info
+
+    name, ppid = d['name'], d['ppid']
+    info = {'pid': proc.pid}
+    with proc.oneshot():
+        for fun_name, args, kwds in process_namespace.getters:
+            fun = getattr(proc, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            try:
+                info[fun_name] = fun()
+            except psutil.NoSuchProcess as exc:
+                check_exception(exc, proc, name, ppid)
+                do_wait()
+                return info
+            except psutil.AccessDenied as exc:
+                check_exception(exc, proc, name, ppid)
+                continue
+        do_wait()
+    return info
 
 
 @serialrun
@@ -357,6 +387,10 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def setUp(self):
         self.pool = multiprocessing.Pool()
+        if POSIX:
+            self.spawn_zombie()
+            parent, zombie = self.spawn_zombie()
+            parent.terminate()
 
     def tearDown(self):
         self.pool.terminate()
@@ -670,20 +704,6 @@ class TestFetchAllProcesses(PsutilTestCase):
         for k, v in ret.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
-
-
-class TestProcessWaitType(PsutilTestCase):
-
-    @unittest.skipIf(not POSIX, "not POSIX")
-    def test_negative_signal(self):
-        p = psutil.Process(self.spawn_testproc().pid)
-        p.terminate()
-        code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
-        if enum is not None:
-            self.assertIsInstance(code, enum.IntEnum)
-        else:
-            self.assertIsInstance(code, int)
 
 
 if __name__ == '__main__':
