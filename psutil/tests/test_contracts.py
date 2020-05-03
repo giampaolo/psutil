@@ -10,7 +10,6 @@ Some of these are duplicates of tests test_system.py and test_process.py
 """
 
 import errno
-import functools
 import multiprocessing
 import os
 import signal
@@ -361,10 +360,9 @@ def proc_info(pid):
 
     name, ppid = d['name'], d['ppid']
     info = {'pid': proc.pid}
+    ns = process_namespace(proc)
     with proc.oneshot():
-        for fun_name, args, kwds in process_namespace.getters:
-            fun = getattr(proc, fun_name)
-            fun = functools.partial(fun, *args, **kwds)
+        for fun, fun_name in ns.iter(*ns.getters, clear_cache=False):
             try:
                 info[fun_name] = fun()
             except psutil.NoSuchProcess as exc:

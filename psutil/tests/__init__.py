@@ -1074,14 +1074,15 @@ class process_namespace:
     def __init__(self, proc):
         self._proc = proc
 
-    def iter(self, *tuples):
+    def iter(self, *tuples, clear_cache=True):
         """Given a list of tuples yields a set of (fun, fun_name) tuples
         in random order.
         """
         ls = list(tuples)
         random.shuffle(ls)
         for fun_name, args, kwds in ls:
-            self.clear_cache()
+            if clear_cache:
+                self.clear_cache()
             fun = getattr(self._proc, fun_name)
             fun = functools.partial(fun, *args, **kwds)
             yield (fun, fun_name)
