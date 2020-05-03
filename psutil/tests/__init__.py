@@ -840,6 +840,11 @@ class TestCase(unittest.TestCase):
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
+    # ...otherwise multiprocessing.Pool complains
+    if not PY3:
+        def runTest(self):
+            pass
+
 
 # monkey patch default unittest.TestCase
 unittest.TestCase = TestCase

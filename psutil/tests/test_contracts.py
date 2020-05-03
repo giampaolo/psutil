@@ -347,10 +347,11 @@ def proc_info(pid):
         assert exc.msg
 
     def do_wait():
-        try:
-            proc.wait(0)
-        except psutil.Error as exc:
-            check_exception(exc, proc, name, ppid)
+        if pid != 0:
+            try:
+                proc.wait(0)
+            except psutil.Error as exc:
+                check_exception(exc, proc, name, ppid)
 
     try:
         proc = psutil.Process(pid)
