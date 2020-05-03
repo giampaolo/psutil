@@ -49,6 +49,7 @@ from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
+from psutil.tests import terminate
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -252,16 +253,6 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(cext.proc_info, os.getpid())
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcessDualImplementation(TestMemoryLeak):
-
-    def test_cmdline_peb_true(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
-
-    def test_cmdline_peb_false(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
-
-
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     """Repeat the tests above looking for leaks occurring when dealing
     with terminated processes raising NoSuchProcess exception.
@@ -272,10 +263,15 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        p = spawn_testproc()
-        cls.proc = psutil.Process(p.pid)
+        cls.subp = spawn_testproc()
+        cls.proc = psutil.Process(cls.subp.pid)
         cls.proc.kill()
         cls.proc.wait()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        terminate(cls.subp)
 
     def _call(self, fun):
         try:
@@ -309,6 +305,16 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
                     pass
 
             self.execute(call)
+
+
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestProcessDualImplementation(TestMemoryLeak):
+
+    def test_cmdline_peb_true(self):
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
+
+    def test_cmdline_peb_false(self):
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
 
 
 # ===================================================================
