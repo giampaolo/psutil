@@ -1015,61 +1015,88 @@ class process_namespace:
     >>> for fun, name in ns.iter(*ns.getters):
     ...    fun()
     """
-    getters = []
-    for _name in psutil._as_dict_attrnames:
-        if _name == 'rlimit':
-            getters.append((_name, (psutil.RLIMIT_NOFILE, ), {}))
-        elif _name == 'memory_maps':
-            getters.append((_name, (), {'grouped': False}))
-        elif _name == 'connections':
-            getters.append((_name, (), {'kind': 'all'}))
-        elif _name == 'pid':
-            continue
-        else:
-            getters.append((_name, (), {}))
+    utils = [
+        ('cpu_percent', (), {}),
+        ('memory_percent', (), {}),
+        # ('as_dict', (), {}),
+        # ('children', (), {'recursive': True}),
+        # ('is_running', (), {}),
+        # ('memory_info_ex', (), {}),
+        # ('oneshot', (), {}),
+        # ('parent', (), {}),
+        # ('parents', (), {}),
+        # ('pid', (), {}),
+        # ('wait', (0, ), {}),
+    ]
+
+    getters = [
+        ('cmdline', (), {}),
+        ('connections', (), {'kind': 'all'}),
+        ('cpu_times', (), {}),
+        ('create_time', (), {}),
+        ('cwd', (), {}),
+        ('exe', (), {}),
+        ('memory_full_info', (), {}),
+        ('memory_info', (), {}),
+        ('name', (), {}),
+        ('nice', (), {}),
+        ('num_ctx_switches', (), {}),
+        ('num_threads', (), {}),
+        ('open_files', (), {}),
+        ('ppid', (), {}),
+        ('status', (), {}),
+        ('threads', (), {}),
+        ('username', (), {}),
+    ]
+    if POSIX:
+        getters += [('uids', (), {})]
+        getters += [('gids', (), {})]
+        getters += [('terminal', (), {})]
+        getters += [('num_fds', (), {})]
+    if HAS_PROC_IO_COUNTERS:
+        getters += [('io_counters', (), {})]
+    if HAS_IONICE:
+        getters += [('ionice', (), {})]
+    if HAS_RLIMIT:
+        getters += [('rlimit', (psutil.RLIMIT_NOFILE, ), {})]
+    if HAS_CPU_AFFINITY:
+        getters += [('cpu_affinity', (), {})]
+    if HAS_PROC_CPU_NUM:
+        getters += [('cpu_num', (), {})]
+    if HAS_ENVIRON:
+        getters += [('environ', (), {})]
+    if WINDOWS:
+        getters += [('num_handles', (), {})]
+    if HAS_MEMORY_MAPS:
+        getters += [('memory_maps', (), {'grouped': False})]
 
     setters = []
     if POSIX:
-        setters.append(('nice', (0, ), {}))
+        setters += [('nice', (0, ), {})]
     else:
-        setters.append(('nice', (psutil.NORMAL_PRIORITY_CLASS, ), {}))
+        setters += [('nice', (psutil.NORMAL_PRIORITY_CLASS, ), {})]
     if HAS_RLIMIT:
-        _default = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
-        setters.append(('rlimit', (psutil.RLIMIT_NOFILE, _default), {}))
-        del _default
+        setters += [('rlimit', (psutil.RLIMIT_NOFILE, (1024, 4096)), {})]
     if HAS_IONICE:
         if LINUX:
-            setters.append(('ionice', (), {'ioclass': psutil.IOPRIO_CLASS_NONE,
-                                           'value': 0}))
+            setters += [('ionice', (psutil.IOPRIO_CLASS_NONE, 0), {})]
         else:
-            setters.append(('ionice', (psutil.IOPRIO_NORMAL, ), {}))
+            setters += [('ionice', (psutil.IOPRIO_NORMAL, ), {})]
     if HAS_CPU_AFFINITY:
-        setters.append(('cpu_affinity', ([0], ), {}))
+        setters += [('cpu_affinity', ([0], ), {})]
 
     killers = [
         ('send_signal', (signal.SIGTERM, ), {}),
         ('suspend', (), {}),
         ('resume', (), {}),
         ('terminate', (), {}),
-        ('kill', (), {})]
-    if WINDOWS:
-        killers.append(('send_signal', (signal.CTRL_C_EVENT, ), {}))
-        killers.append(('send_signal', (signal.CTRL_BREAK_EVENT, ), {}))
-
-    ignored = [
-        ('as_dict', (), {}),
-        ('children', (), {'recursive': True}),
-        ('is_running', (), {}),
-        ('memory_info_ex', (), {}),
-        ('oneshot', (), {}),
-        ('parent', (), {}),
-        ('parents', (), {}),
-        ('pid', (), {}),
-        ('wait', (), {'timeout': 0}),
+        ('kill', (), {}),
     ]
+    if WINDOWS:
+        killers += [('send_signal', (signal.CTRL_C_EVENT, ), {})]
+        killers += [('send_signal', (signal.CTRL_BREAK_EVENT, ), {})]
 
-    all = getters + setters + killers
-    del _name
+    all = utils + getters + setters + killers
 
     def __init__(self, proc):
         self._proc = proc
@@ -1092,16 +1119,17 @@ class process_namespace:
         self._proc._init(self._proc.pid, _ignore_nsp=True)
 
     @classmethod
-    def _test_this(cls):
-        all_names = set(x[0] for x in cls.all)
-        ignored_names = set(x[0] for x in cls.ignored)
-        for n in [x for x in dir(psutil.Process) if not x.startswith('_') and
-                  x not in ignored_names]:
-            if n not in all_names:
-                raise RuntimeError('Process.%s is uncovered' % n)
+    def _test(cls):
+        ignored = set(['pid', 'children', 'is_running', 'oneshot', 'as_dict',
+                       'wait', 'memory_info_ex', 'parent', 'parents'])
+        this = set([x[0] for x in cls.all])
+        klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
+        leftout = (this | ignored) ^ klass
+        if leftout:
+            raise ValueError("uncovered Process class names: %r" % leftout)
 
 
-process_namespace._test_this()
+process_namespace._test()
 
 
 class system_namespace:
