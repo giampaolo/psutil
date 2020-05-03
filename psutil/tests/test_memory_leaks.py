@@ -58,11 +58,6 @@ cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
 
-# ===================================================================
-# utils
-# ===================================================================
-
-
 def skip_if_linux():
     return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
                            "worthless on LINUX (pure python)")
@@ -79,17 +74,10 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     proc = thisproc
 
     def test_coverage(self):
-        skip = set((
-            "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
-            "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
-            "nice", "oneshot", "parent", "parents", "rlimit", "send_signal",
-            "suspend", "terminate", "wait"))
-        for name in dir(psutil.Process):
-            if name.startswith('_'):
-                continue
-            if name in skip:
-                continue
-            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+        p = psutil.Process()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(*ns.getters + ns.setters):
+            assert hasattr(self, "test_" + name), name
 
     @skip_if_linux()
     def test_name(self):
@@ -121,7 +109,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     def test_status(self):
         self.execute(self.proc.status)
 
-    def test_nice_get(self):
+    def test_nice(self):
         self.execute(self.proc.nice)
 
     def test_nice_set(self):
@@ -129,7 +117,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(lambda: self.proc.nice(niceness))
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
-    def test_ionice_get(self):
+    def test_ionice(self):
         self.execute(self.proc.ionice)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
@@ -210,7 +198,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(self.proc.cwd)
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
-    def test_cpu_affinity_get(self):
+    def test_cpu_affinity(self):
         self.execute(self.proc.cpu_affinity)
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
@@ -233,7 +221,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @unittest.skipIf(not LINUX, "LINUX only")
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
-    def test_rlimit_get(self):
+    def test_rlimit(self):
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE))
 
     @unittest.skipIf(not LINUX, "LINUX only")
@@ -253,7 +241,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.connections(kind))
+            self.execute(lambda: self.proc.connections(kind), times=100)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -332,20 +320,14 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
-        skip = set((
-            "version_info", "__version__", "process_iter", "wait_procs",
-            "cpu_percent", "cpu_times_percent", "cpu_count"))
-        for name in psutil.__all__:
-            if not name.islower():
-                continue
-            if name in skip:
-                continue
-            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+        ns = system_namespace
+        for fun, name in ns.iter(*ns.all):
+            assert hasattr(self, "test_" + name), name
 
     # --- cpu
 
     @skip_if_linux()
-    def test_cpu_count_logical(self):
+    def test_cpu_count(self):  # logical
         self.execute(lambda: psutil.cpu_count(logical=True))
 
     @skip_if_linux()
@@ -423,7 +405,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         with create_sockets():
-            self.execute(psutil.net_connections)
+            self.execute(psutil.net_connections, times=100)
 
     def test_net_if_addrs(self):
         # Note: verified that on Windows this was a false positive.
