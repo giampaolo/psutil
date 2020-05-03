@@ -216,6 +216,8 @@ def _get_py_exe():
 
 PYTHON_EXE = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
+atexit.register(DEVNULL.close)
+
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 AF_UNIX = getattr(socket, "AF_UNIX", object())
@@ -1008,21 +1010,19 @@ class process_namespace:
     (and e.g. make sure they all raise NoSuchProcess).
     """
 
-    # getters
     getters = []
-    for name in psutil._as_dict_attrnames:
-        if name == 'rlimit':
-            getters.append((name, (psutil.RLIMIT_NOFILE, ), {}))
-        elif name == 'memory_maps':
-            getters.append((name, (), {'grouped': False}))
-        elif name == 'connections':
-            getters.append((name, (), {'kind': 'all'}))
-        elif name == 'pid':
+    for _name in psutil._as_dict_attrnames:
+        if _name == 'rlimit':
+            getters.append((_name, (psutil.RLIMIT_NOFILE, ), {}))
+        elif _name == 'memory_maps':
+            getters.append((_name, (), {'grouped': False}))
+        elif _name == 'connections':
+            getters.append((_name, (), {'kind': 'all'}))
+        elif _name == 'pid':
             continue
         else:
-            getters.append((name, (), {}))
+            getters.append((_name, (), {}))
 
-    # setters
     setters = []
     if POSIX:
         setters.append(('nice', (0, ), {}))
@@ -1039,7 +1039,6 @@ class process_namespace:
     if HAS_CPU_AFFINITY:
         setters.append(('cpu_affinity', ([0], ), {}))
 
-    # killers
     killers = [
         ('send_signal', (signal.SIGTERM, ), {}),
         ('suspend', (), {}),
@@ -1050,14 +1049,37 @@ class process_namespace:
         killers.append(('send_signal', (signal.CTRL_C_EVENT, ), {}))
         killers.append(('send_signal', (signal.CTRL_BREAK_EVENT, ), {}))
 
-    # all
+    ignored = [
+        ('as_dict', (), {}),
+        ('children', (), {'recursive': True}),
+        ('is_running', (), {}),
+        ('memory_info_ex', (), {}),
+        ('oneshot', (), {}),
+        ('parent', (), {}),
+        ('parents', (), {}),
+        ('pid', (), {}),
+        ('wait', (), {'timeout': 0}),
+    ]
+
     all = getters + setters + killers
-    del name
+    del _name
 
     @staticmethod
     def clear_cache(proc):
         """Clear the cache of a Process instance."""
         proc._init(proc.pid, _ignore_nsp=True)
+
+    @classmethod
+    def _test_this(cls):
+        all_names = set(x[0] for x in cls.all)
+        ignored_names = set(x[0] for x in cls.ignored)
+        for n in [x for x in dir(psutil.Process) if not x.startswith('_') and
+                  x not in ignored_names]:
+            if n not in all_names:
+                raise RuntimeError('Process.%s is uncovered' % n)
+
+
+process_namespace._test_this()
 
 
 def serialrun(klass):
@@ -1379,9 +1401,6 @@ else:
 # ===================================================================
 
 
-atexit.register(DEVNULL.close)
-
-
 # this is executed first
 @atexit.register
 def cleanup_test_procs():
@@ -1390,7 +1409,7 @@ def cleanup_test_procs():
 
 # atexit module does not execute exit functions in case of SIGTERM, which
 # gets sent to test subprocesses, which is a problem if they import this
-# modul. With this it will. See:
+# module. With this it will. See:
 # http://grodola.blogspot.com/
 #     2016/02/how-to-always-execute-exit-functions-in-py.html
 if POSIX:
