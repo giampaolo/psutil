@@ -1017,15 +1017,11 @@ def _get_eligible_cpu():
 
 
 class process_namespace:
-    """A container that lists all the method names of the Process class
-    + some reasonable parameters to be called with.
-    Utilities such as parent(), children() and as_dict() are excluded.
-    Used by those tests who wish to call all Process methods in one shot
-    (and e.g. make sure they all raise NoSuchProcess).
+    """A container that lists all Process class method names + some
+    reasonable parameters to be called with. Utility methods (parent(),
+    children(), ...) are excluded.
 
-    Usage:
-
-    >>> ns = process_namespace(proc)
+    >>> ns = process_namespace(psutil.Process())
     >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
@@ -1149,9 +1145,8 @@ process_namespace._test()
 
 
 class system_namespace:
-    """A container that lists all the system-realted APIs in psutil
-    namespace.  Utilities such as cpu_percent() are excluded.
-    Usage:
+    """A container that lists all the module-level, system-related APIs.
+    Utilities such as cpu_percent() are excluded. Usage:
 
     >>> ns = system_namespace
     >>> for fun, name in ns.iter(ns.getters):
