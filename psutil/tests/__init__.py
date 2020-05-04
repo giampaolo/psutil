@@ -37,6 +37,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
+from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
@@ -89,6 +90,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
+    'process_namespace', 'system_namespace',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -214,6 +216,8 @@ def _get_py_exe():
 
 PYTHON_EXE = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
+atexit.register(DEVNULL.close)
+
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 AF_UNIX = getattr(socket, "AF_UNIX", object())
@@ -836,6 +840,11 @@ class TestCase(unittest.TestCase):
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
         assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
 
+    # ...otherwise multiprocessing.Pool complains
+    if not PY3:
+        def runTest(self):
+            pass
+
 
 # monkey patch default unittest.TestCase
 unittest.TestCase = TestCase
@@ -996,6 +1005,221 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+def _get_eligible_cpu():
+    p = psutil.Process()
+    if hasattr(p, "cpu_num"):
+        return p.cpu_num()
+    elif hasattr(p, "cpu_affinity"):
+        return p.cpu_affinity()[0]
+    return 0
+
+
+class process_namespace:
+    """A container that lists all Process class method names + some
+    reasonable parameters to be called with. Utility methods (parent(),
+    children(), ...) are excluded.
+
+    >>> ns = process_namespace(psutil.Process())
+    >>> for fun, name in ns.iter(ns.getters):
+    ...    fun()
+    """
+    utils = [
+        ('cpu_percent', (), {}),
+        ('memory_percent', (), {}),
+    ]
+
+    ignored = [
+        ('as_dict', (), {}),
+        ('children', (), {'recursive': True}),
+        ('is_running', (), {}),
+        ('memory_info_ex', (), {}),
+        ('oneshot', (), {}),
+        ('parent', (), {}),
+        ('parents', (), {}),
+        ('pid', (), {}),
+        ('wait', (0, ), {}),
+    ]
+
+    getters = [
+        ('cmdline', (), {}),
+        ('connections', (), {'kind': 'all'}),
+        ('cpu_times', (), {}),
+        ('create_time', (), {}),
+        ('cwd', (), {}),
+        ('exe', (), {}),
+        ('memory_full_info', (), {}),
+        ('memory_info', (), {}),
+        ('name', (), {}),
+        ('nice', (), {}),
+        ('num_ctx_switches', (), {}),
+        ('num_threads', (), {}),
+        ('open_files', (), {}),
+        ('ppid', (), {}),
+        ('status', (), {}),
+        ('threads', (), {}),
+        ('username', (), {}),
+    ]
+    if POSIX:
+        getters += [('uids', (), {})]
+        getters += [('gids', (), {})]
+        getters += [('terminal', (), {})]
+        getters += [('num_fds', (), {})]
+    if HAS_PROC_IO_COUNTERS:
+        getters += [('io_counters', (), {})]
+    if HAS_IONICE:
+        getters += [('ionice', (), {})]
+    if HAS_RLIMIT:
+        getters += [('rlimit', (psutil.RLIMIT_NOFILE, ), {})]
+    if HAS_CPU_AFFINITY:
+        getters += [('cpu_affinity', (), {})]
+    if HAS_PROC_CPU_NUM:
+        getters += [('cpu_num', (), {})]
+    if HAS_ENVIRON:
+        getters += [('environ', (), {})]
+    if WINDOWS:
+        getters += [('num_handles', (), {})]
+    if HAS_MEMORY_MAPS:
+        getters += [('memory_maps', (), {'grouped': False})]
+
+    setters = []
+    if POSIX:
+        setters += [('nice', (0, ), {})]
+    else:
+        setters += [('nice', (psutil.NORMAL_PRIORITY_CLASS, ), {})]
+    if HAS_RLIMIT:
+        setters += [('rlimit', (psutil.RLIMIT_NOFILE, (1024, 4096)), {})]
+    if HAS_IONICE:
+        if LINUX:
+            setters += [('ionice', (psutil.IOPRIO_CLASS_NONE, 0), {})]
+        else:
+            setters += [('ionice', (psutil.IOPRIO_NORMAL, ), {})]
+    if HAS_CPU_AFFINITY:
+        setters += [('cpu_affinity', ([_get_eligible_cpu()], ), {})]
+
+    killers = [
+        ('send_signal', (signal.SIGTERM, ), {}),
+        ('suspend', (), {}),
+        ('resume', (), {}),
+        ('terminate', (), {}),
+        ('kill', (), {}),
+    ]
+    if WINDOWS:
+        killers += [('send_signal', (signal.CTRL_C_EVENT, ), {})]
+        killers += [('send_signal', (signal.CTRL_BREAK_EVENT, ), {})]
+
+    all = utils + getters + setters + killers
+
+    def __init__(self, proc):
+        self._proc = proc
+
+    def iter(self, ls, clear_cache=True):
+        """Given a list of tuples yields a set of (fun, fun_name) tuples
+        in random order.
+        """
+        ls = list(ls)
+        random.shuffle(ls)
+        for fun_name, args, kwds in ls:
+            if clear_cache:
+                self.clear_cache()
+            fun = getattr(self._proc, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            yield (fun, fun_name)
+
+    def clear_cache(self):
+        """Clear the cache of a Process instance."""
+        self._proc._init(self._proc.pid, _ignore_nsp=True)
+
+    @classmethod
+    def _test(cls):
+        this = set([x[0] for x in cls.all])
+        ignored = set([x[0] for x in cls.ignored])
+        klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
+        leftout = (this | ignored) ^ klass
+        if leftout:
+            raise ValueError("uncovered Process class names: %r" % leftout)
+
+
+process_namespace._test()
+
+
+class system_namespace:
+    """A container that lists all the module-level, system-related APIs.
+    Utilities such as cpu_percent() are excluded. Usage:
+
+    >>> ns = system_namespace
+    >>> for fun, name in ns.iter(ns.getters):
+    ...    fun()
+    """
+    getters = [
+        ('boot_time', (), {}),
+        ('cpu_count', (), {'logical': False}),
+        ('cpu_count', (), {'logical': True}),
+        ('cpu_stats', (), {}),
+        ('cpu_times', (), {'percpu': False}),
+        ('cpu_times', (), {'percpu': True}),
+        ('disk_io_counters', (), {'perdisk': True}),
+        ('disk_partitions', (), {'all': True}),
+        ('disk_usage', (os.getcwd(), ), {}),
+        ('net_connections', (), {'kind': 'all'}),
+        ('net_if_addrs', (), {}),
+        ('net_if_stats', (), {}),
+        ('net_io_counters', (), {'pernic': True}),
+        ('pid_exists', (os.getpid(), ), {}),
+        ('pids', (), {}),
+        ('swap_memory', (), {}),
+        ('users', (), {}),
+        ('virtual_memory', (), {}),
+    ]
+    if HAS_CPU_FREQ:
+        getters.append(('cpu_freq', (), {'percpu': True}))
+    if HAS_GETLOADAVG:
+        getters.append(('getloadavg', (), {}))
+    if HAS_SENSORS_TEMPERATURES:
+        getters.append(('sensors_temperatures', (), {}))
+    if HAS_SENSORS_FANS:
+        getters.append(('sensors_fans', (), {}))
+    if HAS_SENSORS_BATTERY:
+        getters.append(('sensors_battery', (), {}))
+    if WINDOWS:
+        getters.append(('win_service_iter', (), {}))
+        getters.append(('win_service_get', ('alg', ), {}))
+
+    ignored = [
+        ('process_iter', (), {}),
+        ('wait_procs', ([psutil.Process()], ), {}),
+        ('cpu_percent', (), {}),
+        ('cpu_times_percent', (), {}),
+    ]
+
+    all = getters
+
+    @staticmethod
+    def iter(ls):
+        """Given a list of tuples yields a set of (fun, fun_name) tuples
+        in random order.
+        """
+        ls = list(ls)
+        random.shuffle(ls)
+        for fun_name, args, kwds in ls:
+            fun = getattr(psutil, fun_name)
+            fun = functools.partial(fun, *args, **kwds)
+            yield (fun, fun_name)
+
+    @classmethod
+    def _test(cls):
+        this = set([x[0] for x in cls.all])
+        ignored = set([x[0] for x in cls.ignored])
+        # there's a separate test for __all__
+        mod = set([x for x in dir(psutil) if x.islower() and x[0] != '_' and
+                   x in psutil.__all__ and callable(getattr(psutil, x))])
+        leftout = (this | ignored) ^ mod
+        if leftout:
+            raise ValueError("uncovered psutil mod name(s): %r" % leftout)
+
+
+system_namespace._test()
 
 
 def serialrun(klass):
@@ -1317,9 +1541,6 @@ else:
 # ===================================================================
 
 
-atexit.register(DEVNULL.close)
-
-
 # this is executed first
 @atexit.register
 def cleanup_test_procs():
@@ -1328,7 +1549,7 @@ def cleanup_test_procs():
 
 # atexit module does not execute exit functions in case of SIGTERM, which
 # gets sent to test subprocesses, which is a problem if they import this
-# modul. With this it will. See:
+# module. With this it will. See:
 # http://grodola.blogspot.com/
 #     2016/02/how-to-always-execute-exit-functions-in-py.html
 if POSIX:

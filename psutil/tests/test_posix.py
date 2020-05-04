@@ -23,7 +23,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import CI_TESTING
-from psutil.tests import get_kernel_version
 from psutil.tests import spawn_testproc
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
@@ -282,47 +281,6 @@ class TestProcess(PsutilTestCase):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
         self.assertEqual(ps_nice, psutil_nice)
-
-    def test_num_fds(self):
-        # Note: this fails from time to time; I'm keen on thinking
-        # it doesn't mean something is broken
-        def call(p, attr):
-            args = ()
-            attr = getattr(p, name, None)
-            if attr is not None and callable(attr):
-                if name == 'rlimit':
-                    args = (psutil.RLIMIT_NOFILE,)
-                attr(*args)
-            else:
-                attr
-
-        p = psutil.Process(os.getpid())
-        failures = []
-        ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'children', 'as_dict',
-                         'memory_info_ex', 'parent', 'parents']
-        if LINUX and get_kernel_version() < (2, 6, 36):
-            ignored_names.append('rlimit')
-        if LINUX and get_kernel_version() < (2, 6, 23):
-            ignored_names.append('num_ctx_switches')
-        for name in dir(psutil.Process):
-            if (name.startswith('_') or name in ignored_names):
-                continue
-            else:
-                try:
-                    num1 = p.num_fds()
-                    for x in range(2):
-                        call(p, name)
-                    num2 = p.num_fds()
-                except psutil.AccessDenied:
-                    pass
-                else:
-                    if abs(num2 - num1) > 1:
-                        fail = "failure while processing Process.%s method " \
-                               "(before=%s, after=%s)" % (name, num1, num2)
-                        failures.append(fail)
-        if failures:
-            self.fail('\n' + '\n'.join(failures))
 
 
 @unittest.skipIf(not POSIX, "POSIX only")

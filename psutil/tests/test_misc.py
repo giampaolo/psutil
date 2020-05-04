@@ -161,9 +161,7 @@ class TestMisc(PsutilTestCase):
     def test__all__(self):
         dir_psutil = dir(psutil)
         for name in dir_psutil:
-            if name in ('callable', 'error', 'namedtuple', 'tests',
-                        'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
-                        'TOTAL_PHYMEM', 'PermissionError',
+            if name in ('long', 'tests', 'test', 'PermissionError',
                         'ProcessLookupError'):
                 continue
             if not name.startswith('_'):
