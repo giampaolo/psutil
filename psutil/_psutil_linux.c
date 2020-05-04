@@ -23,6 +23,8 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <malloc.h>
+
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -541,6 +543,25 @@ error:
 }
 
 
+static PyObject*
+psutil_linux_mallinfo(PyObject* self, PyObject* args) {
+       struct mallinfo mi;
+
+       mi = mallinfo();
+       return Py_BuildValue(
+            "iiiiiiiiii",
+            mi.arena,
+            mi.ordblks,
+            mi.smblks,
+            mi.hblks,
+            mi.hblkhd,
+            mi.usmblks,
+            mi.fsmblks,
+            mi.uordblks,
+            mi.fordblks,
+            mi.keepcost);
+}
+
 /*
  * Module init.
  */
@@ -574,6 +595,8 @@ static PyMethodDef mod_methods[] = {
     // --- linux specific
 
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
+     "A wrapper around sysinfo(), return system memory usage statistics"},
+    {"linux_mallinfo", psutil_linux_mallinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
 #if PSUTIL_HAVE_PRLIMIT
     {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,

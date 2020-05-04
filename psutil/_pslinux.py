@@ -182,6 +182,19 @@ sdiskio = namedtuple(
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
+# psutil.malloc_info() (mallinfo Linux struct)
+smalloc = namedtuple('smalloc', [
+    'arena',     # non-mmapped space allocated (bytes)
+    'ordblks',   # number of free chunks
+    'smblks',    # number of free fastbin blocks
+    'hblks',     # number of mmapped regions
+    'hblkhd',    # space allocated in mmapped regions (bytes)
+    'usmblks',   # maximum total allocated space (bytes)
+    'fsmblks',   # space in freed fastbin blocks (bytes)
+    'uordblks',  # total allocated space (bytes)
+    'fordblks',  # total free space (bytes)
+    'keepcost'   # top-most, releasable space (bytes)
+])
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
@@ -543,6 +556,10 @@ def swap_memory():
                 warnings.warn(msg, RuntimeWarning)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+def malloc_info():
+    return smalloc(*cext.linux_mallinfo())
 
 
 # =====================================================================

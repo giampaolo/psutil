@@ -2002,6 +2002,16 @@ def swap_memory():
     return _psplatform.swap_memory()
 
 
+# Linux only
+if hasattr(_psplatform, "malloc_info"):
+
+    def malloc_info():
+        """Platform-specific info about memory allocated by this process
+        via malloc(). On Linux this return mallinfo(3) struct.
+        """
+        return _psplatform.malloc_info()
+
+
 # =====================================================================
 # --- disks/paritions related functions
 # =====================================================================
