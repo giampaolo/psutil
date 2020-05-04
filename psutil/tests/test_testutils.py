@@ -352,21 +352,23 @@ class TestNetUtils(PsutilTestCase):
 @serialrun
 class TestMemLeakClass(TestMemoryLeak):
 
+    @retry_on_failure()
     def test_times(self):
         def fun():
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
         self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 11)
+        self.assertEqual(cnt['cnt'], 12)
         self.execute(fun, times=10, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 31)
+        self.assertEqual(cnt['cnt'], 33)
 
+    @retry_on_failure()
     def test_warmup_times(self):
         def fun():
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
         self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 11)
+        self.assertEqual(cnt['cnt'], 12)
 
     def test_param_err(self):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
@@ -383,7 +385,7 @@ class TestMemLeakClass(TestMemoryLeak):
         times = 100
         self.assertRaises(AssertionError, self.execute, fun, times=times,
                           warmup_times=10, retry_for=None)
-        self.assertEqual(len(ls), times + 10)
+        self.assertEqual(len(ls), times + 11)
 
     @retry_on_failure(retries=20)  # 2 secs
     def test_leak_with_retry(self, ls=[]):
@@ -397,15 +399,17 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertIn("try calling fun for another", f.getvalue())
         self.assertGreater(len(ls), times)
 
+    @retry_on_failure()
     def test_tolerance(self):
         def fun():
             ls.append("x" * 24 * 1024)
         ls = []
         times = 100
         self.execute(fun, times=times, warmup_times=0,
-                     tolerance=200 * 1024 * 1024)
+                     tolerance=200 * 1024 * 1024, check_fds=False)
         self.assertEqual(len(ls), times)
 
+    @retry_on_failure()
     def test_execute_w_exc(self):
         def fun():
             1 / 0
@@ -419,6 +423,17 @@ class TestMemLeakClass(TestMemoryLeak):
             pass
         with self.assertRaises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun)
+
+    def test_unclosed_fds(self):
+        def fun():
+            f = open(__file__)
+            self.addCleanup(f.close)
+            box.append(f)
+
+        box = []
+        self.assertRaisesRegex(
+            AssertionError, r"1 unclosed fd\(s\) or handle\(s\)",
+            self.execute, fun, times=5, warmup_times=5)
 
 
 class TestTestingUtils(PsutilTestCase):

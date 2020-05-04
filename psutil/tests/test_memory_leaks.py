@@ -472,47 +472,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
             self.execute(lambda: cext.winservice_query_descr(name))
 
 
-# =====================================================================
-# --- File descriptors and handlers
-# =====================================================================
-
-
-class TestUnclosedFdsOrHandles(unittest.TestCase):
-    """Call a function N times (twice) and make sure the number of file
-    descriptors (POSIX) or handles (Windows) does not increase. Done in
-    order to discover forgotten close(2) and CloseHandle syscalls.
-    """
-    times = 2
-
-    def execute(self, iterator):
-        p = psutil.Process()
-        failures = []
-        for fun, fun_name in iterator:
-            before = p.num_fds() if POSIX else p.num_handles()
-            try:
-                for x in range(self.times):
-                    fun()
-            except psutil.Error:
-                continue
-            else:
-                after = p.num_fds() if POSIX else p.num_handles()
-                if abs(after - before) > 0:
-                    fail = "failure while calling %s function " \
-                           "(before=%s, after=%s)" % (fun, before, after)
-                    failures.append(fail)
-        if failures:
-            self.fail('\n' + '\n'.join(failures))
-
-    def test_process_apis(self):
-        p = psutil.Process()
-        ns = process_namespace(p)
-        self.execute(ns.iter(ns.getters + ns.setters))
-
-    def test_system_apis(self):
-        ns = system_namespace
-        self.execute(ns.iter(ns.all))
-
-
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
     run_from_name(__file__)

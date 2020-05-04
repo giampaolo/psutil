@@ -900,7 +900,13 @@ class TestMemoryLeak(PsutilTestCase):
     It does so by calling a function many times, and checks whether the
     process memory usage increased before and after having called the
     function repeadetly.
+
+    In addition also call the function onces and make sure num_fds()
+    (POSIX) or num_handles() (Windows) does not increase. This is done
+    in order to discover forgotten close(2) and CloseHandle syscalls.
+
     Note that sometimes this may produce false positives.
+
     PyPy appears to be completely unstable for this framework, probably
     because of how its JIT handles memory, so tests on PYPY are
     automatically skipped.
@@ -910,6 +916,7 @@ class TestMemoryLeak(PsutilTestCase):
     warmup_times = 10
     tolerance = 4096  # memory
     retry_for = 3.0  # seconds
+    check_fds = True  # whether to check if num_fds() increased
     verbose = True
 
     def setUp(self):
@@ -921,6 +928,12 @@ class TestMemoryLeak(PsutilTestCase):
         # should be less likely to produce false positives.
         mem = self._thisproc.memory_full_info()
         return getattr(mem, "uss", mem.rss)
+
+    def _get_fds_or_handles(self):
+        if POSIX:
+            return self._thisproc.num_fds()
+        else:
+            return self._thisproc.num_handles()
 
     def _call(self, fun):
         return fun()
@@ -959,7 +972,7 @@ class TestMemoryLeak(PsutilTestCase):
             print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for):
+                tolerance=tolerance, retry_for=retry_for, check_fds=check_fds):
         """Test a callable."""
         if times <= 0:
             raise ValueError("times must be > 0")
@@ -969,6 +982,15 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError("tolerance must be >= 0")
         if retry_for is not None and retry_for < 0:
             raise ValueError("retry_for must be >= 0")
+
+        if check_fds:
+            before = self._get_fds_or_handles()
+            self._call(fun)
+            after = self._get_fds_or_handles()
+            diff = abs(after - before)
+            if diff > 0:
+                msg = "%s unclosed fd(s) or handle(s)" % (diff)
+                raise self.fail(msg)
 
         # warm up
         self._call_ntimes(fun, warmup_times)
