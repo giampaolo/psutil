@@ -1332,6 +1332,10 @@ class TestProcess(PsutilTestCase):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
+            # These 2 are a contradiction, but "ps" says PID 1's parent
+            # is PID 0.
+            assert not psutil.pid_exists(0)
+            self.assertEqual(psutil.Process(1).ppid(), 0)
             return
 
         p = psutil.Process(0)
@@ -1344,32 +1348,20 @@ class TestProcess(PsutilTestCase):
         self.assertRaises(exc, p.send_signal, signal.SIGTERM)
 
         # test all methods
-        for name in psutil._as_dict_attrnames:
-            if name == 'pid':
-                continue
-            meth = getattr(p, name)
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters):
             try:
-                ret = meth()
+                ret = fun()
             except psutil.AccessDenied:
                 pass
             else:
                 if name in ("uids", "gids"):
                     self.assertEqual(ret.real, 0)
                 elif name == "username":
-                    if POSIX:
-                        self.assertEqual(p.username(), 'root')
-                    elif WINDOWS:
-                        self.assertEqual(p.username(), 'NT AUTHORITY\\SYSTEM')
+                    user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
+                    self.assertEqual(p.username(), user)
                 elif name == "name":
                     assert name, name
-
-        if hasattr(p, 'rlimit'):
-            try:
-                p.rlimit(psutil.RLIMIT_FSIZE)
-            except psutil.AccessDenied:
-                pass
-
-        p.as_dict()
 
         if not OPENBSD:
             self.assertIn(0, psutil.pids())
