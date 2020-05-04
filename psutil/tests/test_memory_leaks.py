@@ -37,6 +37,7 @@ from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
+from psutil.tests import HAS_MALLOC_INFO
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_PROC_CPU_NUM
@@ -448,6 +449,10 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
         self.execute(psutil.users)
+
+    @unittest.skipIf(not HAS_MALLOC_INFO, "not supported")
+    def test_malloc_info(self):
+        self.execute(psutil.malloc_info)
 
     if WINDOWS:
 

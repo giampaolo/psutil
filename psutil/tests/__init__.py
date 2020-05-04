@@ -184,6 +184,8 @@ except Exception:
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
+HAS_MALLOC_INFO = hasattr(psutil, "malloc_info")
+
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 # --- misc
@@ -1204,6 +1206,8 @@ class system_namespace:
         getters.append(('sensors_fans', (), {}))
     if HAS_SENSORS_BATTERY:
         getters.append(('sensors_battery', (), {}))
+    if HAS_MALLOC_INFO:
+        getters.append(('malloc_info', (), {}))
     if WINDOWS:
         getters.append(('win_service_iter', (), {}))
         getters.append(('win_service_get', ('alg', ), {}))

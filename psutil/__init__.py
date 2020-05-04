@@ -212,7 +212,7 @@ __all__ = [
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
+    "virtual_memory", "swap_memory",  # "malloc_info",              # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats",  # "cpu_freq", "getloadavg"
     "net_io_counters", "net_connections", "net_if_addrs",           # network
@@ -2010,6 +2010,8 @@ if hasattr(_psplatform, "malloc_info"):
         via malloc(). On Linux this return mallinfo(3) struct.
         """
         return _psplatform.malloc_info()
+
+    __all__.append("malloc_info")
 
 
 # =====================================================================
