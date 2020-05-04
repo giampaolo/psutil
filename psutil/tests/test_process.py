@@ -50,6 +50,7 @@ from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
 from psutil.tests import mock
+from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
@@ -1232,80 +1233,45 @@ class TestProcess(PsutilTestCase):
         # >>> time.sleep(2)  # time-consuming task, process dies in meantime
         # >>> proc.name()
         # Refers to Issue #15
-        p = self.spawn_psproc()
-        p.terminate()
-        p.wait()
-        if WINDOWS:
-            call_until(psutil.pids, "%s not in ret" % p.pid)
-        self.assertProcessGone(p)
-
-        if WINDOWS:
-            with self.assertRaises(psutil.NoSuchProcess):
-                p.send_signal(signal.CTRL_C_EVENT)
-            with self.assertRaises(psutil.NoSuchProcess):
-                p.send_signal(signal.CTRL_BREAK_EVENT)
-
-        excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'oneshot', 'memory_info_ex']
-        if LINUX and not HAS_RLIMIT:
-            excluded_names.append('rlimit')
-        for name in dir(p):
-            if (name.startswith('_') or
-                    name in excluded_names):
-                continue
+        def assert_raises_nsp(fun, fun_name):
             try:
-                meth = getattr(p, name)
-                # get/set methods
-                if name == 'nice':
-                    if POSIX:
-                        ret = meth(1)
-                    else:
-                        ret = meth(psutil.NORMAL_PRIORITY_CLASS)
-                elif name == 'ionice':
-                    ret = meth()
-                    ret = meth(2)
-                elif name == 'rlimit':
-                    ret = meth(psutil.RLIMIT_NOFILE)
-                    ret = meth(psutil.RLIMIT_NOFILE, (5, 5))
-                elif name == 'cpu_affinity':
-                    ret = meth()
-                    ret = meth([0])
-                elif name == 'send_signal':
-                    ret = meth(signal.SIGTERM)
-                else:
-                    ret = meth()
-            except psutil.ZombieProcess:
-                self.fail("ZombieProcess for %r was not supposed to happen" %
-                          name)
+                ret = fun()
+            except psutil.ZombieProcess:  # differentiate from NSP
+                raise
             except psutil.NoSuchProcess:
                 pass
             except psutil.AccessDenied:
-                if OPENBSD and name in ('threads', 'num_threads'):
-                    pass
-                else:
-                    raise
-            except NotImplementedError:
-                pass
+                if OPENBSD and fun_name in ('threads', 'num_threads'):
+                    return
+                raise
             else:
-                # NtQuerySystemInformation succeeds if process is gone.
-                if WINDOWS and name in ('exe', 'name'):
-                    normcase = os.path.normcase
-                    if name == 'exe':
-                        self.assertEqual(normcase(ret), normcase(PYTHON_EXE))
-                    else:
-                        self.assertEqual(
-                            normcase(ret),
-                            normcase(os.path.basename(PYTHON_EXE)))
-                    continue
-                self.fail(
-                    "NoSuchProcess exception not raised for %r, retval=%s" % (
-                        name, ret))
+                # NtQuerySystemInformation succeeds even if process is gone.
+                if WINDOWS and fun_name in ('exe', 'name'):
+                    return
+                raise self.fail("%r didn't raise NSP and returned %r "
+                                "instead" % (fun, ret))
+
+        p = self.spawn_psproc()
+        p.terminate()
+        p.wait()
+        if WINDOWS:  # XXX
+            call_until(psutil.pids, "%s not in ret" % p.pid)
+        self.assertProcessGone(p)
+
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.all):
+            assert_raises_nsp(fun, name)
+
+        # NtQuerySystemInformation succeeds even if process is gone.
+        if WINDOWS:
+            normcase = os.path.normcase
+            self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
-        def succeed_or_zombie_p_exc(fun, *args, **kwargs):
+        def succeed_or_zombie_p_exc(fun):
             try:
-                return fun(*args, **kwargs)
+                return fun()
             except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
@@ -1318,39 +1284,7 @@ class TestProcess(PsutilTestCase):
         assert zproc.is_running()
         # ...and as_dict() shouldn't crash
         zproc.as_dict()
-
-        if hasattr(zproc, "rlimit"):
-            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
-            succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
-                                    (5, 5))
-        # set methods
-        succeed_or_zombie_p_exc(zproc.parent)
-        if hasattr(zproc, 'cpu_affinity'):
-            try:
-                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
-            except ValueError as err:
-                if TRAVIS and LINUX and "not eligible" in str(err):
-                    # https://travis-ci.org/giampaolo/psutil/jobs/279890461
-                    pass
-                else:
-                    raise
-
-        succeed_or_zombie_p_exc(zproc.nice, 0)
-        if hasattr(zproc, 'ionice'):
-            if LINUX:
-                succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
-            else:
-                succeed_or_zombie_p_exc(zproc.ionice, 0)  # Windows
-        if hasattr(zproc, 'rlimit'):
-            succeed_or_zombie_p_exc(zproc.rlimit,
-                                    psutil.RLIMIT_NOFILE, (5, 5))
-        succeed_or_zombie_p_exc(zproc.suspend)
-        succeed_or_zombie_p_exc(zproc.resume)
-        succeed_or_zombie_p_exc(zproc.terminate)
-        succeed_or_zombie_p_exc(zproc.kill)
-
-        # ...its parent should 'see' it
-        # edit: not true on BSD and MACOS
+        # ...its parent should 'see' it (edit: not true on BSD and MACOS
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
         # self.assertIn(zpid, descendants)
@@ -1359,6 +1293,11 @@ class TestProcess(PsutilTestCase):
         # rid of a zombie is to kill its parent.
         # self.assertEqual(zpid.ppid(), os.getpid())
         # ...and all other APIs should be able to deal with it
+
+        ns = process_namespace(zproc)
+        for fun, name in ns.iter(ns.all):
+            succeed_or_zombie_p_exc(fun)
+
         assert psutil.pid_exists(zproc.pid)
         if not TRAVIS and MACOS:
             # For some reason this started failing all of the sudden.
@@ -1393,6 +1332,10 @@ class TestProcess(PsutilTestCase):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
+            # These 2 are a contradiction, but "ps" says PID 1's parent
+            # is PID 0.
+            assert not psutil.pid_exists(0)
+            self.assertEqual(psutil.Process(1).ppid(), 0)
             return
 
         p = psutil.Process(0)
@@ -1405,32 +1348,20 @@ class TestProcess(PsutilTestCase):
         self.assertRaises(exc, p.send_signal, signal.SIGTERM)
 
         # test all methods
-        for name in psutil._as_dict_attrnames:
-            if name == 'pid':
-                continue
-            meth = getattr(p, name)
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters):
             try:
-                ret = meth()
+                ret = fun()
             except psutil.AccessDenied:
                 pass
             else:
                 if name in ("uids", "gids"):
                     self.assertEqual(ret.real, 0)
                 elif name == "username":
-                    if POSIX:
-                        self.assertEqual(p.username(), 'root')
-                    elif WINDOWS:
-                        self.assertEqual(p.username(), 'NT AUTHORITY\\SYSTEM')
+                    user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
+                    self.assertEqual(p.username(), user)
                 elif name == "name":
                     assert name, name
-
-        if hasattr(p, 'rlimit'):
-            try:
-                p.rlimit(psutil.RLIMIT_FSIZE)
-            except psutil.AccessDenied:
-                pass
-
-        p.as_dict()
 
         if not OPENBSD:
             self.assertIn(0, psutil.pids())

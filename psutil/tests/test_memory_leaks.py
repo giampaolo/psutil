@@ -32,7 +32,6 @@ from psutil._compat import ProcessLookupError
 from psutil._compat import super
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
-from psutil.tests import spawn_testproc
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
@@ -46,7 +45,11 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
+from psutil.tests import spawn_testproc
+from psutil.tests import system_namespace
+from psutil.tests import terminate
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -54,11 +57,6 @@ from psutil.tests import unittest
 SKIP_PYTHON_IMPL = True
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
-
-
-# ===================================================================
-# utils
-# ===================================================================
 
 
 def skip_if_linux():
@@ -77,17 +75,10 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     proc = thisproc
 
     def test_coverage(self):
-        skip = set((
-            "pid", "as_dict", "children", "cpu_affinity", "cpu_percent",
-            "ionice", "is_running", "kill", "memory_info_ex", "memory_percent",
-            "nice", "oneshot", "parent", "parents", "rlimit", "send_signal",
-            "suspend", "terminate", "wait"))
-        for name in dir(psutil.Process):
-            if name.startswith('_'):
-                continue
-            if name in skip:
-                continue
-            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+        p = psutil.Process()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters):
+            assert hasattr(self, "test_" + name), name
 
     @skip_if_linux()
     def test_name(self):
@@ -119,7 +110,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     def test_status(self):
         self.execute(self.proc.status)
 
-    def test_nice_get(self):
+    def test_nice(self):
         self.execute(self.proc.nice)
 
     def test_nice_set(self):
@@ -127,7 +118,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(lambda: self.proc.nice(niceness))
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
-    def test_ionice_get(self):
+    def test_ionice(self):
         self.execute(self.proc.ionice)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
@@ -208,7 +199,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(self.proc.cwd)
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
-    def test_cpu_affinity_get(self):
+    def test_cpu_affinity(self):
         self.execute(self.proc.cpu_affinity)
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, "not supported")
@@ -231,7 +222,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @unittest.skipIf(not LINUX, "LINUX only")
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
-    def test_rlimit_get(self):
+    def test_rlimit(self):
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE))
 
     @unittest.skipIf(not LINUX, "LINUX only")
@@ -251,7 +242,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.connections(kind))
+            self.execute(lambda: self.proc.connections(kind), times=100)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -260,16 +251,6 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_proc_info(self):
         self.execute(cext.proc_info, os.getpid())
-
-
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcessDualImplementation(TestMemoryLeak):
-
-    def test_cmdline_peb_true(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
-
-    def test_cmdline_peb_false(self):
-        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
@@ -282,10 +263,15 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        p = spawn_testproc()
-        cls.proc = psutil.Process(p.pid)
+        cls.subp = spawn_testproc()
+        cls.proc = psutil.Process(cls.subp.pid)
         cls.proc.kill()
         cls.proc.wait()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        terminate(cls.subp)
 
     def _call(self, fun):
         try:
@@ -321,6 +307,16 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             self.execute(call)
 
 
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestProcessDualImplementation(TestMemoryLeak):
+
+    def test_cmdline_peb_true(self):
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
+
+    def test_cmdline_peb_false(self):
+        self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=False))
+
+
 # ===================================================================
 # system APIs
 # ===================================================================
@@ -330,20 +326,14 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
-        skip = set((
-            "version_info", "__version__", "process_iter", "wait_procs",
-            "cpu_percent", "cpu_times_percent", "cpu_count"))
-        for name in psutil.__all__:
-            if not name.islower():
-                continue
-            if name in skip:
-                continue
-            self.assertTrue(hasattr(self, "test_" + name), msg=name)
+        ns = system_namespace
+        for fun, name in ns.iter(ns.all):
+            assert hasattr(self, "test_" + name), name
 
     # --- cpu
 
     @skip_if_linux()
-    def test_cpu_count_logical(self):
+    def test_cpu_count(self):  # logical
         self.execute(lambda: psutil.cpu_count(logical=True))
 
     @skip_if_linux()
@@ -421,7 +411,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         with create_sockets():
-            self.execute(psutil.net_connections)
+            self.execute(psutil.net_connections, times=100)
 
     def test_net_if_addrs(self):
         # Note: verified that on Windows this was a false positive.
@@ -480,6 +470,47 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
+
+
+# =====================================================================
+# --- File descriptors and handlers
+# =====================================================================
+
+
+class TestUnclosedFdsOrHandles(unittest.TestCase):
+    """Call a function N times (twice) and make sure the number of file
+    descriptors (POSIX) or handles (Windows) does not increase. Done in
+    order to discover forgotten close(2) and CloseHandle syscalls.
+    """
+    times = 2
+
+    def execute(self, iterator):
+        p = psutil.Process()
+        failures = []
+        for fun, fun_name in iterator:
+            before = p.num_fds() if POSIX else p.num_handles()
+            try:
+                for x in range(self.times):
+                    fun()
+            except psutil.Error:
+                continue
+            else:
+                after = p.num_fds() if POSIX else p.num_handles()
+                if abs(after - before) > 0:
+                    fail = "failure while calling %s function " \
+                           "(before=%s, after=%s)" % (fun, before, after)
+                    failures.append(fail)
+        if failures:
+            self.fail('\n' + '\n'.join(failures))
+
+    def test_process_apis(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        self.execute(ns.iter(ns.getters + ns.setters))
+
+    def test_system_apis(self):
+        ns = system_namespace
+        self.execute(ns.iter(ns.all))
 
 
 if __name__ == '__main__':

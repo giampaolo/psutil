@@ -35,6 +35,7 @@ from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
+from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
@@ -43,6 +44,7 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
+from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
 from psutil.tests import TestMemoryLeak
@@ -417,6 +419,20 @@ class TestMemLeakClass(TestMemoryLeak):
             pass
         with self.assertRaises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun)
+
+
+class TestTestingUtils(PsutilTestCase):
+
+    def test_process_namespace(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
+        self.assertEqual(fun(), p.ppid())
+
+    def test_system_namespace(self):
+        ns = system_namespace
+        fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
+        self.assertEqual(fun(), psutil.net_if_addrs())
 
 
 class TestOtherUtils(PsutilTestCase):

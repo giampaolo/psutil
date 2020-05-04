@@ -345,42 +345,6 @@ class TestProcess(PsutilTestCase):
         win32api.CloseHandle(handle)
         self.assertEqual(p.num_handles(), before)
 
-    def test_handles_leak(self):
-        # Call all Process methods and make sure no handles are left
-        # open. This is here mainly to make sure functions using
-        # OpenProcess() always call CloseHandle().
-        def call(p, attr):
-            attr = getattr(p, name, None)
-            if attr is not None and callable(attr):
-                attr()
-            else:
-                attr
-
-        p = psutil.Process(self.pid)
-        failures = []
-        for name in dir(psutil.Process):
-            if name.startswith('_') \
-                    or name in ('terminate', 'kill', 'suspend', 'resume',
-                                'nice', 'send_signal', 'wait', 'children',
-                                'as_dict', 'memory_info_ex'):
-                continue
-            else:
-                try:
-                    call(p, name)
-                    num1 = p.num_handles()
-                    call(p, name)
-                    num2 = p.num_handles()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-                else:
-                    if num2 > num1:
-                        fail = \
-                            "failure while processing Process.%s method " \
-                            "(before=%s, after=%s)" % (name, num1, num2)
-                        failures.append(fail)
-        if failures:
-            self.fail('\n' + '\n'.join(failures))
-
     @unittest.skipIf(not sys.version_info >= (2, 7),
                      "CTRL_* signals not supported")
     def test_ctrl_signals(self):
