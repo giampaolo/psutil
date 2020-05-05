@@ -895,17 +895,21 @@ class PsutilTestCase(TestCase):
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
-    """Test framework class for detecting function memory leaks (typically
-    functions implemented in C).
-    It does so by calling a function many times, and checks whether the
-    process memory usage increased before and after having called the
-    function repeadetly.
+    """Test framework class for detecting function memory leaks
+    (typically functions implemented in C).
+    It does so by checking whether the process memory usage increased
+    before and after calling the function many times.
 
-    Note that sometimes this may produce false positives.
+    Note that this is hard (probably impossible) to do reliably, due
+    to how the OS handles memory, the GC and so on (e.g. memory can even
+    decrease!). As such you may incur into false negatives or positives.
+    In that case you can try to adjust the tolerance of each individual
+    test case. If available, USS memory is used, as it should be more
+    precise than RSS. mallinfo() on Linux and _heapwalk() on Windows may
+    give even more precision.
 
     PyPy appears to be completely unstable for this framework, probably
-    because of how its JIT handles memory, so tests on PYPY are
-    automatically skipped.
+    because of its JIT, so tests on PYPY are skipped.
     """
     # Configurable class attrs.
     times = 1000
@@ -1016,12 +1020,12 @@ class TestMemoryLeak(PsutilTestCase):
 
 
 class TestFdsLeak(PsutilTestCase):
-    """Test framework class which calls a function and make sure num_fds()
-    (POSIX) or num_handles() (Windows) does not increase. This is done
-    in order to discover forgotten close(2) and CloseHandle syscalls.
+    """Test framework class which makes sure num_fds() (POSIX) or
+    num_handles() (Windows) does not increase after calling a function.
+    This can be used to discover forgotten close(2) and CloseHandle
+    syscalls.
     """
 
-    times = 1
     tolerance = 0
     _thisproc = psutil.Process()
 
@@ -1034,20 +1038,21 @@ class TestFdsLeak(PsutilTestCase):
     def _call(self, fun):
         return fun()
 
-    def execute(self, fun, times=times, tolerance=tolerance):
+    def execute(self, fun, tolerance=tolerance):
         # This is supposed to close() any unclosed file object.
         gc.collect()
         before = self._get_fds_or_handles()
-        for x in range(times):
-            self._call(fun)
+        self._call(fun)
         after = self._get_fds_or_handles()
         diff = after - before
         if diff < 0:
             raise self.fail("negative diff %r (gc probably collected a "
                             "resource from a previous test)" % diff)
         if diff > 0:
-            msg = "%s unclosed fd(s) or handle(s) after calling %r %s " \
-                  "time(s)" % (diff, fun, times)
+            type_ = "fd" if POSIX else "handle"
+            if diff > 1:
+                type_ += "s"
+            msg = "%s unclosed %s after calling %r" % (diff, type_, fun)
             raise self.fail(msg)
 
 
