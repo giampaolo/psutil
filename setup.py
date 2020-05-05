@@ -402,7 +402,7 @@ def main():
                     missdeps("sudo yum install gcc python%s-devel" % py3)
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
-                             "is not installed"), ok=False, file=sys.stderr)
+                             "is not installed"), color="red", file=sys.stderr)
             elif FREEBSD:
                 missdeps("pkg install gcc python%s" % py3)
             elif OPENBSD:
@@ -419,7 +419,7 @@ def main():
                 ur = "http://www.microsoft.com/en-us/download/"
                 ur += "details.aspx?id=44266"
             s = "VisualStudio is not installed; get it from %s" % ur
-            print(hilite(s, ok=False), file=sys.stderr)
+            print(hilite(s, color="red"), file=sys.stderr)
 
 
 if __name__ == '__main__':

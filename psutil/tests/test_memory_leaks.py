@@ -136,6 +136,8 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @unittest.skipIf(POSIX, "worthless on POSIX")
     def test_username(self):
+        # always open 1 handle on Windows (only once)
+        psutil.Process().username()
         self.execute(self.proc.username)
 
     @skip_if_linux()
@@ -248,7 +250,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_proc_info(self):
-        self.execute(cext.proc_info, os.getpid())
+        self.execute(lambda: cext.proc_info(os.getpid()))
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
@@ -356,6 +358,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_getloadavg(self):
+        psutil.getloadavg()
         self.execute(psutil.getloadavg)
 
     # --- mem
@@ -397,26 +400,41 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- net
 
+    # XXX
     @unittest.skipIf(TRAVIS and MACOS, "false positive on TRAVIS + MACOS")
     @unittest.skipIf(CIRRUS and FREEBSD, "false positive on CIRRUS + FREEBSD")
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
+        if WINDOWS:
+            # GetAdaptersAddresses() increases the handle count on first
+            # call (only).
+            psutil.net_io_counters()
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skip_if_linux()
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
+        # always opens and handle on Windows() (once)
+        psutil.net_connections(kind='all')
         with create_sockets():
-            self.execute(psutil.net_connections, times=100)
+            self.execute(lambda: psutil.net_connections(kind='all'), times=100)
 
     def test_net_if_addrs(self):
+        if WINDOWS:
+            # GetAdaptersAddresses() increases the handle count on first
+            # call (only).
+            psutil.net_if_addrs()
         # Note: verified that on Windows this was a false positive.
         self.execute(psutil.net_if_addrs,
                      tolerance=80 * 1024 if WINDOWS else 4096)
 
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
+        if WINDOWS:
+            # GetAdaptersAddresses() increases the handle count on first
+            # call (only).
+            psutil.net_if_stats()
         self.execute(psutil.net_if_stats)
 
     # --- sensors
