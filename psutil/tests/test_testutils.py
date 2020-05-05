@@ -432,7 +432,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
         box = []
         self.assertRaisesRegex(
-            AssertionError, r"1 unclosed fd\(s\) or handle\(s\)",
+            AssertionError, r"unclosed fd\(s\) or handle\(s\)",
             self.execute, fun, times=5, warmup_times=5)
 
 
