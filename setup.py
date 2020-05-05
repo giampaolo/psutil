@@ -402,7 +402,7 @@ def main():
                     missdeps("sudo yum install gcc python%s-devel" % py3)
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
-                             "is not installed"), ok=False, file=sys.stderr)
+                             "is not installed"), color="red", file=sys.stderr)
             elif FREEBSD:
                 missdeps("pkg install gcc python%s" % py3)
             elif OPENBSD:
