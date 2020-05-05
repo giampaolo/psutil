@@ -1154,16 +1154,25 @@ class process_namespace:
         self._proc._init(self._proc.pid, _ignore_nsp=True)
 
     @classmethod
-    def _test(cls):
+    def test_class_coverage(cls, test_class, ls):
+        """Given a TestCase instance and a list of tuples checks that
+        the class defines the required test method names.
+        """
+        for fun_name, _, _ in ls:
+            meth_name = 'test_' + fun_name
+            if not hasattr(test_class, meth_name):
+                msg = "%r class should define a '%s' method" % (
+                    test_class.__class__.__name__, meth_name)
+                raise AttributeError(msg)
+
+    @classmethod
+    def test(cls):
         this = set([x[0] for x in cls.all])
         ignored = set([x[0] for x in cls.ignored])
         klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
         leftout = (this | ignored) ^ klass
         if leftout:
             raise ValueError("uncovered Process class names: %r" % leftout)
-
-
-process_namespace._test()
 
 
 class system_namespace:
@@ -1195,18 +1204,18 @@ class system_namespace:
         ('virtual_memory', (), {}),
     ]
     if HAS_CPU_FREQ:
-        getters.append(('cpu_freq', (), {'percpu': True}))
+        getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
-        getters.append(('getloadavg', (), {}))
+        getters += [('getloadavg', (), {})]
     if HAS_SENSORS_TEMPERATURES:
-        getters.append(('sensors_temperatures', (), {}))
+        getters += [('sensors_temperatures', (), {})]
     if HAS_SENSORS_FANS:
-        getters.append(('sensors_fans', (), {}))
+        getters += [('sensors_fans', (), {})]
     if HAS_SENSORS_BATTERY:
-        getters.append(('sensors_battery', (), {}))
+        getters += [('sensors_battery', (), {})]
     if WINDOWS:
-        getters.append(('win_service_iter', (), {}))
-        getters.append(('win_service_get', ('alg', ), {}))
+        getters += [('win_service_iter', (), {})]
+        getters += [('win_service_get', ('alg', ), {})]
 
     ignored = [
         ('process_iter', (), {}),
@@ -1230,7 +1239,7 @@ class system_namespace:
             yield (fun, fun_name)
 
     @classmethod
-    def _test(cls):
+    def test(cls):
         this = set([x[0] for x in cls.all])
         ignored = set([x[0] for x in cls.ignored])
         # there's a separate test for __all__
@@ -1240,8 +1249,7 @@ class system_namespace:
         if leftout:
             raise ValueError("uncovered psutil mod name(s): %r" % leftout)
 
-
-system_namespace._test()
+    test_class_coverage = process_namespace.test_class_coverage
 
 
 def serialrun(klass):

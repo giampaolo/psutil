@@ -75,10 +75,8 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     proc = thisproc
 
     def test_coverage(self):
-        p = psutil.Process()
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.getters + ns.setters):
-            assert hasattr(self, "test_" + name), name
+        ns = process_namespace(None)
+        ns.test_class_coverage(self, ns.getters + ns.setters)
 
     @skip_if_linux()
     def test_name(self):
@@ -326,9 +324,8 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
-        ns = system_namespace
-        for fun, name in ns.iter(ns.all):
-            assert hasattr(self, "test_" + name), name
+        ns = system_namespace()
+        ns.test_class_coverage(self, ns.all)
 
     # --- cpu
 
