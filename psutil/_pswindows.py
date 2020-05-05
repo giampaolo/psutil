@@ -182,6 +182,8 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
+# psutil.malloc_info()
+pmalloc = namedtuple('pmalloc', ['used', 'free'])
 
 
 # =====================================================================
@@ -246,6 +248,11 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
+
+
+def malloc_info():
+    used, free = cext.malloc_info()
+    return pmalloc(used, free)
 
 
 # =====================================================================

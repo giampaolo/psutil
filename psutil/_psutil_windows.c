@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
 #include <wtsapi32.h>  // users()
+#include <malloc.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -1518,6 +1519,32 @@ psutil_getpagesize(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return malloc information (used and free).
+ */
+static PyObject *
+psutil_malloc_info(PyObject *self, PyObject *args) {
+    _HEAPINFO hinfo;
+    int status;
+    size_t used = 0;
+    size_t free = 0;
+    hinfo._pentry = NULL;
+
+    while ((status = _heapwalk(&hinfo)) == _HEAPOK) {
+        if (hinfo._useflag == _USEDENTRY)
+            used += hinfo._size;
+        else
+            free += hinfo._size;
+    }
+
+    if ((status == _HEAPEMPTY) || (status == _HEAPEND))
+       return Py_BuildValue("nn", used, free);
+
+    PyErr_SetString(PyExc_RuntimeError, "invalid heap region");
+    return NULL;
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -1570,6 +1597,9 @@ PsutilMethods[] = {
      "Return the number of handles opened by process."},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
+
+    {"malloc_info", psutil_malloc_info, METH_VARARGS,
+     "Return used and free malloc stats."},
 
     // --- alternative pinfo interface
     {"proc_info", psutil_proc_info, METH_VARARGS,

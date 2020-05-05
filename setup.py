@@ -419,7 +419,7 @@ def main():
                 ur = "http://www.microsoft.com/en-us/download/"
                 ur += "details.aspx?id=44266"
             s = "VisualStudio is not installed; get it from %s" % ur
-            print(hilite(s, ok=False), file=sys.stderr)
+            print(hilite(s, color="red"), file=sys.stderr)
 
 
 if __name__ == '__main__':
