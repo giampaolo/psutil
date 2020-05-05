@@ -432,7 +432,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
         box = []
         self.assertRaisesRegex(
-            AssertionError, r"1 unclosed fd\(s\) or handle\(s\)",
+            AssertionError, r"unclosed fd\(s\) or handle\(s\)",
             self.execute, fun, times=5, warmup_times=5)
 
 
@@ -441,11 +441,13 @@ class TestTestingUtils(PsutilTestCase):
     def test_process_namespace(self):
         p = psutil.Process()
         ns = process_namespace(p)
+        ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
         self.assertEqual(fun(), p.ppid())
 
     def test_system_namespace(self):
-        ns = system_namespace
+        ns = system_namespace()
+        ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
         self.assertEqual(fun(), psutil.net_if_addrs())
 
