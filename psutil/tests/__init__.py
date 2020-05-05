@@ -927,12 +927,13 @@ class TestMemoryLeak(PsutilTestCase):
 
     def _get_mem(self):
         if LINUX:
-            mem = psutil.malloc_info().uordblks
-        elif MACOS or WINDOWS:
-            mem = self._thisproc.memory_full_info().uss
+            return psutil.malloc_info().uordblks
+        elif WINDOWS:
+            return psutil.malloc_info().used
+        elif MACOS:
+            return self._thisproc.memory_full_info().uss
         else:
-            mem = self._thisproc.memory_info().rss
-        return mem
+            return self._thisproc.memory_info().rss
 
     def _get_fds_or_handles(self):
         if POSIX:

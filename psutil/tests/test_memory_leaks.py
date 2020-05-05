@@ -212,7 +212,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     @skip_if_linux()
     def test_open_files(self):
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files)
+            self.execute(self.proc.open_files, times=100)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @skip_if_linux()
