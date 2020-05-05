@@ -500,22 +500,31 @@ class TestUnclosedFdsOrHandles(TestFdsLeak):
         p = psutil.Process()
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.getters + ns.setters):
+            if WINDOWS:
+                fun()
             self.execute(fun)
 
     def test_process_apis_nsp(self):
         def wrapper(fun):
-            self.assertRaises(psutil.NoSuchProcess, fun)
+            try:
+                fun()
+            except psutil.NoSuchProcess:
+                pass
 
         p = psutil.Process(self.spawn_testproc().pid)
         p.terminate()
         p.wait()
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.getters + ns.setters + ns.killers):
+            if WINDOWS:
+                wrapper(fun)
             self.execute(lambda: wrapper(fun))
 
     def test_system_apis(self):
         ns = system_namespace
         for fun, name in ns.iter(ns.all):
+            if WINDOWS:
+                fun()
             self.execute(fun)
 
 
