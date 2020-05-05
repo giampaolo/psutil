@@ -17,6 +17,8 @@
 
 static PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
+    // Note: GetAdaptersAddresses() increase the handle count on first
+    // call (and not anymore later on).
     // allocate a 15 KB buffer to start with
     int outBufLen = 15000;
     DWORD dwRetVal = 0;

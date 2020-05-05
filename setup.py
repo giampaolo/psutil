@@ -113,9 +113,9 @@ def silenced_output(stream_name):
 
 
 def missdeps(msg):
-    s = hilite("C compiler or Python headers are not installed ", ok=False)
-    s += hilite("on this system. Try to run:\n", ok=False)
-    s += hilite(msg, ok=False, bold=True)
+    s = hilite("C compiler or Python headers are not installed ", color="red")
+    s += hilite("on this system. Try to run:\n", color="red")
+    s += hilite(msg, color="red", bold=True)
     print(s, file=sys.stderr)
 
 
@@ -402,7 +402,7 @@ def main():
                     missdeps("sudo yum install gcc python%s-devel" % py3)
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
-                             "is not installed"), ok=False, file=sys.stderr)
+                             "is not installed"), color="red", file=sys.stderr)
             elif FREEBSD:
                 missdeps("pkg install gcc python%s" % py3)
             elif OPENBSD:
@@ -419,7 +419,7 @@ def main():
                 ur = "http://www.microsoft.com/en-us/download/"
                 ur += "details.aspx?id=44266"
             s = "VisualStudio is not installed; get it from %s" % ur
-            print(hilite(s, ok=False), file=sys.stderr)
+            print(hilite(s, color="red"), file=sys.stderr)
 
 
 if __name__ == '__main__':
