@@ -923,6 +923,13 @@ class TestMemoryLeak(PsutilTestCase):
 
     PyPy appears to be completely unstable for this framework, probably
     because of its JIT, so tests on PYPY are skipped.
+
+    Usage:
+
+        class TestLeaks(psutil.tests.TestMemoryLeak):
+
+            def test_fun(self):
+                self.execute(some_function)
     """
     # Configurable class attrs.
     times = 1000
