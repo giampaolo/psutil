@@ -1035,7 +1035,7 @@ class TestFdsLeak(PsutilTestCase):
         return fun()
 
     def execute(self, fun, times=times, tolerance=tolerance):
-        # This is supposed to close() any unclused file object.
+        # This is supposed to close() any unclosed file object.
         gc.collect()
         before = self._get_fds_or_handles()
         for x in range(times):
