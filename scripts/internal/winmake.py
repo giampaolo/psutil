@@ -464,6 +464,13 @@ def test_contracts():
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
+def test_testutils():
+    """Run test utilities tests"""
+    build()
+    test_setup()
+    sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
+
+
 def test_by_name(name):
     """Run test by name"""
     build()

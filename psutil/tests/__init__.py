@@ -89,7 +89,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
+    'retry_on_failure', 'TestMemoryLeak', 'TestFdsLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace',
     # install utils
     'install_pip', 'install_test_deps',
@@ -901,10 +901,6 @@ class TestMemoryLeak(PsutilTestCase):
     process memory usage increased before and after having called the
     function repeadetly.
 
-    In addition also call the function onces and make sure num_fds()
-    (POSIX) or num_handles() (Windows) does not increase. This is done
-    in order to discover forgotten close(2) and CloseHandle syscalls.
-
     Note that sometimes this may produce false positives.
 
     PyPy appears to be completely unstable for this framework, probably
@@ -916,7 +912,6 @@ class TestMemoryLeak(PsutilTestCase):
     warmup_times = 10
     tolerance = 4096  # memory
     retry_for = 3.0  # seconds
-    check_fds = True  # whether to check if num_fds() increased
     verbose = True
 
     def setUp(self):
@@ -972,7 +967,7 @@ class TestMemoryLeak(PsutilTestCase):
             print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for, check_fds=check_fds):
+                tolerance=tolerance, retry_for=retry_for):
         """Test a callable."""
         if times <= 0:
             raise ValueError("times must be > 0")
@@ -982,15 +977,6 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError("tolerance must be >= 0")
         if retry_for is not None and retry_for < 0:
             raise ValueError("retry_for must be >= 0")
-
-        if check_fds:
-            before = self._get_fds_or_handles()
-            self._call(fun)
-            after = self._get_fds_or_handles()
-            diff = abs(after - before)
-            if diff > 0:
-                msg = "%s unclosed fd(s) or handle(s)" % (diff)
-                raise self.fail(msg)
 
         # warm up
         self._call_ntimes(fun, warmup_times)
@@ -1027,6 +1013,42 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+class TestFdsLeak(PsutilTestCase):
+    """Test framework class which calls a function and make sure num_fds()
+    (POSIX) or num_handles() (Windows) does not increase. This is done
+    in order to discover forgotten close(2) and CloseHandle syscalls.
+    """
+
+    times = 1
+    tolerance = 0
+    _thisproc = psutil.Process()
+
+    def _get_fds_or_handles(self):
+        if POSIX:
+            return self._thisproc.num_fds()
+        else:
+            return self._thisproc.num_handles()
+
+    def _call(self, fun):
+        return fun()
+
+    def execute(self, fun, times=times, tolerance=tolerance):
+        # This is supposed to close() any unclused file object.
+        gc.collect()
+        before = self._get_fds_or_handles()
+        for x in range(times):
+            self._call(fun)
+        after = self._get_fds_or_handles()
+        diff = after - before
+        if diff < 0:
+            raise self.fail("negative diff %r (gc probably collected a "
+                            "resource from a previous test)" % diff)
+        if diff > 0:
+            msg = "%s unclosed fd(s) or handle(s) after calling %r %s " \
+                  "time(s)" % (diff, fun, times)
+            raise self.fail(msg)
 
 
 def _get_eligible_cpu():
