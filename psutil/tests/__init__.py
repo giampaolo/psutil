@@ -926,10 +926,13 @@ class TestMemoryLeak(PsutilTestCase):
         gc.collect()
 
     def _get_mem(self):
-        # USS is the closest thing we have to "real" memory usage and it
-        # should be less likely to produce false positives.
-        mem = self._thisproc.memory_full_info()
-        return getattr(mem, "uss", mem.rss)
+        if LINUX:
+            mem = psutil.malloc_info().uordblks
+        elif MACOS or WINDOWS:
+            mem = self._thisproc.memory_full_info().uss
+        else:
+            mem = self._thisproc.memory_info().rss
+        return mem
 
     def _get_fds_or_handles(self):
         if POSIX:
