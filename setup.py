@@ -113,9 +113,9 @@ def silenced_output(stream_name):
 
 
 def missdeps(msg):
-    s = hilite("C compiler or Python headers are not installed ", ok=False)
-    s += hilite("on this system. Try to run:\n", ok=False)
-    s += hilite(msg, ok=False, bold=True)
+    s = hilite("C compiler or Python headers are not installed ", color="red")
+    s += hilite("on this system. Try to run:\n", color="red")
+    s += hilite(msg, color="red", bold=True)
     print(s, file=sys.stderr)
 
 
