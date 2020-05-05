@@ -908,7 +908,7 @@ class TestMemoryLeak(PsutilTestCase):
     automatically skipped.
     """
     # Configurable class attrs.
-    times = 1200
+    times = 1000
     warmup_times = 10
     tolerance = 4096  # memory
     retry_for = 3.0  # seconds
