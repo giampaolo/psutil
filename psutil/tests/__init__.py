@@ -895,18 +895,31 @@ class PsutilTestCase(TestCase):
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
-    """Test framework class for detecting function memory leaks
-    (typically functions implemented in C).
-    It does so by checking whether the process memory usage increased
-    before and after calling the function many times.
+    """Test framework class for detecting function memory leaks,
+    typically functions implemented in C which forgot to free() memory
+    from the heap. It does so by checking whether the process memory
+    usage increased before and after calling the function many times.
+    The logic:
+
+        call_fun_n_times()
+        if mem_diff > tolerance:
+            call_fun_for_3_secs()
+            if mem_diff > 0:
+                return 1  # failure
+        return 0  # success
 
     Note that this is hard (probably impossible) to do reliably, due
-    to how the OS handles memory, the GC and so on (e.g. memory can even
-    decrease!). As such you may incur into false negatives or positives.
-    In that case you can try to adjust the tolerance of each individual
-    test case. If available, USS memory is used, as it should be more
-    precise than RSS. mallinfo() on Linux and _heapwalk() on Windows may
-    give even more precision.
+    to how the OS handles memory, the GC and so on (memory can even
+    decrease!). In order to avoid false positives you should adjust the
+    tolerance of each individual test case, but most of the times you
+    won't have to.
+
+    If available (Linux, OSX, Windows) USS memory is used for comparison,
+    since it's supposed to be more precise, see:
+    http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
+    If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
+    Windows may give even more precision, but at the moment are not
+    implemented.
 
     PyPy appears to be completely unstable for this framework, probably
     because of its JIT, so tests on PYPY are skipped.
