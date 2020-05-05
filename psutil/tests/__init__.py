@@ -1009,21 +1009,22 @@ class TestMemoryLeak(PsutilTestCase):
             # and if there are no leaks it should not increase
             # anymore. Let's keep calling fun for N more seconds and
             # fail if we notice any difference (ignore tolerance).
-            msg = "+%s after %s calls; try calling fun for another %s secs" % (
-                bytes2human(mem1), times, retry_for)
+            msg1 = "+%s mem increase after %s calls (%s per-call on average)"
+            msg1 = msg1 % (bytes2human(mem1), times, bytes2human(mem1 / times))
             if not retry_for:
-                raise self.fail(msg)
+                raise self.fail(msg1)
             else:
-                self._log(msg)
-
+                self._log(msg1 + "; try calling fun for another %s secs"
+                          % retry_for)
             mem2, ncalls = self._call_for(fun, retry_for)
             if mem2 > mem1:
                 # failure
-                msg = "+%s memory increase after %s calls; " % (
-                    bytes2human(mem1), times)
-                msg += "+%s after another %s calls over %s secs" % (
-                    bytes2human(mem2), ncalls, retry_for)
-                raise self.fail(msg)
+                msg2 = msg1
+                msg2 += "; +%s after another %s calls over %s secs "
+                msg2 += "(%s per-call on average)"
+                msg2 = msg2 % (bytes2human(mem2), ncalls, retry_for,
+                               bytes2human(mem2 / ncalls))
+                raise self.fail(msg2)
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
