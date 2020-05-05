@@ -436,8 +436,9 @@ class TestFdsLeakClass(TestFdsLeak):
 
         box = []
         self.assertRaisesRegex(
-            AssertionError, r"5 unclosed fd\(s\) or handle\(s\)",
+            AssertionError, r"unclosed fd\(s\) or handle\(s\)",
             self.execute, fun, times=5)
+        self.assertEqual(len(box), 5)
 
 
 class TestTestingUtils(PsutilTestCase):

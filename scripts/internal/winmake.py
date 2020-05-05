@@ -576,6 +576,7 @@ def main():
     sp.add_parser('test-process', help="run process tests")
     sp.add_parser('test-system', help="run system tests")
     sp.add_parser('test-unicode', help="run unicode tests")
+    sp.add_parser('test-testutils', help="run test utils tests")
     sp.add_parser('uninstall', help="uninstall psutil")
     sp.add_parser('upload-wheels', help="upload wheel files on PyPI")
     sp.add_parser('wheel', help="create wheel file")
