@@ -811,54 +811,34 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process username as a "DOMAIN//USERNAME" string.
- */
-static PyObject *
-psutil_proc_username(PyObject *self, PyObject *args) {
-    DWORD pid;
-    HANDLE processHandle = NULL;
-    HANDLE tokenHandle = NULL;
-    PTOKEN_USER user = NULL;
-    ULONG bufferSize;
-    WCHAR *name = NULL;
-    WCHAR *domainName = NULL;
-    ULONG nameSize;
-    ULONG domainNameSize;
-    SID_NAME_USE nameUse;
-    PyObject *py_username = NULL;
-    PyObject *py_domain = NULL;
-    PyObject *py_tuple = NULL;
+static PTOKEN_USER
+_psutil_user_token_from_pid(DWORD pid) {
+    HANDLE hProcess = NULL;
+    HANDLE hToken = NULL;
+    PTOKEN_USER userToken = NULL;
+    ULONG bufferSize = 0x100;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL)
         return NULL;
 
-    processHandle = psutil_handle_from_pid(
-        pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (processHandle == NULL)
-        return NULL;
-
-    if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
+    if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
         PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
         goto error;
     }
 
-    CloseHandle(processHandle);
-    processHandle = NULL;
-
     // Get the user SID.
-    bufferSize = 0x100;
     while (1) {
-        user = malloc(bufferSize);
-        if (user == NULL) {
+        userToken = malloc(bufferSize);
+        if (userToken == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
+        if (!GetTokenInformation(hToken, TokenUser, userToken, bufferSize,
                                  &bufferSize))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                free(user);
+                free(userToken);
                 continue;
             }
             else {
@@ -869,15 +849,45 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         break;
     }
 
-    CloseHandle(tokenHandle);
-    tokenHandle = NULL;
+    CloseHandle(hProcess);
+    CloseHandle(hToken);
+    return userToken;
+
+error:
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    if (hToken != NULL)
+        CloseHandle(hToken);
+    return NULL;
+}
+
+
+/*
+ * Return process username as a "DOMAIN//USERNAME" string.
+ */
+static PyObject *
+psutil_proc_username(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PTOKEN_USER userToken = NULL;
+    WCHAR *userName = NULL;
+    WCHAR *domainName = NULL;
+    ULONG nameSize = 0x100;
+    ULONG domainNameSize = 0x100;
+    SID_NAME_USE nameUse;
+    PyObject *py_username = NULL;
+    PyObject *py_domain = NULL;
+    PyObject *py_tuple = NULL;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    userToken = _psutil_user_token_from_pid(pid);
+    if (userToken == NULL)
+        return NULL;
 
     // resolve the SID to a name
-    nameSize = 0x100;
-    domainNameSize = 0x100;
     while (1) {
-        name = malloc(nameSize * sizeof(WCHAR));
-        if (name == NULL) {
+        userName = malloc(nameSize * sizeof(WCHAR));
+        if (userName == NULL) {
             PyErr_NoMemory();
             goto error;
         }
@@ -886,11 +896,11 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSidW(NULL, user->User.Sid, name, &nameSize,
+        if (!LookupAccountSidW(NULL, userToken->User.Sid, userName, &nameSize,
                                domainName, &domainNameSize, &nameUse))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                free(name);
+                free(userName);
                 free(domainName);
                 continue;
             }
@@ -905,7 +915,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     py_domain = PyUnicode_FromWideChar(domainName, wcslen(domainName));
     if (! py_domain)
         goto error;
-    py_username = PyUnicode_FromWideChar(name, wcslen(name));
+    py_username = PyUnicode_FromWideChar(userName, wcslen(userName));
     if (! py_username)
         goto error;
     py_tuple = Py_BuildValue("OO", py_domain, py_username);
@@ -914,23 +924,18 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     Py_DECREF(py_domain);
     Py_DECREF(py_username);
 
-    free(name);
+    free(userName);
     free(domainName);
-    free(user);
-
+    free(userToken);
     return py_tuple;
 
 error:
-    if (processHandle != NULL)
-        CloseHandle(processHandle);
-    if (tokenHandle != NULL)
-        CloseHandle(tokenHandle);
-    if (name != NULL)
-        free(name);
+    if (userName != NULL)
+        free(userName);
     if (domainName != NULL)
         free(domainName);
-    if (user != NULL)
-        free(user);
+    if (userToken != NULL)
+        free(userToken);
     Py_XDECREF(py_domain);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tuple);
