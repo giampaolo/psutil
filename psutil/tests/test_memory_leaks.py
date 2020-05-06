@@ -525,6 +525,8 @@ class TestUnclosedFdsOrHandles(TestFdsLeak):
         for fun, name in ns.iter(ns.all):
             if WINDOWS:
                 fun()
+            if MACOS and name == 'connections':
+                continue  # raise AD
             self.execute(fun)
 
 
