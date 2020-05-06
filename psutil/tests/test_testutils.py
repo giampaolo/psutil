@@ -47,6 +47,7 @@ from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
+from psutil.tests import TestFdsLeak
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
@@ -358,9 +359,9 @@ class TestMemLeakClass(TestMemoryLeak):
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
         self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 12)
+        self.assertEqual(cnt['cnt'], 11)
         self.execute(fun, times=10, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 33)
+        self.assertEqual(cnt['cnt'], 31)
 
     @retry_on_failure()
     def test_warmup_times(self):
@@ -368,7 +369,7 @@ class TestMemLeakClass(TestMemoryLeak):
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
         self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 12)
+        self.assertEqual(cnt['cnt'], 11)
 
     def test_param_err(self):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
@@ -385,7 +386,7 @@ class TestMemLeakClass(TestMemoryLeak):
         times = 100
         self.assertRaises(AssertionError, self.execute, fun, times=times,
                           warmup_times=10, retry_for=None)
-        self.assertEqual(len(ls), times + 11)
+        self.assertEqual(len(ls), times + 10)
 
     @retry_on_failure(retries=20)  # 2 secs
     def test_leak_with_retry(self, ls=[]):
@@ -406,7 +407,7 @@ class TestMemLeakClass(TestMemoryLeak):
         ls = []
         times = 100
         self.execute(fun, times=times, warmup_times=0,
-                     tolerance=200 * 1024 * 1024, check_fds=False)
+                     tolerance=200 * 1024 * 1024)
         self.assertEqual(len(ls), times)
 
     @retry_on_failure()
@@ -424,16 +425,18 @@ class TestMemLeakClass(TestMemoryLeak):
         with self.assertRaises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun)
 
-    def test_unclosed_fds(self):
+
+class TestFdsLeakClass(TestFdsLeak):
+
+    def test_unclosed_files(self):
         def fun():
             f = open(__file__)
             self.addCleanup(f.close)
             box.append(f)
 
         box = []
-        self.assertRaisesRegex(
-            AssertionError, r"unclosed fd\(s\) or handle\(s\)",
-            self.execute, fun, times=5, warmup_times=5)
+        self.assertRaisesRegex(AssertionError, "unclosed", self.execute, fun)
+        self.assertEqual(len(box), 1)
 
 
 class TestTestingUtils(PsutilTestCase):
@@ -441,11 +444,12 @@ class TestTestingUtils(PsutilTestCase):
     def test_process_namespace(self):
         p = psutil.Process()
         ns = process_namespace(p)
+        ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
         self.assertEqual(fun(), p.ppid())
 
     def test_system_namespace(self):
-        ns = system_namespace
+        ns = system_namespace()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
         self.assertEqual(fun(), psutil.net_if_addrs())
 

@@ -89,7 +89,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
+    'retry_on_failure', 'TestMemoryLeak', 'TestFdsLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace',
     # install utils
     'install_pip', 'install_test_deps',
@@ -895,28 +895,47 @@ class PsutilTestCase(TestCase):
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
-    """Test framework class for detecting function memory leaks (typically
-    functions implemented in C).
-    It does so by calling a function many times, and checks whether the
-    process memory usage increased before and after having called the
-    function repeadetly.
+    """Test framework class for detecting function memory leaks,
+    typically functions implemented in C which forgot to free() memory
+    from the heap. It does so by checking whether the process memory
+    usage increased before and after calling the function many times.
+    The logic:
 
-    In addition also call the function onces and make sure num_fds()
-    (POSIX) or num_handles() (Windows) does not increase. This is done
-    in order to discover forgotten close(2) and CloseHandle syscalls.
+        call_fun_n_times()
+        if mem_diff > tolerance:
+            call_fun_for_3_secs()
+            if mem_diff > 0:
+                return 1  # failure
+        return 0  # success
 
-    Note that sometimes this may produce false positives.
+    Note that this is hard (probably impossible) to do reliably, due
+    to how the OS handles memory, the GC and so on (memory can even
+    decrease!). In order to avoid false positives you should adjust the
+    tolerance of each individual test case, but most of the times you
+    won't have to.
+
+    If available (Linux, OSX, Windows) USS memory is used for comparison,
+    since it's supposed to be more precise, see:
+    http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
+    If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
+    Windows may give even more precision, but at the moment are not
+    implemented.
 
     PyPy appears to be completely unstable for this framework, probably
-    because of how its JIT handles memory, so tests on PYPY are
-    automatically skipped.
+    because of its JIT, so tests on PYPY are skipped.
+
+    Usage:
+
+        class TestLeaks(psutil.tests.TestMemoryLeak):
+
+            def test_fun(self):
+                self.execute(some_function)
     """
     # Configurable class attrs.
-    times = 1200
+    times = 1000
     warmup_times = 10
     tolerance = 4096  # memory
     retry_for = 3.0  # seconds
-    check_fds = True  # whether to check if num_fds() increased
     verbose = True
 
     def setUp(self):
@@ -972,7 +991,7 @@ class TestMemoryLeak(PsutilTestCase):
             print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for, check_fds=check_fds):
+                tolerance=tolerance, retry_for=retry_for):
         """Test a callable."""
         if times <= 0:
             raise ValueError("times must be > 0")
@@ -982,15 +1001,6 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError("tolerance must be >= 0")
         if retry_for is not None and retry_for < 0:
             raise ValueError("retry_for must be >= 0")
-
-        if check_fds:
-            before = self._get_fds_or_handles()
-            self._call(fun)
-            after = self._get_fds_or_handles()
-            diff = abs(after - before)
-            if diff > 0:
-                msg = "%s unclosed fd(s) or handle(s)" % (diff)
-                raise self.fail(msg)
 
         # warm up
         self._call_ntimes(fun, warmup_times)
@@ -1027,6 +1037,43 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+class TestFdsLeak(PsutilTestCase):
+    """Test framework class which makes sure num_fds() (POSIX) or
+    num_handles() (Windows) does not increase after calling a function.
+    This can be used to discover forgotten close(2) and CloseHandle
+    syscalls.
+    """
+
+    tolerance = 0
+    _thisproc = psutil.Process()
+
+    def _get_fds_or_handles(self):
+        if POSIX:
+            return self._thisproc.num_fds()
+        else:
+            return self._thisproc.num_handles()
+
+    def _call(self, fun):
+        return fun()
+
+    def execute(self, fun, tolerance=tolerance):
+        # This is supposed to close() any unclosed file object.
+        gc.collect()
+        before = self._get_fds_or_handles()
+        self._call(fun)
+        after = self._get_fds_or_handles()
+        diff = after - before
+        if diff < 0:
+            raise self.fail("negative diff %r (gc probably collected a "
+                            "resource from a previous test)" % diff)
+        if diff > 0:
+            type_ = "fd" if POSIX else "handle"
+            if diff > 1:
+                type_ += "s"
+            msg = "%s unclosed %s after calling %r" % (diff, type_, fun)
+            raise self.fail(msg)
 
 
 def _get_eligible_cpu():
@@ -1154,16 +1201,25 @@ class process_namespace:
         self._proc._init(self._proc.pid, _ignore_nsp=True)
 
     @classmethod
-    def _test(cls):
+    def test_class_coverage(cls, test_class, ls):
+        """Given a TestCase instance and a list of tuples checks that
+        the class defines the required test method names.
+        """
+        for fun_name, _, _ in ls:
+            meth_name = 'test_' + fun_name
+            if not hasattr(test_class, meth_name):
+                msg = "%r class should define a '%s' method" % (
+                    test_class.__class__.__name__, meth_name)
+                raise AttributeError(msg)
+
+    @classmethod
+    def test(cls):
         this = set([x[0] for x in cls.all])
         ignored = set([x[0] for x in cls.ignored])
         klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
         leftout = (this | ignored) ^ klass
         if leftout:
             raise ValueError("uncovered Process class names: %r" % leftout)
-
-
-process_namespace._test()
 
 
 class system_namespace:
@@ -1195,18 +1251,18 @@ class system_namespace:
         ('virtual_memory', (), {}),
     ]
     if HAS_CPU_FREQ:
-        getters.append(('cpu_freq', (), {'percpu': True}))
+        getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
-        getters.append(('getloadavg', (), {}))
+        getters += [('getloadavg', (), {})]
     if HAS_SENSORS_TEMPERATURES:
-        getters.append(('sensors_temperatures', (), {}))
+        getters += [('sensors_temperatures', (), {})]
     if HAS_SENSORS_FANS:
-        getters.append(('sensors_fans', (), {}))
+        getters += [('sensors_fans', (), {})]
     if HAS_SENSORS_BATTERY:
-        getters.append(('sensors_battery', (), {}))
+        getters += [('sensors_battery', (), {})]
     if WINDOWS:
-        getters.append(('win_service_iter', (), {}))
-        getters.append(('win_service_get', ('alg', ), {}))
+        getters += [('win_service_iter', (), {})]
+        getters += [('win_service_get', ('alg', ), {})]
 
     ignored = [
         ('process_iter', (), {}),
@@ -1229,19 +1285,7 @@ class system_namespace:
             fun = functools.partial(fun, *args, **kwds)
             yield (fun, fun_name)
 
-    @classmethod
-    def _test(cls):
-        this = set([x[0] for x in cls.all])
-        ignored = set([x[0] for x in cls.ignored])
-        # there's a separate test for __all__
-        mod = set([x for x in dir(psutil) if x.islower() and x[0] != '_' and
-                   x in psutil.__all__ and callable(getattr(psutil, x))])
-        leftout = (this | ignored) ^ mod
-        if leftout:
-            raise ValueError("uncovered psutil mod name(s): %r" % leftout)
-
-
-system_namespace._test()
+    test_class_coverage = process_namespace.test_class_coverage
 
 
 def serialrun(klass):
