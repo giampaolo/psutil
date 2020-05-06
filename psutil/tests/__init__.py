@@ -1285,6 +1285,8 @@ class system_namespace:
             fun = functools.partial(fun, *args, **kwds)
             yield (fun, fun_name)
 
+    test_class_coverage = process_namespace.test_class_coverage
+
 
 def serialrun(klass):
     """A decorator to mark a TestCase class. When running parallel tests,
