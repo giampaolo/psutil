@@ -1285,19 +1285,6 @@ class system_namespace:
             fun = functools.partial(fun, *args, **kwds)
             yield (fun, fun_name)
 
-    @classmethod
-    def test(cls):
-        this = set([x[0] for x in cls.all])
-        ignored = set([x[0] for x in cls.ignored])
-        # there's a separate test for __all__
-        mod = set([x for x in dir(psutil) if x.islower() and x[0] != '_' and
-                   x in psutil.__all__ and callable(getattr(psutil, x))])
-        leftout = (this | ignored) ^ mod
-        if leftout:
-            raise ValueError("uncovered psutil mod name(s): %r" % leftout)
-
-    test_class_coverage = process_namespace.test_class_coverage
-
 
 def serialrun(klass):
     """A decorator to mark a TestCase class. When running parallel tests,

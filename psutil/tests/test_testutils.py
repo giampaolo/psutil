@@ -450,7 +450,6 @@ class TestTestingUtils(PsutilTestCase):
 
     def test_system_namespace(self):
         ns = system_namespace()
-        ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
         self.assertEqual(fun(), psutil.net_if_addrs())
 
