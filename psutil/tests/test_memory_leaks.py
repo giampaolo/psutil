@@ -50,9 +50,11 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
+from psutil.tests import TestFdsLeak
 from psutil.tests import TestMemoryLeak
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+
 
 SKIP_PYTHON_IMPL = True
 cext = psutil._psplatform.cext
@@ -485,6 +487,47 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
+
+
+# =====================================================================
+# --- File descriptors and handlers
+# =====================================================================
+
+
+class TestUnclosedFdsOrHandles(TestFdsLeak):
+
+    def test_process_apis(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters):
+            if WINDOWS:
+                fun()
+            self.execute(fun)
+
+    def test_process_apis_nsp(self):
+        def wrapper(fun):
+            try:
+                fun()
+            except psutil.NoSuchProcess:
+                pass
+
+        p = psutil.Process(self.spawn_testproc().pid)
+        p.terminate()
+        p.wait()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters + ns.setters + ns.killers):
+            if WINDOWS:
+                wrapper(fun)
+            self.execute(lambda: wrapper(fun))
+
+    def test_system_apis(self):
+        ns = system_namespace
+        for fun, name in ns.iter(ns.all):
+            if WINDOWS:
+                fun()
+            if MACOS and name == 'connections':
+                continue  # raise AD
+            self.execute(fun)
 
 
 if __name__ == '__main__':
