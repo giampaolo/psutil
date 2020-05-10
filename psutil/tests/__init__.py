@@ -476,12 +476,10 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         from psutil._psposix import wait_pid
 
     def wait(proc, timeout):
-        try:
-            return psutil.Process(proc.pid).wait(timeout)
-        except psutil.NoSuchProcess:
-            # Needed to kill zombies.
-            if POSIX:
-                return wait_pid(proc.pid, timeout)
+        if isinstance(proc, subprocess.Popen) and not PY3:
+            proc.wait()
+        else:
+            proc.wait(timeout)
 
     def sendsig(proc, sig):
         # If the process received SIGSTOP, SIGCONT is necessary first,
