@@ -12,7 +12,6 @@ Tests for testing utils (psutil.tests namespace).
 import collections
 import contextlib
 import errno
-import io
 import os
 import socket
 import stat
@@ -24,8 +23,6 @@ from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
-from psutil._compat import redirect_stderr
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
@@ -40,7 +37,6 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry
-from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
