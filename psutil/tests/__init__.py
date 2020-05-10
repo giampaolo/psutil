@@ -932,15 +932,14 @@ class TestMemoryLeak(PsutilTestCase):
                 self.execute(some_function)
     """
     # Configurable class attrs.
-    times = 1000
+    times = 200
     warmup_times = 10
-    tolerance = 4096  # memory
-    retry_for = 3.0  # seconds
+    tolerance = 0  # memory
     verbose = True
 
-    def setUp(self):
-        self._thisproc = psutil.Process()
-        gc.collect()
+    @classmethod
+    def setUpClass(cls):
+        cls._thisproc = psutil.Process()
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
@@ -962,13 +961,13 @@ class TestMemoryLeak(PsutilTestCase):
         called fun repeadetly, and return the memory difference.
         """
         ncalls = 0
-        gc.collect()
+        gc.collect(generation=1)
         mem1 = self._get_mem()
         for x in iterator:
             ret = self._call(fun)
             ncalls += 1
             del x, ret
-        gc.collect()
+        gc.collect(generation=1)
         mem2 = self._get_mem()
         self.assertEqual(gc.garbage, [])
         diff = mem2 - mem1
@@ -991,7 +990,7 @@ class TestMemoryLeak(PsutilTestCase):
             print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for):
+                tolerance=tolerance):
         """Test a callable."""
         if times <= 0:
             raise ValueError("times must be > 0")
@@ -999,13 +998,12 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError("warmup_times must be >= 0")
         if tolerance is not None and tolerance < 0:
             raise ValueError("tolerance must be >= 0")
-        if retry_for is not None and retry_for < 0:
-            raise ValueError("retry_for must be >= 0")
 
         # warm up
         self._call_ntimes(fun, warmup_times)
         mem1 = self._call_ntimes(fun, times)
 
+        b2h = bytes2human
         if mem1 > tolerance:
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
@@ -1013,21 +1011,17 @@ class TestMemoryLeak(PsutilTestCase):
             # and if there are no leaks it should not increase
             # anymore. Let's keep calling fun for N more seconds and
             # fail if we notice any difference (ignore tolerance).
-            msg = "+%s after %s calls; try calling fun for another %s secs" % (
-                bytes2human(mem1), times, retry_for)
-            if not retry_for:
-                raise self.fail(msg)
-            else:
-                self._log(msg)
+            msg = "+%s after %s calls" % (b2h(mem1), times)
+            raise self.fail(msg)
 
-            mem2, ncalls = self._call_for(fun, retry_for)
-            if mem2 > mem1:
-                # failure
-                msg = "+%s memory increase after %s calls; " % (
-                    bytes2human(mem1), times)
-                msg += "+%s after another %s calls over %s secs" % (
-                    bytes2human(mem2), ncalls, retry_for)
-                raise self.fail(msg)
+            # mem2, ncalls = self._call_for(fun, retry_for)
+            # if mem2 > mem1:
+            #     # failure
+            #     msg = "+%s memory increase after %s calls; " % (
+            #         bytes2human(mem1), times)
+            #     msg += "+%s after another %s calls over %s secs" % (
+            #         bytes2human(mem2), ncalls, retry_for)
+            #     raise self.fail(msg)
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
