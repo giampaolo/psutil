@@ -21,7 +21,6 @@ import os
 
 import psutil
 import psutil._common
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -30,7 +29,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
 from psutil._compat import super
-from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
@@ -402,9 +400,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- net
 
-    # XXX
-    @unittest.skipIf(TRAVIS and MACOS, "false positive on TRAVIS + MACOS")
-    @unittest.skipIf(CIRRUS and FREEBSD, "false positive on CIRRUS + FREEBSD")
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
@@ -430,7 +425,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         # Note: verified that on Windows this was a false positive.
         self.execute(psutil.net_if_addrs)
 
-    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         if WINDOWS:
             # GetAdaptersAddresses() increases the handle count on first
@@ -461,7 +456,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     def test_boot_time(self):
         self.execute(psutil.boot_time)
 
-    @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
         self.execute(psutil.users)
 

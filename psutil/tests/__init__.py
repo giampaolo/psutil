@@ -956,34 +956,20 @@ class TestMemoryLeak(PsutilTestCase):
     def _call(self, fun):
         return fun()
 
-    def _itercall(self, fun, iterator):
+    def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
         called fun repeadetly, and return the memory difference.
         """
-        ncalls = 0
         gc.collect(generation=1)
         mem1 = self._get_mem()
-        for x in iterator:
+        for x in range(times):
             ret = self._call(fun)
-            ncalls += 1
             del x, ret
         gc.collect(generation=1)
         mem2 = self._get_mem()
         self.assertEqual(gc.garbage, [])
-        diff = mem2 - mem1
-        if diff < 0:
-            self._log("negative memory diff -%s" % (bytes2human(abs(diff))))
-        return (diff, ncalls)
-
-    def _call_ntimes(self, fun, times):
-        return self._itercall(fun, range(times))[0]
-
-    def _call_for(self, fun, secs):
-        def iterator(secs):
-            stop_at = time.time() + secs
-            while time.time() < stop_at:
-                yield
-        return self._itercall(fun, iterator(secs))
+        diff = mem2 - mem1  # can also be negative
+        return diff
 
     def _log(self, msg):
         if self.verbose:
@@ -1011,17 +997,19 @@ class TestMemoryLeak(PsutilTestCase):
             # and if there are no leaks it should not increase
             # anymore. Let's keep calling fun for N more seconds and
             # fail if we notice any difference (ignore tolerance).
-            msg = "+%s after %s calls" % (b2h(mem1), times)
-            raise self.fail(msg)
+            msg1 = "Run #1: mem=+%s, per-call=%s, calls=%s" % (
+                b2h(mem1), b2h(mem1 / times), times)
+            self._log("\n" + msg1)
 
-            # mem2, ncalls = self._call_for(fun, retry_for)
-            # if mem2 > mem1:
-            #     # failure
-            #     msg = "+%s memory increase after %s calls; " % (
-            #         bytes2human(mem1), times)
-            #     msg += "+%s after another %s calls over %s secs" % (
-            #         bytes2human(mem2), ncalls, retry_for)
-            #     raise self.fail(msg)
+            # Retry 5x more times.
+            times *= 5
+            mem2 = self._call_ntimes(fun, times)
+            msg2 = "Run #2: mem=+%s, per-call=%s, calls=%s" % (
+                b2h(mem2), b2h(mem2 / times), times)
+            self._log(msg2)
+
+            if mem2 > mem1:
+                raise self.fail(msg1 + ". " + msg2)
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
