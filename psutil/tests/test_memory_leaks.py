@@ -403,10 +403,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_io_counters()
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skip_if_linux()
@@ -418,19 +414,10 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
             self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_if_addrs()
-        # Note: verified that on Windows this was a false positive.
         self.execute(psutil.net_if_addrs)
 
     # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_if_stats()
         self.execute(psutil.net_if_stats)
 
     # --- sensors
@@ -488,6 +475,8 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
 
 class TestUnclosedFdsOrHandles(TestFdsLeak):
+    # Note: on Windows certain C functions increase the handles count
+    # on first call (and never again).
 
     def test_process_apis(self):
         p = psutil.Process()
@@ -518,7 +507,7 @@ class TestUnclosedFdsOrHandles(TestFdsLeak):
         for fun, name in ns.iter(ns.all):
             if WINDOWS:
                 fun()
-            if MACOS and name == 'connections':
+            if MACOS and name == 'net_connections':
                 continue  # raise AD
             self.execute(fun)
 
