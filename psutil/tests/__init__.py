@@ -945,12 +945,6 @@ class TestMemoryLeak(PsutilTestCase):
         mem = self._thisproc.memory_full_info()
         return getattr(mem, "uss", mem.rss)
 
-    def _get_fds_or_handles(self):
-        if POSIX:
-            return self._thisproc.num_fds()
-        else:
-            return self._thisproc.num_handles()
-
     def _call(self, fun):
         return fun()
 
