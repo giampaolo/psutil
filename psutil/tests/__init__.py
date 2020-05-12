@@ -973,17 +973,21 @@ class TestMemoryLeak(PsutilTestCase):
         if self.verbose:
             print_color(msg, color="yellow", file=sys.stderr)
 
-    def execute(self, fun, times=times, warmup_times=warmup_times,
-                retries=retries, tolerance=tolerance):
+    def execute(self, fun, times=None, warmup_times=None, retries=None,
+                tolerance=None):
         """Test a callable."""
-        if times <= 0:
-            raise ValueError("times must be > 0")
-        if warmup_times < 0:
-            raise ValueError("warmup_times must be >= 0")
-        if retries < 1:
-            raise ValueError("retries must be >= 1")
-        if tolerance is not None and tolerance < 0:
-            raise ValueError("tolerance must be >= 0")
+        times = times if times is not None else self.times
+        warmup_times = warmup_times if warmup_times is not None \
+            else self.warmup_times
+        retries = retries if retries is not None else self.retries
+        tolerance = tolerance if tolerance is not None else self.tolerance
+        try:
+            assert times >= 1, "times must be >= 1"
+            assert warmup_times >= 0, "warmup_times must be >= 0"
+            assert retries >= 0, "retries must be >= 0"
+            assert tolerance >= 0, "tolerance must be >= 0"
+        except AssertionError as err:
+            raise ValueError(str(err))
 
         # warm up
         self._call_ntimes(fun, warmup_times)

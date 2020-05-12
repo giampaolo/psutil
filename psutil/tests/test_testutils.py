@@ -361,7 +361,7 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, warmup_times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
-        self.assertRaises(ValueError, self.execute, lambda: 0, retries=0)
+        self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
 
     def test_leak(self):
         ls = []
