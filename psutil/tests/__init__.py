@@ -900,10 +900,12 @@ class TestMemoryLeak(PsutilTestCase):
 
     Note that this is hard (probably impossible) to do reliably, due
     to how the OS handles memory, the GC and so on (memory can even
-    decrease!). In order to avoid false positives this implementation
-    tries to takee memory fluctuation into account.
+    decrease!). In order to avoid false positives, in case of failure
+    (mem > 0) we retry the test for up to 5 times, increasing call
+    repetitions each time. If the memory keeps increasing then it's a
+    failure.
 
-    If available (Linux, OSX, Windows) USS memory is used for comparison,
+    If available (Linux, OSX, Windows), USS memory is used for comparison,
     since it's supposed to be more precise, see:
     http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
     If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
@@ -923,6 +925,7 @@ class TestMemoryLeak(PsutilTestCase):
     # Configurable class attrs.
     times = 200
     warmup_times = 10
+    retries = 5
     tolerance = 0  # memory
     verbose = True
 
@@ -965,7 +968,7 @@ class TestMemoryLeak(PsutilTestCase):
             print_color(msg, color="yellow", file=sys.stderr)
 
     def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance):
+                retries=retries, tolerance=tolerance):
         """Test a callable."""
         if times <= 0:
             raise ValueError("times must be > 0")
@@ -976,33 +979,29 @@ class TestMemoryLeak(PsutilTestCase):
 
         # warm up
         self._call_ntimes(fun, warmup_times)
-        mem1 = self._call_ntimes(fun, times)
 
         b2h = bytes2human
-        if mem1 > tolerance:
-            # This doesn't necessarily mean we have a leak yet.
-            # At this point we assume that after having called the
-            # function so many times the memory usage is stabilized
-            # and if there are no leaks it should not increase
-            # anymore. Let's keep calling fun for N more seconds and
-            # fail if we notice any difference (ignore tolerance).
-            msg1 = "Run #1: mem=+%s, per-call=%s, calls=%s" % (
-                b2h(mem1), b2h(mem1 / times), times)
-            self._log("\n" + msg1)
+        messages = []
+        prev_mem = 0
+        increase = times
 
-            # Retry 5x more times.
-            times *= 5
-            mem2 = self._call_ntimes(fun, times)
-            msg2 = "Run #2: mem=+%s, per-call=%s, calls=%s" % (
-                b2h(mem2), b2h(mem2 / times), times)
-            self._log(msg2)
-
-            limit = mem2 / 2
-            if limit > mem1:
-                raise self.fail("%s. %s. Limit = %s" % (
-                    msg1, msg2, b2h(limit)))
+        for idx in range(1, retries + 1):
+            mem = self._call_ntimes(fun, times)
+            msg = "Run #%s: extra-mem=%s, per-call=%s, calls=%s" % (
+                idx, b2h(mem), b2h(mem / times), times)
+            messages.append(msg)
+            success = mem <= tolerance or mem < prev_mem
+            if success:
+                if idx > 1:
+                    self._log(msg)
+                return
             else:
-                self._log("Limit: %s" % b2h(limit))
+                if idx == 1:
+                    print()  # NOQA
+                self._log(msg)
+                times += increase
+                prev_mem = mem
+        raise self.fail(". ".join(messages))
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
