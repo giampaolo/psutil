@@ -366,10 +366,7 @@ class TestMemLeakClass(TestMemoryLeak):
         def fun():
             ls.append("x" * 24 * 1024)
         ls = []
-        times = 100
-        self.assertRaises(AssertionError, self.execute, fun, times=times,
-                          warmup_times=10)
-        self.assertGreater(len(ls), times + 10)
+        self.assertRaises(AssertionError, self.execute, fun)
 
     def test_tolerance(self):
         def fun():
