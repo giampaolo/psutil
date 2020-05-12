@@ -363,10 +363,15 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
 
     def test_leak(self):
-        def fun():
-            ls.append("x" * 24 * 1024)
         ls = []
-        self.assertRaises(AssertionError, self.execute, fun)
+
+        def fun(ls=ls):
+            ls.append("x" * 24 * 1024)
+
+        try:
+            self.assertRaises(AssertionError, self.execute, fun)
+        finally:
+            del ls
 
     def test_tolerance(self):
         def fun():
@@ -392,6 +397,7 @@ class TestMemLeakClass(TestMemoryLeak):
             self.execute_w_exc(ZeroDivisionError, fun)
 
 
+@serialrun
 class TestFdsLeakClass(TestFdsLeak):
 
     def test_unclosed_files(self):

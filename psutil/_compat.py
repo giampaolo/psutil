@@ -8,7 +8,6 @@ Python 3 way of doing things).
 """
 
 import collections
-import contextlib
 import errno
 import functools
 import os
@@ -23,7 +22,7 @@ __all__ = [
     # literals
     "u", "b",
     # collections module
-    "lru_cache", "redirect_stderr",
+    "lru_cache",
     # shutil module
     "which", "get_terminal_size",
     # python 3 exceptions
@@ -423,17 +422,3 @@ except ImportError:
                 return (res[1], res[0])
             except Exception:
                 return fallback
-
-
-# python 3.4
-try:
-    from contextlib import redirect_stderr
-except ImportError:
-    @contextlib.contextmanager
-    def redirect_stderr(target):
-        original = sys.stderr
-        try:
-            sys.stderr = target
-            yield
-        finally:
-            sys.stderr = original

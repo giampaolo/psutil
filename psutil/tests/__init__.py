@@ -974,21 +974,20 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError("times must be > 0")
         if warmup_times < 0:
             raise ValueError("warmup_times must be >= 0")
+        if retries < 1:
+            raise ValueError("retries must be >= 1")
         if tolerance is not None and tolerance < 0:
             raise ValueError("tolerance must be >= 0")
 
         # warm up
         self._call_ntimes(fun, warmup_times)
-
-        b2h = bytes2human
         messages = []
         prev_mem = 0
         increase = times
-
         for idx in range(1, retries + 1):
             mem = self._call_ntimes(fun, times)
             msg = "Run #%s: extra-mem=%s, per-call=%s, calls=%s" % (
-                idx, b2h(mem), b2h(mem / times), times)
+                idx, bytes2human(mem), bytes2human(mem / times), times)
             messages.append(msg)
             success = mem <= tolerance or mem < prev_mem
             if success:
