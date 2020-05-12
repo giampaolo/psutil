@@ -897,20 +897,11 @@ class TestMemoryLeak(PsutilTestCase):
     typically functions implemented in C which forgot to free() memory
     from the heap. It does so by checking whether the process memory
     usage increased before and after calling the function many times.
-    The logic:
-
-        call_fun_n_times()
-        if mem_diff > tolerance:
-            call_fun_for_3_secs()
-            if mem_diff > 0:
-                return 1  # failure
-        return 0  # success
 
     Note that this is hard (probably impossible) to do reliably, due
     to how the OS handles memory, the GC and so on (memory can even
-    decrease!). In order to avoid false positives you should adjust the
-    tolerance of each individual test case, but most of the times you
-    won't have to.
+    decrease!). In order to avoid false positives this implementation
+    tries to takee memory fluctuation into account.
 
     If available (Linux, OSX, Windows) USS memory is used for comparison,
     since it's supposed to be more precise, see:
@@ -1006,8 +997,12 @@ class TestMemoryLeak(PsutilTestCase):
                 b2h(mem2), b2h(mem2 / times), times)
             self._log(msg2)
 
-            if mem2 > mem1:
-                raise self.fail(msg1 + ". " + msg2)
+            limit = mem2 / 2
+            if limit > mem1:
+                raise self.fail("%s. %s. Limit = %s" % (
+                    msg1, msg2, b2h(limit)))
+            else:
+                self._log("Limit: %s" % b2h(limit))
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it

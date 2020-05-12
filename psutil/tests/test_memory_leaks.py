@@ -414,7 +414,9 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
             self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
-        self.execute(psutil.net_if_addrs)
+        # Note: verified that on Windows this was a false positive.
+        tolerance = 80 * 1024 if WINDOWS else self.tolerance
+        self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
     # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
