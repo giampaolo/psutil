@@ -488,7 +488,6 @@ def test_failed():
 def test_memleaks():
     """Run memory leaks tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
