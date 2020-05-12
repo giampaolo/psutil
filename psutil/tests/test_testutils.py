@@ -361,6 +361,7 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, warmup_times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
+        self.assertRaises(ValueError, self.execute, lambda: 0, retries=0)
 
     def test_leak(self):
         ls = []
@@ -385,9 +386,7 @@ class TestMemLeakClass(TestMemoryLeak):
     def test_execute_w_exc(self):
         def fun():
             1 / 0
-        # XXX: use high tolerance, occasional false positive
-        self.execute_w_exc(ZeroDivisionError, fun, times=2000,
-                           warmup_times=20, tolerance=200 * 1024)
+        self.execute_w_exc(ZeroDivisionError, fun)
         with self.assertRaises(ZeroDivisionError):
             self.execute_w_exc(OSError, fun)
 
