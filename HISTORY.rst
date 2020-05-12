@@ -24,6 +24,7 @@ XXXX-XX-XX
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
+- 1757_: memory leak tests are now stable.
 
 **Bug fixes**
 

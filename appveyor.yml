@@ -69,6 +69,7 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test-memleaks"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py wheel"

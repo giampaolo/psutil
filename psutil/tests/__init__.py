@@ -476,12 +476,16 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         from psutil._psposix import wait_pid
 
     def wait(proc, timeout):
-        try:
-            return psutil.Process(proc.pid).wait(timeout)
-        except psutil.NoSuchProcess:
-            # Needed to kill zombies.
-            if POSIX:
-                return wait_pid(proc.pid, timeout)
+        if isinstance(proc, subprocess.Popen) and not PY3:
+            proc.wait()
+        else:
+            proc.wait(timeout)
+        if WINDOWS and isinstance(proc, subprocess.Popen):
+            # Otherwise PID may still hang around.
+            try:
+                return psutil.Process(proc.pid).wait(timeout)
+            except psutil.NoSuchProcess:
+                pass
 
     def sendsig(proc, sig):
         # If the process received SIGSTOP, SIGCONT is necessary first,
@@ -899,22 +903,15 @@ class TestMemoryLeak(PsutilTestCase):
     typically functions implemented in C which forgot to free() memory
     from the heap. It does so by checking whether the process memory
     usage increased before and after calling the function many times.
-    The logic:
-
-        call_fun_n_times()
-        if mem_diff > tolerance:
-            call_fun_for_3_secs()
-            if mem_diff > 0:
-                return 1  # failure
-        return 0  # success
 
     Note that this is hard (probably impossible) to do reliably, due
     to how the OS handles memory, the GC and so on (memory can even
-    decrease!). In order to avoid false positives you should adjust the
-    tolerance of each individual test case, but most of the times you
-    won't have to.
+    decrease!). In order to avoid false positives, in case of failure
+    (mem > 0) we retry the test for up to 5 times, increasing call
+    repetitions each time. If the memory keeps increasing then it's a
+    failure.
 
-    If available (Linux, OSX, Windows) USS memory is used for comparison,
+    If available (Linux, OSX, Windows), USS memory is used for comparison,
     since it's supposed to be more precise, see:
     http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
     If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
@@ -932,15 +929,15 @@ class TestMemoryLeak(PsutilTestCase):
                 self.execute(some_function)
     """
     # Configurable class attrs.
-    times = 1000
+    times = 200
     warmup_times = 10
-    tolerance = 4096  # memory
-    retry_for = 3.0  # seconds
+    retries = 5
+    tolerance = 0  # memory
     verbose = True
 
-    def setUp(self):
-        self._thisproc = psutil.Process()
-        gc.collect()
+    @classmethod
+    def setUpClass(cls):
+        cls._thisproc = psutil.Process()
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
@@ -957,77 +954,63 @@ class TestMemoryLeak(PsutilTestCase):
     def _call(self, fun):
         return fun()
 
-    def _itercall(self, fun, iterator):
+    def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
         called fun repeadetly, and return the memory difference.
         """
-        ncalls = 0
-        gc.collect()
+        gc.collect(generation=1)
         mem1 = self._get_mem()
-        for x in iterator:
+        for x in range(times):
             ret = self._call(fun)
-            ncalls += 1
             del x, ret
-        gc.collect()
+        gc.collect(generation=1)
         mem2 = self._get_mem()
         self.assertEqual(gc.garbage, [])
-        diff = mem2 - mem1
-        if diff < 0:
-            self._log("negative memory diff -%s" % (bytes2human(abs(diff))))
-        return (diff, ncalls)
-
-    def _call_ntimes(self, fun, times):
-        return self._itercall(fun, range(times))[0]
-
-    def _call_for(self, fun, secs):
-        def iterator(secs):
-            stop_at = time.time() + secs
-            while time.time() < stop_at:
-                yield
-        return self._itercall(fun, iterator(secs))
+        diff = mem2 - mem1  # can also be negative
+        return diff
 
     def _log(self, msg):
         if self.verbose:
             print_color(msg, color="yellow", file=sys.stderr)
 
-    def execute(self, fun, times=times, warmup_times=warmup_times,
-                tolerance=tolerance, retry_for=retry_for):
+    def execute(self, fun, times=None, warmup_times=None, retries=None,
+                tolerance=None):
         """Test a callable."""
-        if times <= 0:
-            raise ValueError("times must be > 0")
-        if warmup_times < 0:
-            raise ValueError("warmup_times must be >= 0")
-        if tolerance is not None and tolerance < 0:
-            raise ValueError("tolerance must be >= 0")
-        if retry_for is not None and retry_for < 0:
-            raise ValueError("retry_for must be >= 0")
+        times = times if times is not None else self.times
+        warmup_times = warmup_times if warmup_times is not None \
+            else self.warmup_times
+        retries = retries if retries is not None else self.retries
+        tolerance = tolerance if tolerance is not None else self.tolerance
+        try:
+            assert times >= 1, "times must be >= 1"
+            assert warmup_times >= 0, "warmup_times must be >= 0"
+            assert retries >= 0, "retries must be >= 0"
+            assert tolerance >= 0, "tolerance must be >= 0"
+        except AssertionError as err:
+            raise ValueError(str(err))
 
         # warm up
         self._call_ntimes(fun, warmup_times)
-        mem1 = self._call_ntimes(fun, times)
-
-        if mem1 > tolerance:
-            # This doesn't necessarily mean we have a leak yet.
-            # At this point we assume that after having called the
-            # function so many times the memory usage is stabilized
-            # and if there are no leaks it should not increase
-            # anymore. Let's keep calling fun for N more seconds and
-            # fail if we notice any difference (ignore tolerance).
-            msg = "+%s after %s calls; try calling fun for another %s secs" % (
-                bytes2human(mem1), times, retry_for)
-            if not retry_for:
-                raise self.fail(msg)
+        messages = []
+        prev_mem = 0
+        increase = times
+        for idx in range(1, retries + 1):
+            mem = self._call_ntimes(fun, times)
+            msg = "Run #%s: extra-mem=%s, per-call=%s, calls=%s" % (
+                idx, bytes2human(mem), bytes2human(mem / times), times)
+            messages.append(msg)
+            success = mem <= tolerance or mem < prev_mem
+            if success:
+                if idx > 1:
+                    self._log(msg)
+                return
             else:
+                if idx == 1:
+                    print()  # NOQA
                 self._log(msg)
-
-            mem2, ncalls = self._call_for(fun, retry_for)
-            if mem2 > mem1:
-                # failure
-                msg = "+%s memory increase after %s calls; " % (
-                    bytes2human(mem1), times)
-                msg += "+%s after another %s calls over %s secs" % (
-                    bytes2human(mem2), ncalls, retry_for)
-                raise self.fail(msg)
+                times += increase
+                prev_mem = mem
+        raise self.fail(". ".join(messages))
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it

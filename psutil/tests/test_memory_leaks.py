@@ -21,7 +21,6 @@ import os
 
 import psutil
 import psutil._common
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -30,7 +29,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
 from psutil._compat import super
-from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
@@ -244,7 +242,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.connections(kind), times=100)
+            self.execute(lambda: self.proc.connections(kind))
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
@@ -402,16 +400,9 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- net
 
-    # XXX
-    @unittest.skipIf(TRAVIS and MACOS, "false positive on TRAVIS + MACOS")
-    @unittest.skipIf(CIRRUS and FREEBSD, "false positive on CIRRUS + FREEBSD")
     @skip_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_io_counters()
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @skip_if_linux()
@@ -420,23 +411,15 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         # always opens and handle on Windows() (once)
         psutil.net_connections(kind='all')
         with create_sockets():
-            self.execute(lambda: psutil.net_connections(kind='all'), times=100)
+            self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_if_addrs()
         # Note: verified that on Windows this was a false positive.
-        self.execute(psutil.net_if_addrs,
-                     tolerance=80 * 1024 if WINDOWS else 4096)
+        tolerance = 80 * 1024 if WINDOWS else self.tolerance
+        self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
-    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
-        if WINDOWS:
-            # GetAdaptersAddresses() increases the handle count on first
-            # call (only).
-            psutil.net_if_stats()
         self.execute(psutil.net_if_stats)
 
     # --- sensors
@@ -462,7 +445,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     def test_boot_time(self):
         self.execute(psutil.boot_time)
 
-    @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
         self.execute(psutil.users)
 
@@ -495,6 +477,8 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
 
 class TestUnclosedFdsOrHandles(TestFdsLeak):
+    # Note: on Windows certain C functions increase the handles count
+    # on first call (and never again).
 
     def test_process_apis(self):
         p = psutil.Process()
@@ -525,7 +509,7 @@ class TestUnclosedFdsOrHandles(TestFdsLeak):
         for fun, name in ns.iter(ns.all):
             if WINDOWS:
                 fun()
-            if MACOS and name == 'connections':
+            if MACOS and name == 'net_connections':
                 continue  # raise AD
             self.execute(fun)
 
