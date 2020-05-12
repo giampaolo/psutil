@@ -480,6 +480,12 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             proc.wait()
         else:
             proc.wait(timeout)
+        if WINDOWS and isinstance(proc, subprocess.Popen):
+            # Otherwise PID may still hang around.
+            try:
+                return psutil.Process(proc.pid).wait(timeout)
+            except psutil.NoSuchProcess:
+                pass
 
     def sendsig(proc, sig):
         # If the process received SIGSTOP, SIGCONT is necessary first,
