@@ -53,14 +53,29 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
-SKIP_PYTHON_IMPL = True
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
+FEW_TIMES = 5
 
 
-def skip_if_linux():
-    return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
-                           "worthless on LINUX (pure python)")
+def fewtimes_if_linux():
+    """Decorator for those Linux functions which are implemented in pure
+    Python, and which we want to run faster.
+    """
+    def decorator(fun):
+        @functools.wraps(fun)
+        def wrapper(self, *args, **kwargs):
+            if LINUX:
+                before = self.__class__.times
+                try:
+                    self.__class__.times = FEW_TIMES
+                    return fun(self, *args, **kwargs)
+                finally:
+                    self.__class__.times = before
+            else:
+                return fun(self, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 # ===================================================================
@@ -77,33 +92,33 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         ns = process_namespace(None)
         ns.test_class_coverage(self, ns.getters + ns.setters)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_name(self):
         self.execute(self.proc.name)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cmdline(self):
         self.execute(self.proc.cmdline)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_exe(self):
         self.execute(self.proc.exe)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_ppid(self):
         self.execute(self.proc.ppid)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_uids(self):
         self.execute(self.proc.uids)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_gids(self):
         self.execute(self.proc.gids)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_status(self):
         self.execute(self.proc.status)
 
@@ -129,7 +144,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
             self.execute_w_exc(OSError, fun)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, "not supported")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_io_counters(self):
         self.execute(self.proc.io_counters)
 
@@ -139,11 +154,11 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         psutil.Process().username()
         self.execute(self.proc.username)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_create_time(self):
         self.execute(self.proc.create_time)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @skip_on_access_denied(only_if=OPENBSD)
     def test_num_threads(self):
         self.execute(self.proc.num_threads)
@@ -153,47 +168,46 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(self.proc.num_handles)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_num_ctx_switches(self):
         self.execute(self.proc.num_ctx_switches)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
         self.execute(self.proc.threads)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cpu_times(self):
         self.execute(self.proc.cpu_times)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
     def test_cpu_num(self):
         self.execute(self.proc.cpu_num)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_memory_full_info(self):
         self.execute(self.proc.memory_full_info)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_terminal(self):
         self.execute(self.proc.terminal)
 
-    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "worthless on POSIX (pure python)")
     def test_resume(self):
-        self.execute(self.proc.resume)
+        times = FEW_TIMES if POSIX else self.times
+        self.execute(self.proc.resume, times=times)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cwd(self):
         self.execute(self.proc.cwd)
 
@@ -209,13 +223,13 @@ class TestProcessObjectLeaks(TestMemoryLeak):
             self.execute_w_exc(
                 ValueError, lambda: self.proc.cpu_affinity([-1]))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_open_files(self):
         with open(get_testfn(), 'w'):
             self.execute(self.proc.open_files)
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps)
 
@@ -231,7 +245,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
         self.execute_w_exc(OSError, lambda: self.proc.rlimit(-1))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
@@ -272,7 +286,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
         super().tearDownClass()
         terminate(cls.subp)
 
-    def _call(self, fun):
+    def call(self, fun):
         try:
             fun()
         except psutil.NoSuchProcess:
@@ -330,27 +344,27 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- cpu
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cpu_count(self):  # logical
         self.execute(lambda: psutil.cpu_count(logical=True))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cpu_count_physical(self):
         self.execute(lambda: psutil.cpu_count(logical=False))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cpu_times(self):
         self.execute(psutil.cpu_times)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_per_cpu_times(self):
         self.execute(lambda: psutil.cpu_times(percpu=True))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
@@ -370,41 +384,39 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     def test_swap_memory(self):
         self.execute(psutil.swap_memory)
 
-    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "worthless on POSIX (pure python)")
     def test_pid_exists(self):
-        self.execute(lambda: psutil.pid_exists(os.getpid()))
+        times = FEW_TIMES if POSIX else self.times
+        self.execute(lambda: psutil.pid_exists(os.getpid()), times=times)
 
     # --- disk
 
-    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "worthless on POSIX (pure python)")
     def test_disk_usage(self):
-        self.execute(lambda: psutil.disk_usage('.'))
+        times = FEW_TIMES if POSIX else self.times
+        self.execute(lambda: psutil.disk_usage('.'), times=times)
 
     def test_disk_partitions(self):
         self.execute(psutil.disk_partitions)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this Linux version')
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_disk_io_counters(self):
         self.execute(lambda: psutil.disk_io_counters(nowrap=False))
 
     # --- proc
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_pids(self):
         self.execute(psutil.pids)
 
     # --- net
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         # always opens and handle on Windows() (once)
@@ -423,24 +435,24 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- sensors
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
     def test_sensors_battery(self):
         self.execute(psutil.sensors_battery)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
         self.execute(psutil.sensors_temperatures)
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     def test_sensors_fans(self):
         self.execute(psutil.sensors_fans)
 
     # --- others
 
-    @skip_if_linux()
+    @fewtimes_if_linux()
     def test_boot_time(self):
         self.execute(psutil.boot_time)
 

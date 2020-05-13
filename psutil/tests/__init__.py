@@ -948,9 +948,6 @@ class TestMemoryLeak(PsutilTestCase):
         else:
             return self._thisproc.num_handles()
 
-    def _call(self, fun):
-        return fun()
-
     def _log(self, msg):
         if self.verbose:
             print_color(msg, color="yellow", file=sys.stderr)
@@ -961,7 +958,7 @@ class TestMemoryLeak(PsutilTestCase):
         close(2) and CloseHandle syscalls.
         """
         before = self._get_num_fds()
-        self._call(fun)
+        self.call(fun)
         after = self._get_num_fds()
         diff = after - before
         if diff < 0:
@@ -981,7 +978,7 @@ class TestMemoryLeak(PsutilTestCase):
         gc.collect(generation=1)
         mem1 = self._get_mem()
         for x in range(times):
-            ret = self._call(fun)
+            ret = self.call(fun)
             del x, ret
         gc.collect(generation=1)
         mem2 = self._get_mem()
@@ -1010,6 +1007,11 @@ class TestMemoryLeak(PsutilTestCase):
                 times += increase
                 prev_mem = mem
         raise self.fail(". ".join(messages))
+
+    # ---
+
+    def call(self, fun):
+        return fun()
 
     def execute(self, fun, times=None, warmup_times=None, retries=None,
                 tolerance=None):
