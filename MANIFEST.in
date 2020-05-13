@@ -96,7 +96,7 @@ include psutil/tests/test_bsd.py
 include psutil/tests/test_connections.py
 include psutil/tests/test_contracts.py
 include psutil/tests/test_linux.py
-include psutil/tests/test_memory_leaks.py
+include psutil/tests/test_memleaks.py
 include psutil/tests/test_misc.py
 include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py

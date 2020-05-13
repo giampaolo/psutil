@@ -27,7 +27,7 @@ fi
 
 if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.6" ]; then
     # run mem leaks test
-    PSUTIL_TESTING=1 python -Wa psutil/tests/test_memory_leaks.py
+    PSUTIL_TESTING=1 python -Wa psutil/tests/test_memleaks.py
     # run linter (on Linux only)
     if [[ "$(uname -s)" != 'Darwin' ]]; then
         make lint PYTHON=python

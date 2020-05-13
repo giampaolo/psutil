@@ -71,7 +71,7 @@ def cprint(msg, color, bold=False, file=None):
 class TestLoader:
 
     testdir = HERE
-    skip_files = ['test_memory_leaks.py']
+    skip_files = ['test_memleaks.py']
     if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
         skip_files.extend(['test_osx.py', 'test_linux.py', 'test_posix.py'])
 

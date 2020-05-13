@@ -12,4 +12,4 @@ per-file-ignores =
    setup.py:T001
    scripts/*:T001
    psutil/tests/runner.py:T001
-   psutil/tests/test_memory_leaks.py:T001
+   psutil/tests/test_memleaks.py:T001

@@ -488,7 +488,7 @@ def test_failed():
 def test_memleaks():
     """Run memory leaks tests"""
     build()
-    sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
+    sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
 
 
 def install_git_hooks():
