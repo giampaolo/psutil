@@ -123,7 +123,8 @@ PYPY = '__pypy__' in sys.builtin_module_names
 TRAVIS = bool(os.environ.get('TRAVIS'))
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 CIRRUS = bool(os.environ.get('CIRRUS'))
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS
+GITHUB = bool(os.environ.get('CI', False))
+CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB
 
 # --- configurable defaults
 

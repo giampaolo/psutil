@@ -44,6 +44,7 @@ from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
 from psutil.tests import TRAVIS
+from psutil.tests import GITHUB
 from psutil.tests import unittest
 import psutil
 import psutil.tests

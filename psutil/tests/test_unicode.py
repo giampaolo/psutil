@@ -108,6 +108,7 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
+from psutil.tests import GITHUB
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 import psutil
