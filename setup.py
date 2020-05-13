@@ -67,7 +67,11 @@ if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
 
-extras_require = {}
+extras_require = {"test": [
+    "ipaddress; python_version < '3.0'",
+     "mock; python_version < '3.0'",
+     "pypiwin32; sys.platform == 'win32'",
+     "wmi; sys.platform == 'win32'"]}
 if sys.version_info[:2] <= (3, 3):
     extras_require.update(dict(enum='enum34'))
 
