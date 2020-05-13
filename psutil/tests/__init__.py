@@ -89,7 +89,7 @@ __all__ = [
     'ThreadTask'
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
-    'retry_on_failure', 'TestMemoryLeak', 'TestFdsLeak', 'PsutilTestCase',
+    'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace',
     # install utils
     'install_pip', 'install_test_deps',
@@ -931,13 +931,10 @@ class TestMemoryLeak(PsutilTestCase):
     # Configurable class attrs.
     times = 200
     warmup_times = 10
-    retries = 5
     tolerance = 0  # memory
+    retries = 5
     verbose = True
-
-    @classmethod
-    def setUpClass(cls):
-        cls._thisproc = psutil.Process()
+    _thisproc = psutil.Process()
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
@@ -945,8 +942,37 @@ class TestMemoryLeak(PsutilTestCase):
         mem = self._thisproc.memory_full_info()
         return getattr(mem, "uss", mem.rss)
 
+    def _get_num_fds(self):
+        if POSIX:
+            return self._thisproc.num_fds()
+        else:
+            return self._thisproc.num_handles()
+
     def _call(self, fun):
         return fun()
+
+    def _log(self, msg):
+        if self.verbose:
+            print_color(msg, color="yellow", file=sys.stderr)
+
+    def _check_fds(self, fun):
+        """Makes sure num_fds() (POSIX) or num_handles() (Windows) does
+        not increase after calling a function.  Used to discover forgotten
+        close(2) and CloseHandle syscalls.
+        """
+        before = self._get_num_fds()
+        self._call(fun)
+        after = self._get_num_fds()
+        diff = after - before
+        if diff < 0:
+            raise self.fail("negative diff %r (gc probably collected a "
+                            "resource from a previous test)" % diff)
+        if diff > 0:
+            type_ = "fd" if POSIX else "handle"
+            if diff > 1:
+                type_ += "s"
+            msg = "%s unclosed %s after calling %r" % (diff, type_, fun)
+            raise self.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
@@ -963,28 +989,7 @@ class TestMemoryLeak(PsutilTestCase):
         diff = mem2 - mem1  # can also be negative
         return diff
 
-    def _log(self, msg):
-        if self.verbose:
-            print_color(msg, color="yellow", file=sys.stderr)
-
-    def execute(self, fun, times=None, warmup_times=None, retries=None,
-                tolerance=None):
-        """Test a callable."""
-        times = times if times is not None else self.times
-        warmup_times = warmup_times if warmup_times is not None \
-            else self.warmup_times
-        retries = retries if retries is not None else self.retries
-        tolerance = tolerance if tolerance is not None else self.tolerance
-        try:
-            assert times >= 1, "times must be >= 1"
-            assert warmup_times >= 0, "warmup_times must be >= 0"
-            assert retries >= 0, "retries must be >= 0"
-            assert tolerance >= 0, "tolerance must be >= 0"
-        except AssertionError as err:
-            raise ValueError(str(err))
-
-        # warm up
-        self._call_ntimes(fun, warmup_times)
+    def _check_mem(self, fun, times, warmup_times, retries, tolerance):
         messages = []
         prev_mem = 0
         increase = times
@@ -1006,6 +1011,27 @@ class TestMemoryLeak(PsutilTestCase):
                 prev_mem = mem
         raise self.fail(". ".join(messages))
 
+    def execute(self, fun, times=None, warmup_times=None, retries=None,
+                tolerance=None):
+        """Test a callable."""
+        times = times if times is not None else self.times
+        warmup_times = warmup_times if warmup_times is not None \
+            else self.warmup_times
+        retries = retries if retries is not None else self.retries
+        tolerance = tolerance if tolerance is not None else self.tolerance
+        try:
+            assert times >= 1, "times must be >= 1"
+            assert warmup_times >= 0, "warmup_times must be >= 0"
+            assert retries >= 0, "retries must be >= 0"
+            assert tolerance >= 0, "tolerance must be >= 0"
+        except AssertionError as err:
+            raise ValueError(str(err))
+
+        self._call_ntimes(fun, warmup_times)  # warm up
+        self._check_fds(fun)
+        self._check_mem(fun, times=times, warmup_times=warmup_times,
+                        retries=retries, tolerance=tolerance)
+
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
         raises an exception on every call.
@@ -1014,43 +1040,6 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
-
-
-class TestFdsLeak(PsutilTestCase):
-    """Test framework class which makes sure num_fds() (POSIX) or
-    num_handles() (Windows) does not increase after calling a function.
-    This can be used to discover forgotten close(2) and CloseHandle
-    syscalls.
-    """
-
-    tolerance = 0
-    _thisproc = psutil.Process()
-
-    def _get_fds_or_handles(self):
-        if POSIX:
-            return self._thisproc.num_fds()
-        else:
-            return self._thisproc.num_handles()
-
-    def _call(self, fun):
-        return fun()
-
-    def execute(self, fun, tolerance=tolerance):
-        # This is supposed to close() any unclosed file object.
-        gc.collect()
-        before = self._get_fds_or_handles()
-        self._call(fun)
-        after = self._get_fds_or_handles()
-        diff = after - before
-        if diff < 0:
-            raise self.fail("negative diff %r (gc probably collected a "
-                            "resource from a previous test)" % diff)
-        if diff > 0:
-            type_ = "fd" if POSIX else "handle"
-            if diff > 1:
-                type_ += "s"
-            msg = "%s unclosed %s after calling %r" % (diff, type_, fun)
-            raise self.fail(msg)
 
 
 def _get_eligible_cpu():

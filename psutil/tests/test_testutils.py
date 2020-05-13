@@ -43,7 +43,6 @@ from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
-from psutil.tests import TestFdsLeak
 from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
@@ -354,7 +353,7 @@ class TestMemLeakClass(TestMemoryLeak):
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
         self.execute(fun, times=10, warmup_times=15)
-        self.assertEqual(cnt['cnt'], 25)
+        self.assertEqual(cnt['cnt'], 26)
 
     def test_param_err(self):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
@@ -363,16 +362,28 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
 
-    def test_leak(self):
+    def test_leak_mem(self):
         ls = []
 
         def fun(ls=ls):
             ls.append("x" * 24 * 1024)
 
         try:
-            self.assertRaises(AssertionError, self.execute, fun)
+            self.assertRaisesRegex(AssertionError, "extra-mem",
+                                   self.execute, fun)
         finally:
             del ls
+
+    def test_unclosed_files(self):
+        def fun():
+            f = open(__file__)
+            self.addCleanup(f.close)
+            box.append(f)
+
+        box = []
+        kind = "fd" if POSIX else "handle"
+        self.assertRaisesRegex(AssertionError, "unclosed " + kind,
+                               self.execute, fun)
 
     def test_tolerance(self):
         def fun():
@@ -381,7 +392,7 @@ class TestMemLeakClass(TestMemoryLeak):
         times = 100
         self.execute(fun, times=times, warmup_times=0,
                      tolerance=200 * 1024 * 1024)
-        self.assertEqual(len(ls), times)
+        self.assertEqual(len(ls), times + 1)
 
     def test_execute_w_exc(self):
         def fun():
@@ -394,20 +405,6 @@ class TestMemLeakClass(TestMemoryLeak):
             pass
         with self.assertRaises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun)
-
-
-@serialrun
-class TestFdsLeakClass(TestFdsLeak):
-
-    def test_unclosed_files(self):
-        def fun():
-            f = open(__file__)
-            self.addCleanup(f.close)
-            box.append(f)
-
-        box = []
-        self.assertRaisesRegex(AssertionError, "unclosed", self.execute, fun)
-        self.assertEqual(len(box), 1)
 
 
 class TestTestingUtils(PsutilTestCase):
