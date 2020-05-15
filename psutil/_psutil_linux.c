@@ -158,19 +158,17 @@ psutil_linux_prlimit(PyObject *self, PyObject *args) {
         ret = prlimit(pid, resource, NULL, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-#if defined(PSUTIL_HAVE_LONG_LONG)
         if (sizeof(old.rlim_cur) > sizeof(long)) {
             return Py_BuildValue("LL",
                                  (PY_LONG_LONG)old.rlim_cur,
                                  (PY_LONG_LONG)old.rlim_max);
         }
-#endif
         return Py_BuildValue("ll", (long)old.rlim_cur, (long)old.rlim_max);
     }
 
     // set
     else {
-#if defined(PSUTIL_HAVE_LARGEFILE_SUPPORT)
+#if defined(HAVE_LONG_LONG)
         new.rlim_cur = PyLong_AsLongLong(py_soft);
         if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
