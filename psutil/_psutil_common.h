@@ -15,6 +15,11 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
 
+// strncpy() variant which appends a null terminator.
+#define PSUTIL_STRNCPY(dst, src, n) \
+    strncpy(dst, src, n - 1); \
+    dst[n - 1] = '\0'
+
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================

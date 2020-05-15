@@ -679,7 +679,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     if (sock == -1)
         goto error;
 
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // is up?
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
