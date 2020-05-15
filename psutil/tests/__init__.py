@@ -815,10 +815,8 @@ def get_testfn(suffix="", dir=None):
     deletion at interpreter exit. It's technically racy but probably
     not really due to the time variant.
     """
-    timer = getattr(time, 'perf_counter', time.time)
     while True:
-        prefix = "%s%.9f-" % (TESTFN_PREFIX, timer())
-        name = tempfile.mktemp(prefix=prefix, suffix=suffix, dir=dir)
+        name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
             return os.path.realpath(name)  # needed for OSX
 
