@@ -353,7 +353,7 @@ class TestMisc(PsutilTestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if TRAVIS and not os.path.exists(setup_py):
+        if CI_TESTING and not os.path.exists(setup_py):
             return self.skipTest("can't find setup.py")
         module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)

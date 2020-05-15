@@ -197,14 +197,14 @@ class TestSystemVirtualMemory(PsutilTestCase):
         psutil_value = psutil.virtual_memory().total
         self.assertAlmostEqual(vmstat_value, psutil_value)
 
-    # Older versions of procps used slab memory to calculate used memory.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    @unittest.skipIf(LINUX and get_free_version_info() < (3, 3, 12),
-                     "old free version")
     @retry_on_failure()
     def test_used(self):
+        # Older versions of procps used slab memory to calculate used memory.
+        # This got changed in:
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        if get_free_version_info() < (3, 3, 12):
+            raise self.skipTest("old free version")
         free = free_physmem()
         free_value = free.used
         psutil_value = psutil.virtual_memory().used

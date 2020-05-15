@@ -37,6 +37,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
 from psutil.tests import reap_children
 from psutil.tests import retry
+from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
@@ -362,6 +363,7 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
 
+    @retry_on_failure()
     def test_leak_mem(self):
         ls = []
 
