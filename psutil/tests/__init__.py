@@ -698,7 +698,7 @@ def wait_for_pid(pid):
         time.sleep(0.01)
 
 
-@retry(exception=(EnvironmentError, AssertionError), logfun=None,
+@retry(exception=(FileNotFoundError, AssertionError), logfun=None,
        timeout=GLOBAL_TIMEOUT, interval=0.001)
 def wait_for_file(fname, delete=True, empty=False):
     """Wait for a file to be written on disk with some content."""

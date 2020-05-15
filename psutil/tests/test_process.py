@@ -365,16 +365,6 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
             with self.assertRaises(ValueError):
                 p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
-            # high
-            if os.getuid() == 0:  # root
-                p.ionice(psutil.IOPRIO_CLASS_RT)
-                self.assertEqual(tuple(p.ionice()),
-                                 (psutil.IOPRIO_CLASS_RT, 0))
-                p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
-                self.assertEqual(tuple(p.ionice()),
-                                 (psutil.IOPRIO_CLASS_RT, 7))
-                with self.assertRaises(ValueError):
-                    p.ionice(psutil.IOPRIO_CLASS_IDLE, value=8)
             # errs
             self.assertRaisesRegex(
                 ValueError, "ioclass accepts no value",
@@ -1096,6 +1086,8 @@ class TestProcess(PsutilTestCase):
                 pass
         # this is the one, now let's make sure there are no duplicates
         pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
+        if LINUX and pid == 0:
+            raise self.skipTest("PID 0")
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)

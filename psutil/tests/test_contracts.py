@@ -86,7 +86,6 @@ class TestAvailConstantsAPIs(PsutilTestCase):
 
     def test_linux_rlimit(self):
         ae = self.assertEqual
-        ae(hasattr(psutil.Process, "rlimit"), LINUX)  # requires Linux 2.6.36
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
         ae(hasattr(psutil, "RLIMIT_AS"), LINUX)
         ae(hasattr(psutil, "RLIMIT_CORE"), LINUX)
@@ -116,11 +115,8 @@ class TestAvailSystemAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
 
     def test_cpu_freq(self):
-        linux = (LINUX and
-                 (os.path.exists("/sys/devices/system/cpu/cpufreq") or
-                  os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
         self.assertEqual(hasattr(psutil, "cpu_freq"),
-                         linux or MACOS or WINDOWS or FREEBSD)
+                         LINUX or MACOS or WINDOWS or FREEBSD)
 
     def test_sensors_temperatures(self):
         self.assertEqual(
@@ -153,6 +149,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
     def test_rlimit(self):
+        # requires Linux 2.6.36
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
 
     def test_io_counters(self):
