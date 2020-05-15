@@ -42,11 +42,10 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 // Linux >= 2.6.13
 #define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
-// Linux >= 2.6.36 (supposedly) and glibc >= 13
+// Linux >= 2.6.36 (supposedly) and glibc >= 2.13
 #define PSUTIL_HAVE_PRLIMIT \
-    (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)) && \
-    (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13) && \
-    defined(__NR_prlimit64)
+    defined(__NR_prlimit64) && \
+    (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13)
 
 #if PSUTIL_HAVE_PRLIMIT
     #define _FILE_OFFSET_BITS 64
