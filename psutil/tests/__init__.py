@@ -200,7 +200,9 @@ def _get_py_exe():
         else:
             return exe
 
-    if MACOS:
+    if GITHUB_WHEELS:
+        return which('python')
+    elif MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
