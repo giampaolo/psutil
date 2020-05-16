@@ -47,6 +47,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
 from psutil.tests import TRAVIS
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
@@ -618,7 +619,7 @@ class TestDiskAPIs(PsutilTestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and MACOS and err.errno == errno.EIO:
+                    if (GITHUB_WHEELS or TRAVIS) and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
