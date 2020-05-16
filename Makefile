@@ -222,8 +222,11 @@ sdist:  ## Create tar.gz source distribution.
 wheel:  ## Generate wheel.
 	$(PYTHON) setup.py bdist_wheel
 
-win-download-wheels:  ## Download wheels hosted on appveyor.
-	$(TEST_PREFIX) $(PYTHON) scripts/internal/win_download_wheels.py --user giampaolo --project psutil
+win-download-wheels:  ## Download latest wheels hosted on appveyor.
+	$(PYTHON) scripts/internal/win_download_wheels.py --user giampaolo --project psutil
+
+download-wheels:  ## Download latest wheels hosted on github.
+	$(PYTHON) scripts/internal/download_wheels.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
 
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
