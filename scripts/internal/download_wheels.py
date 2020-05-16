@@ -40,9 +40,7 @@ OUTFILE = "wheels.zip"
 def get_artifacts():
     base_url = "https://api.github.com/repos/%s/%s" % (USER, PROJECT)
     url = base_url + "/actions/artifacts"
-    res = requests.get(
-        url=url,
-        headers={"Authorization": "token %s" % TOKEN})
+    res = requests.get(url=url, headers={"Authorization": "token %s" % TOKEN})
     res.raise_for_status()
     data = json.loads(res.content)
     return data
@@ -50,9 +48,7 @@ def get_artifacts():
 
 def download_zip(url):
     print("downloading: " + url)
-    res = requests.get(
-        url=url,
-        headers={"Authorization": "token %s" % TOKEN})
+    res = requests.get(url=url, headers={"Authorization": "token %s" % TOKEN})
     res.raise_for_status()
     totbytes = 0
     with open(OUTFILE, 'wb') as f:
@@ -93,28 +89,28 @@ def print_wheels():
         pyimpl = name.split('-')[3]
         if 'linux' in plat:
             if 'pypy' in pyimpl:
-                groups['PYPY_ON_LINUX'].append(name)
+                groups['pypy_on_linux'].append(name)
             else:
-                groups['LINUX'].append(name)
+                groups['linux'].append(name)
         elif 'win' in plat:
             if 'pypy' in pyimpl:
-                groups['PYPY_ON_WINDOWS'].append(name)
+                groups['pypy_on_windows'].append(name)
             else:
-                groups['WINDOWS'].append(name)
+                groups['windows'].append(name)
         elif 'macosx' in plat:
             if 'pypy' in pyimpl:
-                groups['PYPY_ON_MACOS'].append(name)
+                groups['pypy_on_macos'].append(name)
             else:
-                groups['MACOS'].append(name)
+                groups['macos'].append(name)
         else:
             assert 0, name
 
     totsize = 0
     templ = "%-54s %7s %7s %7s"
     for platf, names in groups.items():
-        ppn = "%s (%s)" % (platf, len(names))
-        print_color(templ % (ppn, "SIZE", "ARCH", "PYVER"),
-                    color=None, bold=True)
+        ppn = "%s (total = %s)" % (platf.replace('_', ' '), len(names))
+        s = templ % (ppn, "size", "arch", "pyver")
+        print_color('\n' + s, color=None, bold=True)
         for name in sorted(names):
             path = os.path.join('dist', name)
             size = os.path.getsize(path)
@@ -124,7 +120,7 @@ def print_wheels():
             pyver += name.split('-')[2][2:]
             s = templ % (name, bytes2human(size), arch, pyver)
             if 'pypy' in pyver:
-                print_color(s, color='lightblue')
+                print_color(s, color='violet')
             else:
                 print_color(s, color='brown')
 
