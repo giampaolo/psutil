@@ -23,6 +23,7 @@ import requests
 import shutil
 import zipfile
 
+from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human
 from psutil._common import print_color
 
@@ -35,7 +36,8 @@ OUTFILE = "wheels.zip"
 
 # --- GitHub API
 
-def list_artifacts():
+
+def get_artifacts():
     base_url = "https://api.github.com/repos/%s/%s" % (USER, PROJECT)
     url = base_url + "/actions/artifacts"
     res = requests.get(
@@ -63,46 +65,74 @@ def download_zip(url):
 # --- extract
 
 
+def rename_27_wheels():
+    # See: https://github.com/giampaolo/psutil/issues/810
+    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
+    print("rename: %s\n        %s" % (src, dst))
+    os.rename(src, dst)
+    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PSUTIL_VERSION
+    print("rename: %s\n        %s" % (src, dst))
+    os.rename(src, dst)
+
+
 def extract():
     with zipfile.ZipFile(OUTFILE, 'r') as zf:
         zf.extractall('dist')
+    rename_27_wheels()
 
 
 def print_wheels():
+    def is64bit(name):
+        return name.endswith(('x86_64.whl', 'amd64.whl'))
+
     groups = collections.defaultdict(list)
     for name in os.listdir('dist'):
         plat = name.split('-')[-1]
+        pyimpl = name.split('-')[3]
         if 'linux' in plat:
-            groups['LINUX'].append(name)
+            if 'pypy' in pyimpl:
+                groups['PYPY_ON_LINUX'].append(name)
+            else:
+                groups['LINUX'].append(name)
         elif 'win' in plat:
-            groups['WINDOWS'].append(name)
+            if 'pypy' in pyimpl:
+                groups['PYPY_ON_WINDOWS'].append(name)
+            else:
+                groups['WINDOWS'].append(name)
         elif 'macosx' in plat:
-            groups['MACOS'].append(name)
+            if 'pypy' in pyimpl:
+                groups['PYPY_ON_MACOS'].append(name)
+            else:
+                groups['MACOS'].append(name)
         else:
             assert 0, name
 
     totsize = 0
-    for osname, names in groups.items():
-        print_color("%s (%s)" % (osname, len(names)),
+    templ = "%-54s %7s %7s %7s"
+    for platf, names in groups.items():
+        ppn = "%s (%s)" % (platf, len(names))
+        print_color(templ % (ppn, "SIZE", "ARCH", "PYVER"),
                     color=None, bold=True)
         for name in sorted(names):
             path = os.path.join('dist', name)
             size = os.path.getsize(path)
             totsize += size
-            is64 = name.endswith('x86_64.whl')
-            # is32 = name.endswith('i686.whl')
-            arch = '32' if is64 else '64'
-            s = "  %-55s %-8s %s" % (name, bytes2human(size), arch)
-            if '-pypy' not in name:
-                print_color(s + '   py  ', color='brown')
+            arch = '64' if is64bit(name) else '32'
+            pyver = 'pypy' if name.split('-')[3].startswith('pypy') else 'py'
+            pyver += name.split('-')[2][2:]
+            s = templ % (name, bytes2human(size), arch, pyver)
+            if 'pypy' in pyver:
+                print_color(s, color='lightblue')
             else:
-                print_color(s + '   pypy', color='grey')
+                print_color(s, color='brown')
 
 
 def run():
     if os.path.isdir('dist'):
         shutil.rmtree('dist')
-    data = list_artifacts()
+    data = get_artifacts()
     download_zip(data['artifacts'][0]['archive_download_url'])
     os.mkdir('dist')
     extract()
