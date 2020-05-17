@@ -21,21 +21,23 @@ jobs:
       with:
         python-version: '3.7'
 
+    - name: Install cibuildwheel
+      run: |
+        python -m pip install cibuildwheel==1.4.1
+
     - name: Install Visual C++ for Python 2.7
       if: startsWith(matrix.os, 'windows')
       run: |
         choco install vcpython27 -f -y
-    - name: "install cibuildwheel"
-      run: pip install cibuildwheel==1.4.1
 
-    - name: build wheel
-      run: cibuildwheel .
+    - name: Build wheel
+      run: |
+        python -m cibuildwheel --output-dir wheelhouse
 
-    - name: Upload wheels
-      uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v1
       with:
-        name: wheels2
-        path: wheelhouse
+        name: wheels
+        path: ./wheelhouse
 
   # wheel:
   #   name: build wheel for ${{ matrix.os }}
