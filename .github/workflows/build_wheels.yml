@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp27-*win* cp27-*manylinux* pp-*manylinux*"
+      CIBW_SKIP: "pp27-*win* pp-*manylinux*"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
     steps:

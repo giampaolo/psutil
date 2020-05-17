@@ -132,7 +132,7 @@ def run():
     download_zip(data['artifacts'][0]['archive_download_url'])
     os.mkdir('dist')
     extract()
-    rename_27_wheels()
+    # rename_27_wheels()
     print_wheels()
 
 
