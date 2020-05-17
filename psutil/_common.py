@@ -780,12 +780,13 @@ def term_supports_colors(file=sys.stdout):
         return True
 
 
-def hilite(s, color="green", bold=False):
+def hilite(s, color=None, bold=False):
     """Return an highlighted version of 'string'."""
     if not term_supports_colors():
         return s
     attr = []
-    colors = dict(green='32', red='91', brown='33', yellow='93')
+    colors = dict(green='32', red='91', brown='33', yellow='93', blue='34',
+                  violet='35', lightblue='36', grey='37', darkgrey='30')
     colors[None] = '29'
     try:
         color = colors[color]
@@ -798,7 +799,7 @@ def hilite(s, color="green", bold=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
-def print_color(s, color="green", bold=False, file=sys.stdout):
+def print_color(s, color=None, bold=False, file=sys.stdout):
     """Print a colorized version of string."""
     if not term_supports_colors():
         print(s, file=file)  # NOQA

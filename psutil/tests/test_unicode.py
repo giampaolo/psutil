@@ -108,7 +108,6 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import TESTFN_PREFIX
 from psutil.tests import TRAVIS
-from psutil.tests import GITHUB_WHEELS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 import psutil
@@ -145,7 +144,7 @@ def subprocess_supports_unicode(suffix):
         safe_rmpath(testfn)
         create_exe(testfn)
         sproc = spawn_testproc(cmd=[testfn])
-    except UnicodeEncodeError:
+    except (UnicodeEncodeError, IOError):
         return False
     else:
         return True
@@ -231,8 +230,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -257,8 +255,7 @@ class _BaseFSAPIsTests(object):
                     return conn
             raise ValueError("connection not found")
 
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:

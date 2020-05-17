@@ -35,6 +35,7 @@ from psutil.tests import check_net_address
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -378,7 +379,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        stop_at = time.time() + 1
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
@@ -422,7 +423,7 @@ class TestCpuAPIs(PsutilTestCase):
         # Simulate some work load then make sure time have increased
         # between calls.
         tot1 = psutil.cpu_times(percpu=True)
-        giveup_at = time.time() + 1
+        giveup_at = time.time() + GLOBAL_TIMEOUT
         while True:
             if time.time() >= giveup_at:
                 return self.fail("timeout")
@@ -619,7 +620,8 @@ class TestDiskAPIs(PsutilTestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if (GITHUB_WHEELS or TRAVIS) and MACOS and err.errno == errno.EIO:
+                    if (GITHUB_WHEELS or TRAVIS) and \
+                            MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html

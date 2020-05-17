@@ -69,10 +69,10 @@ if POSIX:
 
 extras_require = {"test": [
     "ipaddress; python_version < '3.0'",
-     "mock; python_version < '3.0'",
-     "pypiwin32; sys.platform == 'win32'",
-     "wmi; sys.platform == 'win32'",
-     "enum34; python_version <= '3.4'",]}
+    "mock; python_version < '3.0'",
+    "pypiwin32; sys.platform == 'win32'",
+    "wmi; sys.platform == 'win32'",
+    "enum34; python_version <= '3.4'"]}
 
 
 def get_version():

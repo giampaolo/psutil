@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 """
-Script which downloads exe and wheel files hosted on AppVeyor:
+Script which downloads wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
 Readapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
