@@ -41,6 +41,7 @@ from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import enum
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -1379,7 +1380,8 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         d1 = clean_dict(p.environ())
         d2 = clean_dict(os.environ.copy())
-        self.assertEqual(d1, d2)
+        if not OSX and GITHUB_WHEELS:
+            self.assertEqual(d1, d2)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(not POSIX, "POSIX only")

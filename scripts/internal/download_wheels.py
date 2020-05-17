@@ -86,18 +86,19 @@ def print_wheels():
     for name in os.listdir('dist'):
         plat = name.split('-')[-1]
         pyimpl = name.split('-')[3]
+        ispypy = 'pypy' in pyimpl
         if 'linux' in plat:
-            if 'pypy' in pyimpl:
+            if ispypy:
                 groups['pypy_on_linux'].append(name)
             else:
                 groups['linux'].append(name)
         elif 'win' in plat:
-            if 'pypy' in pyimpl:
+            if ispypy:
                 groups['pypy_on_windows'].append(name)
             else:
                 groups['windows'].append(name)
         elif 'macosx' in plat:
-            if 'pypy' in pyimpl:
+            if ispypy:
                 groups['pypy_on_macos'].append(name)
             else:
                 groups['macos'].append(name)
