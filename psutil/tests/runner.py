@@ -45,6 +45,7 @@ from psutil._common import term_supports_colors
 from psutil._compat import super
 from psutil.tests import CI_TESTING
 from psutil.tests import import_module_by_path
+from psutil.tests import print_sysinfo
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import TOX
@@ -193,6 +194,8 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def run(self, suite):
         result = self._run(suite)
+        if CI_TESTING:
+            print_sysinfo()
         self._exit(result.wasSuccessful())
 
 
@@ -277,6 +280,8 @@ class ParallelRunner(ColouredTextRunner):
                    ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed)))
         print("Ran %s tests in %.3fs using %s workers" % (
             par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
+        if CI_TESTING:
+            print_sysinfo()
         ok = par.wasSuccessful() and ser.wasSuccessful()
         self._exit(ok)
 
@@ -308,46 +313,6 @@ def setup():
         # This won't work on Windows but set_testing() below will do it.
         os.environ['PSUTIL_TESTING'] = '1'
     psutil._psplatform.cext.set_testing()
-
-
-def print_sysinfo():
-    import collections
-    import datetime
-    import getpass
-    import platform
-    from psutil.tests import get_kernel_version
-
-    info = collections.OrderedDict()
-    info['OS'] = platform.system()
-    if psutil.OSX:
-        info['version'] = str(platform.mac_ver())
-    elif psutil.WINDOWS:
-        info['version'] = ' '.join(map(str, platform.win32_ver()))
-        if hasattr(platform, 'win32_edition'):
-            info['edition'] = platform.win32_edition()
-    else:
-        info['version'] = platform.version()
-    if psutil.POSIX:
-        info['kernel'] = '.'.join(map(str, get_kernel_version()))
-    info['arch'] = ', '.join(
-        list(platform.architecture()) + [platform.machine()])
-    info['hostname'] = platform.node()
-    info['python'] = ', '.join([
-        platform.python_implementation(),
-        platform.python_version(),
-        platform.python_compiler()])
-    if psutil.POSIX:
-        s = platform.libc_ver()[1]
-        if s:
-            info['glibc'] = s
-    info['fs-encoding'] = sys.getfilesystemencoding()
-    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    info['user'] = getpass.getuser()
-    info['pid'] = os.getpid()
-    print("=" * 70, flush=True)
-    for k, v in info.items():
-        print("%-14s %s" % (k + ':', v), flush=True)
-    print("=" * 70, flush=True)
 
 
 def main():

@@ -90,7 +90,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
-    'process_namespace', 'system_namespace',
+    'process_namespace', 'system_namespace', 'print_sysinfo',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -1045,6 +1045,45 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+def print_sysinfo():
+    import collections
+    import datetime
+    import getpass
+    import platform
+
+    info = collections.OrderedDict()
+    info['OS'] = platform.system()
+    if psutil.OSX:
+        info['version'] = str(platform.mac_ver())
+    elif psutil.WINDOWS:
+        info['version'] = ' '.join(map(str, platform.win32_ver()))
+        if hasattr(platform, 'win32_edition'):
+            info['edition'] = platform.win32_edition()
+    else:
+        info['version'] = platform.version()
+    if psutil.POSIX:
+        info['kernel'] = '.'.join(map(str, get_kernel_version()))
+    info['arch'] = ', '.join(
+        list(platform.architecture()) + [platform.machine()])
+    info['hostname'] = platform.node()
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler()])
+    if psutil.POSIX:
+        s = platform.libc_ver()[1]
+        if s:
+            info['glibc'] = s
+    info['fs-encoding'] = sys.getfilesystemencoding()
+    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    info['user'] = getpass.getuser()
+    info['pid'] = os.getpid()
+    print("=" * 70, flush=True)  # NOQA
+    for k, v in info.items():
+        print("%-14s %s" % (k + ':', v), flush=True)  # NOQA
+    print("=" * 70, flush=True)  # NOQA
 
 
 def _get_eligible_cpu():
