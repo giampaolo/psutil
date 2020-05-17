@@ -25,9 +25,8 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       run: |
         choco install vcpython27 -f -y
-
     - name: "install cibuildwheel"
-      run: python -m pip install cibuildwheel==1.4.1
+      run: pip install cibuildwheel==1.4.1
 
     - name: build wheel
       run: cibuildwheel .
