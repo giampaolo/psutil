@@ -157,7 +157,6 @@ if PY3:
     INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
 else:
     INVALID_UNICODE_SUFFIX = "f\xc0\x80"
-
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths

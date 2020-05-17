@@ -310,6 +310,42 @@ def setup():
     psutil._psplatform.cext.set_testing()
 
 
+def print_sysinfo():
+    import collections
+    import datetime
+    import getpass
+    import platform
+
+    info = collections.OrderedDict()
+    info['OS'] = platform.system()
+    if psutil.OSX:
+        info['version'] = str(platform.mac_ver())
+    elif psutil.WINDOWS:
+        info['version'] = ' '.join(map(str, platform.win32_ver()))
+        if hasattr(platform, 'win32_edition'):
+            info['edition'] = platform.win32_edition()
+    else:
+        info['version'] = platform.version()
+    if psutil.POSIX:
+        info['kernel'] = platform.uname()[2]
+    info['arch'] = ', '.join(
+        list(platform.architecture()) + [platform.machine()])
+    info['hostname'] = platform.node()
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler()])
+    if psutil.POSIX:
+        info['glibc'] = platform.libc_ver()[1]
+    info['fs-encoding'] = sys.getfilesystemencoding()
+    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    info['user'] = getpass.getuser()
+    print("=" * 70)
+    for k, v in info.items():
+        print("%-14s %s" % (k + ':', v))
+    print("=" * 70)
+
+
 def main():
     setup()
     usage = "python3 -m psutil.tests [opts] [test-name]"
@@ -338,7 +374,8 @@ def main():
     else:
         suite = loader.all()
 
-    # runner
+    if CI_TESTING:
+        print_sysinfo()
     runner = get_runner(opts.parallel)
     runner.run(suite)
 
