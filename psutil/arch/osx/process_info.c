@@ -261,7 +261,7 @@ psutil_get_environ(pid_t pid) {
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
             NoSuchProcess("sysctl");
         else
-            PyErr_SetFromErrno(PyExc_OSError);
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         goto error;
     }
 
@@ -320,7 +320,6 @@ psutil_get_environ(pid_t pid) {
 
     free(procargs);
     free(procenv);
-
     return py_ret;
 
 empty:
@@ -353,7 +352,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     // now read the data from sysctl
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl");
         return -1;
     }
 

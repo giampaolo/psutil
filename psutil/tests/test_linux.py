@@ -28,6 +28,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -40,8 +41,9 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import SYSMEM_TOLERANCE
 from psutil.tests import ThreadTask
+from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
@@ -211,7 +213,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
         free_value = free.used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=SYSMEM_TOLERANCE,
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -220,14 +222,14 @@ class TestSystemVirtualMemory(PsutilTestCase):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     # https://travis-ci.org/giampaolo/psutil/jobs/226719664
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -236,7 +238,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     # https://travis-ci.org/giampaolo/psutil/jobs/227242952
     @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
@@ -245,7 +247,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_shared(self):
@@ -255,7 +257,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=SYSMEM_TOLERANCE,
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @retry_on_failure()
@@ -270,7 +272,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
             free_value = int(lines[1].split()[-1])
             psutil_value = psutil.virtual_memory().available
             self.assertAlmostEqual(
-                free_value, psutil_value, delta=SYSMEM_TOLERANCE,
+                free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
     def test_warnings_on_misses(self):
@@ -508,21 +510,21 @@ class TestSystemSwapMemory(PsutilTestCase):
         free_value = free_swap().total
         psutil_value = psutil.swap_memory().total
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=SYSMEM_TOLERANCE)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     def test_missing_sin_sout(self):
         with mock.patch('psutil._common.open', create=True) as m:
@@ -572,7 +574,7 @@ class TestSystemSwapMemory(PsutilTestCase):
         total *= unit_multiplier
         free *= unit_multiplier
         self.assertEqual(swap.total, total)
-        self.assertAlmostEqual(swap.free, free, delta=SYSMEM_TOLERANCE)
+        self.assertAlmostEqual(swap.free, free, delta=TOLERANCE_SYS_MEM)
 
     def test_emulate_meminfo_has_no_metrics(self):
         # Emulate a case where /proc/meminfo provides no swap metrics
@@ -1025,11 +1027,10 @@ class TestSystemDiskPartitions(PsutilTestCase):
             usage = psutil.disk_usage(part.mountpoint)
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(usage.total, total)
-            # 10 MB tollerance
-            if abs(usage.free - free) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % (usage.free, free))
-            if abs(usage.used - used) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % (usage.used, used))
+            self.assertAlmostEqual(usage.free, free,
+                                   delta=TOLERANCE_DISK_USAGE)
+            self.assertAlmostEqual(usage.used, used,
+                                   delta=TOLERANCE_DISK_USAGE)
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
@@ -1375,8 +1376,10 @@ class TestMisc(PsutilTestCase):
         t.start()
         try:
             p = psutil.Process()
-            tid = p.threads()[1].id
-            assert not psutil.pid_exists(tid), tid
+            threads = p.threads()
+            self.assertEqual(len(threads), 2)
+            tid = sorted(threads, key=lambda x: x.id)[1].id
+            self.assertNotEqual(p.pid, tid)
             pt = psutil.Process(tid)
             pt.as_dict()
             self.assertNotIn(tid, psutil.pids())
@@ -1705,7 +1708,7 @@ class TestProcess(PsutilTestCase):
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()
-            giveup_at = time.time() + 2
+            giveup_at = time.time() + GLOBAL_TIMEOUT
             while True:
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):

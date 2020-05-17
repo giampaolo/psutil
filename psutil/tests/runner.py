@@ -45,6 +45,7 @@ from psutil._common import term_supports_colors
 from psutil._compat import super
 from psutil.tests import CI_TESTING
 from psutil.tests import import_module_by_path
+from psutil.tests import print_sysinfo
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
 from psutil.tests import TOX
@@ -193,6 +194,8 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def run(self, suite):
         result = self._run(suite)
+        if CI_TESTING:
+            print_sysinfo()
         self._exit(result.wasSuccessful())
 
 
@@ -277,6 +280,8 @@ class ParallelRunner(ColouredTextRunner):
                    ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed)))
         print("Ran %s tests in %.3fs using %s workers" % (
             par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
+        if CI_TESTING:
+            print_sysinfo()
         ok = par.wasSuccessful() and ser.wasSuccessful()
         self._exit(ok)
 
@@ -338,7 +343,8 @@ def main():
     else:
         suite = loader.all()
 
-    # runner
+    if CI_TESTING:
+        print_sysinfo()
     runner = get_runner(opts.parallel)
     runner.run(suite)
 

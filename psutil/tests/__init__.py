@@ -74,10 +74,10 @@ else:
 
 __all__ = [
     # constants
-    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'SYSMEM_TOLERANCE', 'NO_RETRIES',
+    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
     'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
-    'CI_TESTING', 'VALID_PROC_STATUSES',
+    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -90,7 +90,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
-    'process_namespace', 'system_namespace',
+    'process_namespace', 'system_namespace', 'print_sysinfo',
     # install utils
     'install_pip', 'install_test_deps',
     # fs utils
@@ -120,24 +120,28 @@ __all__ = [
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
-TRAVIS = bool(os.environ.get('TRAVIS'))
-APPVEYOR = bool(os.environ.get('APPVEYOR'))
-CIRRUS = bool(os.environ.get('CIRRUS'))
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS
+TRAVIS = 'TRAVIS' in os.environ
+APPVEYOR = 'APPVEYOR' in os.environ
+CIRRUS = 'CIRRUS' in os.environ
+GITHUB_WHEELS = 'CIBUILDWHEEL' in os.environ
+CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
 
 # --- configurable defaults
 
 # how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
-# bytes tolerance for system-wide memory related tests
-SYSMEM_TOLERANCE = 500 * 1024  # 500KB
+# bytes tolerance for system-wide related tests
+TOLERANCE_SYS_MEM = 500 * 1024  # 500KB
+TOLERANCE_DISK_USAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid
 # false positives
-if TRAVIS or APPVEYOR:
+if CI_TESTING:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
+    TOLERANCE_SYS_MEM *= 3
+    TOLERANCE_DISK_USAGE *= 3
 
 # --- file names
 
@@ -153,7 +157,6 @@ if PY3:
     INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
 else:
     INVALID_UNICODE_SUFFIX = "f\xc0\x80"
-
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
@@ -199,7 +202,9 @@ def _get_py_exe():
         else:
             return exe
 
-    if MACOS:
+    if GITHUB_WHEELS:
+        return which('python')
+    elif MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -734,7 +739,7 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + 1
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             try:
                 return fun()
@@ -1040,6 +1045,45 @@ class TestMemoryLeak(PsutilTestCase):
             self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
+
+
+def print_sysinfo():
+    import collections
+    import datetime
+    import getpass
+    import platform
+
+    info = collections.OrderedDict()
+    info['OS'] = platform.system()
+    if psutil.OSX:
+        info['version'] = str(platform.mac_ver())
+    elif psutil.WINDOWS:
+        info['version'] = ' '.join(map(str, platform.win32_ver()))
+        if hasattr(platform, 'win32_edition'):
+            info['edition'] = platform.win32_edition()
+    else:
+        info['version'] = platform.version()
+    if psutil.POSIX:
+        info['kernel'] = '.'.join(map(str, get_kernel_version()))
+    info['arch'] = ', '.join(
+        list(platform.architecture()) + [platform.machine()])
+    info['hostname'] = platform.node()
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler()])
+    if psutil.POSIX:
+        s = platform.libc_ver()[1]
+        if s:
+            info['glibc'] = s
+    info['fs-encoding'] = sys.getfilesystemencoding()
+    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    info['user'] = getpass.getuser()
+    info['pid'] = os.getpid()
+    print("=" * 70)  # NOQA
+    for k, v in info.items():
+        print("%-14s %s" % (k + ':', v))  # NOQA
+    print("=" * 70)  # NOQA
 
 
 def _get_eligible_cpu():
