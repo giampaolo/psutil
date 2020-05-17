@@ -12,14 +12,15 @@ import time
 
 import psutil
 from psutil import MACOS
-from psutil.tests import spawn_zombie
-from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
 from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
-from psutil.tests import SYSMEM_TOLERANCE
+from psutil.tests import spawn_testproc
+from psutil.tests import spawn_zombie
 from psutil.tests import terminate
+from psutil.tests import TOLERANCE_DISKUSAGE
+from psutil.tests import TOLERANCE_SYSMEM
 from psutil.tests import unittest
 
 
@@ -165,6 +166,7 @@ class TestSystemAPIs(PsutilTestCase):
 
     # --- disk
 
+    @retry_on_failure()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
@@ -186,11 +188,8 @@ class TestSystemAPIs(PsutilTestCase):
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)
             self.assertEqual(usage.total, total)
-            # 10 MB tollerance
-            if abs(usage.free - free) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.free, free)
-            if abs(usage.used - used) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.used, used)
+            self.assertAlmostEqual(usage.free, free, delta=TOLERANCE_DISKUSAGE)
+            self.assertAlmostEqual(usage.used, used, delta=TOLERANCE_DISKUSAGE)
 
     # --- cpu
 
@@ -221,25 +220,25 @@ class TestSystemAPIs(PsutilTestCase):
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=SYSMEM_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYSMEM)
 
     @retry_on_failure()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=SYSMEM_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYSMEM)
 
     @retry_on_failure()
     def test_vmem_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=SYSMEM_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYSMEM)
 
     @retry_on_failure()
     def test_vmem_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=SYSMEM_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYSMEM)
 
     # --- swap mem
 

@@ -38,17 +38,17 @@ class AIXSpecificTestCase(PsutilTestCase):
 
         psutil_result = psutil.virtual_memory()
 
-        # SYSMEM_TOLERANCE from psutil.tests is not enough. For some reason
+        # TOLERANCE_SYSMEM from psutil.tests is not enough. For some reason
         # we're seeing differences of ~1.2 MB. 2 MB is still a good tolerance
         # when compared to GBs.
-        SYSMEM_TOLERANCE = 2 * KB * KB   # 2 MB
+        TOLERANCE_SYSMEM = 2 * KB * KB   # 2 MB
         self.assertEqual(psutil_result.total, total)
         self.assertAlmostEqual(
-            psutil_result.used, used, delta=SYSMEM_TOLERANCE)
+            psutil_result.used, used, delta=TOLERANCE_SYSMEM)
         self.assertAlmostEqual(
-            psutil_result.available, available, delta=SYSMEM_TOLERANCE)
+            psutil_result.available, available, delta=TOLERANCE_SYSMEM)
         self.assertAlmostEqual(
-            psutil_result.free, free, delta=SYSMEM_TOLERANCE)
+            psutil_result.free, free, delta=TOLERANCE_SYSMEM)
 
     def test_swap_memory(self):
         out = sh('/usr/sbin/lsps -a')

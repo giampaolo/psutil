@@ -74,10 +74,10 @@ else:
 
 __all__ = [
     # constants
-    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'SYSMEM_TOLERANCE', 'NO_RETRIES',
+    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYSMEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
     'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
-    'CI_TESTING', 'VALID_PROC_STATUSES',
+    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISKUSAGE',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -130,8 +130,9 @@ CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
 
 # how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
-# bytes tolerance for system-wide memory related tests
-SYSMEM_TOLERANCE = 500 * 1024  # 500KB
+# bytes tolerance for system-wide related tests
+TOLERANCE_SYSMEM = 500 * 1024  # 500KB
+TOLERANCE_DISKUSAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid
@@ -139,6 +140,8 @@ GLOBAL_TIMEOUT = 5
 if TRAVIS or APPVEYOR:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
+    TOLERANCE_SYSMEM *= 3
+    TOLERANCE_DISKUSAGE *= 3
 
 # --- file names
 
