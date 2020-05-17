@@ -3,17 +3,13 @@ name: Build wheels
 on: [push, pull_request]
 
 jobs:
-  wheel_without_test:
-    name: build wheel for ${{ matrix.os }}
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    env:
-      CIBW_SKIP: "*manylinux2010*"
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+        os: [ubuntu-18.04, windows-latest, macos-latest]
+
     steps:
     - uses: actions/checkout@v1
 
