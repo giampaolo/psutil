@@ -740,7 +740,7 @@ def safe_rmpath(path):
         # open handles or references preventing the delete operation
         # to succeed immediately, so we retry for a while. See:
         # https://bugs.python.org/issue33240
-        stop_at = time.time() + 1
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             try:
                 return fun()

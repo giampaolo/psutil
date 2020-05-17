@@ -28,6 +28,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -1705,7 +1706,7 @@ class TestProcess(PsutilTestCase):
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()
-            giveup_at = time.time() + 2
+            giveup_at = time.time() + GLOBAL_TIMEOUT
             while True:
                 for file in p.open_files():
                     if file.path == os.path.abspath(fname):

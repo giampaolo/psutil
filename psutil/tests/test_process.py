@@ -42,6 +42,7 @@ from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import enum
 from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
@@ -210,7 +211,7 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc()
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
         p.kill()
-        stop_at = time.time() + 2
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             try:
                 code = p.wait(0)
