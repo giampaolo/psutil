@@ -10,8 +10,6 @@ https://ci.appveyor.com/project/giampaolo/psutil
 Readapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
 http://code.saghul.net/index.php/2015/09/09/
-
-NOTE: no longer used (use use GitHub actions).
 """
 
 from __future__ import print_function
