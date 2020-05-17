@@ -1376,6 +1376,7 @@ class TestMisc(PsutilTestCase):
         try:
             p = psutil.Process()
             tid = p.threads()[1].id
+            self.assertNotEqual(p.pid, tid)
             assert not psutil.pid_exists(tid), tid
             pt = psutil.Process(tid)
             pt.as_dict()

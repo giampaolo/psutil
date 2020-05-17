@@ -619,7 +619,8 @@ class TestDiskAPIs(PsutilTestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if (GITHUB_WHEELS or TRAVIS) and MACOS and err.errno == errno.EIO:
+                    if (GITHUB_WHEELS or TRAVIS) and \
+                            MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
