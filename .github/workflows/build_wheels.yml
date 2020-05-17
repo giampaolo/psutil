@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp27-*win* pp-*manylinux*"
+      CIBW_SKIP: "*manylinux2010*"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
     steps:
@@ -27,7 +27,7 @@ jobs:
         choco install vcpython27 -f -y
 
     - name: "install cibuildwheel"
-      run: pip install cibuildwheel==1.4.1
+      run: python -m pip install cibuildwheel==1.4.1
 
     - name: build wheel
       run: cibuildwheel .
