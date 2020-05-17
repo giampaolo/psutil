@@ -76,7 +76,6 @@ def rename_27_wheels():
 def extract():
     with zipfile.ZipFile(OUTFILE, 'r') as zf:
         zf.extractall('dist')
-    rename_27_wheels()
 
 
 def print_wheels():
@@ -132,6 +131,7 @@ def run():
     download_zip(data['artifacts'][0]['archive_download_url'])
     os.mkdir('dist')
     extract()
+    rename_27_wheels()
     print_wheels()
 
 

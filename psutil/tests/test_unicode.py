@@ -230,8 +230,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(prefix="", suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -256,8 +255,7 @@ class _BaseFSAPIsTests(object):
                     return conn
             raise ValueError("connection not found")
 
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(prefix="", suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:

@@ -812,7 +812,7 @@ def create_exe(outpath, c_code=None):
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
-def get_testfn(prefix=TESTFN_PREFIX, suffix="", dir=None):
+def get_testfn(suffix="", dir=None):
     """Return an absolute pathname of a file or dir that did not
     exist at the time this call is made. Also schedule it for safe
     deletion at interpreter exit. It's technically racy but probably
