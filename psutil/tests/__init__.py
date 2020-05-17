@@ -137,7 +137,7 @@ TOLERANCE_DISKUSAGE = 10 * 1024 * 1024  # 10MB
 GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid
 # false positives
-if TRAVIS or APPVEYOR:
+if CI_TESTING:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
     TOLERANCE_SYSMEM *= 3
