@@ -16,8 +16,9 @@ jobs:
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
     steps:
     - uses: actions/checkout@v1
+
     - uses: actions/setup-python@v1
-      name: Install Python 3.7
+      name: Install Python
       with:
         python-version: '3.7'
 
