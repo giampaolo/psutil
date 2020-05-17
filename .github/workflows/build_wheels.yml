@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp-*manylinux*"
+      CIBW_SKIP: "pp27-*win* cp27-*manylinux* pp-*manylinux*"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_MANYLINUX_I686_IMAGE: manylinux2014
     steps:
@@ -46,7 +46,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp-*manylinux*"
+      CIBW_SKIP: "pp27-*win* *27* cp27-*manylinux* pp-*manylinux*"
       CIBW_TEST_COMMAND: python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
