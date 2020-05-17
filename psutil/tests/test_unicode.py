@@ -144,7 +144,7 @@ def subprocess_supports_unicode(suffix):
         safe_rmpath(testfn)
         create_exe(testfn)
         sproc = spawn_testproc(cmd=[testfn])
-    except UnicodeEncodeError:
+    except (UnicodeEncodeError, IOError):
         return False
     else:
         return True
