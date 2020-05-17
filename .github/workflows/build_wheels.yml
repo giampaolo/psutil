@@ -26,7 +26,7 @@ jobs:
           choco install vcpython27 -f -y
 
       - name: "install cibuildwheel"
-        run: pip install cibuildwheel==1.4.1
+        run: $PYBIN/pip install cibuildwheel==1.4.1
 
       - name: Build wheel
         run: cibuildwheel .
