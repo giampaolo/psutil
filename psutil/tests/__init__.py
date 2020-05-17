@@ -120,10 +120,10 @@ __all__ = [
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
-TRAVIS = bool(os.environ.get('TRAVIS'))
-APPVEYOR = bool(os.environ.get('APPVEYOR'))
-CIRRUS = bool(os.environ.get('CIRRUS'))
-GITHUB_WHEELS = bool(os.environ.get('CIBUILDWHEEL', False))
+TRAVIS = 'TRAVIS' in os.environ
+APPVEYOR = 'APPVEYOR' in os.environ
+CIRRUS = 'CIRRUS' in os.environ
+GITHUB_WHEELS = 'CIBUILDWHEEL' in os.environ
 CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
 
 # --- configurable defaults

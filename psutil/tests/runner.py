@@ -315,6 +315,7 @@ def print_sysinfo():
     import datetime
     import getpass
     import platform
+    from psutil.tests import get_kernel_version
 
     info = collections.OrderedDict()
     info['OS'] = platform.system()
@@ -327,7 +328,7 @@ def print_sysinfo():
     else:
         info['version'] = platform.version()
     if psutil.POSIX:
-        info['kernel'] = platform.uname()[2]
+        info['kernel'] = '.'.join(map(str, get_kernel_version()))
     info['arch'] = ', '.join(
         list(platform.architecture()) + [platform.machine()])
     info['hostname'] = platform.node()
@@ -336,14 +337,17 @@ def print_sysinfo():
         platform.python_version(),
         platform.python_compiler()])
     if psutil.POSIX:
-        info['glibc'] = platform.libc_ver()[1]
+        s = platform.libc_ver()[1]
+        if s:
+            info['glibc'] = s
     info['fs-encoding'] = sys.getfilesystemencoding()
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
-    print("=" * 70)
+    info['pid'] = os.getpid()
+    print("=" * 70, flush=True)
     for k, v in info.items():
-        print("%-14s %s" % (k + ':', v))
-    print("=" * 70)
+        print("%-14s %s" % (k + ':', v), flush=True)
+    print("=" * 70, flush=True)
 
 
 def main():
