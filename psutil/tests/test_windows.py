@@ -166,6 +166,8 @@ class TestSystemAPIs(TestCase):
                         break
                     if 'cdrom' in ps_part.opts:
                         break
+                    if ps_part.mountpoint.startswith('A:'):
+                        break  # floppy
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
                     except FileNotFoundError:
