@@ -141,10 +141,10 @@ GLOBAL_TIMEOUT = 5
 # be more tolerant if we're on travis / appveyor in order to avoid
 # false positives
 if CI_TESTING:
-    NO_RETRIES *= 3
-    GLOBAL_TIMEOUT *= 3
-    TOLERANCE_SYS_MEM *= 3
-    TOLERANCE_DISK_USAGE *= 3
+    NO_RETRIES *= 5
+    GLOBAL_TIMEOUT *= 5
+    TOLERANCE_SYS_MEM *= 5
+    TOLERANCE_DISK_USAGE *= 5
 
 # --- file names
 

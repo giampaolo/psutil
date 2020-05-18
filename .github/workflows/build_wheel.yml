@@ -46,7 +46,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp27-*win* *27*win* *27*macosx*"
+      CIBW_SKIP: "pp27-*win* *27*win* *38*macosx*"
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
