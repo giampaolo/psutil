@@ -28,7 +28,6 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import isfile_strict
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
@@ -590,9 +589,11 @@ class TestFetchAllProcesses(PsutilTestCase):
                 continue
             assert os.path.isabs(f.path), f
             try:
-                assert isfile_strict(f.path), f
+                st = os.stat(f.path)
             except FileNotFoundError:
                 pass
+            else:
+                assert stat.S_ISREG(st.st_mode), f
 
     def num_fds(self, ret, info):
         self.assertIsInstance(ret, int)

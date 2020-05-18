@@ -551,6 +551,7 @@ class TestProcess(PsutilTestCase):
             p.cpu_times().system,
             sum([x.system_time for x in p.threads()]), delta=0.1)
 
+    @retry_on_failure()
     def test_memory_info(self):
         p = psutil.Process()
 
