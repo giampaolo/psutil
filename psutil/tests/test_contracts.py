@@ -331,9 +331,9 @@ def proc_info(pid):
         tcase.assertEqual(exc.pid, pid)
         tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
-            # XXX investigate zombie/ppid relation on POSIX
-            # tcase.assertEqual(exc.ppid, ppid)
-            pass
+            if exc.ppid is not None:
+                tcase.assertGreaterEqual(exc.ppid, 0)
+                tcase.assertEqual(exc.ppid, ppid)
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)
@@ -359,11 +359,7 @@ def proc_info(pid):
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
             try:
                 info[fun_name] = fun()
-            except psutil.NoSuchProcess as exc:
-                check_exception(exc, proc, name, ppid)
-                do_wait()
-                return info
-            except psutil.AccessDenied as exc:
+            except psutil.Error as exc:
                 check_exception(exc, proc, name, ppid)
                 continue
         do_wait()
