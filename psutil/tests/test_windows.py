@@ -201,7 +201,8 @@ class TestSystemAPIs(TestCase):
         sys_value = [
             x + '\\' for x in win32api.GetLogicalDriveStrings().split("\\\x00")
             if x and not x.startswith('A:')]
-        psutil_value = [x.mountpoint for x in psutil.disk_partitions(all=True)]
+        psutil_value = [x.mountpoint for x in psutil.disk_partitions(all=True)
+                        if not x.startswith('A:')]
         self.assertEqual(sys_value, psutil_value)
 
     def test_net_if_stats(self):
