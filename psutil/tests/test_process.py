@@ -37,6 +37,7 @@ from psutil._compat import PY3
 from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
+from psutil.tests import CI_TESTING
 from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
@@ -349,11 +350,13 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not LINUX, "linux only")
     def test_ionice_linux(self):
         p = psutil.Process()
-        self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
+        if not CI_TESTING:
+            self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
         self.assertEqual(psutil.IOPRIO_CLASS_NONE, 0)
         self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)  # high
         self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)  # normal
         self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)  # low
+        init = p.ionice()
         try:
             # low
             p.ionice(psutil.IOPRIO_CLASS_IDLE)
@@ -367,6 +370,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
             with self.assertRaises(ValueError):
                 p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
+            p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
             # errs
             self.assertRaisesRegex(
                 ValueError, "ioclass accepts no value",
@@ -378,13 +382,18 @@ class TestProcess(PsutilTestCase):
                 ValueError, "'ioclass' argument must be specified",
                 p.ionice, value=1)
         finally:
-            p.ionice(psutil.IOPRIO_CLASS_BE)
+            ioclass, value = init
+            if ioclass == psutil.IOPRIO_CLASS_NONE:
+                value = 0
+            p.ionice(ioclass, value)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(not WINDOWS, 'not supported on this win version')
     def test_ionice_win(self):
         p = psutil.Process()
-        self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+        if not CI_TESTING:
+            self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+        init = p.ionice()
         try:
             # base
             p.ionice(psutil.IOPRIO_VERYLOW)
@@ -405,8 +414,7 @@ class TestProcess(PsutilTestCase):
                 ValueError, "is not a valid priority",
                 p.ionice, psutil.IOPRIO_HIGH + 1)
         finally:
-            p.ionice(psutil.IOPRIO_NORMAL)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
+            p.ionice(init)
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):

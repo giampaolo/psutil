@@ -27,6 +27,7 @@ from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
+from psutil.tests import CI_TESTING
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
@@ -364,6 +365,7 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
 
     @retry_on_failure()
+    @unittest.skipIf(CI_TESTING, "skipped on CI")
     def test_leak_mem(self):
         ls = []
 
@@ -373,7 +375,7 @@ class TestMemLeakClass(TestMemoryLeak):
         try:
             # will consume around 3M in total
             self.assertRaisesRegex(AssertionError, "extra-mem",
-                                   self.execute, fun, times=50, retries=2)
+                                   self.execute, fun, times=50)
         finally:
             del ls
 

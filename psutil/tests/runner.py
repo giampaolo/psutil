@@ -194,8 +194,6 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def run(self, suite):
         result = self._run(suite)
-        if CI_TESTING:
-            print_sysinfo()
         self._exit(result.wasSuccessful())
 
 
@@ -280,8 +278,6 @@ class ParallelRunner(ColouredTextRunner):
                    ser.testsRun, ser_fails, ser_errs, ser_skips, ser_elapsed)))
         print("Ran %s tests in %.3fs using %s workers" % (
             par.testsRun + ser.testsRun, par_elapsed + ser_elapsed, NWORKERS))
-        if CI_TESTING:
-            print_sysinfo()
         ok = par.wasSuccessful() and ser.wasSuccessful()
         self._exit(ok)
 
