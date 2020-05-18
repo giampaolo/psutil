@@ -48,6 +48,7 @@ from psutil.tests import SKIP_SYSCONS
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import GITHUB_WHEELS
+from psutil.tests import PYPY
 import psutil
 
 
