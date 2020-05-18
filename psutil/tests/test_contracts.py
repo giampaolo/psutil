@@ -14,6 +14,7 @@ import multiprocessing
 import os
 import signal
 import stat
+import sys
 import time
 import traceback
 
@@ -672,6 +673,10 @@ class TestFetchAllProcesses(PsutilTestCase):
             priorities = [getattr(psutil, x) for x in dir(psutil)
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
+            if sys.version_info > (3, 4):
+                self.assertIsInstance(ret, enum.IntEnum)
+            else:
+                self.assertIsInstance(ret, int)
 
     def num_ctx_switches(self, ret, info):
         assert is_namedtuple(ret)

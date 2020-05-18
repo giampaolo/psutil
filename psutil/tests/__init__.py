@@ -935,7 +935,7 @@ class TestMemoryLeak(PsutilTestCase):
     times = 200
     warmup_times = 10
     tolerance = 0  # memory
-    retries = 5
+    retries = 10 if CI_TESTING else 5
     verbose = True
     _thisproc = psutil.Process()
 
@@ -998,7 +998,7 @@ class TestMemoryLeak(PsutilTestCase):
             msg = "Run #%s: extra-mem=%s, per-call=%s, calls=%s" % (
                 idx, bytes2human(mem), bytes2human(mem / times), times)
             messages.append(msg)
-            success = mem <= tolerance or mem < prev_mem
+            success = mem <= tolerance or mem <= prev_mem
             if success:
                 if idx > 1:
                     self._log(msg)

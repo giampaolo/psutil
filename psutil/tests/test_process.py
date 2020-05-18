@@ -41,7 +41,6 @@ from psutil.tests import CI_TESTING
 from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
-from psutil.tests import enum
 from psutil.tests import GITHUB_WHEELS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
@@ -370,7 +369,10 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
             with self.assertRaises(ValueError):
                 p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
-            p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+            try:
+                p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+            except psutil.AccessDenied:
+                pass
             # errs
             self.assertRaisesRegex(
                 ValueError, "ioclass accepts no value",
@@ -792,43 +794,46 @@ class TestProcess(PsutilTestCase):
     def test_nice(self):
         p = psutil.Process()
         self.assertRaises(TypeError, p.nice, "str")
-        if WINDOWS:
-            try:
-                init = p.nice()
-                if sys.version_info > (3, 4):
-                    self.assertIsInstance(init, enum.IntEnum)
-                else:
-                    self.assertIsInstance(init, int)
-                self.assertEqual(init, psutil.NORMAL_PRIORITY_CLASS)
-                p.nice(psutil.HIGH_PRIORITY_CLASS)
-                self.assertEqual(p.nice(), psutil.HIGH_PRIORITY_CLASS)
-                p.nice(psutil.NORMAL_PRIORITY_CLASS)
-                self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
-            finally:
-                p.nice(psutil.NORMAL_PRIORITY_CLASS)
-        else:
-            first_nice = p.nice()
-            try:
-                if hasattr(os, "getpriority"):
-                    self.assertEqual(
-                        os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
-                p.nice(1)
-                self.assertEqual(p.nice(), 1)
-                if hasattr(os, "getpriority"):
-                    self.assertEqual(
-                        os.getpriority(os.PRIO_PROCESS, os.getpid()), p.nice())
-                # XXX - going back to previous nice value raises
-                # AccessDenied on MACOS
-                if not MACOS:
-                    p.nice(0)
-                    self.assertEqual(p.nice(), 0)
-            except psutil.AccessDenied:
-                pass
-            finally:
+        init = p.nice()
+        try:
+            if WINDOWS:
+                for prio in [psutil.NORMAL_PRIORITY_CLASS,
+                             psutil.IDLE_PRIORITY_CLASS,
+                             psutil.BELOW_NORMAL_PRIORITY_CLASS,
+                             psutil.REALTIME_PRIORITY_CLASS,
+                             psutil.HIGH_PRIORITY_CLASS,
+                             psutil.ABOVE_NORMAL_PRIORITY_CLASS]:
+                    with self.subTest(prio=prio):
+                        try:
+                            p.nice(prio)
+                        except psutil.AccessDenied:
+                            pass
+                        else:
+                            self.assertEqual(p.nice(), prio)
+            else:
                 try:
-                    p.nice(first_nice)
+                    if hasattr(os, "getpriority"):
+                        self.assertEqual(
+                            os.getpriority(os.PRIO_PROCESS, os.getpid()),
+                            p.nice())
+                    p.nice(1)
+                    self.assertEqual(p.nice(), 1)
+                    if hasattr(os, "getpriority"):
+                        self.assertEqual(
+                            os.getpriority(os.PRIO_PROCESS, os.getpid()),
+                            p.nice())
+                    # XXX - going back to previous nice value raises
+                    # AccessDenied on MACOS
+                    if not MACOS:
+                        p.nice(0)
+                        self.assertEqual(p.nice(), 0)
                 except psutil.AccessDenied:
                     pass
+        finally:
+            try:
+                p.nice(init)
+            except psutil.AccessDenied:
+                pass
 
     def test_status(self):
         p = psutil.Process()
