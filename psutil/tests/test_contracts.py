@@ -94,7 +94,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 self.assertEqual(x, False)
         else:
             ae = self.assertEqual
-            
+
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
         ae(hasattr(psutil, "RLIMIT_AS"), LINUX)
         ae(hasattr(psutil, "RLIMIT_CORE"), LINUX)
