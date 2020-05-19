@@ -586,7 +586,11 @@ def reap_children(recursive=False):
     # Terminate children.
     if children:
         for p in children:
-            terminate(p, wait_timeout=None)
+            if MACOS and sys.version_info.major == 3 and\
+                    sys.version_info.minor == 8:
+                terminate(p, sig=signal.SIGKILL, wait_timeout=None)
+            else:
+                terminate(p, wait_timeout=None)
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
