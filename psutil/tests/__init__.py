@@ -54,10 +54,10 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
-if sys.version_info < (2, 7):
-    import unittest2 as unittest  # requires "pip install unittest2"
-else:
+if PY3:
     import unittest
+else:
+    import unittest2 as unittest  # requires "pip install unittest2"
 
 try:
     from unittest import mock  # py3
@@ -202,12 +202,13 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_WHEELS and PYPY or POSIX:
+    if GITHUB_WHEELS:
         if PYPY:
-            if sys.version_info.major == 3:
-                return which("pypy3")
-            return which("pypy")
-        return which('python')
+            return which("pypy3") if PY3 else which("pypy")
+        elif WINDOWS:
+            return sys.executable
+        else:
+            return which('python')
     elif MACOS:
         exe = \
             attempt(sys.executable) or \
