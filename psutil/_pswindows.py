@@ -1066,11 +1066,11 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_set(self, value):
-        def to_bitmask(l):
-            if not l:
-                raise ValueError("invalid argument %r" % l)
+        def to_bitmask(ls):
+            if not ls:
+                raise ValueError("invalid argument %r" % ls)
             out = 0
-            for b in l:
+            for b in ls:
                 out |= 2 ** b
             return out
 
