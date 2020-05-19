@@ -202,7 +202,11 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_WHEELS:
+    if GITHUB_WHEELS and PYPY or POSIX:
+        if PYPY:
+            if sys.version_info.major == 3:
+                return which("pypy3")
+            return which("pypy")
         return which('python')
     elif MACOS:
         exe = \

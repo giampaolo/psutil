@@ -24,7 +24,6 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
 from psutil.tests import APPVEYOR
-from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
@@ -32,7 +31,9 @@ from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import spawn_testproc
 from psutil.tests import terminate
+from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import unittest
 
 
@@ -184,6 +185,7 @@ class TestSystemAPIs(TestCase):
             else:
                 self.fail("can't find partition %s" % repr(ps_part))
 
+    @retry_on_failure()
     def test_disk_usage(self):
         for disk in psutil.disk_partitions():
             if 'cdrom' in disk.opts:
@@ -191,9 +193,9 @@ class TestSystemAPIs(TestCase):
             sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
             psutil_value = psutil.disk_usage(disk.mountpoint)
             self.assertAlmostEqual(sys_value[0], psutil_value.free,
-                                   delta=1024 * 1024)
+                                   delta=TOLERANCE_DISK_USAGE)
             self.assertAlmostEqual(sys_value[1], psutil_value.total,
-                                   delta=1024 * 1024)
+                                   delta=TOLERANCE_DISK_USAGE)
             self.assertEqual(psutil_value.used,
                              psutil_value.total - psutil_value.free)
 
@@ -202,7 +204,7 @@ class TestSystemAPIs(TestCase):
             x + '\\' for x in win32api.GetLogicalDriveStrings().split("\\\x00")
             if x and not x.startswith('A:')]
         psutil_value = [x.mountpoint for x in psutil.disk_partitions(all=True)
-                        if not x.startswith('A:')]
+                        if not x.mountpoint.startswith('A:')]
         self.assertEqual(sys_value, psutil_value)
 
     def test_net_if_stats(self):

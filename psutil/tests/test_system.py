@@ -544,8 +544,7 @@ class TestCpuAPIs(PsutilTestCase):
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
-        assert len(loadavg) == 3
-
+        self.assertEqual(len(loadavg), 3)
         for load in loadavg:
             self.assertIsInstance(load, float)
             self.assertGreaterEqual(load, 0.0)
