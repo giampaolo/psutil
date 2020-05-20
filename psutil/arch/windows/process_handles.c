@@ -244,7 +244,7 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         }
 
         // This will set *globalFileName* global variable.
-        if (psutil_threaded_get_filename(hFile) != 0)
+        if (psutil_get_filename(&hFile) != 0)
             goto error;
 
         if (globalFileName->Length > 0) {
