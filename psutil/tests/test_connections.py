@@ -39,6 +39,7 @@ from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import reap_children
+from psutil.tests import retry_on_failure
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
@@ -572,6 +573,7 @@ class TestSystemWideConnections(_ConnTestCase):
 
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
     @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
+    @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
         # sockets. For each process check that proc.connections()
