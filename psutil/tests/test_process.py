@@ -1275,7 +1275,9 @@ class TestProcess(PsutilTestCase):
         # NtQuerySystemInformation succeeds even if process is gone.
         if WINDOWS:
             normcase = os.path.normcase
-            self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
+            realpath = os.path.realpath
+            self.assertEqual(normcase(realpath(p.exe())), realpath(
+                             normcase(PYTHON_EXE)))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
