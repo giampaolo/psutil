@@ -50,7 +50,7 @@ DEPS = [
     "wmi",
     "requests"
 ]
-if sys.version_info[:2] <= (3, 0):
+if sys.version_info[:2] <= (2, 7):
     DEPS.append('unittest2')
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
@@ -58,9 +58,7 @@ if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
 if sys.version_info[:2] <= (3, 4):
     DEPS.append('enum34')
-if PYPY:
-    pass
-else:
+if not PYPY:
     DEPS.append("pywin32")
 
 _cmds = {}

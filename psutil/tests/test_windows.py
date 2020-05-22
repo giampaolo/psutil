@@ -41,7 +41,7 @@ from psutil.tests import unittest
 if WINDOWS and not PYPY:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        import win32api  # requires "pip install pypiwin32"
+        import win32api  # requires "pip install pywin32"
         import win32con
         import win32process
         import wmi  # requires "pip install wmi" / "make setup-dev-env"
@@ -68,6 +68,8 @@ def wrap_exceptions(fun):
 
 
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
+# See: https://github.com/giampaolo/psutil/pull/1762#issuecomment-632861854
+@unittest.skipIf(GITHUB_WHEELS, "wmi module unreliable on GITHUB")
 class TestCase(PsutilTestCase):
     pass
 
