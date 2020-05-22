@@ -60,10 +60,8 @@ if sys.version_info[:2] <= (3, 4):
     DEPS.append('enum34')
 if PYPY:
     pass
-elif sys.version_info[:2] <= (3, 4):
-    DEPS.append("pypiwin32==219")
 else:
-    DEPS.append("pypiwin32")
+    DEPS.append("pywin32")
 
 _cmds = {}
 if PY3:
