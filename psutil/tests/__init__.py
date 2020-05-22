@@ -206,7 +206,7 @@ def _get_py_exe():
         if PYPY:
             return which("pypy3") if PY3 else which("pypy")
         elif WINDOWS:
-            return os.path.realpath(sys.executable)
+            return sys.executable
         else:
             return which('python')
     elif MACOS:
