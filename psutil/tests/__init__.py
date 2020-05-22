@@ -131,7 +131,7 @@ CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
 # how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
 # bytes tolerance for system-wide related tests
-TOLERANCE_SYS_MEM = 500 * 1024  # 500KB
+TOLERANCE_SYS_MEM = 5 * 1024 * 1024  # 5MB
 TOLERANCE_DISK_USAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
