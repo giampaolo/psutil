@@ -67,9 +67,14 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def get_wmi():
+    # See: https://github.com/giampaolo/psutil/pull/1762#issuecomment-632861854
+    if GITHUB_WHEELS:
+        raise unittest.SkipTest("wmi module unreliable on GITHUB")
+    return wmi.WMI()
+
+
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
-# See: https://github.com/giampaolo/psutil/pull/1762#issuecomment-632861854
-@unittest.skipIf(GITHUB_WHEELS, "wmi module unreliable on GITHUB")
 class TestCase(PsutilTestCase):
     pass
 
@@ -98,12 +103,12 @@ class TestCpuAPIs(TestCase):
         self.assertEqual(sys_value, psutil_value)
 
     def test_cpu_count_logical_vs_wmi(self):
-        w = wmi.WMI()
+        w = get_wmi()
         proc = w.Win32_Processor()[0]
         self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
 
     def test_cpu_count_phys_vs_wmi(self):
-        w = wmi.WMI()
+        w = get_wmi()
         proc = w.Win32_Processor()[0]
         self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
 
@@ -112,7 +117,7 @@ class TestCpuAPIs(TestCase):
                          len(psutil.cpu_times(percpu=True)))
 
     def test_cpu_freq(self):
-        w = wmi.WMI()
+        w = get_wmi()
         proc = w.Win32_Processor()[0]
         self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
         self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
@@ -132,7 +137,7 @@ class TestSystemAPIs(TestCase):
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
 
     def test_total_phymem(self):
-        w = wmi.WMI().Win32_ComputerSystem()[0]
+        w = get_wmi().Win32_ComputerSystem()[0]
         self.assertEqual(int(w.TotalPhysicalMemory),
                          psutil.virtual_memory().total)
 
@@ -141,7 +146,7 @@ class TestSystemAPIs(TestCase):
     #     # _UPTIME constant is not public but it is used internally
     #     # as value to return for pid 0 creation time.
     #     # WMI behaves the same.
-    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+    #     w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
     #     p = psutil.Process(0)
     #     wmic_create = str(w.CreationDate.split('.')[0])
     #     psutil_create = time.strftime("%Y%m%d%H%M%S",
@@ -153,7 +158,7 @@ class TestSystemAPIs(TestCase):
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        w = wmi.WMI().Win32_Process()
+        w = get_wmi().Win32_Process()
         wmi_pids = set([x.ProcessId for x in w])
         psutil_pids = set(psutil.pids())
         self.assertEqual(wmi_pids, psutil_pids)
@@ -161,7 +166,7 @@ class TestSystemAPIs(TestCase):
     @retry_on_failure()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
-        wmi_parts = wmi.WMI().Win32_LogicalDisk()
+        wmi_parts = get_wmi().Win32_LogicalDisk()
         for ps_part in ps_parts:
             for wmi_part in wmi_parts:
                 if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
@@ -212,7 +217,7 @@ class TestSystemAPIs(TestCase):
 
     def test_net_if_stats(self):
         ps_names = set(cext.net_if_stats())
-        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
+        wmi_adapters = get_wmi().Win32_NetworkAdapter()
         wmi_names = set()
         for wmi_adapter in wmi_adapters:
             wmi_names.add(wmi_adapter.Name)
@@ -221,7 +226,7 @@ class TestSystemAPIs(TestCase):
                         "no common entries in %s, %s" % (ps_names, wmi_names))
 
     def test_boot_time(self):
-        wmi_os = wmi.WMI().Win32_OperatingSystem()
+        wmi_os = get_wmi().Win32_OperatingSystem()
         wmi_btime_str = wmi_os[0].LastBootUpTime.split('.')[0]
         wmi_btime_dt = datetime.datetime.strptime(
             wmi_btime_str, "%Y%m%d%H%M%S")
@@ -257,7 +262,7 @@ class TestSensorsBattery(TestCase):
 
     @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_percent(self):
-        w = wmi.WMI()
+        w = get_wmi()
         battery_wmi = w.query('select * from Win32_Battery')[0]
         battery_psutil = psutil.sensors_battery()
         self.assertAlmostEqual(
@@ -266,7 +271,7 @@ class TestSensorsBattery(TestCase):
 
     @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_power_plugged(self):
-        w = wmi.WMI()
+        w = get_wmi()
         battery_wmi = w.query('select * from Win32_Battery')[0]
         battery_psutil = psutil.sensors_battery()
         # Status codes:
@@ -512,41 +517,41 @@ class TestProcessWMI(TestCase):
         terminate(cls.pid)
 
     def test_name(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         self.assertEqual(p.name(), w.Caption)
 
     @unittest.skipIf(GITHUB_WHEELS, "unreliable path on GITHUB_WHEELS")
     def test_exe(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         # Note: wmi reports the exe as a lower case string.
         # Being Windows paths case-insensitive we ignore that.
         self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
 
     def test_cmdline(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         self.assertEqual(' '.join(p.cmdline()),
                          w.CommandLine.replace('"', ''))
 
     def test_username(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         domain, _, username = w.GetOwner()
         username = "%s\\%s" % (domain, username)
         self.assertEqual(p.username(), username)
 
+    @retry_on_failure()
     def test_memory_rss(self):
-        time.sleep(0.1)
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         rss = p.memory_info().rss
         self.assertEqual(rss, int(w.WorkingSetSize))
 
+    @retry_on_failure()
     def test_memory_vms(self):
-        time.sleep(0.1)
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         vms = p.memory_info().vms
         # http://msdn.microsoft.com/en-us/library/aa394372(VS.85).aspx
@@ -558,7 +563,7 @@ class TestProcessWMI(TestCase):
             self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
     def test_create_time(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        w = get_wmi().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         wmic_create = str(w.CreationDate.split('.')[0])
         psutil_create = time.strftime("%Y%m%d%H%M%S",
