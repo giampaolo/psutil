@@ -24,6 +24,7 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
 from psutil.tests import APPVEYOR
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
@@ -513,6 +514,7 @@ class TestProcessWMI(TestCase):
         p = psutil.Process(self.pid)
         self.assertEqual(p.name(), w.Caption)
 
+    @unittest.skipIf(GITHUB_WHEELS, "unreliable path on GITHUB_WHEELS")
     def test_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
