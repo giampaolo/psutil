@@ -10,6 +10,7 @@
 from __future__ import division, print_function
 
 import contextlib
+import errno
 import functools
 import os
 import socket
@@ -479,7 +480,9 @@ def isfile_strict(path):
     """
     try:
         st = os.stat(path)
-    except FileNotFoundError:
+    except OSError as err:
+        if err.errno in (errno.EPERM, errno.EACCES):
+            raise
         return False
     else:
         return stat.S_ISREG(st.st_mode)
@@ -492,7 +495,9 @@ def path_exists_strict(path):
     """
     try:
         os.stat(path)
-    except FileNotFoundError:
+    except OSError as err:
+        if err.errno in (errno.EPERM, errno.EACCES):
+            raise
         return False
     else:
         return True
