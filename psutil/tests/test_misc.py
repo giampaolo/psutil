@@ -323,7 +323,7 @@ class TestMisc(PsutilTestCase):
                         side_effect=OSError(errno.EACCES, "foo")):
             self.assertRaises(OSError, isfile_strict, this_file)
         with mock.patch('psutil._common.os.stat',
-                        side_effect=OSError(errno.EINVAL, "foo")):
+                        side_effect=OSError(errno.ENOENT, "foo")):
             assert not isfile_strict(this_file)
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
