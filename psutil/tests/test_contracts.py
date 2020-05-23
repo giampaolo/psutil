@@ -41,6 +41,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
 from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
+from psutil.tests import PYPY
 from psutil.tests import serialrun
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import unittest
@@ -247,7 +248,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, addrs in psutil.net_if_addrs().items():
             self.assertIsInstance(ifname, str)
             for addr in addrs:
-                if enum is not None:
+                if enum is not None and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 else:
                     self.assertIsInstance(addr.family, int)
