@@ -1516,9 +1516,9 @@ class TestPopen(PsutilTestCase):
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()
         if POSIX:
-            self.assertEqual(proc.wait(), -signal.SIGTERM)
+            self.assertEqual(proc.wait(5), -signal.SIGTERM)
         else:
-            self.assertEqual(proc.wait(), signal.SIGTERM)
+            self.assertEqual(proc.wait(5), signal.SIGTERM)
 
     def test_ctx_manager(self):
         with psutil.Popen([PYTHON_EXE, "-V"],
