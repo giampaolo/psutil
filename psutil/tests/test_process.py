@@ -33,6 +33,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
+from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil._compat import super
