@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp*win32 *38*macosx*"
+      CIBW_SKIP: "pp*win32"
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
@@ -37,40 +37,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: wheels
-        path: wheelhouse
-
-  wheel_problematic:
-    name: build problematic wheel for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest]
-    env:
-      CIBW_BUILD: "*38*macosx*"
-      CIBW_TEST_COMMAND: python -Wa {project}/psutil/tests/runner.py
-      CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' PYTHONUNBUFFERED=1 gtimeout -k 5 600 python -Wa {project}/psutil/tests/runner.py
-      CIBW_TEST_EXTRAS: test
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      name: Install Python 3.7
-      with:
-        python-version: '3.7'
-
-    - name: Install coreutils
-      if: startsWith(matrix.os, 'macos')
-      run: |
-        brew install coreutils
-
-    - name: "install cibuildwheel"
-      run: pip install cibuildwheel==1.4.1
-
-    - name: build wheel
-      run: cibuildwheel .
-
-    - name: Upload wheels
-      uses: actions/upload-artifact@v1
-      with:
-        name: wheels3
         path: wheelhouse
