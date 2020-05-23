@@ -3,41 +3,6 @@ name: Build wheel
 on: [push, pull_request]
 
 jobs:
-  wheel_without_test:
-    name: build wheel for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    env:
-      CIBW_SKIP: "pp27-*win* cp27-*manylinux* pp-*manylinux*"
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      name: Install Python 3.7
-      with:
-        python-version: '3.7'
-
-    - name: Install Visual C++ for Python 2.7
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install vcpython27 -f -y
-
-    - name: "install cibuildwheel"
-      run: pip install cibuildwheel==1.4.1
-
-    - name: build wheel
-      run: cibuildwheel .
-
-    - name: Upload wheels
-      uses: actions/upload-artifact@v1
-      with:
-        name: wheels2
-        path: wheelhouse
-
   wheel:
     name: build wheel with test for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -80,10 +45,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [macos-latest]
     env:
-      CIBW_SKIP: "pp27-*win*"
-      CIBW_BUILD: "*win32 *38*macosx*"
+      CIBW_BUILD: "*38*macosx*"
       CIBW_TEST_COMMAND: python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' PYTHONUNBUFFERED=1 gtimeout -k 5 600 python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
@@ -93,11 +57,6 @@ jobs:
       name: Install Python 3.7
       with:
         python-version: '3.7'
-
-    - name: Install Visual C++ for Python 2.7
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install vcpython27 -f -y
 
     - name: Install coreutils
       if: startsWith(matrix.os, 'macos')
