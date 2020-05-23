@@ -13,6 +13,7 @@ import itertools
 import os
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import textwrap
@@ -32,6 +33,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
+from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil._compat import super
@@ -637,7 +639,12 @@ class TestProcess(PsutilTestCase):
                     # 64 bit dlls: they are visible via explorer but cannot
                     # be accessed via os.stat() (wtf?).
                     if '64' not in os.path.basename(nt.path):
-                        assert os.path.exists(nt.path), nt.path
+                        try:
+                            st = os.stat(nt.path)
+                        except FileNotFoundError:
+                            pass
+                        else:
+                            assert stat.S_ISREG(st.st_mode), nt.path
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
@@ -923,8 +930,8 @@ class TestProcess(PsutilTestCase):
         if len(initial) > 12:
             initial = initial[:12]  # ...otherwise it will take forever
         combos = []
-        for l in range(0, len(initial) + 1):
-            for subset in itertools.combinations(initial, l):
+        for i in range(0, len(initial) + 1):
+            for subset in itertools.combinations(initial, i):
                 if subset:
                     combos.append(list(subset))
 
@@ -1271,7 +1278,7 @@ class TestProcess(PsutilTestCase):
             assert_raises_nsp(fun, name)
 
         # NtQuerySystemInformation succeeds even if process is gone.
-        if WINDOWS:
+        if WINDOWS and not GITHUB_WHEELS:
             normcase = os.path.normcase
             self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
 
@@ -1509,9 +1516,9 @@ class TestPopen(PsutilTestCase):
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()
         if POSIX:
-            self.assertEqual(proc.wait(), -signal.SIGTERM)
+            self.assertEqual(proc.wait(5), -signal.SIGTERM)
         else:
-            self.assertEqual(proc.wait(), signal.SIGTERM)
+            self.assertEqual(proc.wait(5), signal.SIGTERM)
 
     def test_ctx_manager(self):
         with psutil.Popen([PYTHON_EXE, "-V"],

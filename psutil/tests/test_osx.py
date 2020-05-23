@@ -17,7 +17,6 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
-from psutil.tests import spawn_zombie
 from psutil.tests import terminate
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
@@ -100,65 +99,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(
             year,
             time.strftime("%Y", time.localtime(start_psutil)))
-
-
-# TODO: probably needs removal (duplicate)
-@unittest.skipIf(not MACOS, "MACOS only")
-class TestZombieProcessAPIs(PsutilTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.parent, cls.zombie = spawn_zombie()
-
-    @classmethod
-    def tearDownClass(cls):
-        terminate(cls.parent)
-        terminate(cls.zombie)
-
-    def test_pidtask_info(self):
-        self.assertEqual(self.zombie.status(), psutil.STATUS_ZOMBIE)
-        self.zombie.ppid()
-        self.zombie.uids()
-        self.zombie.gids()
-        self.zombie.terminal()
-        self.zombie.create_time()
-
-    def test_exe(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.exe)
-
-    def test_cmdline(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.cmdline)
-
-    def test_environ(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.environ)
-
-    def test_cwd(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.cwd)
-
-    def test_memory_full_info(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.memory_full_info)
-
-    def test_cpu_times(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.cpu_times)
-
-    def test_num_ctx_switches(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.num_ctx_switches)
-
-    def test_num_threads(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.num_threads)
-
-    def test_open_files(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.open_files)
-
-    def test_connections(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.connections)
-
-    def test_num_fds(self):
-        self.assertRaises(psutil.ZombieProcess, self.zombie.num_fds)
-
-    def test_threads(self):
-        self.assertRaises((psutil.ZombieProcess, psutil.AccessDenied),
-                          self.zombie.threads)
 
 
 @unittest.skipIf(not MACOS, "MACOS only")

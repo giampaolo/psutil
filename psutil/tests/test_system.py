@@ -43,6 +43,7 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import IS_64BIT
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
@@ -544,8 +545,7 @@ class TestCpuAPIs(PsutilTestCase):
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
-        assert len(loadavg) == 3
-
+        self.assertEqual(len(loadavg), 3)
         for load in loadavg:
             self.assertIsInstance(load, float)
             self.assertGreaterEqual(load, 0.0)
@@ -553,6 +553,7 @@ class TestCpuAPIs(PsutilTestCase):
 
 class TestDiskAPIs(PsutilTestCase):
 
+    @unittest.skipIf(PYPY and not IS_64BIT, "unreliable on PYPY32 + 32BIT")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         self.assertEqual(usage._fields, ('total', 'used', 'free', 'percent'))
@@ -748,7 +749,7 @@ class TestNetAPIs(PsutilTestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
-                if sys.version_info >= (3, 4):
+                if sys.version_info >= (3, 4) and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces

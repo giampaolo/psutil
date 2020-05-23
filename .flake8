@@ -4,8 +4,6 @@
 
 [flake8]
 ignore =
-    # ambiguous variable name 'l'
-    E741,
     # line break after binary operator
     W504
 per-file-ignores =

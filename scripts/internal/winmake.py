@@ -47,21 +47,19 @@ DEPS = [
     "pyreadline",
     "setuptools",
     "wheel",
-    "wmi",
     "requests"
 ]
-if sys.version_info[:2] <= (2, 6):
+if sys.version_info[:2] <= (2, 7):
     DEPS.append('unittest2')
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
-if PYPY:
-    pass
-elif sys.version_info[:2] <= (3, 4):
-    DEPS.append("pypiwin32==219")
-else:
-    DEPS.append("pypiwin32")
+if sys.version_info[:2] <= (3, 4):
+    DEPS.append('enum34')
+if not PYPY:
+    DEPS.append("pywin32")
+    DEPS.append("wmi")
 
 _cmds = {}
 if PY3:

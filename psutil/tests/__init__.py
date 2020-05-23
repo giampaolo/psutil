@@ -54,10 +54,10 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
-if sys.version_info < (2, 7):
-    import unittest2 as unittest  # requires "pip install unittest2"
-else:
+if PY3:
     import unittest
+else:
+    import unittest2 as unittest  # requires "pip install unittest2"
 
 try:
     from unittest import mock  # py3
@@ -77,7 +77,7 @@ __all__ = [
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
     'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
-    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE',
+    'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
@@ -125,13 +125,16 @@ APPVEYOR = 'APPVEYOR' in os.environ
 CIRRUS = 'CIRRUS' in os.environ
 GITHUB_WHEELS = 'CIBUILDWHEEL' in os.environ
 CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
+# are we a 64 bit process?
+IS_64BIT = sys.maxsize > 2 ** 32
+
 
 # --- configurable defaults
 
 # how many times retry_on_failure() decorator will retry
 NO_RETRIES = 10
 # bytes tolerance for system-wide related tests
-TOLERANCE_SYS_MEM = 500 * 1024  # 500KB
+TOLERANCE_SYS_MEM = 5 * 1024 * 1024  # 5MB
 TOLERANCE_DISK_USAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
@@ -203,7 +206,10 @@ def _get_py_exe():
             return exe
 
     if GITHUB_WHEELS:
-        return which('python')
+        if PYPY:
+            return which("pypy3") if PY3 else which("pypy")
+        else:
+            return which('python')
     elif MACOS:
         exe = \
             attempt(sys.executable) or \
@@ -1475,7 +1481,7 @@ def check_net_address(addr, family):
     IPv6 and MAC addresses.
     """
     import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
-    if enum and PY3:
+    if enum and PY3 and not PYPY:
         assert isinstance(family, enum.IntEnum), family
     if family == socket.AF_INET:
         octs = [int(x) for x in addr.split('.')]
