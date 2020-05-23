@@ -569,7 +569,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertGreaterEqual(ret.pss, ret.uss)
 
     def open_files(self, ret, info):
-        return  # XXX
         self.assertIsInstance(ret, list)
         for f in ret:
             self.assertIsInstance(f.fd, int)

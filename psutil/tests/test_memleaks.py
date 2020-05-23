@@ -225,7 +225,6 @@ class TestProcessObjectLeaks(TestMemoryLeak):
 
     @fewtimes_if_linux()
     def test_open_files(self):
-        return  # XXX
         with open(get_testfn(), 'w'):
             self.execute(self.proc.open_files)
 
