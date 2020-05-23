@@ -74,12 +74,12 @@ etc.) and make sure that:
 """
 
 import os
+import shutil
 import traceback
 import warnings
 from contextlib import closing
 
 from psutil import BSD
-from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import WINDOWS
@@ -107,7 +107,6 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import TESTFN_PREFIX
-from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 import psutil
@@ -132,7 +131,7 @@ if APPVEYOR:
             traceback.print_exc()
 
 
-def subprocess_supports_unicode(suffix):
+def try_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
     """
@@ -144,6 +143,8 @@ def subprocess_supports_unicode(suffix):
         safe_rmpath(testfn)
         create_exe(testfn)
         sproc = spawn_testproc(cmd=[testfn])
+        shutil.copyfile(testfn, testfn + '-2')
+        safe_rmpath(testfn + '-2')
     except (UnicodeEncodeError, IOError):
         return False
     else:
@@ -160,6 +161,8 @@ def subprocess_supports_unicode(suffix):
 
 
 @serialrun
+@unittest.skipIf(ASCII_FS, "ASCII fs")
+@unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
 class _BaseFSAPIsTests(object):
     funky_suffix = None
 
@@ -215,7 +218,6 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(PYPY and WINDOWS, "fails on PYPY + WINDOWS")
     def test_proc_open_files(self):
-        return  # XXX
         p = psutil.Process()
         start = set(p.open_files())
         with open(self.funky_name, 'rb'):
@@ -298,11 +300,10 @@ class _BaseFSAPIsTests(object):
 
 
 # https://travis-ci.org/giampaolo/psutil/jobs/440073249
-@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
-@unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
-@unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
-                 "subprocess can't deal with unicode")
+# @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
+# @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
+@unittest.skipIf(not try_unicode(UNICODE_SUFFIX),
+                 "can't deal with unicode str")
 class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, valid, UTF8 path name."""
     funky_suffix = UNICODE_SUFFIX
@@ -317,9 +318,8 @@ class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
 
 
 @unittest.skipIf(CI_TESTING, "unreliable on CI")
-@unittest.skipIf(PYPY, "unreliable on PYPY")
-@unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
-                 "subprocess can't deal with invalid unicode")
+@unittest.skipIf(not try_unicode(INVALID_UNICODE_SUFFIX),
+                 "can't deal with invalid unicode str")
 class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
