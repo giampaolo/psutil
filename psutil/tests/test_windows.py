@@ -511,7 +511,7 @@ class TestProcessWMI(WindowsTestCase):
         p = psutil.Process(self.pid)
         self.assertEqual(p.name(), w.Caption)
 
-    @unittest.skipIf(GITHUB_WHEELS, "unreliable path on GITHUB_WHEELS")
+    @unittest.skipIf(GITHUB_WHEELS, "unreliable path on GITHUB_WHEELS/virtualenv")
     def test_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
