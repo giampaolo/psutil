@@ -10,7 +10,6 @@ import contextlib
 import errno
 import os
 import socket
-import string
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -416,45 +415,45 @@ class TestFilters(_ConnTestCase):
 
         tcp_template = textwrap.dedent("""
             import socket, time
-            s = socket.socket($family, socket.SOCK_STREAM)
-            s.bind(('$addr', 0))
+            s = socket.socket({family}, socket.SOCK_STREAM)
+            s.bind(('{addr}', 0))
             s.listen(5)
-            with open('$testfn', 'w') as f:
+            with open('{testfn}', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
             time.sleep(60)
-        """)
+            """)
 
         udp_template = textwrap.dedent("""
             import socket, time
-            s = socket.socket($family, socket.SOCK_DGRAM)
-            s.bind(('$addr', 0))
-            with open('$testfn', 'w') as f:
+            s = socket.socket({family}, socket.SOCK_DGRAM)
+            s.bind(('{addr}', 0))
+            with open('{testfn}', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
             time.sleep(60)
-        """)
+            """)
 
         # must be relative on Windows
         testfile = os.path.basename(self.get_testfn(dir=os.getcwd()))
-        tcp4_template = string.Template(tcp_template).substitute(
+        tcp4_template = tcp_template.format(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        udp4_template = string.Template(udp_template).substitute(
+        udp4_template = udp_template.format(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
-        tcp6_template = string.Template(tcp_template).substitute(
+        tcp6_template = tcp_template.format(
             family=int(AF_INET6), addr="::1", testfn=testfile)
-        udp6_template = string.Template(udp_template).substitute(
+        udp6_template = udp_template.format(
             family=int(AF_INET6), addr="::1", testfn=testfile)
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = self.pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(testfile))
+        tcp4_addr = eval(wait_for_file(testfile, delete=True))
         udp4_proc = self.pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(testfile))
+        udp4_addr = eval(wait_for_file(testfile, delete=True))
         if supports_ipv6():
             tcp6_proc = self.pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(testfile))
+            tcp6_addr = eval(wait_for_file(testfile, delete=True))
             udp6_proc = self.pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(testfile))
+            udp6_addr = eval(wait_for_file(testfile, delete=True))
         else:
             tcp6_proc = None
             udp6_proc = None
