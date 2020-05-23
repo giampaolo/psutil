@@ -26,6 +26,7 @@ from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_BATTERY
+from psutil.tests import IS_64BIT
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PY3
@@ -49,9 +50,6 @@ if WINDOWS and not PYPY:
 
 cext = psutil._psplatform.cext
 
-# are we a 64 bit process
-IS_64_BIT = sys.maxsize > 2**32
-
 
 def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
@@ -70,7 +68,7 @@ def wrap_exceptions(fun):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")
 # https://github.com/giampaolo/psutil/pull/1762#issuecomment-632892692
-@unittest.skipIf(GITHUB_WHEELS and (not PY3 or not IS_64_BIT),
+@unittest.skipIf(GITHUB_WHEELS and (not PY3 or not IS_64BIT),
                  "pywin32 broken on GITHUB + PY2")
 class WindowsTestCase(PsutilTestCase):
     pass
@@ -670,7 +668,7 @@ class RemoteProcessTestCase(PsutilTestCase):
                                     stderr=subprocess.STDOUT)
             output, _ = proc.communicate()
             proc.wait()
-            if output == str(not IS_64_BIT):
+            if output == str(not IS_64BIT):
                 return filename
 
     test_args = ["-c", "import sys; sys.stdin.read()"]
@@ -682,7 +680,7 @@ class RemoteProcessTestCase(PsutilTestCase):
         if other_python is None:
             raise unittest.SkipTest(
                 "could not find interpreter with opposite bitness")
-        if IS_64_BIT:
+        if IS_64BIT:
             self.python64 = sys.executable
             self.python32 = other_python
         else:

@@ -39,7 +39,7 @@ jobs:
         path: wheelhouse
 
   wheel:
-    name: build wheel for ${{ matrix.os }}
+    name: build wheel with test for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -75,7 +75,7 @@ jobs:
         path: wheelhouse
 
   wheel_problematic:
-    name: build wheel for ${{ matrix.os }}
+    name: build problematic wheel for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
