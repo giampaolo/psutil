@@ -67,11 +67,12 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-@unittest.skipIf(PYPY, "pywin32 not available on PYPY")  # skip whole module
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
+@unittest.skipIf(PYPY, "pywin32 not available on PYPY")
 # https://github.com/giampaolo/psutil/pull/1762#issuecomment-632892692
-@unittest.skipIf(GITHUB_WHEELS and not PY3,
+@unittest.skipIf(GITHUB_WHEELS and (not PY3 or not IS_64_BIT),
                  "pywin32 broken on GITHUB + PY2")
-class TestCase(PsutilTestCase):
+class WindowsTestCase(PsutilTestCase):
     pass
 
 
@@ -80,8 +81,7 @@ class TestCase(PsutilTestCase):
 # ===================================================================
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestCpuAPIs(TestCase):
+class TestCpuAPIs(WindowsTestCase):
 
     @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
                      'NUMBER_OF_PROCESSORS env var is not available')
@@ -119,8 +119,7 @@ class TestCpuAPIs(TestCase):
         self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestSystemAPIs(TestCase):
+class TestSystemAPIs(WindowsTestCase):
 
     def test_nic_names(self):
         out = sh('ipconfig /all')
@@ -247,8 +246,7 @@ class TestSystemAPIs(TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestSensorsBattery(TestCase):
+class TestSensorsBattery(WindowsTestCase):
 
     def test_has_battery(self):
         if win32api.GetPwrCapabilities()['SystemBatteriesPresent']:
@@ -308,8 +306,7 @@ class TestSensorsBattery(TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcess(PsutilTestCase):
+class TestProcess(WindowsTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -500,8 +497,7 @@ class TestProcess(PsutilTestCase):
         self.assertRaises(psutil.NoSuchProcess, proc.exe)
 
 
-@unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestProcessWMI(TestCase):
+class TestProcessWMI(WindowsTestCase):
     """Compare Process API results with WMI."""
 
     @classmethod
@@ -567,8 +563,11 @@ class TestProcessWMI(TestCase):
         self.assertEqual(wmic_create, psutil_create)
 
 
+# ---
+
+
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestDualProcessImplementation(TestCase):
+class TestDualProcessImplementation(PsutilTestCase):
     """
     Certain APIs on Windows have 2 internal implementations, one
     based on documented Windows APIs, another one based
@@ -744,7 +743,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
-class TestServices(TestCase):
+class TestServices(PsutilTestCase):
 
     def test_win_service_iter(self):
         valid_statuses = set([
