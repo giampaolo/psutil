@@ -47,6 +47,7 @@ from _compat import PY3  # NOQA
 from _compat import which  # NOQA
 
 
+PYPY = '__pypy__' in sys.builtin_module_names
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
@@ -71,10 +72,12 @@ extras_require = {"test": [
     "enum34; python_version <= '3.4'",
     "ipaddress; python_version < '3.0'",
     "mock; python_version < '3.0'",
-    "pywin32; sys.platform == 'win32'",
-    "wmi; sys.platform == 'win32'",
     "unittest2; python_version < '3.0'",
 ]}
+if not PYPY:
+    extras_require['test'].extend([
+        "pywin32; sys.platform == 'win32'",
+        "wmi; sys.platform == 'win32'"])
 
 
 def get_version():

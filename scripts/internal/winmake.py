@@ -47,7 +47,6 @@ DEPS = [
     "pyreadline",
     "setuptools",
     "wheel",
-    "wmi",
     "requests"
 ]
 if sys.version_info[:2] <= (2, 7):
@@ -60,6 +59,7 @@ if sys.version_info[:2] <= (3, 4):
     DEPS.append('enum34')
 if not PYPY:
     DEPS.append("pywin32")
+    DEPS.append("wmi")
 
 _cmds = {}
 if PY3:
