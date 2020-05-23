@@ -674,25 +674,22 @@ class RemoteProcessTestCase(PsutilTestCase):
             if output == str(not IS_64_BIT):
                 return filename
 
-    @classmethod
-    def setUpClass(cls):
-        other_python = cls.find_other_interpreter()
-
-        if other_python is None:
-            raise unittest.SkipTest(
-                "could not find interpreter with opposite bitness")
-
-        if IS_64_BIT:
-            cls.python64 = sys.executable
-            cls.python32 = other_python
-        else:
-            cls.python64 = other_python
-            cls.python32 = sys.executable
-
     test_args = ["-c", "import sys; sys.stdin.read()"]
 
     def setUp(self):
         super().setUp()
+
+        other_python = self.find_other_interpreter()
+        if other_python is None:
+            raise unittest.SkipTest(
+                "could not find interpreter with opposite bitness")
+        if IS_64_BIT:
+            self.python64 = sys.executable
+            self.python32 = other_python
+        else:
+            self.python64 = other_python
+            self.python32 = sys.executable
+
         env = os.environ.copy()
         env["THINK_OF_A_NUMBER"] = str(os.getpid())
         self.proc32 = self.spawn_testproc(
