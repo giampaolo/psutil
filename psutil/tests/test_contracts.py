@@ -386,10 +386,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         # Fixes "can't pickle <function proc_info>: it's not the
         # same object as test_contracts.proc_info".
         from psutil.tests.test_contracts import proc_info
-        if PYPY:
-            return map(proc_info, psutil.pids())
-        else:
-            return self.pool.imap_unordered(proc_info, psutil.pids())
+        return self.pool.imap_unordered(proc_info, psutil.pids())
 
     def test_all(self):
         failures = []
