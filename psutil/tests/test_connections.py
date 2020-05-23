@@ -465,6 +465,8 @@ class TestFilters(_ConnTestCase):
             udp6_addr = None
 
         for p in thisproc.children():
+            if p.pid in ignore_pid:
+                continue
             cons = p.connections()
             self.assertEqual(len(cons), 1)
             for conn in cons:
