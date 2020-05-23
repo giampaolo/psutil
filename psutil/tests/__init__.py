@@ -1478,7 +1478,7 @@ def check_net_address(addr, family):
     IPv6 and MAC addresses.
     """
     import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
-    if enum and PY3:
+    if enum and PY3 and not PYPY:
         assert isinstance(family, enum.IntEnum), family
     if family == socket.AF_INET:
         octs = [int(x) for x in addr.split('.')]

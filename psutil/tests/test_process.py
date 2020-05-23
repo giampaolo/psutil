@@ -13,6 +13,7 @@ import itertools
 import os
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import textwrap
@@ -32,7 +33,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
-from psutil._common import path_exists_strict
 from psutil._compat import long
 from psutil._compat import PY3
 from psutil._compat import super
@@ -638,7 +638,12 @@ class TestProcess(PsutilTestCase):
                     # 64 bit dlls: they are visible via explorer but cannot
                     # be accessed via os.stat() (wtf?).
                     if '64' not in os.path.basename(nt.path):
-                        assert path_exists_strict(nt.path), nt.path
+                        try:
+                            st = os.stat(nt.path)
+                        except FileNotFoundError:
+                            pass
+                        else:
+                            assert stat.S_ISREG(st.st_mode), nt.path
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
