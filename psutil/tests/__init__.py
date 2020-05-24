@@ -499,10 +499,6 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
                 pass
 
     def sendsig(proc, sig):
-        # If the process received SIGSTOP, SIGCONT is necessary first,
-        # otherwise SIGTERM won't work.
-        if POSIX and sig != signal.SIGKILL:
-            proc.send_signal(signal.SIGCONT)
         proc.send_signal(sig)
 
     def term_subproc(proc, timeout):
