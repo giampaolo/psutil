@@ -34,6 +34,7 @@ from psutil._compat import long
 from psutil._compat import range
 from psutil.tests import create_sockets
 from psutil.tests import enum
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
@@ -85,6 +86,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
+    @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
     def test_linux_rlimit(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
@@ -149,6 +151,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
+    @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
     def test_rlimit(self):
         # requires Linux 2.6.36
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)

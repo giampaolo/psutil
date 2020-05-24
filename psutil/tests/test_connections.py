@@ -38,6 +38,7 @@ from psutil.tests import enum
 from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
+from psutil.tests import reap_children
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
@@ -392,6 +393,8 @@ class TestFilters(_ConnTestCase):
 
     @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
+        reap_children()
+
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
             all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
                          "tcp6", "udp", "udp4", "udp6")
