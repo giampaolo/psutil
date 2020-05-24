@@ -8,7 +8,7 @@ matrix:
           env: PYVER=py27
         - language: generic
           os: osx
-          env: PYVER=py38
+          env: PYVER=py36
         # Linux
         - python: 2.7
         - python: 3.5
