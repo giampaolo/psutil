@@ -38,7 +38,7 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
 fi
 
 if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
-    pip install -U ipaddress mock
+    pip install -U ipaddress mock unittest2
 fi
 
 pip install -U coverage coveralls flake8 setuptools

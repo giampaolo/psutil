@@ -9,6 +9,12 @@ matrix:
         - language: generic
           os: osx
           env: PYVER=py36
+        - language: generic
+          os: osx
+          env: PYVER=py37
+        - language: generic
+          os: osx
+          env: PYVER=py38
         # Linux
         - python: 2.7
         - python: 3.5
