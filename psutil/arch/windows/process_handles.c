@@ -82,7 +82,8 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 
 
 static int
-psutil_get_filename(HANDLE hFile) {
+psutil_get_filename(LPVOID lpvParam) {
+    HANDLE hFile = *((HANDLE*)lpvParam);
     NTSTATUS status;
     ULONG bufferSize;
     ULONG attempts = 8;
@@ -153,7 +154,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
     DWORD threadRetValue;
 
     hThread = CreateThread(
-        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, hFile, 0, NULL);
+        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL);
     if (hThread == NULL) {
         PyErr_SetFromOSErrnoWithSyscall("CreateThread");
         return 1;
