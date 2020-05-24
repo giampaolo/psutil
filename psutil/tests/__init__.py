@@ -499,8 +499,6 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
                 pass
 
     def sendsig(proc, sig):
-        if MACOS and GITHUB_WHEELS:
-            sig = signal.SIGKILL
         # If the process received SIGSTOP, SIGCONT is necessary first,
         # otherwise SIGTERM won't work.
         if POSIX and sig != signal.SIGKILL:
