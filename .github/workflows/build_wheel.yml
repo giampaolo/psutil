@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   wheel:
-    name: build wheel with test for ${{ matrix.os }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
