@@ -551,10 +551,10 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except ProcessLookupError:
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            else:
+            if is_zombie(self.pid):
                 raise ZombieProcess(self.pid, self._name, self._ppid)
+            else:
+                raise NoSuchProcess(self.pid, self._name)
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
         except OSError:
@@ -576,10 +576,10 @@ def wrap_exceptions_procfs(inst):
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
-        if not pid_exists(inst.pid):
-            raise NoSuchProcess(inst.pid, inst._name)
-        else:
+        if is_zombie(inst.pid):
             raise ZombieProcess(inst.pid, inst._name, inst._ppid)
+        else:
+            raise NoSuchProcess(inst.pid, inst._name)
     except PermissionError:
         raise AccessDenied(inst.pid, inst._name)
 

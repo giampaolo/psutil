@@ -31,6 +31,7 @@ XXXX-XX-XX
 - 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
 - 1760_: [Linux] Process.rlimit() does not handle long long type properly.
+- 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
 
 5.7.0
 =====
