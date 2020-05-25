@@ -9,6 +9,7 @@
 #define __NTEXTAPI_H__
 #include <winternl.h>
 #include <iphlpapi.h>
+#include <WtsApi32.h>
 
 typedef LONG NTSTATUS;
 
@@ -550,6 +551,54 @@ DWORD (CALLBACK *_GetActiveProcessorCount) (
     WORD GroupNumber);
 
 #define GetActiveProcessorCount _GetActiveProcessorCount
+
+BOOL (CALLBACK *_WTSQuerySessionInformationW) (
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPWSTR * ppBuffer,
+    DWORD * pBytesReturned
+    );
+
+BOOL (CALLBACK *_WTSQuerySessionInformationA) (
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPSTR * ppBuffer,
+    DWORD * pBytesReturned
+    );
+
+#ifdef UNICODE
+#define _WTSQuerySessionInformation _WTSQuerySessionInformationW
+#else
+#define _WTSQuerySessionInformation _WTSQuerySessionInformationW
+#endif
+
+BOOL (CALLBACK *_WTSEnumerateSessionsW)(
+    HANDLE hServer,
+    DWORD Reserved,
+    DWORD Version,
+    PWTS_SESSION_INFOW * ppSessionInfo,
+    DWORD * pCount
+    );
+
+BOOL (CALLBACK *_WTSEnumerateSessionsA)(
+    HANDLE hServer,
+    DWORD Reserved,
+    DWORD Version,
+    PWTS_SESSION_INFOA * ppSessionInfo,
+    DWORD * pCount
+    );
+
+#ifdef UNICODE
+#define _WTSEnumerateSessions _WTSEnumerateSessionsW
+#else
+#define _WTSEnumerateSessions _WTSEnumerateSessionsA
+#endif
+
+VOID (CALLBACK *_WTSFreeMemory)(
+    IN PVOID pMemory
+    );
 
 ULONGLONG (CALLBACK *_GetTickCount64) (
     void);

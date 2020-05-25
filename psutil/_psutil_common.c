@@ -264,10 +264,6 @@ psutil_loadlibs() {
         "ntdll.dll", "NtSetInformationProcess");
     if (! NtSetInformationProcess)
         return 1;
-    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
-        "winsta.dll", "WinStationQueryInformationW");
-    if (! WinStationQueryInformationW)
-        return 1;
     NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
     if (! NtQueryObject)
@@ -320,7 +316,14 @@ psutil_loadlibs() {
     // minumum requirement: Win 7
     GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
-
+    // minimum requirements: Windows Server Core
+    _WTSEnumerateSessions = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSEnumerateSessionsW");
+    _WTSQuerySessionInformation = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSQuerySessionInformationW");
+    _WTSFreeMemory = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSFreeMemory");
+        
     PyErr_Clear();
     return 0;
 }

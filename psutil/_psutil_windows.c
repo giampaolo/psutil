@@ -1191,8 +1191,9 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    WCHAR *buffer_user = NULL;
-    LPTSTR buffer_addr = NULL;
+    LPWSTR buffer_user = NULL;
+    LPWSTR buffer_addr = NULL;
+    LPWSTR buffer_info = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
     DWORD i;
@@ -1200,8 +1201,7 @@ psutil_users(PyObject *self, PyObject *args) {
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
-    WINSTATION_INFO station_info;
-    ULONG returnLen;
+    PWTSINFO wts_info;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
@@ -1210,7 +1210,16 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+    // If either or those APIs are missing, we are probably running
+    // in a Windows Nano Server container
+    if (_WTSEnumerateSessions == NULL ||
+        _WTSQuerySessionInformation == NULL ||
+        _WTSFreeMemory == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "wtsapi32.dll cannot be found.");
+        goto error;
+    }
+
+    if (_WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
         goto error;
     }
@@ -1220,16 +1229,19 @@ psutil_users(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL)
-            WTSFreeMemory(buffer_user);
+            _WTSFreeMemory(buffer_user);
         if (buffer_addr != NULL)
-            WTSFreeMemory(buffer_addr);
+            _WTSFreeMemory(buffer_addr);
+        if (buffer_info != NULL)
+            _WTSFreeMemory(buffer_info);
 
         buffer_user = NULL;
         buffer_addr = NULL;
+        buffer_info = NULL;
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
+        if (_WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
@@ -1239,8 +1251,8 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
-                                       &buffer_addr, &bytes) == 0) {
+        if (_WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
+                                        &buffer_addr, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
             goto error;
         }
@@ -1263,17 +1275,13 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         // login time
-        if (! WinStationQueryInformationW(
-                hServer,
-                sessionId,
-                WinStationInformation,
-                &station_info,
-                sizeof(station_info),
-                &returnLen))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("WinStationQueryInformationW");
+        bytes = 0;
+        if (_WTSQuerySessionInformation(hServer, sessionId, WTSSessionInfo,
+                                        &buffer_info, &bytes) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
             goto error;
         }
+        wts_info = (PWTSINFO)buffer_info;
 
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
         if (py_username == NULL)
@@ -1282,7 +1290,7 @@ psutil_users(PyObject *self, PyObject *args) {
             "OOd",
             py_username,
             py_address,
-            psutil_FiletimeToUnixTime(station_info.ConnectTime)
+            psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
         );
         if (!py_tuple)
             goto error;
@@ -1293,9 +1301,10 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    WTSFreeMemory(sessions);
-    WTSFreeMemory(buffer_user);
-    WTSFreeMemory(buffer_addr);
+    _WTSFreeMemory(sessions);
+    _WTSFreeMemory(buffer_user);
+    _WTSFreeMemory(buffer_addr);
+    _WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
@@ -1305,11 +1314,11 @@ error:
     Py_DECREF(py_retlist);
 
     if (sessions != NULL)
-        WTSFreeMemory(sessions);
+        _WTSFreeMemory(sessions);
     if (buffer_user != NULL)
-        WTSFreeMemory(buffer_user);
+        _WTSFreeMemory(buffer_user);
     if (buffer_addr != NULL)
-        WTSFreeMemory(buffer_addr);
+        _WTSFreeMemory(buffer_addr);
     return NULL;
 }
 
