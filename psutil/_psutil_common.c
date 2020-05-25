@@ -323,7 +323,7 @@ psutil_loadlibs() {
         "wtsapi32.dll", "WTSQuerySessionInformationW");
     _WTSFreeMemory = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSFreeMemory");
-        
+
     PyErr_Clear();
     return 0;
 }
