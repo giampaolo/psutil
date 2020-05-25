@@ -20,18 +20,17 @@ import collections
 import json
 import os
 import requests
-import shutil
 import zipfile
 
-from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human
 from psutil._common import print_color
+from psutil.tests import safe_rmpath
 
 
 USER = ""
 PROJECT = ""
 TOKEN = ""
-OUTFILE = "wheels.zip"
+OUTFILE = "wheels-github.zip"
 
 
 # --- GitHub API
@@ -59,18 +58,6 @@ def download_zip(url):
 
 
 # --- extract
-
-
-def rename_27_wheels():
-    # See: https://github.com/giampaolo/psutil/issues/810
-    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
-    print("rename: %s\n        %s" % (src, dst))
-    os.rename(src, dst)
-    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PSUTIL_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PSUTIL_VERSION
-    print("rename: %s\n        %s" % (src, dst))
-    os.rename(src, dst)
 
 
 def extract():
@@ -126,13 +113,10 @@ def print_wheels():
 
 
 def run():
-    if os.path.isdir('dist'):
-        shutil.rmtree('dist')
     data = get_artifacts()
     download_zip(data['artifacts'][0]['archive_download_url'])
-    os.mkdir('dist')
+    os.makedirs('dist', exist_ok=True)
     extract()
-    # rename_27_wheels()
     print_wheels()
 
 
@@ -147,7 +131,10 @@ def main():
     PROJECT = args.project
     with open(os.path.expanduser(args.tokenfile)) as f:
         TOKEN = f.read().strip()
-    run()
+    try:
+        run()
+    finally:
+        safe_rmpath(OUTFILE)
 
 
 if __name__ == '__main__':
