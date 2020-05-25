@@ -1,4 +1,4 @@
-name: Build wheel
+name: Build wheels
 
 on: [push, pull_request]
 
@@ -9,9 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     env:
-      CIBW_SKIP: "pp*win32"
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
@@ -27,10 +26,10 @@ jobs:
       run: |
         choco install vcpython27 -f -y
 
-    - name: "install cibuildwheel"
+    - name: Install cibuildwheel
       run: pip install cibuildwheel==1.4.1
 
-    - name: build wheel
+    - name: Build wheels
       run: cibuildwheel .
 
     - name: Upload wheels
