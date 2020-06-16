@@ -925,7 +925,7 @@ class TestMemoryLeak(PsutilTestCase):
 
     If available (Linux, OSX, Windows), USS memory is used for comparison,
     since it's supposed to be more precise, see:
-    http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
+    https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
     If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
     Windows may give even more precision, but at the moment are not
     implemented.
@@ -1635,7 +1635,6 @@ def cleanup_test_procs():
 # atexit module does not execute exit functions in case of SIGTERM, which
 # gets sent to test subprocesses, which is a problem if they import this
 # module. With this it will. See:
-# http://grodola.blogspot.com/
-#     2016/02/how-to-always-execute-exit-functions-in-py.html
+# https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
     signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))

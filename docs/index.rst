@@ -10,7 +10,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`__
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`__
+- `Blog <https://gmpy.dev/tags/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
@@ -1627,7 +1627,7 @@ Process class
     (USS, PSS and swap).
     The additional metrics provide a better representation of "effective"
     process memory consumption (in case of USS) as explained in detail in this
-    `blog post <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
     :meth:`memory_info` and is considerably slower.
@@ -2839,7 +2839,7 @@ Timeline
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get

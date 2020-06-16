@@ -77,7 +77,7 @@ Quick links
 - `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`_
+- `Blog <https://gmpy.dev/tags/psutil>`_
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
@@ -135,7 +135,7 @@ Donate
 ======
 
 A lot of time and effort went into making psutil as it is today. If you whish
-to help its future development consider making a `donation <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
+to help its future development consider making me a `donation <https://gmpy.dev/donate>`__.
 
 Projects using psutil
 =====================
@@ -502,7 +502,7 @@ Windows services
      'username': 'NT AUTHORITY\\LocalService'}
 
 
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
