@@ -937,7 +937,7 @@ class TestProcess(PsutilTestCase):
 
         for combo in combos:
             p.cpu_affinity(combo)
-            self.assertEqual(p.cpu_affinity(), combo)
+            self.assertEqual(sorted(p.cpu_affinity()), sorted(combo))
 
     # TODO: #595
     @unittest.skipIf(BSD, "broken on BSD")

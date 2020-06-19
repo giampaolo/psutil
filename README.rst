@@ -77,7 +77,7 @@ Quick links
 - `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`_
+- `Blog <https://gmpy.dev/tags/psutil>`_
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
@@ -100,7 +100,7 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy3 <http://pypy.org/>`__ is also known to work.
+...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**, `PyPy <http://pypy.org/>`__ 2.7 and 3.X.
 
 psutil for enterprise
 =====================
@@ -131,19 +131,11 @@ Security
 To report a security vulnerability, please use the `Tidelift security
 contact`_.  Tidelift will coordinate the fix and disclosure.
 
-Example applications
-====================
+Donate
+======
 
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
-| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/top-small.png      |
-|    :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo.png          |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/top.png          |
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
-| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap-small.png     |
-|     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
-
-Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
-and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
+A lot of time and effort went into making psutil as it is today. If you whish
+to help its future development consider making me a `donation <https://gmpy.dev/donate>`__.
 
 Projects using psutil
 =====================
@@ -154,9 +146,7 @@ psutil has roughly the following monthly downloads:
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
-There are over
-`10.000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
-on github which depend from psutil.
+...and has over 45,000 projects on GitHub depending from it.
 Here's some I find particularly interesting:
 
 - https://github.com/google/grr
@@ -166,7 +156,6 @@ Here's some I find particularly interesting:
 - https://github.com/ajenti/ajenti
 - https://github.com/home-assistant/home-assistant/
 
-
 Portings
 ========
 
@@ -174,7 +163,6 @@ Portings
 - C: https://github.com/hamon-in/cpslib
 - Rust: https://github.com/borntyping/rust-psutil
 - Nim: https://github.com/johnscillieri/psutil-nim
-
 
 Example usages
 ==============
@@ -514,7 +502,7 @@ Windows services
      'username': 'NT AUTHORITY\\LocalService'}
 
 
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme

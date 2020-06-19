@@ -10,7 +10,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`__
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`__
+- `Blog <https://gmpy.dev/tags/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
@@ -268,16 +268,17 @@ CPU
 .. function:: getloadavg()
 
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-    The load represents the processes which are in a runnable state, either
+    The "load" represents the processes which are in a runnable state, either
     using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
     On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
     by using a Windows API that spawns a thread which keeps running in
-    background and updates the load average every 5 seconds, mimicking the UNIX
-    behavior. Thus, the first time this is called and for the next 5 seconds
+    background and updates results every 5 seconds, mimicking the UNIX behavior.
+    Thus, on Windows, the first time this is called and for the next 5 seconds
     it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
     The numbers returned only make sense if related to the number of CPU cores
-    installed on the system. So, for instance, `3.14` on a system with 10 CPU
-    cores means that the system load was 31.4% percent over the last N minutes.
+    installed on the system. So, for instance, a value of `3.14` on a system
+    with 10 logical CPUs means that the system load was 31.4% percent over the
+    last N minutes.
 
     .. code-block:: python
 
@@ -1626,7 +1627,7 @@ Process class
     (USS, PSS and swap).
     The additional metrics provide a better representation of "effective"
     process memory consumption (in case of USS) as explained in detail in this
-    `blog post <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
     :meth:`memory_info` and is considerably slower.
@@ -2838,7 +2839,7 @@ Timeline
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
