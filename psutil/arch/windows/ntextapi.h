@@ -552,51 +552,23 @@ DWORD (CALLBACK *_GetActiveProcessorCount) (
 
 #define GetActiveProcessorCount _GetActiveProcessorCount
 
-BOOL (CALLBACK *_WTSQuerySessionInformationW) (
+BOOL(CALLBACK *_WTSQuerySessionInformation) (
     HANDLE hServer,
     DWORD SessionId,
     WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR * ppBuffer,
-    DWORD * pBytesReturned
+    LPTSTR* ppBuffer,
+    DWORD* pBytesReturned
     );
 
-BOOL (CALLBACK *_WTSQuerySessionInformationA) (
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPSTR * ppBuffer,
-    DWORD * pBytesReturned
-    );
-
-#ifdef UNICODE
-#define _WTSQuerySessionInformation _WTSQuerySessionInformationW
-#else
-#define _WTSQuerySessionInformation _WTSQuerySessionInformationW
-#endif
-
-BOOL (CALLBACK *_WTSEnumerateSessionsW)(
+BOOL(CALLBACK *_WTSEnumerateSessions)(
     HANDLE hServer,
     DWORD Reserved,
     DWORD Version,
-    PWTS_SESSION_INFOW * ppSessionInfo,
-    DWORD * pCount
+    PWTS_SESSION_INFO* ppSessionInfo,
+    DWORD* pCount
     );
 
-BOOL (CALLBACK *_WTSEnumerateSessionsA)(
-    HANDLE hServer,
-    DWORD Reserved,
-    DWORD Version,
-    PWTS_SESSION_INFOA * ppSessionInfo,
-    DWORD * pCount
-    );
-
-#ifdef UNICODE
-#define _WTSEnumerateSessions _WTSEnumerateSessionsW
-#else
-#define _WTSEnumerateSessions _WTSEnumerateSessionsA
-#endif
-
-VOID (CALLBACK *_WTSFreeMemory)(
+VOID(CALLBACK *_WTSFreeMemory)(
     IN PVOID pMemory
     );
 

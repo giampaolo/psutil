@@ -317,10 +317,17 @@ psutil_loadlibs() {
     GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
     // minimum requirements: Windows Server Core
+#ifdef UNICODE
     _WTSEnumerateSessions = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSEnumerateSessionsW");
     _WTSQuerySessionInformation = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSQuerySessionInformationW");
+#else
+    _WTSEnumerateSessions = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSEnumerateSessionsA");
+    _WTSQuerySessionInformation = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSQuerySessionInformationA");
+#endif
     _WTSFreeMemory = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSFreeMemory");
 

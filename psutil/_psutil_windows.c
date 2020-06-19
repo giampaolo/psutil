@@ -1191,9 +1191,9 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    LPWSTR buffer_user = NULL;
-    LPWSTR buffer_addr = NULL;
-    LPWSTR buffer_info = NULL;
+    LPTSTR buffer_user = NULL;
+    LPTSTR buffer_addr = NULL;
+    LPTSTR buffer_info = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
     DWORD i;
@@ -1283,9 +1283,14 @@ psutil_users(PyObject *self, PyObject *args) {
         }
         wts_info = (PWTSINFO)buffer_info;
 
+#ifdef UNICODE
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
+#else
+        py_username = PyUnicode_FromString(buffer_user);
+#endif
         if (py_username == NULL)
             goto error;
+
         py_tuple = Py_BuildValue(
             "OOd",
             py_username,
@@ -1319,6 +1324,8 @@ error:
         _WTSFreeMemory(buffer_user);
     if (buffer_addr != NULL)
         _WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        _WTSFreeMemory(buffer_info);
     return NULL;
 }
 
