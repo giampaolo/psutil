@@ -1258,14 +1258,15 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 0) {  // AF_INET
+        if (address->AddressFamily == 2) {  // AF_INET == 2
             sprintf_s(address_str,
                       _countof(address_str),
                       "%u.%u.%u.%u",
-                      address->Address[0],
-                      address->Address[1],
+                      // The IP address is offset by two bytes from the start of the Address member of the WTS_CLIENT_ADDRESS structure.
                       address->Address[2],
-                      address->Address[3]);
+                      address->Address[3],
+                      address->Address[4],
+                      address->Address[5]);
             py_address = Py_BuildValue("s", address_str);
             if (!py_address)
                 goto error;
