@@ -9,7 +9,6 @@ include LICENSE
 include MANIFEST.in
 include Makefile
 include README.rst
-include SUPPORTERS.rst
 include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
