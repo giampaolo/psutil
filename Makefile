@@ -37,7 +37,7 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1
 
 all: test
 
