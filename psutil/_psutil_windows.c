@@ -22,7 +22,6 @@
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
-#include <wtsapi32.h>  // users()
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -1191,9 +1190,9 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    LPTSTR buffer_user = NULL;
-    LPTSTR buffer_addr = NULL;
-    LPTSTR buffer_info = NULL;
+    LPWSTR buffer_user = NULL;
+    LPWSTR buffer_addr = NULL;
+    LPWSTR buffer_info = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
     DWORD i;
@@ -1212,14 +1211,14 @@ psutil_users(PyObject *self, PyObject *args) {
 
     // If either or those APIs are missing, we are probably running
     // in a Windows Nano Server container
-    if (_WTSEnumerateSessions == NULL ||
-        _WTSQuerySessionInformation == NULL ||
-        _WTSFreeMemory == NULL) {
+    if (WTSEnumerateSessions == NULL ||
+        WTSQuerySessionInformation == NULL ||
+        WTSFreeMemory == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "wtsapi32.dll cannot be found.");
         goto error;
     }
 
-    if (_WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
         PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
         goto error;
     }
@@ -1229,11 +1228,11 @@ psutil_users(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL)
-            _WTSFreeMemory(buffer_user);
+            WTSFreeMemory(buffer_user);
         if (buffer_addr != NULL)
-            _WTSFreeMemory(buffer_addr);
+            WTSFreeMemory(buffer_addr);
         if (buffer_info != NULL)
-            _WTSFreeMemory(buffer_info);
+            WTSFreeMemory(buffer_info);
 
         buffer_user = NULL;
         buffer_addr = NULL;
@@ -1241,7 +1240,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (_WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
+        if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
@@ -1251,7 +1250,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (_WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
+        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
                                         &buffer_addr, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
             goto error;
@@ -1277,18 +1276,14 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (_WTSQuerySessionInformation(hServer, sessionId, WTSSessionInfo,
+        if (WTSQuerySessionInformation(hServer, sessionId, WTSSessionInfo,
                                         &buffer_info, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
             goto error;
         }
         wts_info = (PWTSINFO)buffer_info;
 
-#ifdef UNICODE
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
-#else
-        py_username = PyUnicode_FromString(buffer_user);
-#endif
         if (py_username == NULL)
             goto error;
 
@@ -1307,10 +1302,10 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    _WTSFreeMemory(sessions);
-    _WTSFreeMemory(buffer_user);
-    _WTSFreeMemory(buffer_addr);
-    _WTSFreeMemory(buffer_info);
+    WTSFreeMemory(sessions);
+    WTSFreeMemory(buffer_user);
+    WTSFreeMemory(buffer_addr);
+    WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
@@ -1320,13 +1315,13 @@ error:
     Py_DECREF(py_retlist);
 
     if (sessions != NULL)
-        _WTSFreeMemory(sessions);
+        WTSFreeMemory(sessions);
     if (buffer_user != NULL)
-        _WTSFreeMemory(buffer_user);
+        WTSFreeMemory(buffer_user);
     if (buffer_addr != NULL)
-        _WTSFreeMemory(buffer_addr);
+        WTSFreeMemory(buffer_addr);
     if (buffer_info != NULL)
-        _WTSFreeMemory(buffer_info);
+        WTSFreeMemory(buffer_info);
     return NULL;
 }
 
