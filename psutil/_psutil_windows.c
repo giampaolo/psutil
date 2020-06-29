@@ -1240,7 +1240,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
@@ -1250,9 +1250,9 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSClientAddress,
                                         &buffer_addr, &bytes) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
@@ -1276,9 +1276,9 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSSessionInfo,
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSSessionInfo,
                                         &buffer_info, &bytes) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
         wts_info = (PWTSINFO)buffer_info;

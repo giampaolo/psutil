@@ -629,7 +629,7 @@ DWORD (CALLBACK *_GetActiveProcessorCount) (
 
 #define GetActiveProcessorCount _GetActiveProcessorCount
 
-BOOL(CALLBACK *_WTSQuerySessionInformation) (
+BOOL(CALLBACK *_WTSQuerySessionInformationW) (
     HANDLE hServer,
     DWORD SessionId,
     WTS_INFO_CLASS WTSInfoClass,
@@ -637,9 +637,9 @@ BOOL(CALLBACK *_WTSQuerySessionInformation) (
     DWORD* pBytesReturned
     );
 
-#define WTSQuerySessionInformation _WTSQuerySessionInformation
+#define WTSQuerySessionInformationW _WTSQuerySessionInformationW
 
-BOOL(CALLBACK *_WTSEnumerateSessions)(
+BOOL(CALLBACK *_WTSEnumerateSessionsW)(
     HANDLE hServer,
     DWORD Reserved,
     DWORD Version,
@@ -647,7 +647,7 @@ BOOL(CALLBACK *_WTSEnumerateSessions)(
     DWORD* pCount
     );
 
-#define WTSEnumerateSessions _WTSEnumerateSessions
+#define WTSEnumerateSessionsW _WTSEnumerateSessionsW
 
 VOID(CALLBACK *_WTSFreeMemory)(
     IN PVOID pMemory

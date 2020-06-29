@@ -317,9 +317,9 @@ psutil_loadlibs() {
     GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
     // minimum requirements: Windows Server Core
-    WTSEnumerateSessions = psutil_GetProcAddressFromLib(
+    WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSEnumerateSessionsW");
-    WTSQuerySessionInformation = psutil_GetProcAddressFromLib(
+    WTSQuerySessionInformationW = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSQuerySessionInformationW");
     WTSFreeMemory = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSFreeMemory");
