@@ -1200,7 +1200,7 @@ psutil_users(PyObject *self, PyObject *args) {
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
-    PWTSINFO wts_info;
+    PWTSINFOW wts_info;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
@@ -1276,7 +1276,7 @@ psutil_users(PyObject *self, PyObject *args) {
             PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
-        wts_info = (PWTSINFO)buffer_info;
+        wts_info = (PWTSINFOW)buffer_info;
 
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
         if (py_username == NULL)
