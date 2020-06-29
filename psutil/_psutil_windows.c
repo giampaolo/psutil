@@ -1209,16 +1209,11 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // If either or those APIs are missing, we are probably running
-    // in a Windows Nano Server container
-    if (WTSEnumerateSessions == NULL ||
-        WTSQuerySessionInformation == NULL ||
-        WTSFreeMemory == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "wtsapi32.dll cannot be found.");
-        goto error;
-    }
-
-    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+        if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
+            // On Windows Nano server
+            return py_retlist;
+        }
         PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
         goto error;
     }
