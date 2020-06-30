@@ -1193,7 +1193,7 @@ psutil_users(PyObject *self, PyObject *args) {
     LPWSTR buffer_user = NULL;
     LPWSTR buffer_addr = NULL;
     LPWSTR buffer_info = NULL;
-    PWTS_SESSION_INFO sessions = NULL;
+    PWTS_SESSION_INFOW sessions = NULL;
     DWORD count;
     DWORD i;
     DWORD sessionId;
