@@ -1223,7 +1223,7 @@ psutil_users(PyObject *self, PyObject *args) {
             // On Windows Nano server, the Wtsapi32 API can be present, but return WinError 120.
             return py_retlist;
         }
-        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
+        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessionsW");
         goto error;
     }
 
