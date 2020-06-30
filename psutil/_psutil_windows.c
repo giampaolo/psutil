@@ -1209,6 +1209,13 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    if (WTSEnumerateSessionsW == NULL ||
+        WTSQuerySessionInformationW == NULL ||
+        WTSFreeMemory == NULL) {
+            // On Windows Nano server
+            return py_retlist;
+    }
+
     if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
             // On Windows Nano server
