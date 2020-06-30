@@ -1212,13 +1212,15 @@ psutil_users(PyObject *self, PyObject *args) {
     if (WTSEnumerateSessionsW == NULL ||
         WTSQuerySessionInformationW == NULL ||
         WTSFreeMemory == NULL) {
-            // On Windows Nano server
+            // If we don't run in an environment that is a Remote Desktop Services environment
+            // the Wtsapi32 proc might not be present.
+            // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
             return py_retlist;
     }
 
     if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
-            // On Windows Nano server
+            // On Windows Nano server, the Wtsapi32 API can be present, but return WinError 120.
             return py_retlist;
         }
         PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
