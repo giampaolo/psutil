@@ -48,10 +48,9 @@ from psutil.tests import import_module_by_path
 from psutil.tests import print_sysinfo
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
-from psutil.tests import TOX
 
 
-VERBOSITY = 1 if TOX else 2
+VERBOSITY = 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
 NWORKERS = psutil.cpu_count() or 1
 USE_COLORS = not CI_TESTING and term_supports_colors()

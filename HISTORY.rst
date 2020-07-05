@@ -25,6 +25,8 @@ XXXX-XX-XX
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
 - 1757_: memory leak tests are now stable.
+- 1768_: [Windows] added support for Windows Nano Server. (contributed by
+  Julien Lebot)
 
 **Bug fixes**
 
@@ -32,6 +34,8 @@ XXXX-XX-XX
   (patch by Michał Górny)
 - 1760_: [Linux] Process.rlimit() does not handle long long type properly.
 - 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
+- 1781_: fix signature of callback function for getloadavg().  (patch by
+  Ammar Askar)
 
 5.7.0
 =====
