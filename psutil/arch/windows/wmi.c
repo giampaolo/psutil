@@ -30,7 +30,7 @@ double load_avg_5m = 0;
 double load_avg_15m = 0;
 
 
-VOID CALLBACK LoadAvgCallback(PVOID hCounter) {
+VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
     PDH_STATUS err;
