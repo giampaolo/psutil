@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.7.2
+=====
+
+2020-07-15
+
+**Bug fixes**
+
+- wheels for 2.7 were inadvertently deleted.
+
 5.7.1
 =====
 

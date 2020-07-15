@@ -2508,6 +2508,10 @@ Timeline
 ========
 
 - 2020-07-15:
+  `5.7.2 <https://pypi.org/project/psutil/5.7.2/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#571>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.7.1...release-5.7.2#files_bucket>`__
+- 2020-07-15:
   `5.7.1 <https://pypi.org/project/psutil/5.7.1/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#571>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.7.0...release-5.7.1#files_bucket>`__

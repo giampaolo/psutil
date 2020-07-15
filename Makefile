@@ -220,7 +220,7 @@ download-wheels-github:  ## Download latest wheels hosted on github.
 download-wheels:  ## Download wheels from github and appveyor
 	rm -rf dist
 	${MAKE} download-wheels-appveyor
-	${MAKE} download-wheels-github
+	# ${MAKE} download-wheels-github
 	${MAKE} print-wheels
 
 print-wheels:  ## Print downloaded wheels
