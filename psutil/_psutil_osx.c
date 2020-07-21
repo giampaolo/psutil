@@ -513,7 +513,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     uint64_t total;
     size_t   len = sizeof(total);
     vm_statistics_data_t vm;
-    int pagesize = getpagesize();
+    int pagesize = PAGE_SIZE;
     // physical mem
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
@@ -553,7 +553,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size;
     struct xsw_usage totals;
     vm_statistics_data_t vmstat;
-    int pagesize = getpagesize();
+    int pagesize = PAGE_SIZE;
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
