@@ -137,7 +137,8 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
     def test_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
-                         LINUX or MACOS or WINDOWS or AIX or SUNOS)
+                         LINUX or MACOS or WINDOWS or AIX or SUNOS or
+                         FREEBSD or OPENBSD or NETBSD)
 
     def test_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)

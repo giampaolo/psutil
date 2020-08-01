@@ -669,6 +669,10 @@ class Process(object):
             return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
+    def environ(self):
+        return cext.proc_environ(self.pid)
+
+    @wrap_exceptions
     def terminal(self):
         tty_nr = self.oneshot()[kinfo_proc_map['ttynr']]
         tmap = _psposix.get_terminal_map()

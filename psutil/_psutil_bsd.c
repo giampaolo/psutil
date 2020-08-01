@@ -57,6 +57,7 @@
 #include <net/route.h>
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
+#include <kvm.h>
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
@@ -390,6 +391,145 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return Py_BuildValue("N", py_retlist);
 }
 
+
+/*
+ * Return process environment as a Python dictionary
+ */
+PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    int i, cnt = -1;
+    long pid;
+    char *s, **envs, errbuf[_POSIX2_LINE_MAX];
+    PyObject *py_value=NULL, *py_retdict=NULL;
+    kvm_t *kd;
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 *p;
+#else
+    struct kinfo_proc *p;
+#endif
+
+    if (!PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+#if defined(PSUTIL_FREEBSD)
+    kd = kvm_openfiles(NULL, "/dev/null", NULL, 0, errbuf);
+#else
+    kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+#endif
+    if (!kd) {
+        convert_kvm_err("kvm_openfiles", errbuf);
+        return NULL;
+    }
+
+    py_retdict = PyDict_New();
+    if (!py_retdict)
+        goto error;
+
+#if defined(PSUTIL_FREEBSD)
+    p = kvm_getprocs(kd, KERN_PROC_PID, pid, &cnt);
+#elif defined(PSUTIL_OPENBSD)
+    p = kvm_getprocs(kd, KERN_PROC_PID, pid, sizeof(*p), &cnt);
+#elif defined(PSUTIL_NETBSD)
+    p = kvm_getproc2(kd, KERN_PROC_PID, pid, sizeof(*p), &cnt);
+#endif
+    if (!p) {
+        NoSuchProcess("kvm_getprocs");
+        goto error;
+    }
+    if (cnt <= 0) {
+        NoSuchProcess(cnt < 0 ? kvm_geterr(kd) : "kvm_getprocs: cnt==0");
+        goto error;
+    }
+
+    // On *BSD kernels there are a few kernel-only system processes without an
+    // environment (See e.g. "procstat -e 0 | 1 | 2 ..." on FreeBSD.)
+    //
+    // Some system process have no stats attached at all
+    // (they are marked with P_SYSTEM.)
+    //
+    // On FreeBSD, it's possible that the process is swapped or paged out,
+    // then there no access to the environ stored in the process' user area.
+    //
+    // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
+    //
+    // To make unittest suite happy, return an empty environment.
+    //
+#if defined(PSUTIL_FREEBSD)
+#if (defined(__FreeBSD_version) && __FreeBSD_version >= 700000)
+    if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
+#else
+    if ((p)->ki_flag & P_SYSTEM) {
+#endif
+#elif defined(PSUTIL_NETBSD)
+    if ((p)->p_stat == SZOMB) {
+#elif defined(PSUTIL_OPENBSD)
+    if ((p)->p_flag & P_SYSTEM) {
+#endif
+        kvm_close(kd);
+        return py_retdict;
+    }
+
+#if defined(PSUTIL_NETBSD)
+    envs = kvm_getenvv2(kd, p, 0);
+#else
+    envs = kvm_getenvv(kd, p, 0);
+#endif
+    if (!envs) {
+        // Map to "psutil" general high-level exceptions
+        switch (errno) {
+            case 0:
+                // Process has cleared it's environment, return empty one
+                kvm_close(kd);
+                return py_retdict;
+            case EPERM:
+                AccessDenied("kvm_getenvv");
+                break;
+            case ESRCH:
+                NoSuchProcess("kvm_getenvv");
+                break;
+#if defined(PSUTIL_FREEBSD)
+            case ENOMEM:
+                // Unfortunately, under FreeBSD kvm_getenvv() returns
+                // failure for certain processes ( e.g. try
+                // "sudo procstat -e <pid of your XOrg server>".)
+                // Map the error condition to 'AccessDenied'.
+                sprintf(errbuf,
+                        "kvm_getenvv(pid=%ld, ki_uid=%d): errno=ENOMEM",
+                        pid, p->ki_uid);
+                AccessDenied(errbuf);
+                break;
+#endif
+            default:
+                sprintf(errbuf, "kvm_getenvv(pid=%ld)", pid);
+                PyErr_SetFromOSErrnoWithSyscall(errbuf);
+                break;
+        }
+        goto error;
+    }
+
+    for (i = 0; envs[i] != NULL; i++) {
+        s = strchr(envs[i], '=');
+        if (!s)
+            continue;
+        *s++ = 0;
+        py_value = PyUnicode_DecodeFSDefault(s);
+        if (!py_value)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, envs[i], py_value)) {
+            goto error;
+        }
+        Py_DECREF(py_value);
+    }
+
+    kvm_close(kd);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_value);
+    Py_XDECREF(py_retdict);
+    kvm_close(kd);
+    return NULL;
+}
 
 /*
  * Return the number of logical CPUs in the system.
@@ -960,6 +1100,8 @@ static PyMethodDef mod_methods[] = {
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
 #endif
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+     "Return process environment"},
 
     // --- system-related functions
 
