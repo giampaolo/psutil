@@ -51,7 +51,7 @@ if FREEBSD:
         cext.SWAIT: _common.STATUS_WAITING,
         cext.SLOCK: _common.STATUS_LOCKED,
     }
-elif OPENBSD or NETBSD:
+elif OPENBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
         cext.SSLEEP: _common.STATUS_SLEEPING,
@@ -76,12 +76,11 @@ elif OPENBSD or NETBSD:
 elif NETBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
-        cext.SACTIVE: _common.STATUS_RUNNING,
-        cext.SDYING: _common.STATUS_ZOMBIE,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
         cext.SSTOP: _common.STATUS_STOPPED,
         cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SDEAD: _common.STATUS_DEAD,
-        cext.SSUSPENDED: _common.STATUS_SUSPENDED,  # unique to NetBSD
+        cext.SRUN: _common.STATUS_WAKING,
+        cext.SONPROC: _common.STATUS_RUNNING,
     }
 
 TCP_STATUSES = {

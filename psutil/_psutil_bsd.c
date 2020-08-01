@@ -1060,7 +1060,9 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "SSLEEP", LSSLEEP)) INITERR;
     if (PyModule_AddIntConstant(mod, "SSTOP", LSSTOP)) INITERR;
     if (PyModule_AddIntConstant(mod, "SZOMB", LSZOMB)) INITERR;
+#if __NetBSD_Version__ < 500000000
     if (PyModule_AddIntConstant(mod, "SDEAD", LSDEAD)) INITERR;
+#endif
     if (PyModule_AddIntConstant(mod, "SONPROC", LSONPROC)) INITERR;
     // unique to NetBSD
     if (PyModule_AddIntConstant(mod, "SSUSPENDED", LSSUSPENDED)) INITERR;
