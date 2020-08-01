@@ -517,7 +517,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 }
 
 
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 701000
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -795,9 +795,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 case KVME_TYPE_DEAD:
                     path = "[dead]";
                     break;
+#ifdef KVME_TYPE_SG
                 case KVME_TYPE_SG:
                     path = "[sg]";
                     break;
+#endif
                 case KVME_TYPE_UNKNOWN:
                     path = "[unknown]";
                     break;

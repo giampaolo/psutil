@@ -617,8 +617,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",softdep", sizeof(opts));
         if (flags & MNT_NOSYMFOLLOW)
             strlcat(opts, ",nosymfollow", sizeof(opts));
+#ifdef MNT_GJOURNAL
         if (flags & MNT_GJOURNAL)
             strlcat(opts, ",gjournal", sizeof(opts));
+#endif
         if (flags & MNT_MULTILABEL)
             strlcat(opts, ",multilabel", sizeof(opts));
         if (flags & MNT_ACLS)
@@ -627,8 +629,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",noclusterr", sizeof(opts));
         if (flags & MNT_NOCLUSTERW)
             strlcat(opts, ",noclusterw", sizeof(opts));
+#ifdef MNT_NFS4ACLS
         if (flags & MNT_NFS4ACLS)
             strlcat(opts, ",nfs4acls", sizeof(opts));
+#endif
 #elif PSUTIL_NETBSD
         if (flags & MNT_NODEV)
             strlcat(opts, ",nodev", sizeof(opts));
