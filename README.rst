@@ -134,7 +134,7 @@ contact`_.  Tidelift will coordinate the fix and disclosure.
 Donate
 ======
 
-A lot of time and effort went into making psutil as it is today. If you whish
+A lot of time and effort went into making psutil as it is today. If you wish
 to help its future development consider making me a `donation <https://gmpy.dev/donate>`__.
 
 Projects using psutil
