@@ -167,6 +167,26 @@ psutil_setup(void) {
 }
 
 
+// ============================================================================
+// Utility functions (BSD)
+// ============================================================================
+
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+void
+convert_kvm_err(const char *syscall, char *errbuf) {
+    char fullmsg[8192];
+
+    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
+    if (strstr(errbuf, "Permission denied") != NULL)
+        AccessDenied(fullmsg);
+    else if (strstr(errbuf, "Operation not permitted") != NULL)
+        AccessDenied(fullmsg);
+    else
+        PyErr_Format(PyExc_RuntimeError, fullmsg);
+}
+#endif
+
+
 // ====================================================================
 // --- Windows
 // ====================================================================

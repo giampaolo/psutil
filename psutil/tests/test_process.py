@@ -298,7 +298,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdout.isatty():
+        if sys.stdin.isatty():
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:
