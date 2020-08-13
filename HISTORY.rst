@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.7.3
+=====
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 893_: implement Process.environ() on BSD family. (patch by Armin Gruner)
+
 5.7.2
 =====
 
