@@ -763,6 +763,8 @@ class TestScripts(PsutilTestCase):
     def test_battery(self):
         self.assert_stdout('battery.py')
 
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
