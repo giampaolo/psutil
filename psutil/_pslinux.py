@@ -1205,9 +1205,19 @@ def sensors_temperatures():
     # https://github.com/giampaolo/psutil/issues/971
     # https://github.com/nicolargo/glances/issues/1060
     basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*'))
-    basenames.extend(glob.glob(
-        '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'))
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
+
+    # Only add the coretemp hwmon entries if they're not already in
+    # /sys/class/hwmon/
+    # https://github.com/giampaolo/psutil/issues/1708
+    # https://github.com/giampaolo/psutil/pull/1648
+    basenames2 = glob.glob(
+        '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*')
+    repl = re.compile('/sys/devices/platform/coretemp.*/hwmon/')
+    for name in basenames2:
+        altname = repl.sub('/sys/class/hwmon/', name)
+        if altname not in basenames:
+            basenames.append(name)
 
     for base in basenames:
         try:
