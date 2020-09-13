@@ -161,7 +161,7 @@ Portings
 
 - Go: https://github.com/shirou/gopsutil
 - C: https://github.com/hamon-in/cpslib
-- Rust: https://github.com/borntyping/rust-psutil
+- Rust: https://github.com/rust-psutil/rust-psutil
 - Nim: https://github.com/johnscillieri/psutil-nim
 
 Example usages
