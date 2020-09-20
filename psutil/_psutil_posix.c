@@ -404,7 +404,7 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
         goto error;
 
     close(sock);
-    if ((ifr.ifr_flags & IFF_UP) != 0)
+    if ((ifr.ifr_flags & IFF_RUNNING) != 0)
         return Py_BuildValue("O", Py_True);
     else
         return Py_BuildValue("O", Py_False);

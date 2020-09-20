@@ -919,8 +919,7 @@ class TestSystemNetIfStats(PsutilTestCase):
             except RuntimeError:
                 pass
             else:
-                # Not always reliable.
-                # self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
                                  int(re.findall(r'(?i)MTU[: ](\d+)', out)[0]))
 
