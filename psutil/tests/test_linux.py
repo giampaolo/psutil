@@ -924,6 +924,11 @@ class TestSystemNetIfStats(PsutilTestCase):
                 self.assertEqual(stats.mtu,
                                  int(re.findall(r'(?i)MTU[: ](\d+)', out)[0]))
 
+    def test_mtu(self):
+        for name, stats in psutil.net_if_stats().items():
+            with open("/sys/class/net/%s/mtu" % name, "rt") as f:
+                self.assertEqual(stats.mtu, int(f.read().strip()))
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
