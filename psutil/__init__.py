@@ -2230,6 +2230,9 @@ if hasattr(_psplatform, "wifi_interfaces"):
     def wifi_interfaces():
         return _psplatform.wifi_interfaces()
 
+    def wifi_scan():
+        return _psplatform.wifi_scan()
+
 
 # =====================================================================
 # --- sensors

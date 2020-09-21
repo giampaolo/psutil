@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <linux/wireless.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -538,6 +539,38 @@ error:
 }
 
 
+static PyObject*
+psutil_wifi_scan(PyObject* self, PyObject* args) {
+    int sock = -1;
+    int ret;
+    struct iwreq w = {0};
+
+    // setup iwreq struct
+    w.u.param.flags = IW_SCAN_DEFAULT;
+    w.u.param.value = 0;
+    strncpy(w.ifr_name, "wlp3s0", IFNAMSIZ);
+
+    // create socket
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        goto error;
+
+    // scan
+    ret = ioctl(sock, SIOCSIWSCAN, &w);
+    if (ret == -1)
+        goto error;
+
+
+
+    return Py_BuildValue("i", 99);
+
+error:
+    if (sock != -1)
+        close(sock);
+    return PyErr_SetFromErrno(PyExc_OSError);
+}
+
+
 /*
  * Module init.
  */
@@ -567,6 +600,8 @@ static PyMethodDef mod_methods[] = {
      "Return currently connected users as a list of tuples"},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return duplex and speed info about a NIC"},
+    {"wifi_scan", psutil_wifi_scan, METH_VARARGS,
+     "Scan wifi networks"},
 
     // --- linux specific
 
