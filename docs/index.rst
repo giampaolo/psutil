@@ -687,7 +687,8 @@ Network
   system as a dictionary whose keys are the NIC names and value is a named tuple
   with the following fields:
 
-  - **isup**: a bool indicating whether the NIC is up and running.
+  - **isup**: a bool indicating whether the NIC is up and running (meaning
+    ethernet cable or Wi-Fi is connected).
   - **duplex**: the duplex communication type;
     it can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
     :const:`NIC_DUPLEX_UNKNOWN`.
@@ -706,6 +707,7 @@ Network
 
   .. versionadded:: 3.0.0
 
+  .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
 
 Sensors
 -------
