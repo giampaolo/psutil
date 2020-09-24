@@ -131,11 +131,12 @@ Security
 To report a security vulnerability, please use the `Tidelift security
 contact`_.  Tidelift will coordinate the fix and disclosure.
 
-Donate
-======
+Sponsorship
+===========
 
 A lot of time and effort went into making psutil as it is today. If you whish
-to help its future development consider making me a `donation <https://gmpy.dev/donate>`__.
+to help its future development consider
+`sponsoring <https://github.com/sponsors/giampaolo>`__ it.
 
 Projects using psutil
 =====================
@@ -146,7 +147,7 @@ psutil has roughly the following monthly downloads:
     :target: https://pepy.tech/project/psutil
     :alt: Downloads
 
-...and has over 45,000 projects on GitHub depending from it.
+...and has over 55,000 projects on GitHub depending from it.
 Here's some I find particularly interesting:
 
 - https://github.com/google/grr
