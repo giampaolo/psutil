@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <string.h>
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
@@ -176,6 +177,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     size_t len;
     const char *data;
     char *ptr;
+    char *percentp;
 
     if (addr == NULL) {
         Py_INCREF(Py_None);
@@ -198,6 +200,18 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             return Py_None;
         }
         else {
+            // IPv6 addresses can have a percent symbol at the end.
+            // E.g. these 2 are equivalent:
+            // "fe80::1ff:fe23:4567:890a"
+            // "fe80::1ff:fe23:4567:890a%eth0"
+            // That is the "zone id" portion, which usually is the name
+            // of the network interface. Let's remove it (ifconfig cmd
+            // does the same).
+            if (family == AF_INET6) {
+                percentp = strchr(buf, '%');
+                if (percentp != NULL)
+                    buf[percentp - buf] = '\0';
+            }
             return Py_BuildValue("s", buf);
         }
     }

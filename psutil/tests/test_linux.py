@@ -75,6 +75,23 @@ def get_ipv4_address(ifname):
                         struct.pack('256s', ifname))[20:24])
 
 
+def get_ipv6_address(ifname):
+    with open("/proc/net/if_inet6", 'rt') as f:
+        for line in f.readlines():
+            fields = line.split()
+            if fields[-1] == ifname:
+                break
+        else:
+            raise ValueError("could not find interface %r" % ifname)
+    unformatted = fields[0]
+    groups = []
+    for i in range(0, len(unformatted), 4):
+        groups.append(unformatted[i:i + 4])
+    formatted = ":".join(groups)
+    packed = socket.inet_pton(socket.AF_INET6, formatted)
+    return socket.inet_ntop(socket.AF_INET6, packed)
+
+
 def get_mac_address(ifname):
     import fcntl
     ifname = ifname[:15]
@@ -890,7 +907,8 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     self.assertEqual(addr.address, get_mac_address(name))
                 elif addr.family == socket.AF_INET:
                     self.assertEqual(addr.address, get_ipv4_address(name))
-                # TODO: test for AF_INET6 family
+                elif addr.family == socket.AF_INET6:
+                    self.assertEqual(addr.address, get_ipv6_address(name))
 
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @unittest.skipIf(not which('ip'), "'ip' utility not available")
