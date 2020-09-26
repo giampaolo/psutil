@@ -1647,6 +1647,8 @@ PsutilMethods[] = {
      "Return system memory page size."},
     {"wifi_cards", psutil_wifi_cards, METH_VARARGS,
      "Return a list of Wi-Fi interfaces."},
+    {"wifi_scan", psutil_wifi_scan, METH_VARARGS,
+     "Scan Wi-Fi networks."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

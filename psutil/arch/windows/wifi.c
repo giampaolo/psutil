@@ -14,12 +14,12 @@
 
 
 /*
- * Return a Python list of named tuples with overall network I/O information
+ * Return a Python list of Wi-Fi cards.
  */
 PyObject *
 psutil_wifi_cards(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
-    DWORD dwMaxClient = 2;   //
+    DWORD dwMaxClient = 2;
     DWORD dwCurVersion = 0;
     DWORD dwResult = 0;
     int iRet = 0;
@@ -38,13 +38,13 @@ psutil_wifi_cards(PyObject *self, PyObject *args) {
         return NULL;
 
     dwResult = WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient);
-    if (dwResult != ERROR_SUCCESS)  {
+    if (dwResult != ERROR_SUCCESS) {
         PyErr_SetFromOSErrnoWithSyscall("WlanOpenHandle");
         return NULL;
     }
 
     dwResult = WlanEnumInterfaces(hClient, NULL, &pIfList);
-    if (dwResult != ERROR_SUCCESS)  {
+    if (dwResult != ERROR_SUCCESS) {
         PyErr_SetFromOSErrnoWithSyscall("WlanEnumInterfaces");
         goto error;
     }
@@ -106,6 +106,7 @@ psutil_wifi_cards(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
+    WlanCloseHandle(hClient, NULL);
     if (pIfList != NULL)
         WlanFreeMemory(pIfList);
     return py_retlist;
@@ -118,5 +119,187 @@ error:
     Py_XDECREF(py_description);
     Py_DECREF(py_retlist);
     WlanCloseHandle(hClient, NULL);
+    return NULL;
+}
+
+
+/*
+ * Scan Wi-Fi networks.
+ */
+PyObject *
+psutil_wifi_scan(PyObject *self, PyObject *args) {
+    LPWSTR guidstr;
+    GUID guid;
+    HRESULT hr;
+    HANDLE hClient = NULL;
+    DWORD dwMaxClient = 2;
+    DWORD dwCurVersion = 0;
+    DWORD dwResult = 0;
+    unsigned int j;
+    int iRSSI = 0;
+    char *auth;
+    char *cipher;
+    PWLAN_AVAILABLE_NETWORK_LIST pBssList = NULL;
+    PWLAN_AVAILABLE_NETWORK pBssEntry = NULL;
+    PyObject *py_dict = NULL;
+    PyObject *py_ssid = NULL;
+    PyObject *py_quality = NULL;
+    PyObject *py_level = NULL;
+    PyObject *py_auth = NULL;
+    PyObject *py_cipher = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "u", &guidstr))
+        return NULL;
+
+    hr = CLSIDFromString(guidstr, (LPCLSID)&guid);
+    if (hr != NOERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "CLSIDFromString syscall failed");
+        return NULL;
+    }
+
+    dwResult = WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient);
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanOpenHandle");
+        return NULL;
+    }
+
+    dwResult = WlanGetAvailableNetworkList(hClient, &guid, 0,  NULL, &pBssList);
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanGetAvailableNetworkList");
+        return NULL;
+    }
+
+    // https://docs.microsoft.com/en-us/windows/win32/api/wlanapi/ns-wlanapi-wlan_available_network
+    for (j = 0; j < pBssList->dwNumberOfItems; j++) {
+        pBssEntry = (WLAN_AVAILABLE_NETWORK *) & pBssList->Network[j];
+        if (! pBssEntry->bNetworkConnectable)
+            continue;
+
+        // RSSI expressed in dbm
+        if (pBssEntry->wlanSignalQuality == 0)
+            iRSSI = -100;
+        else if (pBssEntry->wlanSignalQuality == 100)
+            iRSSI = -50;
+        else
+            iRSSI = -100 + (pBssEntry->wlanSignalQuality/2);
+
+        /*
+        printf("Security Enabled[%u]:\t ", j);
+        if (pBssEntry->bSecurityEnabled)
+            printf("Yes\n");
+        else
+            printf("No\n");
+        */
+
+        switch (pBssEntry->dot11DefaultAuthAlgorithm) {
+            case DOT11_AUTH_ALGO_80211_OPEN:
+                auth = "802.11 Open";
+                break;
+            case DOT11_AUTH_ALGO_80211_SHARED_KEY:
+                auth = "802.11 Shared";
+                break;
+            case DOT11_AUTH_ALGO_WPA:
+                auth = "WPA";
+                break;
+            case DOT11_AUTH_ALGO_WPA_PSK:
+                auth = "WPA-PSK";
+                break;
+            case DOT11_AUTH_ALGO_WPA_NONE:
+                auth = "WPA-None";
+                break;
+            case DOT11_AUTH_ALGO_RSNA:
+                auth = "RSNA";
+                break;
+            case DOT11_AUTH_ALGO_RSNA_PSK:
+                auth = "RSNA-PSK";
+                break;
+            default:
+                auth = "";
+                break;
+        }
+
+        switch (pBssEntry->dot11DefaultCipherAlgorithm) {
+            case DOT11_CIPHER_ALGO_NONE:
+                cipher = "None";
+                break;
+            case DOT11_CIPHER_ALGO_WEP40:
+                cipher = "WEP-40";
+                break;
+            case DOT11_CIPHER_ALGO_TKIP:
+                cipher = "TKIP";
+                break;
+            case DOT11_CIPHER_ALGO_CCMP:
+                cipher = "CCMP";
+                break;
+            case DOT11_CIPHER_ALGO_WEP104:
+                cipher = "WEP-104 (0x%x)";
+                break;
+            case DOT11_CIPHER_ALGO_WEP:
+                cipher = "WEP";
+                break;
+            default:
+                cipher = "";
+                break;
+            }
+
+        // --- build Python dict
+
+        py_dict = PyDict_New();
+        if (!py_dict)
+            goto error;
+        // SSID
+        py_ssid = Py_BuildValue("s", pBssEntry->dot11Ssid.ucSSID);
+        if (! py_ssid)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "ssid", py_ssid))
+            goto error;
+        // quality
+        py_quality = Py_BuildValue("i", pBssEntry->wlanSignalQuality);
+        if (! py_quality)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "quality", py_quality))
+            goto error;
+        // level
+        py_level = Py_BuildValue("i", iRSSI);
+        if (! py_level)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "level", py_level))
+            goto error;
+        // auth
+        py_auth = Py_BuildValue("s", auth);
+        if (! py_auth)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "auth", py_auth))
+            goto error;
+        // cipher
+        py_cipher = Py_BuildValue("s", cipher);
+        if (! py_cipher)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
+            goto error;
+
+        // cleanup
+        if (PyList_Append(py_retlist, py_dict))
+            goto error;
+        Py_CLEAR(py_dict);
+        Py_CLEAR(py_ssid);
+        Py_CLEAR(py_quality);
+        Py_CLEAR(py_level);
+        Py_CLEAR(py_auth);
+        Py_CLEAR(py_cipher);
+        Py_CLEAR(py_dict);
+    }
+
+    WlanCloseHandle(hClient, NULL);
+    WlanFreeMemory(pBssList);
+    return py_retlist;
+
+error:
+    WlanCloseHandle(hClient, NULL);
+    if (pBssList != NULL)
+        WlanFreeMemory(pBssList);
     return NULL;
 }

@@ -7,3 +7,4 @@
 #include <Python.h>
 
 PyObject *psutil_wifi_cards(PyObject *self, PyObject *args);
+PyObject *psutil_wifi_scan(PyObject *self, PyObject *args);

@@ -2231,12 +2231,7 @@ if hasattr(_psplatform, "wifi_cards"):
         return _psplatform.wifi_cards()
 
     def wifi_scan(card_name=None):
-        if not card_name:
-            cards = wifi_cards()
-            if not cards:
-                raise ValueError("No Wi-Fi cards available on this system")
-            card = cards[0]
-        return _psplatform.wifi_scan(card)
+        return _psplatform.wifi_scan(card_name)
 
 
 # =====================================================================
