@@ -1440,17 +1440,6 @@ class TestSensorsBattery(PsutilTestCase):
         psutil_value = psutil.sensors_battery().percent
         self.assertAlmostEqual(acpi_value, psutil_value, delta=1)
 
-    @unittest.skipIf(not which("acpi"), "acpi utility not available")
-    def test_power_plugged(self):
-        out = sh("acpi -b")
-        if 'unknown' in out.lower():
-            return unittest.skip("acpi output not reliable")
-        if 'discharging at zero rate' in out:
-            plugged = True
-        else:
-            plugged = "Charging" in out.split('\n')[0]
-        self.assertEqual(psutil.sensors_battery().power_plugged, plugged)
-
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
         def open_mock(name, *args, **kwargs):
