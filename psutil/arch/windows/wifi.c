@@ -31,6 +31,7 @@ psutil_wifi_cards(PyObject *self, PyObject *args) {
 
     PyObject *py_tuple = NULL;
     PyObject *py_guid = NULL;
+    PyObject *py_description = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -90,12 +91,18 @@ psutil_wifi_cards(PyObject *self, PyObject *args) {
         py_guid = PyUnicode_FromWideChar(GuidString, wcslen(GuidString));
         if (! py_guid)
             goto error;
-        py_tuple = Py_BuildValue("(Os)", py_guid, status);
+        py_description = PyUnicode_FromWideChar(
+            pIfInfo->strInterfaceDescription,
+            wcslen(pIfInfo->strInterfaceDescription));
+        if (! py_description)
+            goto error;
+        py_tuple = Py_BuildValue("(OOs)", py_guid, py_description, status);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_CLEAR(py_guid);
+        Py_CLEAR(py_description);
         Py_CLEAR(py_tuple);
     }
 
@@ -108,6 +115,7 @@ error:
         WlanFreeMemory(pIfList);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_guid);
+    Py_XDECREF(py_description);
     Py_DECREF(py_retlist);
     WlanCloseHandle(hClient, NULL);
     return NULL;
