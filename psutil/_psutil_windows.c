@@ -37,6 +37,7 @@
 #include "arch/windows/services.h"
 #include "arch/windows/socks.h"
 #include "arch/windows/wmi.h"
+#include "arch/windows/wifi.h"
 
 // Raised by Process.wait().
 static PyObject *TimeoutExpired;
@@ -1644,6 +1645,8 @@ PsutilMethods[] = {
      "Return battery metrics usage."},
     {"getpagesize", psutil_getpagesize, METH_VARARGS,
      "Return system memory page size."},
+    {"wifi_interfaces", psutil_wifi_interfaces, METH_VARARGS,
+     "Return a list of Wi-Fi interfaces."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

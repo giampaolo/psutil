@@ -163,11 +163,12 @@ if WINDOWS:
             'psutil/arch/windows/services.c',
             'psutil/arch/windows/socks.c',
             'psutil/arch/windows/wmi.c',
+            'psutil/arch/windows/wifi.c',
         ],
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "ws2_32", "PowrProf", "pdh",
+            "ws2_32", "PowrProf", "pdh", "wlanapi", "ole32",
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"]
