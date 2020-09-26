@@ -6,4 +6,4 @@
 
 #include <Python.h>
 
-PyObject *psutil_wifi_interfaces(PyObject *self, PyObject *args);
+PyObject *psutil_wifi_cards(PyObject *self, PyObject *args);

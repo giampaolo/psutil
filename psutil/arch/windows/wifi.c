@@ -17,7 +17,7 @@
  * Return a Python list of named tuples with overall network I/O information
  */
 PyObject *
-psutil_wifi_interfaces(PyObject *self, PyObject *args) {
+psutil_wifi_cards(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
     DWORD dwMaxClient = 2;   //
     DWORD dwCurVersion = 0;

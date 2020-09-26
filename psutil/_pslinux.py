@@ -1047,7 +1047,7 @@ def net_if_stats():
 # =====================================================================
 
 
-def wifi_interfaces():
+def wifi_cards():
     ls = []
     with open_text("%s/net/wireless" % get_procfs_path()) as f:
         lines = f.readlines()[2:]

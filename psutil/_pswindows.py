@@ -404,8 +404,8 @@ def net_if_addrs():
 # =====================================================================
 
 
-def wifi_interfaces():
-    return cext.wifi_interfaces()
+def wifi_cards():
+    return cext.wifi_cards()
 
 
 # =====================================================================

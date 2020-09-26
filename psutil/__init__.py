@@ -2225,13 +2225,18 @@ def net_if_stats():
 # =====================================================================
 
 
-if hasattr(_psplatform, "wifi_interfaces"):
+if hasattr(_psplatform, "wifi_cards"):
 
-    def wifi_interfaces():
-        return _psplatform.wifi_interfaces()
+    def wifi_cards():
+        return _psplatform.wifi_cards()
 
-    def wifi_scan():
-        return _psplatform.wifi_scan()
+    def wifi_scan(card_name=None):
+        if not card_name:
+            cards = wifi_cards()
+            if not cards:
+                raise ValueError("No Wi-Fi cards available on this system")
+            card = cards[0]
+        return _psplatform.wifi_scan(card)
 
 
 # =====================================================================
