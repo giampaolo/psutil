@@ -184,15 +184,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         else if (pBssEntry->wlanSignalQuality == 100)
             iRSSI = -50;
         else
-            iRSSI = -100 + (pBssEntry->wlanSignalQuality/2);
-
-        /*
-        printf("Security Enabled[%u]:\t ", j);
-        if (pBssEntry->bSecurityEnabled)
-            printf("Yes\n");
-        else
-            printf("No\n");
-        */
+            iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
 
         switch (pBssEntry->dot11DefaultAuthAlgorithm) {
             case DOT11_AUTH_ALGO_80211_OPEN:
@@ -301,5 +293,13 @@ error:
     WlanCloseHandle(hClient, NULL);
     if (pBssList != NULL)
         WlanFreeMemory(pBssList);
+    Py_XDECREF(py_dict);
+    Py_XDECREF(py_ssid);
+    Py_XDECREF(py_quality);
+    Py_XDECREF(py_level);
+    Py_XDECREF(py_auth);
+    Py_XDECREF(py_cipher);
+    Py_XDECREF(py_dict);
+    Py_DECREF(py_retlist);
     return NULL;
 }
