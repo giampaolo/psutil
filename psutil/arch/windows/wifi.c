@@ -13,6 +13,9 @@
 #include "../../_psutil_common.h"
 
 
+int waitFlag = 1;
+
+
 /*
  * Return a Python list of Wi-Fi cards.
  */
@@ -123,6 +126,30 @@ error:
 }
 
 
+void notificationCallback(PWLAN_NOTIFICATION_DATA pNotifData, PVOID pContext) {
+    if (pNotifData == NULL) {
+        psutil_debug("pNotifData == NULL");
+        return;
+    }
+    if (pNotifData->NotificationSource == WLAN_NOTIFICATION_SOURCE_ACM) {
+        waitFlag = 0;
+        if (pNotifData->NotificationCode == wlan_notification_acm_scan_complete) {
+            psutil_debug("Wi-Fi scan completed");
+        }
+        else if (pNotifData->NotificationCode == wlan_notification_acm_scan_fail) {
+            psutil_debug("Wi-Fi scan error");
+            PyErr_Format(PyExc_RuntimeError, "Wi-Fi scan error");
+        }
+        else {
+            psutil_debug("Wi-Fi scan ignored notification code %i",
+                         pNotifData->NotificationCode);
+        }
+        return;
+    }
+    psutil_debug("NotificationSource != WLAN_NOTIFICATION_SOURCE_ACM");
+}
+
+
 /*
  * Scan Wi-Fi networks.
  */
@@ -139,6 +166,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     int iRSSI = 0;
     char *auth;
     char *cipher;
+    DWORD dwPrevNotifType = 0;
     PWLAN_AVAILABLE_NETWORK_LIST pBssList = NULL;
     PWLAN_AVAILABLE_NETWORK pBssEntry = NULL;
     PyObject *py_dict = NULL;
@@ -154,18 +182,67 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "u", &guidstr))
         return NULL;
 
+    // Get GUID.
     hr = CLSIDFromString(guidstr, (LPCLSID)&guid);
     if (hr != NOERROR) {
         PyErr_SetString(PyExc_RuntimeError, "CLSIDFromString syscall failed");
         return NULL;
     }
 
+    // Open handle.
     dwResult = WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient);
     if (dwResult != ERROR_SUCCESS) {
         PyErr_SetFromOSErrnoWithSyscall("WlanOpenHandle");
         return NULL;
     }
 
+    // Scan takes a while so we need to register a callback.
+    dwResult = WlanRegisterNotification(
+        hClient,
+        WLAN_NOTIFICATION_SOURCE_ACM,
+        FALSE,
+        (WLAN_NOTIFICATION_CALLBACK)notificationCallback,
+        NULL,
+        NULL,
+        &dwPrevNotifType);
+
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification");
+        return NULL;
+    }
+
+    // Scan.
+    dwResult = WlanScan(hClient, &guid, NULL, NULL, NULL);
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanScan");
+        return NULL;
+    }
+
+    // Yawn...
+    waitFlag = 1;
+    while (waitFlag == 1)
+        Sleep(100);
+
+    // Unregister callback.
+    dwResult = WlanRegisterNotification(
+        hClient,
+        WLAN_NOTIFICATION_SOURCE_NONE,
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        &dwPrevNotifType);
+
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification (unregister)");
+        return NULL;
+    }
+
+    // Check if callback set an exception.
+    if (PyErr_Occurred() != NULL)
+        goto error;
+
+    // Get results.
     dwResult = WlanGetAvailableNetworkList(hClient, &guid, 0,  NULL, &pBssList);
     if (dwResult != ERROR_SUCCESS) {
         PyErr_SetFromOSErrnoWithSyscall("WlanGetAvailableNetworkList");
@@ -235,7 +312,27 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
             default:
                 cipher = "";
                 break;
-            }
+        }
+/*
+        PWLAN_BSS_LIST WlanBssList;
+        dwResult = WlanGetNetworkBssList(
+            hClient,
+            &guid,
+            NULL,
+            dot11_BSS_type_any,
+            TRUE,
+            NULL,
+            &WlanBssList);
+        if (dwResult != ERROR_SUCCESS) {
+            PyErr_SetFromOSErrnoWithSyscall("WlanGetNetworkBssList");
+            return NULL;
+        }
+        printf("num items A: %i\n", pBssList->dwNumberOfItems);
+        printf("num items B: %i\n", WlanBssList->dwNumberOfItems);
+        for (int c = 0; c < WlanBssList->dwNumberOfItems; c++) {
+            printf("SSID: %hs\n", WlanBssList->wlanBssEntries[c].dot11Ssid.ucSSID);
+        }
+*/
 
         // --- build Python dict
 
