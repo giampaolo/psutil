@@ -13,12 +13,10 @@
 #include "../../_psutil_common.h"
 
 
+// TODO: avoid global var and instead use pContext in notification_callback().
 int waitFlag = 1;
 
 
-/*
- * Return a Python list of Wi-Fi cards.
- */
 PyObject *
 psutil_wifi_cards(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
@@ -126,7 +124,8 @@ error:
 }
 
 
-void notificationCallback(PWLAN_NOTIFICATION_DATA pNotifData, PVOID pContext) {
+static void
+notification_callback(PWLAN_NOTIFICATION_DATA pNotifData, PVOID pContext) {
     if (pNotifData == NULL) {
         psutil_debug("pNotifData == NULL");
         return;
@@ -137,6 +136,7 @@ void notificationCallback(PWLAN_NOTIFICATION_DATA pNotifData, PVOID pContext) {
             psutil_debug("Wi-Fi scan completed");
         }
         else if (pNotifData->NotificationCode == wlan_notification_acm_scan_fail) {
+            // TODO: provide better error message.
             psutil_debug("Wi-Fi scan error");
             PyErr_Format(PyExc_RuntimeError, "Wi-Fi scan error");
         }
@@ -147,6 +147,60 @@ void notificationCallback(PWLAN_NOTIFICATION_DATA pNotifData, PVOID pContext) {
         return;
     }
     psutil_debug("NotificationSource != WLAN_NOTIFICATION_SOURCE_ACM");
+}
+
+
+static int
+refresh_scan(HANDLE hClient, GUID guid) {
+    DWORD dwResult;
+    DWORD dwPrevNotifType = 0;
+
+    // Scan takes a while so we need to register a callback.
+    dwResult = WlanRegisterNotification(
+        hClient,
+        WLAN_NOTIFICATION_SOURCE_ACM,
+        FALSE,
+        (WLAN_NOTIFICATION_CALLBACK)notification_callback,
+        NULL,
+        NULL,
+        &dwPrevNotifType);
+
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification");
+        return 1;
+    }
+
+    // Scan.
+    dwResult = WlanScan(hClient, &guid, NULL, NULL, NULL);
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanScan");
+        return 1;
+    }
+
+    // Yawn...
+    waitFlag = 1;
+    while (waitFlag == 1)
+        Sleep(100);
+
+    // Unregister callback.
+    dwResult = WlanRegisterNotification(
+        hClient,
+        WLAN_NOTIFICATION_SOURCE_NONE,
+        FALSE,
+        NULL,
+        NULL,
+        NULL,
+        &dwPrevNotifType);
+
+    if (dwResult != ERROR_SUCCESS) {
+        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification (unregister)");
+        return 1;
+    }
+
+    // Check if callback set an exception.
+    if (PyErr_Occurred() != NULL)
+        return 1;
+    return 0;
 }
 
 
@@ -161,12 +215,11 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
     DWORD dwMaxClient = 2;
     DWORD dwCurVersion = 0;
-    DWORD dwResult = 0;
+    DWORD dwResult;
     unsigned int j;
     int iRSSI = 0;
     char *auth;
     char *cipher;
-    DWORD dwPrevNotifType = 0;
     PWLAN_AVAILABLE_NETWORK_LIST pBssList = NULL;
     PWLAN_AVAILABLE_NETWORK pBssEntry = NULL;
     PyObject *py_dict = NULL;
@@ -196,50 +249,8 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    // Scan takes a while so we need to register a callback.
-    dwResult = WlanRegisterNotification(
-        hClient,
-        WLAN_NOTIFICATION_SOURCE_ACM,
-        FALSE,
-        (WLAN_NOTIFICATION_CALLBACK)notificationCallback,
-        NULL,
-        NULL,
-        &dwPrevNotifType);
-
-    if (dwResult != ERROR_SUCCESS) {
-        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification");
-        return NULL;
-    }
-
-    // Scan.
-    dwResult = WlanScan(hClient, &guid, NULL, NULL, NULL);
-    if (dwResult != ERROR_SUCCESS) {
-        PyErr_SetFromOSErrnoWithSyscall("WlanScan");
-        return NULL;
-    }
-
-    // Yawn...
-    waitFlag = 1;
-    while (waitFlag == 1)
-        Sleep(100);
-
-    // Unregister callback.
-    dwResult = WlanRegisterNotification(
-        hClient,
-        WLAN_NOTIFICATION_SOURCE_NONE,
-        FALSE,
-        NULL,
-        NULL,
-        NULL,
-        &dwPrevNotifType);
-
-    if (dwResult != ERROR_SUCCESS) {
-        PyErr_SetFromOSErrnoWithSyscall("WlanRegisterNotification (unregister)");
-        return NULL;
-    }
-
-    // Check if callback set an exception.
-    if (PyErr_Occurred() != NULL)
+    // Refresh scan results.
+    if (refresh_scan(hClient, guid) == 1)
         goto error;
 
     // Get results.
