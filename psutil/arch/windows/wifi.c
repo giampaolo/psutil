@@ -220,14 +220,17 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     int iRSSI = 0;
     char *auth;
     char *cipher;
+    char macaddr[200];
     PWLAN_AVAILABLE_NETWORK_LIST pBssList = NULL;
     PWLAN_AVAILABLE_NETWORK pBssEntry = NULL;
+    PWLAN_BSS_LIST WlanBssList = NULL;
     PyObject *py_dict = NULL;
     PyObject *py_ssid = NULL;
     PyObject *py_quality = NULL;
     PyObject *py_level = NULL;
     PyObject *py_auth = NULL;
     PyObject *py_cipher = NULL;
+    PyObject *py_macaddr = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -324,26 +327,34 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
                 cipher = "";
                 break;
         }
-/*
-        PWLAN_BSS_LIST WlanBssList;
+
+        // Get MAC address.
         dwResult = WlanGetNetworkBssList(
             hClient,
             &guid,
-            NULL,
-            dot11_BSS_type_any,
-            TRUE,
+            &pBssEntry->dot11Ssid,
+            pBssEntry->dot11BssType,
+            pBssEntry->bSecurityEnabled,
             NULL,
             &WlanBssList);
         if (dwResult != ERROR_SUCCESS) {
             PyErr_SetFromOSErrnoWithSyscall("WlanGetNetworkBssList");
-            return NULL;
+            goto error;
         }
-        printf("num items A: %i\n", pBssList->dwNumberOfItems);
-        printf("num items B: %i\n", WlanBssList->dwNumberOfItems);
-        for (int c = 0; c < WlanBssList->dwNumberOfItems; c++) {
-            printf("SSID: %hs\n", WlanBssList->wlanBssEntries[c].dot11Ssid.ucSSID);
+        if (WlanBssList->dwNumberOfItems < 1) {
+            PyErr_SetString(PyExc_RuntimeError, "dwNumberOfItems = 0");
+            goto error;
         }
-*/
+        snprintf(
+            macaddr,
+            sizeof(macaddr),
+            "%02x:%02x:%02x:%02x:%02x:%02x",
+            WlanBssList->wlanBssEntries[0].dot11Bssid[0],
+            WlanBssList->wlanBssEntries[0].dot11Bssid[1],
+            WlanBssList->wlanBssEntries[0].dot11Bssid[2],
+            WlanBssList->wlanBssEntries[0].dot11Bssid[3],
+            WlanBssList->wlanBssEntries[0].dot11Bssid[4],
+            WlanBssList->wlanBssEntries[0].dot11Bssid[5]);
 
         // --- build Python dict
 
@@ -379,6 +390,12 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         if (! py_cipher)
             goto error;
         if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
+            goto error;
+        // MAC address
+        py_macaddr = Py_BuildValue("s", macaddr);
+        if (! py_macaddr)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "macaddr", py_macaddr))
             goto error;
 
         // cleanup
