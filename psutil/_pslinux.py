@@ -1361,9 +1361,6 @@ def sensors_battery():
         root + "/charge_full")
     time_to_empty = multi_cat(root + "/time_to_empty_now")
 
-    if (energy_now is None or power_now is None) and time_to_empty is None:
-        return None
-
     # Percent. If we have energy_full the percentage will be more
     # accurate compared to reading /capacity file (float vs. int).
     if energy_full is not None and energy_now is not None:
@@ -1407,6 +1404,9 @@ def sensors_battery():
         secsleft = int(time_to_empty * 60)
         if secsleft < 0:
             secsleft = _common.POWER_TIME_UNKNOWN
+    else:
+        secsleft = _common.POWER_TIME_UNKNOWN
+
 
     return _common.sbattery(percent, secsleft, power_plugged)
 
