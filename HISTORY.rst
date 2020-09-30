@@ -13,6 +13,12 @@ XXXX-XX-XX
 - 1837_: [Linux] improved battery detection and charge "secsleft" calculation
   (patch by aristocratos)
 
+**Bug fixes**
+
+- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
+  the remaining values, still return a result instead of None.
+  (patch by aristocratos)
+
 5.7.2
 =====
 
