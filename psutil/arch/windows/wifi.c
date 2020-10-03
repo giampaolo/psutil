@@ -16,6 +16,30 @@
 // TODO: avoid global var and instead use pContext in notification_callback().
 int waitFlag = 1;
 
+static char *
+status2str(PWLAN_INTERFACE_INFO pIfInfo) {
+    switch (pIfInfo->isState) {
+        case wlan_interface_state_not_ready:
+            return "not_ready";
+        case wlan_interface_state_connected:
+            return "connected";
+        case wlan_interface_state_ad_hoc_network_formed:
+            return "ad_hoc_network_formed";
+        case wlan_interface_state_disconnecting:
+            return "disconnecting";
+        case wlan_interface_state_disconnected:
+            return "disconnected";
+        case wlan_interface_state_associating:
+            return "associating";
+        case wlan_interface_state_discovering:
+            return "discovering";
+        case wlan_interface_state_authenticating:
+            return "authenticating";
+        default:
+            return "unknown";
+    }
+}
+
 
 PyObject *
 psutil_wifi_ifaces(PyObject *self, PyObject *args) {
@@ -33,6 +57,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_dict = NULL;
     PyObject *py_guid = NULL;
     PyObject *py_description = NULL;
+    PyObject *py_status = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -59,39 +84,17 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        switch (pIfInfo->isState) {
-            case wlan_interface_state_not_ready:
-                status = "not_ready";
-                break;
-            case wlan_interface_state_connected:
-                status = "connected";
-                break;
-            case wlan_interface_state_ad_hoc_network_formed:
-                status = "ad_hoc_network_formed";
-                break;
-            case wlan_interface_state_disconnecting:
-                status = "disconnecting";
-                break;
-            case wlan_interface_state_disconnected:
-                status = "disconnected";
-                break;
-            case wlan_interface_state_associating:
-                status = "associating";
-                break;
-            case wlan_interface_state_discovering:
-                status = "discovering";
-                break;
-            case wlan_interface_state_authenticating:
-                status = "authenticating";
-                break;
-            default:
-                status = "unknown";
-                break;
-        }
+        status = status2str(pIfInfo);
 
         // build dict
         py_dict = PyDict_New();
         if (!py_dict)
+            goto error;
+        // status
+        py_status = Py_BuildValue("s", status);
+        if (! py_status)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "status", py_status))
             goto error;
         // guid
         py_guid = PyUnicode_FromWideChar(GuidString, wcslen(GuidString));
@@ -112,6 +115,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         Py_CLEAR(py_guid);
         Py_CLEAR(py_description);
+        Py_CLEAR(py_status);
         Py_CLEAR(py_dict);
     }
 
@@ -126,6 +130,7 @@ error:
     Py_XDECREF(py_dict);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_description);
+    Py_XDECREF(py_status);
     Py_DECREF(py_retlist);
     WlanCloseHandle(hClient, NULL);
     return NULL;
