@@ -12,6 +12,9 @@
 // https://github.com/azbox-enigma2/pythonwifi/blob/master/pythonwifi/iwlibs.py
 
 #include <Python.h>
+#include <linux/if.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <linux/wireless.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
