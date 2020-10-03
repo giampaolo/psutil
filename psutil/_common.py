@@ -206,6 +206,10 @@ shwtemp = namedtuple(
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 # psutil.sensors_fans()
 sfan = namedtuple('sfan', ['label', 'current'])
+# psutil.wifi_ifaces() (quality and signal)
+wfqual = namedtuple('wfqual', ['perc', 'curr', 'max'])
+wfsig = namedtuple('wfsig', ['perc', 'curr', 'max'])
+
 
 # --- for Process methods
 
@@ -831,6 +835,30 @@ def print_color(s, color=None, bold=False, file=sys.stdout):
             print(s, file=file)    # NOQA
         finally:
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
+
+
+class BaseWifiInterface:
+
+    def __init__(self, ifname):
+        self._ifname = ifname
+
+    def __str__(self):
+        return "psutil.%s(%r)" % (self.__class__.__name__, self._ifname)
+
+    __repr__ = __str__
+
+    def ifname(self):
+        """The interface name."""
+        return self._ifname
+
+    def as_dict(self):
+        ignore = ['as_dict']
+        names = [x for x in dir(self) if not x.startswith('_') and
+                 x not in ignore]
+        retdict = {}
+        for name in names:
+            retdict[name] = getattr(self, name)()
+        return retdict
 
 
 if bool(os.getenv('PSUTIL_DEBUG', 0)):

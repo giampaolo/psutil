@@ -1052,38 +1052,10 @@ def net_if_stats():
 # =====================================================================
 
 
-wfqual = namedtuple('wfqual', ['perc', 'curr', 'max'])
-wfsig = namedtuple('wfsig', ['perc', 'curr', 'max'])
-
-
-class _BaseWifiInterface:
+class WifiInterface(_common.BaseWifiInterface):
 
     def __init__(self, ifname):
-        self._ifname = ifname
-
-    def __str__(self):
-        return "psutil.%s(%r)" % (self.__class__.__name__, self._ifname)
-
-    __repr__ = __str__
-
-    def ifname(self):
-        """The interface name."""
-        return self._ifname
-
-    def as_dict(self):
-        ignore = ['as_dict']
-        names = [x for x in dir(self) if not x.startswith('_') and
-                 x not in ignore]
-        retdict = {}
-        for name in names:
-            retdict[name] = getattr(self, name)()
-        return retdict
-
-
-class WifiInterface(_BaseWifiInterface):
-
-    def __init__(self, ifname):
-        _BaseWifiInterface.__init__(self, ifname)
+        _common.BaseWifiInterface.__init__(self, ifname)
         with self._get_fd() as fd:
             self._assert_wifi_card(ifname, fd)
             ranges = cext.wifi_card_ranges(self._ifname, fd)
@@ -1137,7 +1109,7 @@ class WifiInterface(_BaseWifiInterface):
         with self._get_fd() as fd:
             curr, _ = cext.wifi_card_stats(self._ifname, fd)
         perc = int(usage_percent(curr, self._qual_max))
-        return wfqual(perc, curr, self._qual_max)
+        return _common.wfqual(perc, curr, self._qual_max)
 
     def signal(self):
         # This is how wavemon does it:
@@ -1152,7 +1124,7 @@ class WifiInterface(_BaseWifiInterface):
             perc = 70
         else:
             perc = curr + abs(self._sig_max)
-        return wfsig(perc, curr, self._sig_max)
+        return _common.wfsig(perc, curr, self._sig_max)
 
     def mode(self):
         """The Wi-Fi mode as a string (e.g. "managed" or "master")."""
