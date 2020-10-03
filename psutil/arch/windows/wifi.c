@@ -54,8 +54,14 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PWLAN_INTERFACE_INFO_LIST pIfList = NULL;
     PWLAN_INTERFACE_INFO pIfInfo = NULL;
 
+    // variables used for WlanQueryInterfaces for opcode = wlan_intf_opcode_current_connection
+    PWLAN_CONNECTION_ATTRIBUTES pConnectInfo = NULL;
+    DWORD connectInfoSize = sizeof(WLAN_CONNECTION_ATTRIBUTES);
+    WLAN_OPCODE_VALUE_TYPE opCode = wlan_opcode_value_type_invalid;
+
     PyObject *py_dict = NULL;
     PyObject *py_guid = NULL;
+    PyObject *py_essid = NULL;
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -110,10 +116,39 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItemString(py_dict, "descr", py_description))
             goto error;
+
+        // ---- if the interface is connected retrieve more info
+
+        if (pIfInfo->isState == wlan_interface_state_connected) {
+            dwResult = WlanQueryInterface(
+                hClient,
+                &pIfInfo->InterfaceGuid,
+                wlan_intf_opcode_current_connection,
+                NULL,
+                &connectInfoSize,
+                (PVOID *) &pConnectInfo,
+                &opCode);
+
+            if (dwResult != ERROR_SUCCESS) {
+                PyErr_SetFromOSErrnoWithSyscall("WlanEnumInterfaces");
+                goto error;
+            }
+
+            // essid
+            py_essid = PyUnicode_FromWideChar(
+                pConnectInfo->strProfileName,
+                wcslen(pConnectInfo->strProfileName));
+            if (! py_essid)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "essid", py_essid))
+                goto error;
+        }
+
         // cleanup
         if (PyList_Append(py_retlist, py_dict))
             goto error;
         Py_CLEAR(py_guid);
+        Py_CLEAR(py_essid);
         Py_CLEAR(py_description);
         Py_CLEAR(py_status);
         Py_CLEAR(py_dict);
@@ -128,6 +163,7 @@ error:
     if (pIfList != NULL)
         WlanFreeMemory(pIfList);
     Py_XDECREF(py_dict);
+    Py_XDECREF(py_essid);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_description);
     Py_XDECREF(py_status);
