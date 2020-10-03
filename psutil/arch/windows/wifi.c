@@ -41,6 +41,19 @@ status2str(PWLAN_INTERFACE_INFO pIfInfo) {
 }
 
 
+static char *
+convert_macaddr(unsigned char *ptr) {
+    static char buff[64];
+
+    sprintf(buff, "%02X:%02X:%02X:%02X:%02X:%02X",
+            (ptr[0] & 0xFF), (ptr[1] & 0xFF),
+            (ptr[2] & 0xFF), (ptr[3] & 0xFF),
+            (ptr[4] & 0xFF), (ptr[5] & 0xFF));
+    return buff;
+}
+
+
+
 PyObject *
 psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
@@ -62,6 +75,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_dict = NULL;
     PyObject *py_guid = NULL;
     PyObject *py_essid = NULL;
+    PyObject *py_bssid = NULL;
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -141,6 +155,14 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_dict, "essid", py_essid))
                 goto error;
+            // bssid
+            py_bssid = Py_BuildValue("s",
+                convert_macaddr(pConnectInfo->wlanAssociationAttributes.dot11Bssid));
+            if (! py_bssid)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "bssid", py_bssid))
+                goto error;
+
         }
 
         // cleanup
@@ -148,6 +170,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         Py_CLEAR(py_guid);
         Py_CLEAR(py_essid);
+        Py_CLEAR(py_bssid);
         Py_CLEAR(py_description);
         Py_CLEAR(py_status);
         Py_CLEAR(py_dict);
@@ -163,6 +186,7 @@ error:
         WlanFreeMemory(pIfList);
     Py_XDECREF(py_dict);
     Py_XDECREF(py_essid);
+    Py_XDECREF(py_bssid);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_description);
     Py_XDECREF(py_status);
