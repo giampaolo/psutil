@@ -1645,7 +1645,7 @@ PsutilMethods[] = {
      "Return battery metrics usage."},
     {"getpagesize", psutil_getpagesize, METH_VARARGS,
      "Return system memory page size."},
-    {"wifi_cards", psutil_wifi_cards, METH_VARARGS,
+    {"wifi_ifaces", psutil_wifi_ifaces, METH_VARARGS,
      "Return a list of Wi-Fi interfaces."},
     {"wifi_scan", psutil_wifi_scan, METH_VARARGS,
      "Scan Wi-Fi networks."},

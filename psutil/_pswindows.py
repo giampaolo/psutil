@@ -404,8 +404,12 @@ def net_if_addrs():
 # =====================================================================
 
 
-def wifi_cards():
-    return cext.wifi_cards()
+class WifiInterface:
+    pass
+
+
+def wifi_ifaces():
+    return cext.wifi_ifaces()
 
 
 def wifi_scan(guid):

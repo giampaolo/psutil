@@ -18,7 +18,7 @@ int waitFlag = 1;
 
 
 PyObject *
-psutil_wifi_cards(PyObject *self, PyObject *args) {
+psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     HANDLE hClient = NULL;
     DWORD dwMaxClient = 2;
     DWORD dwCurVersion = 0;
@@ -407,6 +407,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         Py_CLEAR(py_level);
         Py_CLEAR(py_auth);
         Py_CLEAR(py_cipher);
+        Py_CLEAR(py_macaddr);
         Py_CLEAR(py_dict);
     }
 
@@ -424,6 +425,7 @@ error:
     Py_XDECREF(py_level);
     Py_XDECREF(py_auth);
     Py_XDECREF(py_cipher);
+    Py_XDECREF(py_macaddr);
     Py_XDECREF(py_dict);
     Py_DECREF(py_retlist);
     return NULL;
