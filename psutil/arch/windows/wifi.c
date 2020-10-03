@@ -30,7 +30,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PWLAN_INTERFACE_INFO_LIST pIfList = NULL;
     PWLAN_INTERFACE_INFO pIfInfo = NULL;
 
-    PyObject *py_tuple = NULL;
+    PyObject *py_dict = NULL;
     PyObject *py_guid = NULL;
     PyObject *py_description = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -89,22 +89,30 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 break;
         }
 
+        // build dict
+        py_dict = PyDict_New();
+        if (!py_dict)
+            goto error;
+        // guid
         py_guid = PyUnicode_FromWideChar(GuidString, wcslen(GuidString));
         if (! py_guid)
             goto error;
+        if (PyDict_SetItemString(py_dict, "guid", py_guid))
+            goto error;
+        // description
         py_description = PyUnicode_FromWideChar(
             pIfInfo->strInterfaceDescription,
             wcslen(pIfInfo->strInterfaceDescription));
         if (! py_description)
             goto error;
-        py_tuple = Py_BuildValue("(OOs)", py_guid, py_description, status);
-        if (!py_tuple)
+        if (PyDict_SetItemString(py_dict, "descr", py_description))
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
+        // cleanup
+        if (PyList_Append(py_retlist, py_dict))
             goto error;
         Py_CLEAR(py_guid);
         Py_CLEAR(py_description);
-        Py_CLEAR(py_tuple);
+        Py_CLEAR(py_dict);
     }
 
     WlanCloseHandle(hClient, NULL);
@@ -115,7 +123,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
 error:
     if (pIfList != NULL)
         WlanFreeMemory(pIfList);
-    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_dict);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_description);
     Py_DECREF(py_retlist);
