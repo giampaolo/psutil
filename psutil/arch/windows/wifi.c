@@ -135,9 +135,8 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             }
 
             // essid
-            py_essid = PyUnicode_FromWideChar(
-                pConnectInfo->strProfileName,
-                wcslen(pConnectInfo->strProfileName));
+            py_essid = Py_BuildValue("s",
+                pConnectInfo->wlanAssociationAttributes.dot11Ssid.ucSSID);
             if (! py_essid)
                 goto error;
             if (PyDict_SetItemString(py_dict, "essid", py_essid))
