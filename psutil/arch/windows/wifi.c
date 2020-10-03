@@ -17,7 +17,7 @@
 int waitFlag = 1;
 
 static char *
-status2str(PWLAN_INTERFACE_INFO pIfInfo) {
+convert_status(PWLAN_INTERFACE_INFO pIfInfo) {
     switch (pIfInfo->isState) {
         case wlan_interface_state_not_ready:
             return "not_ready";
@@ -42,7 +42,7 @@ status2str(PWLAN_INTERFACE_INFO pIfInfo) {
 
 
 static char *
-auth2str(int value) {
+convert_auth(int value) {
     switch (value) {
         case DOT11_AUTH_ALGO_80211_OPEN:
             return "802.11 Open";
@@ -65,7 +65,7 @@ auth2str(int value) {
 
 
 static char *
-cipher2str(int value) {
+convert_cipher(int value) {
     switch (value) {
         case DOT11_CIPHER_ALGO_NONE:
             return "None";
@@ -126,6 +126,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_cipher = NULL;
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
+    PyObject *py_qual_perc = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -152,7 +153,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        status = status2str(pIfInfo);
+        status = convert_status(pIfInfo);
 
         // build dict
         py_dict = PyDict_New();
@@ -210,16 +211,23 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_dict, "bssid", py_bssid))
                 goto error;
+            // quality percent
+            py_qual_perc = Py_BuildValue(
+                "k", pConnectInfo->wlanAssociationAttributes.wlanSignalQuality);
+            if (! py_qual_perc)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "qual_perc", py_qual_perc))
+                goto error;
             // auth
             py_auth = Py_BuildValue("s",
-                auth2str(pConnectInfo->wlanSecurityAttributes.dot11AuthAlgorithm));
+                convert_auth(pConnectInfo->wlanSecurityAttributes.dot11AuthAlgorithm));
             if (! py_auth)
                 goto error;
             if (PyDict_SetItemString(py_dict, "auth", py_auth))
                 goto error;
             // cipher
             py_cipher = Py_BuildValue("s",
-                cipher2str(pConnectInfo->wlanSecurityAttributes.dot11CipherAlgorithm));
+                convert_cipher(pConnectInfo->wlanSecurityAttributes.dot11CipherAlgorithm));
             if (! py_cipher)
                 goto error;
             if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
@@ -232,6 +240,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         Py_CLEAR(py_guid);
         Py_CLEAR(py_essid);
         Py_CLEAR(py_bssid);
+        Py_CLEAR(py_qual_perc);
         Py_CLEAR(py_auth);
         Py_CLEAR(py_cipher);
         Py_CLEAR(py_description);
@@ -250,6 +259,7 @@ error:
     Py_XDECREF(py_dict);
     Py_XDECREF(py_essid);
     Py_XDECREF(py_bssid);
+    Py_XDECREF(py_qual_perc);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_auth);
     Py_XDECREF(py_cipher);
@@ -414,8 +424,8 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         else
             iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
 
-        auth = auth2str(pBssEntry->dot11DefaultAuthAlgorithm);
-        cipher = cipher2str(pBssEntry->dot11DefaultCipherAlgorithm);
+        auth = convert_auth(pBssEntry->dot11DefaultAuthAlgorithm);
+        cipher = convert_cipher(pBssEntry->dot11DefaultCipherAlgorithm);
 
         // Get MAC address.
         dwResult = WlanGetNetworkBssList(
