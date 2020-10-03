@@ -42,6 +42,29 @@ status2str(PWLAN_INTERFACE_INFO pIfInfo) {
 
 
 static char *
+auth2str(int value) {
+    switch (value) {
+        case DOT11_AUTH_ALGO_80211_OPEN:
+            return "802.11 Open";
+        case DOT11_AUTH_ALGO_80211_SHARED_KEY:
+            return "802.11 Shared";
+        case DOT11_AUTH_ALGO_WPA:
+            return "WPA";
+        case DOT11_AUTH_ALGO_WPA_PSK:
+            return "WPA-PSK";
+        case DOT11_AUTH_ALGO_WPA_NONE:
+            return "WPA-None";
+        case DOT11_AUTH_ALGO_RSNA:
+            return "RSNA";
+        case DOT11_AUTH_ALGO_RSNA_PSK:
+            return "RSNA-PSK";
+        default:
+            return "unknown";
+    }
+}
+
+
+static char *
 convert_macaddr(unsigned char *ptr) {
     static char buff[64];
 
@@ -52,6 +75,8 @@ convert_macaddr(unsigned char *ptr) {
     return buff;
 }
 
+
+// ---
 
 
 PyObject *
@@ -76,6 +101,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_guid = NULL;
     PyObject *py_essid = NULL;
     PyObject *py_bssid = NULL;
+    PyObject *py_auth = NULL;
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -162,7 +188,13 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_dict, "bssid", py_bssid))
                 goto error;
-
+            // auth
+            py_auth = Py_BuildValue("s",
+                auth2str(pConnectInfo->wlanSecurityAttributes.dot11AuthAlgorithm));
+            if (! py_auth)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "auth", py_auth))
+                goto error;
         }
 
         // cleanup
@@ -171,6 +203,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         Py_CLEAR(py_guid);
         Py_CLEAR(py_essid);
         Py_CLEAR(py_bssid);
+        Py_CLEAR(py_auth);
         Py_CLEAR(py_description);
         Py_CLEAR(py_status);
         Py_CLEAR(py_dict);
@@ -188,6 +221,7 @@ error:
     Py_XDECREF(py_essid);
     Py_XDECREF(py_bssid);
     Py_XDECREF(py_guid);
+    Py_XDECREF(py_auth);
     Py_XDECREF(py_description);
     Py_XDECREF(py_status);
     Py_DECREF(py_retlist);
