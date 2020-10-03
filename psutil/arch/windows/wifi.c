@@ -65,6 +65,27 @@ auth2str(int value) {
 
 
 static char *
+cipher2str(int value) {
+    switch (value) {
+        case DOT11_CIPHER_ALGO_NONE:
+            return "None";
+        case DOT11_CIPHER_ALGO_WEP40:
+            return "WEP-40";
+        case DOT11_CIPHER_ALGO_TKIP:
+            return "TKIP";
+        case DOT11_CIPHER_ALGO_CCMP:
+            return "CCMP";
+        case DOT11_CIPHER_ALGO_WEP104:
+            return "WEP-104 (0x%x)";
+        case DOT11_CIPHER_ALGO_WEP:
+            return "WEP";
+        default:
+            return "unknown";
+    }
+}
+
+
+static char *
 convert_macaddr(unsigned char *ptr) {
     static char buff[64];
 
@@ -102,6 +123,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_essid = NULL;
     PyObject *py_bssid = NULL;
     PyObject *py_auth = NULL;
+    PyObject *py_cipher = NULL;
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -195,6 +217,13 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_dict, "auth", py_auth))
                 goto error;
+            // cipher
+            py_cipher = Py_BuildValue("s",
+                cipher2str(pConnectInfo->wlanSecurityAttributes.dot11CipherAlgorithm));
+            if (! py_cipher)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
+                goto error;
         }
 
         // cleanup
@@ -204,6 +233,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         Py_CLEAR(py_essid);
         Py_CLEAR(py_bssid);
         Py_CLEAR(py_auth);
+        Py_CLEAR(py_cipher);
         Py_CLEAR(py_description);
         Py_CLEAR(py_status);
         Py_CLEAR(py_dict);
@@ -222,6 +252,7 @@ error:
     Py_XDECREF(py_bssid);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_auth);
+    Py_XDECREF(py_cipher);
     Py_XDECREF(py_description);
     Py_XDECREF(py_status);
     Py_DECREF(py_retlist);
@@ -384,30 +415,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
             iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
 
         auth = auth2str(pBssEntry->dot11DefaultAuthAlgorithm);
-
-        switch (pBssEntry->dot11DefaultCipherAlgorithm) {
-            case DOT11_CIPHER_ALGO_NONE:
-                cipher = "None";
-                break;
-            case DOT11_CIPHER_ALGO_WEP40:
-                cipher = "WEP-40";
-                break;
-            case DOT11_CIPHER_ALGO_TKIP:
-                cipher = "TKIP";
-                break;
-            case DOT11_CIPHER_ALGO_CCMP:
-                cipher = "CCMP";
-                break;
-            case DOT11_CIPHER_ALGO_WEP104:
-                cipher = "WEP-104 (0x%x)";
-                break;
-            case DOT11_CIPHER_ALGO_WEP:
-                cipher = "WEP";
-                break;
-            default:
-                cipher = "";
-                break;
-        }
+        cipher = cipher2str(pBssEntry->dot11DefaultCipherAlgorithm);
 
         // Get MAC address.
         dwResult = WlanGetNetworkBssList(
