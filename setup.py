@@ -256,7 +256,10 @@ elif LINUX:
         macros.append(ETHTOOL_MACRO)
     ext = Extension(
         'psutil._psutil_linux',
-        sources=sources + ['psutil/_psutil_linux.c'],
+        sources=sources + [
+            'psutil/_psutil_linux.c',
+            'psutil/arch/linux/wifi.c',
+        ],
         define_macros=macros)
 
 elif SUNOS:

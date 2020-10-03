@@ -23,7 +23,6 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
-#include <linux/wireless.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -61,6 +60,7 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
+#include "arch/linux/wifi.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607
@@ -539,38 +539,6 @@ error:
 }
 
 
-static PyObject*
-psutil_wifi_scan(PyObject* self, PyObject* args) {
-    int sock = -1;
-    int ret;
-    struct iwreq w = {0};
-
-    // setup iwreq struct
-    w.u.param.flags = IW_SCAN_DEFAULT;
-    w.u.param.value = 0;
-    strncpy(w.ifr_name, "wlp3s0", IFNAMSIZ);
-
-    // create socket
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1)
-        goto error;
-
-    // scan
-    ret = ioctl(sock, SIOCSIWSCAN, &w);
-    if (ret == -1)
-        goto error;
-
-
-
-    return Py_BuildValue("i", 99);
-
-error:
-    if (sock != -1)
-        close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
-}
-
-
 /*
  * Module init.
  */
@@ -600,8 +568,29 @@ static PyMethodDef mod_methods[] = {
      "Return currently connected users as a list of tuples"},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return duplex and speed info about a NIC"},
+
+    // --- Wi-Fi
+
     {"wifi_scan", psutil_wifi_scan, METH_VARARGS,
      "Scan wifi networks"},
+    {"wifi_card_essid", psutil_wifi_card_essid, METH_VARARGS,
+     "Return Wi-Fi card's ESSID (network name)."},
+    {"wifi_card_bssid", psutil_wifi_card_bssid, METH_VARARGS,
+     "Return Wi-Fi card's BSSID (access point MAC address)."},
+    {"wifi_card_proto", psutil_wifi_card_proto, METH_VARARGS,
+     "Return Wi-Fi card's network protocol."},
+    {"wifi_card_mode", psutil_wifi_card_mode, METH_VARARGS,
+     "Return Wi-Fi card's mode."},
+    {"wifi_card_frequency", psutil_wifi_card_frequency, METH_VARARGS,
+     "Return Wi-Fi card's frequency."},
+    {"wifi_card_bitrate", psutil_wifi_card_bitrate, METH_VARARGS,
+     "Return Wi-Fi card's bitrate."},
+    {"wifi_card_txpower", psutil_wifi_card_txpower, METH_VARARGS,
+     "Return Wi-Fi card's TX power."},
+    {"wifi_card_ranges", psutil_wifi_card_ranges, METH_VARARGS,
+     "Return Wi-Fi card's ranges info."},
+    {"wifi_card_stats", psutil_wifi_card_stats, METH_VARARGS,
+     "Return Wi-Fi card's ranges info."},
 
     // --- linux specific
 
@@ -696,6 +685,8 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
+
+    psutil_setup();
 
     if (mod == NULL)
         INITERR;

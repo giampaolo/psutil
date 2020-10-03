@@ -2225,13 +2225,15 @@ def net_if_stats():
 # =====================================================================
 
 
-if hasattr(_psplatform, "wifi_cards"):
+if hasattr(_psplatform, "wifi_ifaces"):
 
-    def wifi_cards():
-        return _psplatform.wifi_cards()
+    WifiInterface = _psplatform.WifiInterface
 
-    def wifi_scan(card_name=None):
-        return _psplatform.wifi_scan(card_name)
+    def wifi_ifaces():
+        return _psplatform.wifi_ifaces()
+
+    def wifi_scan(nic=None):
+        return _psplatform.wifi_scan(nic)
 
 
 # =====================================================================

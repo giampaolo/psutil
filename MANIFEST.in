@@ -54,6 +54,8 @@ include psutil/arch/freebsd/specific.c
 include psutil/arch/freebsd/specific.h
 include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/freebsd/sys_socks.h
+include psutil/arch/linux/wifi.c
+include psutil/arch/linux/wifi.h
 include psutil/arch/netbsd/socks.c
 include psutil/arch/netbsd/socks.h
 include psutil/arch/netbsd/specific.c
@@ -85,6 +87,8 @@ include psutil/arch/windows/services.c
 include psutil/arch/windows/services.h
 include psutil/arch/windows/socks.c
 include psutil/arch/windows/socks.h
+include psutil/arch/windows/wifi.c
+include psutil/arch/windows/wifi.h
 include psutil/arch/windows/wmi.c
 include psutil/arch/windows/wmi.h
 include psutil/tests/README.rst
