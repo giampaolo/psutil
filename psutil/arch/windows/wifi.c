@@ -383,32 +383,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         else
             iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
 
-        switch (pBssEntry->dot11DefaultAuthAlgorithm) {
-            case DOT11_AUTH_ALGO_80211_OPEN:
-                auth = "802.11 Open";
-                break;
-            case DOT11_AUTH_ALGO_80211_SHARED_KEY:
-                auth = "802.11 Shared";
-                break;
-            case DOT11_AUTH_ALGO_WPA:
-                auth = "WPA";
-                break;
-            case DOT11_AUTH_ALGO_WPA_PSK:
-                auth = "WPA-PSK";
-                break;
-            case DOT11_AUTH_ALGO_WPA_NONE:
-                auth = "WPA-None";
-                break;
-            case DOT11_AUTH_ALGO_RSNA:
-                auth = "RSNA";
-                break;
-            case DOT11_AUTH_ALGO_RSNA_PSK:
-                auth = "RSNA-PSK";
-                break;
-            default:
-                auth = "";
-                break;
-        }
+        auth = auth2str(pBssEntry->dot11DefaultAuthAlgorithm);
 
         switch (pBssEntry->dot11DefaultCipherAlgorithm) {
             case DOT11_CIPHER_ALGO_NONE:
