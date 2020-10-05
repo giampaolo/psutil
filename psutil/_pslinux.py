@@ -185,7 +185,7 @@ sdiskio = namedtuple(
                 'busy_time'])
 # psutil.wifi_info()
 swifiinfo = namedtuple(
-    'swifiinfo', ['essid', 'bssid', 'proto', 'quality', 'signal', 'mode',
+    'swifiinfo', ['essid', 'bssid', 'proto', 'link_quality', 'signal', 'mode',
                   'freq', 'bitrate', 'txpower'])
 # psutil.Process().open_files()
 popenfile = namedtuple(
@@ -1160,58 +1160,63 @@ def _wifi_card_names():
     return ls
 
 
-def wifi_ifaces():
-    ls = []
-    for name in _wifi_card_names():
-        iface = WifiInterface(name)
-        ls.append(iface)
-    return ls
+# def wifi_ifaces():
+#     ls = []
+#     for name in _wifi_card_names():
+#         iface = WifiInterface(name)
+#         ls.append(iface)
+#     return ls
 
 
 def wifi_scan(nic):
     return cext.wifi_scan(nic)
 
 
-# def wifi_info(nic):
-#     sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
-#     try:
-#         fd = sock.fileno()
-#         essid = cext.wifi_card_essid(nic, fd)
-#         bssid = cext.wifi_card_bssid(nic, fd)
-#         proto = cext.wifi_card_proto(nic, fd)
-#         mode = cext.wifi_card_mode(nic, fd)
-#         freq = int(cext.wifi_card_frequency(nic, fd))
-#         bitrate = cext.wifi_card_bitrate(nic, fd)
-#         txpower = cext.wifi_card_txpower(nic, fd)
+def wifi_ifaces():
+    sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
+    try:
+        ls = []
+        for nic in _wifi_card_names():
+            fd = sock.fileno()
+            essid = cext.wifi_card_essid(nic, fd)
+            bssid = cext.wifi_card_bssid(nic, fd)
+            proto = cext.wifi_card_proto(nic, fd)
+            mode = cext.wifi_card_mode(nic, fd)
+            freq = int(cext.wifi_card_frequency(nic, fd))
+            bitrate = cext.wifi_card_bitrate(nic, fd)
+            txpower = cext.wifi_card_txpower(nic, fd)
 
-#         qual_curr, sig_curr = cext.wifi_card_stats(nic, fd)
-#         qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
-#         qual_perc = int(usage_percent(qual_curr, qual_max))
+            qual_curr, sig_curr = cext.wifi_card_stats(nic, fd)
+            qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
+            qual_perc = usage_percent(qual_curr, qual_max, round_=1)
 
-#         # This is how wavemon does it:
-#         # https://github.com/bmegli/wifi-scan/issues/18
-#         # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
-#         # sig_max is supposed to be -110.
-#         if sig_curr < sig_max:
-#             sig_perc = 0
-#         elif sig_curr > -40:
-#             sig_perc = 70
-#         else:
-#             sig_perc = sig_curr + abs(sig_max)
+            # This is how wavemon does it:
+            # https://github.com/bmegli/wifi-scan/issues/18
+            # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
+            # sig_max is supposed to be -110.
+            if sig_curr < sig_max:
+                sig_perc = 0
+            elif sig_curr > -40:
+                sig_perc = 70
+            else:
+                sig_perc = sig_curr + abs(sig_max)
 
-#         return swifiinfo(
-#             essid=essid,
-#             bssid=bssid,
-#             proto=proto,
-#             quality=dict(percent=qual_perc, current=qual_curr, max=qual_max),
-#             signal=dict(percent=sig_perc, current=sig_curr, max=sig_max),
-#             mode=mode,
-#             freq=freq,
-#             bitrate=bitrate,
-#             txpower=txpower,
-#         )
-#     finally:
-#         sock.close()
+            nt = dict(
+                essid=essid,
+                bssid=bssid,
+                proto=proto,
+                quality_percent=qual_perc,
+                signal=sig_curr,  # RSSI
+                signal_percent=sig_perc,
+                mode=mode,
+                freq=freq,
+                bitrate=bitrate,
+                txpower=txpower,
+            )
+            ls.append(nt)
+        return ls
+    finally:
+        sock.close()
 
 
 # =====================================================================
