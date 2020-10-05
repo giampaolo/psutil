@@ -53,6 +53,8 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
+SIOCGIFNETMASK = 0x891b
+SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
 EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
@@ -72,6 +74,32 @@ def get_ipv4_address(ifname):
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(),
                         SIOCGIFADDR,
+                        struct.pack('256s', ifname))[20:24])
+
+
+def get_ipv4_netmask(ifname):
+    import fcntl
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with contextlib.closing(s):
+        return socket.inet_ntoa(
+            fcntl.ioctl(s.fileno(),
+                        SIOCGIFNETMASK,
+                        struct.pack('256s', ifname))[20:24])
+
+
+def get_ipv4_broadcast(ifname):
+    import fcntl
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with contextlib.closing(s):
+        return socket.inet_ntoa(
+            fcntl.ioctl(s.fileno(),
+                        SIOCGIFBRDADDR,
                         struct.pack('256s', ifname))[20:24])
 
 
@@ -907,6 +935,12 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     self.assertEqual(addr.address, get_mac_address(name))
                 elif addr.family == socket.AF_INET:
                     self.assertEqual(addr.address, get_ipv4_address(name))
+                    self.assertEqual(addr.netmask, get_ipv4_netmask(name))
+                    if addr.broadcast is not None:
+                        self.assertEqual(addr.broadcast,
+                                         get_ipv4_broadcast(name))
+                    else:
+                        self.assertEqual(get_ipv4_broadcast(name), '0.0.0.0')
                 elif addr.family == socket.AF_INET6:
                     # IPv6 addresses can have a percent symbol at the end.
                     # E.g. these 2 are equivalent:
