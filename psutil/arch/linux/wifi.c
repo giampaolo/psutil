@@ -42,6 +42,33 @@ ioctl_request(char *ifname, int request, struct iwreq *pwrq, int sock) {
 }
 
 
+static int
+wifi_card_exists(char *ifname, int sock) {
+    struct iwreq wrq;
+    int ret;
+
+    ret = ioctl_request(ifname, SIOCGIWNAME, &wrq, sock);
+    if (ret == 0)
+        return 1;
+    else
+        return 0;
+}
+
+
+static PyObject*
+handle_ioctl_err(char *ifname, int sock, char *syscall) {
+    if ((errno == ENOTSUP) || (errno == EINVAL)) {
+        if (wifi_card_exists(ifname, sock) == 1) {
+            PyErr_Clear();
+            psutil_debug("%s failed; converting to None", syscall);
+            Py_RETURN_NONE;
+        }
+        return NULL;
+    }
+    return NULL;
+}
+
+
 static char *
 convert_macaddr(unsigned char *ptr) {
     static char buff[64];
@@ -182,7 +209,7 @@ psutil_wifi_card_frequency(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWFREQ, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWFREQ)");
     // expressed in Mb/sec
     freq = freq2double(wrq.u.freq);
     return Py_BuildValue("d", freq);
@@ -198,7 +225,7 @@ psutil_wifi_card_bitrate(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWRATE, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWRATE)");
     // Expressed in Mb/sec.
     return Py_BuildValue("d", (double)wrq.u.bitrate.value / 1000 / 1000);
 }
@@ -276,7 +303,7 @@ psutil_wifi_card_stats(PyObject* self, PyObject* args) {
     wrq.u.data.flags = 1;
 
     if (ioctl_request(ifname, SIOCGIWSTATS, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWSTATS)");
 
     // substract 256 in order to match /proc/net/wireless
     return Py_BuildValue(

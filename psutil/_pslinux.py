@@ -1196,24 +1196,29 @@ def wifi_ifaces():
             bssid = cext.wifi_card_bssid(nic, fd)
             proto = cext.wifi_card_proto(nic, fd)
             mode = cext.wifi_card_mode(nic, fd)
-            freq = int(cext.wifi_card_frequency(nic, fd))
+            freq = cext.wifi_card_frequency(nic, fd)
+            if freq is not None:
+                freq = int(freq)
             bitrate = cext.wifi_card_bitrate(nic, fd)
             txpower = cext.wifi_card_txpower(nic, fd)
 
-            qual_curr, sig_curr = cext.wifi_card_stats(nic, fd)
-            qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
-            qual_perc = usage_percent(qual_curr, qual_max, round_=1)
+            qual_perc = sig_curr = sig_perc = None
+            stats = cext.wifi_card_stats(nic, fd)
+            if stats is not None:
+                qual_curr, sig_curr = stats
+                qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
+                qual_perc = usage_percent(qual_curr, qual_max, round_=1)
 
-            # This is how wavemon does it:
-            # https://github.com/bmegli/wifi-scan/issues/18
-            # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
-            # sig_max is supposed to be -110.
-            if sig_curr < sig_max:
-                sig_perc = 0
-            elif sig_curr > -40:
-                sig_perc = 70
-            else:
-                sig_perc = sig_curr + abs(sig_max)
+                # This is how wavemon does it:
+                # https://github.com/bmegli/wifi-scan/issues/18
+                # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
+                # sig_max is supposed to be -110.
+                if sig_curr < sig_max:
+                    sig_perc = 0
+                elif sig_curr > -40:
+                    sig_perc = 70
+                else:
+                    sig_perc = sig_curr + abs(sig_max)
 
             nt = dict(
                 essid=essid,
