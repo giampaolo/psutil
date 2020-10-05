@@ -1150,14 +1150,28 @@ class WifiInterface(_common.BaseWifiInterface):
 
 
 def _wifi_card_names():
-    ls = []
-    with open_text("%s/net/wireless" % get_procfs_path()) as f:
-        lines = f.readlines()[2:]
-    if lines:
-        for line in lines:
-            name = line.partition(':')[0]
-            ls.append(name)
-    return ls
+    # /proc/net/wireless ignores Wi-Fi interfaces which are not connected.
+    with open_text("%s/net/dev" % get_procfs_path()) as f:
+        lines = f.readlines()
+    sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
+    try:
+        ls = []
+        for line in lines[2:]:
+            colon = line.rfind(':')
+            assert colon > 0, repr(line)
+            name = line[:colon].strip()
+            try:
+                # Aka ioctl(SIOCGIWNAME), which is supposed to fail
+                # for non-wifi interfaces.
+                cext.wifi_card_proto(name, sock.fileno())
+            except OSError as err:
+                if err.errno != errno.ENOTSUP:
+                    raise
+            else:
+                ls.append(name)
+        return ls
+    finally:
+        sock.close()
 
 
 # def wifi_ifaces():
