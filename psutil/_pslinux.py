@@ -196,12 +196,12 @@ swifi = namedtuple(
         'freq',
         'bitrate',
         'txpower',
-        'discarded_nwid',
-        'discarded_crypt',
-        'discarded_frag',
-        'discarded_retry',
-        'discarded_misc',
-        'missed_beacons',
+        'beacons',
+        'discard_nwid',
+        'discard_crypt',
+        'discard_frag',
+        'discard_retry',
+        'discard_misc',
     ])
 # psutil.Process().open_files()
 popenfile = namedtuple(
@@ -1207,19 +1207,19 @@ def wifi_ifaces():
             txpower = cext.wifi_card_txpower(nic, fd)
 
             # stats
-            qual_perc = sig_perc = qual_curr = sig_curr = discarded_nwid = \
-                discarded_crypt = discarded_frag = discarded_retry = \
-                discarded_misc = missed_beacons = None
+            qual_perc = sig_perc = qual_curr = sig_curr = discard_nwid = \
+                discard_crypt = discard_frag = discard_retry = \
+                discard_misc = beacons = None
             stats = cext.wifi_card_stats(nic, fd)
             if stats is not None:
                 (qual_curr,
                  sig_curr,
-                 discarded_nwid,
-                 discarded_crypt,
-                 discarded_frag,
-                 discarded_retry,
-                 discarded_misc,
-                 missed_beacons) = stats
+                 discard_nwid,
+                 discard_crypt,
+                 discard_frag,
+                 discard_retry,
+                 discard_misc,
+                 beacons) = stats
                 qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
                 qual_perc = usage_percent(qual_curr, qual_max, round_=1)
 
@@ -1246,12 +1246,12 @@ def wifi_ifaces():
                 freq=freq,
                 bitrate=bitrate,
                 txpower=txpower,
-                discarded_nwid=discarded_nwid,
-                discarded_crypt=discarded_crypt,
-                discarded_frag=discarded_frag,
-                discarded_retry=discarded_retry,
-                discarded_misc=discarded_misc,
-                missed_beacons=missed_beacons,
+                beacons=beacons,
+                discard_nwid=discard_nwid,
+                discard_crypt=discard_crypt,
+                discard_frag=discard_frag,
+                discard_retry=discard_retry,
+                discard_misc=discard_misc,
             )
             ret[nic] = nt
         return ret

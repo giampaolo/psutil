@@ -1061,33 +1061,33 @@ class TestWifiIfaces(PsutilTestCase):
         self.assertEqual(value, self.read_proc_wireless()['signal'])
 
     @retry_on_failure()
-    def test_discarded_nwid(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_nwid
+    def test_discard_nwid(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_nwid
         self.assertEqual(value, self.read_proc_wireless()['nwid'])
 
     @retry_on_failure()
-    def test_discarded_crypt(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_crypt
+    def test_discard_crypt(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_crypt
         self.assertEqual(value, self.read_proc_wireless()['crypt'])
 
     @retry_on_failure()
-    def test_discarded_frag(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_frag
+    def test_discard_frag(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_frag
         self.assertEqual(value, self.read_proc_wireless()['frag'])
 
     @retry_on_failure()
-    def test_discarded_retry(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_retry
+    def test_discard_retry(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_retry
         self.assertEqual(value, self.read_proc_wireless()['retry'])
 
     @retry_on_failure()
-    def test_discarded_misc(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_misc
+    def test_discard_misc(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_misc
         self.assertEqual(value, self.read_proc_wireless()['misc'])
 
     @retry_on_failure()
-    def test_missed_beacons(self):
-        value = psutil.wifi_ifaces()[self.ifname].missed_beacons
+    def test_beacons(self):
+        value = psutil.wifi_ifaces()[self.ifname].beacons
         self.assertEqual(value, self.read_proc_wireless()['beacon'])
 
     def test_proto(self):
