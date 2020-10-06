@@ -2227,8 +2227,6 @@ def net_if_stats():
 
 if hasattr(_psplatform, "wifi_ifaces"):
 
-    WifiInterface = _psplatform.WifiInterface
-
     def wifi_ifaces():
         return _psplatform.wifi_ifaces()
 

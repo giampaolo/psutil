@@ -82,6 +82,7 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
+    "HAS_WIFI_IFACES", "HAS_ACTIVE_WIFI",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -173,8 +174,8 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
-HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
@@ -182,14 +183,23 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
+HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
+HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
+HAS_THREADS = hasattr(psutil.Process, "threads")
+HAS_WIFI_IFACES = hasattr(psutil, "wifi_ifaces")
+
 try:
     HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 except Exception:
     HAS_BATTERY = False
-HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
-HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
-HAS_THREADS = hasattr(psutil.Process, "threads")
+
+try:
+    HAS_ACTIVE_WIFI = list(psutil.wifi_ifaces().values())[0].signal is not None
+except Exception:
+    HAS_ACTIVE_WIFI = False
+
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
+
 
 # --- misc
 

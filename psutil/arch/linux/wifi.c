@@ -305,11 +305,17 @@ psutil_wifi_card_stats(PyObject* self, PyObject* args) {
     if (ioctl_request(ifname, SIOCGIWSTATS, &wrq, sock) != 0)
         return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWSTATS)");
 
-    // substract 256 in order to match /proc/net/wireless
+    // signal: substract 256 in order to match /proc/net/wireless
     return Py_BuildValue(
-        "Ii",
-        stats.qual.qual,              // link quality
-        (int) stats.qual.level - 256  // signal
+        "IiIIIIII",
+        stats.qual.qual,                    // link quality
+        (int)stats.qual.level - 256,        // signal
+        stats.discard.nwid,                 // Rx: wrong nwid/essid
+        stats.discard.code,                 // Rx: unable to code/decode (WEP)
+        stats.discard.fragment,             // Rx: can't perform MAC reassembly
+        stats.discard.retries,              // Tx: max MAC retries num reached
+        stats.discard.misc,                 // other cases
+        stats.miss.beacon                   // missed beacons
     );
 }
 
