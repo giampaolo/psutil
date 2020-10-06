@@ -13,7 +13,6 @@ except ImportError:
     sys.exit('platform not supported')
 
 import psutil
-from psutil._compat import get_terminal_size
 from psutil._common import bytes2human
 
 
@@ -37,7 +36,6 @@ def print_line(line, highlight=False):
     global lineno
     try:
         if highlight:
-            line += " " * (win.getmaxyx()[1] - len(line))
             win.addstr(lineno, 0, line, curses.A_REVERSE)
         else:
             win.addstr(lineno, 0, line, 0)
@@ -50,7 +48,7 @@ def print_line(line, highlight=False):
 
 
 def get_dashes(perc):
-    dashes = "|" * int((float(perc) / 10 * 4))
+    dashes = "=" * int((float(perc) / 10 * 4))
     empty_dashes = " " * (40 - len(dashes))
     return dashes, empty_dashes
 
@@ -59,42 +57,42 @@ def refresh_window():
     """Print results on screen by using curses."""
     global lineno
 
-    tsize = get_terminal_size()[0]
     for name, info in psutil.wifi_ifaces().items():
-        print_line("INTERFACE")
-        print_line("─" * (tsize))
+        print_line("INTERFACE", highlight=True)
         print_line("  %s (%s), SSID: %s" % (name, info.proto, info.essid))
         print_line("")
 
-        print_line("LEVELS")
-        print_line("─" * (tsize))
+        print_line("LEVELS", highlight=True)
 
-        print_line("  link quality: %s%%" % info.quality_percent)
+        print_line("  Link quality: %s%%" % info.quality_percent)
         dashes, empty_dashes = get_dashes(info.quality_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
         print_line(line)
         print_line("")
 
-        print_line("  signal level: %s dBm (%s%%)" % (
+        print_line("  Signal level: %s dBm (%s%%)" % (
             info.signal, info.signal_percent))
         dashes, empty_dashes = get_dashes(info.signal_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
         print_line(line)
         print_line("")
 
-        print_line("STATISTICS")
-        print_line("─" * (tsize))
+        print_line("STATISTICS", highlight=True)
         ioc = psutil.net_io_counters(pernic=True)[name]
-        print_line("  RX: %s" % bytes2human(ioc.bytes_recv))
-        print_line("  TX: %s" % bytes2human(ioc.bytes_sent))
+        print_line("  RX: %s (%s)" % (
+            bytes2human(ioc.bytes_recv), '{0:,}'.format(ioc.bytes_recv)))
+        print_line("  TX: %s (%s)" % (
+            bytes2human(ioc.bytes_sent), '{0:,}'.format(ioc.bytes_sent)))
         print_line("")
 
-        print_line("INFO")
-        print_line("─" * (tsize))
-        print_line("  mode: %s, connected to: %s" % (info.mode, info.bssid))
-        print_line("  freq: %s MHz" % (info.freq))
-        print_line("  tx-power: %s" % (info.txpower))
-        print_line("")
+        print_line("INFO", highlight=True)
+        print_line("  Mode: %s, Connected to: %s" % (info.mode, info.bssid))
+        print_line("  Freq: %s MHz" % (info.freq))
+        print_line("  TX-Power: %s" % (info.txpower))
+        print_line("  Beacons: %s, Nwid: %s, Crypt: %s" % (
+            info.beacons, info.discard_nwid, info.discard_crypt))
+        print_line("  Frag: %s, Retry: %s, Misc: %s" % (
+            info.discard_frag, info.discard_retry, info.discard_misc))
         print_line("")
 
     win.refresh()
@@ -109,7 +107,7 @@ def main():
     try:
         while True:
             refresh_window()
-            time.sleep(.5)
+            time.sleep(.2)
     except (KeyboardInterrupt, SystemExit):
         pass
 
