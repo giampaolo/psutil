@@ -194,7 +194,7 @@ swifi = namedtuple(
         'proto',
         'mode',
         'freq',
-        'max_bitrate',
+        'bitrate',
         'txpower',
         'discarded_nwid',
         'discarded_crypt',
@@ -1152,10 +1152,10 @@ def net_if_stats():
 #         with self._get_fd() as fd:
 #             return cext.wifi_card_frequency(self._ifname, fd)
 
-#     def max_bitrate(self):
+#     def bitrate(self):
 #         """The interface bitrate expressed in Mb/sec."""
 #         with self._get_fd() as fd:
-#             return cext.wifi_card_max_bitrate(self._ifname, fd)
+#             return cext.wifi_card_bitrate(self._ifname, fd)
 
 #     def txpower(self):
 #         """The Wi-Fi transmission power expressed in dBm (decibel per
@@ -1203,7 +1203,7 @@ def wifi_ifaces():
             freq = cext.wifi_card_frequency(nic, fd)
             if freq is not None:
                 freq = int(freq)
-            max_bitrate = cext.wifi_card_max_bitrate(nic, fd)
+            bitrate = cext.wifi_card_bitrate(nic, fd)
             txpower = cext.wifi_card_txpower(nic, fd)
 
             # stats
@@ -1244,7 +1244,7 @@ def wifi_ifaces():
                 signal_percent=sig_perc,
                 mode=mode,
                 freq=freq,
-                max_bitrate=max_bitrate,
+                bitrate=bitrate,
                 txpower=txpower,
                 discarded_nwid=discarded_nwid,
                 discarded_crypt=discarded_crypt,

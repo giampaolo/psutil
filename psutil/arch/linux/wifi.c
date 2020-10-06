@@ -217,7 +217,7 @@ psutil_wifi_card_frequency(PyObject* self, PyObject* args) {
 
 
 PyObject*
-psutil_wifi_card_max_bitrate(PyObject* self, PyObject* args) {
+psutil_wifi_card_bitrate(PyObject* self, PyObject* args) {
     char *ifname;
     int sock;
     struct iwreq wrq;

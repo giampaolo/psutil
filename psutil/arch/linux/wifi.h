@@ -12,7 +12,7 @@ PyObject* psutil_wifi_card_bssid(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_proto(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_mode(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_frequency(PyObject* self, PyObject* args);
-PyObject* psutil_wifi_card_max_bitrate(PyObject* self, PyObject* args);
+PyObject* psutil_wifi_card_bitrate(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_txpower(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_ranges(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_stats(PyObject* self, PyObject* args);
