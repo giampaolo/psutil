@@ -1223,18 +1223,18 @@ def wifi_ifaces():
                  discard_misc,
                  beacons) = stats
                 qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
-                qual_perc = usage_percent(qual_curr, qual_max, round_=1)
+                qual_perc = round(usage_percent(qual_curr, qual_max))
 
                 # This is how wavemon does it:
                 # https://github.com/bmegli/wifi-scan/issues/18
                 # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
                 # sig_max is supposed to be -110.
                 if sig_curr < sig_max:
-                    sig_perc = 0.0
+                    sig_perc = 0
                 elif sig_curr > -40:
-                    sig_perc = 70.0
+                    sig_perc = 70
                 else:
-                    sig_perc = float(sig_curr + abs(sig_max))
+                    sig_perc = sig_curr + abs(sig_max)
 
             nt = swifi(
                 essid=essid,

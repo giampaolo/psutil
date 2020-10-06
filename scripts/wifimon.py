@@ -5,8 +5,9 @@
 # found in the LICENSE file.
 
 import atexit
-import time
+import socket
 import sys
+import time
 try:
     import curses
 except ImportError:
@@ -16,7 +17,8 @@ import psutil
 from psutil._common import bytes2human
 
 
-# --- curses stuff
+INTERVAL = 0.2
+
 
 def tear_down():
     win.keypad(0)
@@ -29,9 +31,14 @@ win = curses.initscr()
 atexit.register(tear_down)
 curses.endwin()
 lineno = 0
+af_map = {
+    socket.AF_INET: 'IPv4',
+    socket.AF_INET6: 'IPv6',
+    psutil.AF_LINK: 'MAC',
+}
 
 
-def print_line(line, highlight=False):
+def printl(line, highlight=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
     try:
@@ -57,44 +64,51 @@ def refresh_window():
     """Print results on screen by using curses."""
     global lineno
 
-    for name, info in psutil.wifi_ifaces().items():
-        print_line("INTERFACE", highlight=True)
-        print_line("  %s (%s), SSID: %s" % (name, info.proto, info.essid))
-        print_line("")
+    for ifname, info in psutil.wifi_ifaces().items():
+        printl("INTERFACE", highlight=True)
+        printl("  %s (%s), SSID: %s" % (ifname, info.proto, info.essid))
+        printl("")
 
-        print_line("LEVELS", highlight=True)
-
-        print_line("  Link quality: %s%%" % info.quality_percent)
+        printl("LEVELS", highlight=True)
+        printl("  Link quality: %s%%" % info.quality_percent)
         dashes, empty_dashes = get_dashes(info.quality_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
-        print_line(line)
-        print_line("")
+        printl(line)
+        printl("")
 
-        print_line("  Signal level: %s dBm (%s%%)" % (
+        printl("  Signal level: %s dBm (%s%%)" % (
             info.signal, info.signal_percent))
         dashes, empty_dashes = get_dashes(info.signal_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
-        print_line(line)
-        print_line("")
+        printl(line)
+        printl("")
 
-        print_line("STATISTICS", highlight=True)
-        ioc = psutil.net_io_counters(pernic=True)[name]
-        print_line("  RX: %s (%s)" % (
+        printl("STATISTICS", highlight=True)
+        ioc = psutil.net_io_counters(pernic=True)[ifname]
+        printl("  RX (recv): %6s (%6s)" % (
             bytes2human(ioc.bytes_recv), '{0:,}'.format(ioc.bytes_recv)))
-        print_line("  TX: %s (%s)" % (
+        printl("  TX (sent): %6s (%6s)" % (
             bytes2human(ioc.bytes_sent), '{0:,}'.format(ioc.bytes_sent)))
-        print_line("")
+        printl("")
 
-        print_line("INFO", highlight=True)
-        print_line("  Mode: %s, Connected to: %s" % (info.mode, info.bssid))
-        print_line("  Freq: %s MHz" % (info.freq))
-        print_line("  TX-Power: %s" % (info.txpower))
-        print_line("  Beacons: %s, Nwid: %s, Crypt: %s" % (
+        printl("INFO", highlight=True)
+        printl("  Mode: %s, Connected to: %s" % (info.mode, info.bssid))
+        printl("  Freq: %s MHz" % (info.freq))
+        printl("  TX-Power: %s, Power save: %s" % (
+            info.txpower, "on" if info.power_save else "off"))
+        printl("  Beacons: %s, Nwid: %s, Crypt: %s" % (
             info.beacons, info.discard_nwid, info.discard_crypt))
-        print_line("  Frag: %s, Retry: %s, Misc: %s" % (
+        printl("  Frag: %s, Retry: %s, Misc: %s" % (
             info.discard_frag, info.discard_retry, info.discard_misc))
-        print_line("")
+        printl("")
 
+        printl("ADDRESSES (%s)" % ifname, highlight=True)
+        addrs = psutil.net_if_addrs()[ifname]
+        for addr in addrs:
+            proto = af_map.get(addr.family, addr.family)
+            printl("%6s: %s" % (proto, addr.address))
+
+    printl("")
     win.refresh()
     lineno = 0
 
@@ -107,7 +121,7 @@ def main():
     try:
         while True:
             refresh_window()
-            time.sleep(.2)
+            time.sleep(INTERVAL)
     except (KeyboardInterrupt, SystemExit):
         pass
 
