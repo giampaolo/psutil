@@ -138,6 +138,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_description = NULL;
     PyObject *py_status = NULL;
     PyObject *py_qual_perc = NULL;
+    PyObject *py_signal = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -225,7 +226,14 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 "k", pConnectInfo->wlanAssociationAttributes.wlanSignalQuality);
             if (! py_qual_perc)
                 goto error;
-            if (PyDict_SetItemString(py_dict, "qual_perc", py_qual_perc))
+            if (PyDict_SetItemString(py_dict, "quality_percent", py_qual_perc))
+                goto error;
+            // signal
+            py_signal = Py_BuildValue(
+                "l", quality_perc_to_rssi(pConnectInfo->wlanAssociationAttributes.wlanSignalQuality));
+            if (! py_signal)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "signal", py_signal))
                 goto error;
             // auth
             py_auth = Py_BuildValue("s",
@@ -250,6 +258,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         Py_CLEAR(py_essid);
         Py_CLEAR(py_bssid);
         Py_CLEAR(py_qual_perc);
+        Py_CLEAR(py_signal);
         Py_CLEAR(py_auth);
         Py_CLEAR(py_cipher);
         Py_CLEAR(py_description);
@@ -271,6 +280,7 @@ error:
     Py_XDECREF(py_qual_perc);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_auth);
+    Py_XDECREF(py_signal);
     Py_XDECREF(py_cipher);
     Py_XDECREF(py_description);
     Py_XDECREF(py_status);
@@ -373,7 +383,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     DWORD dwCurVersion = 0;
     DWORD dwResult;
     unsigned int j;
-    long iRSSI = 0;
+    long signal;
     char *auth;
     char *cipher;
     char macaddr[200];
@@ -383,7 +393,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     PyObject *py_dict = NULL;
     PyObject *py_ssid = NULL;
     PyObject *py_quality = NULL;
-    PyObject *py_level = NULL;
+    PyObject *py_signal = NULL;
     PyObject *py_auth = NULL;
     PyObject *py_cipher = NULL;
     PyObject *py_macaddr = NULL;
@@ -426,12 +436,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
             continue;
 
         // RSSI expressed in dbm
-        if (pBssEntry->wlanSignalQuality == 0)
-            iRSSI = -100;
-        else if (pBssEntry->wlanSignalQuality == 100)
-            iRSSI = -50;
-        else
-            iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
+        signal = quality_perc_to_rssi(pBssEntry->wlanSignalQuality);
         auth = convert_auth(pBssEntry->dot11DefaultAuthAlgorithm);
         cipher = convert_cipher(pBssEntry->dot11DefaultCipherAlgorithm);
 
@@ -480,11 +485,11 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
             goto error;
         if (PyDict_SetItemString(py_dict, "quality", py_quality))
             goto error;
-        // level
-        py_level = Py_BuildValue("i", iRSSI);
-        if (! py_level)
+        // signal
+        py_signal = Py_BuildValue("i", signal);
+        if (! py_signal)
             goto error;
-        if (PyDict_SetItemString(py_dict, "level", py_level))
+        if (PyDict_SetItemString(py_dict, "signal", py_signal))
             goto error;
         // auth
         py_auth = Py_BuildValue("s", auth);
@@ -511,7 +516,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
         Py_CLEAR(py_dict);
         Py_CLEAR(py_ssid);
         Py_CLEAR(py_quality);
-        Py_CLEAR(py_level);
+        Py_CLEAR(py_signal);
         Py_CLEAR(py_auth);
         Py_CLEAR(py_cipher);
         Py_CLEAR(py_macaddr);
@@ -529,7 +534,7 @@ error:
     Py_XDECREF(py_dict);
     Py_XDECREF(py_ssid);
     Py_XDECREF(py_quality);
-    Py_XDECREF(py_level);
+    Py_XDECREF(py_signal);
     Py_XDECREF(py_auth);
     Py_XDECREF(py_cipher);
     Py_XDECREF(py_macaddr);
