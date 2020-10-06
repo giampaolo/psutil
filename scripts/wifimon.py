@@ -20,6 +20,19 @@ from psutil._common import bytes2human
 INTERVAL = 0.2
 
 
+def setup():
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+    curses.endwin()
+
+
+win = curses.initscr()
+setup()
+
+
+@atexit.register
 def tear_down():
     win.keypad(0)
     curses.nocbreak()
@@ -27,31 +40,39 @@ def tear_down():
     curses.endwin()
 
 
-win = curses.initscr()
-atexit.register(tear_down)
-curses.endwin()
 lineno = 0
 af_map = {
     socket.AF_INET: 'IPv4',
     socket.AF_INET6: 'IPv6',
     psutil.AF_LINK: 'MAC',
 }
+colors_map = dict(
+    green=35,
+    red=10,
+    blue=5,
+)
 
 
-def printl(line, highlight=False):
+def printl(line, color=None, bold=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
     try:
-        if highlight:
-            win.addstr(lineno, 0, line, curses.A_REVERSE)
-        else:
-            win.addstr(lineno, 0, line, 0)
+        flags = 0
+        if color:
+            flags |= curses.color_pair(colors_map[color])
+        if bold:
+            flags |= curses.A_BOLD
+        win.addstr(lineno, 0, line, flags)
     except curses.error:
         lineno = 0
         win.refresh()
         raise
     else:
         lineno += 1
+
+
+def printl_title(line):
+    printl(line, color="blue", bold=True)
 
 
 def get_dashes(perc):
@@ -65,25 +86,24 @@ def refresh_window():
     global lineno
 
     for ifname, info in psutil.wifi_ifaces().items():
-        printl("INTERFACE", highlight=True)
+        printl_title("INTERFACE")
         printl("  %s (%s), SSID: %s" % (ifname, info.proto, info.essid))
         printl("")
 
-        printl("LEVELS", highlight=True)
+        printl_title("LEVELS")
         printl("  Link quality: %s%%" % info.quality_percent)
         dashes, empty_dashes = get_dashes(info.quality_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
-        printl(line)
-        printl("")
+        printl(line, color="green" if info.quality_percent >= 50 else "red")
 
         printl("  Signal level: %s dBm (%s%%)" % (
             info.signal, info.signal_percent))
         dashes, empty_dashes = get_dashes(info.signal_percent)
         line = "  [%s%s]" % (dashes, empty_dashes)
-        printl(line)
+        printl(line, color="green" if info.signal_percent >= 50 else "red")
         printl("")
 
-        printl("STATISTICS", highlight=True)
+        printl_title("STATISTICS")
         ioc = psutil.net_io_counters(pernic=True)[ifname]
         printl("  RX (recv): %6s (%6s)" % (
             bytes2human(ioc.bytes_recv), '{0:,}'.format(ioc.bytes_recv)))
@@ -91,18 +111,19 @@ def refresh_window():
             bytes2human(ioc.bytes_sent), '{0:,}'.format(ioc.bytes_sent)))
         printl("")
 
-        printl("INFO", highlight=True)
-        printl("  Mode: %s, Connected to: %s" % (info.mode, info.bssid))
+        printl_title("INFO")
+        printl("  Connected to: %s" % (info.bssid))
+        printl("  Mode: %s" % (info.mode))
         printl("  Freq: %s MHz" % (info.freq))
-        printl("  TX-Power: %s, Power save: %s" % (
-            info.txpower, "on" if info.power_save else "off"))
+        printl("  TX-Power: %s" % (info.txpower))
+        printl("  Power save: %s" % ("on" if info.power_save else "off"))
         printl("  Beacons: %s, Nwid: %s, Crypt: %s" % (
             info.beacons, info.discard_nwid, info.discard_crypt))
         printl("  Frag: %s, Retry: %s, Misc: %s" % (
             info.discard_frag, info.discard_retry, info.discard_misc))
         printl("")
 
-        printl("ADDRESSES (%s)" % ifname, highlight=True)
+        printl_title("ADDRESSES (%s)" % ifname)
         addrs = psutil.net_if_addrs()[ifname]
         for addr in addrs:
             proto = af_map.get(addr.family, addr.family)
