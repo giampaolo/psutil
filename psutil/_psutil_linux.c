@@ -583,7 +583,7 @@ static PyMethodDef mod_methods[] = {
      "Return Wi-Fi card's mode."},
     {"wifi_card_frequency", psutil_wifi_card_frequency, METH_VARARGS,
      "Return Wi-Fi card's frequency."},
-    {"wifi_card_bitrate", psutil_wifi_card_bitrate, METH_VARARGS,
+    {"wifi_card_max_bitrate", psutil_wifi_card_max_bitrate, METH_VARARGS,
      "Return Wi-Fi card's bitrate."},
     {"wifi_card_txpower", psutil_wifi_card_txpower, METH_VARARGS,
      "Return Wi-Fi card's TX power."},
