@@ -97,6 +97,18 @@ convert_macaddr(unsigned char *ptr) {
 }
 
 
+long
+quality_perc_to_rssi(WLAN_SIGNAL_QUALITY value) {
+    // RSSI (signal quality) expressed in dBm
+    if (value == 0)
+        return (long)-100;
+    else if (value == 100)
+        return (long)-50;
+    else
+        return -100 + ((long)value / 2);
+}
+
+
 // ---
 
 
@@ -109,7 +121,6 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     int iRet = 0;
     WCHAR GuidString[40] = {0};
     int i;
-    char *status;
     PWLAN_INTERFACE_INFO_LIST pIfList = NULL;
     PWLAN_INTERFACE_INFO pIfInfo = NULL;
 
@@ -153,14 +164,12 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        status = convert_status(pIfInfo);
-
-        // build dict
+        // --- build dict
         py_dict = PyDict_New();
         if (!py_dict)
             goto error;
         // status
-        py_status = Py_BuildValue("s", status);
+        py_status = Py_BuildValue("s", convert_status(pIfInfo));
         if (! py_status)
             goto error;
         if (PyDict_SetItemString(py_dict, "status", py_status))
@@ -180,7 +189,7 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         if (PyDict_SetItemString(py_dict, "descr", py_description))
             goto error;
 
-        // ---- if the interface is connected retrieve more info
+        // --- if the interface is connected retrieve more info
 
         if (pIfInfo->isState == wlan_interface_state_connected) {
             dwResult = WlanQueryInterface(
@@ -364,7 +373,7 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
     DWORD dwCurVersion = 0;
     DWORD dwResult;
     unsigned int j;
-    int iRSSI = 0;
+    long iRSSI = 0;
     char *auth;
     char *cipher;
     char macaddr[200];
@@ -423,7 +432,6 @@ psutil_wifi_scan(PyObject *self, PyObject *args) {
             iRSSI = -50;
         else
             iRSSI = -100 + (pBssEntry->wlanSignalQuality / 2);
-
         auth = convert_auth(pBssEntry->dot11DefaultAuthAlgorithm);
         cipher = convert_cipher(pBssEntry->dot11DefaultCipherAlgorithm);
 

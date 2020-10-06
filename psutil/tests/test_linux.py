@@ -33,6 +33,8 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
+from psutil.tests import HAS_WIFI_IFACES
+from psutil.tests import HAS_ACTIVE_WIFI
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
@@ -997,6 +999,123 @@ class TestSystemNetConnections(PsutilTestCase):
                 """)) as m:
             psutil.net_connections(kind='unix')
             assert m.called
+
+
+# =====================================================================
+# --- wifi
+# =====================================================================
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(not HAS_WIFI_IFACES, "no Wi-Fi")
+@unittest.skipIf(not HAS_ACTIVE_WIFI, "no active Wi-Fi")
+class TestWifiIfaces(PsutilTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        for ifname, wifi in psutil.wifi_ifaces().items():
+            if wifi.essid is not None:
+                cls.ifname = ifname
+                break
+        else:
+            raise unittest.SkipTest("could not find active Wi-Fi interface")
+
+    def read_proc_wireless(self):
+        with open('/proc/net/wireless') as f:
+            lines = f.readlines()
+        ret = {}
+        for line in lines:
+            if line.startswith(self.ifname):
+                fields = line.split()
+                ret['quality'] = int(fields[2].replace('.', ''))
+                ret['signal'] = int(fields[3].replace('.', ''))
+                ret['nwid'] = int(fields[5])
+                ret['crypt'] = int(fields[6])
+                ret['frag'] = int(fields[7])
+                ret['retry'] = int(fields[8])
+                ret['misc'] = int(fields[9])
+                ret['beacon'] = int(fields[10])
+        return ret
+
+    def test_essid(self):
+        value = psutil.wifi_ifaces()[self.ifname].essid
+        out = sh("iwconfig %s" % self.ifname)
+        iwconfig = re.search('ESSID:".*"', out).group(0).split('"')[1]
+        self.assertEqual(value, iwconfig)
+
+    def test_bssid(self):
+        value = psutil.wifi_ifaces()[self.ifname].bssid
+        out = sh("iwconfig %s" % self.ifname)
+        iwconfig = re.search(
+            'Access Point: (.*)', out).group(0).split(': ')[1].strip()
+        self.assertEqual(value, iwconfig)
+
+    @retry_on_failure()
+    def test_quality(self):
+        value = psutil.wifi_ifaces()[self.ifname].quality
+        self.assertEqual(value, self.read_proc_wireless()['quality'])
+
+    @retry_on_failure()
+    def test_signal(self):
+        value = psutil.wifi_ifaces()[self.ifname].signal
+        self.assertEqual(value, self.read_proc_wireless()['signal'])
+
+    @retry_on_failure()
+    def test_discarded_nwid(self):
+        value = psutil.wifi_ifaces()[self.ifname].discarded_nwid
+        self.assertEqual(value, self.read_proc_wireless()['nwid'])
+
+    @retry_on_failure()
+    def test_discarded_crypt(self):
+        value = psutil.wifi_ifaces()[self.ifname].discarded_crypt
+        self.assertEqual(value, self.read_proc_wireless()['crypt'])
+
+    @retry_on_failure()
+    def test_discarded_frag(self):
+        value = psutil.wifi_ifaces()[self.ifname].discarded_frag
+        self.assertEqual(value, self.read_proc_wireless()['frag'])
+
+    @retry_on_failure()
+    def test_discarded_retry(self):
+        value = psutil.wifi_ifaces()[self.ifname].discarded_retry
+        self.assertEqual(value, self.read_proc_wireless()['retry'])
+
+    @retry_on_failure()
+    def test_discarded_misc(self):
+        value = psutil.wifi_ifaces()[self.ifname].discarded_misc
+        self.assertEqual(value, self.read_proc_wireless()['misc'])
+
+    @retry_on_failure()
+    def test_missed_beacons(self):
+        value = psutil.wifi_ifaces()[self.ifname].missed_beacons
+        self.assertEqual(value, self.read_proc_wireless()['beacon'])
+
+    def test_proto(self):
+        value = psutil.wifi_ifaces()[self.ifname].proto
+        out = sh("iwconfig %s" % self.ifname)
+        line = out.split('\n')[0]
+        iwconfig = line[:line.rfind('ESSID')].replace(self.ifname, '').strip()
+        self.assertEqual(value, iwconfig)
+
+    def test_mode(self):
+        value = psutil.wifi_ifaces()[self.ifname].mode
+        out = sh("iwconfig %s" % self.ifname)
+        iwconfig = re.search(
+            r'Mode:*.([^\s]+)', out).group(0).split(':')[1].lower()
+        self.assertEqual(value, iwconfig)
+
+    def test_frequency(self):
+        value = psutil.wifi_ifaces()[self.ifname].freq
+        out = sh("iw dev %s link" % self.ifname)
+        iw = int(re.search(r'freq: [0-9]+', out).group(0).split(':')[1])
+        self.assertEqual(value, iw)
+
+    def test_txpower(self):
+        value = psutil.wifi_ifaces()[self.ifname].txpower
+        out = sh("iwconfig %s" % self.ifname)
+        iwconfig = int(re.search(
+            'Tx-Power=[0-9]+', out).group(0).split('=')[1])
+        self.assertEqual(value, iwconfig)
 
 
 # =====================================================================

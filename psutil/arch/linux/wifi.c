@@ -12,6 +12,9 @@
 // https://github.com/azbox-enigma2/pythonwifi/blob/master/pythonwifi/iwlibs.py
 
 #include <Python.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <linux/if.h>
 #include <linux/wireless.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -36,6 +39,33 @@ ioctl_request(char *ifname, int request, struct iwreq *pwrq, int sock) {
         return 1;
     }
     return 0;
+}
+
+
+static int
+wifi_card_exists(char *ifname, int sock) {
+    struct iwreq wrq;
+    int ret;
+
+    ret = ioctl_request(ifname, SIOCGIWNAME, &wrq, sock);
+    if (ret == 0)
+        return 1;
+    else
+        return 0;
+}
+
+
+static PyObject*
+handle_ioctl_err(char *ifname, int sock, char *syscall) {
+    if ((errno == ENOTSUP) || (errno == EINVAL)) {
+        if (wifi_card_exists(ifname, sock) == 1) {
+            PyErr_Clear();
+            psutil_debug("%s failed; converting to None", syscall);
+            Py_RETURN_NONE;
+        }
+        return NULL;
+    }
+    return NULL;
 }
 
 
@@ -179,7 +209,7 @@ psutil_wifi_card_frequency(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWFREQ, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWFREQ)");
     // expressed in Mb/sec
     freq = freq2double(wrq.u.freq);
     return Py_BuildValue("d", freq);
@@ -195,7 +225,7 @@ psutil_wifi_card_bitrate(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWRATE, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWRATE)");
     // Expressed in Mb/sec.
     return Py_BuildValue("d", (double)wrq.u.bitrate.value / 1000 / 1000);
 }
@@ -273,13 +303,19 @@ psutil_wifi_card_stats(PyObject* self, PyObject* args) {
     wrq.u.data.flags = 1;
 
     if (ioctl_request(ifname, SIOCGIWSTATS, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWSTATS)");
 
-    // substract 256 in order to match /proc/net/wireless
+    // signal: substract 256 in order to match /proc/net/wireless
     return Py_BuildValue(
-        "Ii",
-        stats.qual.qual,              // link quality
-        (int) stats.qual.level - 256  // signal
+        "IiIIIIII",
+        stats.qual.qual,                    // link quality
+        (int)stats.qual.level - 256,        // signal
+        stats.discard.nwid,                 // Rx: wrong nwid/essid
+        stats.discard.code,                 // Rx: unable to code/decode (WEP)
+        stats.discard.fragment,             // Rx: can't perform MAC reassembly
+        stats.discard.retries,              // Tx: max MAC retries num reached
+        stats.discard.misc,                 // other cases
+        stats.miss.beacon                   // missed beacons
     );
 }
 

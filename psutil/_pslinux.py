@@ -8,7 +8,6 @@ from __future__ import division
 
 import base64
 import collections
-import contextlib
 import errno
 import functools
 import glob
@@ -183,10 +182,27 @@ sdiskio = namedtuple(
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
-# psutil.wifi_info()
-swifiinfo = namedtuple(
-    'swifiinfo', ['essid', 'bssid', 'proto', 'quality', 'signal', 'mode',
-                  'freq', 'bitrate', 'txpower'])
+# psutil.wifi_ifaces()
+swifi = namedtuple(
+    'swifi', [
+        'essid',
+        'bssid',
+        'quality',
+        'quality_percent',
+        'signal',
+        'signal_percent',
+        'proto',
+        'mode',
+        'freq',
+        'bitrate',
+        'txpower',
+        'discarded_nwid',
+        'discarded_crypt',
+        'discarded_frag',
+        'discarded_retry',
+        'discarded_misc',
+        'missed_beacons',
+    ])
 # psutil.Process().open_files()
 popenfile = namedtuple(
     'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
@@ -1052,166 +1068,199 @@ def net_if_stats():
 # =====================================================================
 
 
-class WifiInterface(_common.BaseWifiInterface):
+# class WifiInterface(_common.BaseWifiInterface):
 
-    def __init__(self, ifname):
-        _common.BaseWifiInterface.__init__(self, ifname)
-        with self._get_fd() as fd:
-            self._assert_wifi_card(ifname, fd)
-            ranges = cext.wifi_card_ranges(self._ifname, fd)
-            self._qual_max, self._sig_max = ranges
+#     def __init__(self, ifname):
+#         _common.BaseWifiInterface.__init__(self, ifname)
+#         with self._get_fd() as fd:
+#             self._assert_wifi_card(ifname, fd)
+#             ranges = cext.wifi_card_ranges(self._ifname, fd)
+#             self._qual_max, self._sig_max = ranges
 
-    def _assert_wifi_card(self, ifname, fd):
-        try:
-            cext.wifi_card_proto(self._ifname, fd)
-        except OSError as err:
-            names = _wifi_card_names()
-            if not names:
-                detail = "There are no Wi-Fi cards installed on this system."
-            else:
-                detail = "Available cards are: %r." % names
-            if err.errno == errno.ENODEV:
-                msg = "%r network interface doesn't exist. "
-                msg += detail
-                raise ValueError(msg)
-            if err.errno == errno.ENOTSUP:
-                msg = "%r is not a Wi-Fi interface card. " % ifname
-                msg += detail
-                raise ValueError(msg)
-            raise
+#     def _assert_wifi_card(self, ifname, fd):
+#         try:
+#             cext.wifi_card_proto(self._ifname, fd)
+#         except OSError as err:
+#             names = _wifi_card_names()
+#             if not names:
+#                 detail = "There are no Wi-Fi cards installed on this system."
+#             else:
+#                 detail = "Available cards are: %r." % names
+#             if err.errno == errno.ENODEV:
+#                 msg = "%r network interface doesn't exist. "
+#                 msg += detail
+#                 raise ValueError(msg)
+#             if err.errno == errno.ENOTSUP:
+#                 msg = "%r is not a Wi-Fi interface card. " % ifname
+#                 msg += detail
+#                 raise ValueError(msg)
+#             raise
 
-    @contextlib.contextmanager
-    def _get_fd(self):
-        sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
-        try:
-            yield sock.fileno()
-        finally:
-            sock.close()
+#     @contextlib.contextmanager
+#     def _get_fd(self):
+#         sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
+#         try:
+#             yield sock.fileno()
+#         finally:
+#             sock.close()
 
-    def essid(self):
-        """The wireless network name this interface is connected to.
-        If not connected returns None.
-        """
-        with self._get_fd() as fd:
-            return cext.wifi_card_essid(self._ifname, fd)
+#     def essid(self):
+#         """The wireless network name this interface is connected to.
+#         If not connected returns None.
+#         """
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_essid(self._ifname, fd)
 
-    def bssid(self):
-        """The Access Point MAC address."""
-        with self._get_fd() as fd:
-            return cext.wifi_card_bssid(self._ifname, fd)
+#     def bssid(self):
+#         """The Access Point MAC address."""
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_bssid(self._ifname, fd)
 
-    def proto(self):
-        """The LAN protocol name (e.g. "IEEE 802.11")."""
-        with self._get_fd() as fd:
-            return cext.wifi_card_proto(self._ifname, fd)
+#     def proto(self):
+#         """The LAN protocol name (e.g. "IEEE 802.11")."""
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_proto(self._ifname, fd)
 
-    def quality(self):
-        with self._get_fd() as fd:
-            curr, _ = cext.wifi_card_stats(self._ifname, fd)
-        perc = int(usage_percent(curr, self._qual_max))
-        return _common.wfqual(perc, curr, self._qual_max)
+#     def quality(self):
+#         with self._get_fd() as fd:
+#             curr, _ = cext.wifi_card_stats(self._ifname, fd)
+#         perc = int(usage_percent(curr, self._qual_max))
+#         return _common.wfqual(perc, curr, self._qual_max)
 
-    def signal(self):
-        # This is how wavemon does it:
-        # https://github.com/bmegli/wifi-scan/issues/18
-        # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
-        # sig_max is supposed to be -110.
-        with self._get_fd() as fd:
-            _, curr = cext.wifi_card_stats(self._ifname, fd)
-        if curr < self._sig_max:
-            perc = 0
-        elif curr > -40:
-            perc = 70
-        else:
-            perc = curr + abs(self._sig_max)
-        return _common.wfsig(perc, curr, self._sig_max)
-
-    def mode(self):
-        """The Wi-Fi mode as a string (e.g. "managed" or "master")."""
-        with self._get_fd() as fd:
-            return cext.wifi_card_mode(self._ifname, fd)
-
-    def freq(self):
-        """The interface frequency expressed in Mb/sec."""
-        with self._get_fd() as fd:
-            return cext.wifi_card_frequency(self._ifname, fd)
-
-    def bitrate(self):
-        """The interface bitrate expressed in Mb/sec."""
-        with self._get_fd() as fd:
-            return cext.wifi_card_bitrate(self._ifname, fd)
-
-    def txpower(self):
-        """The Wi-Fi transmission power expressed in dBm (decibel per
-        milliwatt).
-        """
-        with self._get_fd() as fd:
-            return cext.wifi_card_txpower(self._ifname, fd)
-
-
-def _wifi_card_names():
-    ls = []
-    with open_text("%s/net/wireless" % get_procfs_path()) as f:
-        lines = f.readlines()[2:]
-    if lines:
-        for line in lines:
-            name = line.partition(':')[0]
-            ls.append(name)
-    return ls
-
-
-def wifi_ifaces():
-    ls = []
-    for name in _wifi_card_names():
-        iface = WifiInterface(name)
-        ls.append(iface)
-    return ls
-
-
-def wifi_scan(nic):
-    return cext.wifi_scan(nic)
-
-
-# def wifi_info(nic):
-#     sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
-#     try:
-#         fd = sock.fileno()
-#         essid = cext.wifi_card_essid(nic, fd)
-#         bssid = cext.wifi_card_bssid(nic, fd)
-#         proto = cext.wifi_card_proto(nic, fd)
-#         mode = cext.wifi_card_mode(nic, fd)
-#         freq = int(cext.wifi_card_frequency(nic, fd))
-#         bitrate = cext.wifi_card_bitrate(nic, fd)
-#         txpower = cext.wifi_card_txpower(nic, fd)
-
-#         qual_curr, sig_curr = cext.wifi_card_stats(nic, fd)
-#         qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
-#         qual_perc = int(usage_percent(qual_curr, qual_max))
-
+#     def signal(self):
 #         # This is how wavemon does it:
 #         # https://github.com/bmegli/wifi-scan/issues/18
 #         # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
 #         # sig_max is supposed to be -110.
-#         if sig_curr < sig_max:
-#             sig_perc = 0
-#         elif sig_curr > -40:
-#             sig_perc = 70
+#         with self._get_fd() as fd:
+#             _, curr = cext.wifi_card_stats(self._ifname, fd)
+#         if curr < self._sig_max:
+#             perc = 0
+#         elif curr > -40:
+#             perc = 70
 #         else:
-#             sig_perc = sig_curr + abs(sig_max)
+#             perc = curr + abs(self._sig_max)
+#         return _common.wfsig(perc, curr, self._sig_max)
 
-#         return swifiinfo(
-#             essid=essid,
-#             bssid=bssid,
-#             proto=proto,
-#             quality=dict(percent=qual_perc, current=qual_curr, max=qual_max),
-#             signal=dict(percent=sig_perc, current=sig_curr, max=sig_max),
-#             mode=mode,
-#             freq=freq,
-#             bitrate=bitrate,
-#             txpower=txpower,
-#         )
-#     finally:
-#         sock.close()
+#     def mode(self):
+#         """The Wi-Fi mode as a string (e.g. "managed" or "master")."""
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_mode(self._ifname, fd)
+
+#     def freq(self):
+#         """The interface frequency expressed in Mb/sec."""
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_frequency(self._ifname, fd)
+
+#     def bitrate(self):
+#         """The interface bitrate expressed in Mb/sec."""
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_bitrate(self._ifname, fd)
+
+#     def txpower(self):
+#         """The Wi-Fi transmission power expressed in dBm (decibel per
+#         milliwatt).
+#         """
+#         with self._get_fd() as fd:
+#             return cext.wifi_card_txpower(self._ifname, fd)
+
+
+def _wifi_card_names():
+    # /proc/net/wireless ignores Wi-Fi interfaces which are not connected.
+    with open_text("%s/net/dev" % get_procfs_path()) as f:
+        lines = f.readlines()
+    sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
+    try:
+        ls = []
+        for line in lines[2:]:
+            colon = line.rfind(':')
+            assert colon > 0, repr(line)
+            name = line[:colon].strip()
+            try:
+                # Aka ioctl(SIOCGIWNAME), which is supposed to fail
+                # for non-wifi interfaces.
+                cext.wifi_card_proto(name, sock.fileno())
+            except OSError as err:
+                if err.errno != errno.ENOTSUP:
+                    raise
+            else:
+                ls.append(name)
+        return ls
+    finally:
+        sock.close()
+
+
+def wifi_ifaces():
+    sock = socket.socket(socket.SOCK_STREAM, socket.SOCK_DGRAM)
+    try:
+        ret = {}
+        for nic in _wifi_card_names():
+            fd = sock.fileno()
+            essid = cext.wifi_card_essid(nic, fd)
+            bssid = cext.wifi_card_bssid(nic, fd)
+            proto = cext.wifi_card_proto(nic, fd)
+            mode = cext.wifi_card_mode(nic, fd)
+            freq = cext.wifi_card_frequency(nic, fd)
+            if freq is not None:
+                freq = int(freq)
+            bitrate = cext.wifi_card_bitrate(nic, fd)
+            txpower = cext.wifi_card_txpower(nic, fd)
+
+            # stats
+            qual_perc = sig_perc = qual_curr = sig_curr = discarded_nwid = \
+                discarded_crypt = discarded_frag = discarded_retry = \
+                discarded_misc = missed_beacons = None
+            stats = cext.wifi_card_stats(nic, fd)
+            if stats is not None:
+                (qual_curr,
+                 sig_curr,
+                 discarded_nwid,
+                 discarded_crypt,
+                 discarded_frag,
+                 discarded_retry,
+                 discarded_misc,
+                 missed_beacons) = stats
+                qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
+                qual_perc = usage_percent(qual_curr, qual_max, round_=1)
+
+                # This is how wavemon does it:
+                # https://github.com/bmegli/wifi-scan/issues/18
+                # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
+                # sig_max is supposed to be -110.
+                if sig_curr < sig_max:
+                    sig_perc = 0.0
+                elif sig_curr > -40:
+                    sig_perc = 70.0
+                else:
+                    sig_perc = float(sig_curr + abs(sig_max))
+
+            nt = swifi(
+                essid=essid,
+                bssid=bssid,
+                proto=proto,
+                quality=qual_curr,
+                quality_percent=qual_perc,
+                signal=sig_curr,  # RSSI
+                signal_percent=sig_perc,
+                mode=mode,
+                freq=freq,
+                bitrate=bitrate,
+                txpower=txpower,
+                discarded_nwid=discarded_nwid,
+                discarded_crypt=discarded_crypt,
+                discarded_frag=discarded_frag,
+                discarded_retry=discarded_retry,
+                discarded_misc=discarded_misc,
+                missed_beacons=missed_beacons,
+            )
+            ret[nic] = nt
+        return ret
+    finally:
+        sock.close()
+
+
+def wifi_scan(nic):
+    return cext.wifi_scan(nic)
 
 
 # =====================================================================
