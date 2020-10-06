@@ -195,6 +195,7 @@ swifi = namedtuple(
         'mode',
         'freq',
         'bitrate',
+        'power_save',
         'txpower',
         'beacons',
         'discard_nwid',
@@ -1205,6 +1206,7 @@ def wifi_ifaces():
                 freq = int(freq)
             bitrate = cext.wifi_card_bitrate(nic, fd)
             txpower = cext.wifi_card_txpower(nic, fd)
+            power_save = cext.wifi_card_power_save(nic, fd)
 
             # stats
             qual_perc = sig_perc = qual_curr = sig_curr = discard_nwid = \
@@ -1246,6 +1248,7 @@ def wifi_ifaces():
                 freq=freq,
                 bitrate=bitrate,
                 txpower=txpower,
+                power_save=power_save,
                 beacons=beacons,
                 discard_nwid=discard_nwid,
                 discard_crypt=discard_crypt,

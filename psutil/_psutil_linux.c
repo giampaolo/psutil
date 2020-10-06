@@ -591,6 +591,8 @@ static PyMethodDef mod_methods[] = {
      "Return Wi-Fi card's ranges info."},
     {"wifi_card_stats", psutil_wifi_card_stats, METH_VARARGS,
      "Return Wi-Fi card's ranges info."},
+    {"wifi_card_power_save", psutil_wifi_card_power_save, METH_VARARGS,
+     "Return True if Wi-Fi card has power save/managment mode enabled."},
 
     // --- linux specific
 

@@ -200,6 +200,23 @@ psutil_wifi_card_mode(PyObject* self, PyObject* args) {
 
 
 PyObject*
+psutil_wifi_card_power_save(PyObject* self, PyObject* args) {
+    char *ifname;
+    int sock;
+    struct iwreq wrq;
+
+    if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
+        return NULL;
+    if (ioctl_request(ifname, SIOCGIWPOWER, &wrq, sock) != 0)
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWPOWER)");
+    if (wrq.u.power.disabled)
+        Py_RETURN_FALSE;
+    else
+        Py_RETURN_TRUE;
+}
+
+
+PyObject*
 psutil_wifi_card_frequency(PyObject* self, PyObject* args) {
     char *ifname;
     int sock;
@@ -236,7 +253,6 @@ psutil_wifi_card_txpower(PyObject* self, PyObject* args) {
     char *ifname;
     int sock;
     struct iwreq wrq;
-    int value;
 
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
@@ -244,10 +260,9 @@ psutil_wifi_card_txpower(PyObject* self, PyObject* args) {
         return NULL;
     // Expressed in dbm.
     if (wrq.u.txpower.disabled)
-        value = 0;
+        Py_RETURN_NONE;
     else
-        value = wrq.u.txpower.value;
-    return Py_BuildValue("i", value);
+        return Py_BuildValue("i", wrq.u.txpower.value);
 }
 
 
