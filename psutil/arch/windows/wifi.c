@@ -139,8 +139,8 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_status = NULL;
     PyObject *py_qual_perc = NULL;
     PyObject *py_signal = NULL;
-    PyObject *py_rxrate = NULL;
-    PyObject *py_txrate = NULL;
+    PyObject *py_rxbitrate = NULL;
+    PyObject *py_txbitrate = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -255,19 +255,19 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
                 goto error;
-            // RX rate
-            py_rxrate = Py_BuildValue("k",
-                pConnectInfo->wlanAssociationAttributes.ulRxRate);
-            if (! py_rxrate)
+            // RX rate (MB/sec)
+            py_rxbitrate = Py_BuildValue("k",
+                pConnectInfo->wlanAssociationAttributes.ulRxRate / 1000);
+            if (! py_rxbitrate)
                 goto error;
-            if (PyDict_SetItemString(py_dict, "rxrate", py_rxrate))
+            if (PyDict_SetItemString(py_dict, "rxbitrate", py_rxbitrate))
                 goto error;
-            // TX rate
-            py_txrate = Py_BuildValue("k",
-                pConnectInfo->wlanAssociationAttributes.ulTxRate);
-            if (! py_txrate)
+            // TX rate (MB/sec)
+            py_txbitrate = Py_BuildValue("k",
+                pConnectInfo->wlanAssociationAttributes.ulTxRate / 1000);
+            if (! py_txbitrate)
                 goto error;
-            if (PyDict_SetItemString(py_dict, "txrate", py_txrate))
+            if (PyDict_SetItemString(py_dict, "txbitrate", py_txbitrate))
                 goto error;
         }
 
@@ -281,10 +281,10 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
         Py_CLEAR(py_essid);
         Py_CLEAR(py_guid);
         Py_CLEAR(py_qual_perc);
-        Py_CLEAR(py_rxrate);
+        Py_CLEAR(py_rxbitrate);
         Py_CLEAR(py_signal);
         Py_CLEAR(py_status);
-        Py_CLEAR(py_txrate);
+        Py_CLEAR(py_txbitrate);
 
         Py_CLEAR(py_dict);
     }
@@ -304,10 +304,10 @@ error:
     Py_XDECREF(py_essid);
     Py_XDECREF(py_guid);
     Py_XDECREF(py_qual_perc);
-    Py_XDECREF(py_rxrate);
+    Py_XDECREF(py_rxbitrate);
     Py_XDECREF(py_signal);
     Py_XDECREF(py_status);
-    Py_XDECREF(py_txrate);
+    Py_XDECREF(py_txbitrate);
 
     Py_XDECREF(py_dict);
     Py_DECREF(py_retlist);
