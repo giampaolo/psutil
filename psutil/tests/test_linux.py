@@ -1061,33 +1061,33 @@ class TestWifiIfaces(PsutilTestCase):
         self.assertEqual(value, self.read_proc_wireless()['signal'])
 
     @retry_on_failure()
-    def test_discarded_nwid(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_nwid
+    def test_discard_nwid(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_nwid
         self.assertEqual(value, self.read_proc_wireless()['nwid'])
 
     @retry_on_failure()
-    def test_discarded_crypt(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_crypt
+    def test_discard_crypt(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_crypt
         self.assertEqual(value, self.read_proc_wireless()['crypt'])
 
     @retry_on_failure()
-    def test_discarded_frag(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_frag
+    def test_discard_frag(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_frag
         self.assertEqual(value, self.read_proc_wireless()['frag'])
 
     @retry_on_failure()
-    def test_discarded_retry(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_retry
+    def test_discard_retry(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_retry
         self.assertEqual(value, self.read_proc_wireless()['retry'])
 
     @retry_on_failure()
-    def test_discarded_misc(self):
-        value = psutil.wifi_ifaces()[self.ifname].discarded_misc
+    def test_discard_misc(self):
+        value = psutil.wifi_ifaces()[self.ifname].discard_misc
         self.assertEqual(value, self.read_proc_wireless()['misc'])
 
     @retry_on_failure()
-    def test_missed_beacons(self):
-        value = psutil.wifi_ifaces()[self.ifname].missed_beacons
+    def test_beacons(self):
+        value = psutil.wifi_ifaces()[self.ifname].beacons
         self.assertEqual(value, self.read_proc_wireless()['beacon'])
 
     def test_proto(self):
@@ -1116,6 +1116,37 @@ class TestWifiIfaces(PsutilTestCase):
         iwconfig = int(re.search(
             'Tx-Power=[0-9]+', out).group(0).split('=')[1])
         self.assertEqual(value, iwconfig)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(not HAS_WIFI_IFACES, "no Wi-Fi")
+class TestWifiIfacesNoConnection(PsutilTestCase):
+    """Emulates a disconnected Wi-Fi."""
+
+    def setUp(self):
+        import psutil._psutil_linux as cext
+        if not psutil.wifi_ifaces():
+            raise self.skipTest("no Wi-Fi")
+        self.patches = []
+        for name in dir(cext):
+            if name.startswith('wifi_card_'):
+                if name == 'wifi_card_proto':
+                    continue
+                p = mock.patch('psutil._psutil_linux.%s' % name,
+                               return_value=None)
+                p.__enter__()
+                self.patches.append(p)
+
+    def tearDown(self):
+        for p in self.patches:
+            p.__exit__()
+
+    def test_it(self):
+        for name, info in psutil.wifi_ifaces().items():
+            for field in info._fields:
+                with self.subTest(field=field, info=info):
+                    if field != 'proto':
+                        self.assertIsNone(getattr(info, field))
 
 
 # =====================================================================

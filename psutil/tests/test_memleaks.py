@@ -43,6 +43,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import HAS_WIFI_IFACES
 from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
@@ -432,6 +433,12 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
+
+    # --- wifi
+
+    @unittest.skipIf(not HAS_WIFI_IFACES, "not supported")
+    def test_wifi_netifaces(self):
+        self.execute(psutil.wifi_ifaces)
 
     # --- sensors
 

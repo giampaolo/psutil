@@ -16,3 +16,4 @@ PyObject* psutil_wifi_card_bitrate(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_txpower(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_ranges(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_stats(PyObject* self, PyObject* args);
+PyObject* psutil_wifi_card_power_save(PyObject* self, PyObject* args);

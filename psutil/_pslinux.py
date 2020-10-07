@@ -195,13 +195,14 @@ swifi = namedtuple(
         'mode',
         'freq',
         'bitrate',
+        'power_save',
         'txpower',
-        'discarded_nwid',
-        'discarded_crypt',
-        'discarded_frag',
-        'discarded_retry',
-        'discarded_misc',
-        'missed_beacons',
+        'beacons',
+        'discard_nwid',
+        'discard_crypt',
+        'discard_frag',
+        'discard_retry',
+        'discard_misc',
     ])
 # psutil.Process().open_files()
 popenfile = namedtuple(
@@ -1205,34 +1206,35 @@ def wifi_ifaces():
                 freq = int(freq)
             bitrate = cext.wifi_card_bitrate(nic, fd)
             txpower = cext.wifi_card_txpower(nic, fd)
+            power_save = cext.wifi_card_power_save(nic, fd)
 
             # stats
-            qual_perc = sig_perc = qual_curr = sig_curr = discarded_nwid = \
-                discarded_crypt = discarded_frag = discarded_retry = \
-                discarded_misc = missed_beacons = None
+            qual_perc = sig_perc = qual_curr = sig_curr = discard_nwid = \
+                discard_crypt = discard_frag = discard_retry = \
+                discard_misc = beacons = None
             stats = cext.wifi_card_stats(nic, fd)
             if stats is not None:
                 (qual_curr,
                  sig_curr,
-                 discarded_nwid,
-                 discarded_crypt,
-                 discarded_frag,
-                 discarded_retry,
-                 discarded_misc,
-                 missed_beacons) = stats
+                 discard_nwid,
+                 discard_crypt,
+                 discard_frag,
+                 discard_retry,
+                 discard_misc,
+                 beacons) = stats
                 qual_max, sig_max = cext.wifi_card_ranges(nic, fd)
-                qual_perc = usage_percent(qual_curr, qual_max, round_=1)
+                qual_perc = round(usage_percent(qual_curr, qual_max))
 
                 # This is how wavemon does it:
                 # https://github.com/bmegli/wifi-scan/issues/18
                 # https://github.com/uoaerg/wavemon/blob/master/scan_scr.c#L35
                 # sig_max is supposed to be -110.
                 if sig_curr < sig_max:
-                    sig_perc = 0.0
+                    sig_perc = 0
                 elif sig_curr > -40:
-                    sig_perc = 70.0
+                    sig_perc = 70
                 else:
-                    sig_perc = float(sig_curr + abs(sig_max))
+                    sig_perc = sig_curr + abs(sig_max)
 
             nt = swifi(
                 essid=essid,
@@ -1246,12 +1248,13 @@ def wifi_ifaces():
                 freq=freq,
                 bitrate=bitrate,
                 txpower=txpower,
-                discarded_nwid=discarded_nwid,
-                discarded_crypt=discarded_crypt,
-                discarded_frag=discarded_frag,
-                discarded_retry=discarded_retry,
-                discarded_misc=discarded_misc,
-                missed_beacons=missed_beacons,
+                power_save=power_save,
+                beacons=beacons,
+                discard_nwid=discard_nwid,
+                discard_crypt=discard_crypt,
+                discard_frag=discard_frag,
+                discard_retry=discard_retry,
+                discard_misc=discard_misc,
             )
             ret[nic] = nt
         return ret
