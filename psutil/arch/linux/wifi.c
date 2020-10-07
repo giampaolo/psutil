@@ -18,6 +18,7 @@
 #include <linux/wireless.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "../../_psutil_common.h"
 
@@ -157,13 +158,17 @@ psutil_wifi_card_bssid(PyObject* self, PyObject* args) {
     char *ifname;
     int sock;
     struct iwreq wrq;
+    char *macaddr;
 
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWAP, &wrq, sock) != 0)
         return NULL;
-    return Py_BuildValue(
-        "s", convert_macaddr((unsigned char*) &wrq.u.ap_addr.sa_data));
+    macaddr = convert_macaddr((unsigned char*) &wrq.u.ap_addr.sa_data);
+    if (strcmp(macaddr, "00:00:00:00:00:00") == 0)
+        Py_RETURN_NONE;
+    else
+        return Py_BuildValue("s", macaddr);
 }
 
 
@@ -194,7 +199,7 @@ psutil_wifi_card_mode(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWMODE, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWMODE)");
     return Py_BuildValue("s", mode2str(wrq.u.mode));
 }
 
@@ -257,7 +262,7 @@ psutil_wifi_card_txpower(PyObject* self, PyObject* args) {
     if (! PyArg_ParseTuple(args, "si", &ifname, &sock))
         return NULL;
     if (ioctl_request(ifname, SIOCGIWTXPOW, &wrq, sock) != 0)
-        return NULL;
+        return handle_ioctl_err(ifname, sock, "ioctl(SIOCGIWTXPOW)");
     // Expressed in dbm.
     if (wrq.u.txpower.disabled)
         Py_RETURN_NONE;

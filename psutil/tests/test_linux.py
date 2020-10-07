@@ -1118,6 +1118,37 @@ class TestWifiIfaces(PsutilTestCase):
         self.assertEqual(value, iwconfig)
 
 
+@unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(not HAS_WIFI_IFACES, "no Wi-Fi")
+class TestWifiIfacesNoConnection(PsutilTestCase):
+    """Emulates a disconnected Wi-Fi."""
+
+    def setUp(self):
+        import psutil._psutil_linux as cext
+        if not psutil.wifi_ifaces():
+            raise self.skipTest("no Wi-Fi")
+        self.patches = []
+        for name in dir(cext):
+            if name.startswith('wifi_card_'):
+                if name == 'wifi_card_proto':
+                    continue
+                p = mock.patch('psutil._psutil_linux.%s' % name,
+                               return_value=None)
+                p.__enter__()
+                self.patches.append(p)
+
+    def tearDown(self):
+        for p in self.patches:
+            p.__exit__()
+
+    def test_it(self):
+        for name, info in psutil.wifi_ifaces().items():
+            for field in info._fields:
+                with self.subTest(field=field, info=info):
+                    if field != 'proto':
+                        self.assertIsNone(getattr(info, field))
+
+
 # =====================================================================
 # --- system disks
 # =====================================================================
