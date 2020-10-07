@@ -256,15 +256,15 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
             if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
                 goto error;
             // RX rate (MB/sec)
-            py_rxbitrate = Py_BuildValue("k",
-                pConnectInfo->wlanAssociationAttributes.ulRxRate / 1000);
+            py_rxbitrate = Py_BuildValue("d",
+                (double)pConnectInfo->wlanAssociationAttributes.ulRxRate / 1000);
             if (! py_rxbitrate)
                 goto error;
             if (PyDict_SetItemString(py_dict, "rxbitrate", py_rxbitrate))
                 goto error;
             // TX rate (MB/sec)
-            py_txbitrate = Py_BuildValue("k",
-                pConnectInfo->wlanAssociationAttributes.ulTxRate / 1000);
+            py_txbitrate = Py_BuildValue("d",
+                (double)pConnectInfo->wlanAssociationAttributes.ulTxRate / 1000);
             if (! py_txbitrate)
                 goto error;
             if (PyDict_SetItemString(py_dict, "txbitrate", py_txbitrate))
