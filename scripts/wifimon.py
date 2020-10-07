@@ -7,6 +7,32 @@
 """
 A clone of wavemon (https://github.com/uoaerg/wavemon) showing real time
 Wi-Fi activity.
+
+$ python3 script/wifimon.py
+Interface
+    wlp3s0 (IEEE 802.11)
+    SSID: ALHN-68DF
+Levels
+    Link quality: 64%
+    [=========================               ]
+    Signal level: -65 dBm (45%)
+    [==================                      ]
+Statistics
+    RX (recv):   7.8G (8,406,668,388)
+    TX (sent): 983.5M (1,031,322,354)
+Info
+    Connected to: 68:D4:82:7D:1A:95
+    Mode: managed
+    Freq: 2412 MHz
+    TX-Power: 22 dBm
+    Power save: on
+    Beacons: 0, Nwid: 0, Crypt: 0
+    Frag: 0, Retry: 135, Misc: 4086
+Addresses (wlp3s0)
+    IPv4: 192.168.1.6
+    IPv6: fe80::32b6:9d61:74f9:bebb%wlp3s0
+    MAC: 48:45:20:59:a4:0c
+
 """
 
 import socket
@@ -90,7 +116,6 @@ def refresh_window():
         print_title("Interface")
         printl("    %s (%s)" % (ifname, info.proto))
         printl("    SSID: %s" % (info.essid))
-        printl("")
 
         print_title("Levels")
         printl("    Link quality: %s%%" % info.quality_percent)
@@ -98,7 +123,6 @@ def refresh_window():
         line = "    [%s%s]" % (dashes, empty_dashes)
         printl(line, color="green" if info.quality_percent >= 50 else "red",
                bold=True)
-        printl("")
 
         printl("    Signal level: %s dBm (%s%%)" % (
             info.signal, info.signal_percent))
@@ -106,7 +130,6 @@ def refresh_window():
         line = "    [%s%s]" % (dashes, empty_dashes)
         printl(line, color="green" if info.signal_percent >= 50 else "red",
                bold=True)
-        printl("")
 
         print_title("Statistics")
         ioc = psutil.net_io_counters(pernic=True)[ifname]
@@ -114,25 +137,23 @@ def refresh_window():
             bytes2human(ioc.bytes_recv), '{0:,}'.format(ioc.bytes_recv)))
         printl("    TX (sent): %6s (%6s)" % (
             bytes2human(ioc.bytes_sent), '{0:,}'.format(ioc.bytes_sent)))
-        printl("")
 
         print_title("Info")
         printl("    Connected to: %s" % (info.bssid))
         printl("    Mode: %s" % (info.mode))
         printl("    Freq: %s MHz" % (info.freq))
-        printl("    TX-Power: %s" % (info.txpower))
+        printl("    TX-Power: %s dBm" % (info.txpower))
         printl("    Power save: %s" % ("on" if info.power_save else "off"))
         printl("    Beacons: %s, Nwid: %s, Crypt: %s" % (
             info.beacons, info.discard_nwid, info.discard_crypt))
         printl("    Frag: %s, Retry: %s, Misc: %s" % (
             info.discard_frag, info.discard_retry, info.discard_misc))
-        printl("")
 
         print_title("Addresses (%s)" % ifname)
         addrs = psutil.net_if_addrs()[ifname]
         for addr in addrs:
             proto = af_map.get(addr.family, addr.family)
-            printl("%6s: %s" % (proto, addr.address))
+            printl("    %s: %s" % (proto, addr.address))
 
     printl("")
     win.refresh()
