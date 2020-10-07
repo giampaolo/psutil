@@ -139,6 +139,8 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
     PyObject *py_status = NULL;
     PyObject *py_qual_perc = NULL;
     PyObject *py_signal = NULL;
+    PyObject *py_rxrate = NULL;
+    PyObject *py_txrate = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -216,7 +218,8 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             // bssid
             py_bssid = Py_BuildValue("s",
-                convert_macaddr(pConnectInfo->wlanAssociationAttributes.dot11Bssid));
+                convert_macaddr(
+                    pConnectInfo->wlanAssociationAttributes.dot11Bssid));
             if (! py_bssid)
                 goto error;
             if (PyDict_SetItemString(py_dict, "bssid", py_bssid))
@@ -230,39 +233,59 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 goto error;
             // signal
             py_signal = Py_BuildValue(
-                "l", quality_perc_to_rssi(pConnectInfo->wlanAssociationAttributes.wlanSignalQuality));
+                "l", quality_perc_to_rssi(
+                    pConnectInfo->wlanAssociationAttributes.wlanSignalQuality));
             if (! py_signal)
                 goto error;
             if (PyDict_SetItemString(py_dict, "signal", py_signal))
                 goto error;
             // auth
             py_auth = Py_BuildValue("s",
-                convert_auth(pConnectInfo->wlanSecurityAttributes.dot11AuthAlgorithm));
+                convert_auth(
+                    pConnectInfo->wlanSecurityAttributes.dot11AuthAlgorithm));
             if (! py_auth)
                 goto error;
             if (PyDict_SetItemString(py_dict, "auth", py_auth))
                 goto error;
             // cipher
             py_cipher = Py_BuildValue("s",
-                convert_cipher(pConnectInfo->wlanSecurityAttributes.dot11CipherAlgorithm));
+                convert_cipher(
+                    pConnectInfo->wlanSecurityAttributes.dot11CipherAlgorithm));
             if (! py_cipher)
                 goto error;
             if (PyDict_SetItemString(py_dict, "cipher", py_cipher))
+                goto error;
+            // RX rate
+            py_rxrate = Py_BuildValue("k",
+                pConnectInfo->wlanAssociationAttributes.ulRxRate);
+            if (! py_rxrate)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "rxrate", py_rxrate))
+                goto error;
+            // TX rate
+            py_txrate = Py_BuildValue("k",
+                pConnectInfo->wlanAssociationAttributes.ulTxRate);
+            if (! py_txrate)
+                goto error;
+            if (PyDict_SetItemString(py_dict, "txrate", py_txrate))
                 goto error;
         }
 
         // cleanup
         if (PyList_Append(py_retlist, py_dict))
             goto error;
-        Py_CLEAR(py_guid);
-        Py_CLEAR(py_essid);
-        Py_CLEAR(py_bssid);
-        Py_CLEAR(py_qual_perc);
-        Py_CLEAR(py_signal);
         Py_CLEAR(py_auth);
+        Py_CLEAR(py_bssid);
         Py_CLEAR(py_cipher);
         Py_CLEAR(py_description);
+        Py_CLEAR(py_essid);
+        Py_CLEAR(py_guid);
+        Py_CLEAR(py_qual_perc);
+        Py_CLEAR(py_rxrate);
+        Py_CLEAR(py_signal);
         Py_CLEAR(py_status);
+        Py_CLEAR(py_txrate);
+
         Py_CLEAR(py_dict);
     }
 
@@ -274,16 +297,19 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
 error:
     if (pIfList != NULL)
         WlanFreeMemory(pIfList);
-    Py_XDECREF(py_dict);
-    Py_XDECREF(py_essid);
-    Py_XDECREF(py_bssid);
-    Py_XDECREF(py_qual_perc);
-    Py_XDECREF(py_guid);
     Py_XDECREF(py_auth);
-    Py_XDECREF(py_signal);
+    Py_XDECREF(py_bssid);
     Py_XDECREF(py_cipher);
     Py_XDECREF(py_description);
+    Py_XDECREF(py_essid);
+    Py_XDECREF(py_guid);
+    Py_XDECREF(py_qual_perc);
+    Py_XDECREF(py_rxrate);
+    Py_XDECREF(py_signal);
     Py_XDECREF(py_status);
+    Py_XDECREF(py_txrate);
+
+    Py_XDECREF(py_dict);
     Py_DECREF(py_retlist);
     WlanCloseHandle(hClient, NULL);
     return NULL;
