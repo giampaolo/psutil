@@ -11,7 +11,7 @@ Shows real-time network statistics.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python scripts/nettop.py
+$ python3 scripts/nettop.py
 -----------------------------------------------------------
 total bytes:           sent: 1.49 G       received: 4.82 G
 total packets:         sent: 7338724      received: 8082712
@@ -31,7 +31,6 @@ pkts-sent                     0               0
 pkts-recv               1214470               0
 """
 
-import atexit
 import time
 import sys
 try:
@@ -43,20 +42,11 @@ import psutil
 from psutil._common import bytes2human
 
 
-def tear_down():
-    win.keypad(0)
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
-
-
-win = curses.initscr()
-atexit.register(tear_down)
-curses.endwin()
 lineno = 0
+win = curses.initscr()
 
 
-def print_line(line, highlight=False):
+def printl(line, highlight=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
     try:
@@ -89,59 +79,80 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     global lineno
 
     # totals
-    print_line("total bytes:           sent: %-10s   received: %s" % (
+    printl("total bytes:           sent: %-10s   received: %s" % (
         bytes2human(tot_after.bytes_sent),
         bytes2human(tot_after.bytes_recv))
     )
-    print_line("total packets:         sent: %-10s   received: %s" % (
+    printl("total packets:         sent: %-10s   received: %s" % (
         tot_after.packets_sent, tot_after.packets_recv))
 
     # per-network interface details: let's sort network interfaces so
     # that the ones which generated more traffic are shown first
-    print_line("")
+    printl("")
     nic_names = list(pnic_after.keys())
     nic_names.sort(key=lambda x: sum(pnic_after[x]), reverse=True)
     for name in nic_names:
         stats_before = pnic_before[name]
         stats_after = pnic_after[name]
         templ = "%-15s %15s %15s"
-        print_line(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
-        print_line(templ % (
+        printl(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
+        printl(templ % (
             "bytes-sent",
             bytes2human(stats_after.bytes_sent),
             bytes2human(
                 stats_after.bytes_sent - stats_before.bytes_sent) + '/s',
         ))
-        print_line(templ % (
+        printl(templ % (
             "bytes-recv",
             bytes2human(stats_after.bytes_recv),
             bytes2human(
                 stats_after.bytes_recv - stats_before.bytes_recv) + '/s',
         ))
-        print_line(templ % (
+        printl(templ % (
             "pkts-sent",
             stats_after.packets_sent,
             stats_after.packets_sent - stats_before.packets_sent,
         ))
-        print_line(templ % (
+        printl(templ % (
             "pkts-recv",
             stats_after.packets_recv,
             stats_after.packets_recv - stats_before.packets_recv,
         ))
-        print_line("")
+        printl("")
     win.refresh()
     lineno = 0
 
 
+def setup():
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+    curses.endwin()
+    win.nodelay(1)
+
+
+def tear_down():
+    win.keypad(0)
+    curses.nocbreak()
+    curses.echo()
+    curses.endwin()
+
+
 def main():
+    setup()
     try:
         interval = 0
         while True:
+            if win.getch() == ord('q'):
+                break
             args = poll(interval)
             refresh_window(*args)
-            interval = 1
+            interval = 0.5
     except (KeyboardInterrupt, SystemExit):
         pass
+    finally:
+        tear_down()
 
 
 if __name__ == '__main__':
