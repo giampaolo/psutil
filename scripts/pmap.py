@@ -8,7 +8,7 @@
 A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat -v' on BSD.
 Report memory map of a process.
 
-$ python scripts/pmap.py 32402
+$ python3 scripts/pmap.py 32402
 Address                 RSS  Mode    Mapping
 0000000000400000      1200K  r-xp    /usr/bin/python2.7
 0000000000838000         4K  r--p    /usr/bin/python2.7

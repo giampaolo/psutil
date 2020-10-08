@@ -7,7 +7,7 @@
 """
 Shows CPU workload split across different CPUs.
 
-$ python scripts/cpu_workload.py
+$ python3 scripts/cpu_workload.py
 CPU 0     CPU 1     CPU 2     CPU 3     CPU 4     CPU 5     CPU 6     CPU 7
 19.8      20.6      18.2      15.8      6.9       17.3      5.0       20.4
 gvfsd     pytho     kwork     chrom     unity     kwork     kwork     kwork

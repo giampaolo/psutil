@@ -8,7 +8,7 @@
 Print detailed information about a process.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python scripts/procinfo.py
+$ python3 scripts/procinfo.py
 pid           4600
 name          chrome
 parent        4554 (bash)
