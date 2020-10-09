@@ -822,7 +822,7 @@ Other system info
   Return users currently connected on the system as a list of named tuples
   including the following fields:
 
-  - **user**: the name of the user.
+  - **name**: the name of the user.
   - **terminal**: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
   - **host**: the host name associated with the entry, if any.
