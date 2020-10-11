@@ -23,9 +23,6 @@
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
 
-// Link with Iphlpapi.lib
-#pragma comment(lib, "IPHLPAPI.lib")
-
 #include "_psutil_common.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_utils.h"
