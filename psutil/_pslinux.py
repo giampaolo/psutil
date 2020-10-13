@@ -28,6 +28,7 @@ from . import _psutil_posix as cext_posix
 from ._common import AccessDenied
 from ._common import debug
 from ._common import decode
+from ._common import ENCODING
 from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize
@@ -1262,8 +1263,65 @@ def wifi_ifaces():
         sock.close()
 
 
-def wifi_scan(nic):
-    return cext.wifi_scan(nic)
+def wifi_scan(iface=None):
+    import subprocess
+
+    def get_iface(iface):
+        if iface is None:
+            for iface in wifi_ifaces():
+                return iface
+            raise ValueError("no Wi-Fi interface installed on this system")
+        else:
+            if iface not in list(wifi_ifaces().keys()):
+                raise ValueError("unknown Wi-Fi interface %r" % iface)
+            return iface
+
+    def group(section):
+        bssid = section[0].split('Address: ')[1]
+        essid = freq = qual = qual_perc = sig = None
+        for line in section:
+            line = line.strip()
+            if line.startswith('Frequency:'):
+                freq = int(line.split('Frequency:')[1].split(
+                    ' ')[0].replace('.', ''))
+            elif line.startswith("Quality="):
+                qual, qual_max = list(map(int, line.split(
+                    "Quality=")[1].split(' ')[0].split('/')))
+                qual_perc = round(usage_percent(qual, qual_max))
+                sig = int(line.split('Signal level=')[1].split(' ')[0])
+            elif line.startswith("ESSID:"):
+                essid = line.split('ESSID:')[1][1:-1]
+        return dict(
+            essid=essid,
+            bssid=bssid,
+            freq=freq,
+            quality=qual,
+            quality_percent=qual_perc,
+            signal=sig)
+
+    # return cext.wifi_scan(iface)
+    iface = get_iface(iface)
+    out = subprocess.check_output(["iwlist", iface, "scan"],
+                                  stderr=subprocess.PIPE)
+    lines = out.decode(ENCODING).strip().splitlines()
+    if 'Scan completed' in lines[0]:
+        lines = lines[1:]
+    section = []
+    ret = []
+    for line in lines:
+        if line.strip().startswith('Cell '):
+            if section:
+                # last line was the end of a section
+                ret.append(group(section))
+                section = []
+                section.append(line)
+            else:
+                section.append(line)
+        else:
+            section.append(line)
+    if section:
+        ret.append(group(section))
+    return ret
 
 
 # =====================================================================
