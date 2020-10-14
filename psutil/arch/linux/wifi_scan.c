@@ -118,14 +118,20 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
             custom += IW_EV_POINT_OFF;
         }
 
-        //
+        // BSSID (AP mac address) is always supposed to be the first
+        // element in the stream.
         if (iwe->cmd == SIOCGIWAP) {
             bssid = convert_macaddr((unsigned char*) &iwe->u.ap_addr.sa_data);
+            printf("\n");
             printf("bssid: %s\n", bssid);
         }
         else if (iwe->cmd == SIOCGIWESSID) {
             wext_get_scan_ssid(iwe, &data, custom, end);
             printf("ssid: %s\n", data.ssid);
+        }
+        else if (iwe->cmd == IWEVQUAL) {
+            printf("quality: %i\n", iwe->u.qual.qual);
+            printf("level: %i\n", iwe->u.qual.level - 256);
         }
 
         // go to next
