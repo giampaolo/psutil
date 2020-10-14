@@ -359,15 +359,94 @@ iw_set_ext(int skfd, const char *ifname, int request, struct iwreq *pwrq) {
 }
 
 
+// ................................................................
+
+
+#define SSID_MAX_LEN 32
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+
+
+struct wpa_scan_results {
+    struct wpa_scan_res **res;
+    size_t num;
+};
+
+
+struct wext_scan_data {
+    struct wpa_scan_results res;
+    u8 *ie;
+    size_t ie_len;
+    u8 ssid[SSID_MAX_LEN];
+    size_t ssid_len;
+    int maxrate;
+};
+
+
+static int
+wext_19_iw_point(u16 cmd) {
+    return
+        (cmd == SIOCGIWESSID || cmd == SIOCGIWENCODE ||
+         cmd == IWEVGENIE || cmd == IWEVCUSTOM);
+}
+
+
+static PyObject*
+parse_scan(char *res_buf, int len) {
+    char *pos, *end, *custom;
+    struct iw_event iwe_buf, *iwe = &iwe_buf;
+    struct wext_scan_data data;
+    struct wpa_scan_results *res;
+
+    res = malloc(sizeof(*res));
+    if (res == NULL) {
+        free(res_buf);
+        return NULL;
+    }
+
+    pos = (char *) res_buf;
+    end = (char *) res_buf + len;
+    memset(&data, 0, sizeof(data));
+
+    while (pos + IW_EV_LCP_LEN <= end) {
+        memcpy(&iwe_buf, pos, IW_EV_LCP_LEN);
+        if (iwe->len <= IW_EV_LCP_LEN)
+            break;
+        //
+        custom = pos + IW_EV_POINT_LEN;
+        if (wext_19_iw_point(iwe->cmd)) {
+            char *dpos = (char *) &iwe_buf.u.data.length;
+            int dlen = dpos - (char *) &iwe_buf;
+            memcpy(dpos, pos + IW_EV_LCP_LEN,
+                  sizeof(struct iw_event) - dlen);
+        }
+        else {
+            memcpy(&iwe_buf, pos, sizeof(struct iw_event));
+            custom += IW_EV_POINT_OFF;
+        }
+
+        if (iwe->cmd == SIOCGIWAP) {
+            printf("bssid: %s\n", convert_macaddr(
+                (unsigned char*) &iwe->u.ap_addr.sa_data));
+        }
+        //
+        pos += iwe->len;
+    }
+
+    return Py_BuildValue("i", 33);
+}
+
 PyObject*
 psutil_wifi_scan(PyObject* self, PyObject* args) {
     int skfd = -1;
     int ret;
     char *ifname;
     struct iwreq wrq;
-    unsigned char *buffer = NULL;
-    unsigned char *newbuf;
+    char *buffer = NULL;
+    char *newbuf;
     int buflen = IW_SCAN_MAX_DATA;
+    PyObject *py_ret;
 
     if (! PyArg_ParseTuple(args, "s", &ifname))
         return NULL;
@@ -445,9 +524,10 @@ psutil_wifi_scan(PyObject* self, PyObject* args) {
         break;
     }
 
+    py_ret = parse_scan(buffer, wrq.u.data.length);
     close(skfd);
     free(buffer);
-    return Py_BuildValue("i", 99);
+    return py_ret;
 
 error:
     if (skfd != -1)

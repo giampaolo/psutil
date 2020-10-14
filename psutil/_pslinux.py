@@ -1299,8 +1299,8 @@ def wifi_scan(iface=None):
             quality_percent=qual_perc,
             signal=sig)
 
-    # return cext.wifi_scan(iface)
     iface = get_iface(iface)
+    return cext.wifi_scan(iface)
     out = subprocess.check_output(["iwlist", iface, "scan"],
                                   stderr=subprocess.PIPE)
     lines = out.decode(ENCODING).strip().splitlines()
