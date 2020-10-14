@@ -350,12 +350,10 @@ psutil_wifi_card_stats(PyObject* self, PyObject* args) {
 typedef uint8_t u8;
 typedef uint16_t u16;
 
-
 struct wpa_scan_results {
     struct wpa_scan_res **res;
     size_t num;
 };
-
 
 struct wext_scan_data {
     struct wpa_scan_results res;
@@ -394,9 +392,26 @@ wext_19_iw_point(u16 cmd, int we_version) {
 }
 
 
+static void
+wext_get_scan_ssid(struct iw_event *iwe,
+                   struct wext_scan_data *res,
+                   char *custom,
+                   char *end)
+{
+    int ssid_len = iwe->u.essid.length;
+    if (custom + ssid_len > end)
+        return;
+    if (iwe->u.essid.flags && ssid_len > 0 && ssid_len <= IW_ESSID_MAX_SIZE) {
+        memcpy(res->ssid, custom, ssid_len);
+        res->ssid_len = ssid_len;
+    }
+}
+
+
 static PyObject*
 parse_scan(char *res_buf, int len, char *ifname, int skfd) {
     char *pos, *end, *custom;
+    char *bssid;
     struct iw_event iwe_buf, *iwe = &iwe_buf;
     struct wext_scan_data data;
     struct wpa_scan_results *res;
@@ -420,7 +435,7 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
         memcpy(&iwe_buf, pos, IW_EV_LCP_LEN);
         if (iwe->len <= IW_EV_LCP_LEN)
             break;
-        //
+
         custom = pos + IW_EV_POINT_LEN;
         if (wext_19_iw_point(iwe->cmd, we_version)) {
             char *dpos = (char *) &iwe_buf.u.data.length;
@@ -433,16 +448,23 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
             custom += IW_EV_POINT_OFF;
         }
 
-        if (iwe->cmd == SIOCGIWAP) {
-            printf("bssid: %s\n", convert_macaddr(
-                (unsigned char*) &iwe->u.ap_addr.sa_data));
-        }
         //
+        if (iwe->cmd == SIOCGIWAP) {
+            bssid = convert_macaddr((unsigned char*) &iwe->u.ap_addr.sa_data);
+            printf("bssid: %s\n", bssid);
+        }
+        else if (iwe->cmd == SIOCGIWESSID) {
+            wext_get_scan_ssid(iwe, &data, custom, end);
+            printf("ssid: %s\n", data.ssid);
+        }
+
+        // go to next
         pos += iwe->len;
     }
 
     return Py_BuildValue("i", 33);
 }
+
 
 PyObject*
 psutil_wifi_scan(PyObject* self, PyObject* args) {
