@@ -259,6 +259,7 @@ elif LINUX:
         sources=sources + [
             'psutil/_psutil_linux.c',
             'psutil/arch/linux/wifi.c',
+            'psutil/arch/linux/wifi_scan.c',
         ],
         define_macros=macros)
 

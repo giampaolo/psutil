@@ -5,6 +5,10 @@
  */
 
 #include <Python.h>
+#include <linux/wireless.h>
+
+int ioctl_request(char *ifname, int request, struct iwreq *pwrq, int sock);
+char *convert_macaddr(unsigned char *ptr);
 
 PyObject* psutil_wifi_scan(PyObject* self, PyObject* args);
 PyObject* psutil_wifi_card_essid(PyObject* self, PyObject* args);
