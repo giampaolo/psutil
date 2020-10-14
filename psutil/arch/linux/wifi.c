@@ -23,7 +23,7 @@
 #include "../../_psutil_common.h"
 
 
-#define SCAN_INTERVAL 100000  // aka 0.1 secs
+#define SCAN_INTERVAL 100000  // 0.1 secs
 
 
 // ====================================================================
@@ -345,23 +345,6 @@ psutil_wifi_card_stats(PyObject* self, PyObject* args) {
 // ====================================================================
 
 
-static int
-iw_get_ext(int skfd, const char *ifname, int request, struct iwreq *pwrq) {
-    strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
-    return ioctl(skfd, request, pwrq);
-}
-
-
-static int
-iw_set_ext(int skfd, const char *ifname, int request, struct iwreq *pwrq) {
-    strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
-    return ioctl(skfd, request, pwrq);
-}
-
-
-// ................................................................
-
-
 #define SSID_MAX_LEN 32
 
 typedef uint8_t u8;
@@ -385,19 +368,43 @@ struct wext_scan_data {
 
 
 static int
-wext_19_iw_point(u16 cmd) {
-    return
+get_we_version(char *ifname, int sock) {
+    struct iwreq wrq;
+    char buffer[sizeof(struct iw_range) * 2];  // large enough
+    struct iw_range *range;
+
+    memset(buffer, 0, sizeof(buffer));
+    wrq.u.data.pointer = (caddr_t) buffer;
+    wrq.u.data.length = sizeof(buffer);
+    wrq.u.data.flags = 0;
+
+    if (ioctl_request(ifname, SIOCGIWRANGE, &wrq, sock) != 0)
+        return -1;
+
+    range = (struct iw_range *)buffer;
+    return range->we_version_compiled;
+}
+
+
+static int
+wext_19_iw_point(u16 cmd, int we_version) {
+    return we_version > 18 &&
         (cmd == SIOCGIWESSID || cmd == SIOCGIWENCODE ||
          cmd == IWEVGENIE || cmd == IWEVCUSTOM);
 }
 
 
 static PyObject*
-parse_scan(char *res_buf, int len) {
+parse_scan(char *res_buf, int len, char *ifname, int skfd) {
     char *pos, *end, *custom;
     struct iw_event iwe_buf, *iwe = &iwe_buf;
     struct wext_scan_data data;
     struct wpa_scan_results *res;
+    int we_version;
+
+    we_version = get_we_version(ifname, skfd);
+    if (we_version == -1)
+        return NULL;
 
     res = malloc(sizeof(*res));
     if (res == NULL) {
@@ -415,7 +422,7 @@ parse_scan(char *res_buf, int len) {
             break;
         //
         custom = pos + IW_EV_POINT_LEN;
-        if (wext_19_iw_point(iwe->cmd)) {
+        if (wext_19_iw_point(iwe->cmd, we_version)) {
             char *dpos = (char *) &iwe_buf.u.data.length;
             int dlen = dpos - (char *) &iwe_buf;
             memcpy(dpos, pos + IW_EV_LCP_LEN,
@@ -465,7 +472,7 @@ psutil_wifi_scan(PyObject* self, PyObject* args) {
     }
 
     // set scan
-    ret = iw_set_ext(skfd, ifname, SIOCSIWSCAN, &wrq);
+    ret = ioctl(skfd, SIOCSIWSCAN, &wrq);
     if (ret == -1) {
         PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCSIWSCAN)");
         goto error;
@@ -491,7 +498,7 @@ psutil_wifi_scan(PyObject* self, PyObject* args) {
         wrq.u.data.flags = 0;
         wrq.u.data.length = buflen;
 
-        ret = iw_get_ext(skfd, ifname, SIOCGIWSCAN, &wrq);
+        ret = ioctl(skfd, SIOCGIWSCAN, &wrq);
         if (ret < 0) {
             if (errno == E2BIG) {
                 // Some driver may return very large scan results, either
@@ -524,7 +531,7 @@ psutil_wifi_scan(PyObject* self, PyObject* args) {
         break;
     }
 
-    py_ret = parse_scan(buffer, wrq.u.data.length);
+    py_ret = parse_scan(buffer, wrq.u.data.length, ifname, skfd);
     close(skfd);
     free(buffer);
     return py_ret;
