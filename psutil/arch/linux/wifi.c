@@ -11,6 +11,10 @@
 // https://github.com/vy/wapi/blob/master/src/wireless.c
 // https://github.com/azbox-enigma2/pythonwifi/blob/master/pythonwifi/iwlibs.py
 
+// Note: WEXT ioclt()s are deprecated and nl80211 should be preferred:
+// https://wireless.wiki.kernel.org/en/developers/Documentation/Wireless-Extensions
+
+
 #include <Python.h>
 #include <sys/types.h>
 #include <sys/socket.h>

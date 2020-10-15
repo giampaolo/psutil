@@ -86,6 +86,7 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
     struct wext_scan_data data;
     struct wpa_scan_results *res;
     int we_version;
+    PyObject *py_retlist = NULL;
 
     we_version = get_we_version(ifname, skfd);
     if (we_version == -1)
@@ -96,6 +97,10 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
         free(res_buf);
         return NULL;
     }
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        return NULL;
 
     pos = (char *) res_buf;
     end = (char *) res_buf + len;
@@ -138,7 +143,7 @@ parse_scan(char *res_buf, int len, char *ifname, int skfd) {
         pos += iwe->len;
     }
 
-    return Py_BuildValue("i", 33);
+    return py_retlist;
 }
 
 
