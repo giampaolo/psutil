@@ -1426,7 +1426,7 @@ Process class
     - **system**: time spent in kernel mode.
     - **children_user**: user time of all child processes (always ``0`` on
       Windows and macOS).
-    - **system_user**: user time of all child processes (always ``0`` on
+    - **children_system**: system time of all child processes (always ``0`` on
       Windows and macOS).
     - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
       This value is excluded from `user` and `system` times count (because the
