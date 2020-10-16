@@ -226,7 +226,7 @@ AF_LINK = _psplatform.AF_LINK
 
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.7.1"
+__version__ = "5.7.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -853,7 +853,7 @@ class Process(object):
             """
             return self._proc.cpu_num()
 
-    # Linux, macOS, Windows, Solaris, AIX
+    # All platforms has it, but maybe not in the future.
     if hasattr(_psplatform.Process, "environ"):
 
         def environ(self):

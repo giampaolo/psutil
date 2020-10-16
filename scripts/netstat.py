@@ -7,7 +7,7 @@
 """
 A clone of 'netstat -antp' on Linux.
 
-$ python scripts/netstat.py
+$ python3 scripts/netstat.py
 Proto Local address      Remote address   Status        PID    Program name
 tcp   127.0.0.1:48256    127.0.0.1:45884  ESTABLISHED   13646  chrome
 tcp   127.0.0.1:47073    127.0.0.1:45884  ESTABLISHED   13646  chrome

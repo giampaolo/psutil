@@ -22,7 +22,6 @@
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
-#include <wtsapi32.h>  // users()
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -1191,17 +1190,17 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    WCHAR *buffer_user = NULL;
-    LPTSTR buffer_addr = NULL;
-    PWTS_SESSION_INFO sessions = NULL;
+    LPWSTR buffer_user = NULL;
+    LPWSTR buffer_addr = NULL;
+    LPWSTR buffer_info = NULL;
+    PWTS_SESSION_INFOW sessions = NULL;
     DWORD count;
     DWORD i;
     DWORD sessionId;
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
-    WINSTATION_INFO station_info;
-    ULONG returnLen;
+    PWTSINFOW wts_info;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
@@ -1210,8 +1209,21 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
-        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
+    if (WTSEnumerateSessionsW == NULL ||
+        WTSQuerySessionInformationW == NULL ||
+        WTSFreeMemory == NULL) {
+            // If we don't run in an environment that is a Remote Desktop Services environment
+            // the Wtsapi32 proc might not be present.
+            // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+            return py_retlist;
+    }
+
+    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+        if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
+            // On Windows Nano server, the Wtsapi32 API can be present, but return WinError 120.
+            return py_retlist;
+        }
+        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessionsW");
         goto error;
     }
 
@@ -1223,9 +1235,12 @@ psutil_users(PyObject *self, PyObject *args) {
             WTSFreeMemory(buffer_user);
         if (buffer_addr != NULL)
             WTSFreeMemory(buffer_addr);
+        if (buffer_info != NULL)
+            WTSFreeMemory(buffer_info);
 
         buffer_user = NULL;
         buffer_addr = NULL;
+        buffer_info = NULL;
 
         // username
         bytes = 0;
@@ -1239,21 +1254,22 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
-                                       &buffer_addr, &bytes) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSClientAddress,
+                                        &buffer_addr, &bytes) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 0) {  // AF_INET
+        if (address->AddressFamily == 2) {  // AF_INET == 2
             sprintf_s(address_str,
                       _countof(address_str),
                       "%u.%u.%u.%u",
-                      address->Address[0],
-                      address->Address[1],
+                      // The IP address is offset by two bytes from the start of the Address member of the WTS_CLIENT_ADDRESS structure.
                       address->Address[2],
-                      address->Address[3]);
+                      address->Address[3],
+                      address->Address[4],
+                      address->Address[5]);
             py_address = Py_BuildValue("s", address_str);
             if (!py_address)
                 goto error;
@@ -1263,26 +1279,23 @@ psutil_users(PyObject *self, PyObject *args) {
         }
 
         // login time
-        if (! WinStationQueryInformationW(
-                hServer,
-                sessionId,
-                WinStationInformation,
-                &station_info,
-                sizeof(station_info),
-                &returnLen))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("WinStationQueryInformationW");
+        bytes = 0;
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSSessionInfo,
+                                        &buffer_info, &bytes) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
+        wts_info = (PWTSINFOW)buffer_info;
 
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
         if (py_username == NULL)
             goto error;
+
         py_tuple = Py_BuildValue(
             "OOd",
             py_username,
             py_address,
-            psutil_FiletimeToUnixTime(station_info.ConnectTime)
+            psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
         );
         if (!py_tuple)
             goto error;
@@ -1296,6 +1309,7 @@ psutil_users(PyObject *self, PyObject *args) {
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
+    WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
@@ -1310,6 +1324,8 @@ error:
         WTSFreeMemory(buffer_user);
     if (buffer_addr != NULL)
         WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        WTSFreeMemory(buffer_info);
     return NULL;
 }
 

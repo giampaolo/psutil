@@ -16,6 +16,7 @@ DEPS = \
 	flake8 \
 	flake8-print \
 	pyperf \
+	pypinfo \
 	requests \
 	setuptools \
 	twine \
@@ -37,7 +38,7 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1
 
 all: test
 
@@ -208,6 +209,25 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
+# Wheels
+# ===================================================================
+
+download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
+	$(PYTHON) scripts/internal/download_wheels_appveyor.py --user giampaolo --project psutil
+
+download-wheels-github:  ## Download latest wheels hosted on github.
+	$(PYTHON) scripts/internal/download_wheels_github.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
+
+download-wheels:  ## Download wheels from github and appveyor
+	rm -rf dist
+	${MAKE} download-wheels-appveyor
+	# ${MAKE} download-wheels-github
+	${MAKE} print-wheels
+
+print-wheels:  ## Print downloaded wheels
+	$(PYTHON) scripts/internal/print_wheels.py
+
+# ===================================================================
 # Distribution
 # ===================================================================
 
@@ -219,20 +239,11 @@ sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
 
-wheel:  ## Generate wheel.
-	$(PYTHON) setup.py bdist_wheel
-
-win-download-wheels:  ## Download latest wheels hosted on appveyor.
-	$(PYTHON) scripts/internal/win_download_wheels.py --user giampaolo --project psutil
-
-download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
-
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
-	$(PYTHON) setup.py sdist upload
+	$(PYTHON) -m twine upload dist/*.tar.gz
 
-upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
+upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
 # --- others
@@ -253,7 +264,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} win-download-wheels
+	${MAKE} download-wheels
 	${MAKE} sdist
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
@@ -293,6 +304,9 @@ print-access-denied: ## Print AD exceptions
 print-api-speed:  ## Benchmark all API calls
 	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+
+print-downloads:  ## Print PYPI download statistics
+	$(PYTHON) scripts/internal/print_downloads.py
 
 # ===================================================================
 # Misc

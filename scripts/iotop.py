@@ -14,7 +14,7 @@ It doesn't work on Windows as curses module is required.
 
 Example output:
 
-$ python scripts/iotop.py
+$ python3 scripts/iotop.py
 Total DISK READ: 0.00 B/s | Total DISK WRITE: 472.00 K/s
 PID   USER      DISK READ  DISK WRITE  COMMAND
 13155 giampao    0.00 B/s  428.00 K/s  /usr/bin/google-chrome-beta
@@ -30,7 +30,6 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import atexit
 import time
 import sys
 try:
@@ -42,20 +41,11 @@ import psutil
 from psutil._common import bytes2human
 
 
-def tear_down():
-    win.keypad(0)
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
-
-
 win = curses.initscr()
-atexit.register(tear_down)
-curses.endwin()
 lineno = 0
 
 
-def print_line(line, highlight=False):
+def printl(line, highlight=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
     try:
@@ -129,10 +119,10 @@ def refresh_window(procs, disks_read, disks_write):
 
     disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
                 % (bytes2human(disks_read), bytes2human(disks_write))
-    print_line(disks_tot)
+    printl(disks_tot)
 
     header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
-    print_line(header, highlight=True)
+    printl(header, highlight=True)
 
     for p in procs:
         line = templ % (
@@ -142,21 +132,45 @@ def refresh_window(procs, disks_read, disks_write):
             bytes2human(p._write_per_sec),
             p._cmdline)
         try:
-            print_line(line)
+            printl(line)
         except curses.error:
             break
     win.refresh()
 
 
+def setup():
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+    curses.endwin()
+    win.nodelay(1)
+
+
+def tear_down():
+    win.keypad(0)
+    curses.nocbreak()
+    curses.echo()
+    curses.endwin()
+
+
 def main():
+    global lineno
+    setup()
     try:
         interval = 0
         while True:
+            if win.getch() == ord('q'):
+                break
             args = poll(interval)
             refresh_window(*args)
-            interval = 1
+            lineno = 0
+            interval = 0.5
+            time.sleep(interval)
     except (KeyboardInterrupt, SystemExit):
         pass
+    finally:
+        tear_down()
 
 
 if __name__ == '__main__':

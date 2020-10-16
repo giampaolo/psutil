@@ -9,7 +9,7 @@
 A clone of 'sensors' utility on Linux printing hardware temperatures,
 fans speed and battery info.
 
-$ python scripts/sensors.py
+$ python3 scripts/sensors.py
 asus
     Temperatures:
         asus                 57.0°C (high=None°C, critical=None°C)

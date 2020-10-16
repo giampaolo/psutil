@@ -76,7 +76,7 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TOX', 'TRAVIS', 'CIRRUS',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TRAVIS', 'CIRRUS',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -117,7 +117,6 @@ __all__ = [
 
 # --- platforms
 
-TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
 TRAVIS = 'TRAVIS' in os.environ
@@ -186,7 +185,7 @@ HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 try:
     HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 except Exception:
-    HAS_BATTERY = True
+    HAS_BATTERY = False
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
@@ -499,6 +498,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
                 pass
 
     def sendsig(proc, sig):
+        # XXX: otherwise the build hangs for some reason.
+        if MACOS and GITHUB_WHEELS:
+            sig = signal.SIGKILL
         # If the process received SIGSTOP, SIGCONT is necessary first,
         # otherwise SIGTERM won't work.
         if POSIX and sig != signal.SIGKILL:
@@ -922,7 +924,7 @@ class TestMemoryLeak(PsutilTestCase):
 
     If available (Linux, OSX, Windows), USS memory is used for comparison,
     since it's supposed to be more precise, see:
-    http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html
+    https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
     If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
     Windows may give even more precision, but at the moment are not
     implemented.
@@ -1632,7 +1634,6 @@ def cleanup_test_procs():
 # atexit module does not execute exit functions in case of SIGTERM, which
 # gets sent to test subprocesses, which is a problem if they import this
 # module. With this it will. See:
-# http://grodola.blogspot.com/
-#     2016/02/how-to-always-execute-exit-functions-in-py.html
+# https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
     signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))

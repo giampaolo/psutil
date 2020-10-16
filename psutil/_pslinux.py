@@ -843,10 +843,6 @@ class Connections:
             else:
                 ip = socket.inet_ntop(family, base64.b16decode(ip))
         else:  # IPv6
-            # old version - let's keep it, just in case...
-            # ip = ip.decode('hex')
-            # return socket.inet_ntop(socket.AF_INET6,
-            #          ''.join(ip[i:i+4][::-1] for i in range(0, 16, 4)))
             ip = base64.b16decode(ip)
             try:
                 # see: https://github.com/giampaolo/psutil/issues/201
@@ -1031,7 +1027,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_flags(name)
+            isup = cext_posix.net_if_is_running(name)
             duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -1340,7 +1336,8 @@ def sensors_battery():
                 return int(ret) if ret.isdigit() else ret
         return None
 
-    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT')]
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
+            'battery' in x.lower()]
     if not bats:
         return None
     # Get the first available battery. Usually this is "BAT0", except
@@ -1358,12 +1355,11 @@ def sensors_battery():
     energy_full = multi_cat(
         root + "/energy_full",
         root + "/charge_full")
-    if energy_now is None or power_now is None:
-        return None
+    time_to_empty = multi_cat(root + "/time_to_empty_now")
 
     # Percent. If we have energy_full the percentage will be more
     # accurate compared to reading /capacity file (float vs. int).
-    if energy_full is not None:
+    if energy_full is not None and energy_now is not None:
         try:
             percent = 100.0 * energy_now / energy_full
         except ZeroDivisionError:
@@ -1395,11 +1391,17 @@ def sensors_battery():
     #     013937745fd9050c30146290e8f963d65c0179e6/bin/battery.py#L55
     if power_plugged:
         secsleft = _common.POWER_TIME_UNLIMITED
-    else:
+    elif energy_now is not None and power_now is not None:
         try:
             secsleft = int(energy_now / power_now * 3600)
         except ZeroDivisionError:
             secsleft = _common.POWER_TIME_UNKNOWN
+    elif time_to_empty is not None:
+        secsleft = int(time_to_empty * 60)
+        if secsleft < 0:
+            secsleft = _common.POWER_TIME_UNKNOWN
+    else:
+        secsleft = _common.POWER_TIME_UNKNOWN
 
     return _common.sbattery(percent, secsleft, power_plugged)
 

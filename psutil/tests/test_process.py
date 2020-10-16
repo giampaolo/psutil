@@ -298,11 +298,9 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdout.isatty():
+        if terminal is not None:
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
-        else:
-            self.assertIsNone(terminal)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
@@ -937,7 +935,7 @@ class TestProcess(PsutilTestCase):
 
         for combo in combos:
             p.cpu_affinity(combo)
-            self.assertEqual(p.cpu_affinity(), combo)
+            self.assertEqual(sorted(p.cpu_affinity()), sorted(combo))
 
     # TODO: #595
     @unittest.skipIf(BSD, "broken on BSD")

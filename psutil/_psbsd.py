@@ -51,7 +51,7 @@ if FREEBSD:
         cext.SWAIT: _common.STATUS_WAITING,
         cext.SLOCK: _common.STATUS_LOCKED,
     }
-elif OPENBSD or NETBSD:
+elif OPENBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
         cext.SSLEEP: _common.STATUS_SLEEPING,
@@ -76,12 +76,11 @@ elif OPENBSD or NETBSD:
 elif NETBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
-        cext.SACTIVE: _common.STATUS_RUNNING,
-        cext.SDYING: _common.STATUS_ZOMBIE,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
         cext.SSTOP: _common.STATUS_STOPPED,
         cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SDEAD: _common.STATUS_DEAD,
-        cext.SSUSPENDED: _common.STATUS_SUSPENDED,  # unique to NetBSD
+        cext.SRUN: _common.STATUS_WAKING,
+        cext.SONPROC: _common.STATUS_RUNNING,
     }
 
 TCP_STATUSES = {
@@ -354,7 +353,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_flags(name)
+            isup = cext_posix.net_if_is_running(name)
             duplex, speed = cext_posix.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -551,10 +550,10 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except ProcessLookupError:
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            else:
+            if is_zombie(self.pid):
                 raise ZombieProcess(self.pid, self._name, self._ppid)
+            else:
+                raise NoSuchProcess(self.pid, self._name)
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
         except OSError:
@@ -576,10 +575,10 @@ def wrap_exceptions_procfs(inst):
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
-        if not pid_exists(inst.pid):
-            raise NoSuchProcess(inst.pid, inst._name)
-        else:
+        if is_zombie(inst.pid):
             raise ZombieProcess(inst.pid, inst._name, inst._ppid)
+        else:
+            raise NoSuchProcess(inst.pid, inst._name)
     except PermissionError:
         raise AccessDenied(inst.pid, inst._name)
 
@@ -668,6 +667,10 @@ class Process(object):
                     raise
         else:
             return cext.proc_cmdline(self.pid)
+
+    @wrap_exceptions
+    def environ(self):
+        return cext.proc_environ(self.pid)
 
     @wrap_exceptions
     def terminal(self):

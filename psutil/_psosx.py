@@ -262,7 +262,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_flags(name)
+            isup = cext_posix.net_if_is_running(name)
             duplex, speed = cext_posix.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -324,6 +324,14 @@ def pids():
 pid_exists = _psposix.pid_exists
 
 
+def is_zombie(pid):
+    try:
+        st = cext.proc_kinfo_oneshot(pid)[kinfo_proc_map['status']]
+        return st == cext.SZOMB
+    except Exception:
+        return False
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -333,7 +341,10 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except ProcessLookupError:
-            raise NoSuchProcess(self.pid, self._name)
+            if is_zombie(self.pid):
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+            else:
+                raise NoSuchProcess(self.pid, self._name)
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
         except cext.ZombieProcessError:

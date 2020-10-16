@@ -385,7 +385,7 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_flags(PyObject *self, PyObject *args) {
+psutil_net_if_is_running(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = -1;
     int ret;
@@ -404,7 +404,7 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
         goto error;
 
     close(sock);
-    if ((ifr.ifr_flags & IFF_UP) != 0)
+    if ((ifr.ifr_flags & IFF_RUNNING) != 0)
         return Py_BuildValue("O", Py_True);
     else
         return Py_BuildValue("O", Py_False);
@@ -621,8 +621,8 @@ static PyMethodDef mod_methods[] = {
      "Retrieve NICs information"},
     {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS,
      "Retrieve NIC MTU"},
-    {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
-     "Retrieve NIC flags"},
+    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS,
+     "Return True if the NIC is running."},
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},

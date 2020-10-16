@@ -7,7 +7,7 @@
 r"""
 List all Windows services installed.
 
-$ python scripts/winservices.py
+$ python3 scripts/winservices.py
 AeLookupSvc (Application Experience)
 status: stopped, start: manual, username: localSystem, pid: None
 binpath: C:\Windows\system32\svchost.exe -k netsvcs

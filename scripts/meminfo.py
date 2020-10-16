@@ -7,7 +7,7 @@
 """
 Print system memory information.
 
-$ python scripts/meminfo.py
+$ python3 scripts/meminfo.py
 MEMORY
 ------
 Total      :    9.7G

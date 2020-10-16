@@ -58,7 +58,7 @@ Links
 
 --
 
-Giampaolo - http://grodola.blogspot.com
+Giampaolo - https://gmpy.dev/about
 """
 
 

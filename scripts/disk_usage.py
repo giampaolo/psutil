@@ -7,7 +7,7 @@
 """
 List all mounted disk partitions a-la "df -h" command.
 
-$ python scripts/disk_usage.py
+$ python3 scripts/disk_usage.py
 Device               Total     Used     Free  Use %      Type  Mount
 /dev/sdb3            18.9G    14.7G     3.3G    77%      ext4  /
 /dev/sda6           345.9G    83.8G   244.5G    24%      ext4  /home

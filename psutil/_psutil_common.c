@@ -167,6 +167,26 @@ psutil_setup(void) {
 }
 
 
+// ============================================================================
+// Utility functions (BSD)
+// ============================================================================
+
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+void
+convert_kvm_err(const char *syscall, char *errbuf) {
+    char fullmsg[8192];
+
+    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
+    if (strstr(errbuf, "Permission denied") != NULL)
+        AccessDenied(fullmsg);
+    else if (strstr(errbuf, "Operation not permitted") != NULL)
+        AccessDenied(fullmsg);
+    else
+        PyErr_Format(PyExc_RuntimeError, fullmsg);
+}
+#endif
+
+
 // ====================================================================
 // --- Windows
 // ====================================================================
@@ -264,10 +284,6 @@ psutil_loadlibs() {
         "ntdll.dll", "NtSetInformationProcess");
     if (! NtSetInformationProcess)
         return 1;
-    WinStationQueryInformationW = psutil_GetProcAddressFromLib(
-        "winsta.dll", "WinStationQueryInformationW");
-    if (! WinStationQueryInformationW)
-        return 1;
     NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
     if (! NtQueryObject)
@@ -320,6 +336,13 @@ psutil_loadlibs() {
     // minumum requirement: Win 7
     GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
+    // minimum requirements: Windows Server Core
+    WTSEnumerateSessionsW = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSEnumerateSessionsW");
+    WTSQuerySessionInformationW = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSQuerySessionInformationW");
+    WTSFreeMemory = psutil_GetProcAddressFromLib(
+        "wtsapi32.dll", "WTSFreeMemory");
 
     PyErr_Clear();
     return 0;

@@ -662,6 +662,8 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
 
+    psutil_setup();
+
     if (mod == NULL)
         INITERR;
 #if PY_MAJOR_VERSION >= 3

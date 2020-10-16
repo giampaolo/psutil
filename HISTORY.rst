@@ -1,9 +1,37 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.7.1 (unreleased)
-==================
+5.7.3
+=====
 
 XXXX-XX-XX
+
+**Enhancements**
+
+- 893_: implement `Process.environ()` on BSD family. (patch by Armin Gruner)
+- 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
+  running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
+- 1837_: [Linux] improved battery detection and charge "secsleft" calculation
+  (patch by aristocratos)
+
+**Bug fixes**
+
+- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
+  the remaining values, still return a result instead of None.
+  (patch by aristocratos)
+
+5.7.2
+=====
+
+2020-07-15
+
+**Bug fixes**
+
+- wheels for 2.7 were inadvertently deleted.
+
+5.7.1
+=====
+
+2020-07-15
 
 **Enhancements**
 
@@ -25,12 +53,17 @@ XXXX-XX-XX
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
 - 1757_: memory leak tests are now stable.
+- 1768_: [Windows] added support for Windows Nano Server. (contributed by
+  Julien Lebot)
 
 **Bug fixes**
 
 - 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
 - 1760_: [Linux] Process.rlimit() does not handle long long type properly.
+- 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
+- 1781_: fix signature of callback function for getloadavg().  (patch by
+  Ammar Askar)
 
 5.7.0
 =====
