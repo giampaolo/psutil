@@ -57,8 +57,8 @@ def query(cmd):
 
 
 def top_packages():
-    return query(
-        f"pypinfo --all --json --days {DAYS} --limit {LIMIT} '' project")
+    return query("pypinfo --all --json --days %s --limit %s '' project" % (
+        DAYS, LIMIT))
 
 
 def ranking():
@@ -66,7 +66,7 @@ def ranking():
     for i, line in enumerate(data['rows'], 1):
         if line['project'] == PKGNAME:
             return i
-    raise ValueError(f"can't find {PKGNAME}")
+    raise ValueError("can't find %s" % PKGNAME)
 
 
 def downloads():
@@ -74,23 +74,23 @@ def downloads():
     for line in data['rows']:
         if line['project'] == PKGNAME:
             return line['download_count']
-    raise ValueError(f"can't find {PKGNAME}")
+    raise ValueError("can't find %s" % PKGNAME)
 
 
 def downloads_pyver():
-    return query(f"pypinfo --json --days {DAYS} {PKGNAME} pyversion")
+    return query("pypinfo --json --days %s %s pyversion" % (DAYS, PKGNAME))
 
 
 def downloads_by_country():
-    return query(f"pypinfo --json --days {DAYS} {PKGNAME} country")
+    return query("pypinfo --json --days %s %s country" % (DAYS, PKGNAME))
 
 
 def downloads_by_system():
-    return query(f"pypinfo --json --days {DAYS} {PKGNAME} system")
+    return query("pypinfo --json --days %s %s system" % (DAYS, PKGNAME))
 
 
 def downloads_by_distro():
-    return query(f"pypinfo --json --days {DAYS} {PKGNAME} distro")
+    return query("pypinfo --json --days %s %s distro" % (DAYS, PKGNAME))
 
 
 # --- print
@@ -123,12 +123,11 @@ def print_markdown_table(title, left, rows):
 
 
 def main():
-    last_update = top_packages()['last_update']
     print("# Download stats")
     print("")
-    s = f"psutil download statistics of the last {DAYS} days (last update "
-    s += f"*{last_update}*).\n"
-    s += f"Generated via [pypistats.py]({GITHUB_SCRIPT_URL}) script.\n"
+    s = "psutil download statistics of the last %s days (last update " % DAYS
+    s += "*%s*).\n" % top_packages()['last_update']
+    s += "Generated via [pypistats.py](%s) script.\n" % GITHUB_SCRIPT_URL
     print(s)
 
     data = [
