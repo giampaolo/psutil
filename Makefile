@@ -16,6 +16,7 @@ DEPS = \
 	flake8 \
 	flake8-print \
 	pyperf \
+	pypinfo \
 	requests \
 	setuptools \
 	twine \
@@ -303,6 +304,9 @@ print-access-denied: ## Print AD exceptions
 print-api-speed:  ## Benchmark all API calls
 	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+
+print-downloads:  ## Print PYPI download statistics
+	$(PYTHON) scripts/internal/print_downloads.py
 
 # ===================================================================
 # Misc
