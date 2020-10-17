@@ -298,11 +298,21 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        if (pid == 0)
+        if (pid == 0) {
             AccessDenied("automatically set for PID 0");
-        else
+            return NULL;
+        }
+        else if (errno == ENOENT) {
+            // It may happen (file not found error) if the process is
+            // still alive but the executable which launched it got
+            // deleted, see:
+            // https://github.com/giampaolo/psutil/issues/1738
+            return Py_BuildValue("s", "");
+        }
+        else {
             psutil_raise_for_pid(pid, "proc_pidpath()");
-        return NULL;
+            return NULL;
+        }
     }
     return PyUnicode_DecodeFSDefault(buf);
 }

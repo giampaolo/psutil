@@ -15,6 +15,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
+  alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().
 - 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
   pointer.
