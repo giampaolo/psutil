@@ -282,8 +282,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
-    @unittest.skipIf(PYPY and WINDOWS,
-                     "copyload_shared_lib() unsupported on PYPY + WINDOWS")
+    @unittest.skipIf(PYPY, "unstable on PYPY")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.

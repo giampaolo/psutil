@@ -14,6 +14,7 @@ jobs:
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
+      CIBW_SKIP: pp*-macosx_x86_64
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1

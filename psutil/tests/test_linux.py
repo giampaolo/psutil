@@ -1556,17 +1556,6 @@ class TestSensorsBattery(PsutilTestCase):
             self.assertIsNone(psutil.sensors_battery().power_plugged)
             assert m.called
 
-    def test_emulate_no_base_files(self):
-        # Emulate a case where base metrics files are not present,
-        # in which case we're supposed to get None.
-        with mock_open_exception(
-                "/sys/class/power_supply/BAT0/energy_now",
-                IOError(errno.ENOENT, "")):
-            with mock_open_exception(
-                    "/sys/class/power_supply/BAT0/charge_now",
-                    IOError(errno.ENOENT, "")):
-                self.assertIsNone(psutil.sensors_battery())
-
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
         with mock_open_content(
