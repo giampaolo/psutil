@@ -264,7 +264,7 @@ if (int(__version__.replace('.', '')) !=
 if hasattr(_psplatform, 'ppid_map'):
     # Faster version (Windows and Linux).
     _ppid_map = _psplatform.ppid_map
-else:
+else:  # pragma: no cover
     def _ppid_map():
         """Return a {pid: ppid, ...} dict for all running processes in
         one shot. Used to speed up Process.children().
@@ -393,7 +393,7 @@ class Process(object):
     def __str__(self):
         try:
             info = collections.OrderedDict()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             info = {}  # Python 2.6
         info["pid"] = self.pid
         if self._name:

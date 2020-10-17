@@ -799,7 +799,8 @@ def hilite(s, color=None, bold=False):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
 
 
-def print_color(s, color=None, bold=False, file=sys.stdout):
+def print_color(
+        s, color=None, bold=False, file=sys.stdout):  # pragma: no cover
     """Print a colorized version of string."""
     if not term_supports_colors():
         print(s, file=file)  # NOQA

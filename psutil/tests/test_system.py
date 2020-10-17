@@ -483,6 +483,8 @@ class TestCpuAPIs(PsutilTestCase):
                 self._test_cpu_percent(percent, last, new)
             self._test_cpu_percent(sum(new), last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_times_percent(interval=-1)
 
     def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
