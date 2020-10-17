@@ -1599,6 +1599,29 @@ class TestSensorsBattery(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
+class TestSensorsBatteryEmulated(PsutilTestCase):
+
+    def test_it(self):
+        def open_mock(name, *args, **kwargs):
+            if name.endswith("/energy_now"):
+                return io.StringIO(u("60000000"))
+            elif name.endswith("/power_now"):
+                return io.StringIO(u("0"))
+            elif name.endswith("/energy_full"):
+                return io.StringIO(u("60000001"))
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch('os.listdir', return_value=["BAT0"]) as mlistdir:
+            with mock.patch(patch_point, side_effect=open_mock) as mopen:
+                self.assertIsNotNone(psutil.sensors_battery())
+        assert mlistdir.called
+        assert mopen.called
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
 class TestSensorsTemperatures(PsutilTestCase):
 
     def test_emulate_class_hwmon(self):

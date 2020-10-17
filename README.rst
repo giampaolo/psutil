@@ -34,7 +34,7 @@
     :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
     :alt: FreeBSD tests (Cirrus-Ci)
 
-.. |coverage| image:: https://img.shields.io/coveralls/github/giampaolo/psutil.svg?label=test%20coverage
+.. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 

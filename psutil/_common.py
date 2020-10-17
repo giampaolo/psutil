@@ -780,7 +780,7 @@ def term_supports_colors(file=sys.stdout):
         return True
 
 
-def hilite(s, color=None, bold=False):
+def hilite(s, color=None, bold=False):  # pragma: no cover
     """Return an highlighted version of 'string'."""
     if not term_supports_colors():
         return s
