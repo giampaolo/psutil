@@ -247,7 +247,7 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         if (psutil_threaded_get_filename(hFile) != 0)
             goto error;
 
-        if (globalFileName->Length > 0) {
+        if ((globalFileName != NULL) && (globalFileName->Length > 0)) {
             py_path = PyUnicode_FromWideChar(globalFileName->Buffer,
                                              wcslen(globalFileName->Buffer));
             if (! py_path)
