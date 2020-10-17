@@ -618,12 +618,18 @@ def cpu_count_logical():
 def cpu_count_physical():
     """Return the number of physical cores in the system."""
     # Method #1
-    thread_siblings_lists = set()
-    for path in glob.glob(
-            "/sys/devices/system/cpu/cpu[0-9]*/topology/thread_siblings_list"):
+    ls = set()
+    # These 2 files are the same but */core_cpus_list is newer while
+    # */thread_siblings_list is deprecated and may disappear in the future.
+    # https://www.kernel.org/doc/Documentation/admin-guide/cputopology.rst
+    # https://github.com/giampaolo/psutil/pull/1727#issuecomment-707624964
+    # https://lkml.org/lkml/2019/2/26/41
+    p1 = "/sys/devices/system/cpu/cpu[0-9]*/topology/core_cpus_list"
+    p2 = "/sys/devices/system/cpu/cpu[0-9]*/topology/thread_siblings_list"
+    for path in glob.glob(p1) or glob.glob(p2):
         with open_binary(path) as f:
-            thread_siblings_lists.add(f.read())
-    result = len(thread_siblings_lists)
+            ls.add(f.read().strip())
+    result = len(ls)
     if result != 0:
         return result
 
@@ -635,15 +641,15 @@ def cpu_count_physical():
             line = line.strip().lower()
             if not line:
                 # new section
-                if (b'physical id' in current_info and
-                        b'cpu cores' in current_info):
+                try:
                     mapping[current_info[b'physical id']] = \
                         current_info[b'cpu cores']
+                except KeyError:
+                    pass
                 current_info = {}
             else:
                 # ongoing section
-                if (line.startswith(b'physical id') or
-                        line.startswith(b'cpu cores')):
+                if line.startswith((b'physical id', b'cpu cores')):
                     key, value = line.split(b'\t:', 1)
                     current_info[key] = int(value)
 

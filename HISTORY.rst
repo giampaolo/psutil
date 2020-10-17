@@ -15,6 +15,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1620_: [Linux] physical cpu_count() result is incorrect on systems with more
+  than one CPU socket.  (patch by Vincent A. Arcila)
 - 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().

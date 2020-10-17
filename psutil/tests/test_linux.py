@@ -734,6 +734,14 @@ class TestSystemCPUCountPhysical(PsutilTestCase):
                 core_ids.add(fields[1])
         self.assertEqual(psutil.cpu_count(logical=False), len(core_ids))
 
+    def test_method_2(self):
+        meth_1 = psutil._pslinux.cpu_count_physical()
+        with mock.patch('glob.glob', return_value=[]) as m:
+            meth_2 = psutil._pslinux.cpu_count_physical()
+            assert m.called
+        if meth_1 is not None:
+            self.assertEqual(meth_1, meth_2)
+
     def test_emulate_none(self):
         with mock.patch('glob.glob', return_value=[]) as m1:
             with mock.patch('psutil._common.open', create=True) as m2:
