@@ -15,6 +15,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1791_: [macOS] fix missing include for getpagesize().
 - 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
   pointer.
 - 1838_: [Linux] sensors_battery(): if `percent` can be determined but not

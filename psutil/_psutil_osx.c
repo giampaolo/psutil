@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
