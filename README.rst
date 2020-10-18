@@ -139,25 +139,9 @@ None yet.
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
-.. _`Giampaolo Rodola`: https://gmpy.dev/about
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-.. _Tidelift security contact: https://tidelift.com/security
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-
-A lot of time and effort went into making psutil as it is today. If you whish
-to help its future development consider
-`sponsoring <https://github.com/sponsors/giampaolo>`__ it.
-
 Projects using psutil
 =====================
 
-psutil has roughly the following monthly downloads:
-
-.. image:: https://img.shields.io/pypi/dm/psutil.svg
-    :target: https://pepy.tech/project/psutil
-    :alt: Downloads
-
-...and has over 55,000 projects on GitHub depending from it.
 Here's some I find particularly interesting:
 
 - https://github.com/google/grr
