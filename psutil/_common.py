@@ -766,7 +766,7 @@ else:
 
 
 @memoize
-def term_supports_colors(file=sys.stdout):
+def term_supports_colors(file=sys.stdout):  # pragma: no cover
     if os.name == 'nt':
         return True
     try:
