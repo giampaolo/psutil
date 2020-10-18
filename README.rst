@@ -68,18 +68,21 @@
 
 -----
 
-Quick links
-===========
+.. raw:: html
 
-- `Home page <https://github.com/giampaolo/psutil>`_
-- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.org/project/psutil/#files>`_
-- `Forum <http://groups.google.com/group/psutil/topics>`_
-- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
-- `Blog <https://gmpy.dev/tags/psutil>`_
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+    <div align="center">
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/test/raw/master/docs/_static/psutil-logo.png" /></a>
+        <br />
+        <br />
+        <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/INSTALL.rst"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="http://groups.google.com/group/psutil/topics"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
+    </div>
 
 Summary
 =======
@@ -102,37 +105,43 @@ psutil currently supports the following platforms:
 
 ...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**, `PyPy <http://pypy.org/>`__ 2.7 and 3.X.
 
-psutil for enterprise
-=====================
+Funding
+=======
 
-.. |tideliftlogo| image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
-   :width: 150
-   :alt: Tidelift
-   :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+While psutil is free software and will always be, the project would benefit
+immensely from some funding.
+Keeping up with bug reports and maintenance has become hardly sustainable for
+me alone in terms of time.
+If you're a company that's making significant use of psutil you can consider
+becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
+`Open Collective <https://opencollective.com/psutil>`__ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
 
-.. list-table::
-   :widths: 10 150
-
-   * - |tideliftlogo|
-     - The maintainer of psutil and thousands of other packages are working
-       with Tidelift to deliver commercial support and maintenance for the open
-       source dependencies you use to build your applications. Save time,
-       reduce risk, and improve code health, while paying the maintainers of
-       the exact dependencies you use.
-       `Learn more <https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`__.
-
-       By subscribing to Tidelift you will help me (`Giampaolo Rodola`_) support
-       psutil future development. Alternatively consider making a small
-       `donation`_.
-
-Security
+Sponsors
 ========
 
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
+.. raw:: html
 
-Sponsorship
-===========
+    <div>
+        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img src="https://github.com/giampaolo/test/raw/master/docs/_static/tidelift-logo.png" />
+        </a>
+    </div>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+Supporters
+==========
+
+None yet.
+
+.. raw:: html
+
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
+.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+.. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
 A lot of time and effort went into making psutil as it is today. If you whish
 to help its future development consider
