@@ -139,26 +139,6 @@ None yet.
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
-Projects using psutil
-=====================
-
-Here's some I find particularly interesting:
-
-- https://github.com/google/grr
-- https://github.com/facebook/osquery/
-- https://github.com/nicolargo/glances
-- https://github.com/Jahaja/psdash
-- https://github.com/ajenti/ajenti
-- https://github.com/home-assistant/home-assistant/
-
-Portings
-========
-
-- Go: https://github.com/shirou/gopsutil
-- C: https://github.com/hamon-in/cpslib
-- Rust: https://github.com/rust-psutil/rust-psutil
-- Nim: https://github.com/johnscillieri/psutil-nim
-
 Example usages
 ==============
 
@@ -496,9 +476,33 @@ Windows services
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
 
+Projects using psutil
+=====================
+
+Here's some I find particularly interesting:
+
+- https://github.com/google/grr
+- https://github.com/facebook/osquery/
+- https://github.com/nicolargo/glances
+- https://github.com/Jahaja/psdash
+- https://github.com/ajenti/ajenti
+- https://github.com/home-assistant/home-assistant/
+
+Portings
+========
+
+- Go: https://github.com/shirou/gopsutil
+- C: https://github.com/hamon-in/cpslib
+- Rust: https://github.com/rust-psutil/rust-psutil
+- Nim: https://github.com/johnscillieri/psutil-nim
+
+Security
+========
+
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
 
 .. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-
