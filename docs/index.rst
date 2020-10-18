@@ -42,26 +42,44 @@ Supported Python versions are **2.6**, **2.7** and **3.4+**.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+Funding
+=======
 
-Professional support
---------------------
+While psutil is free software and will always be, the project would benefit
+immensely from some funding.
+Keeping up with bug reports and maintenance has become hardly sustainable for
+me alone in terms of time.
+If you're a company that's making significant use of psutil you can consider
+becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
+`Open Collective <https://opencollective.com/psutil>`__ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
+and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
 
-.. image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
-    :width: 80px
-    :align: left
+Sponsors
+--------
 
-Professional support for psutil is available as part of the `Tidelift Subscription`_.
-Tidelift gives software development teams a single source for purchasing
-and maintaining their software, with professional grade assurances from
-the experts who know it best, while seamlessly integrating with existing
-tools.
-By subscribing you will help me (`Giampaolo Rodola`_) support psutil
-future development. Alternatively consider making a small `donation`_.
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
+.. raw:: html
+
+    <div>
+        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+        </a>
+    </div>
+    <br />
+
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+Supporters
+----------
+
+None yet.
+
+.. raw:: html
+
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Install
--------
+=======
 
 Linux Ubuntu / Debian::
 
@@ -2485,6 +2503,17 @@ Running tests
 ::
 
     $ python3 -m psutil.tests
+
+Security
+========
+
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
+
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
+.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+.. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
 Development guide
 =================
