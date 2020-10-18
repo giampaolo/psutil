@@ -71,7 +71,7 @@
 .. raw:: html
 
     <div align="center">
-        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/test/raw/master/docs/_static/psutil-logo.png" /></a>
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.png" /></a>
         <br />
         <br />
         <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
@@ -115,7 +115,8 @@ me alone in terms of time.
 If you're a company that's making significant use of psutil you can consider
 becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
 `Open Collective <https://opencollective.com/psutil>`__ or
-`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
+and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
 
 Sponsors
 ========
@@ -124,7 +125,7 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img src="https://github.com/giampaolo/test/raw/master/docs/_static/tidelift-logo.png" />
+            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
         </a>
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
