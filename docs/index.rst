@@ -2398,7 +2398,10 @@ Kill process tree
       if include_parent:
           children.append(parent)
       for p in children:
-          p.send_signal(sig)
+          try:
+              p.send_signal(sig)
+          except psutil.NoSuchProcess:
+              pass
       gone, alive = psutil.wait_procs(children, timeout=timeout,
                                       callback=on_terminate)
       return (gone, alive)

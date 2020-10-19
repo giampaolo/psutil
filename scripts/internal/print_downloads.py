@@ -29,6 +29,7 @@ DAYS = 30
 LIMIT = 100
 GITHUB_SCRIPT_URL = "https://github.com/giampaolo/psutil/blob/master/" \
                     "scripts/internal/pypistats.py"
+LAST_UPDATE = None
 bytes_billed = 0
 
 
@@ -57,23 +58,28 @@ def query(cmd):
 
 
 def top_packages():
-    return query("pypinfo --all --json --days %s --limit %s '' project" % (
+    global LAST_UPDATE
+    ret = query("pypinfo --all --json --days %s --limit %s '' project" % (
         DAYS, LIMIT))
+    LAST_UPDATE = ret['last_update']
+    return [(x['project'], x['download_count']) for x in ret['rows']]
 
 
 def ranking():
     data = top_packages()
-    for i, line in enumerate(data['rows'], 1):
-        if line['project'] == PKGNAME:
+    i = 1
+    for name, downloads in data:
+        if name == PKGNAME:
             return i
+        i += 1
     raise ValueError("can't find %s" % PKGNAME)
 
 
 def downloads():
     data = top_packages()
-    for line in data['rows']:
-        if line['project'] == PKGNAME:
-            return line['download_count']
+    for name, downloads in data:
+        if name == PKGNAME:
+            return downloads
     raise ValueError("can't find %s" % PKGNAME)
 
 
@@ -123,16 +129,18 @@ def print_markdown_table(title, left, rows):
 
 
 def main():
+    downs = downloads()
+
     print("# Download stats")
     print("")
     s = "psutil download statistics of the last %s days (last update " % DAYS
-    s += "*%s*).\n" % top_packages()['last_update']
+    s += "*%s*).\n" % LAST_UPDATE
     s += "Generated via [pypistats.py](%s) script.\n" % GITHUB_SCRIPT_URL
     print(s)
 
     data = [
-        {'what': 'Per month', 'download_count': downloads()},
-        {'what': 'Per day', 'download_count': int(downloads() / 30)},
+        {'what': 'Per month', 'download_count': downs},
+        {'what': 'Per day', 'download_count': int(downs / 30)},
         {'what': 'PYPI ranking', 'download_count': ranking()}
     ]
     print_markdown_table('Overview', 'what', data)
