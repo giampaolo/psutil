@@ -31,6 +31,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
+from psutil._compat import PY3
 from psutil._compat import range
 from psutil.tests import create_sockets
 from psutil.tests import enum
@@ -101,11 +102,12 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "RLIMIT_RSS"), LINUX)
         ae(hasattr(psutil, "RLIMIT_STACK"), LINUX)
 
-        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)  # requires Linux 2.6.8
-        ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # requires Linux 2.6.25
-        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # requires Linux 2.6.8
+        if PY3:
+            ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)  # Linux 2.6.8
+            ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)  # Linux 2.6.12
+            ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)  # Linux 2.6.12
+            ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # Linux 2.6.25
+            ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # Linux 2.6.8
 
 
 class TestAvailSystemAPIs(PsutilTestCase):

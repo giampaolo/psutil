@@ -1975,7 +1975,7 @@ class TestProcess(PsutilTestCase):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
-        with mock.patch("resource.prlimit",
+        with mock.patch("psutil._pslinux.prlimit",
                         side_effect=OSError(errno.ENOSYS, "")) as m:
             p = psutil.Process()
             p.name()

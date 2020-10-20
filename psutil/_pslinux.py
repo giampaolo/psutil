@@ -13,7 +13,6 @@ import functools
 import glob
 import os
 import re
-import resource
 import socket
 import struct
 import sys
@@ -76,7 +75,6 @@ __extra__all__ = [
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
-HAS_PRLIMIT = hasattr(resource, "prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
@@ -306,6 +304,49 @@ except Exception:  # pragma: no cover
     # Don't want to crash at import time.
     traceback.print_exc()
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
+
+# =====================================================================
+# --- prlimit
+# =====================================================================
+
+# Backport of resource.prlimit() for Python 2. Originally this was done
+# in C, but CentOS-6 which we use to create manylinux wheels is too old
+# and does not support prlimit() syscall. As such the resulting wheel
+# would not include prlimit(), even when installed on newer systems.
+
+prlimit = None
+try:
+    from resource import prlimit  # python >= 3.4
+except ImportError:
+    import ctypes
+    import resource
+
+    libc = ctypes.CDLL(None, use_errno=True)
+
+    if hasattr(libc, "prlimit"):
+
+        def prlimit(pid, resource_, limits=None):
+            class StructRlimit(ctypes.Structure):
+                _fields_ = [('rlim_cur', ctypes.c_longlong),
+                            ('rlim_max', ctypes.c_longlong)]
+
+            current = StructRlimit()
+            if limits is None:
+                # get
+                ret = libc.prlimit(pid, resource_, None, ctypes.byref(current))
+            else:
+                # set
+                new = StructRlimit()
+                new.rlim_cur = limits[0] & resource.RLIM_INFINITY
+                new.rlim_max = limits[1] & resource.RLIM_INFINITY
+                ret = libc.prlimit(
+                    pid, resource_, ctypes.byref(new), ctypes.byref(current))
+
+            if ret != 0:
+                errno = ctypes.get_errno()
+                raise OSError(errno, os.strerror(errno))
+            return (current.rlim_cur, current.rlim_max)
 
 
 # =====================================================================
@@ -1989,7 +2030,7 @@ class Process(object):
                 raise ValueError("value not in 0-7 range")
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
-    if HAS_PRLIMIT:
+    if prlimit is not None:
 
         @wrap_exceptions
         def rlimit(self, resource_, limits=None):
@@ -2001,14 +2042,14 @@ class Process(object):
             try:
                 if limits is None:
                     # get
-                    return resource.prlimit(self.pid, resource_)
+                    return prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
                         raise ValueError(
                             "second argument must be a (soft, hard) tuple, "
                             "got %s" % repr(limits))
-                    resource.prlimit(self.pid, resource_, limits)
+                    prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS and pid_exists(self.pid):
                     # I saw this happening on Travis:

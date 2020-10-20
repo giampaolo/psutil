@@ -103,7 +103,7 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
     # Linux >= 2.6.36
-    if _psplatform.HAS_PRLIMIT:
+    if _psplatform.prlimit is not None:
         from resource import RLIM_INFINITY  # NOQA
         from resource import RLIMIT_AS  # NOQA
         from resource import RLIMIT_CORE  # NOQA
@@ -241,7 +241,7 @@ __all__ = [
 ]
 
 __all__.extend(_psplatform.__extra__all__)
-if LINUX and _psplatform.HAS_PRLIMIT:
+if LINUX and _psplatform.prlimit is not None:
     __all__.extend(_rlim__all__)
     del _rlim__all__
 
