@@ -314,13 +314,13 @@ except Exception:  # pragma: no cover
 # in C, but CentOS-6 which we use to create manylinux wheels is too old
 # and does not support prlimit() syscall. As such the resulting wheel
 # would not include prlimit(), even when installed on newer systems.
+# This is the only part of psutil using ctypes.
 
 prlimit = None
 try:
     from resource import prlimit  # python >= 3.4
 except ImportError:
     import ctypes
-    import resource
 
     libc = ctypes.CDLL(None, use_errno=True)
 
@@ -338,8 +338,8 @@ except ImportError:
             else:
                 # set
                 new = StructRlimit()
-                new.rlim_cur = limits[0] & resource.RLIM_INFINITY
-                new.rlim_max = limits[1] & resource.RLIM_INFINITY
+                new.rlim_cur = limits[0]
+                new.rlim_max = limits[1]
                 ret = libc.prlimit(
                     pid, resource_, ctypes.byref(new), ctypes.byref(current))
 
