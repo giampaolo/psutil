@@ -13,6 +13,7 @@ import functools
 import glob
 import os
 import re
+import resource
 import socket
 import struct
 import sys
@@ -75,16 +76,10 @@ __extra__all__ = [
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
-HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
+HAS_PRLIMIT = hasattr(resource, "prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
-
-# RLIMIT_* constants, not guaranteed to be present on all kernels
-if HAS_PRLIMIT:
-    for name in dir(cext):
-        if name.startswith('RLIM'):
-            __extra__all__.append(name)
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
@@ -1997,7 +1992,7 @@ class Process(object):
     if HAS_PRLIMIT:
 
         @wrap_exceptions
-        def rlimit(self, resource, limits=None):
+        def rlimit(self, resource_, limits=None):
             # If pid is 0 prlimit() applies to the calling process and
             # we don't want that. We should never get here though as
             # PID 0 is not supported on Linux.
@@ -2006,15 +2001,14 @@ class Process(object):
             try:
                 if limits is None:
                     # get
-                    return cext.linux_prlimit(self.pid, resource)
+                    return resource.prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
                         raise ValueError(
                             "second argument must be a (soft, hard) tuple, "
                             "got %s" % repr(limits))
-                    soft, hard = limits
-                    cext.linux_prlimit(self.pid, resource, soft, hard)
+                    resource.prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS and pid_exists(self.pid):
                     # I saw this happening on Travis:

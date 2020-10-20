@@ -95,7 +95,6 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "RLIMIT_CPU"), LINUX)
         ae(hasattr(psutil, "RLIMIT_DATA"), LINUX)
         ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
         ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX)
         ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX)
         ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX)

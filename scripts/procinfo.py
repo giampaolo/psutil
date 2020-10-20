@@ -102,7 +102,6 @@ RLIMITS_MAP = {
     "RLIMIT_CPU": "cputime",
     "RLIMIT_DATA": "datasize",
     "RLIMIT_FSIZE": "filesize",
-    "RLIMIT_LOCKS": "locks",
     "RLIMIT_MEMLOCK": "memlock",
     "RLIMIT_MSGQUEUE": "msgqueue",
     "RLIMIT_NICE": "nice",

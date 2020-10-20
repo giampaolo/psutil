@@ -2253,7 +2253,6 @@ Process resources constants
 .. data:: RLIMIT_CPU
 .. data:: RLIMIT_DATA
 .. data:: RLIMIT_FSIZE
-.. data:: RLIMIT_LOCKS
 .. data:: RLIMIT_MEMLOCK
 .. data:: RLIMIT_MSGQUEUE
 .. data:: RLIMIT_NICE
