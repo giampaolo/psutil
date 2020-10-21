@@ -692,10 +692,6 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE)) INITERR;
 #endif
 
-#ifdef RLIMIT_LOCKS
-    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
-#endif
-
 #ifdef RLIMIT_MEMLOCK
     if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK)) INITERR;
 #endif
@@ -717,6 +713,10 @@ static PyMethodDef mod_methods[] = {
 #endif
 
 // Linux specific
+
+#ifdef RLIMIT_LOCKS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
+#endif
 
 #ifdef RLIMIT_MSGQUEUE
     if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE)) INITERR;

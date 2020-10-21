@@ -448,8 +448,9 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
         # If pid is 0 prlimit() applies to the calling process and
         # we don't want that.
-        with self.assertRaises(ValueError):
-            psutil._psplatform.Process(0).rlimit(0)
+        if LINUX:
+            with self.assertRaisesRegex(ValueError, "can't use prlimit"):
+                psutil._psplatform.Process(0).rlimit(0)
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
