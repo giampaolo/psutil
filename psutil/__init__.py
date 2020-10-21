@@ -224,10 +224,6 @@ __all__ = [
 
 __all__.extend(_psplatform.__extra__all__)
 
-if LINUX:
-    from . import _psutil_linux
-    __all__.extend([x for x in dir(_psutil_linux) if x.startswith('RLIM')])
-
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"

@@ -67,7 +67,6 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", ]
 
-
 # =====================================================================
 # --- globals
 # =====================================================================
@@ -347,6 +346,11 @@ except ImportError:
                 errno = ctypes.get_errno()
                 raise OSError(errno, os.strerror(errno))
             return (current.rlim_cur, current.rlim_max)
+
+
+if prlimit is not None:
+    __extra__all__.extend(
+        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()])
 
 
 # =====================================================================
