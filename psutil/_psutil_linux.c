@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <sys/resource.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -531,6 +532,7 @@ static PyMethodDef mod_methods[] = {
     void init_psutil_linux(void)
 #endif  /* PY_MAJOR_VERSION */
 {
+    PyObject *v;
 #if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
 #else
@@ -540,6 +542,48 @@ static PyMethodDef mod_methods[] = {
         INITERR;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
+
+    if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK)) INITERR;
+
+#if defined(HAVE_LONG_LONG)
+    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
+        v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
+    } else
+#endif
+    {
+        v = PyLong_FromLong((long) RLIM_INFINITY);
+    }
+    if (v) {
+        PyModule_AddObject(mod, "RLIM_INFINITY", v);
+    }
+
+#ifdef RLIMIT_MSGQUEUE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE)) INITERR;
+#endif
+#ifdef RLIMIT_NICE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE)) INITERR;
+#endif
+#ifdef RLIMIT_RTPRIO
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO)) INITERR;
+#endif
+#ifdef RLIMIT_RTTIME
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME)) INITERR;
+#endif
+#ifdef RLIMIT_SIGPENDING
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
+        INITERR;
+#endif
+
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;

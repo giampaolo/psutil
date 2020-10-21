@@ -104,60 +104,42 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
     # Linux >= 2.6.36
     if _psplatform.prlimit is not None:
-        from resource import RLIM_INFINITY  # NOQA
-        from resource import RLIMIT_AS  # NOQA
-        from resource import RLIMIT_CORE  # NOQA
-        from resource import RLIMIT_CPU  # NOQA
-        from resource import RLIMIT_DATA  # NOQA
-        from resource import RLIMIT_FSIZE  # NOQA
-        from resource import RLIMIT_MEMLOCK  # NOQA
-        from resource import RLIMIT_NOFILE  # NOQA
-        from resource import RLIMIT_NPROC  # NOQA
-        from resource import RLIMIT_RSS  # NOQA
-        from resource import RLIMIT_STACK  # NOQA
-
-        _rlim__all__ = [
-            'RLIM_INFINITY',
-            'RLIMIT_AS',
-            'RLIMIT_CORE',
-            'RLIMIT_CPU',
-            'RLIMIT_DATA',
-            'RLIMIT_FSIZE',
-            'RLIMIT_MEMLOCK',
-            'RLIMIT_NOFILE',
-            'RLIMIT_NPROC',
-            'RLIMIT_RSS',
-            'RLIMIT_STACK']
+        from ._psutil_linux import RLIM_INFINITY  # NOQA
+        from ._psutil_linux import RLIMIT_AS  # NOQA
+        from ._psutil_linux import RLIMIT_CORE  # NOQA
+        from ._psutil_linux import RLIMIT_CPU  # NOQA
+        from ._psutil_linux import RLIMIT_DATA  # NOQA
+        from ._psutil_linux import RLIMIT_FSIZE  # NOQA
+        from ._psutil_linux import RLIMIT_LOCKS  # NOQA
+        from ._psutil_linux import RLIMIT_MEMLOCK  # NOQA
+        from ._psutil_linux import RLIMIT_NOFILE  # NOQA
+        from ._psutil_linux import RLIMIT_NPROC  # NOQA
+        from ._psutil_linux import RLIMIT_RSS  # NOQA
+        from ._psutil_linux import RLIMIT_STACK  # NOQA
         # Kinda ugly but considerably faster than using hasattr() and
         # setattr() against the module object (we are at import time:
         # speed matters).
-        import resource
+        from . import _psutil_linux
         try:
-            RLIMIT_MSGQUEUE = resource.RLIMIT_MSGQUEUE
-            _rlim__all__.append('RLIMIT_MSGQUEUE')
+            RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
         except AttributeError:
             pass
         try:
-            RLIMIT_NICE = resource.RLIMIT_NICE
-            _rlim__all__.append('RLIMIT_NICE')
+            RLIMIT_NICE = _psutil_linux.RLIMIT_NICE
         except AttributeError:
             pass
         try:
-            RLIMIT_RTPRIO = resource.RLIMIT_RTPRIO
-            _rlim__all__.append('RLIMIT_RTPRIO')
+            RLIMIT_RTPRIO = _psutil_linux.RLIMIT_RTPRIO
         except AttributeError:
             pass
         try:
-            RLIMIT_RTTIME = resource.RLIMIT_RTTIME
-            _rlim__all__.append('RLIMIT_RTTIME')
+            RLIMIT_RTTIME = _psutil_linux.RLIMIT_RTTIME
         except AttributeError:
             pass
         try:
-            RLIMIT_SIGPENDING = resource.RLIMIT_SIGPENDING
-            _rlim__all__.append('RLIMIT_SIGPENDING')
+            RLIMIT_SIGPENDING = _psutil_linux.RLIMIT_SIGPENDING
         except AttributeError:
             pass
-        del resource
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
@@ -241,9 +223,10 @@ __all__ = [
 ]
 
 __all__.extend(_psplatform.__extra__all__)
-if LINUX and _psplatform.prlimit is not None:
-    __all__.extend(_rlim__all__)
-    del _rlim__all__
+
+if LINUX:
+    from . import _psutil_linux
+    __all__.extend([x for x in dir(_psutil_linux) if x.startswith('RLIM')])
 
 AF_LINK = _psplatform.AF_LINK
 

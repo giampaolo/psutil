@@ -28,6 +28,7 @@
     #include <netdb.h>
     #include <linux/types.h>
     #include <linux/if_packet.h>
+    #include <sys/resource.h>
 #elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
     #include <netinet/in.h>
