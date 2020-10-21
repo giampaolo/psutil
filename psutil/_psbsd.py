@@ -904,3 +904,15 @@ class Process(object):
         @wrap_exceptions
         def memory_maps(self):
             return cext.proc_memory_maps(self.pid)
+
+        @wrap_exceptions
+        def rlimit(self, resource, limits=None):
+            if limits is None:
+                return cext.proc_getrlimit(self.pid, resource)
+            else:
+                if len(limits) != 2:
+                    raise ValueError(
+                        "second argument must be a (soft, hard) tuple, "
+                        "got %s" % repr(limits))
+                soft, hard = limits
+                return cext.proc_setrlimit(self.pid, resource, soft, hard)
