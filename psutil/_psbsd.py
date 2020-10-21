@@ -34,6 +34,8 @@ from ._compat import which
 
 
 __extra__all__ = []
+__extra__all__.extend(
+    [x for x in dir(cext_posix) if x.startswith('RLIM') and x.isupper()])
 
 
 # =====================================================================

@@ -102,44 +102,6 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
-    # Linux >= 2.6.36
-    if _psplatform.HAS_PRLIMIT:
-        from ._psutil_linux import RLIM_INFINITY  # NOQA
-        from ._psutil_linux import RLIMIT_AS  # NOQA
-        from ._psutil_linux import RLIMIT_CORE  # NOQA
-        from ._psutil_linux import RLIMIT_CPU  # NOQA
-        from ._psutil_linux import RLIMIT_DATA  # NOQA
-        from ._psutil_linux import RLIMIT_FSIZE  # NOQA
-        from ._psutil_linux import RLIMIT_LOCKS  # NOQA
-        from ._psutil_linux import RLIMIT_MEMLOCK  # NOQA
-        from ._psutil_linux import RLIMIT_NOFILE  # NOQA
-        from ._psutil_linux import RLIMIT_NPROC  # NOQA
-        from ._psutil_linux import RLIMIT_RSS  # NOQA
-        from ._psutil_linux import RLIMIT_STACK  # NOQA
-        # Kinda ugly but considerably faster than using hasattr() and
-        # setattr() against the module object (we are at import time:
-        # speed matters).
-        from . import _psutil_linux
-        try:
-            RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_NICE = _psutil_linux.RLIMIT_NICE
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_RTPRIO = _psutil_linux.RLIMIT_RTPRIO
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_RTTIME = _psutil_linux.RLIMIT_RTTIME
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_SIGPENDING = _psutil_linux.RLIMIT_SIGPENDING
-        except AttributeError:
-            pass
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
@@ -179,6 +141,82 @@ elif AIX:
 
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
+
+
+if LINUX or FREEBSD:
+    # Kinda ugly but considerably faster than using hasattr() and
+    # setattr() against the module object (we are at import time:
+    # speed matters).
+    from . import _psutil_posix
+
+    try:
+        RLIM_INFINITY = _psutil_posix.RLIM_INFINITY  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_AS = _psutil_posix.RLIMIT_AS  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_CORE = _psutil_posix.RLIMIT_CORE  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_CPU = _psutil_posix.RLIMIT_CPU  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_DATA = _psutil_posix.RLIMIT_DATA  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_FSIZE = _psutil_posix.RLIMIT_FSIZE  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_LOCKS = _psutil_posix.RLIMIT_LOCKS  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_MEMLOCK = _psutil_posix.RLIMIT_MEMLOCK  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_NOFILE = _psutil_posix.RLIMIT_NOFILE  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_NPROC = _psutil_posix.RLIMIT_NPROC  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_RSS = _psutil_posix.RLIMIT_RSS  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_STACK = _psutil_posix.RLIMIT_STACK  # NOQA
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_MSGQUEUE = _psutil_posix.RLIMIT_MSGQUEUE
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_NICE = _psutil_posix.RLIMIT_NICE
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_RTPRIO = _psutil_posix.RLIMIT_RTPRIO
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_RTTIME = _psutil_posix.RLIMIT_RTTIME
+    except AttributeError:
+        pass
+    try:
+        RLIMIT_SIGPENDING = _psutil_posix.RLIMIT_SIGPENDING
+    except AttributeError:
+        pass
 
 
 __all__ = [
