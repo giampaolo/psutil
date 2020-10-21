@@ -67,6 +67,7 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", ]
 
+
 # =====================================================================
 # --- globals
 # =====================================================================
