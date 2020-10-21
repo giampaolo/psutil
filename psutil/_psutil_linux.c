@@ -543,6 +543,7 @@ static PyMethodDef mod_methods[] = {
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
 
+#ifdef RLIMIT_AS
     if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS)) INITERR;
     if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE)) INITERR;
     if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU)) INITERR;
@@ -558,7 +559,8 @@ static PyMethodDef mod_methods[] = {
 #if defined(HAVE_LONG_LONG)
     if (sizeof(RLIM_INFINITY) > sizeof(long)) {
         v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
-    } else
+    }
+    else
 #endif
     {
         v = PyLong_FromLong((long) RLIM_INFINITY);
@@ -583,6 +585,7 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
         INITERR;
 #endif
+#endif  // RLIMIT_AS
 
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;

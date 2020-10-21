@@ -102,6 +102,7 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
+
     # Linux >= 2.6.36
     if _psplatform.prlimit is not None:
         from ._psutil_linux import RLIM_INFINITY  # NOQA
@@ -222,11 +223,11 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-__all__.extend(_psplatform.__extra__all__)
 
 AF_LINK = _psplatform.AF_LINK
 
-__author__ = "Giampaolo Rodola'"
+__all__.extend(_psplatform.__extra__all__)
+__author__ = "Giampaolo Rodola"
 __version__ = "5.7.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
 _timer = getattr(time, 'monotonic', time.time)
