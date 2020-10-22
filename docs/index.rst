@@ -1348,12 +1348,9 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>> # process may open no more than 128 file descriptors
-      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))
-      >>> # process may create files no bigger than 1024 bytes
-      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))
-      >>> # get
-      >>> p.rlimit(psutil.RLIMIT_FSIZE)
+      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
+      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
+      >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
       (1024, 1024)
       >>>
 
@@ -2253,23 +2250,35 @@ Process resources constants
 .. data:: RLIMIT_CPU
 .. data:: RLIMIT_DATA
 .. data:: RLIMIT_FSIZE
-.. data:: RLIMIT_LOCKS
 .. data:: RLIMIT_MEMLOCK
-.. data:: RLIMIT_MSGQUEUE
-.. data:: RLIMIT_NICE
 .. data:: RLIMIT_NOFILE
 .. data:: RLIMIT_NPROC
 .. data:: RLIMIT_RSS
-.. data:: RLIMIT_RTPRIO
-.. data:: RLIMIT_RTTIME
-.. data:: RLIMIT_SIGPENDING
 .. data:: RLIMIT_STACK
 
-  Constants used for getting and setting process resource limits to be used in
-  conjunction with :meth:`psutil.Process.rlimit()`. See `man prlimit`_ for
-  further information.
+Linux specific:
 
-  Availability: Linux
+  .. data:: RLIMIT_LOCKS
+  .. data:: RLIMIT_MSGQUEUE
+  .. data:: RLIMIT_NICE
+  .. data:: RLIMIT_RTPRIO
+  .. data:: RLIMIT_RTTIME
+  .. data:: RLIMIT_SIGPENDING
+
+FreeBSD specific:
+
+  .. data:: RLIMIT_SWAP
+  .. data:: RLIMIT_SBSIZE
+  .. data:: RLIMIT_NPTS
+
+Constants used for getting and setting process resource limits to be used in
+conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
+for further information.
+
+Availability: Linux, FreeBSD
+
+.. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
+  ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
 
 Connections constants
 ---------------------

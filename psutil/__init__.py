@@ -145,78 +145,54 @@ else:  # pragma: no cover
 
 if LINUX or FREEBSD:
     # Kinda ugly but considerably faster than using hasattr() and
-    # setattr() against the module object (we are at import time:
-    # speed matters).
+    # setattr() against the module object or doing it dynamically
+    # via __import__ (we are at import time: speed matters).
     from . import _psutil_posix
 
-    try:
-        RLIM_INFINITY = _psutil_posix.RLIM_INFINITY  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_AS = _psutil_posix.RLIMIT_AS  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_CORE = _psutil_posix.RLIMIT_CORE  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_CPU = _psutil_posix.RLIMIT_CPU  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_DATA = _psutil_posix.RLIMIT_DATA  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_FSIZE = _psutil_posix.RLIMIT_FSIZE  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_LOCKS = _psutil_posix.RLIMIT_LOCKS  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_MEMLOCK = _psutil_posix.RLIMIT_MEMLOCK  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_NOFILE = _psutil_posix.RLIMIT_NOFILE  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_NPROC = _psutil_posix.RLIMIT_NPROC  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_RSS = _psutil_posix.RLIMIT_RSS  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_STACK = _psutil_posix.RLIMIT_STACK  # NOQA
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_MSGQUEUE = _psutil_posix.RLIMIT_MSGQUEUE
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_NICE = _psutil_posix.RLIMIT_NICE
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_RTPRIO = _psutil_posix.RLIMIT_RTPRIO
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_RTTIME = _psutil_posix.RLIMIT_RTTIME
-    except AttributeError:
-        pass
-    try:
-        RLIMIT_SIGPENDING = _psutil_posix.RLIMIT_SIGPENDING
-    except AttributeError:
-        pass
+    _dir = set(_psplatform.__extra__all__)
+    if 'RLIM_INFINITY' in _dir:
+        RLIM_INFINITY = _psutil_posix.RLIM_INFINITY
+    if 'RLIMIT_AS' in _dir:
+        RLIMIT_AS = _psutil_posix.RLIMIT_AS
+    if 'RLIMIT_CORE' in _dir:
+        RLIMIT_CORE = _psutil_posix.RLIMIT_CORE
+    if 'RLIMIT_CPU' in _dir:
+        RLIMIT_CPU = _psutil_posix.RLIMIT_CPU
+    if 'RLIMIT_DATA' in _dir:
+        RLIMIT_DATA = _psutil_posix.RLIMIT_DATA
+    if 'RLIMIT_FSIZE' in _dir:
+        RLIMIT_FSIZE = _psutil_posix.RLIMIT_FSIZE
+    if 'RLIMIT_MEMLOCK' in _dir:
+        RLIMIT_MEMLOCK = _psutil_posix.RLIMIT_MEMLOCK
+    if 'RLIMIT_NOFILE' in _dir:
+        RLIMIT_NOFILE = _psutil_posix.RLIMIT_NOFILE
+    if 'RLIMIT_NPROC' in _dir:
+        RLIMIT_NPROC = _psutil_posix.RLIMIT_NPROC
+    if 'RLIMIT_RSS' in _dir:
+        RLIMIT_RSS = _psutil_posix.RLIMIT_RSS
+    if 'RLIMIT_STACK' in _dir:
+        RLIMIT_STACK = _psutil_posix.RLIMIT_STACK
+    if LINUX:
+        if 'RLIMIT_LOCKS' in _dir:
+            RLIMIT_LOCKS = _psutil_posix.RLIMIT_LOCKS
+        if 'RLIMIT_MSGQUEUE' in _dir:
+            RLIMIT_MSGQUEUE = _psutil_posix.RLIMIT_MSGQUEUE
+        if 'RLIMIT_NICE' in _dir:
+            RLIMIT_NICE = _psutil_posix.RLIMIT_NICE
+        if 'RLIMIT_RTPRIO' in _dir:
+            RLIMIT_RTPRIO = _psutil_posix.RLIMIT_RTPRIO
+        if 'RLIMIT_RTTIME' in _dir:
+            RLIMIT_RTTIME = _psutil_posix.RLIMIT_RTTIME
+        if 'RLIMIT_SIGPENDING' in _dir:
+            RLIMIT_SIGPENDING = _psutil_posix.RLIMIT_SIGPENDING
+    elif FREEBSD:
+        if 'RLIMIT_SWAP' in _dir:
+            RLIMIT_SWAP = _psutil_posix.RLIMIT_SWAP
+        if 'RLIMIT_SBSIZE' in _dir:
+            RLIMIT_SBSIZE = _psutil_posix.RLIMIT_SBSIZE
+        if 'RLIMIT_NPTS' in _dir:
+            RLIMIT_NPTS = _psutil_posix.RLIMIT_NPTS
+    del _dir
 
 
 __all__ = [
@@ -235,6 +211,7 @@ __all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    # "CONN_IDLE", "CONN_BOUND",
 
     "AF_LINK",
 
@@ -244,6 +221,11 @@ __all__ = [
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
     "SUNOS", "WINDOWS", "AIX",
+
+    # "RLIM_INFINITY", "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA",
+    # "RLIMIT_FSIZE", "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_NOFILE",
+    # "RLIMIT_NPROC", "RLIMIT_RSS", "RLIMIT_STACK", "RLIMIT_MSGQUEUE",
+    # "RLIMIT_NICE", "RLIMIT_RTPRIO", "RLIMIT_RTTIME", "RLIMIT_SIGPENDING",
 
     # classes
     "Process", "Popen",
@@ -839,7 +821,7 @@ class Process(object):
             else:
                 return self._proc.ionice_set(ioclass, value)
 
-    # Linux only
+    # Linux / FreeBSD only
     if hasattr(_psplatform.Process, "rlimit"):
 
         def rlimit(self, resource, limits=None):
@@ -847,15 +829,12 @@ class Process(object):
             tuple.
 
             *resource* is one of the RLIMIT_* constants.
-            *limits* is supposed to be a (soft, hard)  tuple.
+            *limits* is supposed to be a (soft, hard) tuple.
 
             See "man prlimit" for further info.
-            Available on Linux only.
+            Available on Linux and FreeBSD only.
             """
-            if limits is None:
-                return self._proc.rlimit(resource)
-            else:
-                return self._proc.rlimit(resource, limits)
+            return self._proc.rlimit(resource, limits)
 
     # Windows, Linux and FreeBSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
@@ -869,7 +848,7 @@ class Process(object):
             (Windows, Linux and BSD only).
             """
             if cpus is None:
-                return list(set(self._proc.cpu_affinity_get()))
+                return sorted(set(self._proc.cpu_affinity_get()))
             else:
                 if not cpus:
                     if hasattr(self._proc, "_get_eligible_cpus"):

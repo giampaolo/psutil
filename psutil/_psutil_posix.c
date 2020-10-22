@@ -738,6 +738,20 @@ static PyMethodDef mod_methods[] = {
     if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING)) INITERR;
 #endif
 
+// Free specific
+
+#ifdef RLIMIT_SWAP
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP)) INITERR;
+#endif
+
+#ifdef RLIMIT_SBSIZE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE)) INITERR;
+#endif
+
+#ifdef RLIMIT_NPTS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NPTS", RLIMIT_NPTS)) INITERR;
+#endif
+
 #if defined(HAVE_LONG_LONG)
     if (sizeof(RLIM_INFINITY) > sizeof(long)) {
         v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);

@@ -108,6 +108,10 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # requires Linux 2.6.25
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # requires Linux 2.6.8
 
+        ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPTS"), FREEBSD)
+
 
 class TestAvailSystemAPIs(PsutilTestCase):
 
