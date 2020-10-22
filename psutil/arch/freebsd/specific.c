@@ -1079,6 +1079,9 @@ error:
 }
 
 
+/*
+ * An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
+ */
 PyObject *
 psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -1114,6 +1117,9 @@ psutil_proc_getrlimit(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * An emulation of Linux prlimit() (set).
+ */
 PyObject *
 psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -1122,7 +1128,6 @@ psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     int name[5];
     struct rlimit new;
     struct rlimit *newp = NULL;
-
     PyObject *py_soft = NULL;
     PyObject *py_hard = NULL;
 
@@ -1151,9 +1156,7 @@ psutil_proc_setrlimit(PyObject *self, PyObject *args) {
         if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
 #endif
-
     newp = &new;
-
     ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
     if (ret == -1)
         return PyErr_SetFromErrno(PyExc_OSError);

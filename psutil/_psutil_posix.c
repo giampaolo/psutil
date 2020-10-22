@@ -15,7 +15,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#include <sys/resource.h>
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
@@ -41,6 +40,9 @@
     #include <sys/sockio.h>
 #elif defined(PSUTIL_AIX)
     #include <netdb.h>
+#endif
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+    #include <sys/resource.h>
 #endif
 
 #include "_psutil_common.h"
