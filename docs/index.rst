@@ -2248,17 +2248,19 @@ Process priority constants
 Process resources constants
 ---------------------------
 
-.. data:: RLIM_INFINITY
-.. data:: RLIMIT_AS
-.. data:: RLIMIT_CORE
-.. data:: RLIMIT_CPU
-.. data:: RLIMIT_DATA
-.. data:: RLIMIT_FSIZE
-.. data:: RLIMIT_MEMLOCK
-.. data:: RLIMIT_NOFILE
-.. data:: RLIMIT_NPROC
-.. data:: RLIMIT_RSS
-.. data:: RLIMIT_STACK
+Linux / FreeBSD:
+
+  .. data:: RLIM_INFINITY
+  .. data:: RLIMIT_AS
+  .. data:: RLIMIT_CORE
+  .. data:: RLIMIT_CPU
+  .. data:: RLIMIT_DATA
+  .. data:: RLIMIT_FSIZE
+  .. data:: RLIMIT_MEMLOCK
+  .. data:: RLIMIT_NOFILE
+  .. data:: RLIMIT_NPROC
+  .. data:: RLIMIT_RSS
+  .. data:: RLIMIT_STACK
 
 Linux specific:
 
