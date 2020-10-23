@@ -1348,16 +1348,17 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>> # process may open no more than 128 file descriptors
-      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))
-      >>> # process may create files no bigger than 1024 bytes
-      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))
-      >>> # get
-      >>> p.rlimit(psutil.RLIMIT_FSIZE)
+      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
+      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
+      >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
       (1024, 1024)
       >>>
 
-    Availability: Linux
+    Also see `procinfo.py`_ script.
+
+    Availability: Linux, FreeBSD
+
+    .. versionchanged:: 5.7.3 added FreeBSD support
 
   .. method:: io_counters()
 
@@ -2247,29 +2248,43 @@ Process priority constants
 Process resources constants
 ---------------------------
 
-.. data:: RLIM_INFINITY
-.. data:: RLIMIT_AS
-.. data:: RLIMIT_CORE
-.. data:: RLIMIT_CPU
-.. data:: RLIMIT_DATA
-.. data:: RLIMIT_FSIZE
-.. data:: RLIMIT_LOCKS
-.. data:: RLIMIT_MEMLOCK
-.. data:: RLIMIT_MSGQUEUE
-.. data:: RLIMIT_NICE
-.. data:: RLIMIT_NOFILE
-.. data:: RLIMIT_NPROC
-.. data:: RLIMIT_RSS
-.. data:: RLIMIT_RTPRIO
-.. data:: RLIMIT_RTTIME
-.. data:: RLIMIT_SIGPENDING
-.. data:: RLIMIT_STACK
+Linux / FreeBSD:
 
-  Constants used for getting and setting process resource limits to be used in
-  conjunction with :meth:`psutil.Process.rlimit()`. See `man prlimit`_ for
-  further information.
+  .. data:: RLIM_INFINITY
+  .. data:: RLIMIT_AS
+  .. data:: RLIMIT_CORE
+  .. data:: RLIMIT_CPU
+  .. data:: RLIMIT_DATA
+  .. data:: RLIMIT_FSIZE
+  .. data:: RLIMIT_MEMLOCK
+  .. data:: RLIMIT_NOFILE
+  .. data:: RLIMIT_NPROC
+  .. data:: RLIMIT_RSS
+  .. data:: RLIMIT_STACK
 
-  Availability: Linux
+Linux specific:
+
+  .. data:: RLIMIT_LOCKS
+  .. data:: RLIMIT_MSGQUEUE
+  .. data:: RLIMIT_NICE
+  .. data:: RLIMIT_RTPRIO
+  .. data:: RLIMIT_RTTIME
+  .. data:: RLIMIT_SIGPENDING
+
+FreeBSD specific:
+
+  .. data:: RLIMIT_SWAP
+  .. data:: RLIMIT_SBSIZE
+  .. data:: RLIMIT_NPTS
+
+Constants used for getting and setting process resource limits to be used in
+conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
+for further information.
+
+Availability: Linux, FreeBSD
+
+.. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
+  ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
 
 Connections constants
 ---------------------
@@ -2512,11 +2527,6 @@ Security
 
 To report a security vulnerability, please use the `Tidelift security
 contact`_.  Tidelift will coordinate the fix and disclosure.
-
-.. _`Giampaolo Rodola`: https://gmpy.dev/about
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-.. _Tidelift security contact: https://tidelift.com/security
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 
 Development guide
 =================
@@ -2874,13 +2884,12 @@ Timeline
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
+.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
-.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
@@ -2908,6 +2917,7 @@ Timeline
 .. _`os.times`: https://docs.python.org//library/os.html#os.times
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
 .. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
 .. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
 .. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
@@ -2920,9 +2930,10 @@ Timeline
 .. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
 .. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
 .. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
-.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
 .. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
