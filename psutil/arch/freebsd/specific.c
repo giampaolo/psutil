@@ -1077,3 +1077,88 @@ error:
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+/*
+ * An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
+ */
+PyObject *
+psutil_proc_getrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    size_t len;
+    int name[5];
+    struct rlimit rlp;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &resource))
+        return NULL;
+
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+    len = sizeof(rlp);
+
+    ret = sysctl(name, 5, &rlp, &len, NULL, 0);
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+#if defined(HAVE_LONG_LONG)
+    return Py_BuildValue("LL",
+                         (PY_LONG_LONG) rlp.rlim_cur,
+                         (PY_LONG_LONG) rlp.rlim_max);
+#else
+    return Py_BuildValue("ll",
+                         (long) rlp.rlim_cur,
+                         (long) rlp.rlim_max);
+#endif
+}
+
+
+/*
+ * An emulation of Linux prlimit() (set).
+ */
+PyObject *
+psutil_proc_setrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    int name[5];
+    struct rlimit new;
+    struct rlimit *newp = NULL;
+    PyObject *py_soft = NULL;
+    PyObject *py_hard = NULL;
+
+    if (! PyArg_ParseTuple(
+            args, _Py_PARSE_PID "iOO", &pid, &resource, &py_soft, &py_hard))
+        return NULL;
+
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+
+#if defined(HAVE_LONG_LONG)
+        new.rlim_cur = PyLong_AsLongLong(py_soft);
+        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+            return NULL;
+        new.rlim_max = PyLong_AsLongLong(py_hard);
+        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+            return NULL;
+#else
+        new.rlim_cur = PyLong_AsLong(py_soft);
+        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+            return NULL;
+        new.rlim_max = PyLong_AsLong(py_hard);
+        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+            return NULL;
+#endif
+    newp = &new;
+    ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    Py_RETURN_NONE;
+}

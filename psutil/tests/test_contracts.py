@@ -89,24 +89,28 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
     def test_linux_rlimit(self):
         ae = self.assertEqual
-        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_AS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX)
+        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_AS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX or FREEBSD)
 
+        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
         ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)  # requires Linux 2.6.8
         ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)  # requires Linux 2.6.12
         ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)  # requires Linux 2.6.12
         ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # requires Linux 2.6.25
         ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # requires Linux 2.6.8
+
+        ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPTS"), FREEBSD)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
@@ -155,7 +159,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
     @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
     def test_rlimit(self):
         # requires Linux 2.6.36
-        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
+        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
     def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")

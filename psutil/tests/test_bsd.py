@@ -474,6 +474,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
                 psutil.sensors_temperatures()["coretemp"][cpu].high,
                 sysctl_result)
 
+
 # =====================================================================
 # --- OpenBSD
 # =====================================================================

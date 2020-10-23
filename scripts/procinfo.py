@@ -108,11 +108,14 @@ RLIMITS_MAP = {
     "RLIMIT_NICE": "nice",
     "RLIMIT_NOFILE": "openfiles",
     "RLIMIT_NPROC": "maxprocesses",
+    "RLIMIT_NPTS": "pseudoterms",
     "RLIMIT_RSS": "rss",
     "RLIMIT_RTPRIO": "realtimeprio",
     "RLIMIT_RTTIME": "rtimesched",
+    "RLIMIT_SBSIZE": "sockbufsize",
     "RLIMIT_SIGPENDING": "sigspending",
     "RLIMIT_STACK": "stack",
+    "RLIMIT_SWAP": "swapuse",
 }
 
 
@@ -317,7 +320,7 @@ def run(pid, verbose=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="print information about a process")
-    parser.add_argument("pid", type=int, help="process pid")
+    parser.add_argument("pid", type=int, help="process pid", nargs='?')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="print more info")
     args = parser.parse_args()

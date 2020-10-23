@@ -1097,6 +1097,10 @@ static PyMethodDef mod_methods[] = {
      "Return process CPU affinity."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
+    {"proc_getrlimit", psutil_proc_getrlimit, METH_VARARGS,
+     "Get process resource limits."},
+    {"proc_setrlimit", psutil_proc_setrlimit, METH_VARARGS,
+     "Set process resource limits."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
 #endif
