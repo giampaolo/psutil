@@ -3,7 +3,7 @@
 5.7.3
 =====
 
-XXXX-XX-XX
+2020-10-23
 
 **Enhancements**
 
