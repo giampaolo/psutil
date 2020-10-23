@@ -197,7 +197,8 @@ if LINUX or FREEBSD:
     from . import _psutil_posix
 
     _globals = globals()
-    for _name in _psplatform.__extra__all__ :
+    _name = None
+    for _name in dir(_psutil_posix):
         if _name.startswith('RLIM') and _name.isupper():
             _globals[_name] = getattr(_psutil_posix, _name)
             __all__.append(_name)
