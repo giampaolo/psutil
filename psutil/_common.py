@@ -303,9 +303,6 @@ class NoSuchProcess(Error):
                 details = "(pid=%s)" % self.pid
             self.msg = "process no longer exists " + details
 
-    def __path__(self):
-        return 'xxx'
-
 
 class ZombieProcess(NoSuchProcess):
     """Exception raised when querying a zombie process. This is
