@@ -80,11 +80,6 @@ HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
 
-# RLIMIT_* constants, not guaranteed to be present on all kernels
-if HAS_PRLIMIT:
-    __extra__all__.extend(
-        [x for x in dir(cext_posix) if x.startswith('RLIM') and x.isupper()])
-
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")

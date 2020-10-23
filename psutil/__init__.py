@@ -143,58 +143,6 @@ else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
-if LINUX or FREEBSD:
-    # Kinda ugly but considerably faster than using hasattr() and
-    # setattr() against the module object or doing it dynamically
-    # via __import__ (we are at import time: speed matters).
-    from . import _psutil_posix
-
-    _dir = set(_psplatform.__extra__all__)
-    if 'RLIM_INFINITY' in _dir:
-        RLIM_INFINITY = _psutil_posix.RLIM_INFINITY
-    if 'RLIMIT_AS' in _dir:
-        RLIMIT_AS = _psutil_posix.RLIMIT_AS
-    if 'RLIMIT_CORE' in _dir:
-        RLIMIT_CORE = _psutil_posix.RLIMIT_CORE
-    if 'RLIMIT_CPU' in _dir:
-        RLIMIT_CPU = _psutil_posix.RLIMIT_CPU
-    if 'RLIMIT_DATA' in _dir:
-        RLIMIT_DATA = _psutil_posix.RLIMIT_DATA
-    if 'RLIMIT_FSIZE' in _dir:
-        RLIMIT_FSIZE = _psutil_posix.RLIMIT_FSIZE
-    if 'RLIMIT_MEMLOCK' in _dir:
-        RLIMIT_MEMLOCK = _psutil_posix.RLIMIT_MEMLOCK
-    if 'RLIMIT_NOFILE' in _dir:
-        RLIMIT_NOFILE = _psutil_posix.RLIMIT_NOFILE
-    if 'RLIMIT_NPROC' in _dir:
-        RLIMIT_NPROC = _psutil_posix.RLIMIT_NPROC
-    if 'RLIMIT_RSS' in _dir:
-        RLIMIT_RSS = _psutil_posix.RLIMIT_RSS
-    if 'RLIMIT_STACK' in _dir:
-        RLIMIT_STACK = _psutil_posix.RLIMIT_STACK
-    if LINUX:
-        if 'RLIMIT_LOCKS' in _dir:
-            RLIMIT_LOCKS = _psutil_posix.RLIMIT_LOCKS
-        if 'RLIMIT_MSGQUEUE' in _dir:
-            RLIMIT_MSGQUEUE = _psutil_posix.RLIMIT_MSGQUEUE
-        if 'RLIMIT_NICE' in _dir:
-            RLIMIT_NICE = _psutil_posix.RLIMIT_NICE
-        if 'RLIMIT_RTPRIO' in _dir:
-            RLIMIT_RTPRIO = _psutil_posix.RLIMIT_RTPRIO
-        if 'RLIMIT_RTTIME' in _dir:
-            RLIMIT_RTTIME = _psutil_posix.RLIMIT_RTTIME
-        if 'RLIMIT_SIGPENDING' in _dir:
-            RLIMIT_SIGPENDING = _psutil_posix.RLIMIT_SIGPENDING
-    elif FREEBSD:
-        if 'RLIMIT_SWAP' in _dir:
-            RLIMIT_SWAP = _psutil_posix.RLIMIT_SWAP
-        if 'RLIMIT_SBSIZE' in _dir:
-            RLIMIT_SBSIZE = _psutil_posix.RLIMIT_SBSIZE
-        if 'RLIMIT_NPTS' in _dir:
-            RLIMIT_NPTS = _psutil_posix.RLIMIT_NPTS
-    del _dir
-
-
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
@@ -242,9 +190,21 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
+__all__.extend(_psplatform.__extra__all__)
+
+if LINUX or FREEBSD:
+    # Populate global namespace with RLIM* constants.
+    from . import _psutil_posix
+
+    _globals = globals()
+    for _name in _psplatform.__extra__all__ :
+        if _name.startswith('RLIM') and _name.isupper():
+            _globals[_name] = getattr(_psutil_posix, _name)
+            __all__.append(_name)
+    del _globals, _name
+
 AF_LINK = _psplatform.AF_LINK
 
-__all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "5.7.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
