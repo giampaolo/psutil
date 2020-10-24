@@ -2002,9 +2002,9 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
-    def getconf(mountp, name):
+    def pathconf(path, name):
         try:
-            return os.pathconf(mountp, name)
+            return os.pathconf(path, name)
         except (OSError, AttributeError):
             pass
 
@@ -2013,8 +2013,8 @@ def disk_partitions(all=False):
         new = []
         for item in ret:
             nt = item._replace(
-                maxfile=getconf(item.mountpoint, 'PC_NAME_MAX'),
-                maxpath=getconf(item.mountpoint, 'PC_PATH_MAX'))
+                maxfile=pathconf(item.mountpoint, 'PC_NAME_MAX'),
+                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'))
             new.append(nt)
         return new
     else:
