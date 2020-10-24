@@ -592,6 +592,16 @@ class TestDiskAPIs(PsutilTestCase):
         psutil.disk_usage(b'.')
 
     def test_disk_partitions(self):
+        def check_ntuple(nt):
+            self.assertIsInstance(nt.device, str)
+            self.assertIsInstance(nt.mountpoint, str)
+            self.assertIsInstance(nt.fstype, str)
+            self.assertIsInstance(nt.opts, str)
+            self.assertIsInstance(nt.maxfile, int)
+            self.assertIsInstance(nt.maxpath, int)
+            self.assertGreater(nt.maxfile, 0)
+            self.assertGreater(nt.maxpath, 0)
+
         # all = False
         ls = psutil.disk_partitions(all=False)
         # on travis we get:
@@ -599,10 +609,7 @@ class TestDiskAPIs(PsutilTestCase):
         # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+            check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -619,6 +626,7 @@ class TestDiskAPIs(PsutilTestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
+            check_ntuple(disk)
             if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
@@ -632,8 +640,8 @@ class TestDiskAPIs(PsutilTestCase):
                         raise
                 else:
                     assert os.path.exists(disk.mountpoint), disk
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+
+        # ---
 
         def find_mount_point(path):
             path = os.path.abspath(path)

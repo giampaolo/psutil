@@ -2012,8 +2012,7 @@ def disk_partitions(all=False):
     if POSIX:
         new = []
         for item in ret:
-            nt = _common.sdiskpartext(
-                *item,
+            nt = item._replace(
                 maxfile=getconf(item.mountpoint, 'PC_NAME_MAX'),
                 maxpath=getconf(item.mountpoint, 'PC_PATH_MAX'))
             new.append(nt)
