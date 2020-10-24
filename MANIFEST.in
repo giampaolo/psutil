@@ -117,6 +117,7 @@ include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/clinter.py
+include scripts/internal/convert_readme.py
 include scripts/internal/download_wheels_appveyor.py
 include scripts/internal/download_wheels_github.py
 include scripts/internal/fix_flake8.py
