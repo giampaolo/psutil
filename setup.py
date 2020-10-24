@@ -106,8 +106,10 @@ def get_description():
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
-    assert not stderr, stderr
-    return stdout.decode('utf8')
+    data = stdout.decode('utf8')
+    if WINDOWS:
+        data = data.replace('\r\n', '\n')
+    return data
 
 
 @contextlib.contextmanager
