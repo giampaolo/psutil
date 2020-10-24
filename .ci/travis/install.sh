@@ -20,6 +20,10 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
             pyenv install 2.7.16
             pyenv virtualenv 2.7.16 psutil
             ;;
+        py35)
+            pyenv install 3.5.10
+            pyenv virtualenv 3.5.10 psutil
+            ;;
         py36)
             pyenv install 3.6.6
             pyenv virtualenv 3.6.6 psutil
