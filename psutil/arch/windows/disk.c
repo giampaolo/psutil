@@ -274,6 +274,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 strcat_s(opts, _countof(opts), "rw");
             if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
+            if (pflags & FILE_READ_ONLY_VOLUME)
+                strcat_s(opts, _countof(opts), ",readonly");
 
             // Check for mount points on this volume and add/get info
             // (checks first to know if we can even have mount points)
