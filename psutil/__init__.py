@@ -207,7 +207,7 @@ if LINUX or FREEBSD:
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.7.3"
+__version__ = "5.7.4"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)

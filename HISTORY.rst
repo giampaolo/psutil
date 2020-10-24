@@ -1,5 +1,10 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.7.4 (development version)
+===========================
+
+XXXX-XX-XX
+
 5.7.3
 =====
 

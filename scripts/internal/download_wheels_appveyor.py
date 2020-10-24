@@ -59,7 +59,7 @@ def get_file_urls(options):
                 file_url = job_url + '/' + item['fileName']
                 urls.append(file_url)
         if not urls:
-            print_color("no artifacts found", 'ret')
+            print_color("no artifacts found", 'red')
             sys.exit(1)
         else:
             for url in sorted(urls, key=lambda x: os.path.basename(x)):
