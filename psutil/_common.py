@@ -178,10 +178,8 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
                                  'read_time', 'write_time'])
 # psutil.disk_partitions()
-sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
-# psutil.disk_partitions()
-sdiskpartext = namedtuple('sdiskpartext', ['device', 'mountpoint', 'fstype',
-                                           'opts', 'maxfile', 'maxpath'])
+sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts',
+                                     'maxfile', 'maxpath'])
 # psutil.net_io_counters()
 snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'packets_sent', 'packets_recv',
