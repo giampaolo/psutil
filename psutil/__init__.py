@@ -2002,7 +2002,24 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
-    return _psplatform.disk_partitions(all)
+    def getconf(mountp, name):
+        try:
+            return os.pathconf(mountp, name)
+        except (OSError, AttributeError):
+            pass
+
+    ret = _psplatform.disk_partitions(all)
+    if POSIX:
+        new = []
+        for item in ret:
+            nt = _common.sdiskpartext(
+                *item,
+                maxfile=getconf(item.mountpoint, 'PC_NAME_MAX'),
+                maxpath=getconf(item.mountpoint, 'PC_PATH_MAX'))
+            new.append(nt)
+        return new
+    else:
+        return ret
 
 
 def disk_io_counters(perdisk=False, nowrap=True):

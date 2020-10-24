@@ -1142,19 +1142,19 @@ psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     name[4] = resource;
 
 #if defined(HAVE_LONG_LONG)
-        new.rlim_cur = PyLong_AsLongLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLongLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
+    new.rlim_cur = PyLong_AsLongLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLongLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
 #else
-        new.rlim_cur = PyLong_AsLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
+    new.rlim_cur = PyLong_AsLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
 #endif
     newp = &new;
     ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
