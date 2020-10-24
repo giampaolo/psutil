@@ -328,6 +328,7 @@ def main():
         version=VERSION,
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
+        long_description_content_type='text/x-rst',
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
