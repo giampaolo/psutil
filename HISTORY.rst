@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1875_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+  which are the maximum file name and path name length.
+
 5.7.3
 =====
 

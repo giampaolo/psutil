@@ -242,6 +242,8 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(disk.mountpoint, str)
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
+            self.assertIsInstance(disk.maxfile, int)
+            self.assertIsInstance(disk.maxpath, int)
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):

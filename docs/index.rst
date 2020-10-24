@@ -410,19 +410,27 @@ Disks
   (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
-  Named tuple's **fstype** field is a string which varies depending on the
-  platform.
-  On Linux it can be one of the values found in /proc/filesystems (e.g.
-  ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
-  On Windows it is determined via `GetDriveType`_ and can be either
-  ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``, ``"unmounted"`` or
-  ``"ramdisk"``. On macOS and BSD it is retrieved via `getfsstat`_ syscall.
   See `disk_usage.py`_ script providing an example usage.
+  Returns a list of namedtuples with the following fields:
 
-    >>> import psutil
-    >>> psutil.disk_partitions()
-    [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
-     sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
+  * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
+    drive letter (e.g. ``"C:\\"``).
+  * **mountpoint**: the mount point path (e.g. ``"/"``). On Windows this is the
+    drive letter (e.g. ``"C:\\"``).
+  * **fstype**: the partition filesystem (e.g. ``"ext3"`` on UNIX or ``"NTFS"``
+    on Windows).
+  * **opts**: a comma-separated string indicating different mount options for
+    the drive/partition. Platform-dependent.
+  * **maxfile**: the maximum length a file name can have.
+  * **maxpath**: the maximum length a path name (directory name + base file
+    name) can have.
+
+  >>> import psutil
+  >>> psutil.disk_partitions()
+  [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro', maxfile=255, maxpath=4096),
+   sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw', maxfile=255, maxpath=4096)]
+
+  .. versionchanged:: 5.7.4 added *maxfile* and *maxpath* fields
 
 .. function:: disk_usage(path)
 
