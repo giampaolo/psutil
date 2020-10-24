@@ -207,7 +207,7 @@ if LINUX or FREEBSD:
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.7.3"
+__version__ = "5.7.4"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -2002,7 +2002,23 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
-    return _psplatform.disk_partitions(all)
+    def pathconf(path, name):
+        try:
+            return os.pathconf(path, name)
+        except (OSError, AttributeError):
+            pass
+
+    ret = _psplatform.disk_partitions(all)
+    if POSIX:
+        new = []
+        for item in ret:
+            nt = item._replace(
+                maxfile=pathconf(item.mountpoint, 'PC_NAME_MAX'),
+                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'))
+            new.append(nt)
+        return new
+    else:
+        return ret
 
 
 def disk_io_counters(perdisk=False, nowrap=True):

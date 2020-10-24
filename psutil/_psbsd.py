@@ -328,7 +328,9 @@ def disk_partitions(all=False):
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        maxfile = maxpath = None  # set later
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
+                                   maxfile, maxpath)
         retlist.append(ntuple)
     return retlist
 
