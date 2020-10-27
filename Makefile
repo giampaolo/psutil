@@ -238,6 +238,7 @@ git-tag-release:  ## Git-tag a new release.
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
+	$(PYTHON) -m twine check dist/*.tar.gz
 
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
@@ -266,6 +267,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	${MAKE} download-wheels
 	${MAKE} sdist
+	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \

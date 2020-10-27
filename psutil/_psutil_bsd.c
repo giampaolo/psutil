@@ -443,17 +443,12 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     // On *BSD kernels there are a few kernel-only system processes without an
     // environment (See e.g. "procstat -e 0 | 1 | 2 ..." on FreeBSD.)
-    //
     // Some system process have no stats attached at all
     // (they are marked with P_SYSTEM.)
-    //
     // On FreeBSD, it's possible that the process is swapped or paged out,
     // then there no access to the environ stored in the process' user area.
-    //
     // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
-    //
     // To make unittest suite happy, return an empty environment.
-    //
 #if defined(PSUTIL_FREEBSD)
 #if (defined(__FreeBSD_version) && __FreeBSD_version >= 700000)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
@@ -1097,6 +1092,10 @@ static PyMethodDef mod_methods[] = {
      "Return process CPU affinity."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
+    {"proc_getrlimit", psutil_proc_getrlimit, METH_VARARGS,
+     "Get process resource limits."},
+    {"proc_setrlimit", psutil_proc_setrlimit, METH_VARARGS,
+     "Set process resource limits."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
 #endif

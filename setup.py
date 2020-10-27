@@ -14,6 +14,7 @@ import platform
 import re
 import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 import warnings
@@ -98,9 +99,17 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 
 def get_description():
-    README = os.path.join(HERE, 'README.rst')
-    with open(README, 'r') as f:
-        return f.read()
+    script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
+    readme = os.path.join(HERE, 'README.rst')
+    p = subprocess.Popen([sys.executable, script, readme],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        raise RuntimeError(stderr)
+    data = stdout.decode('utf8')
+    if WINDOWS:
+        data = data.replace('\r\n', '\n')
+    return data
 
 
 @contextlib.contextmanager
@@ -328,6 +337,7 @@ def main():
         version=VERSION,
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
+        long_description_content_type='text/x-rst',
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',

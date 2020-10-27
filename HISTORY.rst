@@ -1,13 +1,24 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.7.3
-=====
+5.7.4 (development version)
+===========================
 
 XXXX-XX-XX
 
 **Enhancements**
 
-- 893_: implement `Process.environ()` on BSD family. (patch by Armin Gruner)
+- 1875_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+  which are the maximum file name and path name length.
+
+5.7.3
+=====
+
+2020-10-23
+
+**Enhancements**
+
+- 809_: [FreeBSD] add support for `Process.rlimit()`.
+- 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
 - 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
 - 1837_: [Linux] improved battery detection and charge "secsleft" calculation

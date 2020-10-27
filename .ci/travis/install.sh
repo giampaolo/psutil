@@ -29,8 +29,8 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
             pyenv virtualenv 3.7.6 psutil
             ;;
         py38)
-            pyenv install 3.8.2
-            pyenv virtualenv 3.8.2 psutil
+            pyenv install 3.8.5
+            pyenv virtualenv 3.8.5 psutil
             ;;
     esac
     pyenv rehash
