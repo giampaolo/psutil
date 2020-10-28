@@ -31,6 +31,10 @@ environment:
       PYTHON_VERSION: "3.8.x"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python39"
+      PYTHON_VERSION: "3.9.x"
+      PYTHON_ARCH: "32"
+
     # 64 bits
 
     - PYTHON: "C:\\Python27-x64"
@@ -51,6 +55,10 @@ environment:
 
     - PYTHON: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python39-x64"
+      PYTHON_VERSION: "3.9.x"
       PYTHON_ARCH: "64"
 
 init:
