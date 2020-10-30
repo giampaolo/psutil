@@ -44,8 +44,7 @@ function InstallPython ($python_version, $architecture, $python_home) {
     }
     if ($architecture -eq "32") {
         $platform_suffix = ""
-    }
-    else {
+    } else {
         $platform_suffix = ".amd64"
     }
     $filepath = DownloadPython $python_version $platform_suffix
@@ -59,26 +58,23 @@ function InstallPython ($python_version, $architecture, $python_home) {
 
 
 function InstallPip ($python_home) {
-    $pip_path = $python_home + "\Scripts\pip.exe"
-    $python_path = $python_home + "\python.exe"
+    $pip_path = $python_home + "/Scripts/pip.exe"
+    $python_path = $python_home + "/python.exe"
     if (-not(Test-Path $pip_path)) {
         Write-Host "Installing pip..."
         $webclient = New-Object System.Net.WebClient
         $webclient.DownloadFile($GET_PIP_URL, $GET_PIP_PATH)
         Write-Host "Executing:" $python_path $GET_PIP_PATH
-        & $python_path $GET_PIP_PATH
-    }
-    else {
+        Start-Process -FilePath "$python_path" -ArgumentList "$GET_PIP_PATH" -Wait -Passthru
+    } else {
         Write-Host "pip already installed."
     }
 }
-
 
 function InstallPackage ($python_home, $pkg) {
     $pip_path = $python_home + "/Scripts/pip.exe"
     & $pip_path install $pkg
 }
-
 
 function main () {
     InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
