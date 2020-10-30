@@ -32,7 +32,6 @@ environment:
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python39"
-      PYTHON_VERSION: "3.9.x"
       PYTHON_ARCH: "32"
 
     # 64 bits
@@ -58,7 +57,6 @@ environment:
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python39-x64"
-      PYTHON_VERSION: "3.9.x"
       PYTHON_ARCH: "64"
 
 init:
