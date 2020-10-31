@@ -249,7 +249,7 @@ psutil_get_process_data(DWORD pid,
                 NULL);
         if (!NT_SUCCESS(status)) {
             psutil_convert_ntstatus_err(
-                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)")
+                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
             goto error;
         }
 
@@ -262,7 +262,7 @@ psutil_get_process_data(DWORD pid,
                 NULL);
         if (!NT_SUCCESS(status)) {
             psutil_convert_ntstatus_err(
-                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)")
+                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
             goto error;
         }
 
