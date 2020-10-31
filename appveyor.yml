@@ -15,10 +15,6 @@ environment:
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.x"
-      PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "32"
@@ -31,14 +27,15 @@ environment:
       PYTHON_VERSION: "3.8.x"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python39"
+      PYTHON_VERSION: "3.9.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON_ARCH: "32"
+
     # 64 bits
 
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python36-x64"
@@ -51,6 +48,11 @@ environment:
 
     - PYTHON: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python39-x64"
+      PYTHON_VERSION: "3.9.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON_ARCH: "64"
 
 init:
@@ -103,3 +105,4 @@ only_commits:
     - psutil/tests/*
     - scripts/*
     - setup.py
+

@@ -32,6 +32,7 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
+from psutil.tests import APPVEYOR
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import GITHUB_WHEELS
@@ -451,6 +452,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def name(self, ret, info):
         self.assertIsInstance(ret, str)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         # on AIX, "<exiting>" processes don't have names
         if not AIX:
             assert ret
@@ -521,6 +524,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def num_threads(self, ret, info):
         self.assertIsInstance(ret, int)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         self.assertGreaterEqual(ret, 1)
 
     def threads(self, ret, info):
