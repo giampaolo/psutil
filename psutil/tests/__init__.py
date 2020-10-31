@@ -204,9 +204,12 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_WHEELS and PYPY:
-        return which("pypy3") if PY3 else which("pypy")
-    if MACOS:
+    if GITHUB_WHEELS:
+        if PYPY:
+            return which("pypy3") if PY3 else which("pypy")
+        else:
+            return which('python')
+    elif MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -215,10 +218,10 @@ def _get_py_exe():
         if not exe:
             raise ValueError("can't find python exe real abspath")
         return exe
-
-    exe = os.path.realpath(sys.executable)
-    assert os.path.exists(exe), exe
-    return exe
+    else:
+        exe = os.path.realpath(sys.executable)
+        assert os.path.exists(exe), exe
+        return exe
 
 
 PYTHON_EXE = _get_py_exe()

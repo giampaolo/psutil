@@ -10,6 +10,7 @@ import contextlib
 import errno
 import os
 import socket
+import sys
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -36,6 +37,7 @@ from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import get_free_port
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import reap_children
@@ -52,6 +54,7 @@ from psutil.tests import wait_for_file
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
+PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 @serialrun
@@ -573,6 +576,8 @@ class TestSystemWideConnections(_ConnTestCase):
 
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
     @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
+    @unittest.skipIf(GITHUB_WHEELS and PYTHON_39,
+                     "unreliable on GITHUB_WHEELS + PYTHON_39")
     @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
