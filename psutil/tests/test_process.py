@@ -86,7 +86,8 @@ class TestProcess(PsutilTestCase):
     def test_pid(self):
         p = psutil.Process()
         from pprint import pprint as pp
-        pp(p.as_dict())
+        pp(psutil.Process(48).as_dict())
+        print(psutil.Process(48).as_dict(), flush=True)
         self.assertEqual(p.pid, os.getpid())
         with self.assertRaises(AttributeError):
             p.pid = 33
