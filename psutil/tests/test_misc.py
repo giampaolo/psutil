@@ -28,7 +28,6 @@ from psutil._common import wrap_numbers
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
-from psutil.tests import DEVNULL
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
