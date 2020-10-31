@@ -1,13 +1,55 @@
+Setup
+=====
+
+psutil makes extensive use of C extensions, so you'll need a C compiler and
+Python headers.
+
+Linux
+-----
+
+Ubuntu / Debian::
+
+    sudo apt-get install gcc python3-dev
+
+RedHat / CentOS::
+
+    sudo yum install gcc python3-devel
+
+macOS
+-----
+
+Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__.
+
+Windows
+-------
+
+On Windows you'll need **Visual Studio** (Mingw32 is not supported).
+This `blog post <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
+provides numerous info on how to properly set up VS. The needed VS versions are:
+
+* Python 2.6, 2.7: `VS-2008 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__
+* Python 3.4: `VS-2010 <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__
+* Python 3.5+: `VS-2015 <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__
+
+Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires
+`Windows SDK and .NET Framework 3.5 SP1 <https://www.microsoft.com/en-us/download/details.aspx?id=3138>`__.
+Once installed run `vcvars64.bat`
+(see `here <http://stackoverflow.com/questions/11072521/>`__).
+
+Other platforms
+---------------
+
+See `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__
+instructions.
+
 Build, setup and running tests
 ===============================
-
-Make sure to `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__
-a C compiler first, then:
 
 .. code-block:: bash
 
   git clone git@github.com:giampaolo/psutil.git
   make setup-dev-env
+  make install
   make test
 
 - bear in mind that ``make``(see `Makefile`_) is the designated tool to run
