@@ -51,25 +51,32 @@ enum psutil_process_data_kind {
 
 
 static void
-psutil_convert_ntstatus_err(NTSTATUS status, char* syscall) {
-    ULONG err;
+psutil_convert_winerr(ULONG err, char* syscall) {
     char fullmsg[8192];
 
-    if (NT_NTWIN32(status))
-        err = WIN32_FROM_NTSTATUS(status);
-    else
-        err = RtlNtStatusToDosErrorNoTeb(status);
     if (err == ERROR_NOACCESS)  {
         sprintf(
             fullmsg,
-            "(originated from %s -> ERROR_NOACCESS; converted to AccessDenied",
+            "(originated from %s -> ERROR_NOACCESS; converted to AccessDenied)",
             syscall);
         psutil_debug(fullmsg);
         AccessDenied(fullmsg);
     }
     else {
-        psutil_SetFromNTStatusErr(status, syscall);
+        PyErr_SetFromOSErrnoWithSyscall(syscall);
     }
+}
+
+
+static void
+psutil_convert_ntstatus_err(NTSTATUS status, char* syscall) {
+    ULONG err;
+
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
+    else
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    psutil_convert_winerr(err, syscall);
 }
 
 
@@ -154,15 +161,7 @@ psutil_get_process_data(DWORD pid,
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            if (GetLastError() == ERROR_NOACCESS)  {
-                psutil_debug("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-                AccessDenied("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-            }
-            else {
-                PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
-            }
+            psutil_convert_ntstatus_err(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -175,15 +174,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            if (GetLastError() == ERROR_NOACCESS)  {
-                psutil_debug("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-                AccessDenied("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-            }
-            else {
-                PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
-            }
+            psutil_convert_ntstatus_err(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -243,22 +234,9 @@ psutil_get_process_data(DWORD pid,
                 sizeof(pbi64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            if (NT_NTWIN32(status))
-                err = WIN32_FROM_NTSTATUS(status);
-            else
-                err = RtlNtStatusToDosErrorNoTeb(status);
-            if (err == ERROR_NOACCESS)  {
-                psutil_debug("NtWow64QueryInformationProcess64 -> ERROR_NOACCESS "
-                             "converted to AccessDenied");
-                AccessDenied("NtWow64QueryInformationProcess64 -> ERROR_NOACCESS "
-                             "converted to AccessDenied");
-            }
-            else {
-                psutil_SetFromNTStatusErr(
-                    status,
-                    "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
-                );
-            }
+            psutil_convert_ntstatus_err(
+                status,
+                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             goto error;
         }
 
@@ -332,15 +310,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            if (GetLastError() == ERROR_NOACCESS)  {
-                psutil_debug("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-                AccessDenied("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-            }
-            else {
-                PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
-            }
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -353,15 +323,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            if (GetLastError() == ERROR_NOACCESS)  {
-                psutil_debug("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-                AccessDenied("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-            }
-            else {
-                PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
-            }
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -407,7 +369,7 @@ psutil_get_process_data(DWORD pid,
                 size,
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
+            psutil_convert_ntstatus_err(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else
@@ -415,15 +377,7 @@ psutil_get_process_data(DWORD pid,
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
         // May fail with ERROR_PARTIAL_COPY, see:
         // https://github.com/giampaolo/psutil/issues/875
-            if (GetLastError() == ERROR_NOACCESS)  {
-                psutil_debug("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-                AccessDenied("ReadProcessMemory -> ERROR_NOACCESS converted "
-                             "to AccessDenied");
-            }
-            else {
-                PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
-            }
+        psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
         goto error;
     }
 
