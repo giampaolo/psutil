@@ -133,7 +133,7 @@ psutil_get_process_data(DWORD pid,
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
             goto error;
         }
 
@@ -146,7 +146,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 2");
             goto error;
         }
 
@@ -284,7 +284,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 1");
             goto error;
         }
 
@@ -297,7 +297,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory 2");
             goto error;
         }
 
@@ -351,7 +351,7 @@ psutil_get_process_data(DWORD pid,
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
         // May fail with ERROR_PARTIAL_COPY, see:
         // https://github.com/giampaolo/psutil/issues/875
-        PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromOSErrnoWithSyscall("ReadProcessMemory");
         goto error;
     }
 

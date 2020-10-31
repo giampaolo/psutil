@@ -532,9 +532,25 @@ def get_python(path):
         return path
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
-    vers = ('26', '27', '36', '37', '38',
-            '26-64', '27-64', '36-64', '37-64', '38-64'
-            '26-32', '27-32', '36-32', '37-32', '38-32')
+    vers = (
+        '26',
+        '26-32',
+        '26-64',
+        '27',
+        '27-32',
+        '27-64',
+        '36',
+        '36-32',
+        '36-64',
+        '37',
+        '37-32',
+        '37-64',
+        '38',
+        '38-32',
+        '38-64',
+        '39-32',
+        '39-64',
+    )
     for v in vers:
         pypath = r'C:\\python%s\python.exe' % v
         if path in pypath and os.path.isfile(pypath):
