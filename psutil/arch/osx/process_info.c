@@ -167,9 +167,9 @@ psutil_get_cmdline(pid_t pid) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("sysctl");
+            NoSuchProcess("sysctl(KERN_PROCARGS2) -> EINVAL turned into NSP");
         else
-            PyErr_SetFromErrno(PyExc_OSError);
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         goto error;
     }
 
@@ -259,7 +259,7 @@ psutil_get_environ(pid_t pid) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("sysctl");
+            NoSuchProcess("sysctl(KERN_PROCARGS2) -> EINVAL turned into NSP");
         else
             PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         goto error;
