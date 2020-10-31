@@ -87,16 +87,14 @@ psutil_get_process_data(DWORD pid,
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
     SIZE_T size = 0;
-#ifndef _WIN64
-    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
-    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
-#endif
     HANDLE hProcess = NULL;
     LPCVOID src;
     WCHAR *buffer = NULL;
 #ifdef _WIN64
     LPVOID ppeb32 = NULL;
 #else
+    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
+    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
     PVOID64 src64;
     BOOL weAreWow64;
     BOOL theyAreWow64;

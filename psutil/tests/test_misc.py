@@ -719,7 +719,7 @@ class TestScripts(PsutilTestCase):
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
             raise self.skipTest("not supported")
-        self.assert_stdout('procsmem.py', stderr=DEVNULL)
+        self.assert_stdout('procsmem.py')
 
     def test_killall(self):
         self.assert_syntax('killall.py')
