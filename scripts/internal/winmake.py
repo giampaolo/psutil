@@ -525,6 +525,12 @@ def print_api_speed():
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 
+def download_appveyor_wheels():
+    """Download appveyor wheels."""
+    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+       "--user giampaolo --project psutil" % PYTHON)
+
+
 def get_python(path):
     if not path:
         return sys.executable
@@ -570,6 +576,7 @@ def main():
     sp.add_parser('build', help="build")
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
+    sp.add_parser('download-appveyor-wheels', help="download wheels.")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
