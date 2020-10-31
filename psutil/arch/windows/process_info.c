@@ -50,6 +50,29 @@ enum psutil_process_data_kind {
 };
 
 
+static void
+psutil_convert_ntstatus_err(NTSTATUS status, char* syscall) {
+    ULONG err;
+    char fullmsg[8192];
+
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
+    else
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    if (err == ERROR_NOACCESS)  {
+        sprintf(
+            fullmsg,
+            "(originated from %s -> ERROR_NOACCESS; converted to AccessDenied",
+            syscall);
+        psutil_debug(fullmsg);
+        AccessDenied(fullmsg);
+    }
+    else {
+        psutil_SetFromNTStatusErr(status, syscall);
+    }
+}
+
+
 /*
  * Get data from the process with the given pid.  The data is returned
  * in the pdata output member as a nul terminated string which must be
@@ -98,7 +121,6 @@ psutil_get_process_data(DWORD pid,
     PVOID64 src64;
     BOOL weAreWow64;
     BOOL theyAreWow64;
-    ULONG err;
 #endif
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     NTSTATUS status;
@@ -248,7 +270,8 @@ psutil_get_process_data(DWORD pid,
                 sizeof(peb64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
+            psutil_convert_ntstatus_err(
+                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)")
             goto error;
         }
 
@@ -260,10 +283,8 @@ psutil_get_process_data(DWORD pid,
                 sizeof(procParameters64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(
-                    status,
-                    "NtWow64ReadVirtualMemory64(ProcessParameters)"
-            );
+            psutil_convert_ntstatus_err(
+                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)")
             goto error;
         }
 
