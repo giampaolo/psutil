@@ -192,7 +192,7 @@ psutil_get_process_data(DWORD pid,
                 break;
         }
     } else
-#else
+#else  // #ifdef _WIN64
     /* 32 bit case.  Check if the target is also 32 bit. */
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
             !IsWow64Process(hProcess, &theyAreWow64)) {
@@ -724,16 +724,16 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 
     py_retlist = Py_BuildValue(
 #if defined(_WIN64)
-        "kkdddiKKKKKK" "kKKKKKKKKK",
+        "kkdddkKKKKKK" "kKKKKKKKKK",
 #else
-        "kkdddiKKKKKK" "kIIIIIIIII",
+        "kkdddkKKKKKK" "kIIIIIIIII",
 #endif
         process->HandleCount,                   // num handles
         ctx_switches,                           // num ctx switches
         user_time,                              // cpu user time
         kernel_time,                            // cpu kernel time
         create_time,                            // create time
-        (int)process->NumberOfThreads,          // num threads
+        process->NumberOfThreads,               // num threads
         // IO counters
         process->ReadOperationCount.QuadPart,   // io rcount
         process->WriteOperationCount.QuadPart,  // io wcount

@@ -48,17 +48,14 @@ def main():
         raddr = ""
         if c.raddr:
             raddr = "%s:%s" % (c.raddr)
-        if c.pid:
-            name = proc_names.get(c.pid, '?')[:15]
-        else:
-            name = ''
+        name = proc_names.get(c.pid, '?') or ''
         print(templ % (
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,
             c.status,
             c.pid or AD,
-            name,
+            name[:15],
         ))
 
 
