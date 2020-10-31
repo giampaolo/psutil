@@ -282,7 +282,6 @@ pre-release:  ## Check if we're ready to produce a new release.
 	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 	${MAKE} tidelift-relnotes
