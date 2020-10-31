@@ -136,11 +136,11 @@ void convert_kvm_err(const char *syscall, char *errbuf);
 
     #define _NT_FACILITY_MASK 0xfff
     #define _NT_FACILITY_SHIFT 16
-    #define _NT_FACILITY(Status) \
-        ((((ULONG)(Status)) >> _NT_FACILITY_SHIFT) & _NT_FACILITY_MASK)
+    #define _NT_FACILITY(status) \
+        ((((ULONG)(status)) >> _NT_FACILITY_SHIFT) & _NT_FACILITY_MASK)
 
-    #define NT_NTWIN32(status) (_NT_FACILITY(Status) == FACILITY_WIN32)
-    #define WIN32_FROM_NTSTATUS(Status) (((ULONG)(Status)) & 0xffff)
+    #define NT_NTWIN32(status) (_NT_FACILITY(status) == FACILITY_WIN32)
+    #define WIN32_FROM_NTSTATUS(status) (((ULONG)(status)) & 0xffff)
 
     #define LO_T 1e-7
     #define HI_T 429.4967296
