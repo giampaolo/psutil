@@ -247,6 +247,9 @@ upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
+md5-dist:
+	$(PYTHON) scripts/internal/md5_dist.py
+
 # --- others
 
 check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
@@ -268,6 +271,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} download-wheels
 	${MAKE} sdist
 	$(PYTHON) -m twine check dist/*
+	${MAKE} md5-dist
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
