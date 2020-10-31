@@ -28,7 +28,6 @@ from psutil._common import wrap_numbers
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
-from psutil.tests import DEVNULL
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -719,7 +718,7 @@ class TestScripts(PsutilTestCase):
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
             raise self.skipTest("not supported")
-        self.assert_stdout('procsmem.py', stderr=DEVNULL)
+        self.assert_stdout('procsmem.py')
 
     def test_killall(self):
         self.assert_syntax('killall.py')

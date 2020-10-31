@@ -25,7 +25,7 @@ from psutil._common import print_color
 
 
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.5', '3.6', '3.7', '3.8']
+PY_VERSIONS = ['2.7', '3.6', '3.7', '3.8', '3.9']
 TIMEOUT = 30
 
 

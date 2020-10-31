@@ -525,6 +525,12 @@ def print_api_speed():
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 
+def download_appveyor_wheels():
+    """Download appveyor wheels."""
+    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+       "--user giampaolo --project psutil" % PYTHON)
+
+
 def get_python(path):
     if not path:
         return sys.executable
@@ -532,9 +538,25 @@ def get_python(path):
         return path
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
-    vers = ('26', '27', '36', '37', '38',
-            '26-64', '27-64', '36-64', '37-64', '38-64'
-            '26-32', '27-32', '36-32', '37-32', '38-32')
+    vers = (
+        '26',
+        '26-32',
+        '26-64',
+        '27',
+        '27-32',
+        '27-64',
+        '36',
+        '36-32',
+        '36-64',
+        '37',
+        '37-32',
+        '37-64',
+        '38',
+        '38-32',
+        '38-64',
+        '39-32',
+        '39-64',
+    )
     for v in vers:
         pypath = r'C:\\python%s\python.exe' % v
         if path in pypath and os.path.isfile(pypath):
@@ -554,6 +576,7 @@ def main():
     sp.add_parser('build', help="build")
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
+    sp.add_parser('download-appveyor-wheels', help="download wheels.")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
