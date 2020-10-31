@@ -98,6 +98,7 @@ psutil_get_process_data(DWORD pid,
     PVOID64 src64;
     BOOL weAreWow64;
     BOOL theyAreWow64;
+    ULONG err;
 #endif
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     NTSTATUS status;
@@ -220,10 +221,22 @@ psutil_get_process_data(DWORD pid,
                 sizeof(pbi64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(
+            if (NT_NTWIN32(status))
+                err = WIN32_FROM_NTSTATUS(status);
+            else
+                err = RtlNtStatusToDosErrorNoTeb(status);
+            if (err == ERROR_NOACCESS)  {
+                psutil_debug("NtWow64QueryInformationProcess64 -> ERROR_NOACCESS "
+                             "converted to AccessDenied");
+                AccessDenied("NtWow64QueryInformationProcess64 -> ERROR_NOACCESS "
+                             "converted to AccessDenied");
+            }
+            else {
+                psutil_SetFromNTStatusErr(
                     status,
                     "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
-            );
+                );
+            }
             goto error;
         }
 
