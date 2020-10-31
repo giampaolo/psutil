@@ -161,7 +161,7 @@ psutil_get_process_data(DWORD pid,
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_ntstatus_err(GetLastError(), "ReadProcessMemory");
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -174,7 +174,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            psutil_convert_ntstatus_err(GetLastError(), "ReadProcessMemory");
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
