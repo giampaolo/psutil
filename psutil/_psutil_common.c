@@ -199,13 +199,6 @@ int PSUTIL_WINVER;
 SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
-#define NT_FACILITY_MASK 0xfff
-#define NT_FACILITY_SHIFT 16
-#define NT_FACILITY(Status) \
-    ((((ULONG)(Status)) >> NT_FACILITY_SHIFT) & NT_FACILITY_MASK)
-#define NT_NTWIN32(status) (NT_FACILITY(Status) == FACILITY_WIN32)
-#define WIN32_FROM_NTSTATUS(Status) (((ULONG)(Status)) & 0xffff)
-
 
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
