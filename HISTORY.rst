@@ -10,6 +10,11 @@ XXXX-XX-XX
 - 1875_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
   which are the maximum file name and path name length.
 
+**Bug fixes**
+
+- 1868_: [Linux] /proc/pid/stat is missing 2 fields on Alpine Linux (cpu_num
+  and delayacct_blkio_ticks) and are now being set to None.
+
 5.7.3
 =====
 
