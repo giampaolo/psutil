@@ -1577,15 +1577,8 @@ class Process(object):
         ret['children_utime'] = fields[13]
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
-        # https://github.com/giampaolo/psutil/issues/1868
-        try:
-            ret['cpu_num'] = fields[36]
-        except IndexError:
-            ret['cpu_num'] = None
-        try:
-            ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
-        except IndexError:
-            ret['blkio_ticks'] = None
+        ret['cpu_num'] = fields[36]
+        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
 
         return ret
 
