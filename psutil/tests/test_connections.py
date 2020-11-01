@@ -576,8 +576,7 @@ class TestSystemWideConnections(_ConnTestCase):
 
     # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
     @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
-    @unittest.skipIf(GITHUB_WHEELS and PYTHON_39,
-                     "unreliable on GITHUB_WHEELS + PYTHON_39")
+    @unittest.skipIf(GITHUB_WHEELS, "unreliable on GITHUB_WHEELS + PYTHON_39")
     @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
