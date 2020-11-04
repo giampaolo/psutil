@@ -770,7 +770,7 @@ Sensors
 
   Return hardware fans speed. Each entry is a named tuple representing a
   certain hardware sensor fan.
-  Fan speed is expressed in RPM (rounds per minute).
+  Fan speed is expressed in RPM (revolutions per minute).
   If sensors are not supported by the OS an empty dict is returned.
   Example::
 
