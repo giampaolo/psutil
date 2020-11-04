@@ -752,6 +752,14 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def exe(self):
+
+        # Accessing protected system processes raises an error, this is to prevent that from happening.
+        if self.pid == 0:
+            return "System Idle Process"
+        if self.pid == 4:
+            return "System"
+
+
         if PYPY:
             try:
                 exe = cext.proc_exe(self.pid)
