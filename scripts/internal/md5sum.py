@@ -13,7 +13,7 @@ import sys
 
 def md5(file):
     h = hashlib.new("md5")
-    with open(file, 'rb') as f:
+    with open(file, "rb") as f:
         h.update(f.read())
         return h.hexdigest()
 
@@ -21,10 +21,10 @@ def md5(file):
 def main():
     files = sys.argv[1:]
     if not files:
-        sys.exit('provide an argument')
+        sys.exit("provide an argument")
     for file in files:
         print("%s %s" % (os.path.basename(file), md5(file)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

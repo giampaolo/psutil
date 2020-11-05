@@ -40,4 +40,4 @@ jobs:
         path: wheelhouse
 
     - name: Print hashes
-      run: ls
+      run: python scripts/internal/md5sum.py wheelhouse/*
