@@ -11,8 +11,8 @@ import hashlib
 import sys
 
 
-def md5(file):
-    h = hashlib.new("md5")
+def csum(file, kind):
+    h = hashlib.new(kind)
     with open(file, "rb") as f:
         h.update(f.read())
         return h.hexdigest()
@@ -23,7 +23,9 @@ def main():
     if not files:
         sys.exit("provide an argument")
     for file in files:
-        print("%s %s" % (os.path.basename(file), md5(file)))
+        md5 = csum(file, "md5")
+        sha256 = csum(file, "sha256")
+        print("%s md5:%s sha256:%s" % (os.path.basename(file), md5, sha256))
 
 
 if __name__ == "__main__":
