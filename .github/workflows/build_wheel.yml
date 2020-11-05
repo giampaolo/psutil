@@ -38,3 +38,5 @@ jobs:
       with:
         name: wheels
         path: wheelhouse
+      run: |
+        ls
