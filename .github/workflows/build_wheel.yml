@@ -21,18 +21,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
-      # name: Install Python 3.7
-      # with:
-      #   python-version: '3.7'
+      with:
+        python-version: 3.9
 
-    - name: (Windows) install Visual C++ for Python 2.7
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install vcpython27 -f -y
+    # - name: (Windows) install Visual C++ for Python 2.7
+    #   if: startsWith(matrix.os, 'windows')
+    #   run: |
+    #     choco install vcpython27 -f -y
 
     - name: Build wheels
       run: |
-        pip install cibuildwheel==1.4.1
+        python -c "import platform; print(platform.python_version())
+        pip install cibuildwheel
         cibuildwheel .
 
     - name: Upload wheels
