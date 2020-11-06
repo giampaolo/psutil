@@ -4,7 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""A clone of md5sum utility on UNIX. Prints MD5 checksums of file(s)."""
+"""
+Similar to md5sum utility on UNIX. Prints MD5 and SHA256 checksums of file(s).
+"""
 
 import glob
 import hashlib
@@ -28,7 +30,7 @@ def main():
     for file in files:
         md5 = csum(file, "md5")
         sha256 = csum(file, "sha256")
-        print("%s md5:%s sha256:%s" % (os.path.basename(file), md5, sha256))
+        print("%-50s md5:%s sha256:%s" % (os.path.basename(file), md5, sha256))
 
 
 if __name__ == "__main__":

@@ -247,8 +247,8 @@ upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
-md5-dist:
-	$(PYTHON) scripts/internal/md5_dist.py
+md5sum:
+	$(PYTHON) scripts/internal/md5sum.py dist/*
 
 # --- others
 
