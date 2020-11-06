@@ -902,9 +902,12 @@ class PsutilTestCase(TestCase):
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, proc.pid)
         if isinstance(proc, (psutil.Process, psutil.Popen)):
             assert not proc.is_running()
-            print(proc.status())  # NOQA
-            print(proc.as_dict())  # NOQA
-            self.assertRaises(psutil.NoSuchProcess, proc.status)
+            try:
+                self.assertRaises(psutil.NoSuchProcess, proc.status)
+            except Exception:
+                print(proc.status())  # NOQA
+                print(proc.as_dict())  # NOQA
+                raise
             proc.wait(timeout=0)  # assert not raise TimeoutExpired
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
