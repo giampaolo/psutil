@@ -31,7 +31,7 @@ jobs:
 
     - name: Build wheels
       run: |
-        python -c "import platform; print(platform.python_version())
+        python -c "import platform; print(platform.python_version())"
         pip install cibuildwheel
         cibuildwheel .
 
