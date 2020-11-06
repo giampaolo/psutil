@@ -17,17 +17,17 @@ jobs:
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
-      CIBW_SKIP: pp*
+      CIBW_SKIP: pp* cp35-*
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
         python-version: 3.9
 
-    # - name: (Windows) install Visual C++ for Python 2.7
-    #   if: startsWith(matrix.os, 'windows')
-    #   run: |
-    #     choco install vcpython27 -f -y
+    - name: (Windows) install Visual C++ for Python 2.7
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        choco install vcpython27 -f -y
 
     - name: Build wheels
       run: |
