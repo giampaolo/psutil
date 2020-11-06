@@ -7,20 +7,21 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
     env:
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
-      CIBW_SKIP: pp*
+      # CIBW_SKIP: pp*
     steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v1
-      name: Install Python 3.7
-      with:
-        python-version: '3.7'
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      # name: Install Python 3.7
+      # with:
+      #   python-version: '3.7'
 
     - name: Install Visual C++ for Python 2.7
       if: startsWith(matrix.os, 'windows')
