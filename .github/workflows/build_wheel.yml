@@ -8,9 +8,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       # fail-fast: false
-      fail-fast: true
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
@@ -31,7 +31,6 @@ jobs:
 
     - name: Build wheels
       run: |
-        python -c "import platform; print(platform.python_version())"
         pip install cibuildwheel
         cibuildwheel .
 
