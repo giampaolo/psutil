@@ -25,9 +25,9 @@ jobs:
         python-version: 3.9
 
     - name: (Windows) install Visual C++ for Python 2.7
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install vcpython27 -f -y
+      - if: matrix.os == 'windows-latest'
+        run: |
+          choco install vcpython27 -f -y
 
     - name: Build wheels
       run: |
@@ -41,11 +41,11 @@ jobs:
         path: wheelhouse
 
     - name: Create tar.gz
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        make generate-manifest
-        python setup.py sdist
-        mv dist/psutil*.tar.gz wheelhouse/
+      - if: matrix.os == 'ubuntu-latest'
+        run: |
+          make generate-manifest
+          python setup.py sdist
+          mv dist/psutil*.tar.gz wheelhouse/
 
     - name: Print hashes
       run: python scripts/internal/md5sum.py wheelhouse/*
