@@ -41,8 +41,7 @@ jobs:
 
     - name: Create tar.gz
       run: |
-        python setup.py sdist
-        ls
+        make sdist
         mv dist/psutil*.tar.gz wheelhouse/
 
     - name: Print hashes
