@@ -3,10 +3,6 @@ cache: pip
 matrix:
     include:
         # Linux
-        - python: 2.7
-        - python: 3.5
-        - python: 3.6
-        - python: 3.7
         - python: 3.8
         - python: 3.9-dev
         # macOS
