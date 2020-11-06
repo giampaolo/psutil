@@ -6,8 +6,9 @@
 
 """A clone of md5sum utility on UNIX. Prints MD5 checksums of file(s)."""
 
-import os
+import glob
 import hashlib
+import os
 import sys
 
 
@@ -22,6 +23,8 @@ def main():
     files = sys.argv[1:]
     if not files:
         sys.exit("provide an argument")
+    if os.name == 'nt' and '*' in files[0]:
+        files = glob.glob(files[0])
     for file in files:
         md5 = csum(file, "md5")
         sha256 = csum(file, "sha256")
