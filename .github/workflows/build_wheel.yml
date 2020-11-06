@@ -34,7 +34,7 @@ jobs:
         pip install cibuildwheel
         cibuildwheel .
 
-    - name: Upload wheels
+    - name: Create wheels
       uses: actions/upload-artifact@v2
       with:
         name: wheels
