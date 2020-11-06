@@ -43,7 +43,7 @@ jobs:
       run: |
         python setup.py sdist
         ls
-        mv psutil*.tar.gz wheelhouse/
+        mv dist/psutil*.tar.gz wheelhouse/
 
     - name: Print hashes
       run: python scripts/internal/md5sum.py wheelhouse/*
