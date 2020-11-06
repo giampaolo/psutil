@@ -10,12 +10,12 @@ jobs:
       # fail-fast: false
       fail-fast: true
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest]
     env:
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
       CIBW_TEST_EXTRAS: test
-      CIBW_SKIP: pp*-macosx_x86_64
+      CIBW_SKIP: pp*
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -23,19 +23,27 @@ jobs:
       # with:
       #   python-version: '3.7'
 
-    - name: Install Visual C++ for Python 2.7
+    - name: (Windows) install Visual C++ for Python 2.7
       if: startsWith(matrix.os, 'windows')
       run: |
         choco install vcpython27 -f -y
 
-    - name: Install cibuildwheel
-      run: pip install cibuildwheel==1.4.1
-
     - name: Build wheels
-      run: cibuildwheel .
+      run: |
+        pip install cibuildwheel==1.4.1
+        cibuildwheel .
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: wheels
         path: wheelhouse
+
+    - name: Create tar.gz
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+
+    - name: Print hashes
+      run: python scripts/internal/md5sum.py wheelhouse/*
