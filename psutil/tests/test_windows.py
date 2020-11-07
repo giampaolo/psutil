@@ -68,8 +68,7 @@ def wrap_exceptions(fun):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")
 # https://github.com/giampaolo/psutil/pull/1762#issuecomment-632892692
-@unittest.skipIf(GITHUB_WHEELS and (not PY3 or not IS_64BIT),
-                 "pywin32 broken on GITHUB + PY2")
+@unittest.skipIf(GITHUB_WHEELS and not PY3, "pywin32 broken on GITHUB + PY2")
 class WindowsTestCase(PsutilTestCase):
     pass
 

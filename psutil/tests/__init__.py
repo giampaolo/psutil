@@ -1065,37 +1065,51 @@ def print_sysinfo():
     import datetime
     import getpass
     import platform
+    try:
+        import pip
+        assert pip.__version__
+    except (ImportError, AssertionError):
+        pip = None
+    try:
+        import wheel
+        assert wheel.__version__
+    except (ImportError, AssertionError):
+        pip = None
 
     info = collections.OrderedDict()
     info['OS'] = platform.system()
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler()])
+    if pip is not None:
+        info['pip version'] = pip.__version__
+    if wheel is not None:
+        info['wheel version'] = wheel.__version__
     if psutil.OSX:
-        info['version'] = str(platform.mac_ver())
+        info['OS version'] = str(platform.mac_ver())
     elif psutil.WINDOWS:
-        info['version'] = ' '.join(map(str, platform.win32_ver()))
+        info['OS version'] = ' '.join(map(str, platform.win32_ver()))
         if hasattr(platform, 'win32_edition'):
-            info['edition'] = platform.win32_edition()
+            info['OS Edition'] = platform.win32_edition()
     else:
-        info['version'] = platform.version()
+        info['OS version'] = platform.version()
     if psutil.POSIX:
         info['kernel'] = '.'.join(map(str, get_kernel_version()))
     info['arch'] = ', '.join(
         list(platform.architecture()) + [platform.machine()])
     info['hostname'] = platform.node()
-    info['python'] = ', '.join([
-        platform.python_implementation(),
-        platform.python_version(),
-        platform.python_compiler()])
     if psutil.POSIX:
         s = platform.libc_ver()[1]
         if s:
             info['glibc'] = s
-    info['fs-encoding'] = sys.getfilesystemencoding()
+    info['FS encoding'] = sys.getfilesystemencoding()
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
-    info['pid'] = os.getpid()
+    info['PID'] = os.getpid()
     print("=" * 70)  # NOQA
     for k, v in info.items():
-        print("%-14s %s" % (k + ':', v))  # NOQA
+        print("%-17s %s" % (k + ':', v))  # NOQA
     print("=" * 70)  # NOQA
 
 
