@@ -1067,50 +1067,61 @@ def print_sysinfo():
     import platform
     try:
         import pip
-        assert pip.__version__
-    except (ImportError, AssertionError):
+    except ImportError:
         pip = None
     try:
         import wheel
-        assert wheel.__version__
-    except (ImportError, AssertionError):
-        pip = None
+    except ImportError:
+        wheel = None
 
     info = collections.OrderedDict()
     info['OS'] = platform.system()
+    # python
     info['python'] = ', '.join([
         platform.python_implementation(),
         platform.python_version(),
         platform.python_compiler()])
-    if pip is not None:
-        info['pip version'] = pip.__version__
+    info['pip'] = getattr(pip, '__version__', 'not installed')
     if wheel is not None:
-        info['wheel version'] = wheel.__version__
+        info['wheel'] = wheel.__version__
+    # OS
     if psutil.OSX:
-        info['OS version'] = str(platform.mac_ver())
+        info['OS-version'] = str(platform.mac_ver())
     elif psutil.WINDOWS:
-        info['OS version'] = ' '.join(map(str, platform.win32_ver()))
+        info['OS-version'] = ' '.join(map(str, platform.win32_ver()))
         if hasattr(platform, 'win32_edition'):
             info['OS Edition'] = platform.win32_edition()
     else:
-        info['OS version'] = platform.version()
+        info['OS-version'] = platform.version()
     if psutil.POSIX:
-        info['kernel'] = '.'.join(map(str, get_kernel_version()))
+        info['kernel'] = platform.uname()[2]
     info['arch'] = ', '.join(
         list(platform.architecture()) + [platform.machine()])
-    info['hostname'] = platform.node()
+    # UNIX
     if psutil.POSIX:
+        if which('gcc'):
+            out = subprocess.check_output(['gcc', '--version'])
+            if PY3:
+                out = out.decode()
+            info['gcc'] = str(out).split('\n')[0].split(' ')[-1]
+        else:
+            info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
         if s:
             info['glibc'] = s
-    info['FS encoding'] = sys.getfilesystemencoding()
+    # sys
+    info['FS-encoding'] = sys.getfilesystemencoding()
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    info['boot-time'] = datetime.datetime.fromtimestamp(
+        psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
+    info['hostname'] = platform.node()
     info['PID'] = os.getpid()
-    print("=" * 70, flush=True)  # NOQA
+    print("=" * 70)  # NOQA
     for k, v in info.items():
-        print("%-17s %s" % (k + ':', v), flush=True)  # NOQA
-    print("=" * 70, flush=True)  # NOQA
+        print("%-17s %s" % (k + ':', v))  # NOQA
+    print("=" * 70)  # NOQA
+    sys.stdout.flush()
 
 
 def _get_eligible_cpu():
