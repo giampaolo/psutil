@@ -1107,10 +1107,10 @@ def print_sysinfo():
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
     info['PID'] = os.getpid()
-    print("=" * 70)  # NOQA
+    print("=" * 70, flush=True)  # NOQA
     for k, v in info.items():
-        print("%-17s %s" % (k + ':', v))  # NOQA
-    print("=" * 70)  # NOQA
+        print("%-17s %s" % (k + ':', v), flush=True)  # NOQA
+    print("=" * 70, flush=True)  # NOQA
 
 
 def _get_eligible_cpu():
