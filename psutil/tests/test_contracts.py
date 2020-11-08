@@ -40,6 +40,7 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
+from psutil.tests import kernel_version
 from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
@@ -101,11 +102,16 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "RLIMIT_STACK"), LINUX or FREEBSD)
 
         ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)  # requires Linux 2.6.8
-        ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # requires Linux 2.6.25
-        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # requires Linux 2.6.8
+        if LINUX and kernel_version() >= (2, 6, 8):
+            ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
+        if LINUX and kernel_version() >= (2, 6, 12):
+            ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
+        if LINUX and kernel_version() >= (2, 6, 12):
+            ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
+        if LINUX and kernel_version() >= (2, 6, 25):
+            ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
+        if LINUX and kernel_version() >= (2, 6, 8):
+            ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
 
         ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
         ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)

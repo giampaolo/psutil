@@ -97,7 +97,7 @@ __all__ = [
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
     'get_testfn',
     # os
-    'get_winver', 'get_kernel_version',
+    'get_winver', 'kernel_version',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
@@ -597,7 +597,7 @@ def reap_children(recursive=False):
 # ===================================================================
 
 
-def get_kernel_version():
+def kernel_version():
     """Return a tuple such as (2, 6, 36)."""
     if not POSIX:
         raise NotImplementedError("not POSIX")
@@ -1107,7 +1107,7 @@ def print_sysinfo():
     if psutil.POSIX:
         if which('gcc'):
             out = sh(['gcc', '--version'])
-            info['gcc'] = str(out).split('\n')[0].split(' ')[-1]
+            info['gcc'] = str(out).split('\n')[0]
         else:
             info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
