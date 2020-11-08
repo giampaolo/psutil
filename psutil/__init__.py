@@ -193,7 +193,8 @@ __all__ = [
 
 __all__.extend(_psplatform.__extra__all__)
 
-if LINUX or FREEBSD:
+# Linux, FreeBSD
+if hasattr(_psplatform.Process, "rlimit"):
     # Populate global namespace with RLIM* constants.
     from . import _psutil_posix
 

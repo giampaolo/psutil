@@ -88,6 +88,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
+    @unittest.skipIf(GITHUB_WHEELS and LINUX,
+                     "unsupported on GITHUB_WHEELS + LINUX")
     def test_rlimit(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
@@ -110,7 +112,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
             if kernel_version() >= (2, 6, 12):
                 ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
-            if kernel_version() >= (2, 6, 25) and not GITHUB_WHEELS:
+            if kernel_version() >= (2, 6, 25):
                 ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
             if kernel_version() >= (2, 6, 8):
                 ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
@@ -163,6 +165,8 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
+    @unittest.skipIf(GITHUB_WHEELS and LINUX,
+                     "unsupported on GITHUB_WHEELS + LINUX")
     def test_rlimit(self):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
