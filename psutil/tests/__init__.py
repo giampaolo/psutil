@@ -1064,6 +1064,7 @@ def print_sysinfo():
     import collections
     import datetime
     import getpass
+    import locale
     import platform
     try:
         import pip
@@ -1075,7 +1076,24 @@ def print_sysinfo():
         wheel = None
 
     info = collections.OrderedDict()
-    info['OS'] = platform.system()
+
+    # OS
+    if psutil.LINUX and which('lsb_release'):
+        info['OS'] = sh('lsb_release -d -s')
+    elif psutil.OSX:
+        info['OS'] = 'Darwin %s' % platform.mac_ver()[0]
+    elif psutil.WINDOWS:
+        info['OS'] = "Windows " + ' '.join(
+            map(str, platform.win32_ver()))
+        if hasattr(platform, 'win32_edition'):
+            info['OS'] += ", " + platform.win32_edition()
+    else:
+        info['OS'] = "%s %s" % (platform.system(), platform.version())
+    info['arch'] = ', '.join(
+        list(platform.architecture()) + [platform.machine()])
+    if psutil.POSIX:
+        info['kernel'] = platform.uname()[2]
+
     # python
     info['python'] = ', '.join([
         platform.python_implementation(),
@@ -1083,44 +1101,35 @@ def print_sysinfo():
         platform.python_compiler()])
     info['pip'] = getattr(pip, '__version__', 'not installed')
     if wheel is not None:
-        info['wheel'] = wheel.__version__
-    # OS
-    if psutil.OSX:
-        info['OS-version'] = str(platform.mac_ver())
-    elif psutil.WINDOWS:
-        info['OS-version'] = ' '.join(map(str, platform.win32_ver()))
-        if hasattr(platform, 'win32_edition'):
-            info['OS Edition'] = platform.win32_edition()
-    else:
-        info['OS-version'] = platform.version()
-    if psutil.POSIX:
-        info['kernel'] = platform.uname()[2]
-    info['arch'] = ', '.join(
-        list(platform.architecture()) + [platform.machine()])
+        info['pip'] += " (wheel=%s)" % wheel.__version__
+
     # UNIX
     if psutil.POSIX:
         if which('gcc'):
-            out = subprocess.check_output(['gcc', '--version'])
-            if PY3:
-                out = out.decode()
+            out = sh(['gcc', '--version'])
             info['gcc'] = str(out).split('\n')[0].split(' ')[-1]
         else:
             info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
         if s:
             info['glibc'] = s
-    # sys
-    info['FS-encoding'] = sys.getfilesystemencoding()
+
+    # system
+    info['fs-encoding'] = sys.getfilesystemencoding()
+    info['language'] = ', '.join(locale.getlocale())
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
+    info['home'] = os.path.expanduser("~")
+    info['cwd'] = os.getcwd()
     info['hostname'] = platform.node()
     info['PID'] = os.getpid()
-    print("=" * 70)  # NOQA
+
+    print("=" * 70, file=sys.stderr)  # NOQA
     for k, v in info.items():
-        print("%-17s %s" % (k + ':', v))  # NOQA
-    print("=" * 70)  # NOQA
+        print("%-17s %s" % (k + ':', v), file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 
 
