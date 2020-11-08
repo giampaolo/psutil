@@ -35,6 +35,7 @@ from psutil._compat import range
 from psutil.tests import APPVEYOR
 from psutil.tests import create_sockets
 from psutil.tests import enum
+from psutil.tests import GITHUB_WHEELS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
@@ -87,7 +88,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    def test_linux_rlimit(self):
+    def test_rlimit(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
         ae(hasattr(psutil, "RLIMIT_AS"), LINUX or FREEBSD)
@@ -102,16 +103,17 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "RLIMIT_STACK"), LINUX or FREEBSD)
 
         ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
-        if LINUX and kernel_version() >= (2, 6, 8):
-            ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
-        if LINUX and kernel_version() >= (2, 6, 12):
-            ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
-        if LINUX and kernel_version() >= (2, 6, 12):
-            ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
-        if LINUX and kernel_version() >= (2, 6, 25):
-            ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
-        if LINUX and kernel_version() >= (2, 6, 8):
-            ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
+        if POSIX:
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
+            if kernel_version() >= (2, 6, 25) and not GITHUB_WHEELS:
+                ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
 
         ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
         ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)
