@@ -1116,7 +1116,8 @@ def print_sysinfo():
 
     # system
     info['fs-encoding'] = sys.getfilesystemencoding()
-    info['language'] = ', '.join(locale.getlocale())
+    if locale.getlocale():
+        info['language'] = ', '.join(locale.getlocale())
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
