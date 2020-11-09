@@ -7,8 +7,14 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1875_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+- 1872_: [Windows] added support for PyPy 2.7.
+- 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
   which are the maximum file name and path name length.
+
+**Bug fixes**
+
+- 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
+  access to memory location" on Python 3.9.
 
 5.7.3
 =====
