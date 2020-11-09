@@ -903,11 +903,11 @@ class PsutilTestCase(TestCase):
         if isinstance(proc, (psutil.Process, psutil.Popen)):
             assert not proc.is_running()
             try:
-                self.assertRaises(psutil.NoSuchProcess, proc.status)
-            except Exception:
-                print(proc.status())  # NOQA
-                print(proc.as_dict())  # NOQA
-                raise
+                status = proc.status()
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                raise ValueError("didn't raise exception (status=%s)" % status)
             proc.wait(timeout=0)  # assert not raise TimeoutExpired
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
@@ -1066,6 +1066,7 @@ def print_sysinfo():
     import getpass
     import locale
     import platform
+    import pprint
     try:
         import pip
     except ImportError:
@@ -1118,14 +1119,25 @@ def print_sysinfo():
     info['fs-encoding'] = sys.getfilesystemencoding()
     lang = locale.getlocale()
     info['lang'] = '%s, %s' % (lang[0], lang[1])
-    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
+    info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
     info['home'] = os.path.expanduser("~")
     info['cwd'] = os.getcwd()
     info['hostname'] = platform.node()
     info['PID'] = os.getpid()
+
+    # metrics
+    pinfo = psutil.Process().as_dict()
+    del pinfo['memory_maps']
+    info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
+        tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
+    mem = psutil.virtual_memory()
+    info['memory'] = "%3s%%, %s/%s" % (
+        int(mem.percent), bytes2human(mem.available), bytes2human(mem.total))
+    info['pids'] = len(psutil.pids())
+    info['proc'] = pprint.pformat(pinfo)
 
     print("=" * 70, file=sys.stderr)  # NOQA
     for k, v in info.items():
