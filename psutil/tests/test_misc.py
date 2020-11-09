@@ -64,7 +64,8 @@ class TestMisc(PsutilTestCase):
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name='%s'" % str(p.name()), str(r))
+        self.assertIn("name='%s'" % str(p.name()),
+                      r.replace("name=u'", "name='"))
         self.assertIn("status=", r)
         self.assertNotIn("exitcode=", r)
         p.terminate()

@@ -1131,7 +1131,7 @@ def print_sysinfo():
 
     # metrics
     pinfo = psutil.Process().as_dict()
-    del pinfo['memory_maps']
+    pinfo.pop('memory_maps', None)
     info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
         tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
     mem = psutil.virtual_memory()
