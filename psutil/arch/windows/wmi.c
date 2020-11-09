@@ -10,6 +10,8 @@
 #include <windows.h>
 #include <pdh.h>
 
+#include "../../_psutil_common.h"
+
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation

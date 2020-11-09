@@ -23,9 +23,8 @@ int PSUTIL_TESTING = 0;
 // ====================================================================
 
 // PyPy on Windows
-#if defined(PSUTIL_WINDOWS) && \
-    defined(PYPY_VERSION) && \
-    !defined(PyErr_SetFromWindowsErrWithFilename)
+#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
+#if !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
 PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
     PyObject *py_exc = NULL;
@@ -58,7 +57,17 @@ error:
     Py_XDECREF(py_winerr);
     return NULL;
 }
-#endif  // PYPY on Windows
+#endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
+
+
+// PyPy 2.7
+#if !defined(PyErr_SetFromWindowsErr)
+PyObject *
+PyErr_SetFromWindowsErr(int winerr) {
+    return PyErr_SetFromWindowsErrWithFilename(winerr, "");
+}
+#endif  // !defined(PyErr_SetFromWindowsErr)
+#endif  // defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
 
 
 // ====================================================================
