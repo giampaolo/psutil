@@ -1136,7 +1136,7 @@ def print_sysinfo():
         tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
     mem = psutil.virtual_memory()
     info['memory'] = "%3s%%, %s/%s" % (
-        int(mem.percent), bytes2human(mem.available), bytes2human(mem.total))
+        int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
     info['pids'] = len(psutil.pids())
     info['proc'] = pprint.pformat(pinfo)
 
