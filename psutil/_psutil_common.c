@@ -64,7 +64,7 @@ error:
 #if !defined(PyErr_SetFromWindowsErr)
 PyObject *
 PyErr_SetFromWindowsErr(int winerr) {
-    return PyErr_SetFromWindowsErrWithFilename(winerr);
+    return PyErr_SetFromWindowsErrWithFilename(winerr, "");
 }
 #endif  // !defined(PyErr_SetFromWindowsErr)
 #endif  // defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)

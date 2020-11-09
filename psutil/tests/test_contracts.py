@@ -376,14 +376,15 @@ def proc_info(pid):
     name, ppid = d['name'], d['ppid']
     info = {'pid': proc.pid}
     ns = process_namespace(proc)
-    with proc.oneshot():
-        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            try:
-                info[fun_name] = fun()
-            except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
-                continue
-        do_wait()
+    # We don't use oneshot() because in order not to fool
+    # check_exception() in case of NSP.
+    for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+        try:
+            info[fun_name] = fun()
+        except psutil.Error as exc:
+            check_exception(exc, proc, name, ppid)
+            continue
+    do_wait()
     return info
 
 
