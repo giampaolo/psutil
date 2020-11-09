@@ -61,6 +61,17 @@ error:
 #endif  // PYPY on Windows
 
 
+// PyPy + Windows + Python 2.7
+#if defined(PSUTIL_WINDOWS) && \
+    defined(PYPY_VERSION) && \
+    !defined(PyErr_SetFromWindowsErr)
+PyObject *
+PyErr_SetFromWindowsErr(int winerr) {
+    return PyErr_SetFromWindowsErrWithFilename(winerr);
+}
+#endif  // PyPy 2.7 + Windows
+
+
 // ====================================================================
 // --- Custom exceptions
 // ====================================================================
