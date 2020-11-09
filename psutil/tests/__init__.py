@@ -907,7 +907,8 @@ class PsutilTestCase(TestCase):
             except psutil.NoSuchProcess:
                 pass
             else:
-                raise ValueError("didn't raise exception (status=%s)" % status)
+                raise AssertionError("Process.status() didn't raise exception "
+                                     "(status=%s)" % status)
             proc.wait(timeout=0)  # assert not raise TimeoutExpired
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
@@ -1151,7 +1152,7 @@ def _get_eligible_cpu():
     if hasattr(p, "cpu_num"):
         return p.cpu_num()
     elif hasattr(p, "cpu_affinity"):
-        return p.cpu_affinity()[0]
+        return random.choice(p.cpu_affinity())
     return 0
 
 
