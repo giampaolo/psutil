@@ -6,8 +6,6 @@
 
 """Tests for net_connections() and Process.connections() APIs."""
 
-import contextlib
-import errno
 import os
 import socket
 import sys
@@ -32,10 +30,9 @@ from psutil._compat import PY3
 from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
-from psutil.tests import check_net_address
+from psutil.tests import check_connection_ntuple
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
-from psutil.tests import enum
 from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
@@ -57,7 +54,7 @@ PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 @serialrun
-class _ConnTestCase(PsutilTestCase):
+class ConnectionTestCase(PsutilTestCase):
 
     def setUp(self):
         if not (NETBSD or FREEBSD):
@@ -92,93 +89,19 @@ class _ConnTestCase(PsutilTestCase):
         proc_cons.sort()
         self.assertEqual(proc_cons, sys_cons)
 
-    def check_connection_ntuple(self, conn):
-        """Check validity of a connection namedtuple."""
-        def check_ntuple(conn):
-            has_pid = len(conn) == 7
-            self.assertIn(len(conn), (6, 7))
-            self.assertEqual(conn[0], conn.fd)
-            self.assertEqual(conn[1], conn.family)
-            self.assertEqual(conn[2], conn.type)
-            self.assertEqual(conn[3], conn.laddr)
-            self.assertEqual(conn[4], conn.raddr)
-            self.assertEqual(conn[5], conn.status)
-            if has_pid:
-                self.assertEqual(conn[6], conn.pid)
 
-        def check_family(conn):
-            self.assertIn(conn.family, (AF_INET, AF_INET6, AF_UNIX))
-            if enum is not None:
-                assert isinstance(conn.family, enum.IntEnum), conn
-            else:
-                assert isinstance(conn.family, int), conn
-            if conn.family == AF_INET:
-                # actually try to bind the local socket; ignore IPv6
-                # sockets as their address might be represented as
-                # an IPv4-mapped-address (e.g. "::127.0.0.1")
-                # and that's rejected by bind()
-                s = socket.socket(conn.family, conn.type)
-                with contextlib.closing(s):
-                    try:
-                        s.bind((conn.laddr[0], 0))
-                    except socket.error as err:
-                        if err.errno != errno.EADDRNOTAVAIL:
-                            raise
-            elif conn.family == AF_UNIX:
-                self.assertEqual(conn.status, psutil.CONN_NONE)
-
-        def check_type(conn):
-            # SOCK_SEQPACKET may happen in case of AF_UNIX socks
-            self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET))
-            if enum is not None:
-                assert isinstance(conn.type, enum.IntEnum), conn
-            else:
-                assert isinstance(conn.type, int), conn
-            if conn.type == SOCK_DGRAM:
-                self.assertEqual(conn.status, psutil.CONN_NONE)
-
-        def check_addrs(conn):
-            # check IP address and port sanity
-            for addr in (conn.laddr, conn.raddr):
-                if conn.family in (AF_INET, AF_INET6):
-                    self.assertIsInstance(addr, tuple)
-                    if not addr:
-                        continue
-                    self.assertIsInstance(addr.port, int)
-                    assert 0 <= addr.port <= 65535, addr.port
-                    check_net_address(addr.ip, conn.family)
-                elif conn.family == AF_UNIX:
-                    self.assertIsInstance(addr, str)
-
-        def check_status(conn):
-            self.assertIsInstance(conn.status, str)
-            valids = [getattr(psutil, x) for x in dir(psutil)
-                      if x.startswith('CONN_')]
-            self.assertIn(conn.status, valids)
-            if conn.family in (AF_INET, AF_INET6) and conn.type == SOCK_STREAM:
-                self.assertNotEqual(conn.status, psutil.CONN_NONE)
-            else:
-                self.assertEqual(conn.status, psutil.CONN_NONE)
-
-        check_ntuple(conn)
-        check_family(conn)
-        check_type(conn)
-        check_addrs(conn)
-        check_status(conn)
-
-
-class TestBasicOperations(_ConnTestCase):
+class TestBasicOperations(ConnectionTestCase):
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_system(self):
         with create_sockets():
             for conn in psutil.net_connections(kind='all'):
-                self.check_connection_ntuple(conn)
+                check_connection_ntuple(conn)
 
     def test_process(self):
         with create_sockets():
             for conn in psutil.Process().connections(kind='all'):
-                self.check_connection_ntuple(conn)
+                check_connection_ntuple(conn)
 
     def test_invalid_kind(self):
         self.assertRaises(ValueError, thisproc.connections, kind='???')
@@ -186,7 +109,7 @@ class TestBasicOperations(_ConnTestCase):
 
 
 @serialrun
-class TestUnconnectedSockets(_ConnTestCase):
+class TestUnconnectedSockets(ConnectionTestCase):
     """Tests sockets which are open but not connected to anything."""
 
     def get_conn_from_sock(self, sock):
@@ -208,7 +131,7 @@ class TestUnconnectedSockets(_ConnTestCase):
         only (the one supposed to be checked).
         """
         conn = self.get_conn_from_sock(sock)
-        self.check_connection_ntuple(conn)
+        check_connection_ntuple(conn)
 
         # fd, family, type
         if conn.fd != -1:
@@ -285,7 +208,7 @@ class TestUnconnectedSockets(_ConnTestCase):
 
 
 @serialrun
-class TestConnectedSocket(_ConnTestCase):
+class TestConnectedSocket(ConnectionTestCase):
     """Test socket pairs which are are actually connected to
     each other.
     """
@@ -349,7 +272,7 @@ class TestConnectedSocket(_ConnTestCase):
             client.close()
 
 
-class TestFilters(_ConnTestCase):
+class TestFilters(ConnectionTestCase):
 
     def test_filters(self):
         def check(kind, families, types):
@@ -401,7 +324,7 @@ class TestFilters(_ConnTestCase):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
             all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
                          "tcp6", "udp", "udp4", "udp6")
-            self.check_connection_ntuple(conn)
+            check_connection_ntuple(conn)
             self.assertEqual(conn.family, family)
             self.assertEqual(conn.type, type)
             self.assertEqual(conn.laddr, laddr)
@@ -551,7 +474,7 @@ class TestFilters(_ConnTestCase):
 
 
 @unittest.skipIf(SKIP_SYSCONS, "requires root")
-class TestSystemWideConnections(_ConnTestCase):
+class TestSystemWideConnections(ConnectionTestCase):
     """Tests for net_connections()."""
 
     def test_it(self):
@@ -560,7 +483,7 @@ class TestSystemWideConnections(_ConnTestCase):
                 self.assertIn(conn.family, families, msg=conn)
                 if conn.family != AF_UNIX:
                     self.assertIn(conn.type, types_, msg=conn)
-                self.check_connection_ntuple(conn)
+                check_connection_ntuple(conn)
 
         with create_sockets():
             from psutil._common import conn_tmap

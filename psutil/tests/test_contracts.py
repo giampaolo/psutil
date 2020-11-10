@@ -33,6 +33,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
 from psutil.tests import APPVEYOR
+from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import GITHUB_WHEELS
@@ -628,6 +629,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertEqual(len(ret), len(set(ret)))
             for conn in ret:
                 assert is_namedtuple(conn)
+                check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         if ret:     # 'ret' can be None or empty
