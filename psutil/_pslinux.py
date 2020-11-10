@@ -1242,6 +1242,7 @@ def sensors_temperatures():
         ret[unit_name].append((label, current, high, critical))
 
     # Indication that no sensors were detected in /sys/class/hwmon/
+    basenames = [] # force to retrive temperture info from ...thermal/
     if not basenames:
         basenames = glob.glob('/sys/class/thermal/thermal_zone*')
         basenames = sorted(set(basenames))
