@@ -9,19 +9,14 @@
 
 
 #include <Python.h>
-#include <assert.h>
 #include <errno.h>
-#include <limits.h>  // for INT_MAX
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
 #include <sys/sysctl.h>
 #include <libproc.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 #include "process_info.h"
+
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -33,16 +28,15 @@
  */
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
-    int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+    int mib[3];
     size_t size, size2;
     void *ptr;
     int err;
     int lim = 8;  // some limit
 
-    assert( procList != NULL);
-    assert(*procList == NULL);
-    assert(procCount != NULL);
-
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_ALL;
     *procCount = 0;
 
     /*
@@ -59,7 +53,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
      */
     while (lim-- > 0) {
         size = 0;
-        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1) {
+        if (sysctl((int *)mib, 3, NULL, &size, NULL, 0) == -1) {
             PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
             return 1;
         }
@@ -79,7 +73,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
             return 1;
         }
 
-        if (sysctl((int *)mib3, 3, ptr, &size, NULL, 0) == -1) {
+        if (sysctl((int *)mib, 3, ptr, &size, NULL, 0) == -1) {
             err = errno;
             free(ptr);
             if (err != ENOMEM) {
@@ -104,15 +98,44 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 
 
 // Read the maximum argument size for processes
-int
-psutil_get_argmax() {
+static int
+psutil_sysctl_argmax() {
     int argmax;
-    int mib[] = { CTL_KERN, KERN_ARGMAX };
+    int mib[2];
     size_t size = sizeof(argmax);
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARGMAX;
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
         return argmax;
     PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
+    return 0;
+}
+
+
+// Read process argument space.
+static int
+psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
+    int mib[3];
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = pid;
+
+    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
+        // In case of zombie process we'll get EINVAL. We translate it
+        // to NSP and _psosx.py will translate it to ZP.
+        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
+            NoSuchProcess("sysctl");
+        else if (errno == EIO) {
+            psutil_debug("EIO, pid_exists() = %i\n", psutil_pid_exists(pid));
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
+        }
+        else
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
+        return 1;
+    }
     return 0;
 }
 
@@ -128,11 +151,9 @@ psutil_is_zombie(pid_t pid) {
 }
 
 
-
 // return process args as a python list
 PyObject *
 psutil_get_cmdline(pid_t pid) {
-    int mib[3];
     int nargs;
     size_t len;
     char *procargs = NULL;
@@ -149,7 +170,7 @@ psutil_get_cmdline(pid_t pid) {
         return Py_BuildValue("[]");
 
     // read argmax and allocate memory for argument space.
-    argmax = psutil_get_argmax();
+    argmax = psutil_sysctl_argmax();
     if (! argmax)
         goto error;
 
@@ -159,19 +180,8 @@ psutil_get_cmdline(pid_t pid) {
         goto error;
     }
 
-    // read argument space
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
-    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        // In case of zombie process we'll get EINVAL. We translate it
-        // to NSP and _psosx.py will translate it to ZP.
-        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("sysctl");
-        else
-            PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
         goto error;
-    }
 
     arg_end = &procargs[argmax];
     // copy the number of arguments to nargs
@@ -226,7 +236,6 @@ error:
 // return process environment as a python string
 PyObject *
 psutil_get_environ(pid_t pid) {
-    int mib[3];
     int nargs;
     char *procargs = NULL;
     char *procenv = NULL;
@@ -241,7 +250,7 @@ psutil_get_environ(pid_t pid) {
         goto empty;
 
     // read argmax and allocate memory for argument space.
-    argmax = psutil_get_argmax();
+    argmax = psutil_sysctl_argmax();
     if (! argmax)
         goto error;
 
@@ -251,19 +260,8 @@ psutil_get_environ(pid_t pid) {
         goto error;
     }
 
-    // read argument space
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
-    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        // In case of zombie process we'll get EINVAL. We translate it
-        // to NSP and _psosx.py will translate it to ZP.
-        if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("sysctl");
-        else
-            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
+    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
         goto error;
-    }
 
     arg_end = &procargs[argmax];
     // copy the number of arguments to nargs

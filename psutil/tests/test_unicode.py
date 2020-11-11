@@ -135,8 +135,6 @@ def try_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
     """
-    if PY3:
-        return True
     sproc = None
     testfn = get_testfn(suffix=suffix)
     try:
