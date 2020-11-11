@@ -713,18 +713,15 @@ class TestProcess(PsutilTestCase):
     def test_cmdline(self):
         cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
         p = self.spawn_psproc(cmdline)
-        try:
+        # XXX - most of the times the underlying sysctl() call on Net
+        # and Open BSD returns a truncated string.
+        # Also /proc/pid/cmdline behaves the same so it looks
+        # like this is a kernel bug.
+        # XXX - AIX truncates long arguments in /proc/pid/cmdline
+        if NETBSD or OPENBSD or AIX:
+            self.assertEqual(p.cmdline()[0], PYTHON_EXE)
+        else:
             self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
-        except AssertionError:
-            # XXX - most of the times the underlying sysctl() call on Net
-            # and Open BSD returns a truncated string.
-            # Also /proc/pid/cmdline behaves the same so it looks
-            # like this is a kernel bug.
-            # XXX - AIX truncates long arguments in /proc/pid/cmdline
-            if NETBSD or OPENBSD or AIX:
-                self.assertEqual(p.cmdline()[0], PYTHON_EXE)
-            else:
-                raise
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
