@@ -599,7 +599,7 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertIsInstance(nt.opts, str)
             self.assertIsInstance(nt.maxfile, (int, type(None)))
             self.assertIsInstance(nt.maxpath, (int, type(None)))
-            if nt.maxfile is not None:
+            if nt.maxfile is not None and not GITHUB_WHEELS:
                 self.assertGreater(nt.maxfile, 0)
             if nt.maxpath is not None:
                 self.assertGreater(nt.maxpath, 0)
