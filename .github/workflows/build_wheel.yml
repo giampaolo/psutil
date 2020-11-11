@@ -6,7 +6,7 @@ jobs:
   wheel:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout: 30
+    timeout-minutes: 30
     strategy:
       fail-fast: false  # whether to exit the whole run on first failure
       matrix:
