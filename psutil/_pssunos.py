@@ -155,7 +155,7 @@ def swap_memory():
     total = free = 0
     for line in lines:
         line = line.split()
-        t, f = line[-2:]
+        t, f = line[3:4]
         total += int(int(t) * 512)
         free += int(int(f) * 512)
     used = total - free
