@@ -1,0 +1,16 @@
+name: FreeBSD
+
+on: [push, pull_request]
+
+jobs:
+  freebsd:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: meson test
+      uses: vmactions/freebsd-vm@v0.0.7
+      with:
+        prepare: |
+          pkg install -y gcc python3
+        run: |
+          python3 -Wa {project}/psutil/tests/runner.py
