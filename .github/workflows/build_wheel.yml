@@ -1,4 +1,4 @@
-name: Linux, macOS, Windows (test + wheels)
+name: Linux, macOS, Windows
 
 on: [push, pull_request]
 

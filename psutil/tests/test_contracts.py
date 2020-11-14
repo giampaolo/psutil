@@ -36,7 +36,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import enum
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
@@ -89,8 +89,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    @unittest.skipIf(GITHUB_WHEELS and LINUX,
-                     "unsupported on GITHUB_WHEELS + LINUX")
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
     def test_rlimit(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
@@ -166,8 +166,8 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
-    @unittest.skipIf(GITHUB_WHEELS and LINUX,
-                     "unsupported on GITHUB_WHEELS + LINUX")
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
     def test_rlimit(self):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 

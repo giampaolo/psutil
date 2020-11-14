@@ -49,7 +49,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
 from psutil.tests import TRAVIS
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
@@ -599,7 +599,7 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertIsInstance(nt.opts, str)
             self.assertIsInstance(nt.maxfile, (int, type(None)))
             self.assertIsInstance(nt.maxpath, (int, type(None)))
-            if nt.maxfile is not None and not GITHUB_WHEELS:
+            if nt.maxfile is not None and not GITHUB_ACTIONS:
                 self.assertGreater(nt.maxfile, 0)
             if nt.maxpath is not None:
                 self.assertGreater(nt.maxpath, 0)
@@ -633,7 +633,7 @@ class TestDiskAPIs(PsutilTestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if (GITHUB_WHEELS or TRAVIS) and \
+                    if (GITHUB_ACTIONS or TRAVIS) and \
                             MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/

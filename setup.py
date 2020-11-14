@@ -430,9 +430,6 @@ def main():
             elif SUNOS:
                 missdeps("sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
                          "pkg install gcc")
-        elif not success and WINDOWS:
-            print(hilite("VisualStudio is not installed", color="red"),
-                  file=sys.stderr)
 
 
 if __name__ == '__main__':

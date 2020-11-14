@@ -122,8 +122,8 @@ PYPY = '__pypy__' in sys.builtin_module_names
 TRAVIS = 'TRAVIS' in os.environ
 APPVEYOR = 'APPVEYOR' in os.environ
 CIRRUS = 'CIRRUS' in os.environ
-GITHUB_WHEELS = 'CIBUILDWHEEL' in os.environ
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
+GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ
+CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_ACTIONS
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 
@@ -204,7 +204,7 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_WHEELS:
+    if GITHUB_ACTIONS:
         if PYPY:
             return which("pypy3") if PY3 else which("pypy")
         else:
@@ -499,7 +499,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
 
     def sendsig(proc, sig):
         # XXX: otherwise the build hangs for some reason.
-        if MACOS and GITHUB_WHEELS:
+        if MACOS and GITHUB_ACTIONS:
             sig = signal.SIGKILL
         # If the process received SIGSTOP, SIGCONT is necessary first,
         # otherwise SIGTERM won't work.
@@ -1132,11 +1132,15 @@ def print_sysinfo():
     # metrics
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
+    info['cpus'] = psutil.cpu_count()
     info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
         tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
     mem = psutil.virtual_memory()
-    info['memory'] = "%3s%%, %s/%s" % (
+    info['memory'] = "%s%%, %s/%s" % (
         int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
+    swap = psutil.swap_memory()
+    info['swap'] = "%s%%, %s/%s" % (
+        int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
     info['pids'] = len(psutil.pids())
     info['proc'] = pprint.pformat(pinfo)
 

@@ -43,7 +43,7 @@ from psutil.tests import CI_TESTING
 from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
@@ -1274,7 +1274,7 @@ class TestProcess(PsutilTestCase):
             assert_raises_nsp(fun, name)
 
         # NtQuerySystemInformation succeeds even if process is gone.
-        if WINDOWS and not GITHUB_WHEELS:
+        if WINDOWS and not GITHUB_ACTIONS:
             normcase = os.path.normcase
             self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
 
@@ -1398,7 +1398,7 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         d1 = clean_dict(p.environ())
         d2 = clean_dict(os.environ.copy())
-        if not OSX and GITHUB_WHEELS:
+        if not OSX and GITHUB_ACTIONS:
             self.assertEqual(d1, d2)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")

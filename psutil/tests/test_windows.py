@@ -24,7 +24,7 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
 from psutil.tests import APPVEYOR
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import IS_64BIT
 from psutil.tests import mock
@@ -68,7 +68,7 @@ def wrap_exceptions(fun):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 @unittest.skipIf(PYPY, "pywin32 not available on PYPY")
 # https://github.com/giampaolo/psutil/pull/1762#issuecomment-632892692
-@unittest.skipIf(GITHUB_WHEELS and not PY3, "pywin32 broken on GITHUB + PY2")
+@unittest.skipIf(GITHUB_ACTIONS and not PY3, "pywin32 broken on GITHUB + PY2")
 class WindowsTestCase(PsutilTestCase):
     pass
 
@@ -511,7 +511,7 @@ class TestProcessWMI(WindowsTestCase):
         self.assertEqual(p.name(), w.Caption)
 
     # This fail on github because using virtualenv for test environment
-    @unittest.skipIf(GITHUB_WHEELS, "unreliable path on GITHUB_WHEELS")
+    @unittest.skipIf(GITHUB_ACTIONS, "unreliable path on GITHUB_ACTIONS")
     def test_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
