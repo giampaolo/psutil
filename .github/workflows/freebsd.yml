@@ -11,7 +11,7 @@ jobs:
       MYTOKEN2: "value2"
     steps:
     - uses: actions/checkout@v2
-    - name: Test run
+    - name: Install & run
       id: test
       uses: vmactions/freebsd-vm@v0.0.8
       with:
@@ -21,7 +21,5 @@ jobs:
         run: |
           pwd
           ls -lah
-          whoami
-          env
-          freebsd-version
+          python3 setup.py install
           python3 -Wa psutil/psutil/tests/runner.py
