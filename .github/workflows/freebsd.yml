@@ -1,22 +1,22 @@
-name: FreeBSD
+# name: FreeBSD
 
-on: [push, pull_request]
+# on: [push, pull_request]
 
-jobs:
-  test-freebsd:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run tests
-      id: test
-      uses: vmactions/freebsd-vm@v0.0.8
-      with:
-        usesh: true
-        prepare: pkg install -y gcc python3
-        run: |
-          pwd
-          ls -lah
-          make install-pip
-          python3 -m pip install setuptools
-          python3 setup.py develop
-          python3 -Wa psutil/tests/runner.py
+# jobs:
+#   test-freebsd:
+#     runs-on: macos-latest
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: Run tests
+#       id: test
+#       uses: vmactions/freebsd-vm@v0.0.8
+#       with:
+#         usesh: true
+#         prepare: pkg install -y gcc python3
+#         run: |
+#           pwd
+#           ls -lah
+#           make install-pip
+#           python3 -m pip install setuptools
+#           python3 setup.py develop
+#           python3 -Wa psutil/tests/runner.py

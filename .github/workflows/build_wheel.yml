@@ -1,53 +1,53 @@
-name: Linux, macOS, Windows
+name: Linux, macOS, Windows, FreeBSD
 
 on: [push, pull_request]
 
 jobs:
-  linux-osx-win:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false  # whether to exit the whole run on first failure
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - {name: Linux, python: '3.9', os: ubuntu-latest}
-    env:
-      CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
-      CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
-      CIBW_TEST_EXTRAS: test
-      # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
-      CIBW_SKIP: cp35-* pp*
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+  # linux-osx-win:
+  #   name: ${{ matrix.os }}
+  #   runs-on: ${{ matrix.os }}
+  #   timeout-minutes: 30
+  #   strategy:
+  #     fail-fast: false  # whether to exit the whole run on first failure
+  #     matrix:
+  #       os: [ubuntu-latest, macos-latest, windows-latest]
+  #       include:
+  #         - {name: Linux, python: '3.9', os: ubuntu-latest}
+  #   env:
+  #     CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py
+  #     CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py
+  #     CIBW_TEST_EXTRAS: test
+  #     # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
+  #     CIBW_SKIP: cp35-* pp*
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.9
 
-    - name: (Windows) install Visual C++ for Python 2.7
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install vcpython27 -f -y
+  #   - name: (Windows) install Visual C++ for Python 2.7
+  #     if: matrix.os == 'windows-latest'
+  #     run: |
+  #       choco install vcpython27 -f -y
 
-    - name: Run tests
-      run: |
-        pip install cibuildwheel
-        cibuildwheel .
+  #   - name: Run tests
+  #     run: |
+  #       pip install cibuildwheel
+  #       cibuildwheel .
 
-    - name: Create wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: wheelhouse
+  #   - name: Create wheels
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: wheels
+  #       path: wheelhouse
 
-    - name: Print hashes
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        make generate-manifest
-        python setup.py sdist
-        mv dist/psutil*.tar.gz wheelhouse/
-        python scripts/internal/print_hashes.py wheelhouse/
+  #   - name: Print hashes
+  #     if: matrix.os == 'ubuntu-latest'
+  #     run: |
+  #       make generate-manifest
+  #       python setup.py sdist
+  #       mv dist/psutil*.tar.gz wheelhouse/
+  #       python scripts/internal/print_hashes.py wheelhouse/
 
   freebsd:
     runs-on: macos-latest
@@ -60,9 +60,7 @@ jobs:
         usesh: true
         prepare: pkg install -y gcc python3
         run: |
-          pwd
-          ls -lah
           make install-pip
           python3 -m pip install setuptools
-          python3 setup.py develop
+          python3 setup.py install
           python3 -Wa psutil/tests/runner.py
