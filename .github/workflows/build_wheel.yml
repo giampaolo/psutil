@@ -30,7 +30,7 @@ jobs:
       run: |
         choco install vcpython27 -f -y
 
-    - name: Build wheels
+    - name: Run tests
       run: |
         pip install cibuildwheel
         cibuildwheel .
@@ -41,13 +41,11 @@ jobs:
         name: wheels
         path: wheelhouse
 
-    - name: Create tar.gz
+    - name: Print hashes
       if: matrix.os == 'ubuntu-latest'
       run: |
         make generate-manifest
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
-
-    - name: Print hashes
-      run: python scripts/internal/md5sum.py wheelhouse/*
+        python scripts/internal/print_hashes.py wheelhouse/
 

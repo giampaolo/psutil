@@ -89,7 +89,7 @@ uninstall:  ## Uninstall this package via pip.
 	$(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
@@ -103,7 +103,7 @@ install-pip:  ## Install pip (no-op if already installed).
 		f.write(data); \
 		f.flush(); \
 		print('downloaded %s' % f.name); \
-		code = os.system('%s %s --user' % (sys.executable, f.name)); \
+		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
 		f.close(); \
 		sys.exit(code);"
 
