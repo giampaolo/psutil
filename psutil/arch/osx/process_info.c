@@ -297,12 +297,9 @@ psutil_get_environ(pid_t pid) {
 
     while (*arg_ptr != '\0' && arg_ptr < arg_end) {
         char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
-
         if (s == NULL)
             break;
-
         memcpy(procenv + (arg_ptr - env_start), arg_ptr, s - arg_ptr);
-
         arg_ptr = s + 1;
     }
 

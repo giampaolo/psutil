@@ -32,6 +32,10 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
             pyenv install 3.8.5
             pyenv virtualenv 3.8.5 psutil
             ;;
+        py39)
+            pyenv install 3.9.0
+            pyenv virtualenv 3.9.0 psutil
+            ;;
     esac
     pyenv rehash
     pyenv activate psutil
@@ -41,4 +45,4 @@ if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]] || [[ $PYVER == 'py27' ]]; then
     pip install -U ipaddress mock unittest2
 fi
 
-pip install -U coverage coveralls flake8 setuptools
+pip install -U coverage coveralls flake8 setuptools twine

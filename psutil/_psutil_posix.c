@@ -28,17 +28,20 @@
     #include <netdb.h>
     #include <linux/types.h>
     #include <linux/if_packet.h>
-#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#endif
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
     #include <netinet/in.h>
     #include <net/if_dl.h>
     #include <sys/sockio.h>
     #include <net/if_media.h>
     #include <net/if.h>
-#elif defined(PSUTIL_SUNOS)
+#endif
+#if defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
-#elif defined(PSUTIL_AIX)
+#endif
+#if defined(PSUTIL_AIX)
     #include <netdb.h>
 #endif
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)

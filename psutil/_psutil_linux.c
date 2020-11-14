@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <sys/resource.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -41,17 +42,6 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 
 // Linux >= 2.6.13
 #define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
-
-// Linux >= 2.6.36 (supposedly) and glibc >= 2.13
-#define PSUTIL_HAVE_PRLIMIT \
-    defined(__NR_prlimit64) && \
-    (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13)
-
-#if PSUTIL_HAVE_PRLIMIT
-    #define _FILE_OFFSET_BITS 64
-    #include <time.h>
-    #include <sys/resource.h>
-#endif
 
 // Should exist starting from CentOS 6 (year 2011).
 #ifdef CPU_ALLOC
@@ -129,66 +119,6 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
     Py_RETURN_NONE;
-}
-#endif
-
-
-#if PSUTIL_HAVE_PRLIMIT
-/*
- * A wrapper around prlimit(2); sets process resource limits.
- * This can be used for both get and set, in which case extra
- * 'soft' and 'hard' args must be provided.
- */
-static PyObject *
-psutil_linux_prlimit(PyObject *self, PyObject *args) {
-    pid_t pid;
-    int ret, resource;
-    struct rlimit old, new;
-    struct rlimit *newp = NULL;
-    PyObject *py_soft = NULL;
-    PyObject *py_hard = NULL;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i|OO", &pid, &resource,
-                           &py_soft, &py_hard)) {
-        return NULL;
-    }
-
-    // get
-    if (py_soft == NULL && py_hard == NULL) {
-        ret = prlimit(pid, resource, NULL, &old);
-        if (ret == -1)
-            return PyErr_SetFromErrno(PyExc_OSError);
-        if (sizeof(old.rlim_cur) > sizeof(long)) {
-            return Py_BuildValue("LL",
-                                 (PY_LONG_LONG)old.rlim_cur,
-                                 (PY_LONG_LONG)old.rlim_max);
-        }
-        return Py_BuildValue("ll", (long)old.rlim_cur, (long)old.rlim_max);
-    }
-
-    // set
-    else {
-#if defined(HAVE_LONG_LONG)
-        new.rlim_cur = PyLong_AsLongLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLongLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-#else
-        new.rlim_cur = PyLong_AsLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-#endif
-        newp = &new;
-        ret = prlimit(pid, resource, newp, &old);
-        if (ret == -1)
-            return PyErr_SetFromErrno(PyExc_OSError);
-        Py_RETURN_NONE;
-    }
 }
 #endif
 
@@ -572,10 +502,6 @@ static PyMethodDef mod_methods[] = {
 
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-#if PSUTIL_HAVE_PRLIMIT
-    {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
-     "Get or set process resource limits."},
-#endif
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},

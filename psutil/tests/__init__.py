@@ -97,7 +97,7 @@ __all__ = [
     'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
     'get_testfn',
     # os
-    'get_winver', 'get_kernel_version',
+    'get_winver', 'kernel_version',
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
@@ -122,8 +122,8 @@ PYPY = '__pypy__' in sys.builtin_module_names
 TRAVIS = 'TRAVIS' in os.environ
 APPVEYOR = 'APPVEYOR' in os.environ
 CIRRUS = 'CIRRUS' in os.environ
-GITHUB_WHEELS = 'CIBUILDWHEEL' in os.environ
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_WHEELS
+GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
+CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_ACTIONS
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 
@@ -204,7 +204,7 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_WHEELS:
+    if GITHUB_ACTIONS:
         if PYPY:
             return which("pypy3") if PY3 else which("pypy")
         else:
@@ -499,7 +499,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
 
     def sendsig(proc, sig):
         # XXX: otherwise the build hangs for some reason.
-        if MACOS and GITHUB_WHEELS:
+        if MACOS and GITHUB_ACTIONS:
             sig = signal.SIGKILL
         # If the process received SIGSTOP, SIGCONT is necessary first,
         # otherwise SIGTERM won't work.
@@ -597,7 +597,7 @@ def reap_children(recursive=False):
 # ===================================================================
 
 
-def get_kernel_version():
+def kernel_version():
     """Return a tuple such as (2, 6, 36)."""
     if not POSIX:
         raise NotImplementedError("not POSIX")
@@ -902,7 +902,13 @@ class PsutilTestCase(TestCase):
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, proc.pid)
         if isinstance(proc, (psutil.Process, psutil.Popen)):
             assert not proc.is_running()
-            self.assertRaises(psutil.NoSuchProcess, proc.status)
+            try:
+                status = proc.status()
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                raise AssertionError("Process.status() didn't raise exception "
+                                     "(status=%s)" % status)
             proc.wait(timeout=0)  # assert not raise TimeoutExpired
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
@@ -1059,39 +1065,90 @@ def print_sysinfo():
     import collections
     import datetime
     import getpass
+    import locale
     import platform
+    import pprint
+    try:
+        import pip
+    except ImportError:
+        pip = None
+    try:
+        import wheel
+    except ImportError:
+        wheel = None
 
     info = collections.OrderedDict()
-    info['OS'] = platform.system()
-    if psutil.OSX:
-        info['version'] = str(platform.mac_ver())
+
+    # OS
+    if psutil.LINUX and which('lsb_release'):
+        info['OS'] = sh('lsb_release -d -s')
+    elif psutil.OSX:
+        info['OS'] = 'Darwin %s' % platform.mac_ver()[0]
     elif psutil.WINDOWS:
-        info['version'] = ' '.join(map(str, platform.win32_ver()))
+        info['OS'] = "Windows " + ' '.join(
+            map(str, platform.win32_ver()))
         if hasattr(platform, 'win32_edition'):
-            info['edition'] = platform.win32_edition()
+            info['OS'] += ", " + platform.win32_edition()
     else:
-        info['version'] = platform.version()
-    if psutil.POSIX:
-        info['kernel'] = '.'.join(map(str, get_kernel_version()))
+        info['OS'] = "%s %s" % (platform.system(), platform.version())
     info['arch'] = ', '.join(
         list(platform.architecture()) + [platform.machine()])
-    info['hostname'] = platform.node()
+    if psutil.POSIX:
+        info['kernel'] = platform.uname()[2]
+
+    # python
     info['python'] = ', '.join([
         platform.python_implementation(),
         platform.python_version(),
         platform.python_compiler()])
+    info['pip'] = getattr(pip, '__version__', 'not installed')
+    if wheel is not None:
+        info['pip'] += " (wheel=%s)" % wheel.__version__
+
+    # UNIX
     if psutil.POSIX:
+        if which('gcc'):
+            out = sh(['gcc', '--version'])
+            info['gcc'] = str(out).split('\n')[0]
+        else:
+            info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
         if s:
             info['glibc'] = s
+
+    # system
     info['fs-encoding'] = sys.getfilesystemencoding()
+    lang = locale.getlocale()
+    info['lang'] = '%s, %s' % (lang[0], lang[1])
+    info['boot-time'] = datetime.datetime.fromtimestamp(
+        psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
     info['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     info['user'] = getpass.getuser()
-    info['pid'] = os.getpid()
-    print("=" * 70)  # NOQA
+    info['home'] = os.path.expanduser("~")
+    info['cwd'] = os.getcwd()
+    info['hostname'] = platform.node()
+    info['PID'] = os.getpid()
+
+    # metrics
+    pinfo = psutil.Process().as_dict()
+    pinfo.pop('memory_maps', None)
+    info['cpus'] = psutil.cpu_count()
+    info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
+        tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
+    mem = psutil.virtual_memory()
+    info['memory'] = "%s%%, %s/%s" % (
+        int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
+    swap = psutil.swap_memory()
+    info['swap'] = "%s%%, %s/%s" % (
+        int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
+    info['pids'] = len(psutil.pids())
+    info['proc'] = pprint.pformat(pinfo)
+
+    print("=" * 70, file=sys.stderr)  # NOQA
     for k, v in info.items():
-        print("%-14s %s" % (k + ':', v))  # NOQA
-    print("=" * 70)  # NOQA
+        print("%-17s %s" % (k + ':', v), file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)  # NOQA
+    sys.stdout.flush()
 
 
 def _get_eligible_cpu():
@@ -1099,7 +1156,7 @@ def _get_eligible_cpu():
     if hasattr(p, "cpu_num"):
         return p.cpu_num()
     elif hasattr(p, "cpu_affinity"):
-        return p.cpu_affinity()[0]
+        return random.choice(p.cpu_affinity())
     return 0
 
 
@@ -1366,8 +1423,9 @@ def skip_on_not_implemented(only_if=None):
 # ===================================================================
 
 
+# XXX: no longer used
 def get_free_port(host='127.0.0.1'):
-    """Return an unused TCP port."""
+    """Return an unused TCP port. Subject to race conditions."""
     with contextlib.closing(socket.socket()) as sock:
         sock.bind((host, 0))
         return sock.getsockname()[1]
@@ -1502,6 +1560,83 @@ def check_net_address(addr, family):
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
+
+
+def check_connection_ntuple(conn):
+    """Check validity of a connection namedtuple."""
+    def check_ntuple(conn):
+        has_pid = len(conn) == 7
+        assert len(conn) in (6, 7), len(conn)
+        assert conn[0] == conn.fd, conn.fd
+        assert conn[1] == conn.family, conn.family
+        assert conn[2] == conn.type, conn.type
+        assert conn[3] == conn.laddr, conn.laddr
+        assert conn[4] == conn.raddr, conn.raddr
+        assert conn[5] == conn.status, conn.status
+        if has_pid:
+            assert conn[6] == conn.pid, conn.pid
+
+    def check_family(conn):
+        assert conn.family in (AF_INET, AF_INET6, AF_UNIX), conn.family
+        if enum is not None:
+            assert isinstance(conn.family, enum.IntEnum), conn
+        else:
+            assert isinstance(conn.family, int), conn
+        if conn.family == AF_INET:
+            # actually try to bind the local socket; ignore IPv6
+            # sockets as their address might be represented as
+            # an IPv4-mapped-address (e.g. "::127.0.0.1")
+            # and that's rejected by bind()
+            s = socket.socket(conn.family, conn.type)
+            with contextlib.closing(s):
+                try:
+                    s.bind((conn.laddr[0], 0))
+                except socket.error as err:
+                    if err.errno != errno.EADDRNOTAVAIL:
+                        raise
+        elif conn.family == AF_UNIX:
+            assert conn.status == psutil.CONN_NONE, conn.status
+
+    def check_type(conn):
+        # SOCK_SEQPACKET may happen in case of AF_UNIX socks
+        SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
+        assert conn.type in (socket.SOCK_STREAM, socket.SOCK_DGRAM,
+                             SOCK_SEQPACKET), conn.type
+        if enum is not None:
+            assert isinstance(conn.type, enum.IntEnum), conn
+        else:
+            assert isinstance(conn.type, int), conn
+        if conn.type == socket.SOCK_DGRAM:
+            assert conn.status == psutil.CONN_NONE, conn.status
+
+    def check_addrs(conn):
+        # check IP address and port sanity
+        for addr in (conn.laddr, conn.raddr):
+            if conn.family in (AF_INET, AF_INET6):
+                assert isinstance(addr, tuple), type(addr)
+                if not addr:
+                    continue
+                assert isinstance(addr.port, int), type(addr.port)
+                assert 0 <= addr.port <= 65535, addr.port
+                check_net_address(addr.ip, conn.family)
+            elif conn.family == AF_UNIX:
+                assert isinstance(addr, str), type(addr)
+
+    def check_status(conn):
+        assert isinstance(conn.status, str), conn.status
+        valids = [getattr(psutil, x) for x in dir(psutil)
+                  if x.startswith('CONN_')]
+        assert conn.status in valids, conn.status
+        if conn.family in (AF_INET, AF_INET6) and conn.type == SOCK_STREAM:
+            assert conn.status != psutil.CONN_NONE, conn.status
+        else:
+            assert conn.status == psutil.CONN_NONE, conn.status
+
+    check_ntuple(conn)
+    check_family(conn)
+    check_type(conn)
+    check_addrs(conn)
+    check_status(conn)
 
 
 # ===================================================================

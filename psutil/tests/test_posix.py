@@ -371,6 +371,7 @@ class TestSystemAPIs(PsutilTestCase):
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @unittest.skipIf(AIX, "unreliable on AIX")
+    @retry_on_failure()
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()

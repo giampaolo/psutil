@@ -211,7 +211,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             Py_RETURN_NONE;
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
             return NULL;
         }
     }
