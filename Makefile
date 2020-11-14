@@ -214,14 +214,10 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py --user giampaolo --project psutil
+	${MAKE} print-wheels
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
-
-download-wheels:  ## Download wheels from github and appveyor
-	rm -rf dist
-	# ${MAKE} download-wheels-appveyor
-	${MAKE} download-wheels-github
 	${MAKE} print-wheels
 
 print-wheels:  ## Print downloaded wheels
@@ -268,7 +264,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} download-wheels
+	${MAKE} download-wheels-github
 	${MAKE} sdist
 	$(PYTHON) -m twine check dist/*
 	${MAKE} md5-dist

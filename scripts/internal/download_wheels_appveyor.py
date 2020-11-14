@@ -66,7 +66,7 @@ def get_file_urls(options):
                 yield url
 
 
-def rename_27_wheels():
+def rename_win27_wheels():
     # See: https://github.com/giampaolo/psutil/issues/810
     src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
     dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
@@ -101,7 +101,7 @@ def run(options):
         return exit("expected %s files, got %s" % (expected, completed))
     if exc:
         return exit()
-    rename_27_wheels()
+    rename_win27_wheels()
 
 
 def main():

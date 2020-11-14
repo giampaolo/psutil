@@ -8,7 +8,7 @@ required, see
 Build, setup and running tests
 ===============================
 
-Once you have a compiler installed::
+Once you have a compiler installed:
 
 .. code-block:: bash
 
@@ -18,7 +18,7 @@ Once you have a compiler installed::
     make install
     make test
 
-- ``make``(see `Makefile`_) is the designated tool to run tests, build, install
+- ``make`` (see `Makefile`_) is the designated tool to run tests, build, install
   try new features you're developing, etc. This also includes Windows (see
   `make.bat`_ ).
   Some useful commands are:

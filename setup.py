@@ -431,13 +431,8 @@ def main():
                 missdeps("sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
                          "pkg install gcc")
         elif not success and WINDOWS:
-            if PY3:
-                ur = "http://www.visualstudio.com/en-au/news/vs2015-preview-vs"
-            else:
-                ur = "http://www.microsoft.com/en-us/download/"
-                ur += "details.aspx?id=44266"
-            s = "VisualStudio is not installed; get it from %s" % ur
-            print(hilite(s, color="red"), file=sys.stderr)
+            print(hilite("VisualStudio is not installed", color="red"),
+                  file=sys.stderr)
 
 
 if __name__ == '__main__':
