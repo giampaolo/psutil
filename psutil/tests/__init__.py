@@ -122,7 +122,7 @@ PYPY = '__pypy__' in sys.builtin_module_names
 TRAVIS = 'TRAVIS' in os.environ
 APPVEYOR = 'APPVEYOR' in os.environ
 CIRRUS = 'CIRRUS' in os.environ
-GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ
+GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_ACTIONS
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
