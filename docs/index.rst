@@ -2518,10 +2518,12 @@ FAQs
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
   On Unix you may run the Python process as root or use the SUID bit
-  (this is the trick used by tools such as ``ps`` and ``netstat``).
+  (``ps`` and ``netstat`` does this).
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
-  the Python script as a Windows service (this is the trick used by tools
-  such as ProcessHacker).
+  the Python script as a Windows service (ProcessHacker does this).
+
+* Q: is MinGW supported on Windows?
+* A: no, you should Visual Studio (see `development guide`_).
 
 Running tests
 =============

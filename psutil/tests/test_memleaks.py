@@ -243,7 +243,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
-        self.execute_w_exc(OSError, lambda: self.proc.rlimit(-1))
+        self.execute_w_exc((OSError, ValueError), lambda: self.proc.rlimit(-1))
 
     @fewtimes_if_linux()
     # Windows implementation is based on a single system-wide

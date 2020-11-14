@@ -75,7 +75,6 @@ __extra__all__ = [
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
-HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
@@ -305,6 +304,54 @@ except Exception:  # pragma: no cover
     # Don't want to crash at import time.
     traceback.print_exc()
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
+
+# =====================================================================
+# --- prlimit
+# =====================================================================
+
+# Backport of resource.prlimit() for Python 2. Originally this was done
+# in C, but CentOS-6 which we use to create manylinux wheels is too old
+# and does not support prlimit() syscall. As such the resulting wheel
+# would not include prlimit(), even when installed on newer systems.
+# This is the only part of psutil using ctypes.
+
+prlimit = None
+try:
+    from resource import prlimit  # python >= 3.4
+except ImportError:
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+
+    if hasattr(libc, "prlimit"):
+
+        def prlimit(pid, resource_, limits=None):
+            class StructRlimit(ctypes.Structure):
+                _fields_ = [('rlim_cur', ctypes.c_longlong),
+                            ('rlim_max', ctypes.c_longlong)]
+
+            current = StructRlimit()
+            if limits is None:
+                # get
+                ret = libc.prlimit(pid, resource_, None, ctypes.byref(current))
+            else:
+                # set
+                new = StructRlimit()
+                new.rlim_cur = limits[0]
+                new.rlim_max = limits[1]
+                ret = libc.prlimit(
+                    pid, resource_, ctypes.byref(new), ctypes.byref(current))
+
+            if ret != 0:
+                errno = ctypes.get_errno()
+                raise OSError(errno, os.strerror(errno))
+            return (current.rlim_cur, current.rlim_max)
+
+
+if prlimit is not None:
+    __extra__all__.extend(
+        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()])
 
 
 # =====================================================================
@@ -1990,10 +2037,10 @@ class Process(object):
                 raise ValueError("value not in 0-7 range")
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
-    if HAS_PRLIMIT:
+    if prlimit is not None:
 
         @wrap_exceptions
-        def rlimit(self, resource, limits=None):
+        def rlimit(self, resource_, limits=None):
             # If pid is 0 prlimit() applies to the calling process and
             # we don't want that. We should never get here though as
             # PID 0 is not supported on Linux.
@@ -2002,15 +2049,14 @@ class Process(object):
             try:
                 if limits is None:
                     # get
-                    return cext.linux_prlimit(self.pid, resource)
+                    return prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
                         raise ValueError(
                             "second argument must be a (soft, hard) tuple, "
                             "got %s" % repr(limits))
-                    soft, hard = limits
-                    cext.linux_prlimit(self.pid, resource, soft, hard)
+                    prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS and pid_exists(self.pid):
                     # I saw this happening on Travis:

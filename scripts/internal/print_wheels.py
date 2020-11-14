@@ -42,16 +42,18 @@ def main():
         else:
             assert 0, name
 
-    totsize = 0
+    tot_files = 0
+    tot_size = 0
     templ = "%-54s %7s %7s %7s"
     for platf, names in groups.items():
         ppn = "%s (total = %s)" % (platf.replace('_', ' '), len(names))
         s = templ % (ppn, "size", "arch", "pyver")
         print_color('\n' + s, color=None, bold=True)
         for name in sorted(names):
+            tot_files += 1
             path = os.path.join('dist', name)
             size = os.path.getsize(path)
-            totsize += size
+            tot_size += size
             arch = '64' if is64bit(name) else '32'
             pyver = 'pypy' if name.split('-')[3].startswith('pypy') else 'py'
             pyver += name.split('-')[2][2:]
@@ -60,6 +62,9 @@ def main():
                 print_color(s, color='violet')
             else:
                 print_color(s, color='brown')
+
+    print_color("\ntotals: files=%s, size=%s" % (
+        tot_files, bytes2human(tot_size)), bold=1)
 
 
 if __name__ == '__main__':

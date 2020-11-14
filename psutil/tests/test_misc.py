@@ -17,6 +17,7 @@ import os
 import pickle
 import socket
 import stat
+import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -48,6 +49,9 @@ import psutil
 import psutil.tests
 
 
+PYTHON_39 = sys.version_info[:2] == (3, 9)
+
+
 # ===================================================================
 # --- Misc / generic tests.
 # ===================================================================
@@ -60,7 +64,8 @@ class TestMisc(PsutilTestCase):
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name='%s'" % p.name(), r)
+        self.assertIn("name='%s'" % str(p.name()),
+                      r.replace("name=u'", "name='"))
         self.assertIn("status=", r)
         self.assertNotIn("exitcode=", r)
         p.terminate()
@@ -633,6 +638,8 @@ class TestWrapNumbers(PsutilTestCase):
 
 @unittest.skipIf(not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
+# XXX
+@unittest.skipIf(TRAVIS and PYTHON_39, "unreliable on TRAVIS + PYTHON_39")
 class TestScripts(PsutilTestCase):
     """Tests for scripts in the "scripts" directory."""
 
