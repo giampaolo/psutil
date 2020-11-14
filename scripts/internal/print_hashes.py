@@ -5,10 +5,10 @@
 # found in the LICENSE file.
 
 """
-Similar to md5sum utility on UNIX. Prints MD5 and SHA256 checksums of file(s).
+Prints files hashes.
+See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode
 """
 
-import glob
 import hashlib
 import os
 import sys
@@ -22,15 +22,13 @@ def csum(file, kind):
 
 
 def main():
-    files = sys.argv[1:]
-    if not files:
-        sys.exit("provide an argument")
-    if os.name == 'nt' and '*' in files[0]:
-        files = glob.glob(files[0])
-    for file in files:
+    dir = sys.argv[1]
+    for name in sorted(os.listdir(dir)):
+        file = os.path.join(dir, name)
         md5 = csum(file, "md5")
         sha256 = csum(file, "sha256")
-        print("%-50s md5:%s sha256:%s" % (os.path.basename(file), md5, sha256))
+        print("%s\nmd5: %s\nsha256: %s\n" % (
+            os.path.basename(file), md5, sha256))
 
 
 if __name__ == "__main__":

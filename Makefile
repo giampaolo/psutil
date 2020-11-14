@@ -243,9 +243,6 @@ upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
-md5sum:
-	$(PYTHON) scripts/internal/md5sum.py dist/*
-
 # --- others
 
 check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
@@ -308,6 +305,9 @@ print-api-speed:  ## Benchmark all API calls
 
 print-downloads:  ## Print PYPI download statistics
 	$(PYTHON) scripts/internal/print_downloads.py
+
+print-hashes:  ## Prints hashes of files in dist/ directory
+	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 # ===================================================================
 # Misc

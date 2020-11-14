@@ -6,16 +6,22 @@
 
 """
 Prints release announce based on HISTORY.rst file content.
+See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode
 """
 
 import os
 import re
+import subprocess
+import sys
 
 from psutil import __version__ as PRJ_VERSION
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-HISTORY = os.path.abspath(os.path.join(HERE, '../../HISTORY.rst'))
+ROOT = os.path.realpath(os.path.join(HERE, '..', '..'))
+HISTORY = os.path.join(ROOT, 'HISTORY.rst')
+PRINT_HASHES_SCRIPT = os.path.join(
+    ROOT, 'scripts', 'internal', 'print_hashes.py')
 
 PRJ_NAME = 'psutil'
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
@@ -55,6 +61,11 @@ Links
 - Download: {prj_urldownload}
 - Documentation: {prj_urldoc}
 - What's new: {prj_urlwhatsnew}
+
+Hashes
+======
+
+{hashes}
 
 --
 
@@ -100,6 +111,8 @@ def get_changes():
 
 def main():
     changes = get_changes()
+    hashes = subprocess.check_output(
+        [sys.executable, PRINT_HASHES_SCRIPT, 'dist/']).strip().decode()
     print(template.format(
         prj_name=PRJ_NAME,
         prj_version=PRJ_VERSION,
@@ -108,6 +121,7 @@ def main():
         prj_urldoc=PRJ_URL_DOC,
         prj_urlwhatsnew=PRJ_URL_WHATSNEW,
         changes=changes,
+        hashes=hashes,
     ))
 
 
