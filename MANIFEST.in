@@ -1,4 +1,3 @@
-include .cirrus.yml
 include .coveragerc
 include .flake8
 include .gitignore
