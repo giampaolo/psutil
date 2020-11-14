@@ -1,12 +1,38 @@
-Linux, Windows, macOS
-=====================
+Linux, Windows, macOS (wheels)
+==============================
 
-Wheel binaries are provided for these platforms, so all you have to do is this::
+psutil makes extensive use of C extension modules, meaning a C compiler is
+required.
+For these 3 platforms though, pre-compiled cPython wheels are provided on each
+psutil release, so all you have to do is this::
 
-    python3 -m pip install psutil
+    pip3 install psutil
 
-If you whish to install from sources instead, take a look at the
-`dev guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`__.
+If wheels are not available and you whish to install from sources, keep reading.
+
+Linux (install from sources)
+============================
+
+Ubuntu / Debian::
+
+    sudo apt-get install gcc python3-dev
+    pip3 install --user psutil --no-binary :all:
+
+RedHat / CentOS::
+
+    sudo yum install gcc python3-devel
+    pip3 install --user psutil --no-binary :all:
+
+Windows (install from sources)
+==============================
+
+In order to compile psutil on Windows you'll need **Visual Studio**.
+Here's a couple of guides describing how to do it: `1 <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
+and `2 <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__. And then::
+
+    pip3 install --user psutil --no-binary :all:
+
+Note that MinGW compiler is not supported.
 
 FreeBSD
 =======
@@ -47,16 +73,6 @@ Install::
     pkg install gcc
     python3 -m pip install psutil
 
-
-Install from sources
-====================
-
-::
-
-    git clone https://github.com/giampaolo/psutil.git
-    cd psutil
-    python3 setup.py install
-
 Testing installation
 ====================
 
@@ -73,14 +89,13 @@ Install pip
 ===========
 
 Pip is shipped by default with Python 2.7.9+ and 3.4+.
-For other Python versions you can install it manually.
-On Linux or via wget::
+If you don't have it you can install with wget::
 
-    wget https://bootstrap.pypa.io/get-pip.py -O - | python
+    wget https://bootstrap.pypa.io/get-pip.py -O - | python3
 
-On macOS or via curl::
+...ow with curl::
 
-    python < <(curl -s https://bootstrap.pypa.io/get-pip.py)
+    python3 < <(curl -s https://bootstrap.pypa.io/get-pip.py)
 
 On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`__, open
 cmd.exe and install it::
@@ -90,12 +105,11 @@ cmd.exe and install it::
 Permission issues (UNIX)
 ========================
 
-The commands below assume you're running as root.
-If you aren't or you bump into permission errors you can either install psutil
-for your user only::
+If you bump into permission errors you have two options.
+Install psutil for your user only::
 
     pip3 install --user psutil
 
-...or prepend ``sudo`` and install it globally, e.g.::
+...or prepend ``sudo`` and install it at system level::
 
     sudo pip3 install psutil

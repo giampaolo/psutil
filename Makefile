@@ -220,7 +220,7 @@ download-wheels-github:  ## Download latest wheels hosted on github.
 
 download-wheels:  ## Download wheels from github and appveyor
 	rm -rf dist
-	${MAKE} download-wheels-appveyor
+	# ${MAKE} download-wheels-appveyor
 	${MAKE} download-wheels-github
 	${MAKE} print-wheels
 
@@ -279,9 +279,9 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
-	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
+	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 	${MAKE} tidelift-relnotes
