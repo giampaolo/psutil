@@ -1,11 +1,11 @@
-name: FreeBSD test
+name: FreeBSD
 
 on: [push, pull_request]
 
 jobs:
-  testfreebsd:
+  test-freebsd:
     runs-on: macos-latest
-    name: A job to run test FreeBSD
+    name: Test run
     env:
       MYTOKEN : ${{ secrets.MYTOKEN }}
       MYTOKEN2: "value2"
@@ -15,11 +15,12 @@ jobs:
       id: test
       uses: vmactions/freebsd-vm@v0.0.8
       with:
-        envs: 'MYTOKEN MYTOKEN2'
         usesh: true
         prepare: pkg install -y gcc python3
         run: |
           pwd
           ls -lah
+          make install-pip
+          python3 -m pip install setuptools
           python3 setup.py install
-          python3 -Wa psutil/psutil/tests/runner.py
+          python3 -Wa psutil/tests/runner.py
