@@ -33,7 +33,6 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
-from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import reap_children
@@ -161,7 +160,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         return conn
 
     def test_tcp_v4(self):
-        addr = ("127.0.0.1", get_free_port())
+        addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
@@ -169,14 +168,14 @@ class TestUnconnectedSockets(ConnectionTestCase):
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
     def test_tcp_v6(self):
-        addr = ("::1", get_free_port())
+        addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     def test_udp_v4(self):
-        addr = ("127.0.0.1", get_free_port())
+        addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
@@ -184,7 +183,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
     def test_udp_v6(self):
-        addr = ("::1", get_free_port())
+        addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
             assert not conn.raddr
@@ -217,7 +216,7 @@ class TestConnectedSocket(ConnectionTestCase):
     # in TIME_WAIT state.
     @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
-        addr = ("127.0.0.1", get_free_port())
+        addr = ("127.0.0.1", 0)
         assert not thisproc.connections(kind='tcp4')
         server, client = tcp_socketpair(AF_INET, addr=addr)
         try:

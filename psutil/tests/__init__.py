@@ -1423,8 +1423,9 @@ def skip_on_not_implemented(only_if=None):
 # ===================================================================
 
 
+# XXX: no longer used
 def get_free_port(host='127.0.0.1'):
-    """Return an unused TCP port."""
+    """Return an unused TCP port. Subject to race conditions."""
     with contextlib.closing(socket.socket()) as sock:
         sock.bind((host, 0))
         return sock.getsockname()[1]
