@@ -1,16 +1,27 @@
-name: FreeBSD
+name: FreeBSD test
 
 on: [push, pull_request]
 
 jobs:
-  freebsd:
+  testfreebsd:
     runs-on: macos-latest
+    name: A job to run test FreeBSD
+    env:
+      MYTOKEN : ${{ secrets.MYTOKEN }}
+      MYTOKEN2: "value2"
     steps:
     - uses: actions/checkout@v2
-    - name: meson test
-      uses: vmactions/freebsd-vm@v0.0.7
+    - name: Test run
+      id: test
+      uses: vmactions/freebsd-vm@v0.0.8
       with:
-        prepare: |
-          pkg install -y gcc python3
+        envs: 'MYTOKEN MYTOKEN2'
+        usesh: true
+        prepare: pkg install -y gcc python3
         run: |
+          pwd
+          ls -lah
+          whoami
+          env
+          freebsd-version
           python3 -Wa {project}/psutil/tests/runner.py
