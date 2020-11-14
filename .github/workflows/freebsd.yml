@@ -24,4 +24,4 @@ jobs:
           whoami
           env
           freebsd-version
-          python3 -Wa {project}/psutil/tests/runner.py
+          python3 -Wa psutil/psutil/tests/runner.py
