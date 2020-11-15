@@ -14,9 +14,8 @@ jobs:
         usesh: true
         prepare: pkg install -y gcc python3
         run: |
-          pwd
-          ls -lah
-          make install-pip
-          python3 -m pip install setuptools
-          python3 setup.py develop
-          python3 -Wa psutil/tests/runner.py
+          python3 -m pip install --user setuptools
+          make clean
+          make install
+          make test
+          make test-memleaks
