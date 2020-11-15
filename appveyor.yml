@@ -8,6 +8,10 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.ci\\appveyor\\run_with_compiler.cmd"
+    PYTHONWARNINGS: always
+    PYTHONUNBUFFERED: 1
+    PSUTIL_TESTING: 1
+    PSUTIL_DEBUG: 1
   matrix:
     # 32 bits
 

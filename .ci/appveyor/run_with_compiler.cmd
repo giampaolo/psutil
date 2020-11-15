@@ -41,8 +41,7 @@ SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 SET MAJOR_PYTHON_VERSION=%PYTHON_VERSION:~0,1%
 IF "%PYTHON_VERSION:~3,1%" == "." (
     SET MINOR_PYTHON_VERSION=%PYTHON_VERSION:~2,1%
-)
-ELSE (
+) ELSE (
     SET MINOR_PYTHON_VERSION=%PYTHON_VERSION:~2,2%
 )
 
@@ -51,8 +50,7 @@ ELSE (
 IF %MAJOR_PYTHON_VERSION% == 2 (
     SET WINDOWS_SDK_VERSION="v7.0"
     SET SET_SDK_64=Y
-)
-ELSE (
+) ELSE (
     IF %MAJOR_PYTHON_VERSION% == 3 (
         SET WINDOWS_SDK_VERSION="v7.1"
         IF %MINOR_PYTHON_VERSION% LEQ 4 (
@@ -84,8 +82,7 @@ IF %PYTHON_ARCH% == 64 (
         ECHO Executing: %COMMAND_TO_RUN%
         call %COMMAND_TO_RUN% || EXIT 1
     )
-)
-ELSE (
+) ELSE (
     ECHO Using default MSVC build environment for 32 bit architecture
     ECHO Executing: %COMMAND_TO_RUN%
     call %COMMAND_TO_RUN% || EXIT 1
