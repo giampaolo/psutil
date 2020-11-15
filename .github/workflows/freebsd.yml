@@ -16,5 +16,4 @@ jobs:
         run: |
           python3 -m pip install --user setuptools
           python3 setup.py install
-          python3 psutil/tests/runner.py
-          python3 psutil/tests/test_memleaks.py
+          python3 psutil/tests/runner.py && python3 psutil/tests/test_memleaks.py
