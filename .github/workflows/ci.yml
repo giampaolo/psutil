@@ -24,8 +24,12 @@ jobs:
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
-      CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py && python -u -Wa {project}/psutil/tests/test_memleaks.py
-      CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py && LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_COMMAND:
+        make test PYTHON=python && \
+        make test-memleaks PYTHON=python
+      CIBW_TEST_COMMAND_MACOS:
+        LC_ALL='en_US.utf8' make test PYTHON=python && \
+        LC_ALL='en_US.utf8' make test-memleaks PYTHON=python
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
