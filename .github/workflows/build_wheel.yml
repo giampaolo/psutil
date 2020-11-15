@@ -1,8 +1,8 @@
-name: Linux, macOS, Windows, FreeBSD
+# name: Linux, macOS, Windows, FreeBSD
 
-on: [push, pull_request]
+# on: [push, pull_request]
 
-jobs:
+# jobs:
   # linux-osx-win:
   #   name: ${{ matrix.os }}
   #   runs-on: ${{ matrix.os }}
@@ -48,19 +48,3 @@ jobs:
   #       python setup.py sdist
   #       mv dist/psutil*.tar.gz wheelhouse/
   #       python scripts/internal/print_hashes.py wheelhouse/
-
-  freebsd:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run tests
-      id: test
-      uses: vmactions/freebsd-vm@v0.0.8
-      with:
-        usesh: true
-        prepare: pkg install -y gcc python3
-        run: |
-          make install-pip
-          python3 -m pip install setuptools
-          python3 setup.py install
-          python3 -Wa psutil/tests/runner.py
