@@ -20,6 +20,7 @@ environment:
     PSUTIL_DEBUG: 1
   matrix:
     # 32 bits
+
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
