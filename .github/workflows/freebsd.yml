@@ -7,14 +7,17 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
+
     - name: Run tests
       id: test
       uses: vmactions/freebsd-vm@v0.0.8
       with:
-        usesh: true
         prepare: pkg install -y gcc python3
         run: |
           python3 -m pip install --user setuptools
           python3 setup.py install
           python3 psutil/tests/runner.py
+
+    - name: Run memleak tests
+      run: |
           python3 psutil/tests/test_memleaks.py

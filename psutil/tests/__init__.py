@@ -1129,6 +1129,7 @@ def print_sysinfo():
     info['user'] = getpass.getuser()
     info['home'] = os.path.expanduser("~")
     info['cwd'] = os.getcwd()
+    info['pyexe'] = PYTHON_EXE
     info['hostname'] = platform.node()
     info['PID'] = os.getpid()
 

@@ -649,7 +649,7 @@ class TestDiskAPIs(PsutilTestCase):
             path = os.path.abspath(path)
             while not os.path.ismount(path):
                 path = os.path.dirname(path)
-            return path.lower()
+            return path
 
         mount = find_mount_point(__file__)
         mounts = [x.mountpoint.lower() for x in
