@@ -1,0 +1,39 @@
+name: macOS
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false  # whether to exit the whole run on first failure
+      matrix:
+        os: [macos-latest]
+    env:
+      CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py && python -u -Wa {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py && LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_EXTRAS: test
+      # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
+      CIBW_SKIP: cp35-* pp*
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Run tests
+      run: |
+        pip install cibuildwheel
+        cibuildwheel .
+
+    - name: Create wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Print hashes
+      run: |
+        make generate-manifest
+        python scripts/internal/print_hashes.py wheelhouse/

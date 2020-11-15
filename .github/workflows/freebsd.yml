@@ -3,7 +3,7 @@ name: FreeBSD
 on: [push, pull_request]
 
 jobs:
-  test-freebsd:
+  freebsd:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
