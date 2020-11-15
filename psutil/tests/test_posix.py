@@ -32,7 +32,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import terminate
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
 
@@ -307,7 +306,6 @@ class TestSystemAPIs(PsutilTestCase):
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):

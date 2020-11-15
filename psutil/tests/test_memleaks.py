@@ -49,7 +49,6 @@ from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
 from psutil.tests import TestMemoryLeak
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
@@ -219,9 +218,8 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
-        if not TRAVIS:
-            self.execute_w_exc(
-                ValueError, lambda: self.proc.cpu_affinity([-1]))
+        self.execute_w_exc(
+            ValueError, lambda: self.proc.cpu_affinity([-1]))
 
     @fewtimes_if_linux()
     def test_open_files(self):
@@ -429,7 +427,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
-    # @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
 

@@ -13,8 +13,8 @@ import subprocess
 
 
 SKIP_EXTS = ('.png', '.jpg', '.jpeg')
-SKIP_FILES = ('.cirrus.yml', '.travis.yml', 'appveyor.yml')
-SKIP_PREFIXES = ('.ci/', '.github/', 'scripts/internal/')
+SKIP_FILES = ('appveyor.yml')
+SKIP_PREFIXES = ('.ci/', '.github/')
 
 
 def sh(cmd):

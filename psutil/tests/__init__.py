@@ -37,6 +37,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -76,7 +77,7 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TRAVIS', 'CIRRUS',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -119,11 +120,9 @@ __all__ = [
 
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
-TRAVIS = 'TRAVIS' in os.environ
 APPVEYOR = 'APPVEYOR' in os.environ
-CIRRUS = 'CIRRUS' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_ACTIONS
+CI_TESTING = APPVEYOR or GITHUB_ACTIONS
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 
@@ -137,8 +136,7 @@ TOLERANCE_SYS_MEM = 5 * 1024 * 1024  # 5MB
 TOLERANCE_DISK_USAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
-# be more tolerant if we're on travis / appveyor in order to avoid
-# false positives
+# be more tolerant if we're on CI in order to avoid false positives
 if CI_TESTING:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
@@ -207,6 +205,8 @@ def _get_py_exe():
     if GITHUB_ACTIONS:
         if PYPY:
             return which("pypy3") if PY3 else which("pypy")
+        elif FREEBSD:
+            return os.path.realpath(sys.executable)
         else:
             return which('python')
     elif MACOS:
@@ -1126,22 +1126,23 @@ def print_sysinfo():
     info['user'] = getpass.getuser()
     info['home'] = os.path.expanduser("~")
     info['cwd'] = os.getcwd()
+    info['pyexe'] = PYTHON_EXE
     info['hostname'] = platform.node()
     info['PID'] = os.getpid()
 
     # metrics
-    pinfo = psutil.Process().as_dict()
-    pinfo.pop('memory_maps', None)
     info['cpus'] = psutil.cpu_count()
     info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
         tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
     mem = psutil.virtual_memory()
-    info['memory'] = "%s%%, %s/%s" % (
+    info['memory'] = "%s%%, used=%s, total=%s" % (
         int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
     swap = psutil.swap_memory()
-    info['swap'] = "%s%%, %s/%s" % (
+    info['swap'] = "%s%%, used=%s, total=%s" % (
         int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
     info['pids'] = len(psutil.pids())
+    pinfo = psutil.Process().as_dict()
+    pinfo.pop('memory_maps', None)
     info['proc'] = pprint.pformat(pinfo)
 
     print("=" * 70, file=sys.stderr)  # NOQA

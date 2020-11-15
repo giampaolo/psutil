@@ -48,7 +48,6 @@ from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
-from psutil.tests import TRAVIS
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
@@ -533,8 +532,6 @@ class TestCpuAPIs(PsutilTestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        if TRAVIS and not ls:
-            raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
             raise self.skipTest("returns empty list on FreeBSD")
 
@@ -606,9 +603,6 @@ class TestDiskAPIs(PsutilTestCase):
 
         # all = False
         ls = psutil.disk_partitions(all=False)
-        # on travis we get:
-        #     self.assertEqual(p.cpu_affinity(), [n])
-        # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
             check_ntuple(disk)
@@ -633,8 +627,7 @@ class TestDiskAPIs(PsutilTestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if (GITHUB_ACTIONS or TRAVIS) and \
-                            MACOS and err.errno == errno.EIO:
+                    if GITHUB_ACTIONS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
@@ -655,7 +648,6 @@ class TestDiskAPIs(PsutilTestCase):
         mounts = [x.mountpoint.lower() for x in
                   psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
-        psutil.disk_usage(mount)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -817,7 +809,6 @@ class TestNetAPIs(PsutilTestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics

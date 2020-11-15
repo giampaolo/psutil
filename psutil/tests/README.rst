@@ -12,12 +12,3 @@ Instructions for running tests
     make setup-dev-env  # install missing third-party deps
     make test           # serial run
     make test-parallel  # parallel run
-
-* To run tests on all supported Python versions install tox
-  (``pip install tox``) then run ``tox`` from within psutil root directory.
-
-* Every time a commit is pushed tests are automatically run on Travis
-  (Linux, MACOS) and appveyor (Windows):
-
-  * Travis builds: https://travis-ci.org/giampaolo/psutil
-  * AppVeyor builds: https://ci.appveyor.com/project/giampaolo/psutil

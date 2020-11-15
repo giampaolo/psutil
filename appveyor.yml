@@ -1,13 +1,23 @@
 # Build: 3 (bump this up by 1 to force an appveyor run)
 
 os: Visual Studio 2015
-
+# avoid 2 builds when pushing on PRs
+skip_branch_with_pr: true
+# avoid build on new GIT tag
+skip_tags: true
+matrix:
+  # stop build on first failure
+  fast_finish: true
 environment:
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.ci\\appveyor\\run_with_compiler.cmd"
+    PYTHONWARNINGS: always
+    PYTHONUNBUFFERED: 1
+    PSUTIL_TESTING: 1
+    PSUTIL_DEBUG: 1
   matrix:
     # 32 bits
 
@@ -75,6 +85,7 @@ test_script:
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_hashes.py dist"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_access_denied.py"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_api_speed.py"
 
@@ -105,4 +116,3 @@ only_commits:
     - psutil/tests/*
     - scripts/*
     - setup.py
-

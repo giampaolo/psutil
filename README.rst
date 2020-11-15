@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage| |quality|
 |  |version| |py-versions| |packages| |license|
-|  |travis| |appveyor| |cirrus| |doc| |twitter| |tidelift|
+|  |github-actions| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -22,17 +22,13 @@
     :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
     :alt: Code quality
 
-.. |travis| image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux,%20OSX,%20PyPy
-    :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Linux tests (Travis)
+.. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
+    :alt: Linux, macOS, Windows tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
-
-.. |cirrus| image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
-    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
-    :alt: FreeBSD tests (Cirrus-Ci)
 
 .. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
@@ -283,10 +279,12 @@ Process management
 
     >>> import psutil
     >>> psutil.pids()
-    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224, 268, 1215, 1216, 1220, 1221, 1243, 1244,
-     1301, 1601, 2237, 2355, 2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 4263, 4282,
-     4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, 4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446,
-     5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
+    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224, 268, 1215,
+     1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355, 2637, 2774, 3932,
+     4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 4263, 4282, 4306, 4311,
+     4312, 4313, 4314, 4337, 4339, 4357, 4358, 4363, 4383, 4395, 4408, 4433,
+     4443, 4445, 4446, 5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054,
+     7055, 7071]
     >>>
     >>> p = psutil.Process(7055)
     >>> p

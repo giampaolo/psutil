@@ -40,7 +40,6 @@ from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
 from psutil.tests import CI_TESTING
-from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import GITHUB_ACTIONS
@@ -64,7 +63,6 @@ from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import ThreadTask
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
@@ -295,7 +293,6 @@ class TestProcess(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
-    @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
@@ -758,9 +755,6 @@ class TestProcess(PsutilTestCase):
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]
         p = self.spawn_psproc(cmdline)
-        # ...in order to try to prevent occasional failures on travis
-        if TRAVIS:
-            wait_for_pid(p.pid)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(funky_path))
         self.assertEqual(os.path.normcase(p.exe()),
@@ -875,9 +869,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(len(initial), len(set(initial)))
 
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
-        # Work around travis failure:
-        # https://travis-ci.org/giampaolo/psutil/builds/284173194
-        for n in all_cpus if not TRAVIS else initial:
+        for n in all_cpus:
             p.cpu_affinity([n])
             self.assertEqual(p.cpu_affinity(), [n])
             if hasattr(os, "sched_getaffinity"):
@@ -902,9 +894,8 @@ class TestProcess(PsutilTestCase):
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
         # it should work with all iterables, not only lists
-        if not TRAVIS:
-            p.cpu_affinity(set(all_cpus))
-            p.cpu_affinity(tuple(all_cpus))
+        p.cpu_affinity(set(all_cpus))
+        p.cpu_affinity(tuple(all_cpus))
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
@@ -1310,14 +1301,10 @@ class TestProcess(PsutilTestCase):
             succeed_or_zombie_p_exc(fun)
 
         assert psutil.pid_exists(zproc.pid)
-        if not TRAVIS and MACOS:
-            # For some reason this started failing all of the sudden.
-            # Maybe they upgraded MACOS version?
-            # https://travis-ci.org/giampaolo/psutil/jobs/310896404
-            self.assertIn(zproc.pid, psutil.pids())
-            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
-            psutil._pmap = {}
-            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        self.assertIn(zproc.pid, psutil.pids())
+        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        psutil._pmap = {}
+        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):

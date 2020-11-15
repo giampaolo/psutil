@@ -304,9 +304,9 @@ def run_from_name(name):
 
 
 def setup():
-    if 'PSUTIL_TESTING' not in os.environ:
-        # This won't work on Windows but set_testing() below will do it.
-        os.environ['PSUTIL_TESTING'] = '1'
+    # Note: doc states that altering os.environment may cause memory
+    # leaks on some platforms.
+    # Sets PSUTIL_TESTING and PSUTIL_DEBUG in the C module.
     psutil._psplatform.cext.set_testing()
 
 

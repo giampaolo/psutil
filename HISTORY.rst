@@ -7,9 +7,12 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1872_: [Windows] added support for PyPy 2.7.
 - 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
   which are the maximum file name and path name length.
+- 1872_: [Windows] added support for PyPy 2.7.
+- 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
+- 1880_: get rid of Travis and Cirrus CI services (they are no longer free).
+  CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes). AppVeyor is still being used for Windows CI.
 
 **Bug fixes**
 
