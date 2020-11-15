@@ -37,6 +37,7 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -207,6 +208,8 @@ def _get_py_exe():
     if GITHUB_ACTIONS:
         if PYPY:
             return which("pypy3") if PY3 else which("pypy")
+        elif FREEBSD:
+            return os.path.realpath(sys.executable)
         else:
             return which('python')
     elif MACOS:
