@@ -655,7 +655,6 @@ class TestDiskAPIs(PsutilTestCase):
         mounts = [x.mountpoint.lower() for x in
                   psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
-        1 / 0
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
