@@ -1779,7 +1779,7 @@ class Process(object):
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch, in UTC.
+        # seconds since the epoch.
         # Also use cached value if available.
         bt = BOOT_TIME or boot_time()
         return (ctime / CLOCK_TICKS) + bt

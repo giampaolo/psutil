@@ -703,7 +703,7 @@ class Process(object):
 
     def create_time(self):
         """The process creation time as a floating point number
-        expressed in seconds since the epoch, in UTC.
+        expressed in seconds since the epoch.
         The return value is cached after first call.
         """
         if self._create_time is None:
