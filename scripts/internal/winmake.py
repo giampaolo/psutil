@@ -368,7 +368,6 @@ def clean():
         "*__pycache__",
         ".coverage",
         ".failed-tests.txt",
-        ".tox",
     )
     safe_rmtree("build")
     safe_rmtree(".coverage")

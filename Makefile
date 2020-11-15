@@ -63,7 +63,6 @@ clean:  ## Remove all build files.
 		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
-		.tox \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -218,6 +217,7 @@ download-wheels-github:  ## Download latest wheels hosted on github.
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py --user giampaolo --project psutil
+	${MAKE} print-wheels
 
 print-wheels:  ## Print downloaded wheels
 	$(PYTHON) scripts/internal/print_wheels.py
@@ -261,8 +261,8 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
 	${MAKE} sdist
-	${MAKE} download-wheels-github
-	${MAKE} download-wheels-appveyor
+	${MAKE} download-wheels-github > /dev/null
+	${MAKE} download-wheels-appveyor > /dev/null
 	${MAKE} print-wheels
 	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -c \
