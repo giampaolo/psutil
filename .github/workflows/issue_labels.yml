@@ -1,0 +1,38 @@
+# Executed every time an issue or PR is opened. Inspects the title string
+# and sets the appropriate labels.
+# See: https://github.com/Naturalclar/issue-action
+
+name: "Set issue labels"
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    typed: [opened]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Naturalclar/issue-action@v2.0.2
+        with:
+          title-or-body: "title"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          parameters: '[
+  {"keywords": ["aix"], "labels": ["aix"], "assignees": ["wiggin15"]},
+  {"keywords": ["cygwin"], "labels": ["cygwin"], "assignees": [""]},
+  {"keywords": ["freebsd"], "labels": ["freebsd"], "assignees": [""]},
+  {"keywords": ["linux", "ubuntu", "redhat", "mint"], "labels": ["linux"], "assignees": [""]},
+  {"keywords": ["macos", "osx"], "labels": ["osx"], "assignees": [""]},
+  {"keywords": ["netbsd"], "labels": ["netbsd"], "assignees": [""]},
+  {"keywords": ["openbsd"], "labels": ["openbsd"], "assignees": [""]},
+  {"keywords": ["sunos", "solaris"], "labels": ["sunos"], "assignees": ["wiggin15"]},
+  {"keywords": ["unix", "posix"], "labels": ["unix"], "assignees": [""]},
+  {"keywords": ["windows"], "labels": ["windows"], "assignees": [""]},
+  {"keywords": ["wsl"], "labels": ["wsl"], "assignees": [""]},
+  {"keywords": ["bug", "bug"], "labels": ["bug"], "assignees": [""]},
+  {"keywords": ["doc", "documentation"], "labels": ["doc"], "assignees": [""]},
+  {"keywords": ["idea", "proposal", "api", "request", "feature"], "labels": ["api", "enhancement"], "assignees": [""]},
+  {"keywords": ["performance", "speed"], "labels": ["performance"], "assignees": [""]},
+  {"keywords": ["pypy", "pypy2", "pypy3"], "labels": ["pypy"], "assignees": [""]},
+  {"keywords": ["test", "tests"], "labels": ["tests"], "assignees": [""]},
+  {"keywords": ["wheel", "wheels"], "labels": ["wheels"], "assignees": [""]}
+]'
