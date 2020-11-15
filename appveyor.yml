@@ -1,7 +1,8 @@
 # Build: 3 (bump this up by 1 to force an appveyor run)
 
 os: Visual Studio 2015
-skip_branch_with_pr: true
+skip_branch_with_pr: true  # avoid 2 builds when pushing on PRs
+skip_tags: true  # avoid build on new GIT tag
 environment:
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
@@ -13,24 +14,21 @@ environment:
     PSUTIL_TESTING: 1
     PSUTIL_DEBUG: 1
   matrix:
-    # 32 bits
+    fast_finish: true  # stop build on first failure
 
+    # 32 bits
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python37"
       PYTHON_VERSION: "3.7.x"
       PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python38"
       PYTHON_VERSION: "3.8.x"
       PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python39"
       PYTHON_VERSION: "3.9.x"
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -41,19 +39,15 @@ environment:
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
-
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
-
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.x"
       PYTHON_ARCH: "64"
-
     - PYTHON: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
       PYTHON_ARCH: "64"
-
     - PYTHON: "C:\\Python39-x64"
       PYTHON_VERSION: "3.9.x"
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
