@@ -24,8 +24,12 @@ jobs:
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
-      CIBW_BEFORE_TEST: export PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
-      CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py && python -u -Wa {project}/psutil/tests/test_memleaks.py
+      PYTHONWARNINGS: always
+      PYTHONUNBUFFERED: 1
+      PSUTIL_TESTING: 1
+      PSUTIL_DEBUG: 1
+      CIBW_TEST_COMMAND: python {project}/psutil/tests/runner.py &&
+        python {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
@@ -85,7 +89,11 @@ jobs:
         prepare: pkg install -y gcc python3
         run: |
           set +e
-          export PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+          export \
+            PYTHONWARNINGS=always \
+            PYTHONUNBUFFERED=1 \
+            PSUTIL_TESTING=1 \
+            PSUTIL_DEBUG=1
           python3 -m pip install --user setuptools
           python3 setup.py install
           python3 psutil/tests/runner.py
