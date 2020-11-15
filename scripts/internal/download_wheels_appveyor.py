@@ -13,7 +13,6 @@ http://code.saghul.net/index.php/2015/09/09/
 """
 
 from __future__ import print_function
-import argparse
 import concurrent.futures
 import os
 import requests
@@ -24,6 +23,8 @@ from psutil._common import bytes2human
 from psutil._common import print_color
 
 
+USER = "giampaolo"
+PROJECT = "psutil"
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.6', '3.7', '3.8', '3.9']
 TIMEOUT = 30
@@ -43,10 +44,10 @@ def download_file(url):
     return local_fname
 
 
-def get_file_urls(options):
+def get_file_urls():
     with requests.Session() as session:
         data = session.get(
-            BASE_URL + '/projects/' + options.user + '/' + options.project,
+            BASE_URL + '/projects/' + USER + '/' + PROJECT,
             timeout=TIMEOUT)
         data = data.json()
 
@@ -78,8 +79,8 @@ def rename_win27_wheels():
     os.rename(src, dst)
 
 
-def run(options):
-    urls = get_file_urls(options)
+def run():
+    urls = get_file_urls()
     completed = 0
     exc = None
     with concurrent.futures.ThreadPoolExecutor() as e:
@@ -105,12 +106,7 @@ def run(options):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='AppVeyor artifact downloader')
-    parser.add_argument('--user', required=True)
-    parser.add_argument('--project', required=True)
-    args = parser.parse_args()
-    run(args)
+    run()
 
 
 if __name__ == '__main__':

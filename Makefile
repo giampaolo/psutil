@@ -212,10 +212,10 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # ===================================================================
 
 download-wheels-github:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels_github.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
-	$(PYTHON) scripts/internal/download_wheels_appveyor.py --user giampaolo --project psutil
+	$(PYTHON) scripts/internal/download_wheels_appveyor.py
 
 print-wheels:  ## Print downloaded wheels
 	$(PYTHON) scripts/internal/print_wheels.py

@@ -26,10 +26,10 @@ from psutil._common import bytes2human
 from psutil.tests import safe_rmpath
 
 
-USER = ""
-PROJECT = ""
-TOKEN = ""
+USER = "giampaolo"
+PROJECT = "psutil"
 OUTFILE = "wheels-github.zip"
+TOKEN = ""
 
 
 def get_artifacts():
@@ -77,14 +77,10 @@ def run():
 
 
 def main():
-    global USER, PROJECT, TOKEN
+    global TOKEN
     parser = argparse.ArgumentParser(description='GitHub wheels downloader')
-    parser.add_argument('--user', required=True)
-    parser.add_argument('--project', required=True)
     parser.add_argument('--tokenfile', required=True)
     args = parser.parse_args()
-    USER = args.user
-    PROJECT = args.project
     with open(os.path.expanduser(args.tokenfile)) as f:
         TOKEN = f.read().strip()
     try:
