@@ -1131,18 +1131,18 @@ def print_sysinfo():
     info['PID'] = os.getpid()
 
     # metrics
-    pinfo = psutil.Process().as_dict()
-    pinfo.pop('memory_maps', None)
     info['cpus'] = psutil.cpu_count()
     info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
         tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]))
     mem = psutil.virtual_memory()
-    info['memory'] = "%s%%, %s/%s" % (
+    info['memory'] = "%s%%, used=%s, total=%s" % (
         int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
     swap = psutil.swap_memory()
-    info['swap'] = "%s%%, %s/%s" % (
+    info['swap'] = "%s%%, used=%s, total=%s" % (
         int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
     info['pids'] = len(psutil.pids())
+    pinfo = psutil.Process().as_dict()
+    pinfo.pop('memory_maps', None)
     info['proc'] = pprint.pformat(pinfo)
 
     print("=" * 70, file=sys.stderr)  # NOQA
