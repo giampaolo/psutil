@@ -651,11 +651,11 @@ class TestDiskAPIs(PsutilTestCase):
                 path = os.path.dirname(path)
             return path.lower()
 
-        # mount = find_mount_point(__file__)
-        # mounts = [x.mountpoint.lower() for x in
-        #           psutil.disk_partitions(all=True) if x.mountpoint]
-        # self.assertIn(mount, mounts)
-        # psutil.disk_usage(mount)
+        mount = find_mount_point(__file__)
+        mounts = [x.mountpoint.lower() for x in
+                  psutil.disk_partitions(all=True) if x.mountpoint]
+        self.assertIn(mount, mounts)
+        psutil.disk_usage(mount)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
