@@ -15,7 +15,6 @@ jobs:
         prepare: pkg install -y gcc python3
         run: |
           python3 -m pip install --user setuptools
-          make clean
-          make install
-          make test
-          make test-memleaks
+          python3 setup.py install
+          python3 psutil/tests/runner.py
+          python3 psutil/tests/test_memleaks.py
