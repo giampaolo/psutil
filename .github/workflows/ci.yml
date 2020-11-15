@@ -24,14 +24,16 @@ jobs:
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
-      CIBW_TEST_COMMAND: PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1 python -u -Wa {project}/psutil/tests/runner.py && PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1 python -u -Wa {project}/psutil/tests/test_memleaks.py
-      # make test-memleaks PYTHON=python
-      # CIBW_TEST_COMMAND_MACOS: cd {project} && \
-      #   LC_ALL='en_US.utf8' make test PYTHON=python && \
-      #   LC_ALL='en_US.utf8' make test-memleaks PYTHON=python
+      CIBW_BEFORE_TEST: export PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+      CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py && python -u -Wa {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
+
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
@@ -68,6 +70,11 @@ jobs:
   freebsd:
     runs-on: macos-latest
     steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
+
     - uses: actions/checkout@v2
 
     - name: Run tests
