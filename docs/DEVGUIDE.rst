@@ -107,22 +107,17 @@ All of the services listed below are automatically run on each ``git push``.
 Unit tests
 ----------
 
-Tests are automatically run on every GIT push on **Linux**, **macOS**,
+Tests are automatically run on every GIT push and PR on **Linux**, **macOS**,
 **Windows** and **FreeBSD** by using:
 
-- `Travis`_ (Linux, macOS)
 - `Github Actions`_ (Linux, macOS, Windows)
 - `Appveyor`_ (Windows)
-- `Cirrus CI`_ (FreeBSD)
 
-.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux,%20OSX,%20PyPy
-    :target: https://travis-ci.org/giampaolo/psutil
+.. image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
+    :target: https://github.com/giampaolo/psutil/actions
 
 .. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
-
-.. image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
-    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
 
 OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
 
@@ -147,7 +142,6 @@ Documentation
 .. _`.travis.yml`: https://github.com/giampaolo/psutil/blob/master/.travis.yml
 .. _`appveyor.yml`: https://github.com/giampaolo/psutil/blob/master/appveyor.yml
 .. _`Appveyor`: https://ci.appveyor.com/project/giampaolo/psuti
-.. _`Cirrus CI`: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
 .. _`coveralls.io`: https://coveralls.io/github/giampaolo/psuti
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`doc/index.rst`: https://github.com/giampaolo/psutil/blob/master/doc/index.rst
@@ -165,4 +159,3 @@ Documentation
 .. _`psutil/tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_system.py
 .. _`RsT syntax`: http://docutils.sourceforge.net/docs/user/rst/quickref.htm
 .. _`sphinx`: http://sphinx-doc.org
-.. _`Travis`: https://travis-ci.org/giampaolo/psuti

@@ -1,26 +1,32 @@
+# Executed on every push by GitHub Actions. This runs CI tests and
+# generates wheels on the following platforms:
+#
+# * Linux
+# * macOS
+# * FreeBSD
+#
+# Windows works as well but it's disabled (we do it via AppVeyor).
+# To skip certain builds see:
+# https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
+
 name: CI
-
 on: [push, pull_request]
-
 jobs:
-
-  # --- Linux, macOS, Windows
-
   linux-macos-win:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
-      fail-fast: false  # whether to exit the whole run on first failure
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
       CIBW_TEST_COMMAND: python -u -Wa {project}/psutil/tests/runner.py && python -u -Wa {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_COMMAND_MACOS: LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/runner.py && LC_ALL='en_US.utf8' python -Wa {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
-      # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
       CIBW_SKIP: cp35-* pp*
     steps:
     - uses: actions/checkout@v2
@@ -28,10 +34,10 @@ jobs:
       with:
         python-version: 3.9
 
-    - name: (Windows) install Visual C++ for Python 2.7
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install vcpython27 -f -y
+    # - name: (Windows) install Visual C++ for Python 2.7
+    #   if: matrix.os == 'windows-latest'
+    #   run: |
+    #     choco install vcpython27 -f -y
 
     - name: Run tests
       run: |
@@ -55,8 +61,6 @@ jobs:
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
         python scripts/internal/print_hashes.py wheelhouse/
-
-  # --- FreeBSD
 
   freebsd:
     runs-on: macos-latest

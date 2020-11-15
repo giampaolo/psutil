@@ -90,7 +90,6 @@ from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import CI_TESTING
-from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
 from psutil.tests import get_testfn
@@ -259,7 +258,7 @@ class TestFSAPIs(BaseUnicodeTest):
             conn = psutil.Process().connections('unix')[0]
             self.assertIsInstance(conn.laddr, str)
             # AF_UNIX addr not set on OpenBSD
-            if not OPENBSD and not CIRRUS:  # XXX
+            if not OPENBSD:  # XXX
                 self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")

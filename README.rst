@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage| |quality|
 |  |version| |py-versions| |packages| |license|
-|  |linux-macos-win| |freebsd| |appveyor| |doc| |twitter| |tidelift|
+|  |github-actions| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -22,21 +22,13 @@
     :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
     :alt: Code quality
 
-.. |linux-macos-win| image:: https://github.com/giampaolo/psutil/workflows/Linux,%20macOS,%20Windows/badge.svg
+.. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3A%22Linux%2C+macOS%2C+Windows%22
     :alt: Linux, macOS, Windows tests
-
-.. |freebsd| image:: https://github.com/giampaolo/psutil/workflows/FreeBSD/badge.svg
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3AFreeBSD
-    :alt: FreeBSD tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
-
-.. |cirrus| image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
-    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
-    :alt: FreeBSD tests (Cirrus-Ci)
 
 .. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master

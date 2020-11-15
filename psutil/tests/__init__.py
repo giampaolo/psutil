@@ -77,7 +77,7 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'TRAVIS', 'CIRRUS',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -120,11 +120,9 @@ __all__ = [
 
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
-TRAVIS = 'TRAVIS' in os.environ
 APPVEYOR = 'APPVEYOR' in os.environ
-CIRRUS = 'CIRRUS' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
-CI_TESTING = TRAVIS or APPVEYOR or CIRRUS or GITHUB_ACTIONS
+CI_TESTING = APPVEYOR or GITHUB_ACTIONS
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 
@@ -138,8 +136,7 @@ TOLERANCE_SYS_MEM = 5 * 1024 * 1024  # 5MB
 TOLERANCE_DISK_USAGE = 10 * 1024 * 1024  # 10MB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 5
-# be more tolerant if we're on travis / appveyor in order to avoid
-# false positives
+# be more tolerant if we're on CI in order to avoid false positives
 if CI_TESTING:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3

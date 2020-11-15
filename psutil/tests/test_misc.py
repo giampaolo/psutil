@@ -43,7 +43,6 @@ from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 import psutil
 import psutil.tests
@@ -638,8 +637,6 @@ class TestWrapNumbers(PsutilTestCase):
 
 @unittest.skipIf(not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
-# XXX
-@unittest.skipIf(TRAVIS and PYTHON_39, "unreliable on TRAVIS + PYTHON_39")
 class TestScripts(PsutilTestCase):
     """Tests for scripts in the "scripts" directory."""
 
@@ -713,8 +710,6 @@ class TestScripts(PsutilTestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    # permission denied on travis
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
@@ -751,14 +746,12 @@ class TestScripts(PsutilTestCase):
         self.assert_syntax('cpu_distribution.py')
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
             self.skipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
         if not psutil.sensors_fans():
             self.skipTest("no fans")

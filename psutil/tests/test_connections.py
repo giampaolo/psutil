@@ -31,7 +31,6 @@ from psutil.tests import AF_UNIX
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
-from psutil.tests import CIRRUS
 from psutil.tests import create_sockets
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PsutilTestCase
@@ -41,7 +40,6 @@ from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
@@ -246,9 +244,6 @@ class TestConnectedSocket(ConnectionTestCase):
                 # On NetBSD creating a UNIX socket will cause
                 # a UNIX connection to  /var/run/log.
                 cons = [c for c in cons if c.raddr != '/var/run/log']
-                if CIRRUS:
-                    cons = [c for c in cons if c.fd in
-                            (server.fileno(), client.fileno())]
             self.assertEqual(len(cons), 2, msg=cons)
             if LINUX or FREEBSD or SUNOS:
                 # remote path is never set
@@ -495,10 +490,6 @@ class TestSystemWideConnections(ConnectionTestCase):
                 self.assertEqual(len(cons), len(set(cons)))
                 check(cons, families, types_)
 
-    # See: https://travis-ci.org/giampaolo/psutil/jobs/237566297
-    @unittest.skipIf(MACOS and TRAVIS, "unreliable on MACOS + TRAVIS")
-    # XXX
-    @unittest.skipIf(TRAVIS and PYTHON_39, "unreliable on TRAVIS + PYTHON_39")
     @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different

@@ -44,7 +44,6 @@ from psutil.tests import skip_on_not_implemented
 from psutil.tests import ThreadTask
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
 
@@ -261,7 +260,6 @@ class TestSystemVirtualMemory(PsutilTestCase):
             free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @retry_on_failure()
     def test_free(self):
         vmstat_value = vmstat('free memory') * 1024
@@ -276,8 +274,6 @@ class TestSystemVirtualMemory(PsutilTestCase):
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
-    # https://travis-ci.org/giampaolo/psutil/jobs/226719664
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @retry_on_failure()
     def test_active(self):
         vmstat_value = vmstat('active memory') * 1024
@@ -285,8 +281,6 @@ class TestSystemVirtualMemory(PsutilTestCase):
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
-    # https://travis-ci.org/giampaolo/psutil/jobs/227242952
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @retry_on_failure()
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
@@ -638,7 +632,6 @@ class TestSystemSwapMemory(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUTimes(PsutilTestCase):
 
-    @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_fields(self):
         fields = psutil.cpu_times()._fields
         kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
@@ -753,7 +746,6 @@ class TestSystemCPUCountPhysical(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUFrequency(PsutilTestCase):
 
-    @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
@@ -874,7 +866,6 @@ class TestSystemCPUFrequency(PsutilTestCase):
                     if freq[1].max != 0.0:
                         self.assertEqual(freq[1].max, 600.0)
 
-    @unittest.skipIf(TRAVIS, "fails on Travis")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
         # See: https://github.com/giampaolo/psutil/issues/1071
@@ -901,13 +892,11 @@ class TestSystemCPUFrequency(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUStats(PsutilTestCase):
 
-    @unittest.skipIf(TRAVIS, "fails on Travis")
     def test_ctx_switches(self):
         vmstat_value = vmstat("context switches")
         psutil_value = psutil.cpu_stats().ctx_switches
         self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
 
-    @unittest.skipIf(TRAVIS, "fails on Travis")
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
@@ -961,7 +950,6 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @unittest.skipIf(not which('ip'), "'ip' utility not available")
-    # @unittest.skipIf(TRAVIS, "skipped on Travis")
     # def test_net_if_names(self):
     #     out = sh("ip addr").strip()
     #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
