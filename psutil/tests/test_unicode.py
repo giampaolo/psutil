@@ -124,9 +124,9 @@ if APPVEYOR:
         # https://github.com/giampaolo/psutil/blob/
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
-        from psutil.tests import safe_rmpath as _rm
+        from psutil.tests import safe_rmpath as rm
         try:
-            return _rm(path)
+            return rm(path)
         except WindowsError:
             traceback.print_exc()
 
@@ -158,11 +158,22 @@ def try_unicode(suffix):
 # ===================================================================
 
 
+class BaseUnicodeTest(PsutilTestCase):
+    funky_suffix = None
+
+    def setUp(self):
+        if self.funky_suffix is not None:
+            if not try_unicode(self.funky_suffix):
+                raise self.skipTest("can't handle unicode str")
+
+
 @serialrun
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
-class _BaseFSAPIsTests(object):
-    funky_suffix = None
+class TestFSAPIs(BaseUnicodeTest):
+    """Test FS APIs with a funky, valid, UTF8 path name."""
+
+    funky_suffix = UNICODE_SUFFIX
 
     @classmethod
     def setUpClass(cls):
@@ -174,7 +185,12 @@ class _BaseFSAPIsTests(object):
         safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
-        raise NotImplementedError("must be implemented in subclass")
+        # Do not expect psutil to correctly handle unicode paths on
+        # Python 2 if os.listdir() is not able either.
+        here = '.' if isinstance(self.funky_name, str) else u('.')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return self.funky_name in os.listdir(here)
 
     # ---
 
@@ -296,28 +312,8 @@ class _BaseFSAPIsTests(object):
                 self.assertIsInstance(path, str)
 
 
-# https://travis-ci.org/giampaolo/psutil/jobs/440073249
-# @unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
-# @unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
-@unittest.skipIf(not try_unicode(UNICODE_SUFFIX),
-                 "can't deal with unicode str")
-class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
-    """Test FS APIs with a funky, valid, UTF8 path name."""
-    funky_suffix = UNICODE_SUFFIX
-
-    def expect_exact_path_match(self):
-        # Do not expect psutil to correctly handle unicode paths on
-        # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(self.funky_name, str) else u('.')
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return self.funky_name in os.listdir(here)
-
-
 @unittest.skipIf(CI_TESTING, "unreliable on CI")
-@unittest.skipIf(not try_unicode(INVALID_UNICODE_SUFFIX),
-                 "can't deal with invalid unicode str")
-class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
+class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
@@ -332,8 +328,9 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
 # ===================================================================
 
 
-class TestNonFSAPIS(PsutilTestCase):
+class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
+    funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")
@@ -344,15 +341,14 @@ class TestNonFSAPIS(PsutilTestCase):
         # we use "è", which is part of the extended ASCII table
         # (unicode point <= 255).
         env = os.environ.copy()
-        funky_str = UNICODE_SUFFIX if PY3 else 'è'
-        env['FUNNY_ARG'] = funky_str
+        env['FUNNY_ARG'] = self.funky_suffix
         sproc = self.spawn_testproc(env=env)
         p = psutil.Process(sproc.pid)
         env = p.environ()
         for k, v in env.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
-        self.assertEqual(env['FUNNY_ARG'], funky_str)
+        self.assertEqual(env['FUNNY_ARG'], self.funky_suffix)
 
 
 if __name__ == '__main__':
