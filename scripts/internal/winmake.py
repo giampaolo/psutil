@@ -208,12 +208,6 @@ def recursive_rm(*patterns):
                     safe_rmtree(os.path.join(root, dir))
 
 
-def test_setup():
-    os.environ['PYTHONWARNINGS'] = 'all'
-    os.environ['PSUTIL_TESTING'] = '1'
-    os.environ['PSUTIL_DEBUG'] = '1'
-
-
 # ===================================================================
 # commands
 # ===================================================================
@@ -397,7 +391,6 @@ def lint():
 def test(name=RUNNER_PY):
     """Run tests"""
     build()
-    test_setup()
     sh("%s %s" % (PYTHON, name))
 
 
@@ -405,7 +398,6 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    test_setup()
     sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
@@ -415,70 +407,60 @@ def coverage():
 def test_process():
     """Run process tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 def test_system():
     """Run system tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 def test_platform():
     """Run windows only tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 def test_misc():
     """Run misc tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 def test_unicode():
     """Run unicode tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 def test_connections():
     """Run connections tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 def test_contracts():
     """Run contracts tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 def test_testutils():
     """Run test utilities tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
 
 
 def test_by_name(name):
     """Run test by name"""
     build()
-    test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
 def test_failed():
     """Re-run tests which failed on last run."""
     build()
-    test_setup()
     sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
 
 
@@ -513,14 +495,12 @@ def bench_oneshot_2():
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     build()
-    test_setup()
     sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
 
 
 def print_api_speed():
     """Benchmark all API calls."""
     build()
-    test_setup()
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
 
 
