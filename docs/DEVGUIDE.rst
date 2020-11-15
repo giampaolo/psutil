@@ -124,8 +124,7 @@ OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
 Test coverage
 -------------
 
-Test coverage is provided by `coveralls.io`_ and it is controlled via
-`.travis.yml`_.
+Test coverage is provided by `coveralls.io`_.
 
 .. image:: https://coveralls.io/repos/giampaolo/psutil/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
@@ -139,7 +138,6 @@ Documentation
 - public doc is hosted at https://psutil.readthedocs.io
 
 
-.. _`.travis.yml`: https://github.com/giampaolo/psutil/blob/master/.travis.yml
 .. _`appveyor.yml`: https://github.com/giampaolo/psutil/blob/master/appveyor.yml
 .. _`Appveyor`: https://ci.appveyor.com/project/giampaolo/psuti
 .. _`coveralls.io`: https://coveralls.io/github/giampaolo/psuti
