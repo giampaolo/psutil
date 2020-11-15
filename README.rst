@@ -23,7 +23,7 @@
     :alt: Code quality
 
 .. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3A%22Linux%2C+macOS%2C+Windows%22
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
     :alt: Linux, macOS, Windows tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows

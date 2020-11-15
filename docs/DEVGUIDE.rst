@@ -113,10 +113,10 @@ Tests are automatically run on every GIT push and PR on **Linux**, **macOS**,
 - `Github Actions`_ (Linux, macOS, Windows)
 - `Appveyor`_ (Windows)
 
-.. image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
-    :target: https://github.com/giampaolo/psutil/actions
+.. image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=linux%2C%20macos%2C%20freebsd
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
 
-.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
+.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
 
 OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
