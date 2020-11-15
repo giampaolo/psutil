@@ -1180,7 +1180,7 @@ Process class
   .. method:: create_time()
 
     The process creation time as a floating point number expressed in seconds
-    since the epoch, in UTC. The return value is cached after first call.
+    since the epoch. The return value is cached after first call.
 
       >>> import psutil, datetime
       >>> p = psutil.Process()
