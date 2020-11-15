@@ -10,7 +10,7 @@
 # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
 
 name: CI
-on: [push, pull_request]
+on: [push]
 jobs:
   linux-macos-win:
     name: ${{ matrix.os }}
@@ -24,10 +24,10 @@ jobs:
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
-      CIBW_TEST_COMMAND:
+      CIBW_TEST_COMMAND: cd {project} && \
         make test PYTHON=python && \
         make test-memleaks PYTHON=python
-      CIBW_TEST_COMMAND_MACOS:
+      CIBW_TEST_COMMAND_MACOS: cd {project} && \
         LC_ALL='en_US.utf8' make test PYTHON=python && \
         LC_ALL='en_US.utf8' make test-memleaks PYTHON=python
       CIBW_TEST_EXTRAS: test
