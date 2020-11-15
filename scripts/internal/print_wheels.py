@@ -90,7 +90,7 @@ def main():
                 print_color(s, color='brown')
 
     print_color("\ntotals: files=%s, size=%s" % (
-        tot_files, bytes2human(tot_size)), bold=1)
+        tot_files, bytes2human(tot_size)), bold=True)
 
 
 if __name__ == '__main__':
