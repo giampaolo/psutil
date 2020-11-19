@@ -11,6 +11,7 @@ from collections import namedtuple
 from . import _common
 from . import _pslinux
 from . import _psposix
+from . import _pswindows
 from . import _psutil_cygwin as cext  # NOQA
 from ._common import get_procfs_path
 from ._common import memoize
@@ -158,9 +159,38 @@ cpu_stats = _pslinux.cpu_stats
 net_if_addrs = _pslinux.net_if_addrs
 
 
-def net_connections(kind='inet'):
-    """Return system-wide open connections."""
-    raise NotImplementedError("net_connections not implemented on Cygwin")
+# TODO: Does not support listing UNIX sockets yet.  This should be possible to
+# do though; there are some details at
+# https://cygwin.com/git/?p=newlib-cygwin.git;a=blob;f=winsup/cygwin/fhandler_socket_unix.cc;h=9f7f86c47cc8b53130adedae727c8429b315ec45;hb=HEAD#l40
+def net_connections(kind, _pid=-1):
+    """Return socket connections.  If pid == -1 return system-wide
+    connections (as opposed to connections opened by one process only).
+    """
+
+    # Convert to the Windows PID if possible, raising NoSuchProcess if
+    # the PID does not exist
+    if _pid != -1:
+        _pid = cext.cygpid_to_winpid(_pid)
+
+    cons = _pswindows.net_connections(kind, _pid)
+
+    # Filter out only those connections emanating from Cygwin processes and
+    # replace their PIDs with the corresponding Cygwin PID
+    if _pid == -1 and cons:
+        con_cls = type(cons[0])
+        pid_idx = con_cls._fields.index('pid')
+
+        def conv(con):
+            try:
+                pid = cext.winpid_to_cygpid(con.pid)
+            except OSError:
+                return None
+
+            return con_cls(*(con[:pid_idx] + (pid,) + con[pid_idx + 1:]))
+
+        cons = list(filter(None, (conv(con) for con in cons)))
+
+    return cons
 
 
 def net_io_counters():
@@ -451,8 +481,19 @@ class Process(object):
     def open_files(self):
         raise NotImplementedError("open_files not implemented on Cygwin")
 
+    @wrap_exceptions
+    def _connections(self, kind='inet'):
+        return net_connections(kind, _pid=self.pid)
+
     def connections(self, kind='inet'):
-        raise NotImplementedError("connections not implemented on Cygwin")
+        # Attempting to read the connections of a zombie process on Cygwin
+        # will always fail (the underlying Windows process no longer exists
+        # at this point).
+        try:
+            return self._connections(kind)
+        except NoSuchProcess:
+            if self.status() == _common.STATUS_ZOMBIE:
+                return []
 
     def num_fds(self):
         raise NotImplementedError("num_fds not implemented on Cygwin")

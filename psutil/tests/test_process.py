@@ -1193,11 +1193,9 @@ class TestProcess(PsutilTestCase):
 
         p = psutil.Process(min(psutil.pids()))
 
-        if not CYGWIN:
-            # Skip on CYGWIN: connections not supported yet
-            d = p.as_dict(attrs=['connections'], ad_value='foo')
-            if not isinstance(d['connections'], list):
-                self.assertEqual(d['connections'], 'foo')
+        d = p.as_dict(attrs=['connections'], ad_value='foo')
+        if not isinstance(d['connections'], list):
+            self.assertEqual(d['connections'], 'foo')
 
         # Test ad_value is set on AccessDenied.
         with mock.patch('psutil.Process.nice', create=True,

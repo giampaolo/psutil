@@ -258,7 +258,6 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(disk.maxpath, int)
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
-    @unittest.skipIf(CYGWIN, "net_connections not supported yet on Cygwin")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')

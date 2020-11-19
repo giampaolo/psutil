@@ -1193,6 +1193,7 @@ class process_namespace:
 
     getters = [
         ('cmdline', (), {}),
+        ('connections', (), {'kind': 'all'}),
         ('cpu_times', (), {}),
         ('create_time', (), {}),
         ('cwd', (), {}),
@@ -1207,7 +1208,6 @@ class process_namespace:
     ]
     if not CYGWIN:
         # not supported yet on Cygwin
-        getters += [('connections', (), {'kind': 'all'})]
         getters += [('num_ctx_switches', (), {})]
         getters += [('threads', (), {})]
         getters += [('open_files', (), {})]

@@ -314,7 +314,7 @@ class TestNetUtils(PsutilTestCase):
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(NETBSD or FREEBSD,
                      "/var/run/log UNIX socket opened by default")
-    @unittest.skipIf(CYGWIN, "num_fds not supported yet on Cygwin")
+    @unittest.skipIf(CYGWIN, "unix_socketpair not reliable on Cygwin")
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()

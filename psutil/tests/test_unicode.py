@@ -253,7 +253,7 @@ class TestFSAPIs(BaseUnicodeTest):
                              os.path.normcase(self.funky_name))
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(CYGWIN, "connections not supported yet on Cygwin")
+    @unittest.skipIf(CYGWIN, "can't list UNIX sockets on Cygwin")
     def test_proc_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         try:
@@ -272,7 +272,7 @@ class TestFSAPIs(BaseUnicodeTest):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
-    @unittest.skipIf(CYGWIN, "net_connections not supported yet on Cygwin")
+    @unittest.skipIf(CYGWIN, "can't list UNIX sockets on Cygwin")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
