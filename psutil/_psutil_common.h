@@ -39,6 +39,21 @@ static const int PSUTIL_CONN_NONE = 128;
                                                   const char *filename);
 #endif
 
+// Cygwin
+#ifdef PSUTIL_CYGWIN
+/* Python on Cygwin does not have PyErr_SetFromWindowsError, or the
+ * WindowsError exception class.  So instead we raise a normal OSError
+ * with errno mapped from the Windows error using the cygwin_internal
+ * API to provide the mapping. */
+#include <sys/cygwin.h>
+#include <sys/errno.h>
+#define PyErr_SetFromWindowsErr(ierr) ({ \
+    errno = (int) cygwin_internal(CW_GET_ERRNO_FROM_WINERROR, \
+                                  ((ierr) ? (ierr) : GetLastError())); \
+    PyErr_SetFromErrno(PyExc_OSError); \
+})
+#endif // PSUTIL_CYGWIN
+
 // --- _Py_PARSE_PID
 
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).

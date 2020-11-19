@@ -11,6 +11,12 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 
+#ifdef __CYGWIN__
+// Additional includes needed to compile this module on Cygwin
+#include <iphlpapi.h>
+#include <iprtrmib.h>
+#endif
+
 #include "../../_psutil_common.h"
 #include "process_utils.h"
 

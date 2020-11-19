@@ -1,12 +1,14 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include <winsock2.h>
 #include <iprtrmib.h>
 #include <Python.h>
 
 #include <sys/cygwin.h>
 
 #include "_psutil_common.h"
+#include "arch/windows/socks.h"
 
 
 /*
@@ -76,6 +78,10 @@ psutil_winpid_to_cygpid(PyObject *self, PyObject *args) {
  */
 static PyMethodDef
 PsutilMethods[] = {
+    // --- system-related functions
+    {"net_connections", psutil_net_connections, METH_VARARGS,
+     "Return system-wide connections"},
+
     // --- cygwin-specific functions
     {"cygpid_to_winpid", psutil_cygpid_to_winpid, METH_VARARGS,
      "Convert the Cygwin PID of a process to its corresponding Windows PID."},

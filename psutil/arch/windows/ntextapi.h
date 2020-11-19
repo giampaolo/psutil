@@ -56,6 +56,8 @@ typedef enum _KTHREAD_STATE {
     MaximumThreadState
 } KTHREAD_STATE, *PKTHREAD_STATE;
 
+#ifndef __CYGWIN__
+// Cygwin's wininternl.h has long included this typedef
 typedef enum _KWAIT_REASON {
     Executive,
     FreePage,
@@ -98,6 +100,7 @@ typedef enum _KWAIT_REASON {
     WrDeferredPreempt,
     MaximumWaitReason
 } KWAIT_REASON, *PKWAIT_REASON;
+#endif // __CYGWIN__
 
 // users()
 typedef enum _WTS_INFO_CLASS {
