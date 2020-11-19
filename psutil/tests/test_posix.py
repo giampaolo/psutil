@@ -333,7 +333,8 @@ class TestSystemAPIs(PsutilTestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
-    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    @unittest.skipIf(CI_TESTING and (CYGWIN or not psutil.users()),
+                     "unreliable on CI")
     @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     @retry_on_failure()
     def test_users(self):

@@ -63,6 +63,11 @@ environment:
     - PYTHON: "C:\\Python39-x64"
       PYTHON_VERSION: "3.9.x"
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+
+    - os: Cygwin
+      CYG_ROOT: "C:\\cygwin64"
+      PYTHON: "python3.7m"
+      PYTHON_VERSION: "3.7.x"
       PYTHON_ARCH: "64"
 
 init:
@@ -110,9 +115,38 @@ only_commits:
     - psutil/_common.py
     - psutil/_compat.py
     - psutil/_psutil_common.*
+    - psutil/_psutil_cygwin.*
     - psutil/_psutil_windows.*
+    - psutil/_pscygwin.py
     - psutil/_pswindows.py
     - psutil/arch/windows/*
     - psutil/tests/*
     - scripts/*
     - setup.py
+
+# Cygwin build
+for:
+  -
+    matrix:
+      only:
+        - os: Cygwin
+    init:
+      - "echo %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH% for %OS%"
+      - "set PATH=%CYG_ROOT%\\home\\appveyor\\.local\\bin;%CYG_ROOT%\\bin;%PATH%"
+    install:
+      - ps: |
+          $python = "python" + $Env:PYTHON_VERSION[0] + $Env:PYTHON_VERSION[2]
+          Start-Process -NoNewWindow -Wait `
+            -FilePath $Env:CYG_ROOT\setup-x86_64.exe `
+            -ArgumentList "-q -P $python,$python-devel,$python-pip,binutils,gcc-core,git"
+      - "%PYTHON% -m pip --version"
+      - "%PYTHON% -m pip install --upgrade --user setuptools pip"
+      - "%PYTHON% setup.py install"
+    test_script:
+      - "set PYTHONWARNINGS=always"
+      - "set PYTHONUNBUFFERED=1"
+      - "set PSUTIL_TESTING=1"
+      - "set PSUTIL_DEBUG=1"
+      - "%PYTHON% psutil/tests/runner.py"
+    after_test:
+      - "%PYTHON setup.py bdist_wheel"

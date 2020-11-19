@@ -200,7 +200,8 @@ class TestMiscAPIs(PsutilTestCase):
         self.assertGreater(bt, 0)
         self.assertLess(bt, time.time())
 
-    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    @unittest.skipIf(CI_TESTING and (CYGWIN or not psutil.users()),
+                     "unreliable on CI")
     @unittest.skipIf(CYGWIN, "users not supported yet on Cygwin")
     def test_users(self):
         users = psutil.users()
@@ -657,7 +658,7 @@ class TestDiskAPIs(PsutilTestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
-    @unittest.skipIf(CI_TESTING and not psutil.disk_io_counters(),
+    @unittest.skipIf(CI_TESTING and (CYGWIN or not psutil.disk_io_counters()),
                      "unreliable on CI")  # no visible disks
     @unittest.skipIf(CYGWIN, "disk_io_counters not supported yet on Cygwin")
     def test_disk_io_counters(self):
