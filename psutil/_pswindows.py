@@ -14,6 +14,7 @@ import time
 from collections import namedtuple
 
 from . import _common
+from ._common import CYGWIN
 from ._common import AccessDenied
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
@@ -32,15 +33,14 @@ from ._compat import lru_cache
 from ._compat import PY3
 from ._compat import range
 from ._compat import unicode
-from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import HIGH_PRIORITY_CLASS
-from ._psutil_windows import IDLE_PRIORITY_CLASS
-from ._psutil_windows import NORMAL_PRIORITY_CLASS
-from ._psutil_windows import REALTIME_PRIORITY_CLASS
 
 try:
-    from . import _psutil_windows as cext
+    if not CYGWIN:
+        from . import _psutil_windows as cext
+    else:
+        # The Cygwin module partially implements the _psutil_windows module for
+        # the parts used by Cygwin
+        from . import _psutil_cygwin as cext
 except ImportError as err:
     if str(err).lower().startswith("dll load failed") and \
             sys.getwindowsversion()[0] < 6:
@@ -59,6 +59,14 @@ if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
+
+ABOVE_NORMAL_PRIORITY_CLASS = cext.ABOVE_NORMAL_PRIORITY_CLASS
+BELOW_NORMAL_PRIORITY_CLASS = cext.BELOW_NORMAL_PRIORITY_CLASS
+HIGH_PRIORITY_CLASS = cext.HIGH_PRIORITY_CLASS
+IDLE_PRIORITY_CLASS = cext.IDLE_PRIORITY_CLASS
+NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
+REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
+
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
