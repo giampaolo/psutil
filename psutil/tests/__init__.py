@@ -1141,14 +1141,9 @@ def print_sysinfo():
     mem = psutil.virtual_memory()
     info['memory'] = "%s%%, used=%s, total=%s" % (
         int(mem.percent), bytes2human(mem.used), bytes2human(mem.total))
-    try:
-        swap = psutil.swap_memory()
-    except NotImplementedError:
-        if not CYGWIN:
-            raise
-    else:
-        info['swap'] = "%s%%, used=%s, total=%s" % (
-            int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
+    swap = psutil.swap_memory()
+    info['swap'] = "%s%%, used=%s, total=%s" % (
+        int(swap.percent), bytes2human(swap.used), bytes2human(swap.total))
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)

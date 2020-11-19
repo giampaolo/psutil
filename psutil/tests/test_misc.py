@@ -332,7 +332,7 @@ class TestMisc(PsutilTestCase):
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
 
-    @unittest.skipIf(CYGWIN, "swap_memory not supported yet on Cygwin")
+    @unittest.skipIf(CYGWIN, "net_io_counters not supported yet on Cygwin")
     def test_serialization(self):
         def check(ret):
             if json is not None:

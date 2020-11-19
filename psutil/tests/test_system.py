@@ -296,7 +296,6 @@ class TestMemoryAPIs(PsutilTestCase):
                     self.fail("%r > total (total=%s, %s=%s)"
                               % (name, mem.total, name, value))
 
-    @unittest.skipIf(CYGWIN, "swap_memory not supported yet on Cygwin")
     def test_swap_memory(self):
         mem = psutil.swap_memory()
         self.assertEqual(

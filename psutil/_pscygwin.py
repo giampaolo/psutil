@@ -5,6 +5,7 @@ from __future__ import division
 import errno
 import os
 import sys
+import warnings
 from collections import namedtuple
 
 from . import _common
@@ -95,7 +96,14 @@ def virtual_memory():
 
 def swap_memory():
     """Return swap memory metrics."""
-    raise NotImplementedError("swap_memory not implemented on Cygwin")
+
+    # Uses the Linux implementation, but /proc/vmstat is not supported on
+    # Cygwin, so just suppress the warning about sin/sout
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore',
+                                "'sin' and 'sout' swap memory stats "
+                                "couldn't be determined")
+        return _pslinux.swap_memory()
 
 
 # =====================================================================
