@@ -13,9 +13,11 @@ from . import _pslinux
 from . import _psposix
 from . import _psutil_cygwin as cext  # NOQA
 from ._common import get_procfs_path
+from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import NoSuchProcess
 from ._common import open_binary
+from ._common import open_text
 from ._common import TimeoutExpired
 from ._common import usage_percent
 from ._pslinux import wrap_exceptions
@@ -262,6 +264,14 @@ class Process(object):
         self._name = None
         self._ppid = None
         self._procfs_path = get_procfs_path()
+
+    @property
+    @memoize
+    def winpid(self):
+        """The native Windows PID of the process."""
+
+        with open_text('%s/%s/winpid' % (self._procfs_path, self.pid)) as f:
+            return int(f.read().strip())
 
     _assert_alive = _pslinux.Process._assert_alive
 
