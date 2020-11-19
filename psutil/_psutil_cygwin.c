@@ -1,6 +1,52 @@
 #include <Python.h>
 
+#include <sys/cygwin.h>
+
 #include "_psutil_common.h"
+
+
+/*
+ * Convert the Cygwin PID of a process to/from its corresponding Windows PID
+ */
+static PyObject*
+psutil_cygpid_to_winpid(PyObject *self, PyObject *args) {
+    pid_t pid;
+    DWORD winpid;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+
+    if (!(winpid = (DWORD)cygwin_internal(CW_CYGWIN_PID_TO_WINPID, pid)))
+        return NoSuchProcess("cygwin_internal");
+
+#if PY_MAJOR_VERSION >= 3
+    return PyLong_FromLong((long) winpid);
+#else
+    return PyInt_FromLong((long) winpid);
+#endif
+}
+
+
+static PyObject*
+psutil_winpid_to_cygpid(PyObject *self, PyObject *args) {
+    pid_t pid;
+    DWORD winpid;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &winpid))
+        return NULL;
+
+    /* For some reason (perhaps historical) Cygwin provides a function
+     * specifically for this purpose, rather than using cygwin_internal
+     * as in the opposite case. */
+    if ((pid = cygwin_winpid_to_pid(winpid)) < 0)
+        return NoSuchProcess("cygwin_winpid_to_pid");
+
+#if PY_MAJOR_VERSION >= 3
+    return PyLong_FromLong((long) pid);
+#else
+    return PyInt_FromLong((long) pid);
+#endif
+}
 
 
 /*
@@ -8,6 +54,12 @@
  */
 static PyMethodDef
 PsutilMethods[] = {
+    // --- cygwin-specific functions
+    {"cygpid_to_winpid", psutil_cygpid_to_winpid, METH_VARARGS,
+     "Convert the Cygwin PID of a process to its corresponding Windows PID."},
+    {"winpid_to_cygpid", psutil_winpid_to_cygpid, METH_VARARGS,
+     "Convert the Windows PID of a process to its corresponding Cygwin PID."},
+
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
