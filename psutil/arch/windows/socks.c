@@ -464,7 +464,7 @@ error:
     Py_XDECREF(py_conn_tuple);
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     if (table != NULL)
         free(table);
     return NULL;
