@@ -153,11 +153,7 @@ cpu_stats = _pslinux.cpu_stats
 # =====================================================================
 
 
-def net_if_addrs():
-    """Return the addresses associated to each NIC (network interface
-    card) installed on the system.
-    """
-    raise NotImplementedError("net_if_addrs not implemented on Cygwin")
+net_if_addrs = _pslinux.net_if_addrs
 
 
 def net_connections(kind='inet'):

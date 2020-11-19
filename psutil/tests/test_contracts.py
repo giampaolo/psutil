@@ -266,7 +266,6 @@ class TestSystemAPITypes(PsutilTestCase):
             for conn in ret:
                 assert is_namedtuple(conn)
 
-    @unittest.skipIf(CYGWIN, "net_if_addrs not supported yet on Cygwin")
     def test_net_if_addrs(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, addrs in psutil.net_if_addrs().items():

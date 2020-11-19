@@ -424,7 +424,6 @@ class TestTestingUtils(PsutilTestCase):
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
         self.assertEqual(fun(), p.ppid())
 
-    @unittest.skipIf(CYGWIN, "net_if_addrs not supported yet on Cygwin")
     def test_system_namespace(self):
         ns = system_namespace()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
