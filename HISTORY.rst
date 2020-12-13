@@ -12,7 +12,8 @@ XXXX-XX-XX
 - 1872_: [Windows] added support for PyPy 2.7.
 - 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
 - 1880_: get rid of Travis and Cirrus CI services (they are no longer free).
-  CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes). AppVeyor is still being used for Windows CI.
+  CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes).
+  AppVeyor is still being used for Windows CI.
 
 **Bug fixes**
 

@@ -1,12 +1,12 @@
-Setup
-=====
+psutil development guide
+========================
+
+Build, setup and running tests
+..............................
 
 psutil makes extensive use of C extension modules, meaning a C compiler is
 required, see
 `install instructions <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__.
-
-Build, setup and running tests
-===============================
 
 Once you have a compiler installed:
 
@@ -51,7 +51,7 @@ Once you have a compiler installed:
     make test -p C:\python35\python.exe  # Windows
 
 Coding style
-============
+------------
 
 - python code strictly follows `PEP-8`_ styling guides and this is enforced by
   a commit GIT hook installed via ``make install-git-hooks`` which will reject
@@ -59,7 +59,7 @@ Coding style
 - C code should follow `PEP-7`_ styling guides.
 
 Code organization
-=================
+-----------------
 
 .. code-block:: bash
 
@@ -70,7 +70,7 @@ Code organization
     psutil/tests/test_{platform}.py      # platform-specific test suite
 
 Adding a new API
-================
+----------------
 
 Typically, this is what you do:
 
@@ -86,62 +86,49 @@ Typically, this is what you do:
   This usually means testing the return value of the new API against
   a system CLI tool.
 - update the doc in ``doc/index.py``.
-- update ``HISTORY.rst``.
+- update `HISTORY.rst`_ and `CREDITS`_ files.
 - make a pull request.
 
 Make a pull request
-===================
+-------------------
 
 - fork psutil (go to https://github.com/giampaolo/psutil and click on "fork")
-- git clone the fork locally: ``git clone git@github.com:YOUR-USERNAME/psutil.git``)
+- git clone the fork locally: ``git clone git@github.com:YOUR-USERNAME/psutil.git``
 - create a branch:``git checkout -b new-feature``
 - commit your changes: ``git commit -am 'add some feature'``
 - push the branch: ``git push origin new-feature``
-- create a new PR by via GitHub web interface
+- create a new PR via the GitHub web interface and sign-off your work (see
+  `CONTRIBUTING.md`_ guidelines)
 
 Continuous integration
-======================
+----------------------
 
-All of the services listed below are automatically run on each ``git push``.
-
-Unit tests
-----------
-
-Tests are automatically run on every GIT push and PR on **Linux**, **macOS**,
+Unit tests are automatically run on every ``git push`` on **Linux**, **macOS**,
 **Windows** and **FreeBSD** by using:
 
 - `Github Actions`_ (Linux, macOS, Windows)
 - `Appveyor`_ (Windows)
 
-.. image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=linux%2C%20macos%2C%20freebsd
+.. image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
 
-.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=windows
+.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
 
 OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
 
-Test coverage
--------------
-
-Test coverage is provided by `coveralls.io`_.
-
-.. image:: https://coveralls.io/repos/giampaolo/psutil/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
-    :alt: Test coverage (coverall.io)
-
 Documentation
-=============
+-------------
 
 - doc source code is written in a single file: `/docs/index.rst`_.
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io
 
-
 .. _`appveyor.yml`: https://github.com/giampaolo/psutil/blob/master/appveyor.yml
 .. _`Appveyor`: https://ci.appveyor.com/project/giampaolo/psuti
 .. _`coveralls.io`: https://coveralls.io/github/giampaolo/psuti
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
+.. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`doc/index.rst`: https://github.com/giampaolo/psutil/blob/master/doc/index.rst
 .. _`Github Actions`: https://github.com/giampaolo/psutil/actions
 .. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst

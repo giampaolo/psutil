@@ -74,7 +74,7 @@
         <a href="https://github.com/giampaolo/psutil/blob/master/INSTALL.rst"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="http://groups.google.com/group/psutil/topics"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
@@ -134,6 +134,11 @@ None yet.
 .. raw:: html
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
+Contributing
+============
+
+See `CONTRIBUTING.md<https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__ guidelines.
 
 Example usages
 ==============

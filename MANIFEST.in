@@ -1,6 +1,7 @@
 include .coveragerc
 include .flake8
 include .gitignore
+include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
 include INSTALL.rst

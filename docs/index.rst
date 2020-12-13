@@ -10,9 +10,10 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`__
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Blog <https://gmpy.dev/tags/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
+- `Blog <https://gmpy.dev/tags/psutil>`__
+- `Contributing <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 

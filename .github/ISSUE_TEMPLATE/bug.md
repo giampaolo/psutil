@@ -5,11 +5,14 @@ title: "[OS] title"
 labels: 'bug'
 
 ---
-**Platform**
+## Platform
+
 * { OS version }
 * { psutil version (print psutil.__version__) }
 * { python version }
 
 
-**Bug description**
+## Bug description
+
 ...
+
