@@ -139,7 +139,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
         if (errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
-            return 1
+            return 1;
         }
         PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         return 1;
