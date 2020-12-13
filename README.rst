@@ -138,7 +138,7 @@ None yet.
 Contributing
 ============
 
-See `CONTRIBUTING.md <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__ guidelines.
+See `CONTRIBUTING.md <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__ guidelines.
 
 Example usages
 ==============
