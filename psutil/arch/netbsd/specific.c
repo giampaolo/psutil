@@ -126,7 +126,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT)
-            NoSuchProcess("");
+            NoSuchProcess("sysctl -> ENOENT");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -142,7 +142,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     free(buf);
     if (len == -1) {
         if (errno == ENOENT)
-            NoSuchProcess("readlink (ENOENT)");
+            NoSuchProcess("readlink -> ENOENT");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -198,7 +198,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists");
+            return NoSuchProcess("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }

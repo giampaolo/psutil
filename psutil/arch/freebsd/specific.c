@@ -262,7 +262,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists");
+            return NoSuchProcess("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }

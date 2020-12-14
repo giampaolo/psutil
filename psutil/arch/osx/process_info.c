@@ -125,7 +125,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
 
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("");
+            NoSuchProcess("psutil_pid_exists -> 0");
             return 1;
         }
         // In case of zombie process we'll get EINVAL. We translate it

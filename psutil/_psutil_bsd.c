@@ -477,10 +477,10 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 kvm_close(kd);
                 return py_retdict;
             case EPERM:
-                AccessDenied("kvm_getenvv");
+                AccessDenied("kvm_getenvv -> EPERM");
                 break;
             case ESRCH:
-                NoSuchProcess("kvm_getenvv");
+                NoSuchProcess("kvm_getenvv -> ESRCH");
                 break;
 #if defined(PSUTIL_FREEBSD)
             case ENOMEM:
@@ -489,7 +489,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 // "sudo procstat -e <pid of your XOrg server>".)
                 // Map the error condition to 'AccessDenied'.
                 sprintf(errbuf,
-                        "kvm_getenvv(pid=%ld, ki_uid=%d): errno=ENOMEM",
+                        "kvm_getenvv(pid=%ld, ki_uid=%d) -> ENOMEM",
                         pid, p->ki_uid);
                 AccessDenied(errbuf);
                 break;
