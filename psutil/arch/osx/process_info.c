@@ -125,19 +125,17 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
 
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("");
+            NoSuchProcess("psutil_pid_exists -> 0");
             return 1;
         }
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if (errno == EINVAL) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
             NoSuchProcess("sysctl(KERN_PROCARGS2) -> EINVAL");
             return 1;
         }
         // There's nothing we can do other than raising AD.
         if (errno == EIO) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
             return 1;
         }

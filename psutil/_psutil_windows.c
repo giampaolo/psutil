@@ -162,9 +162,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://github.com/giampaolo/psutil/issues/24
-            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
-                         "into NoSuchProcess");
-            NoSuchProcess("OpenProcess");
+            NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -280,7 +278,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            NoSuchProcess("GetProcessTimes");
+            NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -332,7 +330,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -356,7 +354,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -383,7 +381,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
 
     if (pid == 0)
-        return AccessDenied("forced for PID 0");
+        return AccessDenied("automatically set for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
     if (! buffer)
@@ -417,7 +415,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! NT_SUCCESS(status)) {
         FREE(buffer);
         if (psutil_pid_is_running(pid) == 0)
-            NoSuchProcess("NtQuerySystemInformation");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         else
             psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
@@ -536,10 +534,10 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("NtQueryVirtualMemory");
+            AccessDenied("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
-            NoSuchProcess("psutil_pid_is_running");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         }
         else {
             PyErr_Clear();
@@ -644,7 +642,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -709,7 +707,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess("psutil_pid_is_running");
+        NoSuchProcess("psutil_pid_is_running -> 0");
         goto error;
     }
     if (pid_return == -1)

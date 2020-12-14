@@ -105,7 +105,8 @@ NoSuchProcess(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 
-    sprintf(msg, "No such process (originated from %s)", syscall);
+    sprintf(msg, "assume no such process (originated from %s)", syscall);
+    psutil_debug(msg);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -122,7 +123,8 @@ AccessDenied(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 
-    sprintf(msg, "Access denied (originated from %s)", syscall);
+    sprintf(msg, "assume access denied (originated from %s)", syscall);
+    psutil_debug(msg);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);

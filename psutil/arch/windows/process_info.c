@@ -55,11 +55,7 @@ psutil_convert_winerr(ULONG err, char* syscall) {
     char fullmsg[8192];
 
     if (err == ERROR_NOACCESS)  {
-        sprintf(
-            fullmsg,
-            "(originated from %s -> ERROR_NOACCESS; converted to AccessDenied)",
-            syscall);
-        psutil_debug(fullmsg);
+        sprintf(fullmsg, "%s -> ERROR_NOACCESS", syscall);
         AccessDenied(fullmsg);
     }
     else {
@@ -434,7 +430,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
         AccessDenied("NtQueryInformationProcess(ProcessBasicInformation) -> "
-                     "STATUS_NOT_FOUND translated into PermissionError");
+                     "STATUS_NOT_FOUND");
         goto error;
     }
 

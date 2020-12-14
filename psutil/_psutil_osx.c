@@ -97,9 +97,10 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
-            NoSuchProcess("task_for_pid");
+            NoSuchProcess("task_for_pid -> psutil_pid_exists -> 0");
         else if (psutil_is_zombie(pid) == 1)
-            PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
+            PyErr_SetString(ZombieProcessError,
+                            "task_for_pid -> psutil_is_zombie -> 1");
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
