@@ -77,6 +77,21 @@ psutil_convert_ntstatus_err(NTSTATUS status, char* syscall) {
 }
 
 
+static void
+psutil_giveup_with_ad(NTSTATUS status, char* syscall) {
+    ULONG err;
+    char fullmsg[8192];
+
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
+    else
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    sprintf(fullmsg, "%s -> %lu (%s)", syscall, err, strerror(err));
+    psutil_debug(fullmsg);
+    AccessDenied(fullmsg);
+}
+
+
 /*
  * Get data from the process with the given pid.  The data is returned
  * in the pdata output member as a nul terminated string which must be
@@ -190,7 +205,18 @@ psutil_get_process_data(DWORD pid,
         }
     } else
 #else  // #ifdef _WIN64
-    /* 32 bit case.  Check if the target is also 32 bit. */
+    // 32 bit process. In here we may run into a lot of errors, e.g.:
+    // * [Error 0] The operation completed successfully
+    //   (originated from NtWow64ReadVirtualMemory64)
+    // * [Error 998] Invalid access to memory location:
+    //   (originated from NtWow64ReadVirtualMemory64)
+    // Refs:
+    // * https://github.com/giampaolo/psutil/issues/1839
+    // * https://github.com/giampaolo/psutil/pull/1866
+    // Since the following code is quite hackish and fails unpredictably,
+    // in case of any error from NtWow64* APIs we raise AccessDenied.
+
+    // 32 bit case.  Check if the target is also 32 bit.
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
             !IsWow64Process(hProcess, &theyAreWow64)) {
         PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
@@ -231,7 +257,12 @@ psutil_get_process_data(DWORD pid,
                 sizeof(pbi64),
                 NULL);
         if (!NT_SUCCESS(status)) {
+            /*
             psutil_convert_ntstatus_err(
+                status,
+                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
+            */
+            psutil_giveup_with_ad(
                 status,
                 "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             goto error;
@@ -245,8 +276,13 @@ psutil_get_process_data(DWORD pid,
                 sizeof(peb64),
                 NULL);
         if (!NT_SUCCESS(status)) {
+            /*
             psutil_convert_ntstatus_err(
                 status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
+            */
+            psutil_giveup_with_ad(
+                status,
+                "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
             goto error;
         }
 
@@ -258,8 +294,13 @@ psutil_get_process_data(DWORD pid,
                 sizeof(procParameters64),
                 NULL);
         if (!NT_SUCCESS(status)) {
+            /*
             psutil_convert_ntstatus_err(
                 status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
+            */
+            psutil_giveup_with_ad(
+                status,
+                "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
             goto error;
         }
 
@@ -366,7 +407,8 @@ psutil_get_process_data(DWORD pid,
                 size,
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_convert_ntstatus_err(status, "NtWow64ReadVirtualMemory64");
+            // psutil_convert_ntstatus_err(status, "NtWow64ReadVirtualMemory64");
+            psutil_giveup_with_ad(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else

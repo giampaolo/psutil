@@ -17,6 +17,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
+  from 32 bit ones (NtWoW64 APIs).
 - 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
   access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
