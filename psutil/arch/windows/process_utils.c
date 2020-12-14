@@ -55,7 +55,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 // Return 1 if PID exists, 0 if not, -1 on error.
 int
-psutil_pid_exists(DWORD pid) {
+psutil_pid_in_pids(DWORD pid) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
@@ -95,7 +95,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         if (GetLastError() == ERROR_SUCCESS) {
             // Yeah, it's this bad.
             // https://github.com/giampaolo/psutil/issues/1877
-            if (psutil_pid_exists(pid) == 1) {
+            if (psutil_pid_in_pids(pid) == 1) {
                 psutil_debug("OpenProcess -> ERROR_SUCCESS turned into AD");
                 AccessDenied("OpenProcess -> ERROR_SUCCESS");
             }
@@ -115,7 +115,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         if (exitCode == STILL_ACTIVE) {
             return hProcess;
         }
-        if (psutil_pid_exists(pid) == 1) {
+        if (psutil_pid_in_pids(pid) == 1) {
             return hProcess;
         }
         CloseHandle(hProcess);
@@ -184,5 +184,5 @@ psutil_pid_is_running(DWORD pid) {
 
     CloseHandle(hProcess);
     PyErr_Clear();
-    return psutil_pid_exists(pid);
+    return psutil_pid_in_pids(pid);
 }
