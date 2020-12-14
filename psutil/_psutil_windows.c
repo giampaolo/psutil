@@ -159,22 +159,15 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         return AccessDenied("automatically set for PID 0");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    hProcess = psutil_check_phandle(hProcess, pid, 0);
     if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://github.com/giampaolo/psutil/issues/24
-            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
-                         "into NoSuchProcess");
-            NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
         return NULL;
     }
 
     if (! TerminateProcess(hProcess, SIGTERM)) {
         // ERROR_ACCESS_DENIED may happen if the process already died. See:
         // https://github.com/giampaolo/psutil/issues/1099
+        // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
             return NULL;

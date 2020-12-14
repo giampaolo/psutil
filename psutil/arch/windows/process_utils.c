@@ -80,7 +80,7 @@ psutil_pid_in_pids(DWORD pid) {
 // does return the handle, else return NULL with Python exception set.
 // This is needed because OpenProcess API sucks.
 HANDLE
-psutil_check_phandle(HANDLE hProcess, DWORD pid) {
+psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
     DWORD exitCode;
 
     if (hProcess == NULL) {
@@ -108,6 +108,9 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
         return NULL;
     }
+
+    if (check_exit_code == 0)
+        return hProcess;
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
         // XXX - maybe STILL_ACTIVE is not fully reliable as per:
@@ -154,7 +157,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
         return NULL;
     }
 
-    hProcess = psutil_check_phandle(hProcess, pid);
+    hProcess = psutil_check_phandle(hProcess, pid, 1);
     return hProcess;
 }
 
@@ -176,7 +179,7 @@ psutil_pid_is_running(DWORD pid) {
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED))
         return 1;
 
-    hProcess = psutil_check_phandle(hProcess, pid);
+    hProcess = psutil_check_phandle(hProcess, pid, 1);
     if (hProcess != NULL) {
         CloseHandle(hProcess);
         return 1;
