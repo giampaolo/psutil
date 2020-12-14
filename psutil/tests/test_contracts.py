@@ -449,8 +449,12 @@ class TestFetchAllProcesses(PsutilTestCase):
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
             if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                    # XXX may fail on MACOS
-                    assert os.access(ret, os.X_OK)
+                    # XXX: may fail on MACOS
+                    try:
+                        assert os.access(ret, os.X_OK)
+                    except AssertionError:
+                        if os.path.exists(ret):
+                            raise
 
     def pid(self, ret, info):
         self.assertIsInstance(ret, int)
