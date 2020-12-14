@@ -895,6 +895,19 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 free(domainName);
                 continue;
             }
+            else if (GetLastError() == ERROR_NONE_MAPPED) {
+                // From MS doc:
+                // https://docs.microsoft.com/en-us/windows/win32/api/winbase/
+                //     nf-winbase-lookupaccountsida
+                // If the function cannot find an account name for the SID,
+                // GetLastError returns ERROR_NONE_MAPPED. This can occur if
+                // a network time-out prevents the function from finding the
+                // name. It also occurs for SIDs that have no corresponding
+                // account name, such as a logon SID that identifies a logon
+                // session.
+                AccessDenied("LookupAccountSidW -> ERROR_NONE_MAPPED");
+                goto error;
+            }
             else {
                 PyErr_SetFromOSErrnoWithSyscall("LookupAccountSidW");
                 goto error;

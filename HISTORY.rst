@@ -19,7 +19,9 @@ XXXX-XX-XX
 
 - 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
   access to memory location" on Python 3.9.
-- 1874_: [Solaris] wrong swap output given when encrypted column is present
+- 1874_: [Solaris] wrong swap output given when encrypted column is present.
+- 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
+  has no corresponding account name. In this case AccessDenied is now raised.
 - 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
 - 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
