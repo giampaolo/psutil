@@ -55,14 +55,16 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 // Return 1 if PID exists, 0 if not, -1 on error.
 int
-psutil_pid_in_pids(DWORD pid) {
+psutil_pid_exists(DWORD pid) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
 
     proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
+    if (proclist == NULL) {
+        psutil_debug("psutil_get_pids() failed");
         return -1;
+    }
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         if (proclist[i] == pid) {
             free(proclist);
@@ -85,7 +87,22 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
             // "no such process".
-            NoSuchProcess("OpenProcess");
+            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
+                         "into NSP");
+            NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
+            return NULL;
+        }
+        if (GetLastError() == ERROR_SUCCESS) {
+            // Yeah, it's this bad.
+            // https://github.com/giampaolo/psutil/issues/1877
+            if (psutil_pid_exists(pid) == 1) {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into AD");
+                AccessDenied("OpenProcess -> ERROR_SUCCESS");
+            }
+            else {
+                psutil_debug("OpenProcess -> ERROR_SUCCESS turned into NSP");
+                NoSuchProcess("OpenProcess -> ERROR_SUCCESS");
+            }
             return NULL;
         }
         PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
@@ -98,7 +115,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid) {
         if (exitCode == STILL_ACTIVE) {
             return hProcess;
         }
-        if (psutil_pid_in_pids(pid) == 1) {
+        if (psutil_pid_exists(pid) == 1) {
             return hProcess;
         }
         CloseHandle(hProcess);
@@ -167,5 +184,5 @@ psutil_pid_is_running(DWORD pid) {
 
     CloseHandle(hProcess);
     PyErr_Clear();
-    return psutil_pid_in_pids(pid);
+    return psutil_pid_exists(pid);
 }
