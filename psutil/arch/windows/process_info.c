@@ -56,6 +56,7 @@ psutil_convert_winerr(ULONG err, char* syscall) {
 
     if (err == ERROR_NOACCESS)  {
         sprintf(fullmsg, "%s -> ERROR_NOACCESS", syscall);
+        psutil_debug(fullmsg);
         AccessDenied(fullmsg);
     }
     else {
@@ -429,6 +430,8 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
 
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
+        psutil_debug("NtQueryInformationProcess(ProcessBasicInformation) -> "
+                     "STATUS_NOT_FOUND turned into AD")
         AccessDenied("NtQueryInformationProcess(ProcessBasicInformation) -> "
                      "STATUS_NOT_FOUND");
         goto error;

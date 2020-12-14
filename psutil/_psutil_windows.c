@@ -701,7 +701,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("automatically set for PID 0");
+        AccessDenied("forced for PID 0");
         goto error;
     }
 
