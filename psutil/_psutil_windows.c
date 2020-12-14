@@ -162,6 +162,8 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://github.com/giampaolo/psutil/issues/24
+            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
+                         "into NoSuchProcess");
             NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
         }
         else {
