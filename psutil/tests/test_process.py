@@ -1414,7 +1414,16 @@ class TestProcess(PsutilTestCase):
         assert p.is_running()
         # Wait for process to exec or exit.
         self.assertEqual(sproc.stderr.read(), b"")
-        self.assertEqual(p.environ(), {"A": "1", "C": "3"})
+        if MACOS and CI_TESTING:
+            try:
+                env = p.environ()
+            except psutil.AccessDenied:
+                # XXX: fails sometimes with:
+                # PermissionError from 'sysctl(KERN_PROCARGS2) -> EIO'
+                return
+        else:
+            env = p.environ()
+        self.assertEqual(env, {"A": "1", "C": "3"})
         sproc.communicate()
         self.assertEqual(sproc.returncode, 0)
 
