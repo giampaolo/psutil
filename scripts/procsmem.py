@@ -80,18 +80,19 @@ def main():
                 procs.append(p)
 
     procs.sort(key=lambda p: p._uss)
-    templ = "%-7s %-7s %-30s %7s %7s %7s %7s"
-    print(templ % ("PID", "User", "Cmdline", "USS", "PSS", "Swap", "RSS"))
+    templ = "%-7s %-7s %7s %7s %7s %7s %7s"
+    print(templ % ("PID", "User", "USS", "PSS", "Swap", "RSS", "Cmdline"))
     print("=" * 78)
     for p in procs[:86]:
+        cmd = " ".join(p._info["cmdline"])[:50] if p._info["cmdline"] else ""
         line = templ % (
             p.pid,
             p._info["username"][:7] if p._info["username"] else "",
-            " ".join(p._info["cmdline"])[:30],
             convert_bytes(p._uss),
             convert_bytes(p._pss) if p._pss != "" else "",
             convert_bytes(p._swap) if p._swap != "" else "",
             convert_bytes(p._rss),
+            cmd,
         )
         print(line)
     if ad_pids:
