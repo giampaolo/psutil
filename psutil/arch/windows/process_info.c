@@ -86,7 +86,7 @@ psutil_giveup_with_ad(NTSTATUS status, char* syscall) {
         err = WIN32_FROM_NTSTATUS(status);
     else
         err = RtlNtStatusToDosErrorNoTeb(status);
-    sprintf(fullmsg, "%s -> %i (%s)", syscall, err, strerror(err));
+    sprintf(fullmsg, "%s -> %lu (%s)", syscall, err, strerror(err));
     psutil_debug(fullmsg);
     AccessDenied(fullmsg);
 }
@@ -213,8 +213,8 @@ psutil_get_process_data(DWORD pid,
     // Refs:
     // * https://github.com/giampaolo/psutil/issues/1839
     // * https://github.com/giampaolo/psutil/pull/1866
-    // Since the following is quite hackish and fails unpredictably, in
-    // case of any error from NtWow64* APIs we raise AccessDenied.
+    // Since the following code is quite hackish and fails unpredictably,
+    // in case of any error from NtWow64* APIs we raise AccessDenied.
 
     // 32 bit case.  Check if the target is also 32 bit.
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
