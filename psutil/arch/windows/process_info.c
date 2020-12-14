@@ -300,7 +300,7 @@ psutil_get_process_data(DWORD pid,
             */
             psutil_giveup_with_ad(
                 status,
-                "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)")
+                "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
             goto error;
         }
 
