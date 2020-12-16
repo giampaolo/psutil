@@ -16,6 +16,6 @@ labels: 'bug'
 ## Description
 
 {{{
-  A clear explanation of the bug, including traceback nessage (if any). Please read the contributing guidelines before submit:
+  A clear explanation of the bug, including traceback message (if any). Please read the contributing guidelines before submit:
   https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 }}}
