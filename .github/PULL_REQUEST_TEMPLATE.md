@@ -1,9 +1,13 @@
-## Resume
+## Summary
 
-* OS: { OS name }
+* OS: { type-or-version }
 * Bug fix: { yes/no }
-* Fixes: { comma-separated list of tickets fixed by the PR, if any }
+* Type: { core, doc, performance, scripts, tests, wheels, newapi }
+* Fixes: { comma-separated list of issues fixed by this PR, if any }
 
 ## Description
 
-...
+{{{
+  A clear explanation of your bugfix or enhancement. Please read the contributing guidelines before submit:
+  https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
+}}}
