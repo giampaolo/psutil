@@ -115,6 +115,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         run: |
+          find .
           python -m pip install flake8
           python -m flake8 .
           echo "flake8 linting OK"
