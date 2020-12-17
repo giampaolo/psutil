@@ -99,7 +99,7 @@ cache:
 #   - might want to upload the content of dist/*.whl to a public wheelhouse
 
 skip_commits:
-  message: skip-ci
+  message: skip-appveyor
 
 # run build only if one of the following files is modified on commit
 only_commits:
