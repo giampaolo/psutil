@@ -115,6 +115,8 @@ jobs:
     - uses: actions/setup-python@v2
     - name: 'Linters'
       run: |
+        ls
+        find .
         python -m pip install flake8
         python -m flake8 .
         echo "flake8 linting OK"
