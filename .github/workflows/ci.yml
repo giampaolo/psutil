@@ -104,4 +104,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - run: make lint
+    - run: |
+      python -m pip install flake8
+      make lint
