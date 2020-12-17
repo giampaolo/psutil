@@ -106,4 +106,5 @@ jobs:
         run: |
           python -m pip install flake8
           make lint
+          make print-announce
           echo "xxx"
