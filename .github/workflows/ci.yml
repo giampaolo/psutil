@@ -12,21 +12,41 @@
 on: [push]
 name: Build
 jobs:
-  linters:
-    name: Linters
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # in this example, there is a newer version already installed, 3.7.7, so the older version will be downloaded
-        python-version: [2.7, 3.8]
+        python-version: [2.7, 3.9]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         run: |
-          python -m pip install flake8
-          make lint
+          make install
+          make test
+
+  # linters:
+  #   name: Linters
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: [2.7, 3.8]
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-python@v2
+  #     with:
+  #       python-version: ${{ matrix.python-version }}
+  #       run: |
+  #         python -m pip install flake8
+  #         make lint
+
+
+
+
+
+
 
 #   linux-macos-win:
 #     name: ${{ matrix.os }}
