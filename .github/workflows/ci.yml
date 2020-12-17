@@ -12,42 +12,6 @@
 on: [push]
 name: Build
 jobs:
-  linux:
-    name: Linux
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [2.7, 3.9]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-        run: |
-          make install
-          make test
-
-  # linters:
-  #   name: Linters
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       python-version: [2.7, 3.8]
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - uses: actions/setup-python@v2
-  #     with:
-  #       python-version: ${{ matrix.python-version }}
-  #       run: |
-  #         python -m pip install flake8
-  #         make lint
-
-
-
-
-
-
-
 #   linux-macos-win:
 #     name: ${{ matrix.os }}
 #     runs-on: ${{ matrix.os }}
@@ -129,3 +93,17 @@ jobs:
 #           python3 psutil/tests/runner.py
 #           python3 psutil/tests/test_memleaks.py
 
+linters:
+  name: Linters
+  runs-on: ubuntu-latest
+  strategy:
+    matrix:
+      python-version: [2.7, 3.8]
+  steps:
+  - uses: actions/checkout@v2
+  - uses: actions/setup-python@v2
+    with:
+      python-version: ${{ matrix.python-version }}
+      run: |
+        python -m pip install flake8
+        make lint
