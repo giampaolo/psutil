@@ -28,6 +28,7 @@ XXXX-XX-XX
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
 - 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
   it gets translated into AccessDenied.
+- 1891_: [macOS] get rid of deprecated getpagesize().
 
 5.7.3
 =====
