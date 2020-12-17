@@ -117,5 +117,4 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install flake8
-          make lint
-          make print-announce
+          python3 -m flake8 .
