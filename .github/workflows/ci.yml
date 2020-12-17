@@ -10,9 +10,10 @@
 # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
 
 on: [push]
+name: Build
 jobs:
   linters:
-    name: "Linters"
+    name: Linters
     runs-on: ubuntu-latest
     strategy:
       matrix:
