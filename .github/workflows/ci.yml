@@ -48,8 +48,8 @@ jobs:
 
     - name: Run tests
       run: |
+        pip install cibuildwheel
         cibuildwheel .
-
     - name: Create wheels
       uses: actions/upload-artifact@v2
       with:
