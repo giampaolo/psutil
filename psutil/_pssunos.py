@@ -43,7 +43,7 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 # =====================================================================
 
 
-PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
+PAGE_SIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 

@@ -81,7 +81,7 @@ _DEFAULT = object()
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+PAGESIZE = cext_posix.getpagesize()
 BOOT_TIME = None  # set later
 # Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
 # On Python 2, using a buffer with open() for such files may result in a

@@ -876,7 +876,7 @@ error:
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int rc;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;
 
     rc = perfstat_memory_total(
@@ -902,7 +902,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int rc;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;
 
     rc = perfstat_memory_total(

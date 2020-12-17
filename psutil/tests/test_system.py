@@ -218,14 +218,6 @@ class TestMiscAPIs(PsutilTestCase):
             else:
                 psutil.Process(user.pid)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
-    def test_PAGESIZE(self):
-        # pagesize is used internally to perform different calculations
-        # and it's determined by using SC_PAGE_SIZE; make sure
-        # getpagesize() returns the same value.
-        import resource
-        self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
-
     def test_test(self):
         # test for psutil.test() function
         stdout = sys.stdout

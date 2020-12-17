@@ -98,10 +98,7 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-if NETBSD:
-    PAGESIZE = os.sysconf("SC_PAGESIZE")
-else:
-    PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+PAGESIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 
 HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
