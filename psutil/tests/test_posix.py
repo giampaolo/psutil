@@ -9,10 +9,8 @@
 
 import datetime
 import errno
-import mmap
 import os
 import re
-import resource
 import subprocess
 import time
 
@@ -38,6 +36,9 @@ from psutil.tests import unittest
 from psutil.tests import which
 
 if POSIX:
+    import mmap
+    import resource
+
     from psutil._psutil_posix import getpagesize
 
 
