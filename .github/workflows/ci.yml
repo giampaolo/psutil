@@ -110,10 +110,10 @@ jobs:
 
   linters:
     runs-on: ubuntu-latest
+    name: 'Linters'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - name: 'Linters'
         run: |
           python -m pip install flake8
           python -m flake8 .
