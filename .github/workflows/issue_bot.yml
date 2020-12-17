@@ -19,4 +19,4 @@ jobs:
         GITHUB_ISSUE_URL: ${{ github.event.issue.url }}
       run: |
         PYTHONUNBUFFERED=1 python -m pip install --upgrade pip PyGithub
-        PYTHONUNBUFFERED=1 python scripts/internal/issue_bot.py
+        PYTHONUNBUFFERED=1 python scripts/internal/github_issue_bot.py
