@@ -189,7 +189,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memstack;
     int oncpu;
     kinfo_proc kp;
-    long pagesize = sysconf(_SC_PAGESIZE);
+    long pagesize = psutil_getpagesize();
     char str[1000];
     PyObject *py_name;
     PyObject *py_ppid;

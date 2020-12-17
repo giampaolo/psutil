@@ -9,8 +9,10 @@
 
 import datetime
 import errno
+import mmap
 import os
 import re
+import resource
 import subprocess
 import time
 
@@ -34,6 +36,9 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import terminate
 from psutil.tests import unittest
 from psutil.tests import which
+
+if POSIX:
+    from psutil._psutil_posix import getpagesize
 
 
 def ps(fmt, pid=None):
@@ -402,6 +407,16 @@ class TestSystemAPIs(PsutilTestCase):
                 self.assertAlmostEqual(usage.used, used, delta=tolerance)
                 self.assertAlmostEqual(usage.free, free, delta=tolerance)
                 self.assertAlmostEqual(usage.percent, percent, delta=1)
+
+
+@unittest.skipIf(not POSIX, "POSIX only")
+class TestMisc(PsutilTestCase):
+
+    def test_getpagesize(self):
+        pagesize = getpagesize()
+        self.assertGreater(pagesize, 0)
+        self.assertEqual(pagesize, resource.getpagesize())
+        self.assertEqual(pagesize, mmap.PAGESIZE)
 
 
 if __name__ == '__main__':

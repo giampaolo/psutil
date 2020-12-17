@@ -4,9 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""MACOS specific tests."""
+"""macOS specific tests."""
 
-import os
 import re
 import time
 
@@ -23,9 +22,6 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE") if MACOS else None
-
-
 def sysctl(cmdline):
     """Expects a sysctl command with an argument and parse the result
     returning only the value of interest.
@@ -40,13 +36,15 @@ def sysctl(cmdline):
 
 def vm_stat(field):
     """Wrapper around 'vm_stat' cmdline utility."""
+    from psutil._psutil_posix import getpagesize
+
     out = sh('vm_stat')
     for line in out.split('\n'):
         if field in line:
             break
     else:
         raise ValueError("line not found")
-    return int(re.search(r'\d+', line).group(0)) * PAGESIZE
+    return int(re.search(r'\d+', line).group(0)) * getpagesize()
 
 
 # http://code.activestate.com/recipes/578019/

@@ -35,7 +35,7 @@ __extra__all__ = []
 # =====================================================================
 
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+PAGESIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 
 TCP_STATUSES = {
