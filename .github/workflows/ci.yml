@@ -110,13 +110,13 @@ jobs:
 
   linters:
     runs-on: ubuntu-latest
-      steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        name: Linters
-        run: |
-          python -m pip install flake8
-          python -m flake8 .
-          echo "flake8 linting OK"
-          find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python scripts/internal/clinter.py
-          echo "C linting OK"
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: 'Linters'
+      run: |
+        python -m pip install flake8
+        python -m flake8 .
+        echo "flake8 linting OK"
+        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python scripts/internal/clinter.py
+        echo "C linting OK"
