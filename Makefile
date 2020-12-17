@@ -187,7 +187,7 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 lint-py:  ## Run Python (flake8) linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8 && echo "flake8 OK"
 
 lint-c:  ## Run  C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
