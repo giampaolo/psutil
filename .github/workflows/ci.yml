@@ -12,58 +12,58 @@
 name: Build
 on: [push]
 jobs:
-#   linux-macos-win:
-#     name: ${{ matrix.os }}
-#     runs-on: ${{ matrix.os }}
-#     timeout-minutes: 30
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         # os: [ubuntu-latest, macos-latest, windows-latest]
-#         os: [ubuntu-latest, macos-latest]
-#         include:
-#           - {name: Linux, python: '3.9', os: ubuntu-latest}
-#     env:
-#       CIBW_TEST_COMMAND:
-#         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
-#             python {project}/psutil/tests/runner.py &&
-#         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
-#             python {project}/psutil/tests/test_memleaks.py
-#       CIBW_TEST_EXTRAS: test
-#       CIBW_SKIP: cp35-* pp*
-#     steps:
-#     - name: Cancel previous runs
-#       uses: styfle/cancel-workflow-action@0.6.0
-#       with:
-#         access_token: ${{ github.token }}
+  linux-macos-win:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - {name: Linux, python: '3.9', os: ubuntu-latest}
+    env:
+      CIBW_TEST_COMMAND:
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+            python {project}/psutil/tests/runner.py &&
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+            python {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_EXTRAS: test
+      CIBW_SKIP: cp35-* pp*
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
 
-#     - uses: actions/checkout@v2
-#     - uses: actions/setup-python@v2
-#       with:
-#         python-version: 3.9
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
 
-#     # - name: (Windows) install Visual C++ for Python 2.7
-#     #   if: matrix.os == 'windows-latest'
-#     #   run: |
-#     #     choco install vcpython27 -f -y
+    # - name: (Windows) install Visual C++ for Python 2.7
+    #   if: matrix.os == 'windows-latest'
+    #   run: |
+    #     choco install vcpython27 -f -y
 
-#     - name: Run tests
-#       run: |
-#         cibuildwheel .
+    - name: Run tests
+      run: |
+        cibuildwheel .
 
-#     - name: Create wheels
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: wheels
-#         path: wheelhouse
+    - name: Create wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: wheelhouse
 
-#     - name: Print hashes
-#       if: matrix.os == 'ubuntu-latest'
-#       run: |
-#         make generate-manifest
-#         python setup.py sdist
-#         mv dist/psutil*.tar.gz wheelhouse/
-#         python scripts/internal/print_hashes.py wheelhouse/
+    - name: Print hashes
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+        python scripts/internal/print_hashes.py wheelhouse/
 
 #   freebsd:
 #     runs-on: macos-latest
