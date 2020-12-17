@@ -1,0 +1,22 @@
+name: Issue/PR bot
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    typed: [opened]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Run
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_ISSUE_URL: ${{ github.event.issue.url }}
+      run: |
+        PYTHONUNBUFFERED=1 python -m pip install --upgrade pip PyGithub
+        PYTHONUNBUFFERED=1 python scripts/internal/issue_bot.py
