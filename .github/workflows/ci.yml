@@ -9,9 +9,21 @@
 # To skip certain builds see:
 # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
 
-name: Build
 on: [push]
 jobs:
+  linters:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # in this example, there is a newer version already installed, 3.7.7, so the older version will be downloaded
+        python-version: [2.7, 3.8]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - run: python -m pip install flake8
+
 #   linux-macos-win:
 #     name: ${{ matrix.os }}
 #     runs-on: ${{ matrix.os }}
@@ -93,17 +105,3 @@ jobs:
 #           python3 psutil/tests/runner.py
 #           python3 psutil/tests/test_memleaks.py
 
-  linters:
-    name: "Linters"
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [2.7, 3.8]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - run: |
-      python -m pip install flake8
-      make lint
