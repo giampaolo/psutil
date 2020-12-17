@@ -17,6 +17,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 1708_: [Linux] get rid of sensors_temperatures() duplicates.  (patch by Tim
+  Schlueter).
 - 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
   from 32 bit ones (NtWoW64 APIs).
 - 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
