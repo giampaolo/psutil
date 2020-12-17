@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <unistd.h>
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
@@ -49,6 +50,38 @@
 #endif
 
 #include "_psutil_common.h"
+
+
+// ====================================================================
+// --- Utils
+// ====================================================================
+
+
+/*
+ * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
+ *
+ * > In SUSv2 the getpagesize() call is labeled LEGACY, and in POSIX.1-2001
+ * > it has been dropped.
+ * > Portable applications should employ sysconf(_SC_PAGESIZE) instead
+ * > of getpagesize().
+ * > Most systems allow the synonym _SC_PAGE_SIZE for _SC_PAGESIZE.
+ * > Whether getpagesize() is present as a Linux system call depends on the
+ * > architecture.
+ */
+long
+psutil_getpagesize(void) {
+#ifdef _SC_PAGESIZE
+    // recommended POSIX
+    return sysconf(_SC_PAGESIZE);
+#elif _SC_PAGE_SIZE
+    // alias
+    return sysconf(_SC_PAGE_SIZE);
+#else
+    // legacy
+    return (long) getpagesize();
+#endif
+}
+
 
 /*
  * Check if PID exists. Return values:
@@ -120,6 +153,18 @@ psutil_raise_for_pid(long pid, char *syscall) {
         NoSuchProcess(syscall);
     else
         PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall);
+}
+
+
+// ====================================================================
+// --- Python wrappers
+// ====================================================================
+
+
+// Exposed so we can test it against Python's stdlib.
+static PyObject *
+psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
+    return Py_BuildValue("l", psutil_getpagesize());
 }
 
 
@@ -629,6 +674,8 @@ static PyMethodDef mod_methods[] = {
      "Retrieve NIC MTU"},
     {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS,
      "Return True if the NIC is running."},
+    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS,
+     "Return memory page size."},
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},

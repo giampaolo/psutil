@@ -404,7 +404,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size_t         size = sizeof(total);
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = getpagesize();
+    long           pagesize = psutil_getpagesize();
 #if __FreeBSD_version > 702101
     long buffers;
 #else
@@ -465,7 +465,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
     size_t size = sizeof(unsigned int);
-    int pagesize;
+    long pagesize = psutil_getpagesize();
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
@@ -497,12 +497,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
         return PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.vm.v_vnodeout)'");
-    }
-
-    pagesize = getpagesize();
-    if (pagesize <= 0) {
-        PyErr_SetString(PyExc_ValueError, "invalid getpagesize()");
-        return NULL;
     }
 
     return Py_BuildValue(
