@@ -25,9 +25,9 @@ jobs:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
       CIBW_TEST_COMMAND:
-        PYTHON=python PYTHONUNBUFFERED=1 make install &&
-        PYTHON=python PYTHONUNBUFFERED=1 make test &&
-        PYTHON=python PYTHONUNBUFFERED=1 make test-memleaks
+        make install PYTHON=python &&
+        make test PYTHON=python &&
+        make test-memleaks PYTHON=python
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
@@ -84,7 +84,6 @@ jobs:
 #           set +e
 #           export \
 #             PYTHONWARNINGS=always \
-#             PYTHONUNBUFFERED=1 \
 #             PSUTIL_TESTING=1 \
 #             PSUTIL_DEBUG=1
 #           python3 -m pip install --user setuptools
