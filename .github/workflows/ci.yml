@@ -28,6 +28,7 @@ jobs:
         make install PYTHON=python &&
         make test PYTHON=python &&
         make test-memleaks PYTHON=python
+
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
