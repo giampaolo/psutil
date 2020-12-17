@@ -25,9 +25,9 @@ jobs:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
       CIBW_TEST_COMMAND:
-        PYTHONUNBUFFERED=1 make install &&
-        PYTHONUNBUFFERED=1 make test &&
-        PYTHONUNBUFFERED=1 make test-memleaks
+        PYTHON=python PYTHONUNBUFFERED=1 make install &&
+        PYTHON=python PYTHONUNBUFFERED=1 make test &&
+        PYTHON=python PYTHONUNBUFFERED=1 make test-memleaks
       CIBW_TEST_EXTRAS: test
       CIBW_SKIP: cp35-* pp*
     steps:
