@@ -7,9 +7,8 @@ Linux, Windows, macOS (wheels)
 Pre-compiled wheels are distributed for these platforms, so you won't have to
 install a C compiler. All you have to do is::
 
-    pip install --user psutil
+    pip install psutil
 
-This (``--user``) will install psutil as a limited user (not system-wide).
 If wheels are not available for your platform or architecture, or you whish to
 build & install psutil from sources, keep reading.
 
@@ -19,12 +18,12 @@ Linux (build)
 Ubuntu / Debian::
 
     sudo apt-get install gcc python3-dev
-    pip install --user --no-binary :all: psutil
+    pip install --no-binary :all: psutil
 
 RedHat / CentOS::
 
     sudo yum install gcc python3-devel
-    pip install --user --no-binary :all: psutil
+    pip install --no-binary :all: psutil
 
 Windows (build)
 ---------------
@@ -35,14 +34,14 @@ Here's a couple of guides describing how to do it: `link <https://blog.ionelmc.r
 and `link <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__.
 Once VS is installed do::
 
-    pip install --user --no-binary :all: psutil
+    pip install --no-binary :all: psutil
 
 macOS (build)
 -------------
 
 Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__ then run::
 
-    pip install --user --no-binary :all: psutil
+    pip install --no-binary :all: psutil
 
 FreeBSD
 -------
