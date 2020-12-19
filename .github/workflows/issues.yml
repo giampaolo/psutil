@@ -1,22 +1,27 @@
-name: Issue/PR bot
+name: issue-bot
 on:
   issues:
     types: [opened]
   pull_request:
     typed: [opened]
+  issue_comment:
+    types: [created]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    # install python
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Install Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+    # install deps
+    - name: Install deps
+      run: python -m pip install --upgrade pip PyGithub
+    # run
     - name: Run
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_ISSUE_URL: ${{ github.event.issue.url }}
       run: |
-        PYTHONUNBUFFERED=1 python -m pip install --upgrade pip PyGithub
-        PYTHONUNBUFFERED=1 python scripts/internal/github_issue_bot.py
+        python .github/workflows/issues.py ${{ github.event.issue.number }}

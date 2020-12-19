@@ -11,7 +11,7 @@ labels: 'bug'
 * Architecture: { 64bit, 32bit, ARM, PowerPC, s390 }
 * Psutil version: { pip3 show psutil }
 * Python version: { python3 -V }
-* Type: { core, doc, performance, scripts, tests, wheels, newapi }
+* Type: { core, doc, performance, scripts, tests, wheels, new-api, installation }
 
 ## Description
 

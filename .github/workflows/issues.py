@@ -4,9 +4,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+Bot triggered by Github Actions every time a new issue, PR or comment
+is created. Assign labels, provide replies, closes issues, etc. depending
+on the situation.
+"""
+
 import os
 import re
-import textwrap
+import sys
 
 from github import Github
 
@@ -132,6 +138,10 @@ def is_new(issue):
     return issue.comments == 0
 
 
+def is_comment(issue):
+    return not is_new(issue)
+
+
 def has_label(issue, label):
     assigned = [x.name for x in issue.labels]
     return label in assigned
@@ -151,52 +161,34 @@ def get_repo():
     return Github(token).get_repo(repo)
 
 
-def get_issue_event():
-    url = os.environ.get('GITHUB_ISSUE_URL')
-    if url:  # issue
-        num = int(url.split('/')[-1])
-    else:  # PR
-        url = os.environ['GITHUB_REF']
-        num = int(url.split('/')[-2])
-    repo = get_repo()
-    return repo.get_issue(number=num)
-
-
 # --- actions
 
 
 def log(msg):
-    print(">>> %s <<<" % msg)
+    if '\n' in msg or "\r\n" in msg:
+        print(">>>\n%s\n<<<" % msg)
+    else:
+        print(">>> %s <<<" % msg)
 
 
 def add_label(issue, label):
     def should_add(issue, label):
         if has_label(issue, label):
-            log("issue %r already has label %r" % (issue, label))
+            log("already has label %r" % (label))
             return False
 
         for left, right in ILLOGICAL_PAIRS:
             if label == left and has_label(issue, right):
-                log("issue %r already has label %r" % (issue, label))
+                log("already has label" % (label))
                 return False
 
         return not has_label(issue, label)
 
     if not should_add(issue, label):
+        log("should not add label %r" % label)
         return
 
-    type_ = "PR:" if is_pr(issue) else "issue:"
-    assigned = ', '.join([x.name for x in issue.labels])
-    log(textwrap.dedent("""\
-        %-10s     %s: %s
-        assigned:      %s
-        new:           %s""" % (
-        type_,
-        issue.number,
-        issue.title,
-        assigned,
-        label,
-    )))
+    log("add label %r" % label)
     issue.add_to_labels(label)
 
 
@@ -212,26 +204,38 @@ def add_labels_from_text(issue, text):
         add_label(issue, label)
 
 
-def add_labels_from_body(issue, text):
+def add_labels_from_new_body(issue, text):
+    log("start searching for template lines in new issue/PR body")
     # add os label
-    print(repr(text))
     r = re.search(r"\* OS:.*?\n", text)
+    log("search for 'OS: ...' line")
     if r:
+        log("found")
         add_labels_from_text(issue, r.group(0))
+    else:
+        log("not found")
+
     # add bug/enhancement label
+    log("search for 'Bug fix: y/n' line")
     r = re.search(r"\* Bug fix:.*?\n", text)
     if is_pr(issue) and \
             r is not None and \
             not has_label(issue, "bug") and \
             not has_label(issue, "enhancement"):
+        log("found")
         s = r.group(0).lower()
         if 'yes' in s:
             add_label(issue, 'bug')
         else:
             add_label(issue, 'enhancement')
+    else:
+        log("not found")
+
     # add type labels
+    log("search for 'Type: ...' line")
     r = re.search(r"\* Type:.*?\n", text)
     if r:
+        log("found")
         s = r.group(0).lower()
         if 'doc' in s:
             add_label(issue, 'doc')
@@ -243,43 +247,56 @@ def add_labels_from_body(issue, text):
             add_label(issue, 'tests')
         if 'wheels' in s:
             add_label(issue, 'wheels')
-        if 'newapi' in s:
-            add_label(issue, 'api')
+        if 'new-api' in s:
+            add_label(issue, 'new-api')
+        if 'new-platform' in s:
+            add_label(issue, 'new-platform')
+    else:
+        log("not found")
 
 
-# --- run
+# --- events
 
 
-def process_both(issue):
-    add_labels_from_text(issue, issue.title)
-    add_labels_from_body(issue, issue.body)
-
-
-def process_issue(issue):
+def on_new_issue(issue):
     def has_text(text):
         return text in issue.title.lower() or text in issue.body.lower()
 
+    log("searching for missing Python.h")
     if has_text("missing python.h") or \
             has_text("python.h: no such file or directory") or \
             "#include<Python.h>\n^~~~" in issue.body.replace(' ', '') or \
             "#include<Python.h>\r\n^~~~" in issue.body.replace(' ', ''):
+        log("found")
         issue.create_comment(REPLY_MISSING_PYTHON_HEADERS)
         issue.edit(state='closed')
         return
 
 
-def process_pr(pr):
+def on_new_pr(issue):
+    pass
+
+
+def on_new_comment(issue):
     pass
 
 
 def main():
-    log("Running issue/PR bot.")
-    issue = get_issue_event()
-    process_both(issue)
-    if is_issue(issue):
-        process_issue(issue)
+    issue = get_repo().get_issue(number=int(sys.argv[1]))
+    stype = "issue" if is_issue(issue) else "PR"
+    log("running issue bot for %s %r" % (stype, issue))
+
+    if is_new(issue):
+        log("new %s\n%s" % (stype, issue.body))
+        add_labels_from_text(issue, issue.title)
+        add_labels_from_new_body(issue, issue.body)
+        if is_issue(issue):
+            on_new_issue(issue)
+        if is_pr(issue):
+            on_new_pr(issue)
     else:
-        process_pr(issue)
+        log("new comment: \n", issue.body)
+        on_new_comment(issue)
 
 
 if __name__ == '__main__':

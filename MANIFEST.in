@@ -123,7 +123,6 @@ include scripts/internal/download_wheels_github.py
 include scripts/internal/fix_flake8.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
-include scripts/internal/github_issue_bot.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py

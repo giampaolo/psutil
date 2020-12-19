@@ -3,7 +3,7 @@
 # Number of days of inactivity before an issue is closed for lack of response
 daysUntilClose: 14
 # Label requiring a response
-responseRequiredLabel: awaiting-response
+responseRequiredLabel: need-more-info
 # Comment to post when closing an Issue for lack of response.
 # Set to `false` to disable
 closeComment: >
