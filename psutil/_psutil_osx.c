@@ -689,22 +689,19 @@ error:
 static PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     int64_t curr;
-    int64_t min;
-    int64_t max;
+    int64_t min = 0;
+    int64_t max = 0;
     size_t size = sizeof(int64_t);
 
     if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0)) {
         return PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('hw.cpufrequency')");
     }
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.cpufrequency_min')");
-    }
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.cpufrequency_max')");
-    }
+
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
+        psutil_debug("sysctlbyname(hw.cpufrequency_min) failed and set to 0");
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
+        psutil_debug("sysctlbyname(hw.cpufrequency_min) failed and set to 0");
 
     return Py_BuildValue(
         "KKK",
