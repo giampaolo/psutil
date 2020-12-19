@@ -295,7 +295,7 @@ def main():
         if is_pr(issue):
             on_new_pr(issue)
     else:
-        log("new comment: \n", issue.body)
+        log("new comment: \n" % issue.body)
         on_new_comment(issue)
 
 
