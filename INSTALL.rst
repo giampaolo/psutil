@@ -4,10 +4,8 @@ Install psutil
 Linux, Windows, macOS (wheels)
 ------------------------------
 
-psutil makes extensive use of C extension modules, meaning a C compiler is
-required to build the sources.
-Pre-compiled cPython wheels are provided on each release though, so on
-**Linux**, **Windows** and **macOS** all you have to do is::
+Pre-compiled wheels are distributed on each release for ***Linux**, **Windows**
+and **macOS**, so you don't need a C compiler. All you have to do is::
 
     pip3 install --user psutil
 
@@ -15,8 +13,8 @@ This (``--user``) will install psutil as a limited user (not system-wide).
 If wheels are not available for your platform or architecture, or you whish to
 install psutil from sources, keep reading.
 
-Linux (install from sources)
-----------------------------
+Linux (build)
+-------------
 
 Ubuntu / Debian::
 
@@ -28,16 +26,23 @@ RedHat / CentOS::
     sudo yum install gcc python3-devel
     pip3 install --user --no-binary :all: psutil
 
-Windows (install from sources)
-------------------------------
+Windows (build)
+---------------
 
-In order to compile psutil on Windows you'll need **Visual Studio** compiler
+In order to install psutil from sources on Windows you need **Visual Studio**
 (**MinGW** is not supported).
 Here's a couple of guides describing how to do it: `link <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
 and `link <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__.
 Once VS is installed do::
 
     pip3 install --user --no-binary :all: psutil
+
+macOS (build)
+-------------
+
+Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__ then run::
+
+    pip3 install psutil
 
 FreeBSD
 -------
@@ -96,7 +101,7 @@ If you don't have pip you can install with wget::
 On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`__, open
 cmd.exe and install it with::
 
-    C:\Python27\python.exe get-pip.py
+    py get-pip.py
 
 "pip not found"
 ---------------
@@ -110,6 +115,6 @@ Permission errors (UNIX)
 ------------------------
 
 If you want to install psutil system-wide and you bump into permission errors
-either run as root or prepend ``sudo``::
+either run as root user or prepend ``sudo``::
 
     sudo pip3 install psutil

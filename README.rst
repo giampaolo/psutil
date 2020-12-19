@@ -110,7 +110,7 @@ immensely from some funding.
 Keeping up with bug reports and maintenance has become hardly sustainable for
 me alone in terms of time.
 If you're a company that's making significant use of psutil you can consider
-becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
+becoming a sponsor via `GitHub Sponsors <https://github.com/sponsors/giampaolo>`__,
 `Open Collective <https://opencollective.com/psutil>`__ or
 `PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
 and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
@@ -499,14 +499,3 @@ Portings
 - C: https://github.com/hamon-in/cpslib
 - Rust: https://github.com/rust-psutil/rust-psutil
 - Nim: https://github.com/johnscillieri/psutil-nim
-
-Security
-========
-
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
-
-.. _`Giampaolo Rodola`: https://gmpy.dev/about
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-.. _Tidelift security contact: https://tidelift.com/security
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme

@@ -718,6 +718,12 @@ class TestProcess(PsutilTestCase):
         if NETBSD or OPENBSD or AIX:
             self.assertEqual(p.cmdline()[0], PYTHON_EXE)
         else:
+            if MACOS and CI_TESTING:
+                pyexe = p.cmdline()[0]
+                if pyexe != PYTHON_EXE:
+                    self.assertEqual(' '.join(p.cmdline()[1:]),
+                                     ' '.join(cmdline[1:]))
+                    return
             self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
 
     @unittest.skipIf(PYPY, "broken on PYPY")
