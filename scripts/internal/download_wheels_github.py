@@ -19,16 +19,18 @@ import argparse
 import json
 import os
 import requests
+import sys
 import zipfile
 
+from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human
 from psutil.tests import safe_rmpath
 
 
-USER = ""
-PROJECT = ""
-TOKEN = ""
+USER = "giampaolo"
+PROJECT = "psutil"
 OUTFILE = "wheels-github.zip"
+TOKEN = ""
 
 
 def get_artifacts():
@@ -52,25 +54,44 @@ def download_zip(url):
     print("got %s, size %s)" % (OUTFILE, bytes2human(totbytes)))
 
 
+def rename_win27_wheels():
+    # See: https://github.com/giampaolo/psutil/issues/810
+    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
+    if os.path.exists(src):
+        print("rename: %s\n        %s" % (src, dst))
+        os.rename(src, dst)
+    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PSUTIL_VERSION
+    if os.path.exists(src):
+        print("rename: %s\n        %s" % (src, dst))
+        os.rename(src, dst)
+
+
 def run():
     data = get_artifacts()
     download_zip(data['artifacts'][0]['archive_download_url'])
     os.makedirs('dist', exist_ok=True)
     with zipfile.ZipFile(OUTFILE, 'r') as zf:
         zf.extractall('dist')
+    rename_win27_wheels()
 
 
 def main():
-    global USER, PROJECT, TOKEN
+    global TOKEN
     parser = argparse.ArgumentParser(description='GitHub wheels downloader')
-    parser.add_argument('--user', required=True)
-    parser.add_argument('--project', required=True)
-    parser.add_argument('--tokenfile', required=True)
+    parser.add_argument('--token')
+    parser.add_argument('--tokenfile')
     args = parser.parse_args()
-    USER = args.user
-    PROJECT = args.project
-    with open(os.path.expanduser(args.tokenfile)) as f:
-        TOKEN = f.read().strip()
+
+    if args.tokenfile:
+        with open(os.path.expanduser(args.tokenfile)) as f:
+            TOKEN = f.read().strip()
+    elif args.token:
+        TOKEN = args.token
+    else:
+        return sys.exit('specify --token or --tokenfile args')
+
     try:
         run()
     finally:

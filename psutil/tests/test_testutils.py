@@ -350,6 +350,7 @@ class TestNetUtils(PsutilTestCase):
 @serialrun
 class TestMemLeakClass(TestMemoryLeak):
 
+    @retry_on_failure()
     def test_times(self):
         def fun():
             cnt['cnt'] += 1

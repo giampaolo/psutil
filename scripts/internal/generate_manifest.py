@@ -13,7 +13,7 @@ import subprocess
 
 
 SKIP_EXTS = ('.png', '.jpg', '.jpeg')
-SKIP_FILES = ('.travis.yml', 'appveyor.yml')
+SKIP_FILES = ('appveyor.yml')
 SKIP_PREFIXES = ('.ci/', '.github/')
 
 

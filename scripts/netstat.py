@@ -7,7 +7,7 @@
 """
 A clone of 'netstat -antp' on Linux.
 
-$ python scripts/netstat.py
+$ python3 scripts/netstat.py
 Proto Local address      Remote address   Status        PID    Program name
 tcp   127.0.0.1:48256    127.0.0.1:45884  ESTABLISHED   13646  chrome
 tcp   127.0.0.1:47073    127.0.0.1:45884  ESTABLISHED   13646  chrome
@@ -48,13 +48,14 @@ def main():
         raddr = ""
         if c.raddr:
             raddr = "%s:%s" % (c.raddr)
+        name = proc_names.get(c.pid, '?') or ''
         print(templ % (
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,
             c.status,
             c.pid or AD,
-            proc_names.get(c.pid, '?')[:15],
+            name[:15],
         ))
 
 

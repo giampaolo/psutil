@@ -1,0 +1,107 @@
+# Executed on every push by GitHub Actions. This runs CI tests and
+# generates wheels on the following platforms:
+#
+# * Linux
+# * macOS
+# * FreeBSD
+#
+# Windows works as well but it's disabled (we do it via AppVeyor).
+# To skip certain builds see:
+# https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
+
+on: [push]
+name: build
+jobs:
+  linux-macos-win:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - {name: Linux, python: '3.9', os: ubuntu-latest}
+    env:
+      CIBW_TEST_COMMAND:
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_TESTING=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_EXTRAS: test
+      CIBW_SKIP: cp35-* pp*
+
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install cibuildwheel
+      run: pip install cibuildwheel
+
+    # - name: (Windows) install Visual C++ for Python 2.7
+    #   if: matrix.os == 'windows-latest'
+    #   run: |
+    #     choco install vcpython27 -f -y
+
+    - name: Run tests
+      run: cibuildwheel .
+
+    - name: Create wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Print hashes
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+        python scripts/internal/print_hashes.py wheelhouse/
+
+  freebsd:
+    runs-on: macos-latest
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v2
+
+    - name: Run tests
+      id: test
+      uses: vmactions/freebsd-vm@v0.0.8
+      with:
+        usesh: true
+        prepare: pkg install -y gcc python3
+        run: |
+          set +e
+          export \
+            PYTHONWARNINGS=always \
+            PSUTIL_TESTING=1 \
+            PSUTIL_DEBUG=1
+          python3 -m pip install --user setuptools
+          python3 setup.py install
+          python3 psutil/tests/runner.py
+          python3 psutil/tests/test_memleaks.py
+
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: 'Linters'
+      run: |
+        python -m pip install flake8
+        python -m flake8 .
+        echo "flake8 linting OK"
+        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python scripts/internal/clinter.py
+        echo "C linting OK"

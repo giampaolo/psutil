@@ -13,7 +13,6 @@ http://code.saghul.net/index.php/2015/09/09/
 """
 
 from __future__ import print_function
-import argparse
 import concurrent.futures
 import os
 import requests
@@ -24,8 +23,10 @@ from psutil._common import bytes2human
 from psutil._common import print_color
 
 
+USER = "giampaolo"
+PROJECT = "psutil"
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.5', '3.6', '3.7', '3.8']
+PY_VERSIONS = ['2.7', '3.6', '3.7', '3.8', '3.9']
 TIMEOUT = 30
 
 
@@ -43,10 +44,10 @@ def download_file(url):
     return local_fname
 
 
-def get_file_urls(options):
+def get_file_urls():
     with requests.Session() as session:
         data = session.get(
-            BASE_URL + '/projects/' + options.user + '/' + options.project,
+            BASE_URL + '/projects/' + USER + '/' + PROJECT,
             timeout=TIMEOUT)
         data = data.json()
 
@@ -59,14 +60,14 @@ def get_file_urls(options):
                 file_url = job_url + '/' + item['fileName']
                 urls.append(file_url)
         if not urls:
-            print_color("no artifacts found", 'ret')
+            print_color("no artifacts found", 'red')
             sys.exit(1)
         else:
             for url in sorted(urls, key=lambda x: os.path.basename(x)):
                 yield url
 
 
-def rename_27_wheels():
+def rename_win27_wheels():
     # See: https://github.com/giampaolo/psutil/issues/810
     src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
     dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
@@ -78,8 +79,8 @@ def rename_27_wheels():
     os.rename(src, dst)
 
 
-def run(options):
-    urls = get_file_urls(options)
+def run():
+    urls = get_file_urls()
     completed = 0
     exc = None
     with concurrent.futures.ThreadPoolExecutor() as e:
@@ -101,16 +102,11 @@ def run(options):
         return exit("expected %s files, got %s" % (expected, completed))
     if exc:
         return exit()
-    rename_27_wheels()
+    rename_win27_wheels()
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='AppVeyor artifact downloader')
-    parser.add_argument('--user', required=True)
-    parser.add_argument('--project', required=True)
-    args = parser.parse_args()
-    run(args)
+    run()
 
 
 if __name__ == '__main__':

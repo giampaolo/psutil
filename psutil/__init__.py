@@ -102,44 +102,6 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
-    # Linux >= 2.6.36
-    if _psplatform.HAS_PRLIMIT:
-        from ._psutil_linux import RLIM_INFINITY  # NOQA
-        from ._psutil_linux import RLIMIT_AS  # NOQA
-        from ._psutil_linux import RLIMIT_CORE  # NOQA
-        from ._psutil_linux import RLIMIT_CPU  # NOQA
-        from ._psutil_linux import RLIMIT_DATA  # NOQA
-        from ._psutil_linux import RLIMIT_FSIZE  # NOQA
-        from ._psutil_linux import RLIMIT_LOCKS  # NOQA
-        from ._psutil_linux import RLIMIT_MEMLOCK  # NOQA
-        from ._psutil_linux import RLIMIT_NOFILE  # NOQA
-        from ._psutil_linux import RLIMIT_NPROC  # NOQA
-        from ._psutil_linux import RLIMIT_RSS  # NOQA
-        from ._psutil_linux import RLIMIT_STACK  # NOQA
-        # Kinda ugly but considerably faster than using hasattr() and
-        # setattr() against the module object (we are at import time:
-        # speed matters).
-        from . import _psutil_linux
-        try:
-            RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_NICE = _psutil_linux.RLIMIT_NICE
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_RTPRIO = _psutil_linux.RLIMIT_RTPRIO
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_RTTIME = _psutil_linux.RLIMIT_RTTIME
-        except AttributeError:
-            pass
-        try:
-            RLIMIT_SIGPENDING = _psutil_linux.RLIMIT_SIGPENDING
-        except AttributeError:
-            pass
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
@@ -197,6 +159,7 @@ __all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    # "CONN_IDLE", "CONN_BOUND",
 
     "AF_LINK",
 
@@ -206,6 +169,11 @@ __all__ = [
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
     "SUNOS", "WINDOWS", "AIX",
+
+    # "RLIM_INFINITY", "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA",
+    # "RLIMIT_FSIZE", "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_NOFILE",
+    # "RLIMIT_NPROC", "RLIMIT_RSS", "RLIMIT_STACK", "RLIMIT_MSGQUEUE",
+    # "RLIMIT_NICE", "RLIMIT_RTPRIO", "RLIMIT_RTTIME", "RLIMIT_SIGPENDING",
 
     # classes
     "Process", "Popen",
@@ -222,11 +190,26 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-AF_LINK = _psplatform.AF_LINK
 
 __all__.extend(_psplatform.__extra__all__)
+
+# Linux, FreeBSD
+if hasattr(_psplatform.Process, "rlimit"):
+    # Populate global namespace with RLIM* constants.
+    from . import _psutil_posix
+
+    _globals = globals()
+    _name = None
+    for _name in dir(_psutil_posix):
+        if _name.startswith('RLIM') and _name.isupper():
+            _globals[_name] = getattr(_psutil_posix, _name)
+            __all__.append(_name)
+    del _globals, _name
+
+AF_LINK = _psplatform.AF_LINK
+
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.7.2"
+__version__ = "5.8.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -264,7 +247,7 @@ if (int(__version__.replace('.', '')) !=
 if hasattr(_psplatform, 'ppid_map'):
     # Faster version (Windows and Linux).
     _ppid_map = _psplatform.ppid_map
-else:
+else:  # pragma: no cover
     def _ppid_map():
         """Return a {pid: ppid, ...} dict for all running processes in
         one shot. Used to speed up Process.children().
@@ -393,7 +376,7 @@ class Process(object):
     def __str__(self):
         try:
             info = collections.OrderedDict()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             info = {}  # Python 2.6
         info["pid"] = self.pid
         if self._name:
@@ -720,7 +703,7 @@ class Process(object):
 
     def create_time(self):
         """The process creation time as a floating point number
-        expressed in seconds since the epoch, in UTC.
+        expressed in seconds since the epoch.
         The return value is cached after first call.
         """
         if self._create_time is None:
@@ -801,7 +784,7 @@ class Process(object):
             else:
                 return self._proc.ionice_set(ioclass, value)
 
-    # Linux only
+    # Linux / FreeBSD only
     if hasattr(_psplatform.Process, "rlimit"):
 
         def rlimit(self, resource, limits=None):
@@ -809,15 +792,12 @@ class Process(object):
             tuple.
 
             *resource* is one of the RLIMIT_* constants.
-            *limits* is supposed to be a (soft, hard)  tuple.
+            *limits* is supposed to be a (soft, hard) tuple.
 
             See "man prlimit" for further info.
-            Available on Linux only.
+            Available on Linux and FreeBSD only.
             """
-            if limits is None:
-                return self._proc.rlimit(resource)
-            else:
-                return self._proc.rlimit(resource, limits)
+            return self._proc.rlimit(resource, limits)
 
     # Windows, Linux and FreeBSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
@@ -831,7 +811,7 @@ class Process(object):
             (Windows, Linux and BSD only).
             """
             if cpus is None:
-                return list(set(self._proc.cpu_affinity_get()))
+                return sorted(set(self._proc.cpu_affinity_get()))
             else:
                 if not cpus:
                     if hasattr(self._proc, "_get_eligible_cpus"):
@@ -2024,7 +2004,23 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
-    return _psplatform.disk_partitions(all)
+    def pathconf(path, name):
+        try:
+            return os.pathconf(path, name)
+        except (OSError, AttributeError):
+            pass
+
+    ret = _psplatform.disk_partitions(all)
+    if POSIX:
+        new = []
+        for item in ret:
+            nt = item._replace(
+                maxfile=pathconf(item.mountpoint, 'PC_NAME_MAX'),
+                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'))
+            new.append(nt)
+        return new
+    else:
+        return ret
 
 
 def disk_io_counters(perdisk=False, nowrap=True):

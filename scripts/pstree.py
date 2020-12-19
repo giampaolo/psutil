@@ -8,7 +8,7 @@
 Similar to 'ps aux --forest' on Linux, prints the process list
 as a tree structure.
 
-$ python scripts/pstree.py
+$ python3 scripts/pstree.py
 0 ?
 |- 1 init
 | |- 289 cgmanager

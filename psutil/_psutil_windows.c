@@ -160,22 +160,15 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         return AccessDenied("automatically set for PID 0");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    hProcess = psutil_check_phandle(hProcess, pid, 0);
     if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://github.com/giampaolo/psutil/issues/24
-            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
-                         "into NoSuchProcess");
-            NoSuchProcess("OpenProcess");
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
         return NULL;
     }
 
     if (! TerminateProcess(hProcess, SIGTERM)) {
         // ERROR_ACCESS_DENIED may happen if the process already died. See:
         // https://github.com/giampaolo/psutil/issues/1099
+        // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
             return NULL;
@@ -212,7 +205,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             Py_RETURN_NONE;
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
             return NULL;
         }
     }
@@ -281,7 +274,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            NoSuchProcess("GetProcessTimes");
+            NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -333,7 +326,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -357,7 +350,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -384,7 +377,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
 
     if (pid == 0)
-        return AccessDenied("forced for PID 0");
+        return AccessDenied("automatically set for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
     if (! buffer)
@@ -418,7 +411,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! NT_SUCCESS(status)) {
         FREE(buffer);
         if (psutil_pid_is_running(pid) == 0)
-            NoSuchProcess("NtQuerySystemInformation");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         else
             psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
@@ -537,10 +530,10 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("NtQueryVirtualMemory");
+            AccessDenied("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
-            NoSuchProcess("psutil_pid_is_running");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         }
         else {
             PyErr_Clear();
@@ -645,7 +638,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -704,13 +697,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("automatically set for PID 0");
+        AccessDenied("forced for PID 0");
         goto error;
     }
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess("psutil_pid_is_running");
+        NoSuchProcess("psutil_pid_is_running -> 0");
         goto error;
     }
     if (pid_return == -1)
@@ -902,6 +895,19 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 free(userName);
                 free(domainName);
                 continue;
+            }
+            else if (GetLastError() == ERROR_NONE_MAPPED) {
+                // From MS doc:
+                // https://docs.microsoft.com/en-us/windows/win32/api/winbase/
+                //     nf-winbase-lookupaccountsida
+                // If the function cannot find an account name for the SID,
+                // GetLastError returns ERROR_NONE_MAPPED. This can occur if
+                // a network time-out prevents the function from finding the
+                // name. It also occurs for SIDs that have no corresponding
+                // account name, such as a logon SID that identifies a logon
+                // session.
+                AccessDenied("LookupAccountSidW -> ERROR_NONE_MAPPED");
+                goto error;
             }
             else {
                 PyErr_SetFromOSErrnoWithSyscall("LookupAccountSidW");

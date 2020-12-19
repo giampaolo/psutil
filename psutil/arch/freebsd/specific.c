@@ -262,7 +262,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists");
+            return NoSuchProcess("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }
@@ -404,7 +404,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size_t         size = sizeof(total);
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = getpagesize();
+    long           pagesize = psutil_getpagesize();
 #if __FreeBSD_version > 702101
     long buffers;
 #else
@@ -465,7 +465,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
     size_t size = sizeof(unsigned int);
-    int pagesize;
+    long pagesize = psutil_getpagesize();
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
@@ -497,12 +497,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
         return PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.vm.v_vnodeout)'");
-    }
-
-    pagesize = getpagesize();
-    if (pagesize <= 0) {
-        PyErr_SetString(PyExc_ValueError, "invalid getpagesize()");
-        return NULL;
     }
 
     return Py_BuildValue(
@@ -1076,4 +1070,89 @@ error:
     else
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
+}
+
+
+/*
+ * An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
+ */
+PyObject *
+psutil_proc_getrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    size_t len;
+    int name[5];
+    struct rlimit rlp;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &resource))
+        return NULL;
+
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+    len = sizeof(rlp);
+
+    ret = sysctl(name, 5, &rlp, &len, NULL, 0);
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+#if defined(HAVE_LONG_LONG)
+    return Py_BuildValue("LL",
+                         (PY_LONG_LONG) rlp.rlim_cur,
+                         (PY_LONG_LONG) rlp.rlim_max);
+#else
+    return Py_BuildValue("ll",
+                         (long) rlp.rlim_cur,
+                         (long) rlp.rlim_max);
+#endif
+}
+
+
+/*
+ * An emulation of Linux prlimit() (set).
+ */
+PyObject *
+psutil_proc_setrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    int name[5];
+    struct rlimit new;
+    struct rlimit *newp = NULL;
+    PyObject *py_soft = NULL;
+    PyObject *py_hard = NULL;
+
+    if (! PyArg_ParseTuple(
+            args, _Py_PARSE_PID "iOO", &pid, &resource, &py_soft, &py_hard))
+        return NULL;
+
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+
+#if defined(HAVE_LONG_LONG)
+    new.rlim_cur = PyLong_AsLongLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLongLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+#else
+    new.rlim_cur = PyLong_AsLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+#endif
+    newp = &new;
+    ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    Py_RETURN_NONE;
 }

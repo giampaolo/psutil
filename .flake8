@@ -9,5 +9,7 @@ ignore =
 per-file-ignores =
    setup.py:T001
    scripts/*:T001
+   scripts/internal/convert_readme.py:E501,T001
    psutil/tests/runner.py:T001
    psutil/tests/test_memleaks.py:T001
+   .github/workflows/*:T001

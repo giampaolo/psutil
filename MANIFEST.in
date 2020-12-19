@@ -1,7 +1,7 @@
-include .cirrus.yml
 include .coveragerc
 include .flake8
 include .gitignore
+include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
 include INSTALL.rst
@@ -121,6 +121,7 @@ include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/clinter.py
+include scripts/internal/convert_readme.py
 include scripts/internal/download_wheels_appveyor.py
 include scripts/internal/download_wheels_github.py
 include scripts/internal/fix_flake8.py
@@ -129,6 +130,8 @@ include scripts/internal/git_pre_commit.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py
+include scripts/internal/print_downloads.py
+include scripts/internal/print_hashes.py
 include scripts/internal/print_timeline.py
 include scripts/internal/print_wheels.py
 include scripts/internal/purge_installation.py
@@ -152,4 +155,3 @@ include scripts/who.py
 include scripts/wifimon.py
 include scripts/winservices.py
 include setup.py
-include tox.ini

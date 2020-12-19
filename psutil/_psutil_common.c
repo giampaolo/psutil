@@ -23,9 +23,8 @@ int PSUTIL_TESTING = 0;
 // ====================================================================
 
 // PyPy on Windows
-#if defined(PSUTIL_WINDOWS) && \
-    defined(PYPY_VERSION) && \
-    !defined(PyErr_SetFromWindowsErrWithFilename)
+#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
+#if !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
 PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
     PyObject *py_exc = NULL;
@@ -58,7 +57,17 @@ error:
     Py_XDECREF(py_winerr);
     return NULL;
 }
-#endif  // PYPY on Windows
+#endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
+
+
+// PyPy 2.7
+#if !defined(PyErr_SetFromWindowsErr)
+PyObject *
+PyErr_SetFromWindowsErr(int winerr) {
+    return PyErr_SetFromWindowsErrWithFilename(winerr, "");
+}
+#endif  // !defined(PyErr_SetFromWindowsErr)
+#endif  // defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
 
 
 // ====================================================================
@@ -96,7 +105,7 @@ NoSuchProcess(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 
-    sprintf(msg, "No such process (originated from %s)", syscall);
+    sprintf(msg, "assume no such process (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -113,7 +122,7 @@ AccessDenied(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 
-    sprintf(msg, "Access denied (originated from %s)", syscall);
+    sprintf(msg, "assume access denied (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -133,6 +142,7 @@ AccessDenied(const char *syscall) {
 PyObject *
 psutil_set_testing(PyObject *self, PyObject *args) {
     PSUTIL_TESTING = 1;
+    PSUTIL_DEBUG = 1;
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -198,13 +208,6 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 int PSUTIL_WINVER;
 SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
-
-#define NT_FACILITY_MASK 0xfff
-#define NT_FACILITY_SHIFT 16
-#define NT_FACILITY(Status) \
-    ((((ULONG)(Status)) >> NT_FACILITY_SHIFT) & NT_FACILITY_MASK)
-#define NT_NTWIN32(status) (NT_FACILITY(Status) == FACILITY_WIN32)
-#define WIN32_FROM_NTSTATUS(Status) (((ULONG)(Status)) & 0xffff)
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.

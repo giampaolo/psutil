@@ -43,7 +43,7 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 # =====================================================================
 
 
-PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
+PAGE_SIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 
@@ -155,7 +155,7 @@ def swap_memory():
     total = free = 0
     for line in lines:
         line = line.split()
-        t, f = line[-2:]
+        t, f = line[3:4]
         total += int(int(t) * 512)
         free += int(int(f) * 512)
     used = total - free
@@ -233,7 +233,9 @@ def disk_partitions(all=False):
                 # https://github.com/giampaolo/psutil/issues/1674
                 debug("skipping %r: %r" % (mountpoint, err))
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        maxfile = maxpath = None  # set later
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
+                                   maxfile, maxpath)
         retlist.append(ntuple)
     return retlist
 

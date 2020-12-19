@@ -5,15 +5,17 @@ title: "[OS] title"
 labels: 'bug'
 
 ---
-**Platform**
-* { OS version }
-* { psutil version: python3 -c "import psutil; print(psutil.__version__)" }
-* { python version }
+## Summary
 
+* OS: { type-or-version }
+* Architecture: { 64bit, 32bit, ARM, PowerPC, s390 }
+* Psutil version: { pip3 show psutil }
+* Python version: { python3 -V }
+* Type: { core, doc, performance, scripts, tests, wheels, new-api, installation }
 
-**Bug description**
-...
+## Description
 
-
-**Test results**
-{ output of `python -c psutil.tests` (failures only, not full result) }
+{{{
+  A clear explanation of the bug, including traceback message (if any). Please read the contributing guidelines before submit:
+  https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
+}}}

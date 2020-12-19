@@ -76,20 +76,13 @@ __extra__all__ = [
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
-HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 _DEFAULT = object()
 
-# RLIMIT_* constants, not guaranteed to be present on all kernels
-if HAS_PRLIMIT:
-    for name in dir(cext):
-        if name.startswith('RLIM'):
-            __extra__all__.append(name)
-
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+PAGESIZE = cext_posix.getpagesize()
 BOOT_TIME = None  # set later
 # Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
 # On Python 2, using a buffer with open() for such files may result in a
@@ -330,10 +323,58 @@ def cat(fname, fallback=_DEFAULT, binary=True):
 
 try:
     set_scputimes_ntuple("/proc")
-except Exception:
+except Exception:  # pragma: no cover
     # Don't want to crash at import time.
     traceback.print_exc()
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
+
+# =====================================================================
+# --- prlimit
+# =====================================================================
+
+# Backport of resource.prlimit() for Python 2. Originally this was done
+# in C, but CentOS-6 which we use to create manylinux wheels is too old
+# and does not support prlimit() syscall. As such the resulting wheel
+# would not include prlimit(), even when installed on newer systems.
+# This is the only part of psutil using ctypes.
+
+prlimit = None
+try:
+    from resource import prlimit  # python >= 3.4
+except ImportError:
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+
+    if hasattr(libc, "prlimit"):
+
+        def prlimit(pid, resource_, limits=None):
+            class StructRlimit(ctypes.Structure):
+                _fields_ = [('rlim_cur', ctypes.c_longlong),
+                            ('rlim_max', ctypes.c_longlong)]
+
+            current = StructRlimit()
+            if limits is None:
+                # get
+                ret = libc.prlimit(pid, resource_, None, ctypes.byref(current))
+            else:
+                # set
+                new = StructRlimit()
+                new.rlim_cur = limits[0]
+                new.rlim_max = limits[1]
+                ret = libc.prlimit(
+                    pid, resource_, ctypes.byref(new), ctypes.byref(current))
+
+            if ret != 0:
+                errno = ctypes.get_errno()
+                raise OSError(errno, os.strerror(errno))
+            return (current.rlim_cur, current.rlim_max)
+
+
+if prlimit is not None:
+    __extra__all__.extend(
+        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()])
 
 
 # =====================================================================
@@ -641,12 +682,18 @@ def cpu_count_logical():
 def cpu_count_physical():
     """Return the number of physical cores in the system."""
     # Method #1
-    core_ids = set()
-    for path in glob.glob(
-            "/sys/devices/system/cpu/cpu[0-9]*/topology/core_id"):
+    ls = set()
+    # These 2 files are the same but */core_cpus_list is newer while
+    # */thread_siblings_list is deprecated and may disappear in the future.
+    # https://www.kernel.org/doc/Documentation/admin-guide/cputopology.rst
+    # https://github.com/giampaolo/psutil/pull/1727#issuecomment-707624964
+    # https://lkml.org/lkml/2019/2/26/41
+    p1 = "/sys/devices/system/cpu/cpu[0-9]*/topology/core_cpus_list"
+    p2 = "/sys/devices/system/cpu/cpu[0-9]*/topology/thread_siblings_list"
+    for path in glob.glob(p1) or glob.glob(p2):
         with open_binary(path) as f:
-            core_ids.add(int(f.read()))
-    result = len(core_ids)
+            ls.add(f.read().strip())
+    result = len(ls)
     if result != 0:
         return result
 
@@ -658,15 +705,15 @@ def cpu_count_physical():
             line = line.strip().lower()
             if not line:
                 # new section
-                if (b'physical id' in current_info and
-                        b'cpu cores' in current_info):
+                try:
                     mapping[current_info[b'physical id']] = \
                         current_info[b'cpu cores']
+                except KeyError:
+                    pass
                 current_info = {}
             else:
                 # ongoing section
-                if (line.startswith(b'physical id') or
-                        line.startswith(b'cpu cores')):
+                if line.startswith((b'physical id', b'cpu cores')):
                     key, value = line.split(b'\t:', 1)
                     current_info[key] = int(value)
 
@@ -866,10 +913,6 @@ class Connections:
             else:
                 ip = socket.inet_ntop(family, base64.b16decode(ip))
         else:  # IPv6
-            # old version - let's keep it, just in case...
-            # ip = ip.decode('hex')
-            # return socket.inet_ntop(socket.AF_INET6,
-            #          ''.join(ip[i:i+4][::-1] for i in range(0, 16, 4)))
             ip = base64.b16decode(ip)
             try:
                 # see: https://github.com/giampaolo/psutil/issues/201
@@ -1054,7 +1097,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_flags(name)
+            isup = cext_posix.net_if_is_running(name)
             duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -1457,7 +1500,9 @@ def disk_partitions(all=False):
         if not all:
             if device == '' or fstype not in fstypes:
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        maxfile = maxpath = None  # set later
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
+                                   maxfile, maxpath)
         retlist.append(ntuple)
 
     return retlist
@@ -1487,9 +1532,19 @@ def sensors_temperatures():
     # https://github.com/giampaolo/psutil/issues/971
     # https://github.com/nicolargo/glances/issues/1060
     basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*'))
-    basenames.extend(glob.glob(
-        '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'))
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
+
+    # Only add the coretemp hwmon entries if they're not already in
+    # /sys/class/hwmon/
+    # https://github.com/giampaolo/psutil/issues/1708
+    # https://github.com/giampaolo/psutil/pull/1648
+    basenames2 = glob.glob(
+        '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*')
+    repl = re.compile('/sys/devices/platform/coretemp.*/hwmon/')
+    for name in basenames2:
+        altname = repl.sub('/sys/class/hwmon/', name)
+        if altname not in basenames:
+            basenames.append(name)
 
     for base in basenames:
         try:
@@ -1622,7 +1677,8 @@ def sensors_battery():
                 return int(ret) if ret.isdigit() else ret
         return None
 
-    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT')]
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
+            'battery' in x.lower()]
     if not bats:
         return None
     # Get the first available battery. Usually this is "BAT0", except
@@ -1640,12 +1696,11 @@ def sensors_battery():
     energy_full = multi_cat(
         root + "/energy_full",
         root + "/charge_full")
-    if energy_now is None or power_now is None:
-        return None
+    time_to_empty = multi_cat(root + "/time_to_empty_now")
 
     # Percent. If we have energy_full the percentage will be more
     # accurate compared to reading /capacity file (float vs. int).
-    if energy_full is not None:
+    if energy_full is not None and energy_now is not None:
         try:
             percent = 100.0 * energy_now / energy_full
         except ZeroDivisionError:
@@ -1677,11 +1732,17 @@ def sensors_battery():
     #     013937745fd9050c30146290e8f963d65c0179e6/bin/battery.py#L55
     if power_plugged:
         secsleft = _common.POWER_TIME_UNLIMITED
-    else:
+    elif energy_now is not None and power_now is not None:
         try:
             secsleft = int(energy_now / power_now * 3600)
         except ZeroDivisionError:
             secsleft = _common.POWER_TIME_UNKNOWN
+    elif time_to_empty is not None:
+        secsleft = int(time_to_empty * 60)
+        if secsleft < 0:
+            secsleft = _common.POWER_TIME_UNKNOWN
+    else:
+        secsleft = _common.POWER_TIME_UNKNOWN
 
     return _common.sbattery(percent, secsleft, power_plugged)
 
@@ -2010,7 +2071,7 @@ class Process(object):
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch, in UTC.
+        # seconds since the epoch.
         # Also use cached value if available.
         bt = BOOT_TIME or boot_time()
         return (ctime / CLOCK_TICKS) + bt
@@ -2268,10 +2329,10 @@ class Process(object):
                 raise ValueError("value not in 0-7 range")
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
-    if HAS_PRLIMIT:
+    if prlimit is not None:
 
         @wrap_exceptions
-        def rlimit(self, resource, limits=None):
+        def rlimit(self, resource_, limits=None):
             # If pid is 0 prlimit() applies to the calling process and
             # we don't want that. We should never get here though as
             # PID 0 is not supported on Linux.
@@ -2280,15 +2341,14 @@ class Process(object):
             try:
                 if limits is None:
                     # get
-                    return cext.linux_prlimit(self.pid, resource)
+                    return prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
                         raise ValueError(
                             "second argument must be a (soft, hard) tuple, "
                             "got %s" % repr(limits))
-                    soft, hard = limits
-                    cext.linux_prlimit(self.pid, resource, soft, hard)
+                    prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS and pid_exists(self.pid):
                     # I saw this happening on Travis:

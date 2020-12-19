@@ -10,6 +10,8 @@
 #include <windows.h>
 #include <pdh.h>
 
+#include "../../_psutil_common.h"
+
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation
@@ -71,7 +73,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 
     event = CreateEventW(NULL, FALSE, FALSE, L"LoadUpdateEvent");
     if (event == NULL) {
-        PyErr_SetFromWindowsErr(GetLastError());
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 
@@ -89,7 +91,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
         WT_EXECUTEDEFAULT);
 
     if (ret == 0) {
-        PyErr_SetFromWindowsErr(GetLastError());
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 

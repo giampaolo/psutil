@@ -6,4 +6,14 @@ title: "[OS] title"
 
 ---
 
-{ a clear and concise description of what the enhancment is about }
+## Summary
+
+* OS: { type-or-version }
+* Type: { core, doc, performance, scripts, tests, wheels, new-api }
+
+## Description
+
+{{{
+  A clear explanation of your proposal. Please read the contributing guidelines before submit:
+  https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
+}}}

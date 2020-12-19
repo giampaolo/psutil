@@ -32,12 +32,13 @@ from psutil.tests import which
 
 
 if BSD:
-    PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-    if os.getuid() == 0:  # muse requires root privileges
-        MUSE_AVAILABLE = which('muse')
-    else:
-        MUSE_AVAILABLE = False
+    from psutil._psutil_posix import getpagesize
+
+    PAGESIZE = getpagesize()
+    # muse requires root privileges
+    MUSE_AVAILABLE = True if os.getuid() == 0 and which('muse') else False
 else:
+    PAGESIZE = None
     MUSE_AVAILABLE = False
 
 
@@ -473,6 +474,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             self.assertEqual(
                 psutil.sensors_temperatures()["coretemp"][cpu].high,
                 sysctl_result)
+
 
 # =====================================================================
 # --- OpenBSD

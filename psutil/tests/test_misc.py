@@ -17,6 +17,7 @@ import os
 import pickle
 import socket
 import stat
+import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -28,7 +29,6 @@ from psutil._common import wrap_numbers
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
-from psutil.tests import DEVNULL
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -43,10 +43,12 @@ from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 import psutil
 import psutil.tests
+
+
+PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 # ===================================================================
@@ -61,7 +63,8 @@ class TestMisc(PsutilTestCase):
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name='%s'" % p.name(), r)
+        self.assertIn("name='%s'" % str(p.name()),
+                      r.replace("name=u'", "name='"))
         self.assertIn("status=", r)
         self.assertNotIn("exitcode=", r)
         p.terminate()
@@ -707,8 +710,6 @@ class TestScripts(PsutilTestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    # permission denied on travis
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
@@ -719,7 +720,7 @@ class TestScripts(PsutilTestCase):
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
             raise self.skipTest("not supported")
-        self.assert_stdout('procsmem.py', stderr=DEVNULL)
+        self.assert_stdout('procsmem.py')
 
     def test_killall(self):
         self.assert_syntax('killall.py')
@@ -745,14 +746,12 @@ class TestScripts(PsutilTestCase):
         self.assert_syntax('cpu_distribution.py')
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
             self.skipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
         if not psutil.sensors_fans():
             self.skipTest("no fans")

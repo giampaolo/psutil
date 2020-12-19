@@ -40,10 +40,9 @@ from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import call_until
 from psutil.tests import CI_TESTING
-from psutil.tests import CIRRUS
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_ENVIRON
@@ -64,7 +63,6 @@ from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import ThreadTask
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
@@ -295,14 +293,11 @@ class TestProcess(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
-    @unittest.skipIf(TRAVIS or CIRRUS, 'not reliable on TRAVIS/CIRRUS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
-        if sys.stdin.isatty():
+        if terminal is not None:
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
-        else:
-            self.assertIsNone(terminal)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
@@ -450,8 +445,9 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
         # If pid is 0 prlimit() applies to the calling process and
         # we don't want that.
-        with self.assertRaises(ValueError):
-            psutil._psplatform.Process(0).rlimit(0)
+        if LINUX:
+            with self.assertRaisesRegex(ValueError, "can't use prlimit"):
+                psutil._psplatform.Process(0).rlimit(0)
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
@@ -714,18 +710,21 @@ class TestProcess(PsutilTestCase):
     def test_cmdline(self):
         cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
         p = self.spawn_psproc(cmdline)
-        try:
+        # XXX - most of the times the underlying sysctl() call on Net
+        # and Open BSD returns a truncated string.
+        # Also /proc/pid/cmdline behaves the same so it looks
+        # like this is a kernel bug.
+        # XXX - AIX truncates long arguments in /proc/pid/cmdline
+        if NETBSD or OPENBSD or AIX:
+            self.assertEqual(p.cmdline()[0], PYTHON_EXE)
+        else:
+            if MACOS and CI_TESTING:
+                pyexe = p.cmdline()[0]
+                if pyexe != PYTHON_EXE:
+                    self.assertEqual(' '.join(p.cmdline()[1:]),
+                                     ' '.join(cmdline[1:]))
+                    return
             self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
-        except AssertionError:
-            # XXX - most of the times the underlying sysctl() call on Net
-            # and Open BSD returns a truncated string.
-            # Also /proc/pid/cmdline behaves the same so it looks
-            # like this is a kernel bug.
-            # XXX - AIX truncates long arguments in /proc/pid/cmdline
-            if NETBSD or OPENBSD or AIX:
-                self.assertEqual(p.cmdline()[0], PYTHON_EXE)
-            else:
-                raise
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
@@ -762,9 +761,6 @@ class TestProcess(PsutilTestCase):
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]
         p = self.spawn_psproc(cmdline)
-        # ...in order to try to prevent occasional failures on travis
-        if TRAVIS:
-            wait_for_pid(p.pid)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(funky_path))
         self.assertEqual(os.path.normcase(p.exe()),
@@ -879,9 +875,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(len(initial), len(set(initial)))
 
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
-        # Work around travis failure:
-        # https://travis-ci.org/giampaolo/psutil/builds/284173194
-        for n in all_cpus if not TRAVIS else initial:
+        for n in all_cpus:
             p.cpu_affinity([n])
             self.assertEqual(p.cpu_affinity(), [n])
             if hasattr(os, "sched_getaffinity"):
@@ -906,9 +900,8 @@ class TestProcess(PsutilTestCase):
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
         # it should work with all iterables, not only lists
-        if not TRAVIS:
-            p.cpu_affinity(set(all_cpus))
-            p.cpu_affinity(tuple(all_cpus))
+        p.cpu_affinity(set(all_cpus))
+        p.cpu_affinity(tuple(all_cpus))
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity_errs(self):
@@ -1278,7 +1271,7 @@ class TestProcess(PsutilTestCase):
             assert_raises_nsp(fun, name)
 
         # NtQuerySystemInformation succeeds even if process is gone.
-        if WINDOWS and not GITHUB_WHEELS:
+        if WINDOWS and not GITHUB_ACTIONS:
             normcase = os.path.normcase
             self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
 
@@ -1314,14 +1307,10 @@ class TestProcess(PsutilTestCase):
             succeed_or_zombie_p_exc(fun)
 
         assert psutil.pid_exists(zproc.pid)
-        if not TRAVIS and MACOS:
-            # For some reason this started failing all of the sudden.
-            # Maybe they upgraded MACOS version?
-            # https://travis-ci.org/giampaolo/psutil/jobs/310896404
-            self.assertIn(zproc.pid, psutil.pids())
-            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
-            psutil._pmap = {}
-            self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        self.assertIn(zproc.pid, psutil.pids())
+        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        psutil._pmap = {}
+        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
@@ -1402,7 +1391,7 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         d1 = clean_dict(p.environ())
         d2 = clean_dict(os.environ.copy())
-        if not OSX and GITHUB_WHEELS:
+        if not OSX and GITHUB_ACTIONS:
             self.assertEqual(d1, d2)
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
@@ -1431,7 +1420,16 @@ class TestProcess(PsutilTestCase):
         assert p.is_running()
         # Wait for process to exec or exit.
         self.assertEqual(sproc.stderr.read(), b"")
-        self.assertEqual(p.environ(), {"A": "1", "C": "3"})
+        if MACOS and CI_TESTING:
+            try:
+                env = p.environ()
+            except psutil.AccessDenied:
+                # XXX: fails sometimes with:
+                # PermissionError from 'sysctl(KERN_PROCARGS2) -> EIO'
+                return
+        else:
+            env = p.environ()
+        self.assertEqual(env, {"A": "1", "C": "3"})
         sproc.communicate()
         self.assertEqual(sproc.returncode, 0)
 

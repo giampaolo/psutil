@@ -32,9 +32,14 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import terminate
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import which
+
+if POSIX:
+    import mmap
+    import resource
+
+    from psutil._psutil_posix import getpagesize
 
 
 def ps(fmt, pid=None):
@@ -307,7 +312,6 @@ class TestSystemAPIs(PsutilTestCase):
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
@@ -371,6 +375,7 @@ class TestSystemAPIs(PsutilTestCase):
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @unittest.skipIf(AIX, "unreliable on AIX")
+    @retry_on_failure()
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()
@@ -403,6 +408,16 @@ class TestSystemAPIs(PsutilTestCase):
                 self.assertAlmostEqual(usage.used, used, delta=tolerance)
                 self.assertAlmostEqual(usage.free, free, delta=tolerance)
                 self.assertAlmostEqual(usage.percent, percent, delta=1)
+
+
+@unittest.skipIf(not POSIX, "POSIX only")
+class TestMisc(PsutilTestCase):
+
+    def test_getpagesize(self):
+        pagesize = getpagesize()
+        self.assertGreater(pagesize, 0)
+        self.assertEqual(pagesize, resource.getpagesize())
+        self.assertEqual(pagesize, mmap.PAGESIZE)
 
 
 if __name__ == '__main__':

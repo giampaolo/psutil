@@ -1,13 +1,63 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.7.3
+5.8.0
 =====
 
-XXXX-XX-XX
+2020-12-19
 
 **Enhancements**
 
-- 893_: implement Process.environ() on BSD family. (patch by Armin Gruner)
+- 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+  which are the maximum file name and path name length.
+- 1872_: [Windows] added support for PyPy 2.7.
+- 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
+- 1880_: get rid of Travis and Cirrus CI services (they are no longer free).
+  CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes).
+  AppVeyor is still being used for Windows CI.
+
+**Bug fixes**
+
+- 1708_: [Linux] get rid of sensors_temperatures() duplicates.  (patch by Tim
+  Schlueter).
+- 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
+  from 32 bit ones (NtWoW64 APIs).
+- 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
+  access to memory location" on Python 3.9.
+- 1874_: [Solaris] wrong swap output given when encrypted column is present.
+- 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
+  has no corresponding account name. In this case AccessDenied is now raised.
+- 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
+  AccessDenied or NoSuchProcess depending on whether the PID is alive.
+- 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
+  it gets translated into AccessDenied.
+- 1891_: [macOS] get rid of deprecated getpagesize().
+
+5.7.3
+=====
+
+2020-10-23
+
+**Enhancements**
+
+- 809_: [FreeBSD] add support for `Process.rlimit()`.
+- 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
+- 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
+  running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
+- 1837_: [Linux] improved battery detection and charge "secsleft" calculation
+  (patch by aristocratos)
+
+**Bug fixes**
+
+- 1620_: [Linux] physical cpu_count() result is incorrect on systems with more
+  than one CPU socket.  (patch by Vincent A. Arcila)
+- 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
+  alive but the exe file which launched it got deleted.
+- 1791_: [macOS] fix missing include for getpagesize().
+- 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
+  pointer.
+- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
+  the remaining values, still return a result instead of None.
+  (patch by aristocratos)
 
 5.7.2
 =====

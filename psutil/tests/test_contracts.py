@@ -32,14 +32,18 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
+from psutil.tests import APPVEYOR
+from psutil.tests import check_connection_ntuple
+from psutil.tests import CI_TESTING
 from psutil.tests import create_sockets
 from psutil.tests import enum
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
+from psutil.tests import kernel_version
 from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
@@ -86,27 +90,38 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
-    def test_linux_rlimit(self):
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
+    def test_rlimit(self):
         ae = self.assertEqual
-        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_AS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX)
-        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX)
+        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_AS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX or FREEBSD)
 
-        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)  # requires Linux 2.6.8
-        ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)  # requires Linux 2.6.12
-        ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)  # requires Linux 2.6.25
-        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)  # requires Linux 2.6.8
+        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
+        if POSIX:
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
+            if kernel_version() >= (2, 6, 25):
+                ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
+
+        ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPTS"), FREEBSD)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
@@ -152,10 +167,10 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
-    @unittest.skipIf(GITHUB_WHEELS, "not exposed via GITHUB_WHEELS")
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
     def test_rlimit(self):
-        # requires Linux 2.6.36
-        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
+        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
     def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
@@ -238,6 +253,8 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(disk.mountpoint, str)
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
+            self.assertIsInstance(disk.maxfile, int)
+            self.assertIsInstance(disk.maxpath, int)
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):
@@ -361,14 +378,15 @@ def proc_info(pid):
     name, ppid = d['name'], d['ppid']
     info = {'pid': proc.pid}
     ns = process_namespace(proc)
-    with proc.oneshot():
-        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            try:
-                info[fun_name] = fun()
-            except psutil.Error as exc:
-                check_exception(exc, proc, name, ppid)
-                continue
-        do_wait()
+    # We don't use oneshot() because in order not to fool
+    # check_exception() in case of NSP.
+    for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+        try:
+            info[fun_name] = fun()
+        except psutil.Error as exc:
+            check_exception(exc, proc, name, ppid)
+            continue
+    do_wait()
     return info
 
 
@@ -432,8 +450,12 @@ class TestFetchAllProcesses(PsutilTestCase):
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
             if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                    # XXX may fail on MACOS
-                    assert os.access(ret, os.X_OK)
+                    # XXX: may fail on MACOS
+                    try:
+                        assert os.access(ret, os.X_OK)
+                    except AssertionError:
+                        if os.path.exists(ret) and not CI_TESTING:
+                            raise
 
     def pid(self, ret, info):
         self.assertIsInstance(ret, int)
@@ -445,6 +467,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def name(self, ret, info):
         self.assertIsInstance(ret, str)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         # on AIX, "<exiting>" processes don't have names
         if not AIX:
             assert ret
@@ -515,6 +539,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def num_threads(self, ret, info):
         self.assertIsInstance(ret, int)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         self.assertGreaterEqual(ret, 1)
 
     def threads(self, ret, info):
@@ -608,6 +634,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertEqual(len(ret), len(set(ret)))
             for conn in ret:
                 assert is_namedtuple(conn)
+                check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         if ret:     # 'ret' can be None or empty

@@ -21,6 +21,7 @@
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
@@ -98,7 +99,8 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess("task_for_pid");
         else if (psutil_is_zombie(pid) == 1)
-            PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
+            PyErr_SetString(ZombieProcessError,
+                            "task_for_pid -> psutil_is_zombie -> 1");
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
@@ -297,11 +299,21 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        if (pid == 0)
+        if (pid == 0) {
             AccessDenied("automatically set for PID 0");
-        else
+            return NULL;
+        }
+        else if (errno == ENOENT) {
+            // It may happen (file not found error) if the process is
+            // still alive but the executable which launched it got
+            // deleted, see:
+            // https://github.com/giampaolo/psutil/issues/1738
+            return Py_BuildValue("s", "");
+        }
+        else {
             psutil_raise_for_pid(pid, "proc_pidpath()");
-        return NULL;
+            return NULL;
+        }
     }
     return PyUnicode_DecodeFSDefault(buf);
 }
@@ -429,7 +441,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_vm_size_t size = 0;
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
-    vm_size_t page_size;
+    long pagesize = psutil_getpagesize();
     mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
@@ -493,11 +505,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     }
 
     mach_port_deallocate(mach_task_self(), task);
-
-    if (host_page_size(mach_host_self(), &page_size) != KERN_SUCCESS)
-        page_size = PAGE_SIZE;
-
-    return Py_BuildValue("K", private_pages * page_size);
+    return Py_BuildValue("K", private_pages * pagesize);
 }
 
 
@@ -513,7 +521,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     uint64_t total;
     size_t   len = sizeof(total);
     vm_statistics_data_t vm;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     // physical mem
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
@@ -553,7 +561,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size;
     struct xsw_usage totals;
     vm_statistics_data_t vmstat;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;

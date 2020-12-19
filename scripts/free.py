@@ -7,7 +7,7 @@
 """
 A clone of 'free' cmdline utility.
 
-$ python scripts/free.py
+$ python3 scripts/free.py
              total       used       free     shared    buffers      cache
 Mem:      10125520    8625996    1499524          0     349500    3307836
 Swap:            0          0          0

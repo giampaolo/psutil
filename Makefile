@@ -16,6 +16,7 @@ DEPS = \
 	flake8 \
 	flake8-print \
 	pyperf \
+	pypinfo \
 	requests \
 	setuptools \
 	twine \
@@ -62,7 +63,6 @@ clean:  ## Remove all build files.
 		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
-		.tox \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -88,7 +88,7 @@ uninstall:  ## Uninstall this package via pip.
 	$(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
@@ -102,7 +102,7 @@ install-pip:  ## Install pip (no-op if already installed).
 		f.write(data); \
 		f.flush(); \
 		print('downloaded %s' % f.name); \
-		code = os.system('%s %s --user' % (sys.executable, f.name)); \
+		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
 		f.close(); \
 		sys.exit(code);"
 
@@ -211,17 +211,11 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Wheels
 # ===================================================================
 
-download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
-	$(PYTHON) scripts/internal/download_wheels_appveyor.py --user giampaolo --project psutil
-
 download-wheels-github:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels_github.py --user=giampaolo --project=psutil --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
 
-download-wheels:  ## Download wheels from github and appveyor
-	rm -rf dist
-	${MAKE} download-wheels-appveyor
-	# ${MAKE} download-wheels-github
-	${MAKE} print-wheels
+download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
+	$(PYTHON) scripts/internal/download_wheels_appveyor.py
 
 print-wheels:  ## Print downloaded wheels
 	$(PYTHON) scripts/internal/print_wheels.py
@@ -237,6 +231,7 @@ git-tag-release:  ## Git-tag a new release.
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
+	$(PYTHON) -m twine check dist/*.tar.gz
 
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
@@ -263,8 +258,12 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} download-wheels
 	${MAKE} sdist
+	${MAKE} download-wheels-github
+	${MAKE} download-wheels-appveyor
+	${MAKE} print-hashes
+	${MAKE} print-wheels
+	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -272,10 +271,9 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
-	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	${MAKE} pre-release
+	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 	${MAKE} tidelift-relnotes
@@ -303,6 +301,12 @@ print-access-denied: ## Print AD exceptions
 print-api-speed:  ## Benchmark all API calls
 	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+
+print-downloads:  ## Print PYPI download statistics
+	$(PYTHON) scripts/internal/print_downloads.py
+
+print-hashes:  ## Prints hashes of files in dist/ directory
+	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 # ===================================================================
 # Misc

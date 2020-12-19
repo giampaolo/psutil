@@ -48,8 +48,7 @@ from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
-from psutil.tests import TRAVIS
-from psutil.tests import GITHUB_WHEELS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
@@ -218,14 +217,6 @@ class TestMiscAPIs(PsutilTestCase):
                 self.assertIsNone(user.pid)
             else:
                 psutil.Process(user.pid)
-
-    @unittest.skipIf(not POSIX, 'POSIX only')
-    def test_PAGESIZE(self):
-        # pagesize is used internally to perform different calculations
-        # and it's determined by using SC_PAGE_SIZE; make sure
-        # getpagesize() returns the same value.
-        import resource
-        self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
     def test_test(self):
         # test for psutil.test() function
@@ -483,6 +474,8 @@ class TestCpuAPIs(PsutilTestCase):
                 self._test_cpu_percent(percent, last, new)
             self._test_cpu_percent(sum(new), last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_times_percent(interval=-1)
 
     def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
@@ -531,8 +524,6 @@ class TestCpuAPIs(PsutilTestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        if TRAVIS and not ls:
-            raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
             raise self.skipTest("returns empty list on FreeBSD")
 
@@ -590,17 +581,23 @@ class TestDiskAPIs(PsutilTestCase):
         psutil.disk_usage(b'.')
 
     def test_disk_partitions(self):
+        def check_ntuple(nt):
+            self.assertIsInstance(nt.device, str)
+            self.assertIsInstance(nt.mountpoint, str)
+            self.assertIsInstance(nt.fstype, str)
+            self.assertIsInstance(nt.opts, str)
+            self.assertIsInstance(nt.maxfile, (int, type(None)))
+            self.assertIsInstance(nt.maxpath, (int, type(None)))
+            if nt.maxfile is not None and not GITHUB_ACTIONS:
+                self.assertGreater(nt.maxfile, 0)
+            if nt.maxpath is not None:
+                self.assertGreater(nt.maxpath, 0)
+
         # all = False
         ls = psutil.disk_partitions(all=False)
-        # on travis we get:
-        #     self.assertEqual(p.cpu_affinity(), [n])
-        # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+            check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -617,12 +614,12 @@ class TestDiskAPIs(PsutilTestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
+            check_ntuple(disk)
             if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if (GITHUB_WHEELS or TRAVIS) and \
-                            MACOS and err.errno == errno.EIO:
+                    if GITHUB_ACTIONS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
@@ -630,8 +627,8 @@ class TestDiskAPIs(PsutilTestCase):
                         raise
                 else:
                     assert os.path.exists(disk.mountpoint), disk
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+
+        # ---
 
         def find_mount_point(path):
             path = os.path.abspath(path)
@@ -643,7 +640,6 @@ class TestDiskAPIs(PsutilTestCase):
         mounts = [x.mountpoint.lower() for x in
                   psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
-        psutil.disk_usage(mount)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -805,7 +801,6 @@ class TestNetAPIs(PsutilTestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics

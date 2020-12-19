@@ -14,52 +14,83 @@ from psutil._common import print_color
 from psutil._common import bytes2human
 
 
-def main():
-    def is64bit(name):
-        return name.endswith(('x86_64.whl', 'amd64.whl'))
+class Wheel:
 
-    groups = collections.defaultdict(list)
-    for path in glob.glob('dist/*.whl'):
-        name = os.path.basename(path)
-        plat = name.split('-')[-1]
-        pyimpl = name.split('-')[3]
+    def __init__(self, path):
+        self._path = path
+        self._name = os.path.basename(path)
+
+    def __repr__(self):
+        return "<Wheel(name=%s, plat=%s, arch=%s, pyver=%s)>" % (
+            self.name, self.platform(), self.arch(), self.pyver())
+
+    __str__ = __repr__
+
+    @property
+    def name(self):
+        return self._name
+
+    def platform(self):
+        plat = self.name.split('-')[-1]
+        pyimpl = self.name.split('-')[3]
         ispypy = 'pypy' in pyimpl
         if 'linux' in plat:
             if ispypy:
-                groups['pypy_on_linux'].append(name)
+                return 'pypy_on_linux'
             else:
-                groups['linux'].append(name)
+                return 'linux'
         elif 'win' in plat:
             if ispypy:
-                groups['pypy_on_windows'].append(name)
+                return 'pypy_on_windows'
             else:
-                groups['windows'].append(name)
+                return 'windows'
         elif 'macosx' in plat:
             if ispypy:
-                groups['pypy_on_macos'].append(name)
+                return 'pypy_on_macos'
             else:
-                groups['macos'].append(name)
+                return 'macos'
         else:
-            assert 0, name
+            raise ValueError("unknown platform %r" % self.name)
 
-    totsize = 0
+    def arch(self):
+        if self.name.endswith(('x86_64.whl', 'amd64.whl')):
+            return '64'
+        return '32'
+
+    def pyver(self):
+        pyver = 'pypy' if self.name.split('-')[3].startswith('pypy') else 'py'
+        pyver += self.name.split('-')[2][2:]
+        return pyver
+
+    def size(self):
+        return os.path.getsize(self._path)
+
+
+def main():
+    groups = collections.defaultdict(list)
+    for path in glob.glob('dist/*.whl'):
+        wheel = Wheel(path)
+        groups[wheel.platform()].append(wheel)
+
+    tot_files = 0
+    tot_size = 0
     templ = "%-54s %7s %7s %7s"
-    for platf, names in groups.items():
-        ppn = "%s (total = %s)" % (platf.replace('_', ' '), len(names))
+    for platf, wheels in groups.items():
+        ppn = "%s (total = %s)" % (platf, len(wheels))
         s = templ % (ppn, "size", "arch", "pyver")
         print_color('\n' + s, color=None, bold=True)
-        for name in sorted(names):
-            path = os.path.join('dist', name)
-            size = os.path.getsize(path)
-            totsize += size
-            arch = '64' if is64bit(name) else '32'
-            pyver = 'pypy' if name.split('-')[3].startswith('pypy') else 'py'
-            pyver += name.split('-')[2][2:]
-            s = templ % (name, bytes2human(size), arch, pyver)
-            if 'pypy' in pyver:
+        for wheel in sorted(wheels, key=lambda x: x.name):
+            tot_files += 1
+            tot_size += wheel.size()
+            s = templ % (wheel.name, bytes2human(wheel.size()), wheel.arch(),
+                         wheel.pyver())
+            if 'pypy' in wheel.pyver():
                 print_color(s, color='violet')
             else:
                 print_color(s, color='brown')
+
+    print_color("\ntotals: files=%s, size=%s" % (
+        tot_files, bytes2human(tot_size)), bold=True)
 
 
 if __name__ == '__main__':
