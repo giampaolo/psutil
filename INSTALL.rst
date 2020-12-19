@@ -4,14 +4,14 @@ Install psutil
 Linux, Windows, macOS (wheels)
 ------------------------------
 
-Pre-compiled wheels are distributed on each release for ***Linux**, **Windows**
-and **macOS**, so you don't need a C compiler. All you have to do is::
+Pre-compiled wheels are distributed for these platforms, so you won't have to
+install a C compiler. All you have to do is::
 
-    pip3 install --user psutil
+    pip install --user psutil
 
 This (``--user``) will install psutil as a limited user (not system-wide).
 If wheels are not available for your platform or architecture, or you whish to
-install psutil from sources, keep reading.
+build & install psutil from sources, keep reading.
 
 Linux (build)
 -------------
@@ -19,30 +19,30 @@ Linux (build)
 Ubuntu / Debian::
 
     sudo apt-get install gcc python3-dev
-    pip3 install --user --no-binary :all: psutil
+    pip install --user --no-binary :all: psutil
 
 RedHat / CentOS::
 
     sudo yum install gcc python3-devel
-    pip3 install --user --no-binary :all: psutil
+    pip install --user --no-binary :all: psutil
 
 Windows (build)
 ---------------
 
-In order to install psutil from sources on Windows you need **Visual Studio**
-(**MinGW** is not supported).
+In order to install psutil from sources on Windows you need Visual Studio
+(MinGW is not supported).
 Here's a couple of guides describing how to do it: `link <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
 and `link <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__.
 Once VS is installed do::
 
-    pip3 install --user --no-binary :all: psutil
+    pip install --user --no-binary :all: psutil
 
 macOS (build)
 -------------
 
 Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__ then run::
 
-    pip3 install psutil
+    pip install --user --no-binary :all: psutil
 
 FreeBSD
 -------
@@ -50,7 +50,7 @@ FreeBSD
 ::
 
     pkg install python3 gcc
-    python3 -m pip3 install psutil
+    python3 -m pip install psutil
 
 OpenBSD
 -------
@@ -59,7 +59,7 @@ OpenBSD
 
     export PKG_PATH=http://ftp.eu.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
     pkg_add -v python gcc
-    python3 -m pip install psutil
+    pip install psutil
 
 NetBSD
 ------
@@ -69,7 +69,7 @@ NetBSD
     export PKG_PATH="ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
     pkgin install python3 gcc
-    python3 -m pip install psutil
+    pip install psutil
 
 Sun Solaris
 -----------
@@ -81,7 +81,7 @@ If ``cc`` compiler is not installed create a symbolic link to ``gcc``::
 Install::
 
     pkg install gcc
-    python3 -m pip install psutil
+    pip install psutil
 
 Troubleshooting
 ===============
@@ -107,7 +107,7 @@ cmd.exe and install it with::
 ---------------
 
 Sometimes pip is installed but it's not available in your ``PATH``
-(``pip command not found`` or similar). Try this::
+("pip command not found" or similar). Try this::
 
     python3 -m pip install psutil
 
@@ -117,4 +117,4 @@ Permission errors (UNIX)
 If you want to install psutil system-wide and you bump into permission errors
 either run as root user or prepend ``sudo``::
 
-    sudo pip3 install psutil
+    sudo pip install psutil
