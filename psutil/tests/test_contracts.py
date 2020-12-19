@@ -34,6 +34,7 @@ from psutil._compat import long
 from psutil._compat import range
 from psutil.tests import APPVEYOR
 from psutil.tests import check_connection_ntuple
+from psutil.tests import CI_TESTING
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import GITHUB_ACTIONS
@@ -453,7 +454,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                     try:
                         assert os.access(ret, os.X_OK)
                     except AssertionError:
-                        if os.path.exists(ret):
+                        if os.path.exists(ret) and not CI_TESTING:
                             raise
 
     def pid(self, ret, info):
