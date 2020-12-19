@@ -2547,9 +2547,10 @@ If you want to develop psutil take a look at the `development guide`_.
 Platforms support history
 =========================
 
+* psutil 5.8.0 (2020-12): **PyPy 2** on Windows
 * psutil 5.7.1 (2020-07): **Windows Nano**
 * psutil 5.7.0 (2020-02): drop Windows XP & Server 2003 support
-* psutil 5.7.0 (2020-02): **PyPy** on Windows
+* psutil 5.7.0 (2020-02): **PyPy 3** on Windows
 * psutil 5.4.0 (2017-11): **AIX**
 * psutil 3.4.1 (2016-01): **NetBSD**
 * psutil 3.3.0 (2015-11): **OpenBSD**

@@ -261,6 +261,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} sdist
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
+	${MAKE} print-hashes
 	${MAKE} print-wheels
 	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -c \
