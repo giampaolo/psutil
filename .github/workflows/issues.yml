@@ -1,4 +1,5 @@
-name: issue-bot
+# Fired by Github Actions every time an issue, PR or comment is created.
+name: issues
 on:
   issues:
     types: [opened]
