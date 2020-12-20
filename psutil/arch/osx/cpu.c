@@ -13,6 +13,7 @@ Notes:
 - it looks like CPU "sockets" on macOS are called "packages"
 - it looks like macOS does not support NUMA nodes:
   https://apple.stackexchange.com/questions/36465/do-mac-pros-use-numa
+- Most info can be obtained with "sysctl -a | grep machdep.cpu"
 */
 
 
@@ -114,7 +115,7 @@ psutil_cpu_features() {
 
 static PyObject *
 psutil_cpu_num_cores_per_socket() {
-    unsigned int value;
+    int value;
     size_t size = sizeof(value);
 
     if (sysctlbyname("machdep.cpu.cores_per_package",
@@ -123,7 +124,7 @@ psutil_cpu_num_cores_per_socket() {
                      "failed (ignored)");
         Py_RETURN_NONE;
     }
-    return Py_BuildValue("I", value);
+    return Py_BuildValue("i", value);
 }
 
 
@@ -131,7 +132,7 @@ psutil_cpu_num_cores_per_socket() {
 // Here it's "thread_count". Hopefully it's the same thing.
 static PyObject *
 psutil_cpu_threads_per_core() {
-    unsigned int value;
+    int value;
     size_t size = sizeof(value);
 
     if (sysctlbyname("machdep.cpu.thread_count",
@@ -140,7 +141,7 @@ psutil_cpu_threads_per_core() {
                      "failed (ignored)");
         Py_RETURN_NONE;
     }
-    return Py_BuildValue("I", value);
+    return Py_BuildValue("i", value);
 }
 
 
@@ -149,14 +150,14 @@ psutil_cpu_threads_per_core() {
 // Hopefully it's the same thing.
 static PyObject *
 psutil_cpu_sockets() {
-    unsigned int value;
+    int value;
     size_t size = sizeof(value);
 
     if (sysctlbyname("hw.packages", &value, &size, NULL, 2)) {
         psutil_debug("sysctlbyname('hw.packages') failed (ignored)");
         Py_RETURN_NONE;
     }
-    return Py_BuildValue("I", value);
+    return Py_BuildValue("i", value);
 }
 
 
@@ -228,6 +229,8 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     if (py_retdict == NULL) {
         return NULL;
     }
+
+    // strings
     if (psutil_add_to_dict(py_retdict, "model",
                            psutil_cpu_model()) == 1) {
         goto error;
@@ -240,6 +243,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                                psutil_cpu_features()) == 1) {
         goto error;
     }
+
     // various kinds of CPU counts
     if (psutil_add_to_dict(py_retdict, "threads_per_core",
                            psutil_cpu_threads_per_core()) == 1) {
@@ -253,6 +257,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                            psutil_cpu_sockets()) == 1) {
         goto error;
     }
+
     // L* caches
     if (psutil_add_to_dict(py_retdict, "l1d_cache",
                            psutil_cpu_l1d_cache()) == 1) {
