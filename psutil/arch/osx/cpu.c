@@ -99,6 +99,9 @@ psutil_cpu_features() {
 }
 
 
+// It looks like CPU "cores" on macOS are called "packages".
+// In sys/sysctl.h we also have:
+// <<hw.packages - Gives the number of processor packages>>
 static PyObject *
 psutil_cpu_cores_per_socket() {
     unsigned int value;
@@ -113,6 +116,8 @@ psutil_cpu_cores_per_socket() {
 }
 
 
+// "threads_per_core" is how it's called by lscpu on Linux.
+// Here it's "thread_count". Hopefully it's the same thing.
 static PyObject *
 psutil_cpu_threads_per_core() {
     unsigned int value;
