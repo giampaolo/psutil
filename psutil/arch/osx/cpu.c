@@ -113,6 +113,19 @@ psutil_cpu_cores_per_socket() {
 }
 
 
+static PyObject *
+psutil_cpu_threads_per_core() {
+    unsigned int value;
+    size_t size = sizeof(value);
+
+    if (sysctlbyname("machdep.cpu.thread_count",
+                     &value, &size, NULL, 0) != 0) {
+        psutil_debug("sysct('machdep.cpu.thread_count')");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("I", value);
+}
+
 
 /*
  * Retrieve hardware CPU information, similarly to lscpu on Linux.
@@ -138,6 +151,10 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     }
     if (psutil_add_to_dict(py_retdict, "cores_per_socket",
                            psutil_cpu_cores_per_socket()) == 1) {
+        goto error;
+    }
+    if (psutil_add_to_dict(py_retdict, "threads_per_core",
+                           psutil_cpu_threads_per_core()) == 1) {
         goto error;
     }
     return py_retdict;
