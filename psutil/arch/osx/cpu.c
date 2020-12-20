@@ -25,21 +25,6 @@ Notes:
 #include "../../_psutil_posix.h"
 
 
-// Add a new python object to an existing dict, DECREFing that object and
-// setting it to NULL both in case of success or failure.
-static int
-psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
-    if (!py_obj)
-        return 1;
-    if (PyDict_SetItemString(py_dict, keyname, py_obj)) {
-        Py_CLEAR(py_obj);
-        return 1;
-    }
-    Py_CLEAR(py_obj);
-    return 0;
-}
-
-
 static PyObject *
 psutil_cpu_model() {
     size_t len;

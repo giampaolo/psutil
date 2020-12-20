@@ -101,6 +101,7 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // ====================================================================
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
+int psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj);
 void psutil_debug(const char* format, ...);
 int psutil_setup(void);
 
