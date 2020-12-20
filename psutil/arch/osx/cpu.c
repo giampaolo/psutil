@@ -8,6 +8,8 @@
 Notes:
 
 * https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/sysctl.h.auto.html
+* sysctl C types:
+  https://ss64.com/osx/sysctl.html
 * it looks like CPU "sockets" on macOS are called "packages"
 * it looks like macOS does not support NUMA nodes:
   https://apple.stackexchange.com/questions/36465/do-mac-pros-use-numa
@@ -43,14 +45,16 @@ psutil_cpu_model() {
     PyObject *py_str = NULL;
 
     if (sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.brand_string'), get len");
+        psutil_debug("sysctlbyname('machdep.cpu.brand_string') "
+                     "failed (ignored)");
         Py_RETURN_NONE;
     }
 
     buffer = malloc(len);
     if (sysctlbyname("machdep.cpu.brand_string", buffer, &len, NULL, 0) != 0) {
         free(buffer);
-        psutil_debug("sysctlbyname('machdep.cpu.brand_string'), get buf");
+        psutil_debug("sysctlbyname('machdep.cpu.brand_string') "
+                     "failed (ignored)");
         Py_RETURN_NONE;
     }
 
@@ -67,14 +71,14 @@ psutil_cpu_vendor() {
     PyObject *py_str = NULL;
 
     if (sysctlbyname("machdep.cpu.vendor", NULL, &len, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.vendor'), get len");
+        psutil_debug("sysctlbyname('machdep.cpu.vendor') failed (ignored)");
         Py_RETURN_NONE;
     }
 
     buffer = malloc(len);
     if (sysctlbyname("machdep.cpu.vendor", buffer, &len, NULL, 0) != 0) {
         free(buffer);
-        psutil_debug("sysctlbyname('machdep.cpu.vendor'), get buf");
+        psutil_debug("sysctlbyname('machdep.cpu.vendor') failed (ignored)");
         Py_RETURN_NONE;
     }
 
@@ -91,14 +95,14 @@ psutil_cpu_features() {
     PyObject *py_str = NULL;
 
     if (sysctlbyname("machdep.cpu.features", NULL, &len, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.features'), get len");
+        psutil_debug("sysctlbyname('machdep.cpu.features') failed (ignored)");
         Py_RETURN_NONE;
     }
 
     buffer = malloc(len);
     if (sysctlbyname("machdep.cpu.features", buffer, &len, NULL, 0) != 0) {
         free(buffer);
-        psutil_debug("sysctlbyname('machdep.cpu.features'), get buf");
+        psutil_debug("sysctlbyname('machdep.cpu.features') failed (ignored)");
         Py_RETURN_NONE;
     }
 
@@ -115,7 +119,8 @@ psutil_cpu_num_cores_per_socket() {
 
     if (sysctlbyname("machdep.cpu.cores_per_package",
                      &value, &size, NULL, 0) != 0) {
-        psutil_debug("sysct('machdep.cpu.cores_per_package')");
+        psutil_debug("sysctlbyname('machdep.cpu.cores_per_package') "
+                     "failed (ignored)");
         Py_RETURN_NONE;
     }
     return Py_BuildValue("I", value);
@@ -131,7 +136,8 @@ psutil_cpu_threads_per_core() {
 
     if (sysctlbyname("machdep.cpu.thread_count",
                      &value, &size, NULL, 0) != 0) {
-        psutil_debug("sysct('machdep.cpu.thread_count')");
+        psutil_debug("sysctlbyname('machdep.cpu.thread_count') "
+                     "failed (ignored)");
         Py_RETURN_NONE;
     }
     return Py_BuildValue("I", value);
@@ -146,11 +152,31 @@ psutil_cpu_sockets() {
     unsigned int value;
     size_t size = sizeof(value);
 
-    if (sysctlbyname("hw.packages", &value, &size, NULL, 2))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
+    if (sysctlbyname("hw.packages", &value, &size, NULL, 2)) {
+        psutil_debug("sysctlbyname('hw.packages') failed (ignored)");
+        Py_RETURN_NONE;
+    }
     else
         return Py_BuildValue("I", value);
 }
+
+
+// The number of physical CPU sockets.
+// It looks like on macOS "sockets" are called "packages".
+// Hopefully it's the same thing.
+static PyObject *
+psutil_cpu_l1d_cache() {
+    int value;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.l1icachesize", &value, &size, NULL, 2)) {
+        psutil_debug("sysctlbyname('hw.l1icachesize') failed (ignored)");
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    }
+    else
+        return Py_BuildValue("I", value);
+}
+
 
 
 // Retrieve multiple hardware CPU information, similarly to lscpu on Linux.
@@ -184,6 +210,11 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     }
     if (psutil_add_to_dict(py_retdict, "sockets",
                            psutil_cpu_sockets()) == 1) {
+        goto error;
+    }
+    // L* caches
+    if (psutil_add_to_dict(py_retdict, "l1d_cache",
+                           psutil_cpu_l1d_cache()) == 1) {
         goto error;
     }
     return py_retdict;
