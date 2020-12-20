@@ -49,6 +49,7 @@ from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import PY3
+from ._compat import which
 
 if sys.version_info >= (3, 4):
     import enum
@@ -771,6 +772,64 @@ else:
         """Dummy implementation when none of the above files are present.
         """
         return []
+
+
+def cpu_info():
+    """A wrapper on top of "lscpu" CLI tool, parsing its output.
+    If "lscpu" is not installed returns an empty dict.
+    """
+    import json
+    import subprocess
+
+    def getkey(key, converter=None):
+        try:
+            value = data[key]
+        except KeyError:
+            debug("could not find %r in lscpu output" % key)
+            return None
+        if converter is not None:
+            try:
+                return converter(value)
+            except (ValueError, TypeError):
+                debug("could not convert %r -> %r" % (key, value))
+                return None
+        return value
+
+    def lcache_converter(value):
+        if value.endswith('K'):
+            value = value.rstrip('K')
+            multi = 1024
+        elif value.endswith('M'):
+            value = value.rstrip('M')
+            multi = 1024 * 1024
+        else:
+            multi = 1
+        return int(value) * multi
+
+    if not which("lscpu"):
+        debug("lscpu CLI tool not avilable")
+        return {}
+
+    bdata = subprocess.check_output(["lscpu", "-J"])
+    jdata = json.loads(bdata)['lscpu']
+    data = dict([(x['field'].lower().rstrip(':').strip(), x['data'].strip())
+                 for x in jdata])
+    return dict(
+        # strings
+        model=getkey('model name'),
+        vendor=getkey('vendor id'),
+        features=getkey('flags'),
+        # counts
+        cores_per_socket=getkey('core(s) per socket', converter=int),
+        threads_per_core=getkey('thread(s) per core', converter=int),
+        sockets=getkey('socket(s)', converter=int),
+        numa_nodes=getkey('numa node(s)', converter=int),
+        # L* caches
+        l1d_cache=getkey('l1d cache', converter=lcache_converter),
+        l1i_cache=getkey('l1i cache', converter=lcache_converter),
+        l2_cache=getkey('l2 cache', converter=lcache_converter),
+        l3_cache=getkey('l3 cache', converter=lcache_converter),
+    )
 
 
 # =====================================================================
