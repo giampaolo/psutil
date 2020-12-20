@@ -105,7 +105,7 @@ psutil_cpu_features() {
 // https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/
 //     sys/sysctl.h.auto.html
 static PyObject *
-psutil_cpu_cores_per_socket() {
+psutil_cpu_num_cores_per_socket() {
     unsigned int value;
     size_t size = sizeof(value);
 
@@ -121,7 +121,7 @@ psutil_cpu_cores_per_socket() {
 // "threads_per_core" is how it's called by lscpu on Linux.
 // Here it's "thread_count". Hopefully it's the same thing.
 static PyObject *
-psutil_cpu_threads_per_core() {
+psutil_num_cpu_threads_per_core() {
     unsigned int value;
     size_t size = sizeof(value);
 
@@ -139,7 +139,7 @@ psutil_cpu_threads_per_core() {
 //     sys/sysctl.h.auto.html
 // Hopefully it's the same thing.
 static PyObject *
-psutil_cpu_sockets() {
+psutil_num_cpu_sockets() {
     unsigned int value;
     size_t size = sizeof(value);
 
@@ -171,15 +171,15 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
         goto error;
     }
     if (psutil_add_to_dict(py_retdict, "num_cores_per_socket",
-                           psutil_cpu_cores_per_socket()) == 1) {
+                           psutil_cpu_num_cores_per_socket()) == 1) {
         goto error;
     }
     if (psutil_add_to_dict(py_retdict, "num_threads_per_core",
-                           psutil_cpu_threads_per_core()) == 1) {
+                           psutil_num_cpu_threads_per_core()) == 1) {
         goto error;
     }
     if (psutil_add_to_dict(py_retdict, "num_sockets",
-                           psutil_cpu_sockets()) == 1) {
+                           psutil_num_cpu_sockets()) == 1) {
         goto error;
     }
     return py_retdict;
