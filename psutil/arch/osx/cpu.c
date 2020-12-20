@@ -156,11 +156,11 @@ psutil_cpu_sockets() {
         psutil_debug("sysctlbyname('hw.packages') failed (ignored)");
         Py_RETURN_NONE;
     }
-    else
-        return Py_BuildValue("I", value);
+    return Py_BuildValue("I", value);
 }
 
 
+// also available as sysctlbyname("hw.l1icachesize") but it returns 1
 static PyObject *
 psutil_cpu_l1i_cache() {
     int value;
@@ -171,12 +171,11 @@ psutil_cpu_l1i_cache() {
         psutil_debug("sysctl(HW_L1ICACHESIZE) failed (ignored)");
         Py_RETURN_NONE;
     }
-    else {
-        return Py_BuildValue("i", value);
-    }
+    return Py_BuildValue("i", value);
 }
 
 
+// also available as sysctlbyname("hw.l1dcachesize") but it returns 1
 static PyObject *
 psutil_cpu_l1d_cache() {
     int value;
@@ -187,12 +186,11 @@ psutil_cpu_l1d_cache() {
         psutil_debug("sysctl(HW_L1DCACHESIZE) failed (ignored)");
         Py_RETURN_NONE;
     }
-    else {
-        return Py_BuildValue("i", value);
-    }
+    return Py_BuildValue("i", value);
 }
 
 
+// also available as sysctlbyname("hw.l2cachesize") but it returns 1
 static PyObject *
 psutil_cpu_l2_cache() {
     int value;
@@ -203,12 +201,11 @@ psutil_cpu_l2_cache() {
         psutil_debug("sysctl(HW_L2CACHESIZE) failed (ignored)");
         Py_RETURN_NONE;
     }
-    else {
-        return Py_BuildValue("i", value);
-    }
+    return Py_BuildValue("i", value);
 }
 
 
+// also available as sysctlbyname("hw.l3cachesize") but it returns 1
 static PyObject *
 psutil_cpu_l3_cache() {
     int value;
@@ -219,9 +216,7 @@ psutil_cpu_l3_cache() {
         psutil_debug("sysctl(HW_L3CACHESIZE) failed (ignored)");
         Py_RETURN_NONE;
     }
-    else {
-        return Py_BuildValue("i", value);
-    }
+    return Py_BuildValue("i", value);
 }
 
 
