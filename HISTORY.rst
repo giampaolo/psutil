@@ -1,5 +1,17 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.8.0 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
+  determined (instead of crashing).
+- 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+
+
 5.8.0
 =====
 
