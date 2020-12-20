@@ -99,6 +99,21 @@ psutil_cpu_features() {
 }
 
 
+static PyObject *
+psutil_cpu_cores_per_socket() {
+    unsigned int value;
+    size_t size = sizeof(value);
+
+    if (sysctlbyname("machdep.cpu.cores_per_package",
+                     &value, &size, NULL, 0) != 0) {
+        psutil_debug("sysct('machdep.cpu.cores_per_package')");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("I", value);
+}
+
+
+
 /*
  * Retrieve hardware CPU information, similarly to lscpu on Linux.
  */
@@ -106,14 +121,25 @@ PyObject *
 psutil_cpu_info(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
 
-    if (py_retdict == NULL)
+    if (py_retdict == NULL) {
         return NULL;
-    if (psutil_add_to_dict(py_retdict, "model", psutil_cpu_model()) == 1)
+    }
+    if (psutil_add_to_dict(py_retdict, "model",
+                           psutil_cpu_model()) == 1) {
         goto error;
-    if (psutil_add_to_dict(py_retdict, "vendor", psutil_cpu_vendor()) == 1)
+    }
+    if (psutil_add_to_dict(py_retdict, "vendor",
+                           psutil_cpu_vendor()) == 1) {
         goto error;
-    if (psutil_add_to_dict(py_retdict, "features", psutil_cpu_features()) == 1)
+    }
+    if (psutil_add_to_dict(py_retdict, "features",
+                           psutil_cpu_features()) == 1) {
         goto error;
+    }
+    if (psutil_add_to_dict(py_retdict, "cores_per_socket",
+                           psutil_cpu_cores_per_socket()) == 1) {
+        goto error;
+    }
     return py_retdict;
 
 error:
