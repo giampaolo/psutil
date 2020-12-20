@@ -8,8 +8,8 @@
 Notes:
 
 * https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/sysctl.h.auto.html
-* sysctl C types:
-  https://ss64.com/osx/sysctl.html
+* sysctl C types: https://ss64.com/osx/sysctl.html
+* https://apple.stackexchange.com/questions/238777
 * it looks like CPU "sockets" on macOS are called "packages"
 * it looks like macOS does not support NUMA nodes:
   https://apple.stackexchange.com/questions/36465/do-mac-pros-use-numa
@@ -161,20 +161,35 @@ psutil_cpu_sockets() {
 }
 
 
-// The number of physical CPU sockets.
-// It looks like on macOS "sockets" are called "packages".
-// Hopefully it's the same thing.
+static PyObject *
+psutil_cpu_l1i_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L1ICACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L1ICACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    else {
+        return Py_BuildValue("i", value);
+    }
+}
+
+
 static PyObject *
 psutil_cpu_l1d_cache() {
     int value;
-    size_t size = sizeof(int);
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L1DCACHESIZE };
 
-    if (sysctlbyname("hw.l1icachesize", &value, &size, NULL, 2)) {
-        psutil_debug("sysctlbyname('hw.l1icachesize') failed (ignored)");
-        Py_RETURN_NONE;  // mimic os.cpu_count()
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L1DCACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
     }
-    else
-        return Py_BuildValue("I", value);
+    else {
+        return Py_BuildValue("i", value);
+    }
 }
 
 
@@ -215,6 +230,10 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     // L* caches
     if (psutil_add_to_dict(py_retdict, "l1d_cache",
                            psutil_cpu_l1d_cache()) == 1) {
+        goto error;
+    }
+    if (psutil_add_to_dict(py_retdict, "l1i_cache",
+                           psutil_cpu_l1i_cache()) == 1) {
         goto error;
     }
     return py_retdict;
