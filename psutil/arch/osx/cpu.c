@@ -102,6 +102,8 @@ psutil_cpu_features() {
 // It looks like CPU "cores" on macOS are called "packages".
 // In sys/sysctl.h we also have:
 // <<hw.packages - Gives the number of processor packages>>
+// https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/
+//     sys/sysctl.h.auto.html
 static PyObject *
 psutil_cpu_cores_per_socket() {
     unsigned int value;
@@ -132,9 +134,23 @@ psutil_cpu_threads_per_core() {
 }
 
 
-/*
- * Retrieve hardware CPU information, similarly to lscpu on Linux.
- */
+// It looks like CPU "cores" on macOS are called "packages".
+// https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/
+//     sys/sysctl.h.auto.html
+// Hopefully it's the same thing.
+static PyObject *
+psutil_cpu_sockets() {
+    unsigned int value;
+    size_t size = sizeof(value);
+
+    if (sysctlbyname("hw.packages", &value, &size, NULL, 2))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
+        return Py_BuildValue("I", value);
+}
+
+
+// Retrieve multiple hardware CPU information, similarly to lscpu on Linux.
 PyObject *
 psutil_cpu_info(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
@@ -151,15 +167,19 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
         goto error;
     }
     if (psutil_add_to_dict(py_retdict, "features",
-                           psutil_cpu_features()) == 1) {
+                               psutil_cpu_features()) == 1) {
         goto error;
     }
-    if (psutil_add_to_dict(py_retdict, "cores_per_socket",
+    if (psutil_add_to_dict(py_retdict, "num_cores_per_socket",
                            psutil_cpu_cores_per_socket()) == 1) {
         goto error;
     }
-    if (psutil_add_to_dict(py_retdict, "threads_per_core",
+    if (psutil_add_to_dict(py_retdict, "num_threads_per_core",
                            psutil_cpu_threads_per_core()) == 1) {
+        goto error;
+    }
+    if (psutil_add_to_dict(py_retdict, "num_sockets",
+                           psutil_cpu_sockets()) == 1) {
         goto error;
     }
     return py_retdict;
