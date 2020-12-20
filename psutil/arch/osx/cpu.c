@@ -51,6 +51,30 @@ psutil_get_model() {
 }
 
 
+static PyObject *
+psutil_get_vendor() {
+    size_t len;
+    char *buffer;
+    PyObject *py_str = NULL;
+
+    if (sysctlbyname("machdep.cpu.vendor", NULL, &len, NULL, 0) != 0) {
+        psutil_debug("sysctlbyname('machdep.cpu.vendor'), get len");
+        Py_RETURN_NONE;
+    }
+
+    buffer = malloc(len);
+    if (sysctlbyname("machdep.cpu.vendor", buffer, &len, NULL, 0) != 0) {
+        free(buffer);
+        psutil_debug("sysctlbyname('machdep.cpu.vendor'), get buf");
+        Py_RETURN_NONE;
+    }
+
+    py_str = Py_BuildValue("s", buffer);
+    free(buffer);
+    return py_str;
+}
+
+
 /*
  * Retrieve hardware CPU information, similarly to lscpu on Linux.
  */
@@ -61,6 +85,8 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
     if (psutil_add_to_dict(py_retdict, "model", psutil_get_model()) == 1)
+        goto error;
+    if (psutil_add_to_dict(py_retdict, "vendor", psutil_get_vendor()) == 1)
         goto error;
     return py_retdict;
 
