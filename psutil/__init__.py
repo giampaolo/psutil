@@ -1893,8 +1893,11 @@ if hasattr(_psplatform, "cpu_freq"):
 
 if hasattr(_psplatform, "cpu_info"):
 
-    def cpu_info(percpu=False):
-        return _psplatform.cpu_info()
+    def cpu_info():
+        """Return CPU varius types of information about the CPU."""
+        ret = _psplatform.cpu_info()
+        ret['arch'] = os.uname()[4]
+        return ret
 
     __all__.append("cpu_info")
 
