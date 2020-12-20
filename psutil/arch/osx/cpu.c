@@ -19,6 +19,7 @@ Notes:
 
 #include <Python.h>
 #include <sys/sysctl.h>
+#include <ctype.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
@@ -92,6 +93,7 @@ psutil_cpu_vendor() {
 static PyObject *
 psutil_cpu_features() {
     size_t len;
+    int i;
     char *buffer;
     PyObject *py_str = NULL;
 
@@ -106,6 +108,10 @@ psutil_cpu_features() {
         psutil_debug("sysctlbyname('machdep.cpu.features') failed (ignored)");
         Py_RETURN_NONE;
     }
+
+    // lowercase str
+    for (i = 0; buffer[i]; i++)
+        buffer[i] = tolower(buffer[i]);
 
     py_str = Py_BuildValue("s", buffer);
     free(buffer);
