@@ -27,7 +27,7 @@ def sysctl(cmdline):
     returning only the value of interest.
     """
     out = sh(cmdline)
-    result = out.split()[1]
+    result = out.partition(' ')[2]
     try:
         return int(result)
     except ValueError:
@@ -228,6 +228,25 @@ class TestSystemAPIs(PsutilTestCase):
         psutil_result = psutil.sensors_battery()
         self.assertEqual(psutil_result.power_plugged, power_plugged)
         self.assertEqual(psutil_result.percent, int(percent))
+
+
+@unittest.skipIf(not MACOS, "MACOS only")
+class TestCpuInfo(PsutilTestCase):
+
+    def test_model(self):
+        value = psutil.cpu_info()['model']
+        self.assertEqual(value, sysctl("sysctl machdep.cpu.brand_string"))
+
+    def test_vendor(self):
+        value = psutil.cpu_info()['vendor']
+        self.assertEqual(value, sysctl("sysctl machdep.cpu.vendor"))
+
+    def test_features(self):
+        value = psutil.cpu_info()['features']
+        sctl = "%s %s" % (
+            sysctl("sysctl machdep.cpu.features").lower(),
+            sysctl("sysctl machdep.cpu.extfeatures").lower())
+        self.assertEqual(value, sctl)
 
 
 if __name__ == '__main__':
