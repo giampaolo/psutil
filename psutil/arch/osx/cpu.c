@@ -7,11 +7,11 @@
 /*
 Notes:
 
-* https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/sysctl.h.auto.html
-* sysctl C types: https://ss64.com/osx/sysctl.html
-* https://apple.stackexchange.com/questions/238777
-* it looks like CPU "sockets" on macOS are called "packages"
-* it looks like macOS does not support NUMA nodes:
+- https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/sysctl.h.auto.html
+- sysctl C types: https://ss64.com/osx/sysctl.html
+- https://apple.stackexchange.com/questions/238777
+- it looks like CPU "sockets" on macOS are called "packages"
+- it looks like macOS does not support NUMA nodes:
   https://apple.stackexchange.com/questions/36465/do-mac-pros-use-numa
 */
 
@@ -193,6 +193,37 @@ psutil_cpu_l1d_cache() {
 }
 
 
+static PyObject *
+psutil_cpu_l2_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L2CACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L2CACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    else {
+        return Py_BuildValue("i", value);
+    }
+}
+
+
+static PyObject *
+psutil_cpu_l3_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L3CACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L3CACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    else {
+        return Py_BuildValue("i", value);
+    }
+}
+
 
 // Retrieve multiple hardware CPU information, similarly to lscpu on Linux.
 PyObject *
@@ -236,6 +267,15 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                            psutil_cpu_l1i_cache()) == 1) {
         goto error;
     }
+    if (psutil_add_to_dict(py_retdict, "l2_cache",
+                           psutil_cpu_l2_cache()) == 1) {
+        goto error;
+    }
+    if (psutil_add_to_dict(py_retdict, "l3_cache",
+                           psutil_cpu_l3_cache()) == 1) {
+        goto error;
+    }
+
     return py_retdict;
 
 error:
