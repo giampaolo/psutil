@@ -138,7 +138,7 @@ class TestAvailSystemAPIs(PsutilTestCase):
 
     def test_sensors_temperatures(self):
         self.assertEqual(
-            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD)
+            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD or MACOS)
 
     def test_sensors_fans(self):
         self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)

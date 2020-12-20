@@ -45,7 +45,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
-
+#include "arch/osx/specific.h"
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
@@ -1813,6 +1813,8 @@ static PyMethodDef mod_methods[] = {
      "Return CPU statistics"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
+    {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
+     "Return temperature information for a given CPU core number."},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
