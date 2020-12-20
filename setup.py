@@ -188,6 +188,7 @@ elif MACOS:
         'psutil._psutil_osx',
         sources=sources + [
             'psutil/_psutil_osx.c',
+            'psutil/arch/osx/cpu.c',
             'psutil/arch/osx/process_info.c',
         ],
         define_macros=macros,

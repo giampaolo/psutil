@@ -182,7 +182,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",  # "cpu_freq", "getloadavg"
+    "cpu_stats",  # "cpu_freq", "getloadavg", "cpu_info",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -1889,6 +1889,14 @@ if hasattr(_psplatform, "cpu_freq"):
                 return _common.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
+
+
+if hasattr(_psplatform, "cpu_info"):
+
+    def cpu_info(percpu=False):
+        return _psplatform.cpu_info()
+
+    __all__.append("cpu_info")
 
 
 if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):

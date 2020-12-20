@@ -81,7 +81,7 @@ __all__ = [
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
-    "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
+    "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_CPU_FREQ",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
@@ -171,6 +171,7 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
+HAS_CPU_INFO = hasattr(psutil, "cpu_info")
 HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_IONICE = hasattr(psutil.Process, "ionice")

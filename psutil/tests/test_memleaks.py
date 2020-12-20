@@ -33,6 +33,7 @@ from psutil.tests import create_sockets
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_CPU_INFO
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
@@ -366,6 +367,10 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
+
+    @unittest.skipIf(not HAS_CPU_INFO, "not supported")
+    def test_cpu_info(self):
+        self.execute(psutil.cpu_info)
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_getloadavg(self):

@@ -22,7 +22,6 @@
 #include <net/if_dl.h>
 #include <pwd.h>
 #include <unistd.h>
-
 #include <mach/mach.h>
 #include <mach/task.h>
 #include <mach/mach_init.h>
@@ -31,7 +30,6 @@
 #include <mach/mach_traps.h>
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
-
 #include <mach-o/loader.h>
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -45,6 +43,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
+#include "arch/osx/cpu.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -1801,6 +1800,8 @@ static PyMethodDef mod_methods[] = {
      "Return system per-cpu times as a list of tuples"},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return cpu current frequency"},
+    {"cpu_info", psutil_cpu_info, METH_VARARGS,
+     "Return cpu information"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
