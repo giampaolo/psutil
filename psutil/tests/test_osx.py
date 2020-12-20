@@ -22,11 +22,9 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 
 
-def sysctl(cmdline):
-    """Expects a sysctl command with an argument and parse the result
-    returning only the value of interest.
-    """
-    out = sh(cmdline)
+def sysctl(param):
+    """Expects a sysctl sub-command and return its stripped result."""
+    out = sh("sysctl " + param)
     result = out.partition(' ')[2]
     try:
         return int(result)
@@ -134,21 +132,21 @@ class TestSystemAPIs(PsutilTestCase):
     # --- cpu
 
     def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
+        num = sysctl("hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
     def test_cpu_count_physical(self):
-        num = sysctl("sysctl hw.physicalcpu")
+        num = sysctl("hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(
-            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+            freq.current * 1000 * 1000, sysctl("hw.cpufrequency"))
         self.assertEqual(
-            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
+            freq.min * 1000 * 1000, sysctl("hw.cpufrequency_min"))
         self.assertEqual(
-            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
+            freq.max * 1000 * 1000, sysctl("hw.cpufrequency_max"))
 
     # --- virtual mem
 
@@ -235,17 +233,17 @@ class TestCpuInfo(PsutilTestCase):
 
     def test_model(self):
         value = psutil.cpu_info()['model']
-        self.assertEqual(value, sysctl("sysctl machdep.cpu.brand_string"))
+        self.assertEqual(value, sysctl("machdep.cpu.brand_string"))
 
     def test_vendor(self):
         value = psutil.cpu_info()['vendor']
-        self.assertEqual(value, sysctl("sysctl machdep.cpu.vendor"))
+        self.assertEqual(value, sysctl("machdep.cpu.vendor"))
 
     def test_features(self):
         value = psutil.cpu_info()['features']
         sctl = "%s %s" % (
-            sysctl("sysctl machdep.cpu.features").lower(),
-            sysctl("sysctl machdep.cpu.extfeatures").lower())
+            sysctl("machdep.cpu.features").lower(),
+            sysctl("machdep.cpu.extfeatures").lower())
         self.assertEqual(value, sctl)
 
 
