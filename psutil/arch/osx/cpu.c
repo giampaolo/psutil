@@ -28,7 +28,7 @@ psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
 
 
 static PyObject *
-psutil_get_model() {
+psutil_cpu_model() {
     size_t len;
     char *buffer;
     PyObject *py_str = NULL;
@@ -52,7 +52,7 @@ psutil_get_model() {
 
 
 static PyObject *
-psutil_get_vendor() {
+psutil_cpu_vendor() {
     size_t len;
     char *buffer;
     PyObject *py_str = NULL;
@@ -76,7 +76,7 @@ psutil_get_vendor() {
 
 
 static PyObject *
-psutil_get_features() {
+psutil_cpu_features() {
     size_t len;
     char *buffer;
     PyObject *py_str = NULL;
@@ -108,11 +108,11 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    if (psutil_add_to_dict(py_retdict, "model", psutil_get_model()) == 1)
+    if (psutil_add_to_dict(py_retdict, "model", psutil_cpu_model()) == 1)
         goto error;
-    if (psutil_add_to_dict(py_retdict, "vendor", psutil_get_vendor()) == 1)
+    if (psutil_add_to_dict(py_retdict, "vendor", psutil_cpu_vendor()) == 1)
         goto error;
-    if (psutil_add_to_dict(py_retdict, "features", psutil_get_features()) == 1)
+    if (psutil_add_to_dict(py_retdict, "features", psutil_cpu_features()) == 1)
         goto error;
     return py_retdict;
 
