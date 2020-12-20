@@ -246,6 +246,34 @@ class TestCpuInfo(PsutilTestCase):
             sysctl("machdep.cpu.extfeatures").lower())
         self.assertEqual(value, sctl)
 
+    def test_cores_per_socket(self):
+        value = psutil.cpu_info()['cores_per_socket']
+        self.assertEqual(value, sysctl("machdep.cpu.cores_per_package"))
+
+    def test_threads_per_core(self):
+        value = psutil.cpu_info()['threads_per_core']
+        self.assertEqual(value, sysctl("machdep.cpu.thread_count"))
+
+    def test_sockets(self):
+        value = psutil.cpu_info()['sockets']
+        self.assertEqual(value, sysctl("hw.packages"))
+
+    def test_l1i_cache(self):
+        value = psutil.cpu_info()['l1i_cache']
+        self.assertEqual(value, sysctl("hw.l1icachesize"))
+
+    def test_l1d_cache(self):
+        value = psutil.cpu_info()['l1d_cache']
+        self.assertEqual(value, sysctl("hw.l1dcachesize"))
+
+    def test_l2_cache(self):
+        value = psutil.cpu_info()['l2_cache']
+        self.assertEqual(value, sysctl("hw.l2cachesize"))
+
+    def test_l3_cache(self):
+        value = psutil.cpu_info()['l3_cache']
+        self.assertEqual(value, sysctl("hw.l3cachesize"))
+
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
