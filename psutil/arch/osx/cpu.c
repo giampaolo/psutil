@@ -20,6 +20,7 @@ For reference, here's the git history with original implementations:
 
 #include <Python.h>
 #include <sys/sysctl.h>
+#include <sys/vmmeter.h>
 
 #include <mach/mach_error.h>
 #include <mach/mach_host.h>
@@ -77,6 +78,34 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
         (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
         (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
         (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
+    );
+}
+
+
+PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    struct vmmeter vmstat;
+    kern_return_t ret;
+    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
+    mach_port_t mport = mach_host_self();
+
+    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
+    if (ret != KERN_SUCCESS) {
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) failed: %s",
+            mach_error_string(ret));
+        return NULL;
+    }
+    mach_port_deallocate(mach_task_self(), mport);
+
+    return Py_BuildValue(
+        "IIIII",
+        vmstat.v_swtch,  // ctx switches
+        vmstat.v_intr,  // interrupts
+        vmstat.v_soft,  // software interrupts
+        vmstat.v_syscall,  // syscalls
+        vmstat.v_trap  // traps
     );
 }
 

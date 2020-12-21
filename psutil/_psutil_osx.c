@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <utmpx.h>
 #include <sys/sysctl.h>
-#include <sys/vmmeter.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
 #include <netinet/tcp_fsm.h>
@@ -1518,37 +1517,6 @@ error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
-}
-
-
-/*
- * Return CPU statistics.
- */
-static PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    struct vmmeter vmstat;
-    kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
-    mach_port_t mport = mach_host_self();
-
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
-    if (ret != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_VM_INFO) failed: %s",
-            mach_error_string(ret));
-        return NULL;
-    }
-    mach_port_deallocate(mach_task_self(), mport);
-
-    return Py_BuildValue(
-        "IIIII",
-        vmstat.v_swtch,  // ctx switches
-        vmstat.v_intr,  // interrupts
-        vmstat.v_soft,  // software interrupts
-        vmstat.v_syscall,  // syscalls
-        vmstat.v_trap  // traps
-    );
 }
 
 
