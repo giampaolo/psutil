@@ -1559,47 +1559,69 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 
-def cpu_count(kind="logical", **_kw):
-    """Return the number of logical CPUs in the system (same as
-    os.cpu_count() in Python 3.4).
+def cpu_count(kind="logical", **_kwargs):
+    """Return the number of CPUs in the system (various kinds).
 
-    If *logical* is False return the number of physical cores only
-    (e.g. hyper thread CPUs are excluded).
+    DEPRECATION WARNING: before, the signature of this function was
+    cpu_count(logical=True), then it was replaced with:
+    cpu_count(kind="logical").
 
-    Return None if undetermined.
+    The old argument is still supported, even if it's not part of the
+    signature anymore (it's hidden in the private **_kwargs).
+    The followings statements are equivalent and should be replaced in
+    new code:
+
+    cpu_count(logical=True)  == cpu_count(kind="logical")
+    cpu_count(logical=False) == cpu_count(kind="cores")
+    cpu_count(True)          == cpu_count("logical")
+    cpu_count(False)         == cpu_count("cores")
     """
-    # Before, the function of this signature was:
-    # > cpu_count(logical=True)
-    # Then "logical" got deprecated, but we still want to support it
-    # for backward compatibility.
     if isinstance(kind, bool):
+        kind = "logical" if kind else "cores"
         msg = "use of boolean as first parameter is deprecated"
         warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-        kind = "logical" if kind else "cores"
-    if _kw:
-        if list(_kw.keys()) == ["logical"]:
+    if _kwargs:
+        if list(_kwargs.keys()) == ["logical"]:
+            kind = "logical" if _kwargs["logical"] else "cores"
             msg = "'logical' parameter is deprecated; use 'kind' instead"
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            kind = "logical" if _kw["logical"] else "cores"
         else:
             raise TypeError("cpu_count() got an unexpected keyword argument "
-                            "'%s'" % (list(_kw.keys()).pop()))
+                            "'%s'" % (list(_kwargs.keys()).pop()))
 
     if kind == "logical":
-        if not hasattr(_psplatform, "cpu_count_logical"):
-            return None
-        return _psplatform.cpu_count_logical()
+        # Availability: all
+        n = _psplatform.cpu_count_logical()
     elif kind == "cores":
+        # Availability: all except OpenBSD and NetBSD
         if not hasattr(_psplatform, "cpu_count_cores"):
             return None
-        return _psplatform.cpu_count_cores()
+        n = _psplatform.cpu_count_cores()
     elif kind == "sockets":
+        # Availability: Linux, TODO
         if not hasattr(_psplatform, "cpu_count_sockets"):
             return None
-        return _psplatform.cpu_count_sockets()
+        n = _psplatform.cpu_count_sockets()
+    elif kind == "usable":
+        if hasattr(os, "sched_getaffinity"):
+            # Availability: some UNIXes (definitively Linux), Python >= 3.3
+            n = len(os.sched_getaffinity(0))
+        elif hasattr(Process, "cpu_affinity"):
+            # Availability: Linux, Windows, FreeBSD
+            n = len(Process().cpu_affinity())
+        else:
+            # Note that this may not necessarily be correct in case:
+            # * the process CPU affinity has been changed
+            # * Linux cgroups are in use with CPU affinity configured
+            # * Windows systems using processor groups or having more
+            #   than 64 CPUs
+            n = _psplatform.cpu_count_logical()
     else:
-        valid = ("logical", "cores")
+        valid = ("logical", "cores", "sockets", "usable")
         raise ValueError("invalid kind %r; choose between %s" % (kind, valid))
+    if n is not None and n < 1:
+        n = None
+    return n
 
 
 def cpu_times(percpu=False):
