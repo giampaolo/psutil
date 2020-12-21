@@ -1593,6 +1593,10 @@ def cpu_count(kind="logical", **_kw):
         if not hasattr(_psplatform, "cpu_count_cores"):
             return None
         return _psplatform.cpu_count_cores()
+    elif kind == "sockets":
+        if not hasattr(_psplatform, "cpu_count_sockets"):
+            return None
+        return _psplatform.cpu_count_sockets()
     else:
         valid = ("logical", "cores")
         raise ValueError("invalid kind %r; choose between %s" % (kind, valid))

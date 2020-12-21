@@ -698,6 +698,17 @@ def cpu_count_cores():
     return result or None  # mimic os.cpu_count()
 
 
+def cpu_count_sockets():
+    found = set()
+    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+        for line in f:
+            line = line.strip().lower()
+            if line.startswith(b'physical id'):
+                key, value = line.split(b'\t:', 1)
+                found.add(int(value))
+    return len(found) or None
+
+
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
     with open_binary('%s/stat' % get_procfs_path()) as f:
