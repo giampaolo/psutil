@@ -778,10 +778,11 @@ def _cpu_info():
     with open_text('%s/cpuinfo' % get_procfs_path()) as f:
         lines = f.readlines()
 
-    try:
-        threads_per_core = int(cpu_count_logical() / cpu_count_cores())
-    except TypeError:
-        threads_per_core = None
+    logical = cpu_count_logical() or 1
+    cores = cpu_count_cores() or 1
+    sockets = cpu_count_sockets() or 1
+    threads_per_core = int(logical / cores) or 1
+    cpus = threads_per_core * cores * sockets
 
     return dict(
         # strings
@@ -789,7 +790,8 @@ def _cpu_info():
         vendor=lookup(lines, 'vendor_id'),
         flags=lookup(lines, 'flags'),
         # counts
-        cores_per_socket=cpu_count_cores(),
+        cpus=cpus,
+        cores_per_socket=cores,
         threads_per_core=threads_per_core,
         sockets=cpu_count_sockets(),
         # numa_nodes=getkey('numa node(s)', converter=int),
