@@ -1598,7 +1598,7 @@ def cpu_count(kind="logical", **_kwargs):
             return None
         n = _psplatform.cpu_count_cores()
     elif kind == "sockets":
-        # Availability: Linux, TODO
+        # Availability: Linux, Windows, macOS
         if not hasattr(_psplatform, "cpu_count_sockets"):
             return None
         n = _psplatform.cpu_count_sockets()

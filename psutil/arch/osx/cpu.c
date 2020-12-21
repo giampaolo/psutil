@@ -55,7 +55,7 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_cpu_count_sockets() {
+psutil_cpu_count_sockets(PyObject *self, PyObject *args) {
     int value;
     size_t size = sizeof(value);
 
