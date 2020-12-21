@@ -12,6 +12,7 @@ import contextlib
 import errno
 import glob
 import io
+import json
 import os
 import re
 import shutil
@@ -57,6 +58,7 @@ SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
 EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
+
 
 # =====================================================================
 # --- utils
@@ -180,6 +182,14 @@ def vmstat(stat):
         if stat in line:
             return int(line.split(' ')[0])
     raise ValueError("can't find %r in 'vmstat' output" % stat)
+
+
+def lscpu(field):
+    """A wrapper on top of "lscpu" CLI tool, parsing its output."""
+    jdata = json.loads(sh("lscpu -J"))['lscpu']
+    data = dict([(x['field'].lower().rstrip(':').strip(), x['data'].strip())
+                 for x in jdata])
+    return data[field]
 
 
 def get_free_version_info():
@@ -676,8 +686,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
-        out = sh("lscpu -p")
-        num = len([x for x in out.split('\n') if not x.startswith('#')])
+        num = int(lscpu("cpu(s)"))
         self.assertEqual(psutil.cpu_count(logical=True), num)
 
     def test_emulate_fallbacks(self):
@@ -719,13 +728,8 @@ class TestSystemCPUCountCores(PsutilTestCase):
 
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
-        out = sh("lscpu -p")
-        core_ids = set()
-        for line in out.split('\n'):
-            if not line.startswith('#'):
-                fields = line.split(',')
-                core_ids.add(fields[1])
-        self.assertEqual(psutil.cpu_count(logical=False), len(core_ids))
+        num = int(lscpu("core(s) per socket"))
+        self.assertEqual(psutil.cpu_count(logical=False), num)
 
     def test_method_2(self):
         meth_1 = psutil._pslinux.cpu_count_cores()
