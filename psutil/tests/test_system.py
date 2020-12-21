@@ -303,13 +303,14 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.sout >= 0, mem
 
 
-class TestCpuAPIs(PsutilTestCase):
+class TestCpuCount(PsutilTestCase):
 
-    def test_cpu_count(self):
+    def test_base(self):
         kinds = ("logical", "cores", "sockets", "numa", "usable")
         for kind in kinds:
             n = psutil.cpu_count(kind=kind)
             if n is not None:
+                self.assertIsInstance(n, int)
                 with self.subTest(kind):
                     self.assertGreaterEqual(n, 1)
 
@@ -321,7 +322,7 @@ class TestCpuAPIs(PsutilTestCase):
             psutil.cpu_count(kind='xxx')
         self.assertIn(str(kinds), str(cm.exception))
 
-    def test_cpu_count_consistency(self):
+    def test_consistency(self):
         logical = psutil.cpu_count("logical")
         cores = psutil.cpu_count("cores")
         sockets = psutil.cpu_count("sockets")
@@ -341,7 +342,7 @@ class TestCpuAPIs(PsutilTestCase):
             if sockets is not None:
                 self.assertGreaterEqual(cores, sockets)
 
-    def test_cpu_count_deprecation(self):
+    def test_deprecation(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.assertEqual(psutil.cpu_count(logical=True),
@@ -363,7 +364,7 @@ class TestCpuAPIs(PsutilTestCase):
             psutil.cpu_count(True)
         assert ws
 
-    def test_cpu_count_cores(self):
+    def test_cores(self):
         logical = psutil.cpu_count()
         cores = psutil.cpu_count(logical=False)
         if cores is None:
@@ -374,19 +375,18 @@ class TestCpuAPIs(PsutilTestCase):
             self.assertGreaterEqual(cores, 1)
             self.assertGreaterEqual(logical, cores)
 
-    def test_cpu_count_none(self):
+    def test_return_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
         for val in (-1, 0, None):
             with mock.patch('psutil._psplatform.cpu_count_logical',
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count())
                 assert m.called
-            with mock.patch('psutil._psplatform.cpu_count_cores',
-                            return_value=val) as m:
-                self.assertIsNone(psutil.cpu_count(logical=False))
-                assert m.called
 
-    def test_cpu_times(self):
+
+class TestCpuTimes(PsutilTestCase):
+
+    def test_base(self):
         # Check type, value >= 0, str().
         total = 0
         times = psutil.cpu_times()
@@ -415,7 +415,7 @@ class TestCpuAPIs(PsutilTestCase):
         #                                     msg="%s %s" % (new_t, last_t))
         #         last = new
 
-    def test_cpu_times_time_increases(self):
+    def test_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
         stop_at = time.time() + GLOBAL_TIMEOUT
@@ -483,6 +483,9 @@ class TestCpuAPIs(PsutilTestCase):
             self.assertAlmostEqual(
                 getattr(base, field), getattr(summed_values, field), delta=1)
 
+
+class TestCpuPercent(PsutilTestCase):
+
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
             self.assertIsInstance(percent, float)
@@ -544,6 +547,9 @@ class TestCpuAPIs(PsutilTestCase):
             for cpu in psutil.cpu_times_percent(percpu=True):
                 for percent in cpu:
                     self._test_cpu_percent(percent, None, None)
+
+
+class TestOtherCPUFunctions(PsutilTestCase):
 
     def test_cpu_stats(self):
         # Tested more extensively in per-platform test modules.
