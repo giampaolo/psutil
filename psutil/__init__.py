@@ -31,6 +31,7 @@ import subprocess
 import sys
 import threading
 import time
+import warnings
 try:
     import pwd
 except ImportError:
@@ -1558,7 +1559,7 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 
-def cpu_count(logical=True):
+def cpu_count(kind="logical", **_kw):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
 
@@ -1566,19 +1567,35 @@ def cpu_count(logical=True):
     (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
-
-    The return value is cached after first call.
-    If desired cache can be cleared like this:
-
-    >>> psutil.cpu_count.cache_clear()
     """
-    if logical:
-        ret = _psplatform.cpu_count_logical()
+    # Before, the function of this signature was:
+    # > cpu_count(logical=True)
+    # Then "logical" got deprecated, but we still want to support it
+    # for backward compatibility.
+    if isinstance(kind, bool):
+        msg = "use of boolean as first parameter is deprecated"
+        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        kind = "logical" if kind else "cores"
+    if _kw:
+        if list(_kw.keys()) == ["logical"]:
+            msg = "'logical' parameter is deprecated; use 'kind' instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            kind = "logical" if _kw["logical"] else "cores"
+        else:
+            raise TypeError("cpu_count() got an unexpected keyword argument "
+                            "'%s'" % (list(_kw.keys()).pop()))
+
+    if kind == "logical":
+        if not hasattr(_psplatform, "cpu_count_logical"):
+            return None
+        return _psplatform.cpu_count_logical()
+    elif kind == "cores":
+        if not hasattr(_psplatform, "cpu_count_cores"):
+            return None
+        return _psplatform.cpu_count_cores()
     else:
-        ret = _psplatform.cpu_count_cores()
-    if ret is not None and ret < 1:
-        ret = None
-    return ret
+        valid = ("logical", "cores")
+        raise ValueError("invalid kind %r; choose between %s" % (kind, valid))
 
 
 def cpu_times(percpu=False):
