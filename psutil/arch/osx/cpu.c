@@ -30,7 +30,6 @@ For reference, here's the git history with original implementations:
 #include "../../_psutil_posix.h"
 
 
-
 PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
@@ -52,6 +51,18 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
+}
+
+
+PyObject *
+psutil_cpu_count_sockets() {
+    int value;
+    size_t size = sizeof(value);
+
+    if (sysctlbyname("hw.packages", &value, &size, NULL, 2))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
+        return Py_BuildValue("i", value);
 }
 
 

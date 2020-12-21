@@ -1646,6 +1646,8 @@ static PyMethodDef mod_methods[] = {
      "Return number of logical CPUs on the system"},
     {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
      "Return number of CPU cores on the system"},
+    {"cpu_count_sockets", psutil_cpu_count_sockets, METH_VARARGS,
+     "Return number of CPU sockets on the motherboard"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,

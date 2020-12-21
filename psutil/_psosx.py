@@ -164,6 +164,11 @@ def cpu_count_cores():
     return cext.cpu_count_cores()
 
 
+def cpu_count_sockets():
+    """Return the number of physical sockets on the motherboard."""
+    return cext.cpu_count_sockets()
+
+
 def cpu_stats():
     ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
         cext.cpu_stats()
