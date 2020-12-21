@@ -177,11 +177,10 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of physical CPU cores (hyper-thread CPUs count
- * is excluded).
+ * Return the number of CPU cores (non hyper-threading).
  */
 PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
@@ -196,7 +195,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     // than 64 CPUs. See:
     // https://bugs.python.org/issue33166
     if (GetLogicalProcessorInformationEx == NULL) {
-        psutil_debug("Win < 7; cpu_count_phys() forced to None");
+        psutil_debug("Win < 7; cpu_count_cores() forced to None");
         Py_RETURN_NONE;
     }
 

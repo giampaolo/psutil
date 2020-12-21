@@ -100,7 +100,7 @@ class TestCpuAPIs(WindowsTestCase):
         proc = w.Win32_Processor()[0]
         self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
 
-    def test_cpu_count_phys_vs_wmi(self):
+    def test_cpu_count_cores_vs_wmi(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
         self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)

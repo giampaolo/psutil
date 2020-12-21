@@ -59,8 +59,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1620_: [Linux] physical cpu_count() result is incorrect on systems with more
-  than one CPU socket.  (patch by Vincent A. Arcila)
+- 1620_: [Linux] cpu_count(logical=False) result is incorrect on systems with
+  more than one CPU socket.  (patch by Vincent A. Arcila)
 - 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().
@@ -256,7 +256,7 @@ XXXX-XX-XX
   average calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
   `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
-  the number of physical CPUs in case /proc/cpuinfo does not provide this info.
+  the number of CPU cores in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 - 1476_: [Windows] it is now possible to set process high I/O priority
@@ -502,7 +502,7 @@ XXXX-XX-XX
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
-- 771_: [Windows] cpu_count() (both logical and physical) return a wrong
+- 771_: [Windows] cpu_count() (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
 - 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
   process groups (> 64 cores).
@@ -1306,8 +1306,8 @@ XXXX-XX-XX
 - 593_: [FreeBSD] Process().memory_maps() segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
 - 611_: [SunOS] net_io_counters has send and received swapped
-- 614_: [Linux]: cpu_count(logical=False) return the number of physical CPUs
-  instead of physical cores.
+- 614_: [Linux]: cpu_count(logical=False) return the number of sockets instead
+  of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
 - 628_: [Linux] Process.name() truncates process name in case it contains
   spaces or parentheses.
@@ -1424,7 +1424,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 424_: [Windows] installer for Python 3.X 64 bit.
-- 427_: number of logical and physical CPUs (psutil.cpu_count()).
+- 427_: number of logical CPUs and physical cores (psutil.cpu_count()).
 - 447_: psutil.wait_procs() timeout parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
 - 453_: tests on Python < 2.7 require unittest2 module.

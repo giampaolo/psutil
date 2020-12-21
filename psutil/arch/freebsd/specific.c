@@ -364,9 +364,9 @@ error:
 
 
 PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     // Return an XML string from which we'll determine the number of
-    // physical CPU cores in the system.
+    // CPU cores in the system.
     void *topology = NULL;
     size_t size = 0;
     PyObject *py_str;

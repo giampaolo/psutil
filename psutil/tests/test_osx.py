@@ -135,8 +135,8 @@ class TestSystemAPIs(PsutilTestCase):
         num = sysctl("hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
-    def test_cpu_count_physical(self):
-        num = sysctl("hw.physicalcpu")
+    def test_cpu_count_cores(self):
+        num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
     def test_cpu_freq(self):
