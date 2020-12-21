@@ -635,29 +635,8 @@ class TestSystemSwapMemory(PsutilTestCase):
 
 
 # =====================================================================
-# --- system CPU
+# --- system CPU counts
 # =====================================================================
-
-
-@unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUTimes(PsutilTestCase):
-
-    def test_fields(self):
-        fields = psutil.cpu_times()._fields
-        kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
-        kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
-        if kernel_ver_info >= (2, 6, 11):
-            self.assertIn('steal', fields)
-        else:
-            self.assertNotIn('steal', fields)
-        if kernel_ver_info >= (2, 6, 24):
-            self.assertIn('guest', fields)
-        else:
-            self.assertNotIn('guest', fields)
-        if kernel_ver_info >= (3, 2, 0):
-            self.assertIn('guest_nice', fields)
-        else:
-            self.assertNotIn('guest_nice', fields)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -745,6 +724,50 @@ class TestSystemCPUCountCores(PsutilTestCase):
                 self.assertIsNone(psutil._pslinux.cpu_count_cores())
         assert m1.called
         assert m2.called
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemCPUCountSockets(PsutilTestCase):
+
+    @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
+    def test_against_lscpu(self):
+        num = int(lscpu("socket(s)"))
+        self.assertEqual(psutil.cpu_count(kind="sockets"), num)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemCPUCountNuma(PsutilTestCase):
+
+    @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
+    def test_against_lscpu(self):
+        num = int(lscpu("numa node(s)"))
+        self.assertEqual(psutil.cpu_count(kind="numa"), num)
+
+
+# =====================================================================
+# --- system CPU (others)
+# =====================================================================
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemCPUTimes(PsutilTestCase):
+
+    def test_fields(self):
+        fields = psutil.cpu_times()._fields
+        kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
+        kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
+        if kernel_ver_info >= (2, 6, 11):
+            self.assertIn('steal', fields)
+        else:
+            self.assertNotIn('steal', fields)
+        if kernel_ver_info >= (2, 6, 24):
+            self.assertIn('guest', fields)
+        else:
+            self.assertNotIn('guest', fields)
+        if kernel_ver_info >= (3, 2, 0):
+            self.assertIn('guest_nice', fields)
+        else:
+            self.assertNotIn('guest_nice', fields)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
