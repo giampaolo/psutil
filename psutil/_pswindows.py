@@ -197,7 +197,7 @@ def convert_dos_path(s):
         "C:\Windows\systemew\file.txt"
     """
     rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = cext.win32_QueryDosDevice(rawdrive)
+    driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive):]
     return os.path.join(driveletter, remainder)
 

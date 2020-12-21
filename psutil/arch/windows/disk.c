@@ -364,7 +364,7 @@ error:
  If no match is found return an empty string.
 */
 PyObject *
-psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
+psutil_QueryDosDevice(PyObject *self, PyObject *args) {
     LPCTSTR lpDevicePath;
     TCHAR d = TEXT('A');
     TCHAR szBuff[5];
