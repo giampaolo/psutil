@@ -310,6 +310,7 @@ class TestCpuAPIs(PsutilTestCase):
         for kind in kinds:
             n = psutil.cpu_count(kind=kind)
             if n is not None:
+                self.assertIsInstance(n, int)
                 with self.subTest(kind):
                     self.assertGreaterEqual(n, 1)
         with self.assertRaises(ValueError) as cm:
