@@ -266,7 +266,7 @@ psutil_GetLogicalProcessorInformationEx(PyObject *self, PyObject *args) {
                            Py_BuildValue("I", socketsCount)) == 1) {
         return NULL;
     }
-    if (psutil_add_to_dict(py_retdict, "numa_nodes",
+    if (psutil_add_to_dict(py_retdict, "numa",
                            Py_BuildValue("I", numaNodesCount)) == 1) {
         return NULL;
     }

@@ -1602,6 +1602,11 @@ def cpu_count(kind="logical", **_kwargs):
         if not hasattr(_psplatform, "cpu_count_sockets"):
             return None
         n = _psplatform.cpu_count_sockets()
+    elif kind == "numa":
+        # Availability: Windows
+        if not hasattr(_psplatform, "cpu_count_numa"):
+            return None
+        n = _psplatform.cpu_count_numa()
     elif kind == "usable":
         if hasattr(os, "sched_getaffinity"):
             # Availability: some UNIXes (definitively Linux), Python >= 3.3
@@ -1617,7 +1622,7 @@ def cpu_count(kind="logical", **_kwargs):
             #   than 64 CPUs
             n = _psplatform.cpu_count_logical()
     else:
-        valid = ("logical", "cores", "sockets", "usable")
+        valid = ("logical", "cores", "sockets", "numa", "usable")
         raise ValueError("invalid kind %r; choose between %s" % (kind, valid))
     if n is not None and n < 1:
         n = None

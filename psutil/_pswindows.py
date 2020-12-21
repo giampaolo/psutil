@@ -306,7 +306,17 @@ def cpu_count_logical():
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.GetLogicalProcessorInformationEx()
+    return cext.GetLogicalProcessorInformationEx()['cores']
+
+
+def cpu_count_sockets():
+    """Return the number of CPU sockets on the motherboard."""
+    return cext.GetLogicalProcessorInformationEx()['sockets']
+
+
+def cpu_count_numa():
+    """Return the number of CPU NUMA nodes."""
+    return cext.GetLogicalProcessorInformationEx()['numa']
 
 
 def cpu_stats():

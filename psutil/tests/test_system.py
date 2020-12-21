@@ -306,12 +306,17 @@ class TestMemoryAPIs(PsutilTestCase):
 class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_count(self):
-        kinds = ("logical", "cores", "sockets", "usable")
+        kinds = ("logical", "cores", "sockets", "numa", "usable")
         for kind in kinds:
             n = psutil.cpu_count(kind=kind)
             if n is not None:
                 with self.subTest(kind):
                     self.assertGreaterEqual(n, 1)
+
+        numa = psutil.cpu_count(kind='numa')
+        if numa is not None:
+            self.assertGreaterEqual(numa, 0)
+
         with self.assertRaises(ValueError) as cm:
             psutil.cpu_count(kind='xxx')
         self.assertIn(str(kinds), str(cm.exception))
@@ -349,10 +354,12 @@ class TestCpuAPIs(PsutilTestCase):
                              psutil.cpu_count("cores"))
 
         with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always")
             psutil.cpu_count(logical=True)
         assert ws
 
         with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always")
             psutil.cpu_count(True)
         assert ws
 
