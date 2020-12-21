@@ -1666,7 +1666,7 @@ PsutilMethods[] = {
      "Stop a service"},
 
     // --- windows API bindings
-    {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
+    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
 
     // --- others
