@@ -1575,7 +1575,7 @@ def cpu_count(logical=True):
     if logical:
         ret = _psplatform.cpu_count_logical()
     else:
-        ret = _psplatform.cpu_count_physical()
+        ret = _psplatform.cpu_count_cores()
     if ret is not None and ret < 1:
         ret = None
     return ret

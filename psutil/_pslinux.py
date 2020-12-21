@@ -656,8 +656,8 @@ def cpu_count_logical():
         return num
 
 
-def cpu_count_physical():
-    """Return the number of physical cores in the system."""
+def cpu_count_cores():
+    """Return the number of CPU cores in the system."""
     # Method #1
     ls = set()
     # These 2 files are the same but */core_cpus_list is newer while

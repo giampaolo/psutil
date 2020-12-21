@@ -347,7 +347,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         self.execute(lambda: psutil.cpu_count(logical=True))
 
     @fewtimes_if_linux()
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         self.execute(lambda: psutil.cpu_count(logical=False))
 
     @fewtimes_if_linux()

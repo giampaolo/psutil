@@ -1437,10 +1437,10 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of physical CPU cores on the system.
+ * Return the number of CPU cores on the system.
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     kstat_ctl_t *kc;
     kstat_t *ksp;
     int ncpus = 0;
@@ -1669,8 +1669,8 @@ PsutilMethods[] = {
      "Return a Python dict of tuples for network I/O statistics."},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return system boot time in seconds since the EPOCH."},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return the number of physical CPUs on the system."},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Return the number of CPU cores on the system."},
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return TCP and UDP syste-wide open connections."},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,

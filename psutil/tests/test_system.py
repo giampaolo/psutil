@@ -316,16 +316,16 @@ class TestCpuAPIs(PsutilTestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
 
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         logical = psutil.cpu_count()
-        physical = psutil.cpu_count(logical=False)
-        if physical is None:
-            raise self.skipTest("physical cpu_count() is None")
+        cores = psutil.cpu_count(logical=False)
+        if cores is None:
+            raise self.skipTest("cpu_count_cores() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            self.assertIsNone(physical)
+            self.assertIsNone(cores)
         else:
-            self.assertGreaterEqual(physical, 1)
-            self.assertGreaterEqual(logical, physical)
+            self.assertGreaterEqual(cores, 1)
+            self.assertGreaterEqual(logical, cores)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -334,7 +334,7 @@ class TestCpuAPIs(PsutilTestCase):
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count())
                 assert m.called
-            with mock.patch('psutil._psplatform.cpu_count_physical',
+            with mock.patch('psutil._psplatform.cpu_count_cores',
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count(logical=False))
                 assert m.called

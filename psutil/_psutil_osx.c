@@ -383,10 +383,10 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of physical CPUs in the system.
+ * Return the number of CPU cores in the system.
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
     size_t size = sizeof(int);
 
@@ -1789,8 +1789,8 @@ static PyMethodDef mod_methods[] = {
      "Returns a list of PIDs currently running on the system"},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return number of physical CPUs on the system"},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Return number of CPU cores on the system"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,

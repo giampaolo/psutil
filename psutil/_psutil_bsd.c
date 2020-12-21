@@ -1096,8 +1096,8 @@ static PyMethodDef mod_methods[] = {
      "Get process resource limits."},
     {"proc_setrlimit", psutil_proc_setrlimit, METH_VARARGS,
      "Set process resource limits."},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return an XML string to determine the number physical CPUs."},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Return an XML string to determine the number CPU cores."},
 #endif
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment"},

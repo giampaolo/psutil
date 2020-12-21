@@ -715,7 +715,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemCPUCountPhysical(PsutilTestCase):
+class TestSystemCPUCountCores(PsutilTestCase):
 
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
@@ -728,9 +728,9 @@ class TestSystemCPUCountPhysical(PsutilTestCase):
         self.assertEqual(psutil.cpu_count(logical=False), len(core_ids))
 
     def test_method_2(self):
-        meth_1 = psutil._pslinux.cpu_count_physical()
+        meth_1 = psutil._pslinux.cpu_count_cores()
         with mock.patch('glob.glob', return_value=[]) as m:
-            meth_2 = psutil._pslinux.cpu_count_physical()
+            meth_2 = psutil._pslinux.cpu_count_cores()
             assert m.called
         if meth_1 is not None:
             self.assertEqual(meth_1, meth_2)
@@ -738,7 +738,7 @@ class TestSystemCPUCountPhysical(PsutilTestCase):
     def test_emulate_none(self):
         with mock.patch('glob.glob', return_value=[]) as m1:
             with mock.patch('psutil._common.open', create=True) as m2:
-                self.assertIsNone(psutil._pslinux.cpu_count_physical())
+                self.assertIsNone(psutil._pslinux.cpu_count_cores())
         assert m1.called
         assert m2.called
 

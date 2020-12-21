@@ -190,9 +190,9 @@ def cpu_count_logical():
         return None
 
 
-def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
-    return cext.cpu_count_phys()
+def cpu_count_cores():
+    """Return the number of CPU cores in the system."""
+    return cext.cpu_count_cores()
 
 
 def cpu_stats():

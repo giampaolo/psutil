@@ -137,7 +137,7 @@ class TestSystemAPIs(PsutilTestCase):
         num = sysctl("sysctl hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
