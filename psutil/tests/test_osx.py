@@ -22,12 +22,10 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 
 
-def sysctl(cmdline):
-    """Expects a sysctl command with an argument and parse the result
-    returning only the value of interest.
-    """
-    out = sh(cmdline)
-    result = out.split()[1]
+def sysctl(param):
+    """Expects a sysctl sub-command and return its stripped result."""
+    out = sh("sysctl " + param)
+    result = out.partition(' ')[2]
     try:
         return int(result)
     except ValueError:
@@ -134,21 +132,25 @@ class TestSystemAPIs(PsutilTestCase):
     # --- cpu
 
     def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=True))
+        num = sysctl("hw.logicalcpu")
+        self.assertEqual(num, psutil.cpu_count("logical"))
 
     def test_cpu_count_cores(self):
-        num = sysctl("sysctl hw.physicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=False))
+        num = sysctl("hw.physicalcpu")
+        self.assertEqual(num, psutil.cpu_count("cores"))
+
+    def test_cpu_count_sockets(self):
+        num = sysctl("hw.packages")
+        self.assertEqual(num, psutil.cpu_count("sockets"))
 
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(
-            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency"))
+            freq.current * 1000 * 1000, sysctl("hw.cpufrequency"))
         self.assertEqual(
-            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min"))
+            freq.min * 1000 * 1000, sysctl("hw.cpufrequency_min"))
         self.assertEqual(
-            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max"))
+            freq.max * 1000 * 1000, sysctl("hw.cpufrequency_max"))
 
     # --- virtual mem
 
