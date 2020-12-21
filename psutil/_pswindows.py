@@ -306,7 +306,7 @@ def cpu_count_logical():
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.cpu_count_cores()
+    return cext.GetLogicalProcessorInformationEx()
 
 
 def cpu_stats():

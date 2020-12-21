@@ -177,17 +177,25 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of CPU cores (non hyper-threading).
+ * Re-adapted from:
+ * https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/
+ *     nf-sysinfoapi-getlogicalprocessorinformation?redirectedfrom=MSDN
  */
 PyObject *
-psutil_cpu_count_cores(PyObject *self, PyObject *args) {
+psutil_GetLogicalProcessorInformationEx(PyObject *self, PyObject *args) {
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    DWORD ncpus = 0;
-    DWORD prev_processor_info_size = 0;
+    DWORD coresCount = 0;
+    DWORD socketsCount = 0;
+    DWORD numaNodesCount = 0;
+    DWORD prevProcInfoSize = 0;
+    PyObject *py_retdict = PyDict_New();
+
+    if (py_retdict == NULL)
+        return NULL;
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
@@ -230,26 +238,39 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
         // Advance ptr by the size of the previous
         // SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct.
         ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*) \
-            (((char*)ptr) + prev_processor_info_size);
+            (((char*)ptr) + prevProcInfoSize);
 
         if (ptr->Relationship == RelationProcessorCore) {
-            ncpus += 1;
+            coresCount += 1;
+        }
+        else if (ptr->Relationship == RelationProcessorCore) {
+            numaNodesCount += 1;
+        }
+        else if (ptr->Relationship == RelationProcessorPackage) {
+            socketsCount += 1;
         }
 
         // When offset == length, we've reached the last processor
         // info struct in the buffer.
         offset += ptr->Size;
-        prev_processor_info_size = ptr->Size;
+        prevProcInfoSize = ptr->Size;
     }
 
     free(buffer);
-    if (ncpus != 0) {
-        return Py_BuildValue("I", ncpus);
+
+    if (psutil_add_to_dict(py_retdict, "cores",
+                           Py_BuildValue("I", coresCount)) == 1) {
+        return NULL;
     }
-    else {
-        psutil_debug("GetLogicalProcessorInformationEx() count was 0");
-        Py_RETURN_NONE;  // mimick os.cpu_count()
+    if (psutil_add_to_dict(py_retdict, "sockets",
+                           Py_BuildValue("I", socketsCount)) == 1) {
+        return NULL;
     }
+    if (psutil_add_to_dict(py_retdict, "numa_nodes",
+                           Py_BuildValue("I", numaNodesCount)) == 1) {
+        return NULL;
+    }
+    return py_retdict;
 
 return_none:
     if (buffer != NULL)
