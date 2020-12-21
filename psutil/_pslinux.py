@@ -699,82 +699,18 @@ def cpu_count_cores():
     return result or None  # mimic os.cpu_count()
 
 
-def cpu_stats():
-    """Return various CPU stats as a named tuple."""
-    with open_binary('%s/stat' % get_procfs_path()) as f:
-        ctx_switches = None
-        interrupts = None
-        soft_interrupts = None
+def cpu_count_sockets():
+    found = set()
+    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
-            if line.startswith(b'ctxt'):
-                ctx_switches = int(line.split()[1])
-            elif line.startswith(b'intr'):
-                interrupts = int(line.split()[1])
-            elif line.startswith(b'softirq'):
-                soft_interrupts = int(line.split()[1])
-            if ctx_switches is not None and soft_interrupts is not None \
-                    and interrupts is not None:
-                break
-    syscalls = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls)
+            line = line.strip().lower()
+            if line.startswith(b'physical id'):
+                key, value = line.split(b'\t:', 1)
+                found.add(int(value))
+    return len(found) or None
 
 
-if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
-        os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
-    def cpu_freq():
-        """Return frequency metrics for all CPUs.
-        Contrarily to other OSes, Linux updates these values in
-        real-time.
-        """
-        def get_path(num):
-            for p in ("/sys/devices/system/cpu/cpufreq/policy%s" % num,
-                      "/sys/devices/system/cpu/cpu%s/cpufreq" % num):
-                if os.path.exists(p):
-                    return p
-
-        ret = []
-        for n in range(cpu_count_logical()):
-            path = get_path(n)
-            if not path:
-                continue
-
-            pjoin = os.path.join
-            curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
-            if curr is None:
-                # Likely an old RedHat, see:
-                # https://github.com/giampaolo/psutil/issues/1071
-                curr = cat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
-                if curr is None:
-                    raise NotImplementedError(
-                        "can't find current frequency file")
-            curr = int(curr) / 1000
-            max_ = int(cat(pjoin(path, "scaling_max_freq"))) / 1000
-            min_ = int(cat(pjoin(path, "scaling_min_freq"))) / 1000
-            ret.append(_common.scpufreq(curr, min_, max_))
-        return ret
-
-elif os.path.exists("/proc/cpuinfo"):
-    def cpu_freq():
-        """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
-        """
-        ret = []
-        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
-            for line in f:
-                if line.lower().startswith(b'cpu mhz'):
-                    key, value = line.split(b':', 1)
-                    ret.append(_common.scpufreq(float(value), 0., 0.))
-        return ret
-
-else:
-    def cpu_freq():
-        """Dummy implementation when none of the above files are present.
-        """
-        return []
-
-
-def cpu_info():
+def _cpu_info_lscpu():
     """A wrapper on top of "lscpu" CLI tool, parsing its output.
     If "lscpu" is not installed returns an empty dict.
     """
@@ -830,6 +766,130 @@ def cpu_info():
         l2_cache=getkey('l2 cache', converter=lcache_converter),
         l3_cache=getkey('l3 cache', converter=lcache_converter),
     )
+
+
+def _cpu_info():
+    def lookup(lines, text):
+        for line in lines:
+            if line.startswith(text):
+                return line.split('\t:', 1)[1].strip()
+        return None
+
+    with open_text('%s/cpuinfo' % get_procfs_path()) as f:
+        lines = f.readlines()
+
+    try:
+        threads_per_core = int(cpu_count_logical() / cpu_count_cores())
+    except TypeError:
+        threads_per_core = None
+
+    return dict(
+        # strings
+        model=lookup(lines, "model name"),
+        vendor=lookup(lines, 'vendor_id'),
+        flags=lookup(lines, 'flags'),
+        # counts
+        cores_per_socket=cpu_count_cores(),
+        threads_per_core=threads_per_core,
+        sockets=cpu_count_sockets(),
+        # numa_nodes=getkey('numa node(s)', converter=int),
+        # # L* caches
+        # l1d_cache=getkey('l1d cache', converter=lcache_converter),
+        # l1i_cache=getkey('l1i cache', converter=lcache_converter),
+        # l2_cache=getkey('l2 cache', converter=lcache_converter),
+        # l3_cache=getkey('l3 cache', converter=lcache_converter),
+    )
+
+
+def cpu_info():
+    # Prefer lscpu
+    if not which("lscpu"):
+        return _cpu_info_lscpu()
+
+    warnings.warn("'lscpu CLI tool is not installed'; using pure python"
+                  "implementation (worse)", RuntimeWarning)
+
+    path = '%s/cpuinfo' % get_procfs_path()
+    if not os.path.exists(path):
+        debug("%s not available on this platform" % path)
+        return {}
+    return _cpu_info()
+
+
+def cpu_stats():
+    """Return various CPU stats as a named tuple."""
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        ctx_switches = None
+        interrupts = None
+        soft_interrupts = None
+        for line in f:
+            if line.startswith(b'ctxt'):
+                ctx_switches = int(line.split()[1])
+            elif line.startswith(b'intr'):
+                interrupts = int(line.split()[1])
+            elif line.startswith(b'softirq'):
+                soft_interrupts = int(line.split()[1])
+            if ctx_switches is not None and soft_interrupts is not None \
+                    and interrupts is not None:
+                break
+    syscalls = 0
+    return _common.scpustats(
+        ctx_switches, interrupts, soft_interrupts, syscalls)
+
+
+if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
+        os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
+
+    def cpu_freq():
+        """Return frequency metrics for all CPUs.
+        Contrarily to other OSes, Linux updates these values in
+        real-time.
+        """
+        def get_path(num):
+            for p in ("/sys/devices/system/cpu/cpufreq/policy%s" % num,
+                      "/sys/devices/system/cpu/cpu%s/cpufreq" % num):
+                if os.path.exists(p):
+                    return p
+
+        ret = []
+        for n in range(cpu_count_logical()):
+            path = get_path(n)
+            if not path:
+                continue
+
+            pjoin = os.path.join
+            curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
+            if curr is None:
+                # Likely an old RedHat, see:
+                # https://github.com/giampaolo/psutil/issues/1071
+                curr = cat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
+                if curr is None:
+                    raise NotImplementedError(
+                        "can't find current frequency file")
+            curr = int(curr) / 1000
+            max_ = int(cat(pjoin(path, "scaling_max_freq"))) / 1000
+            min_ = int(cat(pjoin(path, "scaling_min_freq"))) / 1000
+            ret.append(_common.scpufreq(curr, min_, max_))
+        return ret
+
+elif os.path.exists("/proc/cpuinfo"):
+    def cpu_freq():
+        """Alternate implementation using /proc/cpuinfo.
+        min and max frequencies are not available and are set to None.
+        """
+        ret = []
+        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+            for line in f:
+                if line.lower().startswith(b'cpu mhz'):
+                    key, value = line.split(b':', 1)
+                    ret.append(_common.scpufreq(float(value), 0., 0.))
+        return ret
+
+else:
+    def cpu_freq():
+        """Dummy implementation when none of the above files are present.
+        """
+        return []
 
 
 # =====================================================================
