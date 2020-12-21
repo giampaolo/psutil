@@ -16,6 +16,7 @@ import signal
 import socket
 import sys
 import time
+import warnings
 
 import psutil
 from psutil import AIX
@@ -304,17 +305,56 @@ class TestMemoryAPIs(PsutilTestCase):
 
 class TestCpuAPIs(PsutilTestCase):
 
-    def test_cpu_count_logical(self):
-        logical = psutil.cpu_count()
-        self.assertIsNotNone(logical)
-        self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
-        self.assertGreaterEqual(logical, 1)
-        #
-        if os.path.exists("/proc/cpuinfo"):
-            with open("/proc/cpuinfo") as fd:
-                cpuinfo_data = fd.read()
-            if "physical id" not in cpuinfo_data:
-                raise unittest.SkipTest("cpuinfo doesn't include physical id")
+    def test_cpu_count(self):
+        kinds = ("logical", "cores", "sockets", "usable")
+        for kind in kinds:
+            n = psutil.cpu_count(kind=kind)
+            if n is not None:
+                with self.subTest(kind):
+                    self.assertGreaterEqual(n, 1)
+        with self.assertRaises(ValueError) as cm:
+            psutil.cpu_count(kind='xxx')
+        self.assertIn(str(kinds), str(cm.exception))
+
+    def test_cpu_count_consistency(self):
+        logical = psutil.cpu_count("logical")
+        cores = psutil.cpu_count("cores")
+        sockets = psutil.cpu_count("sockets")
+        usable = psutil.cpu_count("usable")
+
+        # logical (always supposed to be the highest)
+        if logical is not None:
+            if cores is not None:
+                self.assertGreaterEqual(logical, cores)
+            if sockets is not None:
+                self.assertGreaterEqual(logical, sockets)
+            if usable is not None:
+                self.assertGreaterEqual(logical, usable)
+
+        # cores (at least >= sockets)
+        if cores is not None:
+            if sockets is not None:
+                self.assertGreaterEqual(cores, sockets)
+
+    def test_cpu_count_deprecation(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertEqual(psutil.cpu_count(logical=True),
+                             psutil.cpu_count(kind="logical"))
+            self.assertEqual(psutil.cpu_count(logical=False),
+                             psutil.cpu_count(kind="cores"))
+            self.assertEqual(psutil.cpu_count(True),
+                             psutil.cpu_count("logical"))
+            self.assertEqual(psutil.cpu_count(False),
+                             psutil.cpu_count("cores"))
+
+        with warnings.catch_warnings(record=True) as ws:
+            psutil.cpu_count(logical=True)
+        assert ws
+
+        with warnings.catch_warnings(record=True) as ws:
+            psutil.cpu_count(True)
+        assert ws
 
     def test_cpu_count_cores(self):
         logical = psutil.cpu_count()
