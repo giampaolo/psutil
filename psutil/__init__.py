@@ -1603,7 +1603,7 @@ def cpu_count(kind="logical", **_kwargs):
             return None
         n = _psplatform.cpu_count_sockets()
     elif kind == "numa":
-        # Availability: Windows
+        # Availability: Linux, Windows
         if not hasattr(_psplatform, "cpu_count_numa"):
             return None
         n = _psplatform.cpu_count_numa()

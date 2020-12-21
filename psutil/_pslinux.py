@@ -710,6 +710,11 @@ def cpu_count_sockets():
     return len(found) or None
 
 
+def cpu_count_numa():
+    """Return the number of CPU NUMA nodes."""
+    return len(glob.glob("/sys/devices/system/node/node[0-9]*"))
+
+
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
     with open_binary('%s/stat' % get_procfs_path()) as f:
