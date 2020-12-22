@@ -185,11 +185,11 @@ def vmstat(stat):
 
 
 def lscpu(field):
-    """A wrapper on top of "lscpu" CLI tool, parsing its output."""
-    jdata = json.loads(sh("lscpu -J"))['lscpu']
-    data = dict([(x['field'].lower().rstrip(':').strip(), x['data'].strip())
-                 for x in jdata])
-    return data[field]
+    out = sh("lscpu")
+    for line in out.splitlines():
+        key, _, value = line.partition(':')
+        if field.lower() == key.lower():
+            return value
 
 
 def get_free_version_info():
