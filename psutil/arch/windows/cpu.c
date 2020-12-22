@@ -464,6 +464,43 @@ error:
 // Use the __cpuid intrinsic to get information about a CPU
 // Taken from: https://docs.microsoft.com/en-us/previous-versions/
 //     visualstudio/visual-studio-2008/hskdteyh(v=vs.90)?redirectedfrom=MSDN
+// List of CPU flags
+// https://project.altservice.com/documents/14
+
+const char* szFeatures[] = {
+    "fpu",          // "x87 FPU On Chip",
+    "vme",          //"Virtual-8086 Mode Enhancement",
+    "de",           // "Debugging Extensions",
+    "psa",          // "Page Size Extensions",
+    "tsc",          // "Time Stamp Counter",
+    "msr",          // "RDMSR and WRMSR Support",
+    "pae",          // "Physical Address Extensions",
+    "mce",          // "Machine Check Exception",
+    "cx8",          // "CMPXCHG8B Instruction",
+    "apic",         // "APIC On Chip",
+    "unknown1",     // "Unknown1",
+    "sep",          // "SYSENTER and SYSEXIT",
+    "mtrr",         // "Memory Type Range Registers",
+    "pge",          // "PTE Global Bit",
+    "mca",          // "Machine Check Architecture",
+    "cmov",         // "Conditional Move/Compare Instruction",
+    "pat",          // "Page Attribute Table",
+    "pse36",        // "36-bit Page Size Extension",
+    "pn",           // "Processor Serial Number",
+    "clflush",      // "CFLUSH Extension",
+    "unknown2",     // "Unknown2",
+    "dts",          // "Debug Store",
+    "tmclockctrl",  // "Thermal Monitor and Clock Ctrl",  ???
+    "mmx",          // "MMX Technology",
+    "fxsr",         // "FXSAVE/FXRSTOR",
+    "sse",          // "SSE Extensions",
+    "sse2",         // "SSE2 Extensions",
+    "ss",           // "Self Snoop",
+    "mthread",      // "Multithreading Technology",
+    "tm",           // "Thermal Monitor",
+    "unknown4",     // "Unknown4",
+    "pbe",          // "Pending Break Enable"
+};
 
 
 PyObject *
@@ -545,41 +582,6 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     bool bFullyAssociative = false;
 
     PyObject *py_retdict = PyDict_New();
-
-    const char* szFeatures[] = {
-        "x87 FPU On Chip",
-        "Virtual-8086 Mode Enhancement",
-        "Debugging Extensions",
-        "Page Size Extensions",
-        "Time Stamp Counter",
-        "RDMSR and WRMSR Support",
-        "Physical Address Extensions",
-        "Machine Check Exception",
-        "CMPXCHG8B Instruction",
-        "APIC On Chip",
-        "Unknown1",
-        "SYSENTER and SYSEXIT",
-        "Memory Type Range Registers",
-        "PTE Global Bit",
-        "Machine Check Architecture",
-        "Conditional Move/Compare Instruction",
-        "Page Attribute Table",
-        "36-bit Page Size Extension",
-        "Processor Serial Number",
-        "CFLUSH Extension",
-        "Unknown2",
-        "Debug Store",
-        "Thermal Monitor and Clock Ctrl",
-        "MMX Technology",
-        "FXSAVE/FXRSTOR",
-        "SSE Extensions",
-        "SSE2 Extensions",
-        "Self Snoop",
-        "Multithreading Technology",
-        "Thermal Monitor",
-        "Unknown4",
-        "Pending Break Enable"
-    };
 
     if (py_retdict == NULL)
         return NULL;
@@ -734,33 +736,33 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             printf_s("\nThe following features are supported:\n");
 
             if (bSSE3Instructions)
-                printf_s("\tSSE3\n");
+                printf_s("\tsse3\n");  // SSE3
             if (bMONITOR_MWAIT)
-                printf_s("\tMONITOR/MWAIT\n");
+                printf_s("\tmonitor\n");  // MONITOR/MWAIT
             if (bCPLQualifiedDebugStore)
-                printf_s("\tCPL Qualified Debug Store\n");
+                printf_s("\tds_cpl\n");  // CPL Qualified Debug Store
             if (bVirtualMachineExtensions)
-                printf_s("\tVirtual Machine Extensions\n");
+                printf_s("\tvmext\n");  // Virtual Machine Extensions???
             if (bEnhancedIntelSpeedStepTechnology)
-                printf_s("\tEnhanced Intel SpeedStep Technology\n");
+                printf_s("\test\n");  // Enhanced Intel SpeedStep Technology
             if (bThermalMonitor2)
-                printf_s("\tThermal Monitor 2\n");
+                printf_s("\ttm2\n");  // Thermal Monitor 2
             if (bSupplementalSSE3)
-                printf_s("\tSupplemental Streaming SIMD Extensions 3\n");
+                printf_s("\tsupplsse3\n");  // Supplemental Streaming SIMD Extensions 3 ???
             if (bL1ContextID)
-                printf_s("\tL1 Context ID\n");
+                printf_s("\tl1ctxid\n");  // L1 Context ID ???
             if (bCMPXCHG16B)
-                printf_s("\tCMPXCHG16B Instruction\n");
+                printf_s("\tcx16\n");  // CMPXCHG16B Instruction
             if (bxTPRUpdateControl)
-                printf_s("\txTPR Update Control\n");
+                printf_s("\txtpr\n");  // xTPR Update Control
             if (bPerfDebugCapabilityMSR)
-                printf_s("\tPerf\\Debug Capability MSR\n");
+                printf_s("\tperfdebugmsr\n");  // Perf\\Debug Capability MSR
             if (bSSE41Extensions)
-                printf_s("\tSSE4.1 Extensions\n");
+                printf_s("\tsse4_1\n");  // SSE4.1 Extensions
             if (bSSE42Extensions)
-                printf_s("\tSSE4.2 Extensions\n");
+                printf_s("\tsse4_2\n");  // SSE4.2 Extensions
             if (bPOPCNT)
-                printf_s("\tPPOPCNT Instruction\n");
+                printf_s("\tpopcnt\n");  // PPOPCNT Instruction
 
             i = 0;
             nIds = 1;
@@ -774,51 +776,51 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                 ++i;
             }
             if (bLAHF_SAHFAvailable)
-                printf_s("\tLAHF/SAHF in 64-bit mode\n");
+                printf_s("\tlhaf_lm\n");  // LAHF/SAHF in 64-bit mode
             if (bCmpLegacy)
-                printf_s("\tCore multi-processing legacy mode\n");
+                printf_s("\tcmplegacy\n");  // Core multi-processing legacy mode
             if (bSVM)
-                printf_s("\tSecure Virtual Machine\n");
+                printf_s("\tsvm\n");  // Secure Virtual Machine
             if (bExtApicSpace)
-                printf_s("\tExtended APIC Register Space\n");
+                printf_s("\tx2apic\n");  // Extended APIC Register Space
             if (bAltMovCr8)
-                printf_s("\tAltMovCr8\n");
+                printf_s("\taltmovcr8\n");  // AltMovCr8 ???
             if (bLZCNT)
-                printf_s("\tLZCNT instruction\n");
+                printf_s("\tlzcnt\n");  // LZCNT instruction
             if (bSSE4A)
-                printf_s("\tSSE4A (EXTRQ, INSERTQ, MOVNTSD, MOVNTSS)\n");
+                printf_s("\tsse4a)\n");  // SSE4A
             if (bMisalignedSSE)
-                printf_s("\tMisaligned SSE mode\n");
+                printf_s("\tmisalignsse\n");  // Misaligned SSE mode
             if (bPREFETCH)
-                printf_s("\tPREFETCH and PREFETCHW Instructions\n");
+                printf_s("\t3dnowprefetch\n");  // PREFETCH and PREFETCHW Instructions
             if (bSKINITandDEV)
-                printf_s("\tSKINIT and DEV support\n");
+                printf_s("\tskinit\n");  // SKINIT and DEV support
             if (bSYSCALL_SYSRETAvailable)
-                printf_s("\tSYSCALL/SYSRET in 64-bit mode\n");
+                printf_s("\tsyscall\n");  // SYSCALL/SYSRET in 64-bit mode
             if (bExecuteDisableBitAvailable)
-                printf_s("\tExecute Disable Bit\n");
+                printf_s("\tnx\n");  // Execute Disable Bit
             if (bMMXExtensions)
-                printf_s("\tExtensions to MMX Instructions\n");
+                printf_s("\tmmxext\n");  // Extensions to MMX Instructions
             if (bFFXSR)
-                printf_s("\tFFXSR\n");
+                printf_s("\tffxsr\n");  // FFXSR
             if (b1GBSupport)
-                printf_s("\t1GB page support\n");
+                printf_s("\tpdpe1gb\n");  // 1GB page support
             if (bRDTSCP)
-                printf_s("\tRDTSCP instruction\n");
+                printf_s("\trdtscp\n");  // RDTSCP instruction
             if (b64Available)
-                printf_s("\t64 bit Technology\n");
+                printf_s("\tlm\n");  // 64 bit Technology
             if (b3DNowExt)
-                printf_s("\t3Dnow Ext\n");
+                printf_s("\t3dnowext\n");  // 3Dnow Ext
             if (b3DNow)
-                printf_s("\t3Dnow! instructions\n");
+                printf_s("\t3dnow\n");  // 3Dnow! instructions
             if (bNestedPaging)
-                printf_s("\tNested Paging\n");
+                printf_s("\tnpt\n");  // Nested Paging
             if (bLBRVisualization)
-                printf_s("\tLBR Visualization\n");
+                printf_s("\tlbrv\n");  // LBR Visualization
             if (bFP128)
-                printf_s("\tFP128 optimization\n");
+                printf_s("\tfp128\n");  // FP128 optimization???
             if (bMOVOptimization)
-                printf_s("\tMOVU Optimization\n");
+                printf_s("\tmovu\n");  // MOVU Optimization???
         }
     }
 
