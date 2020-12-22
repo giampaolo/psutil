@@ -7,7 +7,8 @@
 #include <Python.h>
 
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);
-PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
+PyObject *psutil_GetLogicalProcessorInformationEx(
+    PyObject *self, PyObject *args);
 PyObject *psutil_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_times(PyObject *self, PyObject *args);

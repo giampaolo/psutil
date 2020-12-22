@@ -181,17 +181,29 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of CPU cores (non hyper-threading).
+ * Re-adapted from:
+ * https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/
+ *     nf-sysinfoapi-getlogicalprocessorinformation?redirectedfrom=MSDN
  */
 PyObject *
-psutil_cpu_count_cores(PyObject *self, PyObject *args) {
+psutil_GetLogicalProcessorInformationEx(PyObject *self, PyObject *args) {
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = NULL;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX ptr = NULL;
     DWORD length = 0;
     DWORD offset = 0;
-    DWORD ncpus = 0;
-    DWORD prev_processor_info_size = 0;
+    DWORD coresCount = 0;
+    DWORD socketsCount = 0;
+    DWORD numaNodesCount = 0;
+    DWORD L1CacheCount = 0;
+    DWORD L2CacheCount = 0;
+    DWORD L3CacheCount = 0;
+    DWORD prevProcInfoSize = 0;
+    PCACHE_RELATIONSHIP Cache;
+    PyObject *py_retdict = PyDict_New();
+
+    if (py_retdict == NULL)
+        return NULL;
 
     // GetLogicalProcessorInformationEx() is available from Windows 7
     // onward. Differently from GetLogicalProcessorInformation()
@@ -200,12 +212,11 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     // https://bugs.python.org/issue33166
     if (GetLogicalProcessorInformationEx == NULL) {
         psutil_debug("Win < 7; cpu_count_cores() forced to None");
-        Py_RETURN_NONE;
+        return py_retdict;
     }
 
     while (1) {
-        rc = GetLogicalProcessorInformationEx(
-            RelationAll, buffer, &length);
+        rc = GetLogicalProcessorInformationEx(RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 if (buffer) {
@@ -219,9 +230,9 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                psutil_debug("GetLogicalProcessorInformationEx() returned ",
-                             GetLastError());
-                goto return_none;
+                PyErr_SetFromOSErrnoWithSyscall(
+                    "GetLogicalProcessorInformationEx");
+                return NULL;
             }
         }
         else {
@@ -234,31 +245,61 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
         // Advance ptr by the size of the previous
         // SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct.
         ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*) \
-            (((char*)ptr) + prev_processor_info_size);
+            (((char*)ptr) + prevProcInfoSize);
 
         if (ptr->Relationship == RelationProcessorCore) {
-            ncpus += 1;
+            coresCount += 1;
+        }
+        else if (ptr->Relationship == RelationProcessorCore) {
+            numaNodesCount += 1;
+        }
+        else if (ptr->Relationship == RelationProcessorPackage) {
+            socketsCount += 1;
+        }
+        else if (ptr->Relationship == RelationCache) {
+            // Cache data is in ptr->Cache, one CACHE_DESCRIPTOR structure for each cache.
+            Cache = &ptr->Cache;
+            if (Cache->Level == 1)
+                L1CacheCount = Cache->CacheSize;
+            else if (Cache->Level == 2)
+                L2CacheCount = Cache->CacheSize;
+            else if (Cache->Level == 3)
+                L3CacheCount = Cache->CacheSize;
         }
 
         // When offset == length, we've reached the last processor
         // info struct in the buffer.
         offset += ptr->Size;
-        prev_processor_info_size = ptr->Size;
+        prevProcInfoSize = ptr->Size;
     }
 
     free(buffer);
-    if (ncpus != 0) {
-        return Py_BuildValue("I", ncpus);
-    }
-    else {
-        psutil_debug("GetLogicalProcessorInformationEx() count was 0");
-        Py_RETURN_NONE;  // mimick os.cpu_count()
-    }
 
-return_none:
-    if (buffer != NULL)
-        free(buffer);
-    Py_RETURN_NONE;
+    if (psutil_add_to_dict(py_retdict, "cores",
+                           Py_BuildValue("I", coresCount)) == 1) {
+        return NULL;
+    }
+    if (psutil_add_to_dict(py_retdict, "sockets",
+                           Py_BuildValue("I", socketsCount)) == 1) {
+        return NULL;
+    }
+    if (psutil_add_to_dict(py_retdict, "numa",
+                           Py_BuildValue("I", numaNodesCount)) == 1) {
+        return NULL;
+    }
+    if (psutil_add_to_dict(py_retdict, "l1_cache",
+                           Py_BuildValue("I", L1CacheCount)) == 1) {
+        return NULL;
+    }
+    if (psutil_add_to_dict(py_retdict, "l2_cache",
+                           Py_BuildValue("I", L2CacheCount)) == 1) {
+        return NULL;
+    }
+    if (psutil_add_to_dict(py_retdict, "l3_cache",
+                           Py_BuildValue("I", L3CacheCount)) == 1) {
+        return NULL;
+    }
+    return py_retdict;
 }
 
 

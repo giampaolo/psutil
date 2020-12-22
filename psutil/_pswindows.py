@@ -306,7 +306,7 @@ def cpu_count_logical():
 
 def cpu_count_cores():
     """Return the number of CPU cores in the system."""
-    return cext.cpu_count_cores()
+    return cext.GetLogicalProcessorInformationEx()['cores'] or None
 
 
 def cpu_stats():
@@ -327,7 +327,12 @@ def cpu_freq():
 
 
 def cpu_info():
-    return cext.cpu_info()
+    ret = cext.cpu_info()
+    infoex = cext.GetLogicalProcessorInformationEx()
+    ret['l1_cache'] = infoex['l1_cache']
+    ret['l2_cache'] = infoex['l2_cache']
+    ret['l3_cache'] = infoex['l3_cache']
+    return ret
 
 
 _loadavg_inititialized = False
