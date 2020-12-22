@@ -342,13 +342,29 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     # --- cpu
 
+    def test_cpu_count(self):
+        # here just to make ns.test_class_coverage happy
+        pass
+
     @fewtimes_if_linux()
-    def test_cpu_count(self):  # logical
-        self.execute(lambda: psutil.cpu_count(logical=True))
+    def test_cpu_count_logical(self):
+        self.execute(lambda: psutil.cpu_count("logical"))
 
     @fewtimes_if_linux()
     def test_cpu_count_cores(self):
-        self.execute(lambda: psutil.cpu_count(logical=False))
+        self.execute(lambda: psutil.cpu_count("cores"))
+
+    @fewtimes_if_linux()
+    def test_cpu_count_sockets(self):
+        self.execute(lambda: psutil.cpu_count("sockets"))
+
+    @fewtimes_if_linux()
+    def test_cpu_count_numa(self):
+        self.execute(lambda: psutil.cpu_count("numa"))
+
+    @fewtimes_if_linux()
+    def test_cpu_count_usable(self):
+        self.execute(lambda: psutil.cpu_count("usable"))
 
     @fewtimes_if_linux()
     def test_cpu_times(self):

@@ -82,28 +82,29 @@ class TestCpuAPIs(WindowsTestCase):
 
     @unittest.skipIf('NUMBER_OF_PROCESSORS' not in os.environ,
                      'NUMBER_OF_PROCESSORS env var is not available')
-    def test_cpu_count_vs_NUMBER_OF_PROCESSORS(self):
+    def test_cpu_count_logical_vs_NUMBER_OF_PROCESSORS(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
-        self.assertEqual(num_cpus, psutil.cpu_count())
+        self.assertEqual(num_cpus, psutil.cpu_count("logical"))
 
-    def test_cpu_count_vs_GetSystemInfo(self):
+    def test_cpu_count_logical_vs_GetSystemInfo(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
         sys_value = win32api.GetSystemInfo()[5]
-        psutil_value = psutil.cpu_count()
+        psutil_value = psutil.cpu_count("logical")
         self.assertEqual(sys_value, psutil_value)
 
     def test_cpu_count_logical_vs_wmi(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+        self.assertEqual(psutil.cpu_count("logical"),
+                         proc.NumberOfLogicalProcessors)
 
     def test_cpu_count_cores_vs_wmi(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+        self.assertEqual(psutil.cpu_count("cores"), proc.NumberOfCores)
 
     def test_cpu_count_vs_cpu_times(self):
         self.assertEqual(psutil.cpu_count(),

@@ -124,7 +124,7 @@ class BSDTestCase(PsutilTestCase):
     @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
-        self.assertEqual(psutil.cpu_count(logical=True), syst)
+        self.assertEqual(psutil.cpu_count("logical"), syst)
 
     @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_virtual_memory_total(self):
@@ -457,7 +457,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     # --- sensors_temperatures
 
     def test_sensors_temperatures_against_sysctl(self):
-        num_cpus = psutil.cpu_count(True)
+        num_cpus = psutil.cpu_count()
         for cpu in range(num_cpus):
             sensor = "dev.cpu.%s.temperature" % cpu
             # sysctl returns a string in the format 46.0C

@@ -649,24 +649,24 @@ class TestSystemCPUCountLogical(PsutilTestCase):
             value = f.read().strip()
         if "-" in str(value):
             value = int(value.split('-')[1]) + 1
-            self.assertEqual(psutil.cpu_count(), value)
+            self.assertEqual(psutil.cpu_count("logical"), value)
 
     @unittest.skipIf(not os.path.exists("/sys/devices/system/cpu"),
                      "/sys/devices/system/cpu does not exist")
     def test_against_sysdev_cpu_num(self):
         ls = os.listdir("/sys/devices/system/cpu")
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
-        self.assertEqual(psutil.cpu_count(), count)
+        self.assertEqual(psutil.cpu_count("logical"), count)
 
     @unittest.skipIf(not which("nproc"), "nproc utility not available")
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
-        self.assertEqual(psutil.cpu_count(logical=True), num)
+        self.assertEqual(psutil.cpu_count("logical"), num)
 
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
         num = int(lscpu("cpu(s)"))
-        self.assertEqual(psutil.cpu_count(logical=True), num)
+        self.assertEqual(psutil.cpu_count("logical"), num)
 
     def test_emulate_fallbacks(self):
         import psutil._pslinux
@@ -708,7 +708,7 @@ class TestSystemCPUCountCores(PsutilTestCase):
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
         num = int(lscpu("core(s) per socket"))
-        self.assertEqual(psutil.cpu_count(logical=False), num)
+        self.assertEqual(psutil.cpu_count("cores"), num)
 
     def test_method_2(self):
         meth_1 = psutil._pslinux.cpu_count_cores()

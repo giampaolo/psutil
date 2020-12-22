@@ -314,9 +314,7 @@ class TestCpuCount(PsutilTestCase):
                 with self.subTest(kind):
                     self.assertGreaterEqual(n, 1)
 
-        numa = psutil.cpu_count(kind='numa')
-        if numa is not None:
-            self.assertGreaterEqual(numa, 0)
+        self.assertEqual(psutil.cpu_count(), psutil.cpu_count("logical"))
 
         with self.assertRaises(ValueError) as cm:
             psutil.cpu_count(kind='xxx')
@@ -327,6 +325,7 @@ class TestCpuCount(PsutilTestCase):
         cores = psutil.cpu_count("cores")
         sockets = psutil.cpu_count("sockets")
         usable = psutil.cpu_count("usable")
+        numa = psutil.cpu_count(kind='numa')
 
         # logical (always supposed to be the highest)
         if logical is not None:
@@ -341,6 +340,9 @@ class TestCpuCount(PsutilTestCase):
         if cores is not None:
             if sockets is not None:
                 self.assertGreaterEqual(cores, sockets)
+
+        if numa is not None:
+            self.assertGreaterEqual(numa, 0)
 
     def test_deprecation(self):
         with warnings.catch_warnings():
@@ -366,7 +368,7 @@ class TestCpuCount(PsutilTestCase):
 
     def test_cores(self):
         logical = psutil.cpu_count()
-        cores = psutil.cpu_count(logical=False)
+        cores = psutil.cpu_count("cores")
         if cores is None:
             raise self.skipTest("cpu_count_cores() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista

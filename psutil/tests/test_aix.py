@@ -107,7 +107,7 @@ class AIXSpecificTestCase(PsutilTestCase):
     def test_cpu_count_logical(self):
         out = sh('/usr/bin/mpstat -a')
         mpstat_lcpu = int(re.search(r"lcpu=(\d+)", out).group(1))
-        psutil_lcpu = psutil.cpu_count(logical=True)
+        psutil_lcpu = psutil.cpu_count("logical")
         self.assertEqual(mpstat_lcpu, psutil_lcpu)
 
     def test_net_if_addrs_names(self):

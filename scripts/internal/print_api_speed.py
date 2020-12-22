@@ -81,7 +81,13 @@ def main():
         elif name == 'disk_usage':
             args = (os.getcwd(), )
         timecall(name, fun, *args)
-    timecall('cpu_count (cores)', psutil.cpu_count, logical=False)
+        ("logical", "cores", "sockets", "numa", "usable")
+
+    timecall('cpu_count (logical)', psutil.cpu_count, "logical")
+    timecall('cpu_count (cores)', psutil.cpu_count, "cores")
+    timecall('cpu_count (sockets)', psutil.cpu_count, "sockets")
+    timecall('cpu_count (numa)', psutil.cpu_count, "numa")
+    timecall('cpu_count (usable)', psutil.cpu_count, "usable")
     timecall('process_iter (all)', lambda: list(psutil.process_iter()))
     print_timings()
 
