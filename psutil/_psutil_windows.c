@@ -1641,6 +1641,8 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
      "Return CPU frequency."},
+    {"cpu_info", psutil_cpu_info, METH_VARARGS,
+     "Return various CPU information."},
     {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter,
      METH_VARARGS,
      "Initializes the emulated load average calculator."},

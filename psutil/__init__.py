@@ -1896,8 +1896,10 @@ if hasattr(_psplatform, "cpu_info"):
     def cpu_info():
         """Return CPU varius types of information about the CPU."""
         ret = _psplatform.cpu_info()
-        ret['arch'] = os.uname()[4]
-        ret['byteorder'] = sys.byteorder
+        if POSIX and 'arch' not in ret:
+            ret['arch'] = os.uname()[4]
+        if 'byteorder' not in ret:
+            ret['byteorder'] = sys.byteorder
         return ret
 
     __all__.append("cpu_info")

@@ -326,6 +326,10 @@ def cpu_freq():
     return [_common.scpufreq(float(curr), min_, float(max_))]
 
 
+def cpu_info():
+    return cext.cpu_info()
+
+
 _loadavg_inititialized = False
 
 
