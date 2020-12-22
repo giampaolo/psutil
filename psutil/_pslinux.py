@@ -699,77 +699,8 @@ def cpu_count_cores():
     return result or None  # mimic os.cpu_count()
 
 
-def cpu_count_sockets():
-    found = set()
-    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
-        for line in f:
-            line = line.strip().lower()
-            if line.startswith(b'physical id'):
-                key, value = line.split(b'\t:', 1)
-                found.add(int(value))
-    return len(found) or None
-
-
-def _cpu_info_lscpu():
-    """A wrapper on top of "lscpu" CLI tool, parsing its output.
-    If "lscpu" is not installed returns an empty dict.
-    """
-    import json
-    import subprocess
-
-    def getkey(key, converter=None):
-        try:
-            value = data[key]
-        except KeyError:
-            debug("could not find %r in lscpu output" % key)
-            return None
-        if converter is not None:
-            try:
-                return converter(value)
-            except (ValueError, TypeError):
-                debug("could not convert %r -> %r" % (key, value))
-                return None
-        return value
-
-    def lcache_converter(value):
-        if value.endswith('K'):
-            value = value.rstrip('K')
-            multi = 1024
-        elif value.endswith('M'):
-            value = value.rstrip('M')
-            multi = 1024 * 1024
-        else:
-            multi = 1
-        return int(value) * multi
-
-    if not which("lscpu"):
-        debug("lscpu CLI tool not avilable")
-        return {}
-
-    bdata = subprocess.check_output(["lscpu", "-J"])
-    jdata = json.loads(bdata)['lscpu']
-    data = dict([(x['field'].lower().rstrip(':').strip(), x['data'].strip())
-                 for x in jdata])
-    return dict(
-        # strings
-        model=getkey('model name'),
-        vendor=getkey('vendor id'),
-        features=getkey('flags'),
-        # counts
-        cores_per_socket=getkey('core(s) per socket', converter=int),
-        threads_per_core=getkey('thread(s) per core', converter=int),
-        sockets=getkey('socket(s)', converter=int),
-        numa_nodes=getkey('numa node(s)', converter=int),
-        # L* caches
-        l1d_cache=getkey('l1d cache', converter=lcache_converter),
-        l1i_cache=getkey('l1i cache', converter=lcache_converter),
-        l2_cache=getkey('l2 cache', converter=lcache_converter),
-        l3_cache=getkey('l3 cache', converter=lcache_converter),
-    )
-
-
-def _cpu_info():
-    def lookup(lines, text):
+def cpu_info():
+    def lookup_in_lines(lines, text):
         for line in lines:
             if line.startswith(text):
                 return line.split('\t:', 1)[1].strip()
@@ -778,44 +709,17 @@ def _cpu_info():
     with open_text('%s/cpuinfo' % get_procfs_path()) as f:
         lines = f.readlines()
 
-    logical = cpu_count_logical() or 1
-    cores = cpu_count_cores() or 1
-    sockets = cpu_count_sockets() or 1
-    threads_per_core = int(logical / cores) or 1
-    cpus = threads_per_core * cores * sockets
-
+    caches = cext.cpu_caches()
     return dict(
         # strings
-        model=lookup(lines, "model name"),
-        vendor=lookup(lines, 'vendor_id'),
-        flags=lookup(lines, 'flags'),
-        # counts
-        cpus=cpus,
-        cores_per_socket=cores,
-        threads_per_core=threads_per_core,
-        sockets=cpu_count_sockets(),
-        # numa_nodes=getkey('numa node(s)', converter=int),
-        # # L* caches
-        # l1d_cache=getkey('l1d cache', converter=lcache_converter),
-        # l1i_cache=getkey('l1i cache', converter=lcache_converter),
-        # l2_cache=getkey('l2 cache', converter=lcache_converter),
-        # l3_cache=getkey('l3 cache', converter=lcache_converter),
+        model=lookup_in_lines(lines, "model name"),
+        vendor=lookup_in_lines(lines, 'vendor_id'),
+        flags=lookup_in_lines(lines, 'flags'),
+        l1i_cache=caches[0] if caches[0] != -1 else None,
+        l1d_cache=caches[1] if caches[1] != -1 else None,
+        l2_cache=caches[2] if caches[2] != -1 else None,
+        l3_cache=caches[3] if caches[3] != -1 else None,
     )
-
-
-def cpu_info():
-    # Prefer lscpu
-    if not which("lscpu"):
-        return _cpu_info_lscpu()
-
-    warnings.warn("'lscpu CLI tool is not installed'; using pure python"
-                  "implementation (worse)", RuntimeWarning)
-
-    path = '%s/cpuinfo' % get_procfs_path()
-    if not os.path.exists(path):
-        debug("%s not available on this platform" % path)
-        return {}
-    return _cpu_info()
 
 
 def cpu_stats():

@@ -469,6 +469,32 @@ error:
 
 
 /*
+ * Return L1/2/3 CPU cache sizes.
+ */
+static PyObject*
+psutil_cpu_caches(PyObject* self, PyObject* args) {
+    long l1i = -1;
+    long l1d = -1;
+    long l2 = -1;
+    long l3 = -1;
+
+#ifdef _SC_LEVEL1_ICACHE_SIZE
+    l1i = sysconf(_SC_LEVEL1_ICACHE_SIZE);
+#endif
+#ifdef _SC_LEVEL1_DCACHE_SIZE
+    l1d = sysconf(_SC_LEVEL1_DCACHE_SIZE);
+#endif
+#ifdef _SC_LEVEL2_CACHE_SIZE
+    l2 = sysconf(_SC_LEVEL2_CACHE_SIZE);
+#endif
+#ifdef _SC_LEVEL3_CACHE_SIZE
+    l3 = sysconf(_SC_LEVEL3_CACHE_SIZE);
+#endif
+    return Py_BuildValue("llll", l1i, l1d, l2, l3);
+}
+
+
+/*
  * Module init.
  */
 
@@ -497,6 +523,8 @@ static PyMethodDef mod_methods[] = {
      "Return currently connected users as a list of tuples"},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return duplex and speed info about a NIC"},
+    {"cpu_caches", psutil_cpu_caches, METH_VARARGS,
+     "Return L1/2/3 CPU caches"},
 
     // --- linux specific
 
