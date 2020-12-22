@@ -47,7 +47,7 @@ all: test
 # ===================================================================
 
 clean:  ## Remove all build files.
-	rm -rf `find . -type d -name __pycache__ \
+	@rm -rfv `find . -type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
 		-o -type f -name \*.pyc \
@@ -57,7 +57,7 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
 		-o -type f -name \*\$testfn`
-	rm -rf \
+	@rm -rfv \
 		*.core \
 		*.egg-info \
 		*\@psutil-* \

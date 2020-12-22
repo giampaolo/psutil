@@ -63,6 +63,7 @@
 #include "_psutil_posix.h"
 
 #ifdef PSUTIL_FREEBSD
+    #include "arch/freebsd/cpu.h"
     #include "arch/freebsd/specific.h"
     #include "arch/freebsd/sys_socks.h"
     #include "arch/freebsd/proc_socks.h"
@@ -1096,8 +1097,8 @@ static PyMethodDef mod_methods[] = {
      "Get process resource limits."},
     {"proc_setrlimit", psutil_proc_setrlimit, METH_VARARGS,
      "Set process resource limits."},
-    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
-     "Return an XML string to determine the number CPU cores."},
+    {"cpu_topology", psutil_cpu_topology, METH_VARARGS,
+     "Return CPU topology as an XML string."},
 #endif
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment"},

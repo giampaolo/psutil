@@ -363,37 +363,6 @@ error:
 }
 
 
-PyObject *
-psutil_cpu_count_cores(PyObject *self, PyObject *args) {
-    // Return an XML string from which we'll determine the number of
-    // CPU cores in the system.
-    void *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
-
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
-
-    py_str = Py_BuildValue("s", topology);
-    free(topology);
-    return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
-}
-
-
 /*
  * Return virtual memory usage statistics.
  */
@@ -932,47 +901,6 @@ error:
 }
 
 
-PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    unsigned int v_soft;
-    unsigned int v_intr;
-    unsigned int v_syscall;
-    unsigned int v_trap;
-    unsigned int v_swtch;
-    size_t size = sizeof(v_soft);
-
-    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_soft')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_intr')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_syscall')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_trap')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_swtch')");
-    }
-
-    return Py_BuildValue(
-        "IIIII",
-        v_swtch,  // ctx switches
-        v_intr,  // interrupts
-        v_soft,  // software interrupts
-        v_syscall,  // syscalls
-        v_trap  // traps
-    );
-}
-
-
 /*
  * Return battery information.
  */
@@ -1030,43 +958,6 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
 error:
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "no temperature sensors");
-    else
-        PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
-}
-
-
-/*
- * Return frequency information of a given CPU.
- * As of Dec 2018 only CPU 0 appears to be supported and all other
- * cores match the frequency of CPU 0.
- */
-PyObject *
-psutil_cpu_freq(PyObject *self, PyObject *args) {
-    int current;
-    int core;
-    char sensor[26];
-    char available_freq_levels[1000];
-    size_t size = sizeof(current);
-
-    if (! PyArg_ParseTuple(args, "i", &core))
-        return NULL;
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
-    sprintf(sensor, "dev.cpu.%d.freq", core);
-    if (sysctlbyname(sensor, &current, &size, NULL, 0))
-        goto error;
-
-    size = sizeof(available_freq_levels);
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
-    // In case of failure, an empty string is returned.
-    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
-    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
-
-    return Py_BuildValue("is", current, available_freq_levels);
-
-error:
-    if (errno == ENOENT)
-        PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
     else
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;

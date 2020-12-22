@@ -172,7 +172,15 @@ def cpu_stats():
 
 
 def cpu_info():
-    return cext.cpu_info()
+    return dict(
+        model=cext.cpu_model(),
+        vendor=cext.cpu_vendor(),
+        l1i_cache=cext.cpu_l1i_cache(),
+        l1d_cache=cext.cpu_l1d_cache(),
+        l2_cache=cext.cpu_l2_cache(),
+        l3_cache=cext.cpu_l3_cache(),
+        flags=cext.cpu_flags(),
+    )
 
 
 def cpu_freq():

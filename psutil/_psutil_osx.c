@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <utmpx.h>
 #include <sys/sysctl.h>
-#include <sys/vmmeter.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
 #include <netinet/tcp_fsm.h>
@@ -23,11 +22,6 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <mach/mach.h>
-#include <mach/task.h>
-#include <mach/mach_init.h>
-#include <mach/host_info.h>
-#include <mach/mach_host.h>
-#include <mach/mach_traps.h>
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
 #include <mach-o/loader.h>
@@ -353,50 +347,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 
 /*
- * Return the number of logical CPUs in the system.
- * XXX this could be shared with BSD.
- */
-static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    /*
-    int mib[2];
-    int ncpu;
-    size_t len;
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", ncpu);
-    */
-    int num;
-    size_t size = sizeof(int);
-
-    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 2))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
-}
-
-
-/*
- * Return the number of CPU cores in the system.
- */
-static PyObject *
-psutil_cpu_count_cores(PyObject *self, PyObject *args) {
-    int num;
-    size_t size = sizeof(int);
-
-    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
-}
-
-
-/*
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */
@@ -587,36 +537,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
 
 /*
- * Return a Python tuple representing user, kernel and idle CPU times
- */
-static PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args) {
-    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    kern_return_t error;
-    host_cpu_load_info_data_t r_load;
-
-    mach_port_t host_port = mach_host_self();
-    error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
-                            (host_info_t)&r_load, &count);
-    if (error != KERN_SUCCESS) {
-        return PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
-            mach_error_string(error));
-    }
-    mach_port_deallocate(mach_task_self(), host_port);
-
-    return Py_BuildValue(
-        "(dddd)",
-        (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
-    );
-}
-
-
-/*
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject *
@@ -679,40 +599,6 @@ error:
             PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
     return NULL;
-}
-
-
-/*
- * Retrieve CPU frequency. Note: all of these are static vendor values
- * that never change.
- */
-static PyObject *
-psutil_cpu_freq(PyObject *self, PyObject *args) {
-    unsigned int curr;
-    int64_t min = 0;
-    int64_t max = 0;
-    int mib[2];
-    size_t len = sizeof(curr);
-    size_t size = sizeof(min);
-
-    // also availble as "hw.cpufrequency" but it's deprecated
-    mib[0] = CTL_HW;
-    mib[1] = HW_CPU_FREQ;
-
-    if (sysctl(mib, 2, &curr, &len, NULL, 0) < 0)
-        return PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
-
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        psutil_debug("sysct('hw.cpufrequency_min') failed (set to 0)");
-
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
-
-    return Py_BuildValue(
-        "IKK",
-        curr / 1000 / 1000,
-        min / 1000 / 1000,
-        max / 1000 / 1000);
 }
 
 
@@ -1634,37 +1520,6 @@ error:
 
 
 /*
- * Return CPU statistics.
- */
-static PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    struct vmmeter vmstat;
-    kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
-    mach_port_t mport = mach_host_self();
-
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
-    if (ret != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_VM_INFO) failed: %s",
-            mach_error_string(ret));
-        return NULL;
-    }
-    mach_port_deallocate(mach_task_self(), mport);
-
-    return Py_BuildValue(
-        "IIIII",
-        vmstat.v_swtch,  // ctx switches
-        vmstat.v_intr,  // interrupts
-        vmstat.v_soft,  // software interrupts
-        vmstat.v_syscall,  // syscalls
-        vmstat.v_trap  // traps
-    );
-}
-
-
-/*
  * Return battery information.
  */
 static PyObject *
@@ -1786,22 +1641,10 @@ static PyMethodDef mod_methods[] = {
 
     {"pids", psutil_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
-    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
-     "Return number of logical CPUs on the system"},
-    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
-     "Return number of CPU cores on the system"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
      "Return stats about swap memory, in bytes"},
-    {"cpu_times", psutil_cpu_times, METH_VARARGS,
-     "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
-     "Return system per-cpu times as a list of tuples"},
-    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
-     "Return cpu current frequency"},
-    {"cpu_info", psutil_cpu_info, METH_VARARGS,
-     "Return cpu information"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
@@ -1813,10 +1656,31 @@ static PyMethodDef mod_methods[] = {
      "Return dict of tuples of disks I/O information."},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
-     "Return CPU statistics"},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
      "Return battery information."},
+
+    // system CPU
+    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
+     "Return number of logical CPUs on the system"},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Return number of CPU cores on the system"},
+    {"cpu_count_sockets", psutil_cpu_count_cores, METH_VARARGS,
+     "Return number of physical CPU sockets on the motherboard"},
+    {"cpu_times", psutil_cpu_times, METH_VARARGS,
+     "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
+     "Return system per-cpu times as a list of tuples"},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return cpu current frequency"},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
+     "Return CPU statistics"},
+    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
+    {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS, ""},
+    {"cpu_flags", psutil_cpu_flags, METH_VARARGS, ""},
+    {"cpu_l1i_cache", psutil_cpu_l1i_cache, METH_VARARGS, ""},
+    {"cpu_l1d_cache", psutil_cpu_l1d_cache, METH_VARARGS, ""},
+    {"cpu_l2_cache", psutil_cpu_l2_cache, METH_VARARGS, ""},
+    {"cpu_l3_cache", psutil_cpu_l3_cache, METH_VARARGS, ""},
 
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,

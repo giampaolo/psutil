@@ -1,31 +1,171 @@
 /*
- * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /*
-Notes:
+System-wide CPU related functions.
 
+References:
 - https://opensource.apple.com/source/xnu/xnu-1456.1.26/bsd/sys/sysctl.h.auto.html
 - sysctl C types: https://ss64.com/osx/sysctl.html
 - https://apple.stackexchange.com/questions/238777
 - it looks like CPU "sockets" on macOS are called "packages"
 - it looks like macOS does not support NUMA nodes:
   https://apple.stackexchange.com/questions/36465/do-mac-pros-use-numa
-- Most info can be obtained with "sysctl -a | grep machdep.cpu"
+- $ sysctl -a | grep machdep.cpu
+
+Original code was refactored and moved from psutil/_psutil_osx.c in 2020
+right before a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012.
+For reference, here's the git history with original implementations:
+
+- CPU count logical: 3d291d425b856077e65163e43244050fb188def1
+- CPU count physical: 4263e354bb4984334bc44adf5dd2f32013d69fba
+- CPU times: 32488bdf54aed0f8cef90d639c1667ffaa3c31c7
+- CPU stat: fa00dfb961ef63426c7818899340866ced8d2418
+- CPU frequency: 6ba1ac4ebfcd8c95fca324b15606ab0ec1412d39
 */
 
 
 #include <Python.h>
 #include <sys/sysctl.h>
 #include <ctype.h>
+#include <sys/sysctl.h>
+#include <sys/vmmeter.h>
+
+#include <mach/mach_error.h>
+#include <mach/mach_host.h>
+#include <mach/mach_port.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
 
-static PyObject *
+PyObject *
+psutil_cpu_count_logical(PyObject *self, PyObject *args) {
+    int num;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 2))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
+        return Py_BuildValue("i", num);
+}
+
+
+PyObject *
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
+    int num;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
+        return Py_BuildValue("i", num);
+}
+
+
+PyObject *
+psutil_cpu_sockets() {
+    // It looks like on macOS "sockets" are called "packages".
+    // Hopefully it's the same thing.
+    int value;
+    size_t size = sizeof(value);
+
+    if (sysctlbyname("hw.packages", &value, &size, NULL, 2))
+        Py_RETURN_NONE;
+    else
+        return Py_BuildValue("i", value);
+}
+
+
+PyObject *
+psutil_cpu_times(PyObject *self, PyObject *args) {
+    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+    kern_return_t error;
+    host_cpu_load_info_data_t r_load;
+
+    mach_port_t host_port = mach_host_self();
+    error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
+                            (host_info_t)&r_load, &count);
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
+            mach_error_string(error));
+    }
+    mach_port_deallocate(mach_task_self(), host_port);
+
+    return Py_BuildValue(
+        "(dddd)",
+        (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
+        (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
+        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
+        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
+    );
+}
+
+
+PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    struct vmmeter vmstat;
+    kern_return_t ret;
+    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
+    mach_port_t mport = mach_host_self();
+
+    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
+    if (ret != KERN_SUCCESS) {
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) failed: %s",
+            mach_error_string(ret));
+        return NULL;
+    }
+    mach_port_deallocate(mach_task_self(), mport);
+
+    return Py_BuildValue(
+        "IIIII",
+        vmstat.v_swtch,  // ctx switches
+        vmstat.v_intr,  // interrupts
+        vmstat.v_soft,  // software interrupts
+        vmstat.v_syscall,  // syscalls
+        vmstat.v_trap  // traps
+    );
+}
+
+
+PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    unsigned int curr;
+    int64_t min = 0;
+    int64_t max = 0;
+    int mib[2];
+    size_t len = sizeof(curr);
+    size_t size = sizeof(min);
+
+    // also availble as "hw.cpufrequency" but it's deprecated
+    mib[0] = CTL_HW;
+    mib[1] = HW_CPU_FREQ;
+
+    if (sysctl(mib, 2, &curr, &len, NULL, 0) < 0)
+        return PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
+
+    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
+        psutil_debug("sysct('hw.cpufrequency_min') failed (set to 0)");
+
+    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
+        psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
+
+    return Py_BuildValue(
+        "IKK",
+        curr / 1000 / 1000,
+        min / 1000 / 1000,
+        max / 1000 / 1000);
+}
+
+
+PyObject *
 psutil_cpu_model() {
     size_t len;
     char *buffer;
@@ -51,7 +191,7 @@ psutil_cpu_model() {
 }
 
 
-static PyObject *
+PyObject *
 psutil_cpu_vendor() {
     size_t len;
     char *buffer;
@@ -75,10 +215,8 @@ psutil_cpu_vendor() {
 }
 
 
-// Returns a string like this:
-// 'fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov ...'
-static PyObject *
-psutil_cpu_features() {
+PyObject *
+psutil_cpu_flags() {
     size_t len1;
     size_t len2;
     char *buf1 = NULL;
@@ -158,7 +296,68 @@ error:
 }
 
 
-static PyObject *
+// also available as sysctlbyname("hw.l1icachesize") but it returns 1
+PyObject *
+psutil_cpu_l1i_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L1ICACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L1ICACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("i", value);
+}
+
+
+// also available as sysctlbyname("hw.l1dcachesize") but it returns 1
+PyObject *
+psutil_cpu_l1d_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L1DCACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L1DCACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("i", value);
+}
+
+
+// also available as sysctlbyname("hw.l2cachesize") but it returns 1
+PyObject *
+psutil_cpu_l2_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L2CACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L2CACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("i", value);
+}
+
+
+// also available as sysctlbyname("hw.l3cachesize") but it returns 1
+PyObject *
+psutil_cpu_l3_cache() {
+    int value;
+    size_t len = sizeof(value);
+    int mib[2] = { CTL_HW, HW_L3CACHESIZE };
+
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
+        psutil_debug("sysctl(HW_L3CACHESIZE) failed (ignored)");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("i", value);
+}
+
+
+/*
+PyObject *
 psutil_cpu_num_cores_per_socket() {
     int value;
     size_t size = sizeof(value);
@@ -175,7 +374,7 @@ psutil_cpu_num_cores_per_socket() {
 
 // "threads_per_core" is how it's being called by lscpu on Linux.
 // Here it's "thread_count". Hopefully it's the same thing.
-static PyObject *
+PyObject *
 psutil_cpu_threads_per_core() {
     int value;
     size_t size = sizeof(value);
@@ -188,142 +387,4 @@ psutil_cpu_threads_per_core() {
     }
     return Py_BuildValue("i", value);
 }
-
-
-// The number of physical CPU sockets.
-// It looks like on macOS "sockets" are called "packages".
-// Hopefully it's the same thing.
-static PyObject *
-psutil_cpu_sockets() {
-    int value;
-    size_t size = sizeof(value);
-
-    if (sysctlbyname("hw.packages", &value, &size, NULL, 2)) {
-        psutil_debug("sysctlbyname('hw.packages') failed (ignored)");
-        Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
-}
-
-
-// also available as sysctlbyname("hw.l1icachesize") but it returns 1
-static PyObject *
-psutil_cpu_l1i_cache() {
-    int value;
-    size_t len = sizeof(value);
-    int mib[2] = { CTL_HW, HW_L1ICACHESIZE };
-
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L1ICACHESIZE) failed (ignored)");
-        Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
-}
-
-
-// also available as sysctlbyname("hw.l1dcachesize") but it returns 1
-static PyObject *
-psutil_cpu_l1d_cache() {
-    int value;
-    size_t len = sizeof(value);
-    int mib[2] = { CTL_HW, HW_L1DCACHESIZE };
-
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L1DCACHESIZE) failed (ignored)");
-        Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
-}
-
-
-// also available as sysctlbyname("hw.l2cachesize") but it returns 1
-static PyObject *
-psutil_cpu_l2_cache() {
-    int value;
-    size_t len = sizeof(value);
-    int mib[2] = { CTL_HW, HW_L2CACHESIZE };
-
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L2CACHESIZE) failed (ignored)");
-        Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
-}
-
-
-// also available as sysctlbyname("hw.l3cachesize") but it returns 1
-static PyObject *
-psutil_cpu_l3_cache() {
-    int value;
-    size_t len = sizeof(value);
-    int mib[2] = { CTL_HW, HW_L3CACHESIZE };
-
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L3CACHESIZE) failed (ignored)");
-        Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
-}
-
-
-// Retrieve multiple hardware CPU information, similarly to lscpu on Linux.
-PyObject *
-psutil_cpu_info(PyObject *self, PyObject *args) {
-    PyObject *py_retdict = PyDict_New();
-
-    if (py_retdict == NULL) {
-        return NULL;
-    }
-
-    // strings
-    if (psutil_add_to_dict(py_retdict, "model",
-                           psutil_cpu_model()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "vendor",
-                           psutil_cpu_vendor()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "features",
-                               psutil_cpu_features()) == 1) {
-        goto error;
-    }
-
-    // various kinds of CPU counts
-    if (psutil_add_to_dict(py_retdict, "threads_per_core",
-                           psutil_cpu_threads_per_core()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "cores_per_socket",
-                           psutil_cpu_num_cores_per_socket()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "sockets",
-                           psutil_cpu_sockets()) == 1) {
-        goto error;
-    }
-
-    // L* caches
-    if (psutil_add_to_dict(py_retdict, "l1d_cache",
-                           psutil_cpu_l1d_cache()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "l1i_cache",
-                           psutil_cpu_l1i_cache()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "l2_cache",
-                           psutil_cpu_l2_cache()) == 1) {
-        goto error;
-    }
-    if (psutil_add_to_dict(py_retdict, "l3_cache",
-                           psutil_cpu_l3_cache()) == 1) {
-        goto error;
-    }
-
-    return py_retdict;
-
-error:
-    Py_DECREF(py_retdict);
-    return NULL;
-}
+*/
