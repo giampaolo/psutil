@@ -189,7 +189,7 @@ def lscpu(field):
     for line in out.splitlines():
         key, _, value = line.partition(':')
         if field.lower() == key.lower():
-            return value
+            return value.strip()
 
 
 def get_free_version_info():
