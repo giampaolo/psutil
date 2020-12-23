@@ -462,7 +462,7 @@ error:
 // CPU info for x86, x64 processors.
 // Re-adapted from: https://docs.microsoft.com/en-us/previous-versions/
 //     visualstudio/visual-studio-2008/hskdteyh(v=vs.90)?redirectedfrom=MSDN
-// List of CPU flags
+// List of CPU flags:
 // https://project.altservice.com/documents/14
 
 static char* szFeatures[] = {
@@ -610,7 +610,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
         __cpuid(CPUInfo, i);
 
         // Interpret CPU feature information.
-        if  (i == 1) {
+        if (i == 1) {
             nSteppingID = CPUInfo[0] & 0xf;
             nModel = (CPUInfo[0] >> 4) & 0xf;
             nFamily = (CPUInfo[0] >> 8) & 0xf;
@@ -649,7 +649,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
     // Get the information associated with each extended ID.
     for (i=0x80000000; i<=nExIds; ++i) {
         __cpuid(CPUInfo, i);
-        if  (i == 0x80000001) {
+        if (i == 0x80000001) {
             bLAHF_SAHFAvailable = (CPUInfo[2] & 0x1) || false;
             bCmpLegacy = (CPUInfo[2] & 0x2) || false;
             bSVM = (CPUInfo[2] & 0x4) || false;
@@ -672,26 +672,26 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
         }
 
         // Interpret CPU brand string and cache information.
-        if  (i == 0x80000002)
+        if (i == 0x80000002)
             memcpy(CPUBrandString, CPUInfo, sizeof(CPUInfo));
-        else if  (i == 0x80000003)
+        else if (i == 0x80000003)
             memcpy(CPUBrandString + 16, CPUInfo, sizeof(CPUInfo));
-        else if  (i == 0x80000004)
+        else if (i == 0x80000004)
             memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
-        else if  (i == 0x80000006) {
+        else if (i == 0x80000006) {
             nCacheLineSize = CPUInfo[2] & 0xff;
             nL2Associativity = (CPUInfo[2] >> 12) & 0xf;
             nCacheSizeK = (CPUInfo[2] >> 16) & 0xffff;
         }
-        else if  (i == 0x80000008) {
+        else if (i == 0x80000008) {
            nPhysicalAddress = CPUInfo[0] & 0xff;
            nVirtualAddress = (CPUInfo[0] >> 8) & 0xff;
         }
-        else if  (i == 0x8000000A) {
+        else if (i == 0x8000000A) {
             bNestedPaging = (CPUInfo[3] & 0x1) || false;
             bLBRVisualization = (CPUInfo[3] & 0x2) || false;
         }
-        else if  (i == 0x8000001A) {
+        else if (i == 0x8000001A) {
             bFP128 = (CPUInfo[0] & 0x1) || false;
             bMOVOptimization = (CPUInfo[0] & 0x2) || false;
         }
@@ -701,7 +701,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                            Py_BuildValue("s", CPUString)) == 1)
         goto error;
 
-    if  (nIds >= 1) {
+    if (nIds >= 1) {
         /*
         if (nSteppingID)
             printf_s("Stepping ID = %d\n", nSteppingID);
