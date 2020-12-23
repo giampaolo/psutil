@@ -467,7 +467,7 @@ error:
 // List of CPU flags
 // https://project.altservice.com/documents/14
 
-const char* szFeatures[] = {
+char* szFeatures[] = {
     "fpu",          // "x87 FPU On Chip",
     "vme",          //"Virtual-8086 Mode Enhancement",
     "de",           // "Debugging Extensions",
@@ -501,6 +501,14 @@ const char* szFeatures[] = {
     "unknown4",     // "Unknown4",
     "pbe",          // "Pending Break Enable"
 };
+
+
+void
+stradd(char *base, int len, char *tail) {
+    if (strlen(base) != 0)
+        strcat_s(base, len, " ");
+    strcat_s(base, len, tail);
+}
 
 
 PyObject *
@@ -580,6 +588,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
 
     bool bSelfInit = false;
     bool bFullyAssociative = false;
+    char flags[900] = "";
 
     PyObject *py_retdict = PyDict_New();
 
@@ -736,96 +745,93 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             printf_s("\nThe following features are supported:\n");
 
             if (bSSE3Instructions)
-                printf_s("\tsse3\n");  // SSE3
+                stradd(flags, _countof(flags), "sse3");  // SSE3
             if (bMONITOR_MWAIT)
-                printf_s("\tmonitor\n");  // MONITOR/MWAIT
+                stradd(flags, _countof(flags), "monitor");  // MONITOR/MWAIT
             if (bCPLQualifiedDebugStore)
-                printf_s("\tds_cpl\n");  // CPL Qualified Debug Store
+                stradd(flags, _countof(flags), "ds_cpl");  // CPL Qualified Debug Store
             if (bVirtualMachineExtensions)
-                printf_s("\tvmext\n");  // Virtual Machine Extensions???
+                stradd(flags, _countof(flags), "vmext");  // Virtual Machine Extensions???
             if (bEnhancedIntelSpeedStepTechnology)
-                printf_s("\test\n");  // Enhanced Intel SpeedStep Technology
+                stradd(flags, _countof(flags), "est");  // Enhanced Intel SpeedStep Technology
             if (bThermalMonitor2)
-                printf_s("\ttm2\n");  // Thermal Monitor 2
+                stradd(flags, _countof(flags), "tm2");  // Thermal Monitor 2
             if (bSupplementalSSE3)
-                printf_s("\tsupplsse3\n");  // Supplemental Streaming SIMD Extensions 3 ???
+                stradd(flags, _countof(flags), "supplsse3");  // Supplemental Streaming SIMD Extensions 3 ???
             if (bL1ContextID)
-                printf_s("\tl1ctxid\n");  // L1 Context ID ???
+                stradd(flags, _countof(flags), "l1ctxid");  // L1 Context ID ???
             if (bCMPXCHG16B)
-                printf_s("\tcx16\n");  // CMPXCHG16B Instruction
+                stradd(flags, _countof(flags), "cx16");  // CMPXCHG16B Instruction
             if (bxTPRUpdateControl)
-                printf_s("\txtpr\n");  // xTPR Update Control
+                stradd(flags, _countof(flags), "xtpr");  // xTPR Update Control
             if (bPerfDebugCapabilityMSR)
-                printf_s("\tperfdebugmsr\n");  // Perf\\Debug Capability MSR
+                stradd(flags, _countof(flags), "perfdebugmsr");  // Perf\\Debug Capability MSR
             if (bSSE41Extensions)
-                printf_s("\tsse4_1\n");  // SSE4.1 Extensions
+                stradd(flags, _countof(flags), "sse4_1");  // SSE4.1 Extensions
             if (bSSE42Extensions)
-                printf_s("\tsse4_2\n");  // SSE4.2 Extensions
+                stradd(flags, _countof(flags), "sse4_2");  // SSE4.2 Extensions
             if (bPOPCNT)
-                printf_s("\tpopcnt\n");  // PPOPCNT Instruction
+                stradd(flags, _countof(flags), "popcnt");  // PPOPCNT Instruction
 
             i = 0;
             nIds = 1;
             while (i < (sizeof(szFeatures) / sizeof(const char*))) {
                 if (nFeatureInfo & nIds) {
-                    printf_s("\t");
-                    printf_s(szFeatures[i]);
-                    printf_s("\n");
+                    stradd(flags, _countof(flags), szFeatures[i]);
                 }
                 nIds <<= 1;
                 ++i;
             }
             if (bLAHF_SAHFAvailable)
-                printf_s("\tlhaf_lm\n");  // LAHF/SAHF in 64-bit mode
+                stradd(flags, _countof(flags), "lhaf_lm");  // LAHF/SAHF in 64-bit mode
             if (bCmpLegacy)
-                printf_s("\tcmplegacy\n");  // Core multi-processing legacy mode
+                stradd(flags, _countof(flags), "cmplegacy");  // Core multi-processing legacy mode
             if (bSVM)
-                printf_s("\tsvm\n");  // Secure Virtual Machine
+                stradd(flags, _countof(flags), "svm");  // Secure Virtual Machine
             if (bExtApicSpace)
-                printf_s("\tx2apic\n");  // Extended APIC Register Space
+                stradd(flags, _countof(flags), "x2apic");  // Extended APIC Register Space
             if (bAltMovCr8)
-                printf_s("\taltmovcr8\n");  // AltMovCr8 ???
+                stradd(flags, _countof(flags), "altmovcr8");  // AltMovCr8 ???
             if (bLZCNT)
-                printf_s("\tlzcnt\n");  // LZCNT instruction
+                stradd(flags, _countof(flags), "lzcnt");  // LZCNT instruction
             if (bSSE4A)
-                printf_s("\tsse4a)\n");  // SSE4A
+                stradd(flags, _countof(flags), "sse4a)");  // SSE4A
             if (bMisalignedSSE)
-                printf_s("\tmisalignsse\n");  // Misaligned SSE mode
+                stradd(flags, _countof(flags), "misalignsse");  // Misaligned SSE mode
             if (bPREFETCH)
-                printf_s("\t3dnowprefetch\n");  // PREFETCH and PREFETCHW Instructions
+                stradd(flags, _countof(flags), "3dnowprefetch");  // PREFETCH and PREFETCHW Instructions
             if (bSKINITandDEV)
-                printf_s("\tskinit\n");  // SKINIT and DEV support
+                stradd(flags, _countof(flags), "skinit");  // SKINIT and DEV support
             if (bSYSCALL_SYSRETAvailable)
-                printf_s("\tsyscall\n");  // SYSCALL/SYSRET in 64-bit mode
+                stradd(flags, _countof(flags), "syscall");  // SYSCALL/SYSRET in 64-bit mode
             if (bExecuteDisableBitAvailable)
-                printf_s("\tnx\n");  // Execute Disable Bit
+                stradd(flags, _countof(flags), "nx");  // Execute Disable Bit
             if (bMMXExtensions)
-                printf_s("\tmmxext\n");  // Extensions to MMX Instructions
+                stradd(flags, _countof(flags), "mmxext");  // Extensions to MMX Instructions
             if (bFFXSR)
-                printf_s("\tffxsr\n");  // FFXSR
+                stradd(flags, _countof(flags), "ffxsr");  // FFXSR
             if (b1GBSupport)
-                printf_s("\tpdpe1gb\n");  // 1GB page support
+                stradd(flags, _countof(flags), "pdpe1gb");  // 1GB page support
             if (bRDTSCP)
-                printf_s("\trdtscp\n");  // RDTSCP instruction
+                stradd(flags, _countof(flags), "rdtscp");  // RDTSCP instruction
             if (b64Available)
-                printf_s("\tlm\n");  // 64 bit Technology
+                stradd(flags, _countof(flags), "lm");  // 64 bit Technology
             if (b3DNowExt)
-                printf_s("\t3dnowext\n");  // 3Dnow Ext
+                stradd(flags, _countof(flags), "3dnowext");  // 3Dnow Ext
             if (b3DNow)
-                printf_s("\t3dnow\n");  // 3Dnow! instructions
+                stradd(flags, _countof(flags), "3dnow");  // 3Dnow! instructions
             if (bNestedPaging)
-                printf_s("\tnpt\n");  // Nested Paging
+                stradd(flags, _countof(flags), "npt");  // Nested Paging
             if (bLBRVisualization)
-                printf_s("\tlbrv\n");  // LBR Visualization
+                stradd(flags, _countof(flags), "lbrv");  // LBR Visualization
             if (bFP128)
-                printf_s("\tfp128\n");  // FP128 optimization???
+                stradd(flags, _countof(flags), "fp128");  // FP128 optimization???
             if (bMOVOptimization)
-                printf_s("\tmovu\n");  // MOVU Optimization???
+                stradd(flags, _countof(flags), "movu");  // MOVU Optimization???
         }
     }
 
     if (nExIds >= 0x80000004) {
-        printf_s("\nCPU Brand String: %s\n", CPUBrandString);
         if (psutil_add_to_dict(py_retdict, "model",
                                Py_BuildValue("s", CPUBrandString)) == 1)
             goto error;
@@ -903,6 +909,11 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             nNumberSets+1);
         i = i + 1;
     }
+
+    if (psutil_add_to_dict(py_retdict, "flags",
+                           Py_BuildValue("s", flags)) == 1)
+        goto error;
+
     return py_retdict;
 
 error:
