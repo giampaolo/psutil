@@ -49,7 +49,6 @@ from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import PY3
-from ._compat import which
 
 if sys.version_info >= (3, 4):
     import enum

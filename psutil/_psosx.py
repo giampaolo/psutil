@@ -175,7 +175,6 @@ def cpu_info():
     return cext.cpu_info()
 
 
-
 def cpu_freq():
     """Return CPU frequency.
     On macOS per-cpu frequency is not supported.
