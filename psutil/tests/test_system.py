@@ -10,6 +10,7 @@ import contextlib
 import datetime
 import errno
 import os
+import platform
 import pprint
 import shutil
 import signal
@@ -38,6 +39,7 @@ from psutil.tests import enum
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_CPU_INFO
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -51,7 +53,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
-
 
 # ===================================================================
 # --- System-related API tests
@@ -532,6 +533,13 @@ class TestCpuAPIs(PsutilTestCase):
 
         if LINUX:
             self.assertEqual(len(ls), psutil.cpu_count())
+
+    @unittest.skipIf(not HAS_CPU_INFO, "not suported")
+    def test_cpu_info(self):
+        info = psutil.cpu_info()
+        with self.subTest(info):
+            self.assertEqual(info['arch'], platform.machine())
+            self.assertEqual(info['byteorder'], sys.byteorder)
 
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
