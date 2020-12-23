@@ -12,7 +12,6 @@ import contextlib
 import errno
 import glob
 import io
-import json
 import os
 import re
 import shutil

@@ -699,7 +699,7 @@ def cpu_count_cores():
 
 
 def cpu_count_sockets():
-    """Return the numner of CPU sockets on the motherboard."""
+    """Return the number of physical CPU sockets on the motherboard."""
     found = set()
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:

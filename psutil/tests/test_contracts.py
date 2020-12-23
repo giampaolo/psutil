@@ -233,6 +233,13 @@ class TestSystemAPITypes(PsutilTestCase):
 
     def test_cpu_count(self):
         self.assertIsInstance(psutil.cpu_count(), int)
+        if not OPENBSD or NETBSD:
+            self.assertIsNotNone(psutil.cpu_count("logical"))
+        if LINUX or MACOS or WINDOWS:
+            self.assertIsNotNone(psutil.cpu_count("sockets"))
+        if LINUX or WINDOWS:
+            self.assertIsNotNone(psutil.cpu_count("numa"))
+        self.assertIsNotNone(psutil.cpu_count("usable"))
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
