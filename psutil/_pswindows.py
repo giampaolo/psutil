@@ -327,11 +327,17 @@ def cpu_freq():
 
 
 def cpu_info():
+    """Return CPU hardware-related information."""
     ret = cext.cpu_info()
     infoex = cext.GetLogicalProcessorInformationEx()
     ret['l1_cache'] = infoex['l1_cache']
     ret['l2_cache'] = infoex['l2_cache']
     ret['l3_cache'] = infoex['l3_cache']
+    # https://superuser.com/a/1441469
+    # "AMD64", "X86", "IA64", "ARM64", "EM64T"
+    ret['arch'] = \
+        os.environ.get('PROCESSOR_ARCHITEW6432', '') or \
+        os.environ.get('PROCESSOR_ARCHITECTURE', '') or None
     return ret
 
 

@@ -1894,9 +1894,23 @@ if hasattr(_psplatform, "cpu_freq"):
 if hasattr(_psplatform, "cpu_info"):
 
     def cpu_info():
-        """Return CPU varius types of information about the CPU."""
+        """Return CPU varius types of information about the CPU as a dict.
+        Usually used in conjunction with cpu_count().
+        Dictionary keys availability:
+
+          * "model": Linux, macOS, Windows
+          * "vendor": Linux, macOS, Windows
+          * "arch": Linux, macOS, Windows
+          * "byteorder": all
+          * "l1d_cache": Linux, macOS
+          * "l1i_cache": Linux, macOS
+          * "l1_cache": Windows
+          * "l2_cache": Linux, macOS, Windows
+          * "l3_cache": Linux, macOS, Windows
+          * "flags": Linux, macOS, Windows
+        """
         ret = _psplatform.cpu_info()
-        if POSIX and 'arch' not in ret:
+        if 'arch' not in ret and POSIX:
             ret['arch'] = os.uname()[4]
         if 'byteorder' not in ret:
             ret['byteorder'] = sys.byteorder
