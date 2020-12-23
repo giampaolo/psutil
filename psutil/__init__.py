@@ -1891,6 +1891,7 @@ if hasattr(_psplatform, "cpu_freq"):
     __all__.append("cpu_freq")
 
 
+# Availability: Linux, macOS, Windows
 if hasattr(_psplatform, "cpu_info"):
 
     def cpu_info():

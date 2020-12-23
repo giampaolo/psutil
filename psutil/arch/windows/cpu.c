@@ -465,9 +465,9 @@ error:
 // List of CPU flags
 // https://project.altservice.com/documents/14
 
-char* szFeatures[] = {
+static char* szFeatures[] = {
     "fpu",          // "x87 FPU On Chip",
-    "vme",          //"Virtual-8086 Mode Enhancement",
+    "vme",          // "Virtual-8086 Mode Enhancement",
     "de",           // "Debugging Extensions",
     "psa",          // "Page Size Extensions",
     "tsc",          // "Time Stamp Counter",
@@ -501,7 +501,7 @@ char* szFeatures[] = {
 };
 
 
-void
+static void
 stradd(char *base, int len, char *tail) {
     if (strlen(base) != 0)
         strcat_s(base, len, " ");
