@@ -459,10 +459,8 @@ error:
 }
 
 
-// cpuid.cpp
-// processor: x86, x64
-// Use the __cpuid intrinsic to get information about a CPU
-// Taken from: https://docs.microsoft.com/en-us/previous-versions/
+// CPU info for x86, x64 processors.
+// Re-adapted from: https://docs.microsoft.com/en-us/previous-versions/
 //     visualstudio/visual-studio-2008/hskdteyh(v=vs.90)?redirectedfrom=MSDN
 // List of CPU flags
 // https://project.altservice.com/documents/14
@@ -699,14 +697,12 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
         }
     }
 
-    // Display all the information in user-friendly format.
-
-    printf_s("\n\nCPU String: %s\n", CPUString);
     if (psutil_add_to_dict(py_retdict, "vendor",
                            Py_BuildValue("s", CPUString)) == 1)
         goto error;
 
     if  (nIds >= 1) {
+        /*
         if (nSteppingID)
             printf_s("Stepping ID = %d\n", nSteppingID);
         if (nModel)
@@ -728,6 +724,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
            printf_s("Logical Processor Count = %d\n", nLogicalProcessors);
         if (nAPICPhysicalID)
             printf_s("APIC Physical ID = %d\n", nAPICPhysicalID);
+        */
 
         if (nFeatureInfo || bSSE3Instructions ||
             bMONITOR_MWAIT || bCPLQualifiedDebugStore ||
@@ -782,6 +779,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                 nIds <<= 1;
                 ++i;
             }
+
             if (bLAHF_SAHFAvailable)  // LAHF/SAHF in 64-bit mode
                 stradd(flags, _countof(flags), "lhaf_lm");
             if (bCmpLegacy)  // Core multi-processing legacy mode
@@ -837,7 +835,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             goto error;
 
     }
-
+    /*
     if (nExIds >= 0x80000006) {
         printf_s("Cache Line Size = %d\n", nCacheLineSize);
         printf_s("L2 Associativity = %d\n", nL2Associativity);
@@ -851,7 +849,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
 
         if (i == 0) {
             nCores = CPUInfo[0] >> 26;
-            printf_s("\n\nNumber of Cores = %d\n", nCores + 1);
+            // printf_s("\n\nNumber of Cores = %d\n", nCores + 1);
         }
 
         nCacheType = (CPUInfo[0] & 0x1f);
@@ -909,6 +907,7 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             nNumberSets+1);
         i = i + 1;
     }
+    */
 
     if (psutil_add_to_dict(py_retdict, "flags",
                            Py_BuildValue("s", flags)) == 1)
