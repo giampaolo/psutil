@@ -1571,10 +1571,10 @@ def cpu_count(kind="logical", **_kwargs):
     The followings statements are equivalent and should be replaced in
     new code:
 
-    cpu_count(logical=True)  == cpu_count(kind="logical")
-    cpu_count(logical=False) == cpu_count(kind="cores")
-    cpu_count(True)          == cpu_count("logical")
-    cpu_count(False)         == cpu_count("cores")
+      cpu_count(logical=True)  == cpu_count(kind="logical")
+      cpu_count(logical=False) == cpu_count(kind="cores")
+      cpu_count(True)          == cpu_count("logical")
+      cpu_count(False)         == cpu_count("cores")
     """
     if isinstance(kind, bool):
         msg = "cpu_count(%s) function invocation is deprecated; use " \

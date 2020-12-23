@@ -177,12 +177,10 @@ psutil_setup(void) {
 }
 
 
-/*
- * Add a new python object to an existing dict, DECREFing that object and
- * setting it to NULL both in case of success or failure.
- */
 int
 psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
+    // Add a new python object to an existing dict, DECREFing that object
+    // and setting it to NULL both in case of success or failure.
     if (!py_obj)
         return 1;
     if (PyDict_SetItemString(py_dict, keyname, py_obj)) {

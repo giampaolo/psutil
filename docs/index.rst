@@ -201,33 +201,58 @@ CPU
   .. versionchanged::
     4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
 
-.. function:: cpu_count(logical=True)
+.. function:: cpu_count(kind="logical")
 
-  Return the number of logical CPUs in the system (same as `os.cpu_count`_
-  in Python 3.4) or ``None`` if undetermined.
-  "logical CPUs" means the number of physical cores multiplied by the number
-  of threads that can run on each core (this is known as Hyper Threading).
-  If *logical* is ``False`` return the number of physical cores only, or
-  ``None`` if undetermined.
-  On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
-  ``None``.
+  Return the number of CPUs in the system (various kinds) or ``None`` if
+  undetermined (same as `os.cpu_count`_).
+  The *kind* parameter dictates the desired CPU count to get:
+
+  - **'logical'**: the numer of physical cores multiplied by the number
+    of threads that can run on each core (this is known as Hyper Threading).
+    This can be seen as the number of total, sysyem-wide, active CPUs on the
+    system, and it's the same as `os.cpu_count`_.
+  - **'cores'**: the number of physical CPU cores
+  - **'sockets'**: the number of physical CPU sockets on the motherboard
+  - **'numa'**: the number of CPU NUMA nodes
+  - **'usable'**: a best-effort attempt to get the number of CPUs that the
+    current process can use.
+    This number can vary in case CPU affinity has been changed for the current
+    process, Linux cgroups are being used or (in case of Windows) on systems
+    using processor groups.
+    "usable" CPU count is designed to be used in portable applications
+    using process pools (see `multiprocess.Pool <https://docs.python.org/3/library/multiprocessing.html#using-a-pool-of-workers>`__) and it's more accurate
+    than "logical" CPU count or `os.cpu_count`_.
+
   Example on a system having 2 cores + Hyper Threading:
 
+  .. code-block:: python
+
     >>> import psutil
-    >>> psutil.cpu_count()
+    >>> psutil.cpu_count(kind="logical")
     4
-    >>> psutil.cpu_count(logical=False)
+    >>> psutil.cpu_count(kind="cores")
     2
-
-  Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
-  actual number of CPUs the current process can use.
-  That can vary in case process CPU affinity has been changed, Linux cgroups
-  are being used or (in case of Windows) on systems using processor groups or
-  having more than 64 CPUs.
-  The number of usable CPUs can be obtained with:
-
-    >>> len(psutil.Process().cpu_affinity())
+    >>> psutil.cpu_count(kind="sockets")
     1
+
+  Process pool example:
+
+  .. code-block:: python
+
+    from multiprocessing import Pool
+    from psutil import cpu_count
+
+    with Pool(processes=cpu_count("usable")) as pool:
+        ...
+
+  .. versionchanged:: 5.8.1 "kind" parameter was added, "logical" parameter was
+    deprecated, "sockets", "numa", and "usable" CPU counts were added.
+
+  .. warning::
+    the original signature of this function was ``cpu_count(logical=True)``.
+    That signature is now deprecated. The old function invocations
+    ``cpu_count(<bool>)`` and ``cpu_count(logical=<str>)`` still work though,
+    but will raise a ``DeprecationWarning``.
 
 .. function:: cpu_stats()
 
