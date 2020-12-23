@@ -741,37 +741,37 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
             bPREFETCH || bSKINITandDEV || bSYSCALL_SYSRETAvailable ||
             bExecuteDisableBitAvailable || bMMXExtensions || bFFXSR ||
             b1GBSupport || bRDTSCP || b64Available || b3DNowExt || b3DNow ||
-            bNestedPaging || bLBRVisualization || bFP128 || bMOVOptimization) {
-            printf_s("\nThe following features are supported:\n");
+            bNestedPaging || bLBRVisualization || bFP128 || bMOVOptimization)
+        {
 
-            if (bSSE3Instructions)
-                stradd(flags, _countof(flags), "sse3");  // SSE3
-            if (bMONITOR_MWAIT)
-                stradd(flags, _countof(flags), "monitor");  // MONITOR/MWAIT
-            if (bCPLQualifiedDebugStore)
-                stradd(flags, _countof(flags), "ds_cpl");  // CPL Qualified Debug Store
-            if (bVirtualMachineExtensions)
-                stradd(flags, _countof(flags), "vmext");  // Virtual Machine Extensions???
-            if (bEnhancedIntelSpeedStepTechnology)
-                stradd(flags, _countof(flags), "est");  // Enhanced Intel SpeedStep Technology
-            if (bThermalMonitor2)
-                stradd(flags, _countof(flags), "tm2");  // Thermal Monitor 2
-            if (bSupplementalSSE3)
-                stradd(flags, _countof(flags), "supplsse3");  // Supplemental Streaming SIMD Extensions 3 ???
-            if (bL1ContextID)
-                stradd(flags, _countof(flags), "l1ctxid");  // L1 Context ID ???
-            if (bCMPXCHG16B)
-                stradd(flags, _countof(flags), "cx16");  // CMPXCHG16B Instruction
-            if (bxTPRUpdateControl)
-                stradd(flags, _countof(flags), "xtpr");  // xTPR Update Control
-            if (bPerfDebugCapabilityMSR)
-                stradd(flags, _countof(flags), "perfdebugmsr");  // Perf\\Debug Capability MSR
-            if (bSSE41Extensions)
-                stradd(flags, _countof(flags), "sse4_1");  // SSE4.1 Extensions
-            if (bSSE42Extensions)
-                stradd(flags, _countof(flags), "sse4_2");  // SSE4.2 Extensions
-            if (bPOPCNT)
-                stradd(flags, _countof(flags), "popcnt");  // PPOPCNT Instruction
+            if (bSSE3Instructions)  // SSE3
+                stradd(flags, _countof(flags), "sse3");
+            if (bMONITOR_MWAIT)  // MONITOR/MWAIT
+                stradd(flags, _countof(flags), "monitor");
+            if (bCPLQualifiedDebugStore)  // CPL Qualified Debug Store
+                stradd(flags, _countof(flags), "ds_cpl");
+            if (bVirtualMachineExtensions)  // Virtual Machine Extensions???
+                stradd(flags, _countof(flags), "vmext");
+            if (bEnhancedIntelSpeedStepTechnology)  // Enhanced Intel SpeedStep Technology
+                stradd(flags, _countof(flags), "est");
+            if (bThermalMonitor2)  // Thermal Monitor 2
+                stradd(flags, _countof(flags), "tm2");
+            if (bSupplementalSSE3) // Supplemental Streaming SIMD Extensions 3?
+                stradd(flags, _countof(flags), "supplsse3");
+            if (bL1ContextID)  // L1 Context ID ???
+                stradd(flags, _countof(flags), "l1ctxid");
+            if (bCMPXCHG16B)  // CMPXCHG16B Instruction
+                stradd(flags, _countof(flags), "cx16");
+            if (bxTPRUpdateControl)  // xTPR Update Control
+                stradd(flags, _countof(flags), "xtpr");
+            if (bPerfDebugCapabilityMSR)  // Perf\\Debug Capability MSR
+                stradd(flags, _countof(flags), "perfdebugmsr");
+            if (bSSE41Extensions)  // SSE4.1 Extensions
+                stradd(flags, _countof(flags), "sse4_1");
+            if (bSSE42Extensions)  // SSE4.2 Extensions
+                stradd(flags, _countof(flags), "sse4_2");
+            if (bPOPCNT)  // PPOPCNT Instruction
+                stradd(flags, _countof(flags), "popcnt");
 
             i = 0;
             nIds = 1;
@@ -782,52 +782,52 @@ psutil_cpu_info(PyObject *self, PyObject *args) {
                 nIds <<= 1;
                 ++i;
             }
-            if (bLAHF_SAHFAvailable)
-                stradd(flags, _countof(flags), "lhaf_lm");  // LAHF/SAHF in 64-bit mode
-            if (bCmpLegacy)
-                stradd(flags, _countof(flags), "cmplegacy");  // Core multi-processing legacy mode
-            if (bSVM)
-                stradd(flags, _countof(flags), "svm");  // Secure Virtual Machine
-            if (bExtApicSpace)
-                stradd(flags, _countof(flags), "x2apic");  // Extended APIC Register Space
-            if (bAltMovCr8)
-                stradd(flags, _countof(flags), "altmovcr8");  // AltMovCr8 ???
-            if (bLZCNT)
-                stradd(flags, _countof(flags), "lzcnt");  // LZCNT instruction
-            if (bSSE4A)
-                stradd(flags, _countof(flags), "sse4a)");  // SSE4A
-            if (bMisalignedSSE)
-                stradd(flags, _countof(flags), "misalignsse");  // Misaligned SSE mode
-            if (bPREFETCH)
-                stradd(flags, _countof(flags), "3dnowprefetch");  // PREFETCH and PREFETCHW Instructions
-            if (bSKINITandDEV)
-                stradd(flags, _countof(flags), "skinit");  // SKINIT and DEV support
-            if (bSYSCALL_SYSRETAvailable)
-                stradd(flags, _countof(flags), "syscall");  // SYSCALL/SYSRET in 64-bit mode
-            if (bExecuteDisableBitAvailable)
-                stradd(flags, _countof(flags), "nx");  // Execute Disable Bit
-            if (bMMXExtensions)
-                stradd(flags, _countof(flags), "mmxext");  // Extensions to MMX Instructions
-            if (bFFXSR)
-                stradd(flags, _countof(flags), "ffxsr");  // FFXSR
-            if (b1GBSupport)
-                stradd(flags, _countof(flags), "pdpe1gb");  // 1GB page support
-            if (bRDTSCP)
-                stradd(flags, _countof(flags), "rdtscp");  // RDTSCP instruction
-            if (b64Available)
-                stradd(flags, _countof(flags), "lm");  // 64 bit Technology
-            if (b3DNowExt)
-                stradd(flags, _countof(flags), "3dnowext");  // 3Dnow Ext
-            if (b3DNow)
-                stradd(flags, _countof(flags), "3dnow");  // 3Dnow! instructions
-            if (bNestedPaging)
-                stradd(flags, _countof(flags), "npt");  // Nested Paging
-            if (bLBRVisualization)
-                stradd(flags, _countof(flags), "lbrv");  // LBR Visualization
-            if (bFP128)
-                stradd(flags, _countof(flags), "fp128");  // FP128 optimization???
-            if (bMOVOptimization)
-                stradd(flags, _countof(flags), "movu");  // MOVU Optimization???
+            if (bLAHF_SAHFAvailable)  // LAHF/SAHF in 64-bit mode
+                stradd(flags, _countof(flags), "lhaf_lm");
+            if (bCmpLegacy)  // Core multi-processing legacy mode
+                stradd(flags, _countof(flags), "cmplegacy");
+            if (bSVM)  // Secure Virtual Machine
+                stradd(flags, _countof(flags), "svm");
+            if (bExtApicSpace)  // Extended APIC Register Space
+                stradd(flags, _countof(flags), "x2apic");
+            if (bAltMovCr8)  // AltMovCr8 ???
+                stradd(flags, _countof(flags), "altmovcr8");
+            if (bLZCNT)  // LZCNT instruction
+                stradd(flags, _countof(flags), "lzcnt");
+            if (bSSE4A)  // SSE4A
+                stradd(flags, _countof(flags), "sse4a)");
+            if (bMisalignedSSE)  // Misaligned SSE mode
+                stradd(flags, _countof(flags), "misalignsse");
+            if (bPREFETCH)  // PREFETCH and PREFETCHW Instructions
+                stradd(flags, _countof(flags), "3dnowprefetch");
+            if (bSKINITandDEV)  // SKINIT and DEV support
+                stradd(flags, _countof(flags), "skinit");
+            if (bSYSCALL_SYSRETAvailable)  // SYSCALL/SYSRET in 64-bit mode
+                stradd(flags, _countof(flags), "syscall");
+            if (bExecuteDisableBitAvailable)  // Execute Disable Bit
+                stradd(flags, _countof(flags), "nx");
+            if (bMMXExtensions)  // Extensions to MMX Instructions
+                stradd(flags, _countof(flags), "mmxext");
+            if (bFFXSR)  // FFXSR
+                stradd(flags, _countof(flags), "ffxsr");
+            if (b1GBSupport)  // 1GB page support
+                stradd(flags, _countof(flags), "pdpe1gb");
+            if (bRDTSCP)  // RDTSCP instruction
+                stradd(flags, _countof(flags), "rdtscp");
+            if (b64Available)  // 64 bit Technology
+                stradd(flags, _countof(flags), "lm");
+            if (b3DNowExt)  // 3Dnow Ext
+                stradd(flags, _countof(flags), "3dnowext");
+            if (b3DNow)  // 3Dnow! instructions
+                stradd(flags, _countof(flags), "3dnow");
+            if (bNestedPaging)  // Nested Paging
+                stradd(flags, _countof(flags), "npt");
+            if (bLBRVisualization)  // LBR Visualization
+                stradd(flags, _countof(flags), "lbrv");
+            if (bFP128)  // FP128 optimization???
+                stradd(flags, _countof(flags), "fp128");
+            if (bMOVOptimization)  // MOVU Optimization???
+                stradd(flags, _countof(flags), "movu");
         }
     }
 
