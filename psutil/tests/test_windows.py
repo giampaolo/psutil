@@ -115,6 +115,16 @@ class TestCpuAPIs(WindowsTestCase):
         self.assertEqual(proc.CurrentClockSpeed, psutil.cpu_freq().current)
         self.assertEqual(proc.MaxClockSpeed, psutil.cpu_freq().max)
 
+    def test_cpu_info_model(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_info()['model'], proc.Name)
+
+    def test_cpu_info_vendor(self):
+        w = wmi.WMI()
+        proc = w.Win32_Processor()[0]
+        self.assertEqual(psutil.cpu_info()['vendor'], proc.Manufacturer)
+
 
 class TestSystemAPIs(WindowsTestCase):
 
