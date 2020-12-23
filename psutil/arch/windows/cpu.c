@@ -7,7 +7,6 @@
 #include <Python.h>
 #include <windows.h>
 #include <PowrProf.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <intrin.h>
@@ -464,6 +463,11 @@ error:
 //     visualstudio/visual-studio-2008/hskdteyh(v=vs.90)?redirectedfrom=MSDN
 // List of CPU flags:
 // https://project.altservice.com/documents/14
+
+typedef enum {
+    false = 0,
+    true = 1,
+} bool;
 
 static char* szFeatures[] = {
     "fpu",          // "x87 FPU On Chip",
