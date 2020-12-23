@@ -1577,13 +1577,17 @@ def cpu_count(kind="logical", **_kwargs):
     cpu_count(False)         == cpu_count("cores")
     """
     if isinstance(kind, bool):
-        kind = "logical" if kind else "cores"
-        msg = "use of boolean as first parameter is deprecated"
+        msg = "cpu_count(%s) function invocation is deprecated; use " \
+              "cpu_count(%r) instead" % (kind, "logical" if kind else "cores")
         warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        kind = "logical" if kind else "cores"
     if _kwargs:
         if list(_kwargs.keys()) == ["logical"]:
+            msg = "cpu_count(logical=%s) function invocation is deprecated; " \
+                  "use cpu_count(kind=%r) instead"
+            msg = msg % (_kwargs["logical"], "logical" if _kwargs["logical"]
+                         else "cores")
             kind = "logical" if _kwargs["logical"] else "cores"
-            msg = "'logical' parameter is deprecated; use 'kind' instead"
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
         else:
             raise TypeError("cpu_count() got an unexpected keyword argument "
