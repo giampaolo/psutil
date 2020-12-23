@@ -243,7 +243,7 @@ psutil_GetLogicalProcessorInformationEx(PyObject *self, PyObject *args) {
         if (ptr->Relationship == RelationProcessorCore) {
             coresCount += 1;
         }
-        else if (ptr->Relationship == RelationProcessorCore) {
+        else if (ptr->Relationship == RelationNumaNode) {
             numaNodesCount += 1;
         }
         else if (ptr->Relationship == RelationProcessorPackage) {
