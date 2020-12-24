@@ -171,17 +171,12 @@ psutil_cpu_model() {
     char *buffer;
     PyObject *py_str = NULL;
 
-    if (sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.brand_string') "
-                     "failed (ignored)");
+    if (sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0) != 0)
         Py_RETURN_NONE;
-    }
 
     buffer = malloc(len);
     if (sysctlbyname("machdep.cpu.brand_string", buffer, &len, NULL, 0) != 0) {
         free(buffer);
-        psutil_debug("sysctlbyname('machdep.cpu.brand_string') "
-                     "failed (ignored)");
         Py_RETURN_NONE;
     }
 
@@ -197,15 +192,12 @@ psutil_cpu_vendor() {
     char *buffer;
     PyObject *py_str = NULL;
 
-    if (sysctlbyname("machdep.cpu.vendor", NULL, &len, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.vendor') failed (ignored)");
+    if (sysctlbyname("machdep.cpu.vendor", NULL, &len, NULL, 0) != 0)
         Py_RETURN_NONE;
-    }
 
     buffer = malloc(len);
     if (sysctlbyname("machdep.cpu.vendor", buffer, &len, NULL, 0) != 0) {
         free(buffer);
-        psutil_debug("sysctlbyname('machdep.cpu.vendor') failed (ignored)");
         Py_RETURN_NONE;
     }
 
@@ -227,15 +219,10 @@ psutil_cpu_flags() {
 
     // There are standard and extended features (both strings). First,
     // get the size for both.
-    if (sysctlbyname("machdep.cpu.features", NULL, &len1, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.features') failed (ignored)");
+    if (sysctlbyname("machdep.cpu.features", NULL, &len1, NULL, 0) != 0)
         Py_RETURN_NONE;
-    }
-
-    if (sysctlbyname("machdep.cpu.extfeatures", NULL, &len2, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.extfeatures') failed (ignored)");
+    if (sysctlbyname("machdep.cpu.extfeatures", NULL, &len2, NULL, 0) != 0)
         Py_RETURN_NONE;
-    }
 
     // Now we get the real values; we need 2 mallocs.
 
@@ -245,10 +232,8 @@ psutil_cpu_flags() {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctlbyname("machdep.cpu.features", buf1, &len1, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.features') failed (ignored)");
+    if (sysctlbyname("machdep.cpu.features", buf1, &len1, NULL, 0) != 0)
         goto error;
-    }
 
     // ...extended
     buf2 = malloc(len2);
@@ -256,10 +241,8 @@ psutil_cpu_flags() {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctlbyname("machdep.cpu.extfeatures", buf2, &len2, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.extfeatures') failed (ignored)");
+    if (sysctlbyname("machdep.cpu.extfeatures", buf2, &len2, NULL, 0) != 0)
         goto error;
-    }
 
     // Lower case both strings (mimic Linux lscpu).
     for (i = 0; buf1[i]; i++)
@@ -303,11 +286,10 @@ psutil_cpu_l1i_cache() {
     size_t len = sizeof(value);
     int mib[2] = { CTL_HW, HW_L1ICACHESIZE };
 
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L1ICACHESIZE) failed (ignored)");
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0)
         Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 
 
@@ -318,11 +300,10 @@ psutil_cpu_l1d_cache() {
     size_t len = sizeof(value);
     int mib[2] = { CTL_HW, HW_L1DCACHESIZE };
 
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L1DCACHESIZE) failed (ignored)");
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0)
         Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 
 
@@ -333,11 +314,10 @@ psutil_cpu_l2_cache() {
     size_t len = sizeof(value);
     int mib[2] = { CTL_HW, HW_L2CACHESIZE };
 
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L2CACHESIZE) failed (ignored)");
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0)
         Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 
 
@@ -348,11 +328,10 @@ psutil_cpu_l3_cache() {
     size_t len = sizeof(value);
     int mib[2] = { CTL_HW, HW_L3CACHESIZE };
 
-    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0) {
-        psutil_debug("sysctl(HW_L3CACHESIZE) failed (ignored)");
+    if (sysctl(mib, 2, &value, &len, NULL, 0) < 0)
         Py_RETURN_NONE;
-    }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 
 
@@ -364,11 +343,10 @@ psutil_cpu_num_cores_per_socket() {
 
     if (sysctlbyname("machdep.cpu.cores_per_package",
                      &value, &size, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.cores_per_package') "
-                     "failed (ignored)");
         Py_RETURN_NONE;
     }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 
 
@@ -381,10 +359,9 @@ psutil_cpu_threads_per_core() {
 
     if (sysctlbyname("machdep.cpu.thread_count",
                      &value, &size, NULL, 0) != 0) {
-        psutil_debug("sysctlbyname('machdep.cpu.thread_count') "
-                     "failed (ignored)");
         Py_RETURN_NONE;
     }
-    return Py_BuildValue("i", value);
+    else
+        return Py_BuildValue("i", value);
 }
 */
