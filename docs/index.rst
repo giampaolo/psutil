@@ -207,14 +207,13 @@ CPU
   undetermined (same as `os.cpu_count`_).
   The *kind* parameter dictates the desired CPU count to get:
 
-  - **'logical'**: the numer of physical cores multiplied by the number
-    of threads that can run on each core (this is known as Hyper Threading).
-    This can be seen as the number of total, sysyem-wide, active CPUs on the
-    system, and it's the same as `os.cpu_count`_.
-  - **'cores'**: the number of physical CPU cores
-  - **'sockets'**: the number of physical CPU sockets on the motherboard
-  - **'numa'**: the number of CPU NUMA nodes
-  - **'usable'**: a best-effort attempt to get the number of CPUs that the
+  - **logical**: the total number of CPUs in the system (same as `os.cpu_count`_).
+    Usually this is the number of cores multiplied by the number of threads
+    that can run on each core (this is known as Hyper Threading).
+  - **cores**: the number of physical CPU cores
+  - **sockets**: the number of physical CPU sockets on the motherboard
+  - **numa**: the number of CPU NUMA nodes
+  - **usable**: a best-effort attempt to get the number of CPUs that the
     current process can use.
     This number can vary in case CPU affinity has been changed for the current
     process, Linux cgroups are being used or (in case of Windows) on systems
@@ -260,7 +259,7 @@ CPU
 
   .. warning::
     the original signature of this function was ``cpu_count(logical=True)``.
-    That signature is now deprecated. The old function invocations
+    That signature got deprecated in 5.8.1. The old function invocations
     ``cpu_count(<bool>)`` and ``cpu_count(logical=<str>)`` still work though,
     but will raise a ``DeprecationWarning``.
 
