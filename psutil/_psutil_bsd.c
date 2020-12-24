@@ -1099,6 +1099,8 @@ static PyMethodDef mod_methods[] = {
      "Set process resource limits."},
     {"cpu_topology", psutil_cpu_topology, METH_VARARGS,
      "Return CPU topology as an XML string."},
+    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
+
 #endif
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment"},

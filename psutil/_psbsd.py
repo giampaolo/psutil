@@ -279,6 +279,11 @@ else:
                 return 1
         return ret
 
+    def cpu_info():
+        return dict(
+            model=cext.cpu_model(),
+        )
+
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
