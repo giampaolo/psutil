@@ -233,9 +233,10 @@ class TestSystemAPITypes(PsutilTestCase):
 
     def test_cpu_count(self):
         self.assertIsInstance(psutil.cpu_count(), int)
+        self.assertIsNotNone(psutil.cpu_count("logical"))
         if not OPENBSD or NETBSD:
-            self.assertIsNotNone(psutil.cpu_count("logical"))
-        if LINUX or MACOS or WINDOWS:
+            self.assertIsNotNone(psutil.cpu_count("cores"))
+        if LINUX or MACOS or WINDOWS or FREEBSD:
             self.assertIsNotNone(psutil.cpu_count("sockets"))
         if LINUX or WINDOWS:
             self.assertIsNotNone(psutil.cpu_count("numa"))
