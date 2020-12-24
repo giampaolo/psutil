@@ -48,6 +48,8 @@ include psutil/arch/aix/ifaddrs.h
 include psutil/arch/aix/net_connections.c
 include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
+include psutil/arch/freebsd/cpu.c
+include psutil/arch/freebsd/cpu.h
 include psutil/arch/freebsd/proc_socks.c
 include psutil/arch/freebsd/proc_socks.h
 include psutil/arch/freebsd/specific.c
@@ -60,6 +62,8 @@ include psutil/arch/netbsd/specific.c
 include psutil/arch/netbsd/specific.h
 include psutil/arch/openbsd/specific.c
 include psutil/arch/openbsd/specific.h
+include psutil/arch/osx/cpu.c
+include psutil/arch/osx/cpu.h
 include psutil/arch/osx/process_info.c
 include psutil/arch/osx/process_info.h
 include psutil/arch/solaris/environ.c
