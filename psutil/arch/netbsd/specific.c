@@ -686,3 +686,32 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         uv.forks  // forks
     );
 }
+
+
+PyObject *
+psutil_cpu_model(PyObject *self, PyObject *args) {
+    void *buf = NULL;
+    size_t size = 0;
+    PyObject *py_str;
+
+    if (sysctlbyname("machdep.cpu_brand", NULL, &size, NULL, 0))
+        goto error;
+
+    buf = malloc(size);
+    if (!buf) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    if (sysctlbyname("machdep.cpu_brand", buf, &size, NULL, 0))
+        goto error;
+
+    py_str = Py_BuildValue("s", buf);
+    free(buf);
+    return py_str;
+
+error:
+    if (buf != NULL)
+        free(buf);
+    Py_RETURN_NONE;
+}

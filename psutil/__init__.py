@@ -1899,7 +1899,7 @@ if hasattr(_psplatform, "cpu_info"):
         Usually used in conjunction with cpu_count().
         Dictionary keys availability:
 
-          * "model": Linux, macOS, Windows
+          * "model": Linux, macOS, Windows, FreeBSD, NetBSD
           * "vendor": Linux, macOS, Windows
           * "arch": Linux, macOS, Windows
           * "byteorder": all

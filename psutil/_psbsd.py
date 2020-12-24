@@ -279,6 +279,9 @@ else:
                 return 1
         return ret
 
+
+if FREEBSD or NETBSD:
+
     def cpu_info():
         return dict(
             model=cext.cpu_model(),

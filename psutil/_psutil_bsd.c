@@ -1097,10 +1097,6 @@ static PyMethodDef mod_methods[] = {
      "Get process resource limits."},
     {"proc_setrlimit", psutil_proc_setrlimit, METH_VARARGS,
      "Set process resource limits."},
-    {"cpu_topology", psutil_cpu_topology, METH_VARARGS,
-     "Return CPU topology as an XML string."},
-    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
-
 #endif
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment"},
@@ -1143,8 +1139,13 @@ static PyMethodDef mod_methods[] = {
      "Return temperature information for a given CPU core number."},
     {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
      "Return frequency of a given CPU"},
+    {"cpu_topology", psutil_cpu_topology, METH_VARARGS,
+     "Return CPU topology as an XML string."},
+    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
 #endif
-
+#if defined(PSUTIL_NETBSD)
+    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
+#endif
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
