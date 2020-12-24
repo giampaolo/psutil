@@ -223,6 +223,16 @@ CPU
     using process pools (see `multiprocess.Pool <https://docs.python.org/3/library/multiprocessing.html#using-a-pool-of-workers>`__) and it's more accurate
     than "logical" CPU count or `os.cpu_count`_.
 
+  ========  ===========  ==========  ========== ======== ======== ======== ======= =======
+  Type      Linux        Windows     macOS      FreeBSD  OpenBSD  NetBSD   SunOS   AIX
+  ========  ===========  ==========  ========== ======== ======== ======== ======= =======
+  logical   X            X           X          X        X        X        X       X
+  cores     X            X           X          X                          X       X
+  sockets   X            X           X          X
+  numa      X            X
+  usable    X            X           X          X        X        X        X       X
+  ========  ===========  ==========  ========== ======== ======== ======== ======= =======
+
   Example on a system having 2 cores + Hyper Threading:
 
   .. code-block:: python
