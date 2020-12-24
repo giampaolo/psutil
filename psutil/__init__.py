@@ -1595,42 +1595,42 @@ def cpu_count(kind="logical", **_kwargs):
 
     if kind == "logical":
         # Availability: all
-        n = _psplatform.cpu_count_logical()
+        count = _psplatform.cpu_count_logical()
     elif kind == "cores":
         # Availability: all except OpenBSD and NetBSD
         if not hasattr(_psplatform, "cpu_count_cores"):
             return None
-        n = _psplatform.cpu_count_cores()
+        count = _psplatform.cpu_count_cores()
     elif kind == "sockets":
         # Availability: Linux, Windows, macOS, FreeBSD
         if not hasattr(_psplatform, "cpu_count_sockets"):
             return None
-        n = _psplatform.cpu_count_sockets()
+        count = _psplatform.cpu_count_sockets()
     elif kind == "numa":
         # Availability: Linux, Windows
         if not hasattr(_psplatform, "cpu_count_numa"):
             return None
-        n = _psplatform.cpu_count_numa()
+        count = _psplatform.cpu_count_numa()
     elif kind == "usable":
         if hasattr(os, "sched_getaffinity"):
             # Availability: some UNIXes (definitively Linux), Python >= 3.3
-            n = len(os.sched_getaffinity(0))
+            count = len(os.sched_getaffinity(0))
         elif hasattr(Process, "cpu_affinity"):
             # Availability: Linux, Windows, FreeBSD
-            n = len(Process().cpu_affinity())
+            count = len(Process().cpu_affinity())
         else:
             # Note that this may not necessarily be correct in case:
             # * the process CPU affinity has been changed
             # * Linux cgroups are in use with CPU affinity configured
             # * Windows systems using processor groups or having more
             #   than 64 CPUs
-            n = _psplatform.cpu_count_logical()
+            count = _psplatform.cpu_count_logical()
     else:
         valid = ("logical", "cores", "sockets", "numa", "usable")
         raise ValueError("invalid kind %r; choose between %s" % (kind, valid))
-    if n is not None and n < 1:
-        n = None
-    return n
+    if count is not None and count < 1:
+        count = None
+    return count
 
 
 def cpu_times(percpu=False):
