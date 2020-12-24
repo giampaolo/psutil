@@ -248,19 +248,14 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-if OPENBSD or NETBSD:
-    def cpu_count_cores():
-        # OpenBSD and NetBSD do not implement this.
-        return 1 if cpu_count_logical() == 1 else None
-else:
+if FREEBSD:
+
     def cpu_count_cores():
         """Return the number of CPU cores in the system."""
         # From the C module we'll get an XML string similar to this:
         # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
         # We may get None in case "sysctl kern.sched.topology_spec"
-        # is not supported on this BSD version, in which case we'll mimic
-        # os.cpu_count() and return None.
-        ret = None
+        # is not supported on this BSD version.
         s = cext.cpu_topology()
         if s is not None:
             # get rid of padding chars appended at the end of the string
@@ -269,15 +264,19 @@ else:
                 s = s[:index + 9]
                 root = ET.fromstring(s)
                 try:
-                    ret = len(root.findall('group/children/group/cpu')) or None
+                    return len(root.findall('group/children/group/cpu')) \
+                        or None
                 finally:
-                    # needed otherwise it will memleak
-                    root.clear()
-        if not ret:
-            # If logical CPUs == 1 it's obvious we' have only 1 core.
-            if cpu_count_logical() == 1:
-                return 1
-        return ret
+                    root.clear()  # ...otherwise it will memleak
+
+    def cpu_count_sockets():
+        xmlstr = cext.cpu_topology()
+        if xmlstr is not None:
+            root = ET.fromstring(xmlstr)
+            try:
+                return len(root.findall('group'))
+            finally:
+                root.clear()  # ...or it will memleak
 
 
 def cpu_stats():
