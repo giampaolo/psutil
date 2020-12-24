@@ -261,7 +261,7 @@ else:
         # is not supported on this BSD version, in which case we'll mimic
         # os.cpu_count() and return None.
         ret = None
-        s = cext.cpu_count_cores()
+        s = cext.cpu_topology()
         if s is not None:
             # get rid of padding chars appended at the end of the string
             index = s.rfind("</groups>")
