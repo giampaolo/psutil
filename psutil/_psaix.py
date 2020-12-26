@@ -143,7 +143,7 @@ def cpu_count_logical():
         return None
 
 
-def cpu_count_physical():
+def cpu_count_cores():
     cmd = "lsdev -Cc processor"
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)

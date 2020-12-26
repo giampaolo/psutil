@@ -1,13 +1,20 @@
 # Executed on every push by GitHub Actions. This runs CI tests and
-# generates wheels on the following platforms:
+# generates wheels (not all) on the following platforms:
 #
 # * Linux
 # * macOS
+# * Windows (commented)
 # * FreeBSD
 #
-# Windows works as well but it's disabled (we do it via AppVeyor).
 # To skip certain builds see:
 # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
+#
+# External GH actions:
+# * https://github.com/actions/checkout
+# * https://github.com/actions/setup-python
+# * https://github.com/actions/upload-artifact
+# * https://github.com/marketplace/actions/cancel-workflow-action
+# * https://github.com/vmactions/freebsd-vm
 
 on: [push]
 name: build
@@ -85,6 +92,7 @@ jobs:
         run: |
           set +e
           export \
+            PYTHONUNBUFFERED=1 \
             PYTHONWARNINGS=always \
             PSUTIL_TESTING=1 \
             PSUTIL_DEBUG=1
@@ -98,10 +106,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
-    - name: 'Linters'
+    - name: 'Run linters'
       run: |
-        python -m pip install flake8
-        python -m flake8 .
+        python2 -m pip install flake8
+        python3 -m pip install flake8
+        python2 -m flake8 .
+        python3 -m flake8 .
         echo "flake8 linting OK"
-        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python scripts/internal/clinter.py
+        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
         echo "C linting OK"

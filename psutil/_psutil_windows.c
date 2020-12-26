@@ -1612,8 +1612,8 @@ PsutilMethods[] = {
      "Determine if the process exists in the current process list."},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Returns the number of logical CPUs on the system"},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Returns the number of physical CPUs on the system"},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Returns the number of CPU cores on the system"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
@@ -1671,7 +1671,7 @@ PsutilMethods[] = {
      "Stop a service"},
 
     // --- windows API bindings
-    {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
+    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
 
     // --- others

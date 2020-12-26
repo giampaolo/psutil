@@ -197,7 +197,7 @@ def convert_dos_path(s):
         "C:\Windows\systemew\file.txt"
     """
     rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = cext.win32_QueryDosDevice(rawdrive)
+    driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive):]
     return os.path.join(driveletter, remainder)
 
@@ -304,9 +304,9 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-def cpu_count_physical():
-    """Return the number of physical CPU cores in the system."""
-    return cext.cpu_count_phys()
+def cpu_count_cores():
+    """Return the number of CPU cores in the system."""
+    return cext.cpu_count_cores()
 
 
 def cpu_stats():

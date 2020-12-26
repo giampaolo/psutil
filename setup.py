@@ -190,6 +190,7 @@ elif MACOS:
         sources=sources + [
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
+            'psutil/arch/osx/cpu.c',
         ],
         define_macros=macros,
         extra_link_args=[
@@ -202,6 +203,7 @@ elif FREEBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
+            'psutil/arch/freebsd/cpu.c',
             'psutil/arch/freebsd/specific.c',
             'psutil/arch/freebsd/sys_socks.c',
             'psutil/arch/freebsd/proc_socks.c',

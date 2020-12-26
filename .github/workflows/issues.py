@@ -10,9 +10,11 @@ is created. Assign labels, provide replies, closes issues, etc. depending
 on the situation.
 """
 
+import functools
+import json
 import os
 import re
-import sys
+from pprint import pprint as pp
 
 from github import Github
 
@@ -122,24 +124,15 @@ If this was a mistake or you think there's a bug with psutil installation \
 process, please add a comment to reopen this issue.
 """
 
+# REPLY_UPDATE_CHANGELOG = """\
+# """
 
-# --- utils
+
+# --- github API utils
 
 
 def is_pr(issue):
-    return 'PullRequest' in issue.__module__
-
-
-def is_issue(issue):
-    return not is_pr(issue)
-
-
-def is_new(issue):
-    return issue.comments == 0
-
-
-def is_comment(issue):
-    return not is_new(issue)
+    return issue.pull_request is not None
 
 
 def has_label(issue, label):
@@ -159,6 +152,49 @@ def get_repo():
     repo = os.environ['GITHUB_REPOSITORY']
     token = os.environ['GITHUB_TOKEN']
     return Github(token).get_repo(repo)
+
+
+# --- event utils
+
+
+@functools.lru_cache()
+def _get_event_data():
+    ret = json.load(open(os.environ["GITHUB_EVENT_PATH"]))
+    pp(ret)
+    return ret
+
+
+def is_event_new_issue():
+    data = _get_event_data()
+    try:
+        return data['action'] == 'opened' and 'issue' in data
+    except KeyError:
+        return False
+
+
+def is_event_new_pr():
+    data = _get_event_data()
+    try:
+        return data['action'] == 'opened' and 'pull_request' in data
+    except KeyError:
+        return False
+
+
+def is_event_new_comment():
+    data = _get_event_data()
+    try:
+        return data['action'] == 'created' and 'comment' in data
+    except KeyError:
+        return False
+
+
+def get_issue():
+    data = _get_event_data()
+    try:
+        num = data['issue']['number']
+    except KeyError:
+        num = data['pull_request']['number']
+    return get_repo().get_issue(number=num)
 
 
 # --- actions
@@ -275,6 +311,10 @@ def on_new_issue(issue):
 
 def on_new_pr(issue):
     pass
+    # pr = get_repo().get_pull(issue.number)
+    # files = [x.filename for x in list(pr.get_files())]
+    # if "HISTORY.rst" not in files:
+    #     issue.create_comment(REPLY_UPDATE_CHANGELOG)
 
 
 def on_new_comment(issue):
@@ -282,21 +322,25 @@ def on_new_comment(issue):
 
 
 def main():
-    issue = get_repo().get_issue(number=int(sys.argv[1]))
-    stype = "issue" if is_issue(issue) else "PR"
+    issue = get_issue()
+    stype = "PR" if is_pr(issue) else "issue"
     log("running issue bot for %s %r" % (stype, issue))
 
-    if is_new(issue):
-        log("new %s\n%s" % (stype, issue.body))
+    if is_event_new_issue():
+        log("created new issue %s" % issue)
         add_labels_from_text(issue, issue.title)
         add_labels_from_new_body(issue, issue.body)
-        if is_issue(issue):
-            on_new_issue(issue)
-        if is_pr(issue):
-            on_new_pr(issue)
-    else:
-        log("new comment: \n" % issue.body)
+        on_new_issue(issue)
+    elif is_event_new_pr():
+        log("created new PR %s" % issue)
+        add_labels_from_text(issue, issue.title)
+        add_labels_from_new_body(issue, issue.body)
+        on_new_pr(issue)
+    elif is_event_new_comment():
+        log("created new comment for %s" % issue)
         on_new_comment(issue)
+    else:
+        raise ValueError("unhandled event")
 
 
 if __name__ == '__main__':

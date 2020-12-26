@@ -399,7 +399,7 @@ typedef struct _WTSINFOW {
 
 #define PWTSINFO PWTSINFOW
 
-// cpu_count_phys()
+// cpu_count_cores()
 #if (_WIN32_WINNT < 0x0601)  // Windows < 7 (Vista and XP)
 typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
     LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
