@@ -130,16 +130,17 @@ Sponsors
 Supporters
 ==========
 
-None yet.
-
 .. raw:: html
 
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;u=3a4cbf1ea36068a36392856adb2fb02f623a3235&amp;v=4" /></a>
+    </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Contributing
 ============
 
-See `CONTRIBUTING.md <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__ guidelines.
+See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
 
 Example usages
 ==============
