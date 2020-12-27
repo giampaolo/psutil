@@ -23,7 +23,7 @@
     :alt: Code quality
 
 .. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
     :alt: Linux, macOS, Windows tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
@@ -35,7 +35,7 @@
     :alt: Test coverage (coverall.io)
 
 .. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
-    :target: http://psutil.readthedocs.io/en/latest/?badge=latest
+    :target: https://psutil.readthedocs.io/en/latest/
     :alt: Documentation Status
 
 .. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
@@ -43,7 +43,6 @@
     :alt: Latest version
 
 .. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
-    :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
 
 .. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
