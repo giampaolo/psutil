@@ -726,19 +726,12 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
-        def get_path(num):
-            for p in ("/sys/devices/system/cpu/cpufreq/policy%s" % num,
-                      "/sys/devices/system/cpu/cpu%s/cpufreq" % num):
-                if os.path.exists(p):
-                    return p
-
+        paths = sorted(
+            glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or
+            glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"))
         ret = []
-        for n in range(cpu_count_logical()):
-            path = get_path(n)
-            if not path:
-                continue
-
-            pjoin = os.path.join
+        pjoin = os.path.join
+        for path in paths:
             curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
                 # Likely an old RedHat, see:
