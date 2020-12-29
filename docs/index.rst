@@ -2406,7 +2406,7 @@ Kill process tree
                      timeout=None, on_terminate=None):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callabck function which is
+      "on_terminate", if specified, is a callback function which is
       called as soon as a child terminates.
       """
       assert pid != os.getpid(), "won't kill myself"
