@@ -85,19 +85,9 @@ Supporters
 Install
 =======
 
-Linux Ubuntu / Debian::
+On Linux, Windows, macOS::
 
-  sudo apt-get install gcc python3-dev
-  sudo pip3 install psutil
-
-Linux Redhat::
-
-  sudo yum install gcc python3-devel
-  sudo pip3 install psutil
-
-Windows::
-
-  pip3 install psutil
+  pip install psutil
 
 For other platforms see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
