@@ -52,7 +52,7 @@ from psutil.tests import safe_rmpath
 
 VERBOSITY = 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
-NWORKERS = psutil.cpu_count("usable") or 1
+NWORKERS = psutil.cpu_count() or 1
 USE_COLORS = not CI_TESTING and term_supports_colors()
 
 HERE = os.path.abspath(os.path.dirname(__file__))

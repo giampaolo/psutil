@@ -1611,22 +1611,25 @@ def cpu_count(kind="logical", **_kwargs):
         if not hasattr(_psplatform, "cpu_count_numa"):
             return None
         count = _psplatform.cpu_count_numa()
-    elif kind == "usable":
-        if hasattr(os, "sched_getaffinity"):
-            # Availability: some UNIXes (definitively Linux), Python >= 3.3
-            count = len(os.sched_getaffinity(0))
-        elif hasattr(Process, "cpu_affinity"):
-            # Availability: Linux, Windows, FreeBSD
-            count = len(Process().cpu_affinity())
-        else:
-            # Note that this may not necessarily be correct in case:
-            # * the process CPU affinity has been changed
-            # * Linux cgroups are in use with CPU affinity configured
-            # * Windows systems using processor groups or having more
-            #   than 64 CPUs
-            count = _psplatform.cpu_count_logical()
+    # XXX: this is more complicated than this, see:
+    # https://github.com/giampaolo/psutil/issues/1122
+    # https://bugs.python.org/issue36054
+    # elif kind == "usable":
+    #     if hasattr(os, "sched_getaffinity"):
+    #         # Availability: some UNIXes (definitively Linux), Python >= 3.3
+    #         count = len(os.sched_getaffinity(0))
+    #     elif hasattr(Process, "cpu_affinity"):
+    #         # Availability: Linux, Windows, FreeBSD
+    #         count = len(Process().cpu_affinity())
+    #     else:
+    #         # Note that this may not necessarily be correct in case:
+    #         # * the process CPU affinity has been changed
+    #         # * Linux cgroups are in use with CPU affinity configured
+    #         # * Windows systems using processor groups or having more
+    #         #   than 64 CPUs
+    #         count = _psplatform.cpu_count_logical()
     else:
-        valid = ("logical", "cores", "sockets", "numa", "usable")
+        valid = ("logical", "cores", "sockets", "numa")
         raise ValueError("invalid kind %r; choose between %s" % (kind, valid))
     if count is not None and count < 1:
         count = None

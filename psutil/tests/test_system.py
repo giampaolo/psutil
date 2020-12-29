@@ -11,7 +11,6 @@ import datetime
 import errno
 import os
 import pprint
-import random
 import shutil
 import signal
 import socket
@@ -307,7 +306,7 @@ class TestMemoryAPIs(PsutilTestCase):
 class TestCpuCount(PsutilTestCase):
 
     def test_base(self):
-        kinds = ("logical", "cores", "sockets", "numa", "usable")
+        kinds = ("logical", "cores", "sockets", "numa")
         for kind in kinds:
             n = psutil.cpu_count(kind=kind)
             if n is not None:
@@ -325,7 +324,6 @@ class TestCpuCount(PsutilTestCase):
         logical = psutil.cpu_count("logical")
         cores = psutil.cpu_count("cores")
         sockets = psutil.cpu_count("sockets")
-        usable = psutil.cpu_count("usable")
         numa = psutil.cpu_count(kind='numa')
 
         # logical (always supposed to be the highest)
@@ -334,8 +332,6 @@ class TestCpuCount(PsutilTestCase):
                 self.assertGreaterEqual(logical, cores)
             if sockets is not None:
                 self.assertGreaterEqual(logical, sockets)
-            if usable is not None:
-                self.assertGreaterEqual(logical, usable)
 
         # cores (at least >= sockets)
         if cores is not None:
@@ -377,18 +373,6 @@ class TestCpuCount(PsutilTestCase):
         else:
             self.assertGreaterEqual(cores, 1)
             self.assertGreaterEqual(logical, cores)
-
-    def test_usable(self):
-        if hasattr(psutil.Process, "cpu_affinity"):
-            p = psutil.Process()
-            initial = p.cpu_affinity()
-            assert initial, initial
-            self.addCleanup(p.cpu_affinity, initial)
-            p.cpu_affinity([random.choice(initial)])
-            self.assertEqual(psutil.cpu_count(kind="usable"), 1)
-        else:
-            self.assertEqual(psutil.cpu_count(kind="usable"),
-                             psutil.cpu_count(kind="logical"))
 
     def test_return_none(self):
         # https://github.com/giampaolo/psutil/issues/1085

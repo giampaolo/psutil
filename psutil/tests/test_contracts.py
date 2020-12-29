@@ -240,7 +240,6 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsNotNone(psutil.cpu_count("sockets"))
         if LINUX or WINDOWS:
             self.assertIsNotNone(psutil.cpu_count("numa"))
-        self.assertIsNotNone(psutil.cpu_count("usable"))
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
