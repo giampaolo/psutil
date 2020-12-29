@@ -363,10 +363,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         self.execute(lambda: psutil.cpu_count("numa"))
 
     @fewtimes_if_linux()
-    def test_cpu_count_usable(self):
-        self.execute(lambda: psutil.cpu_count("usable"))
-
-    @fewtimes_if_linux()
     def test_cpu_times(self):
         self.execute(psutil.cpu_times)
 
