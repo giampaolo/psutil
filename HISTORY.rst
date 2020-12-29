@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
   determined (instead of crashing).
+- 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
+  for one connection; this is now ignored.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
 
 5.8.0

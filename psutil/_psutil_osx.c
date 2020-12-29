@@ -1027,9 +1027,18 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if ((nb <= 0) || (nb < sizeof(si))) {
+            if ((nb <= 0) || (nb < sizeof(si)) || (errno != 0)) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
+                    psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
+                                 "EBADF (ignored)");
+                    continue;
+                }
+                else if (errno == EOPNOTSUPP) {
+                    // may happen sometimes, see:
+                    // https://github.com/giampaolo/psutil/issues/1512
+                    psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
+                                 "EOPNOTSUPP (ignored)");
                     continue;
                 }
                 else {
@@ -1062,11 +1071,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             Py_DECREF(py_type);
             if (inseq == 0)
                 continue;
-
-            if (errno != 0) {
-                PyErr_SetFromErrno(PyExc_OSError);
-                goto error;
-            }
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
