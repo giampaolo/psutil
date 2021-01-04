@@ -374,12 +374,12 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
 error:
     if (ifaddr != NULL)
         freeifaddrs(ifaddr);
-    Py_DECREF(py_retlist);
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_address);
-    Py_XDECREF(py_netmask);
-    Py_XDECREF(py_broadcast);
-    Py_XDECREF(py_ptp);
+    Py_CLEAR(py_retlist);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_address);
+    Py_CLEAR(py_netmask);
+    Py_CLEAR(py_broadcast);
+    Py_CLEAR(py_ptp);
     return NULL;
 }
 

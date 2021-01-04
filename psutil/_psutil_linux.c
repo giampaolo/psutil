@@ -182,10 +182,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     if (file != NULL)
         endmntent(file);
-    Py_XDECREF(py_dev);
-    Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_dev);
+    Py_CLEAR(py_mountp);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_retlist);
     return NULL;
 }
 
@@ -224,7 +224,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     pid_t pid;
     size_t setsize;
     cpu_set_t *mask = NULL;
-    PyObject *py_list = NULL;
+    PyObject *py_retlist = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -249,35 +249,25 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         ncpus = ncpus * 2;
     }
 
-    py_list = PyList_New(0);
-    if (py_list == NULL)
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
         goto error;
 
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-#if PY_MAJOR_VERSION >= 3
-            PyObject *cpu_num = PyLong_FromLong(cpu);
-#else
-            PyObject *cpu_num = PyInt_FromLong(cpu);
-#endif
-            if (cpu_num == NULL)
+            if (psutil_add_to_list(py_retlist, PyLong_FromLong(cpu)) == 1)
                 goto error;
-            if (PyList_Append(py_list, cpu_num)) {
-                Py_DECREF(cpu_num);
-                goto error;
-            }
-            Py_DECREF(cpu_num);
             --count;
         }
     }
     CPU_FREE(mask);
-    return py_list;
+    return py_retlist;
 
 error:
     if (mask)
         CPU_FREE(mask);
-    Py_XDECREF(py_list);
+    Py_CLEAR(py_retlist);
     return NULL;
 }
 
@@ -329,12 +319,12 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    Py_DECREF(py_cpu_seq);
+    Py_CLEAR(py_cpu_seq);
     Py_RETURN_NONE;
 
 error:
     if (py_cpu_seq != NULL)
-        Py_DECREF(py_cpu_seq);
+        Py_CLEAR(py_cpu_seq);
     return NULL;
 }
 #endif  /* PSUTIL_HAVE_CPU_AFFINITY */
@@ -395,11 +385,11 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_username);
-    Py_XDECREF(py_tty);
-    Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_username);
+    Py_CLEAR(py_tty);
+    Py_CLEAR(py_hostname);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_retlist);
     endutent();
     return NULL;
 }
@@ -420,7 +410,6 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     int speed;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
-    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
@@ -455,11 +444,8 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
         }
     }
 
-    py_retlist = Py_BuildValue("[ii]", duplex, speed);
-    if (!py_retlist)
-        goto error;
     close(sock);
-    return py_retlist;
+    return Py_BuildValue("ii", duplex, speed);
 
 error:
     if (sock != -1)
