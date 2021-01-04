@@ -117,7 +117,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
-    PyObject *py_pid = NULL;
+    PyObject *py_pid;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -130,11 +130,8 @@ psutil_pids(PyObject *self, PyObject *args) {
     orig_address = proclist;
     for (idx = 0; idx < num_processes; idx++) {
         py_pid = PyLong_FromPid(proclist->kp_proc.p_pid);
-        if (! py_pid)
+        if (psutil_add_to_list(py_retlist, py_pid) == 1)
             goto error;
-        if (PyList_Append(py_retlist, py_pid))
-            goto error;
-        Py_CLEAR(py_pid);
         proclist++;
     }
     free(orig_address);
@@ -142,7 +139,6 @@ psutil_pids(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     if (orig_address != NULL)
         free(orig_address);
@@ -577,11 +573,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
         );
-        if (!py_cputime)
+        if (psutil_add_to_list(py_retlist, py_cputime) == 1)
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_CLEAR(py_cputime);
     }
 
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
@@ -591,7 +584,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     if (cpu_load_info != NULL) {
         ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
@@ -826,11 +818,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             basic_info_th->system_time.seconds + \
                 (float)basic_info_th->system_time.microseconds / 1000000.0
         );
-        if (!py_tuple)
+        if (psutil_add_to_list(py_retlist, py_tuple) == 1)
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
     }
 
     ret = vm_deallocate(task, (vm_address_t)thread_list,
@@ -845,7 +834,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (thread_list != NULL) {
         ret = vm_deallocate(task, (vm_address_t)thread_list,

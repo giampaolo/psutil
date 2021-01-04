@@ -134,6 +134,42 @@ AccessDenied(const char *syscall) {
 // --- Global utils
 // ====================================================================
 
+
+/*
+ * Add a new python object to an existing dict, DECREFing that object
+ * and setting it to NULL both in case of success or failure.
+ */
+int
+psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
+    if (!py_obj)
+        return 1;
+    if (PyDict_SetItemString(py_dict, keyname, py_obj)) {
+        Py_CLEAR(py_obj);
+        return 1;
+    }
+    Py_CLEAR(py_obj);
+    return 0;
+}
+
+
+/*
+ * Add a new python object to an existing list, DECREFing that object
+ * and setting it to NULL both in case of success or failure.
+ */
+
+int
+psutil_add_to_list(PyObject *py_list, PyObject *py_obj) {
+    if (!py_obj)
+        return 1;
+    if (PyList_Append(py_list, py_obj)) {
+        Py_CLEAR(py_obj);
+        return 1;
+    }
+    Py_CLEAR(py_obj);
+    return 0;
+}
+
+
 /*
  * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
  * env var. This dual method exists because updating os.environ on
@@ -173,21 +209,6 @@ psutil_setup(void) {
         PSUTIL_DEBUG = 1;
     if (getenv("PSUTIL_TESTING") != NULL)
         PSUTIL_TESTING = 1;
-    return 0;
-}
-
-
-int
-psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
-    // Add a new python object to an existing dict, DECREFing that object
-    // and setting it to NULL both in case of success or failure.
-    if (!py_obj)
-        return 1;
-    if (PyDict_SetItemString(py_dict, keyname, py_obj)) {
-        Py_CLEAR(py_obj);
-        return 1;
-    }
-    Py_CLEAR(py_obj);
     return 0;
 }
 
