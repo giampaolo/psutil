@@ -117,7 +117,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
-    PyObject *py_pid;
+    PyObject *py_pid = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -139,7 +139,8 @@ psutil_pids(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_pid);
+    Py_CLEAR(py_retlist);
     if (orig_address != NULL)
         free(orig_address);
     return NULL;
@@ -191,7 +192,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
 
     if (py_retlist != NULL) {
         // XXX shall we decref() also in case of Py_BuildValue() error?
-        Py_DECREF(py_name);
+        Py_CLEAR(py_name);
     }
     return py_retlist;
 }
@@ -584,7 +585,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_cputime);
+    Py_CLEAR(py_retlist);
     if (cpu_load_info != NULL) {
         ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
                             info_count * sizeof(int));
@@ -739,10 +741,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_dev);
-    Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_dev);
+    Py_CLEAR(py_mountp);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_retlist);
     if (fs != NULL)
         free(fs);
     return NULL;
@@ -834,7 +836,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_retlist);
     if (thread_list != NULL) {
         ret = vm_deallocate(task, (vm_address_t)thread_list,
                             thread_count * sizeof(int));
@@ -937,9 +940,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_path);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_path);
+    Py_CLEAR(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
     return NULL;  // exception has already been set earlier
@@ -1051,12 +1054,12 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             // apply filters
             py_family = PyLong_FromLong((long)family);
             inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
+            Py_CLEAR(py_family);
             if (inseq == 0)
                 continue;
             py_type = PyLong_FromLong((long)type);
             inseq = PySequence_Contains(py_type_filter, py_type);
-            Py_DECREF(py_type);
+            Py_CLEAR(py_type);
             if (inseq == 0)
                 continue;
 
@@ -1147,10 +1150,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_laddr);
-    Py_XDECREF(py_raddr);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_laddr);
+    Py_CLEAR(py_raddr);
+    Py_CLEAR(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
     return NULL;
@@ -1265,8 +1268,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     return py_retdict;
 
 error:
-    Py_XDECREF(py_ifc_info);
-    Py_DECREF(py_retdict);
+    Py_CLEAR(py_ifc_info);
+    Py_CLEAR(py_retdict);
     if (buf != NULL)
         free(buf);
     return NULL;
@@ -1436,8 +1439,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     return py_retdict;
 
 error:
-    Py_XDECREF(py_disk_info);
-    Py_DECREF(py_retdict);
+    Py_CLEAR(py_disk_info);
+    Py_CLEAR(py_retdict);
     return NULL;
 }
 
@@ -1494,11 +1497,11 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_username);
-    Py_XDECREF(py_tty);
-    Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
+    Py_CLEAR(py_username);
+    Py_CLEAR(py_tty);
+    Py_CLEAR(py_hostname);
+    Py_CLEAR(py_tuple);
+    Py_CLEAR(py_retlist);
     return NULL;
 }
 
@@ -1585,7 +1588,7 @@ error:
         CFRelease(power_info);
     if (power_sources_list)
         CFRelease(power_sources_list);
-    Py_XDECREF(py_tuple);
+    Py_CLEAR(py_tuple);
     return NULL;
 }
 
@@ -1743,7 +1746,7 @@ static PyMethodDef mod_methods[] = {
         INITERR;
     Py_INCREF(ZombieProcessError);
     if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError)) {
-        Py_DECREF(ZombieProcessError);
+        Py_CLEAR(ZombieProcessError);
         INITERR;
     }
 

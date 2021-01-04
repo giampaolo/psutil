@@ -233,8 +233,8 @@ psutil_get_cmdline(pid_t pid) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
-    Py_XDECREF(py_retlist);
+    Py_CLEAR(py_arg);
+    Py_CLEAR(py_retlist);
     if (procargs != NULL)
         free(procargs);
     return NULL;
@@ -331,7 +331,7 @@ empty:
     return Py_BuildValue("s", "");
 
 error:
-    Py_XDECREF(py_ret);
+    Py_CLEAR(py_ret);
     if (procargs != NULL)
         free(procargs);
     if (procenv != NULL)

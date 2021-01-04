@@ -137,14 +137,19 @@ AccessDenied(const char *syscall) {
 
 /*
  * Add a new python object to an existing dict, DECREFing that object
- * and setting it to NULL both in case of success or failure.
+ * and setting it to NULL.
+ * In case of failure, both objects are DECREFed and set to NULL.
  */
 int
 psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
-    if (!py_obj)
+    if (!py_obj) {
+        Py_CLEAR(py_obj);
+        Py_CLEAR(py_dict);
         return 1;
+    }
     if (PyDict_SetItemString(py_dict, keyname, py_obj)) {
         Py_CLEAR(py_obj);
+        Py_CLEAR(py_dict);
         return 1;
     }
     Py_CLEAR(py_obj);
@@ -154,15 +159,19 @@ psutil_add_to_dict(PyObject *py_dict, char *keyname, PyObject *py_obj) {
 
 /*
  * Add a new python object to an existing list, DECREFing that object
- * and setting it to NULL both in case of success or failure.
+ * and setting it to NULL.
+ * In case of failure, both objects are DECREFed and set to NULL.
  */
-
 int
 psutil_add_to_list(PyObject *py_list, PyObject *py_obj) {
-    if (!py_obj)
+    if (!py_obj) {
+        Py_CLEAR(py_obj);
+        Py_CLEAR(py_list);
         return 1;
+    }
     if (PyList_Append(py_list, py_obj)) {
         Py_CLEAR(py_obj);
+        Py_CLEAR(py_list);
         return 1;
     }
     Py_CLEAR(py_obj);
