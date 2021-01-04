@@ -1265,12 +1265,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 if2m->ifm_data.ifi_oerrors,
                 if2m->ifm_data.ifi_iqdrops,
                 0);  // dropout not supported
-
-            if (!py_ifc_info)
+            if (psutil_add_to_dict(py_retdict, ifc_name, py_ifc_info) == 1)
                 goto error;
-            if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
-                goto error;
-            Py_CLEAR(py_ifc_info);
         }
         else {
             continue;
@@ -1439,12 +1435,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 write_bytes,
                 read_time / 1000 / 1000,
                 write_time / 1000 / 1000);
-           if (!py_disk_info)
+            if (psutil_add_to_dict(py_retdict, disk_name, py_disk_info) == 1)
                 goto error;
-            if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
-                goto error;
-            Py_CLEAR(py_disk_info);
-
             CFRelease(parent_dict);
             IOObjectRelease(parent);
             CFRelease(props_dict);
@@ -1453,7 +1445,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     }
 
     IOObjectRelease (disk_list);
-
     return py_retdict;
 
 error:
