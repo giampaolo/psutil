@@ -149,7 +149,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
         }
 
         if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
-            ret = (fds_size + (int)PROC_PIDLISTFD_SIZE);
+            ret = fds_size + (int)PROC_PIDLISTFD_SIZE;
             continue;
         }
 
