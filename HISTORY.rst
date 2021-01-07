@@ -5,6 +5,12 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
+  frequency values for all CPUs from /proc/cpuinfo instead of opening many
+  files in /sys fs.  (patch by marxin)
+
 **Bug fixes**
 
 - 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
