@@ -108,6 +108,61 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
 }
 
 
+static struct proc_fdinfo*
+psutil_proc_list_fds(pid_t pid, int *iterations) {
+    int ret;
+    int fds_size = 0;
+    struct proc_fdinfo *fds_pointer = NULL;
+
+    errno = 0;
+    ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 1 failed");
+        goto error;
+    }
+
+    while (1) {
+        if (ret > fds_size) {
+            while (ret > fds_size) {
+                fds_size += PROC_PIDLISTFD_SIZE * 32;
+            }
+
+            if (fds_pointer != NULL) {
+                free(fds_pointer);
+            }
+            fds_pointer = malloc(fds_size);
+
+            if (fds_pointer == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+        }
+
+        errno = 0;
+        ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer, fds_size);
+        if (ret <= 0) {
+            psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 2 failed");
+            goto error;
+        }
+
+        if ((ret + (int)PROC_PIDLISTFD_SIZE) >= fds_size) {
+            ret = (fds_size + PROC_PIDLISTFD_SIZE);
+            continue;
+        }
+
+        break;
+    }
+
+    *iterations = (ret / PROC_PIDLISTFD_SIZE);
+    return fds_pointer;
+
+error:
+    if (fds_pointer != NULL)
+        free(fds_pointer);
+    return NULL;
+}
+
+
 /*
  * Return a Python list of all the PIDs running on the system.
  */
@@ -968,8 +1023,7 @@ error:
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int iterations;
+    int iterations = 0;
     int i;
     unsigned long nb;
 
@@ -999,22 +1053,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (pid == 0)
         return py_retlist;
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+
+    fds_pointer = psutil_proc_list_fds(pid, &iterations);
+    if (fds_pointer == NULL)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     for (i = 0; i < iterations; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
