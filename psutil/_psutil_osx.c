@@ -148,15 +148,15 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
             goto error;
         }
 
-        if ((ret + (int)PROC_PIDLISTFD_SIZE) >= fds_size) {
-            ret = (fds_size + PROC_PIDLISTFD_SIZE);
+        if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
+            ret = (fds_size + (int)PROC_PIDLISTFD_SIZE);
             continue;
         }
 
         break;
     }
 
-    *num_fds = (ret / PROC_PIDLISTFD_SIZE);
+    *num_fds = (ret / (int)PROC_PIDLISTFD_SIZE);
     return fds_pointer;
 
 error:
