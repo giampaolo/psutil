@@ -921,7 +921,6 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
     int iterations;
     int i;
     unsigned long nb;
@@ -940,21 +939,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+    fds_pointer = psutil_proc_list_fds(pid, &iterations);
+    if (fds_pointer == NULL)
         goto error;
-
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
         fdp_pointer = &fds_pointer[i];
@@ -1219,30 +1206,18 @@ error:
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int num;
+    int iterations;
     struct proc_fdinfo *fds_pointer;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = psutil_proc_list_fds(pid, &iterations);
     if (fds_pointer == NULL)
-        return PyErr_NoMemory();
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
-    if (pidinfo_result <= 0) {
-        free(fds_pointer);
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
+        return NULL;
 
-    num = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     free(fds_pointer);
-    return Py_BuildValue("i", num);
+    return Py_BuildValue("i", iterations);
 }
 
 
