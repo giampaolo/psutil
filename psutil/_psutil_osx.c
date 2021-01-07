@@ -130,6 +130,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
                 fds_size += PROC_PIDLISTFD_SIZE * 32;
             }
 
+            psutil_debug("list_fds: allocate buf size %i", fds_size);
             if (fds_pointer != NULL) {
                 free(fds_pointer);
             }
@@ -149,6 +150,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
         }
 
         if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
+            psutil_debug("list_fds: make room for 1 extra fd");
             ret = fds_size + (int)PROC_PIDLISTFD_SIZE;
             continue;
         }
@@ -927,11 +929,9 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
@@ -1013,14 +1013,12 @@ error:
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int num_fds = 0;
+    int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -1040,9 +1038,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
     }
-
-    if (pid == 0)
-        return py_retlist;
 
     fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
