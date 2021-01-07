@@ -108,8 +108,11 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
 }
 
 
+/*
+ * A wrapper around proc_pidinfo(PROC_PIDLISTFDS).
+ */
 static struct proc_fdinfo*
-psutil_proc_list_fds(pid_t pid, int *iterations) {
+psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int ret;
     int fds_size = 0;
     struct proc_fdinfo *fds_pointer = NULL;
@@ -153,7 +156,7 @@ psutil_proc_list_fds(pid_t pid, int *iterations) {
         break;
     }
 
-    *iterations = (ret / PROC_PIDLISTFD_SIZE);
+    *num_fds = (ret / PROC_PIDLISTFD_SIZE);
     return fds_pointer;
 
 error:
@@ -921,7 +924,7 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
-    int iterations;
+    int num_fds;
     int i;
     unsigned long nb;
 
@@ -939,11 +942,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    fds_pointer = psutil_proc_list_fds(pid, &iterations);
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
         goto error;
 
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -1010,7 +1013,7 @@ error:
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int iterations = 0;
+    int num_fds = 0;
     int i;
     unsigned long nb;
 
@@ -1041,11 +1044,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     if (pid == 0)
         return py_retlist;
 
-    fds_pointer = psutil_proc_list_fds(pid, &iterations);
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
         goto error;
 
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
@@ -1206,18 +1209,18 @@ error:
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
-    int iterations;
+    int num_fds;
     struct proc_fdinfo *fds_pointer;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    fds_pointer = psutil_proc_list_fds(pid, &iterations);
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
         return NULL;
 
     free(fds_pointer);
-    return Py_BuildValue("i", iterations);
+    return Py_BuildValue("i", num_fds);
 }
 
 

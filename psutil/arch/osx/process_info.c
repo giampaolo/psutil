@@ -383,8 +383,8 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
         psutil_raise_for_pid(pid, "proc_pidinfo() failed");
         return 0;
     }
-    else if ((unsigned long )ret < sizeof(pti)) {
-        psutil_raise_for_pid(pid, "proc_pidinfo() len mismatch");
+    if ((unsigned long)ret < sizeof(pti)) {
+        psutil_raise_for_pid(pid, "proc_pidinfo() size mismatch");
         return 0;
     }
     return ret;
