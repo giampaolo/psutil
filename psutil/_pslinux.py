@@ -719,14 +719,22 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-def _cpu_get_cpuinfo_freq():
-    """Return current CPU frequency from cpuinfo if available.
-    """
+def _get_cpuinfo_freq():
+    """Return current CPU frequencies from cpuinfo if available."""
     ret = []
+    is_sparc = os.uname()[4].startswith("sparc")
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
-            if line.lower().startswith(b'cpu mhz'):
-                ret.append(float(line.split(b':', 1)[1]))
+            if not is_sparc:
+                if line.lower().startswith(b'cpu mhz'):
+                    key, value = line.split(b':', 1)
+                    ret.append(float(value))
+            else:
+                # https://github.com/giampaolo/psutil/pull/1852
+                if re.search(br"Cpu\d+ClkTck", line) is not None:
+                    key, value = line.split(b':', 1)
+                    value = float(int(value, 16)) / 1000
+                    ret.append(value)
     return ret
 
 
@@ -737,7 +745,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
-        cpuinfo_freqs = _cpu_get_cpuinfo_freq()
+        cpuinfo_freqs = _get_cpuinfo_freq()
         paths = sorted(
             glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or
             glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"))
@@ -765,10 +773,10 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
 
 else:
     def cpu_freq():
-        """Alternate implementation using /proc/cpuinfo.
-        min and max frequencies are not available and are set to None.
+        """Alternate implementation where min and max frequencies are
+        not available and are set to None.
         """
-        return [_common.scpufreq(x, 0., 0.) for x in _cpu_get_cpuinfo_freq()]
+        return [_common.scpufreq(x, 0., 0.) for x in _get_cpuinfo_freq()]
 
 
 # =====================================================================

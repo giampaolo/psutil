@@ -884,6 +884,47 @@ class TestSystemCPUFrequency(PsutilTestCase):
                     freq = psutil.cpu_freq()
                     self.assertEqual(freq.current, 200)
 
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    def test_emulate_sparc(self):
+        # See: https://github.com/giampaolo/psutil/pull/1852
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/cpuinfo':
+                data = textwrap.dedent("""\
+                    cpu             : UltraSparc T2 (Niagara2)
+                    fpu             : UltraSparc T2 integrated FPU
+                    pmu             : niagara2
+                    prom            : OBP 4.33.6 2012/03/14 08:07
+                    type            : sun4v
+                    ncpus probed    : 64
+                    ncpus active    : 64
+                    D$ parity tl1   : 0
+                    I$ parity tl1   : 0
+                    Cpu0ClkTck      : 000000005458c3a0
+                    Cpu1ClkTck      : 000000005458c3a0
+                    """).encode()
+                return io.BytesIO(data)
+            elif name.endswith('/scaling_cur_freq'):
+                return io.BytesIO(b"200000")
+            elif name.endswith('/scaling_max_freq'):
+                return io.BytesIO(b"200000")
+            elif name.endswith('/scaling_min_freq'):
+                return io.BytesIO(b"200000")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch('glob.glob', return_value=['1', '2']):
+                with mock.patch('os.uname',
+                                return_value=(0, 0, 0, 0, 'sparc')):
+                    freqs = psutil.cpu_freq(percpu=True)
+                    self.assertEqual(len(freqs), 2)
+                    for freq in freqs:
+                        self.assertEqual(freq.current, 1415.103)
+                        self.assertEqual(freq.min, 200.0)
+                        self.assertEqual(freq.max, 200.0)
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUStats(PsutilTestCase):
