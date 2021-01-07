@@ -848,19 +848,17 @@ class TestSystemCPUFrequency(PsutilTestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
-                with mock.patch('psutil._pslinux.cpu_count_logical',
-                                return_value=2):
-                    freq = psutil.cpu_freq(percpu=True)
-                    self.assertEqual(freq[0].current, 100.0)
-                    if freq[0].min != 0.0:
-                        self.assertEqual(freq[0].min, 200.0)
-                    if freq[0].max != 0.0:
-                        self.assertEqual(freq[0].max, 300.0)
-                    self.assertEqual(freq[1].current, 400.0)
-                    if freq[1].min != 0.0:
-                        self.assertEqual(freq[1].min, 500.0)
-                    if freq[1].max != 0.0:
-                        self.assertEqual(freq[1].max, 600.0)
+                freq = psutil.cpu_freq(percpu=True)
+                self.assertEqual(freq[0].current, 100.0)
+                if freq[0].min != 0.0:
+                    self.assertEqual(freq[0].min, 200.0)
+                if freq[0].max != 0.0:
+                    self.assertEqual(freq[0].max, 300.0)
+                self.assertEqual(freq[1].current, 400.0)
+                if freq[1].min != 0.0:
+                    self.assertEqual(freq[1].min, 500.0)
+                if freq[1].max != 0.0:
+                    self.assertEqual(freq[1].max, 600.0)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_no_scaling_cur_freq_file(self):
@@ -879,10 +877,8 @@ class TestSystemCPUFrequency(PsutilTestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
-                with mock.patch('psutil._pslinux.cpu_count_logical',
-                                return_value=1):
-                    freq = psutil.cpu_freq()
-                    self.assertEqual(freq.current, 200)
+                freq = psutil.cpu_freq()
+                self.assertEqual(freq.current, 200)
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_sparc(self):
