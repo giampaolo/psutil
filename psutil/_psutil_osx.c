@@ -115,6 +115,7 @@ static struct proc_fdinfo*
 psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int ret;
     int fds_size = 0;
+    int max_size = 24 * 1024 * 1024;  // 24M
     struct proc_fdinfo *fds_pointer = NULL;
 
     errno = 0;
@@ -128,6 +129,11 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
         if (ret > fds_size) {
             while (ret > fds_size) {
                 fds_size += PROC_PIDLISTFD_SIZE * 32;
+                if (fds_size > max_size) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "malloc() exceeded 24M limit");
+                    goto error;
+                }
             }
 
             psutil_debug("list_fds: allocate buf size %i", fds_size);
