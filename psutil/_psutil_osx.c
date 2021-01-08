@@ -136,7 +136,6 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
                 }
             }
 
-            psutil_debug("list_fds: allocate buf size %i", fds_size);
             if (fds_pointer != NULL) {
                 free(fds_pointer);
             }
