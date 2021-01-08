@@ -18,6 +18,8 @@ XXXX-XX-XX
 - 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
   for one connection; this is now ignored.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
+  called after sprintf().  (patch by alxchk)
 
 5.8.0
 =====
