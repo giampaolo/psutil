@@ -380,7 +380,7 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 
     ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if (ret <= 0) {
-        psutil_raise_for_pid(pid, "proc_pidinfo() failed");
+        psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
     if ((unsigned long)ret < sizeof(pti)) {

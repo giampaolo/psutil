@@ -121,7 +121,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
     errno = 0;
     ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (ret <= 0) {
-        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 1 failed");
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 1/2");
         goto error;
     }
 
@@ -131,7 +131,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
                 fds_size += PROC_PIDLISTFD_SIZE * 32;
                 if (fds_size > max_size) {
                     PyErr_Format(PyExc_RuntimeError,
-                                 "malloc() exceeded 24M limit");
+                                 "prevent malloc() to allocate > 24M");
                     goto error;
                 }
             }
@@ -150,7 +150,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
         errno = 0;
         ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer, fds_size);
         if (ret <= 0) {
-            psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 2 failed");
+            psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 2/2");
             goto error;
         }
 
@@ -856,7 +856,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied("task_info");
+            AccessDenied("task_info(TASK_BASIC_INFO)");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
