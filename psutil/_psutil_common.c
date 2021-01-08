@@ -83,8 +83,9 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     char fullmsg[1024];
 
 #ifdef PSUTIL_WINDOWS
+    DWORD dwLastError = GetLastError();
     sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
+    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
 #else
     PyObject *exc;
     sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
