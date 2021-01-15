@@ -95,6 +95,9 @@ I: 557
 Donations
 -------------------------------------------------------------------------------
 
+N: aristocratos
+W: https://github.com/aristocratos
+
 N: Daniel Widdis
 C: Washington, USA
 W: https://github.com/dbwiddis
@@ -542,7 +545,7 @@ I: 1042, 1079, 1070
 
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
-I: 1077, 1093, 1091, 1220, 1346
+I: 1077, 1093, 1091, 1220, 1346, 1904
 
 N: Prodesire
 W: https://github.com/Prodesire
@@ -729,3 +732,7 @@ I: 1620, 1727
 N: Tim Schlueter
 W: https://github.com/modelrockettier
 I: 1822
+
+N: marxin
+W: https://github.com/marxin
+I: 1851

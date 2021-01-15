@@ -44,35 +44,6 @@ static PyObject *TimeoutAbandoned;
 
 
 /*
- * Return the number of logical, active CPUs. Return 0 if undetermined.
- * See discussion at: https://bugs.python.org/issue33166#msg314631
- */
-unsigned int
-psutil_get_num_cpus(int fail_on_err) {
-    unsigned int ncpus = 0;
-
-    // Minimum requirement: Windows 7
-    if (GetActiveProcessorCount != NULL) {
-        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-        if ((ncpus == 0) && (fail_on_err == 1)) {
-            PyErr_SetFromWindowsErr(0);
-        }
-    }
-    else {
-        psutil_debug("GetActiveProcessorCount() not available; "
-                     "using GetSystemInfo()");
-        ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus <= 0) && (fail_on_err == 1)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "GetSystemInfo() failed to retrieve CPU count");
-        }
-    }
-    return ncpus;
-}
-
-
-/*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
  */

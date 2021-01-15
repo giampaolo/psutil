@@ -34,17 +34,11 @@ FEATURES
 
 - #772: extended net_io_counters() metrics.
 
-- #900: wheels for macOS and Linux.
-
 - #922: extended net_io_stats() info.
 
 - #914: extended platform specific process info.
 
 - #898: wifi stats
-
-- #893: (BSD) process environ
-
-- #809: (BSD) per-process resource limits (rlimit()).
 
 - (UNIX) process root (different from cwd)
 

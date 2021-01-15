@@ -794,18 +794,14 @@ class TestSystemCPUFrequency(PsutilTestCase):
             if path.startswith('/sys/devices/system/cpu/'):
                 return False
             else:
-                if path == "/proc/cpuinfo":
-                    flags.append(None)
                 return os_path_exists(path)
 
-        flags = []
         os_path_exists = os.path.exists
         try:
             with mock.patch("os.path.exists", side_effect=path_exists_mock):
                 reload_module(psutil._pslinux)
                 ret = psutil.cpu_freq()
                 assert ret
-                assert flags
                 self.assertEqual(ret.max, 0.0)
                 self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):

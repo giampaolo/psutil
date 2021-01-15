@@ -73,28 +73,21 @@ Sponsors
 Supporters
 ----------
 
-None yet.
-
 .. raw:: html
 
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+    </div>
+    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Install
 =======
 
-Linux Ubuntu / Debian::
+On Linux, Windows, macOS::
 
-  sudo apt-get install gcc python3-dev
-  sudo pip3 install psutil
-
-Linux Redhat::
-
-  sudo yum install gcc python3-devel
-  sudo pip3 install psutil
-
-Windows::
-
-  pip3 install psutil
+  pip install psutil
 
 For other platforms see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
@@ -2438,7 +2431,7 @@ Kill process tree
                      timeout=None, on_terminate=None):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callabck function which is
+      "on_terminate", if specified, is a callback function which is
       called as soon as a child terminates.
       """
       assert pid != os.getpid(), "won't kill myself"
