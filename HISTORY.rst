@@ -20,6 +20,7 @@ XXXX-XX-XX
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
+- 1874_: [Solaris] swap output error due to incorrect range.
 
 5.8.0
 =====
