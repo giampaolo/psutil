@@ -5,11 +5,22 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
+  frequency values for all CPUs from /proc/cpuinfo instead of opening many
+  files in /sys fs.  (patch by marxin)
+
 **Bug fixes**
 
 - 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
   determined (instead of crashing).
+- 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
+  for one connection; this is now ignored.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
+  called after sprintf().  (patch by alxchk)
+- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 
 5.8.0
 =====

@@ -370,14 +370,21 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 /*
  * A wrapper around proc_pidinfo().
+ * https://opensource.apple.com/source/xnu/xnu-2050.7.9/bsd/kern/proc_info.c.
  * Returns 0 on failure (and Python exception gets already set).
  */
 int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
-    int ret = proc_pidinfo(pid, flavor, arg, pti, size);
-    if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
-        psutil_raise_for_pid(pid, "proc_pidinfo()");
+    int ret;
+
+    ret = proc_pidinfo(pid, flavor, arg, pti, size);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo() failed");
+        return 0;
+    }
+    else if ((unsigned long )ret < sizeof(pti)) {
+        psutil_raise_for_pid(pid, "proc_pidinfo() len mismatch");
         return 0;
     }
     return ret;
