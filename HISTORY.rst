@@ -20,6 +20,7 @@ XXXX-XX-XX
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
+- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 
 5.8.0
 =====

@@ -422,3 +422,11 @@ except ImportError:
                 return (res[1], res[0])
             except Exception:
                 return fallback
+
+
+# python 3.3
+try:
+    from subprocess import TimeoutExpired as SubprocessTimeoutExpired
+except ImportError:
+    class SubprocessTimeoutExpired:
+        pass

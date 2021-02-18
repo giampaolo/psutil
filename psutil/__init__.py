@@ -47,6 +47,7 @@ from ._common import ZombieProcess
 from ._compat import long
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
+from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
 from ._compat import PY3 as _PY3
 
 from ._common import CONN_CLOSE
@@ -1504,6 +1505,8 @@ def wait_procs(procs, timeout=None, callback=None):
         try:
             returncode = proc.wait(timeout=timeout)
         except TimeoutExpired:
+            pass
+        except _SubprocessTimeoutExpired:
             pass
         else:
             if returncode is not None or not proc.is_running():
