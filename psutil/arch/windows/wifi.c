@@ -97,7 +97,7 @@ convert_macaddr(unsigned char *ptr) {
 }
 
 
-long
+static long
 quality_perc_to_rssi(WLAN_SIGNAL_QUALITY value) {
     // RSSI (signal quality) expressed in dBm
     if (value == 0)
@@ -106,6 +106,19 @@ quality_perc_to_rssi(WLAN_SIGNAL_QUALITY value) {
         return (long)-50;
     else
         return -100 + ((long)value / 2);
+}
+
+
+static char *
+wlan_error(DWORD dwResult) {
+    if (dwResult == ERROR_INVALID_PARAMETER)
+        return "ERROR_INVALID_PARAMETER";
+    else if (dwResult == ERROR_NOT_ENOUGH_MEMORY)
+        return "ERROR_NOT_ENOUGH_MEMORY";
+    else if (dwResult == ERROR_REMOTE_SESSION_LIMIT_EXCEEDED)
+        return "ERROR_REMOTE_SESSION_LIMIT_EXCEEDED";
+    else
+        return "UNKNOWN";
 }
 
 
@@ -148,13 +161,15 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
 
     dwResult = WlanOpenHandle(dwMaxClient, NULL, &dwCurVersion, &hClient);
     if (dwResult != ERROR_SUCCESS) {
-        PyErr_SetFromOSErrnoWithSyscall("WlanOpenHandle");
-        return NULL;
+        PyErr_Format(PyExc_RuntimeError, "WlanOpenHandle -> %s",
+                     wlan_error(dwResult));
+        goto error;
     }
 
     dwResult = WlanEnumInterfaces(hClient, NULL, &pIfList);
     if (dwResult != ERROR_SUCCESS) {
-        PyErr_SetFromOSErrnoWithSyscall("WlanEnumInterfaces");
+        PyErr_Format(PyExc_RuntimeError, "WlanEnumInterfaces -> %s",
+                     wlan_error(dwResult));
         goto error;
     }
 
@@ -205,7 +220,8 @@ psutil_wifi_ifaces(PyObject *self, PyObject *args) {
                 &opCode);
 
             if (dwResult != ERROR_SUCCESS) {
-                PyErr_SetFromOSErrnoWithSyscall("WlanEnumInterfaces");
+                PyErr_Format(PyExc_RuntimeError, "WlanQueryInterface -> %s",
+                             wlan_error(dwResult));
                 goto error;
             }
 
