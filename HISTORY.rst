@@ -21,6 +21,7 @@ XXXX-XX-XX
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1874_: [Solaris] swap output error due to incorrect range.
+- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 
 5.8.0
 =====
