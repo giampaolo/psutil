@@ -1450,7 +1450,7 @@ def sensors_battery():
         secsleft = _common.POWER_TIME_UNLIMITED
     elif energy_now is not None and power_now is not None:
         try:
-            secsleft = int(energy_now / power_now * 3600)
+            secsleft = int(int(energy_now) / int(power_now) * 3600)
         except ZeroDivisionError:
             secsleft = _common.POWER_TIME_UNKNOWN
     elif time_to_empty is not None:
