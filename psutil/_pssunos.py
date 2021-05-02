@@ -98,10 +98,14 @@ proc_info_map = dict(
 
 
 # psutil.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+class scputimes(namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 # psutil.cpu_times(percpu=True)
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
+class pcputimes(namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 # psutil.Process.memory_info()
