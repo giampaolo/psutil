@@ -195,9 +195,13 @@ pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'read_chars', 'write_chars'])
 # psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system',
-                        'iowait'])
+class pcputimes(
+    namedtuple(
+        "pcputimes", ["user", "system", "children_user", "children_system", "iowait"]
+    )
+):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 
 
 # =====================================================================
@@ -279,7 +283,9 @@ def set_scputimes_ntuple(procfs_path):
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-    scputimes = namedtuple('scputimes', fields)
+    class scputimes(namedtuple("scputimes", fields)):
+        def __sub__(self, other):
+            return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 
 
 def cat(fname, fallback=_DEFAULT, binary=True):
