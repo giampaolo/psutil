@@ -93,7 +93,10 @@ pmem = namedtuple('pmem', ['rss', 'vms'])
 # psutil.Process.memory_full_info()
 pfullmem = pmem
 # psutil.Process.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+class scputimes(namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
+
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 
