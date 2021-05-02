@@ -1687,7 +1687,7 @@ def warn(msg):
 def is_namedtuple(x):
     """Check if object is an instance of namedtuple."""
     t = type(x)
-    if not issubclass(x,tuple):
+    if not issubclass(t,tuple):
         return False
     f = getattr(t, '_fields', None)
     if not isinstance(f, tuple):
