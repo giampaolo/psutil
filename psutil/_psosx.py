@@ -93,7 +93,10 @@ pidtaskinfo_map = dict(
 
 
 # psutil.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
+class scputimes(namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
+
 # psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
