@@ -145,15 +145,19 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
 # psutil.cpu_times()
-scputimes = namedtuple(
-    'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+class scputimes(namedtuple(
+    'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 # psutil.Process.memory_info()
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
 # psutil.Process.memory_full_info()
 pfullmem = pmem
 # psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
+class pcputimes(namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 # psutil.Process.memory_maps(grouped=True)
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
