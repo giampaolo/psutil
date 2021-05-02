@@ -161,8 +161,11 @@ pinfo_map = dict(
 
 
 # psutil.cpu_times()
-scputimes = namedtuple('scputimes',
-                       ['user', 'system', 'idle', 'interrupt', 'dpc'])
+class scputimes(namedtuple('scputimes',
+                       ['user', 'system', 'idle', 'interrupt', 'dpc'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
+
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 # psutil.Process.memory_info()
