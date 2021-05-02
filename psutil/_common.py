@@ -211,8 +211,9 @@ sfan = namedtuple('sfan', ['label', 'current'])
 # --- for Process methods
 
 # psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
+class pcputimes(namedtuple('pcputimes',['user', 'system', 'children_user', 'children_system'])):
+    def __sub__(self, other):
+        return self.__class__(*(self[i] - other[i] for i in range(len(self))))
 # psutil.Process.open_files()
 popenfile = namedtuple('popenfile', ['path', 'fd'])
 # psutil.Process.threads()
