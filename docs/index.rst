@@ -144,6 +144,12 @@ CPU
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
 
+    .. warning::
+      CPU times are always supposed to increase over time, or at least remain
+      the same, and that's because time cannot go backwards.
+      Surprisingly sometimes this might not be the case (at least on Windows
+      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
+
 .. function:: cpu_percent(interval=None, percpu=False)
 
   Return a float representing the current system-wide CPU utilization as a

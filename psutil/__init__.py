@@ -1724,7 +1724,6 @@ def cpu_percent(interval=None, percpu=False):
 
     def calculate(t1, t2):
         times_delta = _cpu_times_deltas(t1, t2)
-
         all_delta = _cpu_tot_time(times_delta)
         busy_delta = _cpu_busy_time(times_delta)
 

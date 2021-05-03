@@ -299,9 +299,9 @@ Process management
     >>> p
     psutil.Process(pid=7055, name='python3', status='running', started='09:04:44')
     >>> p.name()
-    'python'
+    'python3'
     >>> p.exe()
-    '/usr/bin/python'
+    '/usr/bin/python3'
     >>> p.cwd()
     '/home/giampaolo'
     >>> p.cmdline()
@@ -442,23 +442,6 @@ Further process APIs
     ...
     >>> # waits for multiple processes to terminate
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
-    >>>
-
-Popen wrapper:
-
-.. code-block:: python
-
-    >>> import psutil
-    >>> from subprocess import PIPE
-    >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
-    >>> p.name()
-    'python'
-    >>> p.username()
-    'giampaolo'
-    >>> p.communicate()
-    ('hello\n', None)
-    >>> p.wait(timeout=2)
-    0
     >>>
 
 Windows services
