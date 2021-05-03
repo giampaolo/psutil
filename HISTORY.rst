@@ -22,6 +22,7 @@ XXXX-XX-XX
   called after sprintf().  (patch by alxchk)
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
+- 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
 
 5.8.0
 =====

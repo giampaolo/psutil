@@ -243,7 +243,8 @@ class TestSystemVirtualMemory(PsutilTestCase):
         # self.assertEqual(free_value, psutil_value)
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
-        self.assertAlmostEqual(vmstat_value, psutil_value)
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_used(self):
