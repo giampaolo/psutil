@@ -258,10 +258,29 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
 
     @retry_on_failure()
     def test_shared(self):
-        cli_value = free_physmem().shared
+        free = free_physmem()
+        free_value = free.shared
+        if free_value == 0:
+            raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
-        self.assertAlmostEqual(cli_value, psutil_value,
-                               delta=TOLERANCE_SYS_MEM)
+        self.assertAlmostEqual(
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
+
+    @retry_on_failure()
+    def test_available(self):
+        # "free" output format has changed at some point:
+        # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
+        out = sh("free -b")
+        lines = out.split('\n')
+        if 'available' not in lines[0]:
+            raise unittest.SkipTest("free does not support 'available' column")
+        else:
+            free_value = int(lines[1].split()[-1])
+            psutil_value = psutil.virtual_memory().available
+            self.assertAlmostEqual(
+                free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
+                msg='%s %s \n%s' % (free_value, psutil_value, out))
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -301,31 +320,9 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
-    @retry_on_failure()
-    def test_shared(self):
-        free = free_physmem()
-        free_value = free.shared
-        if free_value == 0:
-            raise unittest.SkipTest("free does not support 'shared' column")
-        psutil_value = psutil.virtual_memory().shared
-        self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
-    @retry_on_failure()
-    def test_available(self):
-        # "free" output format has changed at some point:
-        # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
-        out = sh("free -b")
-        lines = out.split('\n')
-        if 'available' not in lines[0]:
-            raise unittest.SkipTest("free does not support 'available' column")
-        else:
-            free_value = int(lines[1].split()[-1])
-            psutil_value = psutil.virtual_memory().available
-            self.assertAlmostEqual(
-                free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
-                msg='%s %s \n%s' % (free_value, psutil_value, out))
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemVirtualMemoryMocks(PsutilTestCase):
 
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
