@@ -235,31 +235,43 @@ def mock_open_exception(for_path, exc):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemVirtualMemory(PsutilTestCase):
+class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
 
     def test_total(self):
-        # free_value = free_physmem().total
-        # psutil_value = psutil.virtual_memory().total
-        # self.assertEqual(free_value, psutil_value)
+        cli_value = free_physmem().total
+        psutil_value = psutil.virtual_memory().total
+        self.assertEqual(cli_value, psutil_value)
+
+    @retry_on_failure()
+    def test_used(self):
+        cli_value = free_physmem().used
+        psutil_value = psutil.virtual_memory().used
+        self.assertAlmostEqual(cli_value, psutil_value,
+                               delta=TOLERANCE_SYS_MEM)
+
+    @retry_on_failure()
+    def test_free(self):
+        cli_value = free_physmem().free
+        psutil_value = psutil.virtual_memory().free
+        self.assertAlmostEqual(cli_value, psutil_value,
+                               delta=TOLERANCE_SYS_MEM)
+
+    @retry_on_failure()
+    def test_shared(self):
+        cli_value = free_physmem().shared
+        psutil_value = psutil.virtual_memory().shared
+        self.assertAlmostEqual(cli_value, psutil_value,
+                               delta=TOLERANCE_SYS_MEM)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
+
+    def test_total(self):
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
-
-    @retry_on_failure()
-    def test_used(self):
-        # Older versions of procps used slab memory to calculate used memory.
-        # This got changed in:
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-        if get_free_version_info() < (3, 3, 12):
-            raise self.skipTest("old free version")
-        free = free_physmem()
-        free_value = free.used
-        psutil_value = psutil.virtual_memory().used
-        self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @retry_on_failure()
     def test_free(self):
