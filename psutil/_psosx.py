@@ -9,6 +9,7 @@ import errno
 import functools
 import os
 from collections import namedtuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from . import _common
 from . import _psposix
@@ -110,6 +111,7 @@ pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
 
 
 def virtual_memory():
+    # type: () -> svmem
     """System virtual memory as a namedtuple."""
     total, active, inactive, wired, free, speculative = cext.virtual_mem()
     # This is how Zabbix calculate avail and used mem:
@@ -127,6 +129,7 @@ def virtual_memory():
 
 
 def swap_memory():
+    # type: () -> _common.sswap
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
@@ -139,12 +142,14 @@ def swap_memory():
 
 
 def cpu_times():
+    # type: () -> scputimes
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = cext.cpu_times()
     return scputimes(user, nice, system, idle)
 
 
 def per_cpu_times():
+    # type: () -> List[scputimes]
     """Return system CPU times as a named tuple"""
     ret = []
     for cpu_t in cext.per_cpu_times():
@@ -155,16 +160,19 @@ def per_cpu_times():
 
 
 def cpu_count_logical():
+    # type: () -> int
     """Return the number of logical CPUs in the system."""
     return cext.cpu_count_logical()
 
 
 def cpu_count_cores():
+    # type: () -> int
     """Return the number of CPU cores in the system."""
     return cext.cpu_count_cores()
 
 
 def cpu_stats():
+    # type: () -> _common.scpustats
     ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
         cext.cpu_stats()
     return _common.scpustats(
@@ -172,6 +180,7 @@ def cpu_stats():
 
 
 def cpu_freq():
+    # type: () -> List[_common.scpufreq]
     """Return CPU frequency.
     On macOS per-cpu frequency is not supported.
     Also, the returned frequency never changes, see:
@@ -191,6 +200,7 @@ disk_io_counters = cext.disk_io_counters
 
 
 def disk_partitions(all=False):
+    # type: (bool) -> List[_common.sdiskpart]
     """Return mounted disk partitions as a list of namedtuples."""
     retlist = []
     partitions = cext.disk_partitions()
@@ -214,6 +224,7 @@ def disk_partitions(all=False):
 
 
 def sensors_battery():
+    # type: () -> _common.sbattery
     """Return battery information."""
     try:
         percent, minsleft, power_plugged = cext.sensors_battery()
@@ -240,6 +251,7 @@ net_if_addrs = cext_posix.net_if_addrs
 
 
 def net_connections(kind='inet'):
+    # type: (str) -> Any
     """System-wide network connections."""
     # Note: on macOS this will fail with AccessDenied unless
     # the process is owned by root.
@@ -258,6 +270,7 @@ def net_connections(kind='inet'):
 
 
 def net_if_stats():
+    # type: () -> Dict[str, _common.snicstats]
     """Get NIC stats (isup, duplex, speed, mtu)."""
     names = net_io_counters().keys()
     ret = {}
@@ -283,11 +296,13 @@ def net_if_stats():
 
 
 def boot_time():
+    # type: () -> float
     """The system boot time expressed in seconds since the epoch."""
     return cext.boot_time()
 
 
 def users():
+    # type: () -> List[_common.suser]
     """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.users()
@@ -308,6 +323,7 @@ def users():
 
 
 def pids():
+    # type: () -> List[int]
     ls = cext.pids()
     if 0 not in ls:
         # On certain macOS versions pids() C doesn't return PID 0 but
@@ -327,6 +343,7 @@ pid_exists = _psposix.pid_exists
 
 
 def is_zombie(pid):
+    # type: (int) -> bool
     try:
         st = cext.proc_kinfo_oneshot(pid)[kinfo_proc_map['status']]
         return st == cext.SZOMB
@@ -335,6 +352,7 @@ def is_zombie(pid):
 
 
 def wrap_exceptions(fun):
+    # type: (Callable) -> Callable
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
     """
@@ -356,6 +374,7 @@ def wrap_exceptions(fun):
 
 @contextlib.contextmanager
 def catch_zombie(proc):
+    # type: (Process) -> Iterator[None]
     """There are some poor C APIs which incorrectly raise ESRCH when
     the process is still alive or it's a zombie, or even RuntimeError
     (those who don't set errno). This is here in order to solve:
@@ -386,6 +405,7 @@ class Process(object):
     __slots__ = ["pid", "_name", "_ppid", "_cache"]
 
     def __init__(self, pid):
+        # type: (int) -> None
         self.pid = pid
         self._name = None
         self._ppid = None
@@ -393,6 +413,7 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _get_kinfo_proc(self):
+        # type: () -> Tuple[int, int, int, int, int, int, int, int, float, int, str]  # NOQA
         # Note: should work with all PIDs without permission issues.
         ret = cext.proc_kinfo_oneshot(self.pid)
         assert len(ret) == len(kinfo_proc_map)
@@ -401,6 +422,7 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _get_pidtaskinfo(self):
+        # type: () -> Tuple[float, float, int, int, int, int, int, int]
         # Note: should work for PIDs owned by user only.
         with catch_zombie(self):
             ret = cext.proc_pidtaskinfo_oneshot(self.pid)
@@ -408,45 +430,54 @@ class Process(object):
         return ret
 
     def oneshot_enter(self):
+        # type: () -> None
         self._get_kinfo_proc.cache_activate(self)
         self._get_pidtaskinfo.cache_activate(self)
 
     def oneshot_exit(self):
+        # type: () -> None
         self._get_kinfo_proc.cache_deactivate(self)
         self._get_pidtaskinfo.cache_deactivate(self)
 
     @wrap_exceptions
     def name(self):
+        # type: () -> str
         name = self._get_kinfo_proc()[kinfo_proc_map['name']]
         return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
+        # type: () -> str
         with catch_zombie(self):
             return cext.proc_exe(self.pid)
 
     @wrap_exceptions
     def cmdline(self):
+        # type: () -> List[str]
         with catch_zombie(self):
             return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def environ(self):
+        # type: () -> Dict[str, str]
         with catch_zombie(self):
             return parse_environ_block(cext.proc_environ(self.pid))
 
     @wrap_exceptions
     def ppid(self):
+        # type: () -> int
         self._ppid = self._get_kinfo_proc()[kinfo_proc_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
     def cwd(self):
+        # type: () -> str
         with catch_zombie(self):
             return cext.proc_cwd(self.pid)
 
     @wrap_exceptions
     def uids(self):
+        # type: () -> _common.puids
         rawtuple = self._get_kinfo_proc()
         return _common.puids(
             rawtuple[kinfo_proc_map['ruid']],
@@ -455,6 +486,7 @@ class Process(object):
 
     @wrap_exceptions
     def gids(self):
+        # type: () -> _common.puids
         rawtuple = self._get_kinfo_proc()
         return _common.puids(
             rawtuple[kinfo_proc_map['rgid']],
@@ -463,6 +495,7 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
+        # type: () -> Optional[str]
         tty_nr = self._get_kinfo_proc()[kinfo_proc_map['ttynr']]
         tmap = _psposix.get_terminal_map()
         try:
@@ -472,6 +505,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
+        # type: () -> pmem
         rawtuple = self._get_pidtaskinfo()
         return pmem(
             rawtuple[pidtaskinfo_map['rss']],
@@ -482,12 +516,14 @@ class Process(object):
 
     @wrap_exceptions
     def memory_full_info(self):
+        # type: () -> pfullmem
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
         return pfullmem(*basic_mem + (uss, ))
 
     @wrap_exceptions
     def cpu_times(self):
+        # type: () -> _common.pcputimes
         rawtuple = self._get_pidtaskinfo()
         return _common.pcputimes(
             rawtuple[pidtaskinfo_map['cpuutime']],
@@ -497,10 +533,12 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
+        # type: () -> float
         return self._get_kinfo_proc()[kinfo_proc_map['ctime']]
 
     @wrap_exceptions
     def num_ctx_switches(self):
+        # type: () -> _common.pctxsw
         # Unvoluntary value seems not to be available;
         # getrusage() numbers seems to confirm this theory.
         # We set it to 0.
@@ -509,10 +547,12 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
+        # type: () -> int
         return self._get_pidtaskinfo()[pidtaskinfo_map['numthreads']]
 
     @wrap_exceptions
     def open_files(self):
+        # type: () -> List[_common.popenfile]
         if self.pid == 0:
             return []
         files = []
@@ -526,6 +566,7 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
+        # type: (str) -> List[_common.pconn]
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
@@ -542,6 +583,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_fds(self):
+        # type: () -> int
         if self.pid == 0:
             return 0
         with catch_zombie(self):
@@ -549,26 +591,31 @@ class Process(object):
 
     @wrap_exceptions
     def wait(self, timeout=None):
+        # type: (Optional[Union[float, int]]) -> Optional[Union[_psposix.Negsignal, int]]  # NOQA
         return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
     def nice_get(self):
+        # type: () -> int
         with catch_zombie(self):
             return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
+        # type: (Union[int, str]) -> None
         with catch_zombie(self):
             return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):
+        # type: () -> str
         code = self._get_kinfo_proc()[kinfo_proc_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def threads(self):
+        # type: () -> List[_common.pthread]
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
