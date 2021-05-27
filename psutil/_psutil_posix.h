@@ -4,5 +4,6 @@
  * found in the LICENSE file.
  */
 
+long psutil_getpagesize(void);
 int psutil_pid_exists(pid_t pid);
 void psutil_raise_for_pid(pid_t pid, char *msg);

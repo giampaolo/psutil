@@ -206,6 +206,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
+    DWORD lpMaximumComponentLength = 0;  // max file name
     PyObject *py_all;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
@@ -257,8 +258,14 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         }
 
         ret = GetVolumeInformation(
-            (LPCTSTR)drive_letter, NULL, _ARRAYSIZE(drive_letter),
-            NULL, NULL, &pflags, (LPTSTR)fs_type, _ARRAYSIZE(fs_type));
+            (LPCTSTR)drive_letter,
+            NULL,
+            _ARRAYSIZE(drive_letter),
+            NULL,
+            &lpMaximumComponentLength,
+            &pflags,
+            (LPTSTR)fs_type,
+            _ARRAYSIZE(fs_type));
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
@@ -274,6 +281,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 strcat_s(opts, _countof(opts), "rw");
             if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
+            if (pflags & FILE_READ_ONLY_VOLUME)
+                strcat_s(opts, _countof(opts), ",readonly");
 
             // Check for mount points on this volume and add/get info
             // (checks first to know if we can even have mount points)
@@ -282,17 +291,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                     drive_letter, mp_buf, MAX_PATH);
                 if (mp_h != INVALID_HANDLE_VALUE) {
                     while (mp_flag) {
-
                         // Append full mount path with drive letter
                         strcpy_s(mp_path, _countof(mp_path), drive_letter);
                         strcat_s(mp_path, _countof(mp_path), mp_buf);
 
                         py_tuple = Py_BuildValue(
-                            "(ssss)",
+                            "(ssssIi)",
                             drive_letter,
                             mp_path,
-                            fs_type, // Typically NTFS
-                            opts);
+                            fs_type,                   // typically "NTFS"
+                            opts,
+                            lpMaximumComponentLength,  // max file length
+                            MAX_PATH                   // max path length
+                        );
 
                         if (!py_tuple ||
                                 PyList_Append(py_retlist, py_tuple) == -1) {
@@ -317,11 +328,14 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         strcat_s(opts, _countof(opts), psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
-            "(ssss)",
+            "(ssssIi)",
             drive_letter,
             drive_letter,
             fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-            opts);
+            opts,
+            lpMaximumComponentLength,  // max file length
+            MAX_PATH                   // max path length
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -350,7 +364,7 @@ error:
  If no match is found return an empty string.
 */
 PyObject *
-psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
+psutil_QueryDosDevice(PyObject *self, PyObject *args) {
     LPCTSTR lpDevicePath;
     TCHAR d = TEXT('A');
     TCHAR szBuff[5];

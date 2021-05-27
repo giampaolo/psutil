@@ -65,7 +65,7 @@ if enum is not None and hasattr(signal, "Signals"):
             return Negsignal(num)
         except ValueError:
             return num
-else:
+else:  # pragma: no cover
     def negsig_to_enum(num):
         return num
 
@@ -167,7 +167,7 @@ def disk_usage(path):
     """
     if PY3:
         st = os.statvfs(path)
-    else:
+    else:  # pragma: no cover
         # os.statvfs() does not support unicode on Python 2:
         # - https://github.com/giampaolo/psutil/issues/416
         # - http://bugs.python.org/issue18695

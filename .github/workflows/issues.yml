@@ -1,0 +1,28 @@
+# Fired by Github Actions every time an issue, PR or comment is created.
+name: issues
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    typed: [opened]
+  issue_comment:
+    types: [created]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # install python
+    - uses: actions/checkout@v2
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    # install deps
+    - name: Install deps
+      run: python -m pip install --upgrade pip PyGithub
+    # run
+    - name: Run
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        PYTHONUNBUFFERED=1 python .github/workflows/issues.py

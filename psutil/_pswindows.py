@@ -199,7 +199,7 @@ def convert_dos_path(s):
         "C:\Windows\systemew\file.txt"
     """
     rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = cext.win32_QueryDosDevice(rawdrive)
+    driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive):]
     return os.path.join(driveletter, remainder)
 
@@ -243,8 +243,16 @@ def virtual_memory():
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     mem = cext.virtual_mem()
-    total = mem[2]
-    free = mem[3]
+
+    total_phys = mem[0]
+    free_phys = mem[1]
+    total_system = mem[2]
+    free_system = mem[3]
+
+    # Despite the name PageFile refers to total system memory here
+    # thus physical memory values need to be substracted to get swap values
+    total = total_system - total_phys
+    free = min(total, free_system - free_phys)
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
@@ -311,9 +319,9 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-def cpu_count_physical():
-    """Return the number of physical CPU cores in the system."""
-    return cext.cpu_count_phys()
+def cpu_count_cores():
+    """Return the number of CPU cores in the system."""
+    return cext.cpu_count_cores()
 
 
 def cpu_stats():
@@ -1073,11 +1081,11 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_set(self, value):
-        def to_bitmask(l):
-            if not l:
-                raise ValueError("invalid argument %r" % l)
+        def to_bitmask(ls):
+            if not ls:
+                raise ValueError("invalid argument %r" % ls)
             out = 0
-            for b in l:
+            for b in ls:
                 out |= 2 ** b
             return out
 

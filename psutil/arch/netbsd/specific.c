@@ -126,7 +126,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT)
-            NoSuchProcess("");
+            NoSuchProcess("sysctl -> ENOENT");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -142,7 +142,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     free(buf);
     if (len == -1) {
         if (errno == ENOENT)
-            NoSuchProcess("readlink (ENOENT)");
+            NoSuchProcess("readlink -> ENOENT");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -198,7 +198,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists");
+            return NoSuchProcess("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }
@@ -445,7 +445,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size_t size;
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
-    long pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
 
     size = sizeof(uv);
     if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
@@ -472,6 +472,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     uint64_t swap_total, swap_free;
     struct swapent *swdev;
     int nswap, i;
+    long pagesize = psutil_getpagesize();
 
     nswap = swapctl(SWAP_NSWAP, 0, 0);
     if (nswap == 0) {
@@ -505,7 +506,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
-    long pagesize = getpagesize();
     size = sizeof(uv);
     if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);

@@ -43,17 +43,17 @@ from psutil._common import hilite
 from psutil._common import print_color
 from psutil._common import term_supports_colors
 from psutil._compat import super
-from psutil.tests import APPVEYOR
+from psutil.tests import CI_TESTING
 from psutil.tests import import_module_by_path
+from psutil.tests import print_sysinfo
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
-from psutil.tests import TOX
 
 
-VERBOSITY = 1 if TOX else 2
+VERBOSITY = 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'
 NWORKERS = psutil.cpu_count() or 1
-USE_COLORS = term_supports_colors() and not APPVEYOR
+USE_COLORS = not CI_TESTING and term_supports_colors()
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
@@ -71,7 +71,7 @@ def cprint(msg, color, bold=False, file=None):
 class TestLoader:
 
     testdir = HERE
-    skip_files = ['test_memory_leaks.py']
+    skip_files = ['test_memleaks.py']
     if "WHEELHOUSE_UPLOADER_USERNAME" in os.environ:
         skip_files.extend(['test_osx.py', 'test_linux.py', 'test_posix.py'])
 
@@ -304,9 +304,9 @@ def run_from_name(name):
 
 
 def setup():
-    if 'PSUTIL_TESTING' not in os.environ:
-        # This won't work on Windows but set_testing() below will do it.
-        os.environ['PSUTIL_TESTING'] = '1'
+    # Note: doc states that altering os.environment may cause memory
+    # leaks on some platforms.
+    # Sets PSUTIL_TESTING and PSUTIL_DEBUG in the C module.
     psutil._psplatform.cext.set_testing()
 
 
@@ -338,7 +338,8 @@ def main():
     else:
         suite = loader.all()
 
-    # runner
+    if CI_TESTING:
+        print_sysinfo()
     runner = get_runner(opts.parallel)
     runner.run(suite)
 

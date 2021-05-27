@@ -10,9 +10,10 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`__
 - `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 - `Forum <http://groups.google.com/group/psutil/topics>`__
 - `Download <https://pypi.org/project/psutil/#files>`__
+- `Blog <https://gmpy.dev/tags/psutil>`__
+- `Contributing <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__
 - `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
@@ -42,40 +43,55 @@ Supported Python versions are **2.6**, **2.7** and **3.4+**.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+Funding
+=======
 
-Professional support
---------------------
+While psutil is free software and will always be, the project would benefit
+immensely from some funding.
+Keeping up with bug reports and maintenance has become hardly sustainable for
+me alone in terms of time.
+If you're a company that's making significant use of psutil you can consider
+becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
+`Open Collective <https://opencollective.com/psutil>`__ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
+and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
 
-.. image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
-    :width: 80px
-    :align: left
+Sponsors
+--------
 
-Professional support for psutil is available as part of the `Tidelift Subscription`_.
-Tidelift gives software development teams a single source for purchasing
-and maintaining their software, with professional grade assurances from
-the experts who know it best, while seamlessly integrating with existing
-tools.
-By subscribing you will help me (`Giampaolo Rodola`_) support psutil
-future development. Alternatively consider making a small `donation`_.
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
+.. raw:: html
+
+    <div>
+        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+        </a>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
+        </a>
+    </div>
+
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+Supporters
+----------
+
+.. raw:: html
+
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+    </div>
+    <br />
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Install
--------
+=======
 
-Linux Ubuntu / Debian::
+On Linux, Windows, macOS::
 
-  sudo apt-get install gcc python3-dev
-  sudo pip3 install psutil
-
-Linux Redhat::
-
-  sudo yum install gcc python3-devel
-  sudo pip3 install psutil
-
-Windows::
-
-  pip3 install psutil
+  pip install psutil
 
 For other platforms see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
@@ -130,6 +146,12 @@ CPU
     scputimes(user=17411.7, nice=77.99, system=3797.02, idle=51266.57, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
+
+    .. warning::
+      CPU times are always supposed to increase over time, or at least remain
+      the same, and that's because time cannot go backwards.
+      Surprisingly sometimes this might not be the case (at least on Windows
+      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -186,13 +208,13 @@ CPU
 
   Return the number of logical CPUs in the system (same as `os.cpu_count`_
   in Python 3.4) or ``None`` if undetermined.
-  *logical* cores means the number of physical cores multiplied by the number
+  "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
-  If *logical* is ``False`` return the number of physical cores only (Hyper
-  Thread CPUs are excluded) or ``None`` if undetermined.
+  If *logical* is ``False`` return the number of physical cores only, or
+  ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
   ``None``.
-  Example on a system having 2 physical hyper-thread CPU cores:
+  Example on a system having 2 cores + Hyper Threading:
 
     >>> import psutil
     >>> psutil.cpu_count()
@@ -200,11 +222,11 @@ CPU
     >>> psutil.cpu_count(logical=False)
     2
 
-  Note that this number is not equivalent to the number of CPUs the current
-  process can actually use.
+  Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
+  actual number of CPUs the current process can use.
   That can vary in case process CPU affinity has been changed, Linux cgroups
-  are being used or on Windows systems using processor groups or having more
-  than 64 CPUs.
+  are being used or (in case of Windows) on systems using processor groups or
+  having more than 64 CPUs.
   The number of usable CPUs can be obtained with:
 
     >>> len(psutil.Process().cpu_affinity())
@@ -268,16 +290,17 @@ CPU
 .. function:: getloadavg()
 
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-    The load represents the processes which are in a runnable state, either
+    The "load" represents the processes which are in a runnable state, either
     using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
     On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
     by using a Windows API that spawns a thread which keeps running in
-    background and updates the load average every 5 seconds, mimicking the UNIX
-    behavior. Thus, the first time this is called and for the next 5 seconds
+    background and updates results every 5 seconds, mimicking the UNIX behavior.
+    Thus, on Windows, the first time this is called and for the next 5 seconds
     it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
     The numbers returned only make sense if related to the number of CPU cores
-    installed on the system. So, for instance, `3.14` on a system with 10 CPU
-    cores means that the system load was 31.4% percent over the last N minutes.
+    installed on the system. So, for instance, a value of `3.14` on a system
+    with 10 logical CPUs means that the system load was 31.4% percent over the
+    last N minutes.
 
     .. code-block:: python
 
@@ -391,19 +414,27 @@ Disks
   (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
-  Named tuple's **fstype** field is a string which varies depending on the
-  platform.
-  On Linux it can be one of the values found in /proc/filesystems (e.g.
-  ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
-  On Windows it is determined via `GetDriveType`_ and can be either
-  ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``, ``"unmounted"`` or
-  ``"ramdisk"``. On macOS and BSD it is retrieved via `getfsstat`_ syscall.
   See `disk_usage.py`_ script providing an example usage.
+  Returns a list of namedtuples with the following fields:
 
-    >>> import psutil
-    >>> psutil.disk_partitions()
-    [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
-     sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
+  * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
+    drive letter (e.g. ``"C:\\"``).
+  * **mountpoint**: the mount point path (e.g. ``"/"``). On Windows this is the
+    drive letter (e.g. ``"C:\\"``).
+  * **fstype**: the partition filesystem (e.g. ``"ext3"`` on UNIX or ``"NTFS"``
+    on Windows).
+  * **opts**: a comma-separated string indicating different mount options for
+    the drive/partition. Platform-dependent.
+  * **maxfile**: the maximum length a file name can have.
+  * **maxpath**: the maximum length a path name (directory name + base file
+    name) can have.
+
+  >>> import psutil
+  >>> psutil.disk_partitions()
+  [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro', maxfile=255, maxpath=4096),
+   sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw', maxfile=255, maxpath=4096)]
+
+  .. versionchanged:: 5.7.4 added *maxfile* and *maxpath* fields
 
 .. function:: disk_usage(path)
 
@@ -686,7 +717,8 @@ Network
   system as a dictionary whose keys are the NIC names and value is a named tuple
   with the following fields:
 
-  - **isup**: a bool indicating whether the NIC is up and running.
+  - **isup**: a bool indicating whether the NIC is up and running (meaning
+    ethernet cable or Wi-Fi is connected).
   - **duplex**: the duplex communication type;
     it can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
     :const:`NIC_DUPLEX_UNKNOWN`.
@@ -705,6 +737,7 @@ Network
 
   .. versionadded:: 3.0.0
 
+  .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
 
 Sensors
 -------
@@ -741,7 +774,7 @@ Sensors
 
   Return hardware fans speed. Each entry is a named tuple representing a
   certain hardware sensor fan.
-  Fan speed is expressed in RPM (rounds per minute).
+  Fan speed is expressed in RPM (revolutions per minute).
   If sensors are not supported by the OS an empty dict is returned.
   Example::
 
@@ -819,7 +852,7 @@ Other system info
   Return users currently connected on the system as a list of named tuples
   including the following fields:
 
-  - **user**: the name of the user.
+  - **name**: the name of the user.
   - **terminal**: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
   - **host**: the host name associated with the entry, if any.
@@ -1143,16 +1176,15 @@ Process class
     >>> psutil.Process().environ()
     {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
 
-    Availability: Linux, macOS, Windows, SunOS
-
     .. versionadded:: 4.0.0
     .. versionchanged:: 5.3.0 added SunOS support
     .. versionchanged:: 5.6.3 added AIX suport
+    .. versionchanged:: 5.7.3 added BSD suport
 
   .. method:: create_time()
 
     The process creation time as a floating point number expressed in seconds
-    since the epoch, in UTC. The return value is cached after first call.
+    since the epoch. The return value is cached after first call.
 
       >>> import psutil, datetime
       >>> p = psutil.Process()
@@ -1328,16 +1360,17 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>> # process may open no more than 128 file descriptors
-      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))
-      >>> # process may create files no bigger than 1024 bytes
-      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))
-      >>> # get
-      >>> p.rlimit(psutil.RLIMIT_FSIZE)
+      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
+      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
+      >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
       (1024, 1024)
       >>>
 
-    Availability: Linux
+    Also see `procinfo.py`_ script.
+
+    Availability: Linux, FreeBSD
+
+    .. versionchanged:: 5.7.3 added FreeBSD support
 
   .. method:: io_counters()
 
@@ -1424,7 +1457,7 @@ Process class
     - **system**: time spent in kernel mode.
     - **children_user**: user time of all child processes (always ``0`` on
       Windows and macOS).
-    - **system_user**: user time of all child processes (always ``0`` on
+    - **children_system**: system time of all child processes (always ``0`` on
       Windows and macOS).
     - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
       This value is excluded from `user` and `system` times count (because the
@@ -1626,7 +1659,7 @@ Process class
     (USS, PSS and swap).
     The additional metrics provide a better representation of "effective"
     process memory consumption (in case of USS) as explained in detail in this
-    `blog post <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
     :meth:`memory_info` and is considerably slower.
@@ -2227,29 +2260,43 @@ Process priority constants
 Process resources constants
 ---------------------------
 
-.. data:: RLIM_INFINITY
-.. data:: RLIMIT_AS
-.. data:: RLIMIT_CORE
-.. data:: RLIMIT_CPU
-.. data:: RLIMIT_DATA
-.. data:: RLIMIT_FSIZE
-.. data:: RLIMIT_LOCKS
-.. data:: RLIMIT_MEMLOCK
-.. data:: RLIMIT_MSGQUEUE
-.. data:: RLIMIT_NICE
-.. data:: RLIMIT_NOFILE
-.. data:: RLIMIT_NPROC
-.. data:: RLIMIT_RSS
-.. data:: RLIMIT_RTPRIO
-.. data:: RLIMIT_RTTIME
-.. data:: RLIMIT_SIGPENDING
-.. data:: RLIMIT_STACK
+Linux / FreeBSD:
 
-  Constants used for getting and setting process resource limits to be used in
-  conjunction with :meth:`psutil.Process.rlimit()`. See `man prlimit`_ for
-  further information.
+  .. data:: RLIM_INFINITY
+  .. data:: RLIMIT_AS
+  .. data:: RLIMIT_CORE
+  .. data:: RLIMIT_CPU
+  .. data:: RLIMIT_DATA
+  .. data:: RLIMIT_FSIZE
+  .. data:: RLIMIT_MEMLOCK
+  .. data:: RLIMIT_NOFILE
+  .. data:: RLIMIT_NPROC
+  .. data:: RLIMIT_RSS
+  .. data:: RLIMIT_STACK
 
-  Availability: Linux
+Linux specific:
+
+  .. data:: RLIMIT_LOCKS
+  .. data:: RLIMIT_MSGQUEUE
+  .. data:: RLIMIT_NICE
+  .. data:: RLIMIT_RTPRIO
+  .. data:: RLIMIT_RTTIME
+  .. data:: RLIMIT_SIGPENDING
+
+FreeBSD specific:
+
+  .. data:: RLIMIT_SWAP
+  .. data:: RLIMIT_SBSIZE
+  .. data:: RLIMIT_NPTS
+
+Constants used for getting and setting process resource limits to be used in
+conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
+for further information.
+
+Availability: Linux, FreeBSD
+
+.. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
+  ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
 
 Connections constants
 ---------------------
@@ -2369,7 +2416,7 @@ Kill process tree
                      timeout=None, on_terminate=None):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callabck function which is
+      "on_terminate", if specified, is a callback function which is
       called as soon as a child terminates.
       """
       assert pid != os.getpid(), "won't kill myself"
@@ -2378,7 +2425,10 @@ Kill process tree
       if include_parent:
           children.append(parent)
       for p in children:
-          p.send_signal(sig)
+          try:
+              p.send_signal(sig)
+          except psutil.NoSuchProcess:
+              pass
       gone, alive = psutil.wait_procs(children, timeout=timeout,
                                       callback=on_terminate)
       return (gone, alive)
@@ -2472,10 +2522,12 @@ FAQs
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
   On Unix you may run the Python process as root or use the SUID bit
-  (this is the trick used by tools such as ``ps`` and ``netstat``).
+  (``ps`` and ``netstat`` does this).
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
-  the Python script as a Windows service (this is the trick used by tools
-  such as ProcessHacker).
+  the Python script as a Windows service (ProcessHacker does this).
+
+* Q: is MinGW supported on Windows?
+* A: no, you should Visual Studio (see `development guide`_).
 
 Running tests
 =============
@@ -2483,6 +2535,12 @@ Running tests
 ::
 
     $ python3 -m psutil.tests
+
+Security
+========
+
+To report a security vulnerability, please use the `Tidelift security
+contact`_.  Tidelift will coordinate the fix and disclosure.
 
 Development guide
 =================
@@ -2492,8 +2550,10 @@ If you want to develop psutil take a look at the `development guide`_.
 Platforms support history
 =========================
 
+* psutil 5.8.0 (2020-12): **PyPy 2** on Windows
+* psutil 5.7.1 (2020-07): **Windows Nano**
 * psutil 5.7.0 (2020-02): drop Windows XP & Server 2003 support
-* psutil 5.7.0 (2020-02): **PyPy** on Windows
+* psutil 5.7.0 (2020-02): **PyPy 3** on Windows
 * psutil 5.4.0 (2017-11): **AIX**
 * psutil 3.4.1 (2016-01): **NetBSD**
 * psutil 3.3.0 (2015-11): **OpenBSD**
@@ -2506,6 +2566,22 @@ Supported Python versions are 2.6, 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2020-12-19:
+  `5.8.0 <https://pypi.org/project/psutil/5.8.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#580>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.7.3...release-5.8.0#files_bucket>`__
+- 2020-10-23:
+  `5.7.3 <https://pypi.org/project/psutil/5.7.3/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#573>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.7.2...release-5.7.3#files_bucket>`__
+- 2020-07-15:
+  `5.7.2 <https://pypi.org/project/psutil/5.7.2/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#572>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.7.1...release-5.7.2#files_bucket>`__
+- 2020-07-15:
+  `5.7.1 <https://pypi.org/project/psutil/5.7.1/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#571>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.7.0...release-5.7.1#files_bucket>`__
 - 2020-02-18:
   `5.7.0 <https://pypi.org/project/psutil/5.7.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#570>`__ -
@@ -2831,14 +2907,13 @@ Timeline
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
+.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
-.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
+.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
@@ -2865,6 +2940,7 @@ Timeline
 .. _`os.times`: https://docs.python.org//library/os.html#os.times
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
 .. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
 .. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
 .. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
@@ -2877,9 +2953,10 @@ Timeline
 .. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
 .. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
 .. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
-.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
 .. _Tidelift security contact: https://tidelift.com/security
+.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme

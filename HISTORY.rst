@@ -1,9 +1,101 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.7.1 (unreleased)
-==================
+5.8.1 (IN DEVELOPMENT)
+======================
 
 XXXX-XX-XX
+
+**Enhancements**
+
+- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
+  frequency values for all CPUs from /proc/cpuinfo instead of opening many
+  files in /sys fs.  (patch by marxin)
+
+**Bug fixes**
+
+- 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
+  determined (instead of crashing).
+- 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
+  for one connection; this is now ignored.
+- 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
+  called after sprintf().  (patch by alxchk)
+- 1874_: [Solaris] swap output error due to incorrect range.
+- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
+- 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+
+5.8.0
+=====
+
+2020-12-19
+
+**Enhancements**
+
+- 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+  which are the maximum file name and path name length.
+- 1872_: [Windows] added support for PyPy 2.7.
+- 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
+- 1880_: get rid of Travis and Cirrus CI services (they are no longer free).
+  CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes).
+  AppVeyor is still being used for Windows CI.
+
+**Bug fixes**
+
+- 1708_: [Linux] get rid of sensors_temperatures() duplicates.  (patch by Tim
+  Schlueter).
+- 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
+  from 32 bit ones (NtWoW64 APIs).
+- 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
+  access to memory location" on Python 3.9.
+- 1874_: [Solaris] wrong swap output given when encrypted column is present.
+- 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
+  has no corresponding account name. In this case AccessDenied is now raised.
+- 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
+  AccessDenied or NoSuchProcess depending on whether the PID is alive.
+- 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
+  it gets translated into AccessDenied.
+- 1891_: [macOS] get rid of deprecated getpagesize().
+
+5.7.3
+=====
+
+2020-10-23
+
+**Enhancements**
+
+- 809_: [FreeBSD] add support for `Process.rlimit()`.
+- 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
+- 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
+  running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
+- 1837_: [Linux] improved battery detection and charge "secsleft" calculation
+  (patch by aristocratos)
+
+**Bug fixes**
+
+- 1620_: [Linux] cpu_count(logical=False) result is incorrect on systems with
+  more than one CPU socket.  (patch by Vincent A. Arcila)
+- 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
+  alive but the exe file which launched it got deleted.
+- 1791_: [macOS] fix missing include for getpagesize().
+- 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
+  pointer.
+- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
+  the remaining values, still return a result instead of None.
+  (patch by aristocratos)
+
+5.7.2
+=====
+
+2020-07-15
+
+**Bug fixes**
+
+- wheels for 2.7 were inadvertently deleted.
+
+5.7.1
+=====
+
+2020-07-15
 
 **Enhancements**
 
@@ -24,11 +116,18 @@ XXXX-XX-XX
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
+- 1757_: memory leak tests are now stable.
+- 1768_: [Windows] added support for Windows Nano Server. (contributed by
+  Julien Lebot)
 
 **Bug fixes**
 
 - 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
+- 1760_: [Linux] Process.rlimit() does not handle long long type properly.
+- 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
+- 1781_: fix signature of callback function for getloadavg().  (patch by
+  Ammar Askar)
 
 5.7.0
 =====
@@ -170,7 +269,7 @@ XXXX-XX-XX
   average calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
   `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
-  the number of physical CPUs in case /proc/cpuinfo does not provide this info.
+  the number of CPU cores in case /proc/cpuinfo does not provide this info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 - 1476_: [Windows] it is now possible to set process high I/O priority
@@ -416,7 +515,7 @@ XXXX-XX-XX
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
-- 771_: [Windows] cpu_count() (both logical and physical) return a wrong
+- 771_: [Windows] cpu_count() (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
 - 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
   process groups (> 64 cores).
@@ -1220,8 +1319,8 @@ XXXX-XX-XX
 - 593_: [FreeBSD] Process().memory_maps() segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
 - 611_: [SunOS] net_io_counters has send and received swapped
-- 614_: [Linux]: cpu_count(logical=False) return the number of physical CPUs
-  instead of physical cores.
+- 614_: [Linux]: cpu_count(logical=False) return the number of sockets instead
+  of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
 - 628_: [Linux] Process.name() truncates process name in case it contains
   spaces or parentheses.
@@ -1338,7 +1437,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 424_: [Windows] installer for Python 3.X 64 bit.
-- 427_: number of logical and physical CPUs (psutil.cpu_count()).
+- 427_: number of logical CPUs and physical cores (psutil.cpu_count()).
 - 447_: psutil.wait_procs() timeout parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
 - 453_: tests on Python < 2.7 require unittest2 module.

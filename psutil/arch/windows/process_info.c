@@ -50,6 +50,48 @@ enum psutil_process_data_kind {
 };
 
 
+static void
+psutil_convert_winerr(ULONG err, char* syscall) {
+    char fullmsg[8192];
+
+    if (err == ERROR_NOACCESS)  {
+        sprintf(fullmsg, "%s -> ERROR_NOACCESS", syscall);
+        psutil_debug(fullmsg);
+        AccessDenied(fullmsg);
+    }
+    else {
+        PyErr_SetFromOSErrnoWithSyscall(syscall);
+    }
+}
+
+
+static void
+psutil_convert_ntstatus_err(NTSTATUS status, char* syscall) {
+    ULONG err;
+
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
+    else
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    psutil_convert_winerr(err, syscall);
+}
+
+
+static void
+psutil_giveup_with_ad(NTSTATUS status, char* syscall) {
+    ULONG err;
+    char fullmsg[8192];
+
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
+    else
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    sprintf(fullmsg, "%s -> %lu (%s)", syscall, err, strerror(err));
+    psutil_debug(fullmsg);
+    AccessDenied(fullmsg);
+}
+
+
 /*
  * Get data from the process with the given pid.  The data is returned
  * in the pdata output member as a nul terminated string which must be
@@ -87,16 +129,14 @@ psutil_get_process_data(DWORD pid,
          http://www.drdobbs.com/embracing-64-bit-windows/184401966
      */
     SIZE_T size = 0;
-#ifndef _WIN64
-    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
-    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
-#endif
     HANDLE hProcess = NULL;
     LPCVOID src;
     WCHAR *buffer = NULL;
 #ifdef _WIN64
     LPVOID ppeb32 = NULL;
 #else
+    static __NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
+    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
     PVOID64 src64;
     BOOL weAreWow64;
     BOOL theyAreWow64;
@@ -133,7 +173,7 @@ psutil_get_process_data(DWORD pid,
         if (!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -146,7 +186,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -164,8 +204,19 @@ psutil_get_process_data(DWORD pid,
                 break;
         }
     } else
-#else
-    /* 32 bit case.  Check if the target is also 32 bit. */
+#else  // #ifdef _WIN64
+    // 32 bit process. In here we may run into a lot of errors, e.g.:
+    // * [Error 0] The operation completed successfully
+    //   (originated from NtWow64ReadVirtualMemory64)
+    // * [Error 998] Invalid access to memory location:
+    //   (originated from NtWow64ReadVirtualMemory64)
+    // Refs:
+    // * https://github.com/giampaolo/psutil/issues/1839
+    // * https://github.com/giampaolo/psutil/pull/1866
+    // Since the following code is quite hackish and fails unpredictably,
+    // in case of any error from NtWow64* APIs we raise AccessDenied.
+
+    // 32 bit case.  Check if the target is also 32 bit.
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
             !IsWow64Process(hProcess, &theyAreWow64)) {
         PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
@@ -206,10 +257,14 @@ psutil_get_process_data(DWORD pid,
                 sizeof(pbi64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(
-                    status,
-                    "NtWow64QueryInformationProcess64(ProcessBasicInformation)"
-            );
+            /*
+            psutil_convert_ntstatus_err(
+                status,
+                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
+            */
+            psutil_giveup_with_ad(
+                status,
+                "NtWow64QueryInformationProcess64(ProcessBasicInformation)");
             goto error;
         }
 
@@ -221,7 +276,13 @@ psutil_get_process_data(DWORD pid,
                 sizeof(peb64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
+            /*
+            psutil_convert_ntstatus_err(
+                status, "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
+            */
+            psutil_giveup_with_ad(
+                status,
+                "NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress)");
             goto error;
         }
 
@@ -233,10 +294,13 @@ psutil_get_process_data(DWORD pid,
                 sizeof(procParameters64),
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(
-                    status,
-                    "NtWow64ReadVirtualMemory64(ProcessParameters)"
-            );
+            /*
+            psutil_convert_ntstatus_err(
+                status, "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
+            */
+            psutil_giveup_with_ad(
+                status,
+                "NtWow64ReadVirtualMemory64(peb64.ProcessParameters)");
             goto error;
         }
 
@@ -284,7 +348,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -297,7 +361,7 @@ psutil_get_process_data(DWORD pid,
         {
             // May fail with ERROR_PARTIAL_COPY, see:
             // https://github.com/giampaolo/psutil/issues/875
-            PyErr_SetFromWindowsErr(0);
+            psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
             goto error;
         }
 
@@ -343,7 +407,8 @@ psutil_get_process_data(DWORD pid,
                 size,
                 NULL);
         if (!NT_SUCCESS(status)) {
-            psutil_SetFromNTStatusErr(status, "NtWow64ReadVirtualMemory64");
+            // psutil_convert_ntstatus_err(status, "NtWow64ReadVirtualMemory64");
+            psutil_giveup_with_ad(status, "NtWow64ReadVirtualMemory64");
             goto error;
         }
     } else
@@ -351,7 +416,7 @@ psutil_get_process_data(DWORD pid,
     if (!ReadProcessMemory(hProcess, src, buffer, size, NULL)) {
         // May fail with ERROR_PARTIAL_COPY, see:
         // https://github.com/giampaolo/psutil/issues/875
-        PyErr_SetFromWindowsErr(0);
+        psutil_convert_winerr(GetLastError(), "ReadProcessMemory");
         goto error;
     }
 
@@ -408,7 +473,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
         AccessDenied("NtQueryInformationProcess(ProcessBasicInformation) -> "
-                     "STATUS_NOT_FOUND translated into PermissionError");
+                     "STATUS_NOT_FOUND");
         goto error;
     }
 
@@ -698,16 +763,16 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 
     py_retlist = Py_BuildValue(
 #if defined(_WIN64)
-        "kkdddiKKKKKK" "kKKKKKKKKK",
+        "kkdddkKKKKKK" "kKKKKKKKKK",
 #else
-        "kkdddiKKKKKK" "kIIIIIIIII",
+        "kkdddkKKKKKK" "kIIIIIIIII",
 #endif
         process->HandleCount,                   // num handles
         ctx_switches,                           // num ctx switches
         user_time,                              // cpu user time
         kernel_time,                            // cpu kernel time
         create_time,                            // create time
-        (int)process->NumberOfThreads,          // num threads
+        process->NumberOfThreads,               // num threads
         // IO counters
         process->ReadOperationCount.QuadPart,   // io rcount
         process->WriteOperationCount.QuadPart,  // io wcount

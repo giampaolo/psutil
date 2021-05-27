@@ -12,7 +12,6 @@ Tests for testing utils (psutil.tests namespace).
 import collections
 import contextlib
 import errno
-import io
 import os
 import socket
 import stat
@@ -24,12 +23,11 @@ from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
-from psutil._compat import redirect_stderr
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
+from psutil.tests import CI_TESTING
 from psutil.tests import create_sockets
 from psutil.tests import get_free_port
 from psutil.tests import HAS_CONNECTIONS_UNIX
@@ -357,65 +355,55 @@ class TestMemLeakClass(TestMemoryLeak):
         def fun():
             cnt['cnt'] += 1
         cnt = {'cnt': 0}
-        self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 12)
-        self.execute(fun, times=10, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 33)
-
-    @retry_on_failure()
-    def test_warmup_times(self):
-        def fun():
-            cnt['cnt'] += 1
-        cnt = {'cnt': 0}
-        self.execute(fun, times=1, warmup_times=10)
-        self.assertEqual(cnt['cnt'], 12)
+        self.execute(fun, times=10, warmup_times=15)
+        self.assertEqual(cnt['cnt'], 26)
 
     def test_param_err(self):
         self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
         self.assertRaises(ValueError, self.execute, lambda: 0, times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, warmup_times=-1)
         self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
-        self.assertRaises(ValueError, self.execute, lambda: 0, retry_for=-1)
+        self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
 
     @retry_on_failure()
-    def test_leak(self):
-        def fun():
-            ls.append("x" * 24 * 1024)
+    @unittest.skipIf(CI_TESTING, "skipped on CI")
+    def test_leak_mem(self):
         ls = []
-        times = 100
-        self.assertRaises(AssertionError, self.execute, fun, times=times,
-                          warmup_times=10, retry_for=None)
-        self.assertEqual(len(ls), times + 11)
 
-    @retry_on_failure(retries=20)  # 2 secs
-    def test_leak_with_retry(self, ls=[]):
-        def fun():
+        def fun(ls=ls):
             ls.append("x" * 24 * 1024)
-        times = 100
-        f = io.StringIO() if PY3 else io.BytesIO()
-        with redirect_stderr(f):
-            self.assertRaises(AssertionError, self.execute, fun, times=times,
-                              retry_for=0.1)
-        self.assertIn("try calling fun for another", f.getvalue())
-        self.assertGreater(len(ls), times)
 
-    @retry_on_failure()
+        try:
+            # will consume around 3M in total
+            self.assertRaisesRegex(AssertionError, "extra-mem",
+                                   self.execute, fun, times=50)
+        finally:
+            del ls
+
+    def test_unclosed_files(self):
+        def fun():
+            f = open(__file__)
+            self.addCleanup(f.close)
+            box.append(f)
+
+        box = []
+        kind = "fd" if POSIX else "handle"
+        self.assertRaisesRegex(AssertionError, "unclosed " + kind,
+                               self.execute, fun)
+
     def test_tolerance(self):
         def fun():
             ls.append("x" * 24 * 1024)
         ls = []
         times = 100
         self.execute(fun, times=times, warmup_times=0,
-                     tolerance=200 * 1024 * 1024, check_fds=False)
-        self.assertEqual(len(ls), times)
+                     tolerance=200 * 1024 * 1024)
+        self.assertEqual(len(ls), times + 1)
 
-    @retry_on_failure()
     def test_execute_w_exc(self):
         def fun():
             1 / 0
-        # XXX: use high tolerance, occasional false positive
-        self.execute_w_exc(ZeroDivisionError, fun, times=2000,
-                           warmup_times=20, tolerance=200 * 1024, retry_for=3)
+        self.execute_w_exc(ZeroDivisionError, fun)
         with self.assertRaises(ZeroDivisionError):
             self.execute_w_exc(OSError, fun)
 
@@ -423,17 +411,6 @@ class TestMemLeakClass(TestMemoryLeak):
             pass
         with self.assertRaises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun)
-
-    def test_unclosed_fds(self):
-        def fun():
-            f = open(__file__)
-            self.addCleanup(f.close)
-            box.append(f)
-
-        box = []
-        self.assertRaisesRegex(
-            AssertionError, r"unclosed fd\(s\) or handle\(s\)",
-            self.execute, fun, times=5, warmup_times=5)
 
 
 class TestTestingUtils(PsutilTestCase):
@@ -447,7 +424,6 @@ class TestTestingUtils(PsutilTestCase):
 
     def test_system_namespace(self):
         ns = system_namespace()
-        ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
         self.assertEqual(fun(), psutil.net_if_addrs())
 

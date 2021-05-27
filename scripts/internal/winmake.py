@@ -47,21 +47,19 @@ DEPS = [
     "pyreadline",
     "setuptools",
     "wheel",
-    "wmi",
     "requests"
 ]
-if sys.version_info[:2] <= (2, 6):
+if sys.version_info[:2] <= (2, 7):
     DEPS.append('unittest2')
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
-if PYPY:
-    pass
-elif sys.version_info[:2] <= (3, 4):
-    DEPS.append("pypiwin32==219")
-else:
-    DEPS.append("pypiwin32")
+if sys.version_info[:2] <= (3, 4):
+    DEPS.append('enum34')
+if not PYPY:
+    DEPS.append("pywin32")
+    DEPS.append("wmi")
 
 _cmds = {}
 if PY3:
@@ -208,12 +206,6 @@ def recursive_rm(*patterns):
             for pattern in patterns:
                 if fnmatch.fnmatch(dir, pattern):
                     safe_rmtree(os.path.join(root, dir))
-
-
-def test_setup():
-    os.environ['PYTHONWARNINGS'] = 'all'
-    os.environ['PSUTIL_TESTING'] = '1'
-    os.environ['PSUTIL_DEBUG'] = '1'
 
 
 # ===================================================================
@@ -370,7 +362,6 @@ def clean():
         "*__pycache__",
         ".coverage",
         ".failed-tests.txt",
-        ".tox",
     )
     safe_rmtree("build")
     safe_rmtree(".coverage")
@@ -400,7 +391,6 @@ def lint():
 def test(name=RUNNER_PY):
     """Run tests"""
     build()
-    test_setup()
     sh("%s %s" % (PYTHON, name))
 
 
@@ -408,7 +398,6 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    test_setup()
     sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
@@ -418,71 +407,67 @@ def coverage():
 def test_process():
     """Run process tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 def test_system():
     """Run system tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 def test_platform():
     """Run windows only tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 def test_misc():
     """Run misc tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 def test_unicode():
     """Run unicode tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 def test_connections():
     """Run connections tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 def test_contracts():
     """Run contracts tests"""
     build()
-    test_setup()
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
+
+
+def test_testutils():
+    """Run test utilities tests"""
+    build()
+    sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
 
 
 def test_by_name(name):
     """Run test by name"""
     build()
-    test_setup()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
 def test_failed():
     """Re-run tests which failed on last run."""
     build()
-    test_setup()
     sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
 
 
 def test_memleaks():
     """Run memory leaks tests"""
     build()
-    test_setup()
-    sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
+    sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
 
 
 def install_git_hooks():
@@ -510,15 +495,19 @@ def bench_oneshot_2():
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     build()
-    test_setup()
     sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
 
 
 def print_api_speed():
     """Benchmark all API calls."""
     build()
-    test_setup()
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
+
+
+def download_appveyor_wheels():
+    """Download appveyor wheels."""
+    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+       "--user giampaolo --project psutil" % PYTHON)
 
 
 def get_python(path):
@@ -528,9 +517,25 @@ def get_python(path):
         return path
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
-    vers = ('26', '27', '36', '37', '38',
-            '26-64', '27-64', '36-64', '37-64', '38-64'
-            '26-32', '27-32', '36-32', '37-32', '38-32')
+    vers = (
+        '26',
+        '26-32',
+        '26-64',
+        '27',
+        '27-32',
+        '27-64',
+        '36',
+        '36-32',
+        '36-64',
+        '37',
+        '37-32',
+        '37-64',
+        '38',
+        '38-32',
+        '38-64',
+        '39-32',
+        '39-64',
+    )
     for v in vers:
         pypath = r'C:\\python%s\python.exe' % v
         if path in pypath and os.path.isfile(pypath):
@@ -550,6 +555,7 @@ def main():
     sp.add_parser('build', help="build")
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
+    sp.add_parser('download-appveyor-wheels', help="download wheels.")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
@@ -569,6 +575,7 @@ def main():
     sp.add_parser('test-process', help="run process tests")
     sp.add_parser('test-system', help="run system tests")
     sp.add_parser('test-unicode', help="run unicode tests")
+    sp.add_parser('test-testutils', help="run test utils tests")
     sp.add_parser('uninstall', help="uninstall psutil")
     sp.add_parser('upload-wheels', help="upload wheel files on PyPI")
     sp.add_parser('wheel', help="create wheel file")

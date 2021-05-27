@@ -47,20 +47,6 @@
 // ============================================================================
 
 
-static void
-convert_kvm_err(const char *syscall, char *errbuf) {
-    char fullmsg[8192];
-
-    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
-    if (strstr(errbuf, "Permission denied") != NULL)
-        AccessDenied(fullmsg);
-    else if (strstr(errbuf, "Operation not permitted") != NULL)
-        AccessDenied(fullmsg);
-    else
-        PyErr_Format(PyExc_RuntimeError, fullmsg);
-}
-
-
 int
 psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
@@ -311,7 +297,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp uvmexp;
     struct bcachestats bcstats;
     struct vmtotal vmdata;
-    long pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
 
     size = sizeof(total_physmem);
     if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {

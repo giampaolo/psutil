@@ -5,50 +5,10 @@ A collection of ideas and notes about stuff to implement in future versions.
 "#NNN" occurrences refer to bug tracker issues at:
 https://github.com/giampaolo/psutil/issues
 
-PLATFORMS
-=========
-
-- #355: Android (with patch)
-- #82: Cygwin (PR at #998)
-- #276: GNU/Hurd
-- #693: Windows Nano
-- #1251: Windows bash
-- DragonFlyBSD
-- HP-UX
-
 FEATURES
 ========
 
-- set process name/title
-
-- #1115: users() idle time.
-
-- #1102: Process.is64bit().
-
-- #371: sensors_temperatures() at least for macOS.
-
-- #669: Windows / net_if_addrs(): return broadcast addr.
-
-- #550: CPU info (frequency, architecture, threads per core, cores per socket,
-  sockets, ...)
-
-- #772: extended net_io_counters() metrics.
-
-- #900: wheels for macOS and Linux.
-
-- #922: extended net_io_stats() info.
-
-- #914: extended platform specific process info.
-
-- #898: wifi stats
-
-- #893: (BSD) process environ
-
-- #809: (BSD) per-process resource limits (rlimit()).
-
 - (UNIX) process root (different from cwd)
-
-- #782: (UNIX) process num of signals received.
 
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
@@ -58,16 +18,14 @@ FEATURES
   Linux: yes
   Others: ?
 
-- Process.threads(): thread names; patch for macOS available at:
-  https://code.google.com/p/plcrashreporter/issues/detail?id=65
-  Sample code:
-  https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
-
 - Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
 - (Windows) fall back on using WMIC for Process methods returning AccessDenied
 
-- #613: thread names.
+- #613: thread names; patch for macOS available at:
+  https://code.google.com/p/plcrashreporter/issues/detail?id=65
+  Sample code:
+  https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
 
 - scripts/taskmgr-gui.py (using tk).
 
@@ -139,19 +97,7 @@ FEATURES
   NoSuchProcess and AccessDenied? Not that we need it, but currently we
   cannot raise a TimeoutExpired exception with a specific error string.
 
-- process_iter() might grow an "attrs" parameter similar to Process.as_dict()
-  invoke the necessary methods and include the results into a "cache"
-  attribute attached to the returned Process instances so that one can avoid
-  catching NSP and AccessDenied:
-  for p in process_iter(attrs=['cpu_percent']):
-  print(p.cache['cpu_percent'])
-  This also leads questions as whether we should introduce a sorting order.
-
 - round Process.memory_percent() result?
-
-- #550: number of threads per core.
-
-- cpu_percent() and cpu_times_percent() use global vars so are not thread safe.
 
 BUGFIXES
 ========

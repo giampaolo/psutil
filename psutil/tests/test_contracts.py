@@ -14,6 +14,7 @@ import multiprocessing
 import os
 import signal
 import stat
+import sys
 import time
 import traceback
 
@@ -28,20 +29,24 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._common import isfile_strict
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
+from psutil.tests import APPVEYOR
+from psutil.tests import check_connection_ntuple
+from psutil.tests import CI_TESTING
 from psutil.tests import create_sockets
 from psutil.tests import enum
-from psutil.tests import get_kernel_version
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import is_namedtuple
+from psutil.tests import kernel_version
 from psutil.tests import process_namespace
 from psutil.tests import PsutilTestCase
+from psutil.tests import PYPY
 from psutil.tests import serialrun
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import unittest
@@ -85,29 +90,38 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    def test_linux_rlimit(self):
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
+    def test_rlimit(self):
         ae = self.assertEqual
-        hasit = LINUX and get_kernel_version() >= (2, 6, 36)
-        ae(hasattr(psutil.Process, "rlimit"), hasit)
-        ae(hasattr(psutil, "RLIM_INFINITY"), hasit)
-        ae(hasattr(psutil, "RLIMIT_AS"), hasit)
-        ae(hasattr(psutil, "RLIMIT_CORE"), hasit)
-        ae(hasattr(psutil, "RLIMIT_CPU"), hasit)
-        ae(hasattr(psutil, "RLIMIT_DATA"), hasit)
-        ae(hasattr(psutil, "RLIMIT_FSIZE"), hasit)
-        ae(hasattr(psutil, "RLIMIT_LOCKS"), hasit)
-        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), hasit)
-        ae(hasattr(psutil, "RLIMIT_NOFILE"), hasit)
-        ae(hasattr(psutil, "RLIMIT_NPROC"), hasit)
-        ae(hasattr(psutil, "RLIMIT_RSS"), hasit)
-        ae(hasattr(psutil, "RLIMIT_STACK"), hasit)
+        ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_AS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CORE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_CPU"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_DATA"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_FSIZE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_MEMLOCK"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NOFILE"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPROC"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_RSS"), LINUX or FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_STACK"), LINUX or FREEBSD)
 
-        hasit = LINUX and get_kernel_version() >= (3, 0)
-        ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), hasit)
-        ae(hasattr(psutil, "RLIMIT_NICE"), hasit)
-        ae(hasattr(psutil, "RLIMIT_RTPRIO"), hasit)
-        ae(hasattr(psutil, "RLIMIT_RTTIME"), hasit)
-        ae(hasattr(psutil, "RLIMIT_SIGPENDING"), hasit)
+        ae(hasattr(psutil, "RLIMIT_LOCKS"), LINUX)
+        if POSIX:
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_MSGQUEUE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_NICE"), LINUX)
+            if kernel_version() >= (2, 6, 12):
+                ae(hasattr(psutil, "RLIMIT_RTPRIO"), LINUX)
+            if kernel_version() >= (2, 6, 25):
+                ae(hasattr(psutil, "RLIMIT_RTTIME"), LINUX)
+            if kernel_version() >= (2, 6, 8):
+                ae(hasattr(psutil, "RLIMIT_SIGPENDING"), LINUX)
+
+        ae(hasattr(psutil, "RLIMIT_SWAP"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_SBSIZE"), FREEBSD)
+        ae(hasattr(psutil, "RLIMIT_NPTS"), FREEBSD)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
@@ -119,11 +133,8 @@ class TestAvailSystemAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
 
     def test_cpu_freq(self):
-        linux = (LINUX and
-                 (os.path.exists("/sys/devices/system/cpu/cpufreq") or
-                  os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq")))
         self.assertEqual(hasattr(psutil, "cpu_freq"),
-                         linux or MACOS or WINDOWS or FREEBSD)
+                         LINUX or MACOS or WINDOWS or FREEBSD)
 
     def test_sensors_temperatures(self):
         self.assertEqual(
@@ -141,7 +152,8 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
     def test_environ(self):
         self.assertEqual(hasattr(psutil.Process, "environ"),
-                         LINUX or MACOS or WINDOWS or AIX or SUNOS)
+                         LINUX or MACOS or WINDOWS or AIX or SUNOS or
+                         FREEBSD or OPENBSD or NETBSD)
 
     def test_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
@@ -155,8 +167,10 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
+    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
+                     "unsupported on GITHUB_ACTIONS + LINUX")
     def test_rlimit(self):
-        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX)
+        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
     def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
@@ -239,6 +253,8 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(disk.mountpoint, str)
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
+            self.assertIsInstance(disk.maxfile, int)
+            self.assertIsInstance(disk.maxpath, int)
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):
@@ -253,7 +269,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, addrs in psutil.net_if_addrs().items():
             self.assertIsInstance(ifname, str)
             for addr in addrs:
-                if enum is not None:
+                if enum is not None and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 else:
                     self.assertIsInstance(addr.family, int)
@@ -338,9 +354,9 @@ def proc_info(pid):
         tcase.assertEqual(exc.pid, pid)
         tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
-            # XXX investigate zombie/ppid relation on POSIX
-            # tcase.assertEqual(exc.ppid, ppid)
-            pass
+            if exc.ppid is not None:
+                tcase.assertGreaterEqual(exc.ppid, 0)
+                tcase.assertEqual(exc.ppid, ppid)
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)
@@ -362,18 +378,15 @@ def proc_info(pid):
     name, ppid = d['name'], d['ppid']
     info = {'pid': proc.pid}
     ns = process_namespace(proc)
-    with proc.oneshot():
-        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-            try:
-                info[fun_name] = fun()
-            except psutil.NoSuchProcess as exc:
-                check_exception(exc, proc, name, ppid)
-                do_wait()
-                return info
-            except psutil.AccessDenied as exc:
-                check_exception(exc, proc, name, ppid)
-                continue
-        do_wait()
+    # We don't use oneshot() because in order not to fool
+    # check_exception() in case of NSP.
+    for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+        try:
+            info[fun_name] = fun()
+        except psutil.Error as exc:
+            check_exception(exc, proc, name, ppid)
+            continue
+    do_wait()
     return info
 
 
@@ -391,13 +404,15 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.pool.terminate()
         self.pool.join()
 
-    def test_all(self):
+    def iter_proc_info(self):
         # Fixes "can't pickle <function proc_info>: it's not the
         # same object as test_contracts.proc_info".
         from psutil.tests.test_contracts import proc_info
+        return self.pool.imap_unordered(proc_info, psutil.pids())
 
+    def test_all(self):
         failures = []
-        for info in self.pool.imap_unordered(proc_info, psutil.pids()):
+        for info in self.iter_proc_info():
             for name, value in info.items():
                 meth = getattr(self, name)
                 try:
@@ -435,8 +450,12 @@ class TestFetchAllProcesses(PsutilTestCase):
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
             if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                    # XXX may fail on MACOS
-                    assert os.access(ret, os.X_OK)
+                    # XXX: may fail on MACOS
+                    try:
+                        assert os.access(ret, os.X_OK)
+                    except AssertionError:
+                        if os.path.exists(ret) and not CI_TESTING:
+                            raise
 
     def pid(self, ret, info):
         self.assertIsInstance(ret, int)
@@ -448,6 +467,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def name(self, ret, info):
         self.assertIsInstance(ret, str)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         # on AIX, "<exiting>" processes don't have names
         if not AIX:
             assert ret
@@ -518,6 +539,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def num_threads(self, ret, info):
         self.assertIsInstance(ret, int)
+        if APPVEYOR and not ret and info['status'] == 'stopped':
+            return
         self.assertGreaterEqual(ret, 1)
 
     def threads(self, ret, info):
@@ -596,9 +619,11 @@ class TestFetchAllProcesses(PsutilTestCase):
                 continue
             assert os.path.isabs(f.path), f
             try:
-                assert isfile_strict(f.path), f
+                st = os.stat(f.path)
             except FileNotFoundError:
                 pass
+            else:
+                assert stat.S_ISREG(st.st_mode), f
 
     def num_fds(self, ret, info):
         self.assertIsInstance(ret, int)
@@ -609,6 +634,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertEqual(len(ret), len(set(ret)))
             for conn in ret:
                 assert is_namedtuple(conn)
+                check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
         if ret:     # 'ret' can be None or empty
@@ -681,6 +707,10 @@ class TestFetchAllProcesses(PsutilTestCase):
             priorities = [getattr(psutil, x) for x in dir(psutil)
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
+            if sys.version_info > (3, 4):
+                self.assertIsInstance(ret, enum.IntEnum)
+            else:
+                self.assertIsInstance(ret, int)
 
     def num_ctx_switches(self, ret, info):
         assert is_namedtuple(ret)

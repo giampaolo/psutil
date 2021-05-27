@@ -8,7 +8,7 @@
 A clone of 'who' command; print information about users who are
 currently logged in.
 
-$ python scripts/who.py
+$ python3 scripts/who.py
 giampaolo    console    2017-03-25 22:24                loginwindow
 giampaolo    ttys000    2017-03-25 23:28 (10.0.2.2)     sshd
 """

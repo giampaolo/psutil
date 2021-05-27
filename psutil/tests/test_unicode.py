@@ -74,12 +74,12 @@ etc.) and make sure that:
 """
 
 import os
+import shutil
 import traceback
 import warnings
 from contextlib import closing
 
 from psutil import BSD
-from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import WINDOWS
@@ -89,10 +89,9 @@ from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
-from psutil.tests import CIRRUS
+from psutil.tests import CI_TESTING
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_exe
-from psutil.tests import spawn_testproc
 from psutil.tests import get_testfn
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
@@ -104,9 +103,9 @@ from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
+from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import TESTFN_PREFIX
-from psutil.tests import TRAVIS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 import psutil
@@ -124,26 +123,26 @@ if APPVEYOR:
         # https://github.com/giampaolo/psutil/blob/
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
-        from psutil.tests import safe_rmpath as _rm
+        from psutil.tests import safe_rmpath as rm
         try:
-            return _rm(path)
+            return rm(path)
         except WindowsError:
             traceback.print_exc()
 
 
-def subprocess_supports_unicode(suffix):
+def try_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
     """
-    if PY3:
-        return True
     sproc = None
     testfn = get_testfn(suffix=suffix)
     try:
         safe_rmpath(testfn)
         create_exe(testfn)
         sproc = spawn_testproc(cmd=[testfn])
-    except UnicodeEncodeError:
+        shutil.copyfile(testfn, testfn + '-2')
+        safe_rmpath(testfn + '-2')
+    except (UnicodeEncodeError, IOError):
         return False
     else:
         return True
@@ -158,9 +157,22 @@ def subprocess_supports_unicode(suffix):
 # ===================================================================
 
 
-@serialrun
-class _BaseFSAPIsTests(object):
+class BaseUnicodeTest(PsutilTestCase):
     funky_suffix = None
+
+    def setUp(self):
+        if self.funky_suffix is not None:
+            if not try_unicode(self.funky_suffix):
+                raise self.skipTest("can't handle unicode str")
+
+
+@serialrun
+@unittest.skipIf(ASCII_FS, "ASCII fs")
+@unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
+class TestFSAPIs(BaseUnicodeTest):
+    """Test FS APIs with a funky, valid, UTF8 path name."""
+
+    funky_suffix = UNICODE_SUFFIX
 
     @classmethod
     def setUpClass(cls):
@@ -172,7 +184,12 @@ class _BaseFSAPIsTests(object):
         safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
-        raise NotImplementedError("must be implemented in subclass")
+        # Do not expect psutil to correctly handle unicode paths on
+        # Python 2 if os.listdir() is not able either.
+        here = '.' if isinstance(self.funky_name, str) else u('.')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return self.funky_name in os.listdir(here)
 
     # ---
 
@@ -229,8 +246,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -242,7 +258,7 @@ class _BaseFSAPIsTests(object):
             conn = psutil.Process().connections('unix')[0]
             self.assertIsInstance(conn.laddr, str)
             # AF_UNIX addr not set on OpenBSD
-            if not OPENBSD and not CIRRUS:  # XXX
+            if not OPENBSD:  # XXX
                 self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
@@ -255,8 +271,7 @@ class _BaseFSAPIsTests(object):
                     return conn
             raise ValueError("connection not found")
 
-        suffix = os.path.basename(self.funky_name)
-        name = self.get_testfn(suffix=suffix)
+        name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
         except UnicodeEncodeError:
@@ -280,8 +295,7 @@ class _BaseFSAPIsTests(object):
 
     @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
     @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
-    @unittest.skipIf(PYPY and WINDOWS,
-                     "copyload_shared_lib() unsupported on PYPY + WINDOWS")
+    @unittest.skipIf(PYPY, "unstable on PYPY")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
@@ -297,31 +311,8 @@ class _BaseFSAPIsTests(object):
                 self.assertIsInstance(path, str)
 
 
-# https://travis-ci.org/giampaolo/psutil/jobs/440073249
-@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
-@unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
-@unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(not subprocess_supports_unicode(UNICODE_SUFFIX),
-                 "subprocess can't deal with unicode")
-class TestFSAPIs(_BaseFSAPIsTests, PsutilTestCase):
-    """Test FS APIs with a funky, valid, UTF8 path name."""
-    funky_suffix = UNICODE_SUFFIX
-
-    def expect_exact_path_match(self):
-        # Do not expect psutil to correctly handle unicode paths on
-        # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(self.funky_name, str) else u('.')
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return self.funky_name in os.listdir(here)
-
-
-@unittest.skipIf(PYPY and TRAVIS, "unreliable on PYPY + TRAVIS")
-@unittest.skipIf(MACOS and TRAVIS, "unreliable on TRAVIS")  # TODO
-@unittest.skipIf(PYPY, "unreliable on PYPY")
-@unittest.skipIf(not subprocess_supports_unicode(INVALID_UNICODE_SUFFIX),
-                 "subprocess can't deal with invalid unicode")
-class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
+@unittest.skipIf(CI_TESTING, "unreliable on CI")
+class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
@@ -336,8 +327,9 @@ class TestFSAPIsWithInvalidPath(_BaseFSAPIsTests, PsutilTestCase):
 # ===================================================================
 
 
-class TestNonFSAPIS(PsutilTestCase):
+class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
+    funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")
@@ -348,15 +340,14 @@ class TestNonFSAPIS(PsutilTestCase):
         # we use "è", which is part of the extended ASCII table
         # (unicode point <= 255).
         env = os.environ.copy()
-        funky_str = UNICODE_SUFFIX if PY3 else 'è'
-        env['FUNNY_ARG'] = funky_str
+        env['FUNNY_ARG'] = self.funky_suffix
         sproc = self.spawn_testproc(env=env)
         p = psutil.Process(sproc.pid)
         env = p.environ()
         for k, v in env.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
-        self.assertEqual(env['FUNNY_ARG'], funky_str)
+        self.assertEqual(env['FUNNY_ARG'], self.funky_suffix)
 
 
 if __name__ == '__main__':

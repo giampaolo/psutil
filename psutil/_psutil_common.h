@@ -15,6 +15,11 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
 
+// strncpy() variant which appends a null terminator.
+#define PSUTIL_STRNCPY(dst, src, n) \
+    strncpy(dst, src, n - 1); \
+    dst[n - 1] = '\0'
+
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
@@ -100,6 +105,12 @@ void psutil_debug(const char* format, ...);
 int psutil_setup(void);
 
 // ====================================================================
+// --- BSD
+// ====================================================================
+
+void convert_kvm_err(const char *syscall, char *errbuf);
+
+// ====================================================================
 // --- Windows
 // ====================================================================
 
@@ -122,6 +133,14 @@ int psutil_setup(void);
     #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
     #define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
     #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+
+    #define _NT_FACILITY_MASK 0xfff
+    #define _NT_FACILITY_SHIFT 16
+    #define _NT_FACILITY(status) \
+        ((((ULONG)(status)) >> _NT_FACILITY_SHIFT) & _NT_FACILITY_MASK)
+
+    #define NT_NTWIN32(status) (_NT_FACILITY(status) == FACILITY_WIN32)
+    #define WIN32_FROM_NTSTATUS(status) (((ULONG)(status)) & 0xffff)
 
     #define LO_T 1e-7
     #define HI_T 429.4967296

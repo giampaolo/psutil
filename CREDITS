@@ -1,25 +1,26 @@
 Intro
-=====
+-------------------------------------------------------------------------------
 
 I would like to recognize some of the people who have been instrumental in the
 development of psutil. I'm sure I'm forgetting somebody (feel free to email me)
 but here is a short list. It's modeled after the Linux CREDITS file where the
 fields are: name (N), e-mail (E), website (W), country (C), description (D),
-(I) issues. Issue tracker is at https://github.com/giampaolo/psutil/issues).
+(I) issues. Issue tracker is at:
+https://github.com/giampaolo/psutil/issues.
 A big thanks to all of you.
 
 - Giampaolo
 
 Author
-======
+-------------------------------------------------------------------------------
 
 N: Giampaolo Rodola
 C: Italy
 E: g.rodola@gmail.com
-W: http://grodola.blogspot.com/
+W: https://gmpy.dev
 
 Experts
-=======
+-------------------------------------------------------------------------------
 
 Github usernames of people to CC on github when in need of help.
 
@@ -45,7 +46,7 @@ Github usernames of people to CC on github when in need of help.
     - wiggin15, Arnon Yaari (maintainer)
 
 Top contributors
-================
+-------------------------------------------------------------------------------
 
 N: Jay Loden
 C: NJ, USA
@@ -69,7 +70,6 @@ W: https://github.com/mrjefftang
 I: 340, 529, 616, 653, 654, 648, 641
 
 N: Jeremy Whitlock
-E: jcscoobyrs@gmail.com
 D: great help with macOS C development.
 I: 125, 150, 174, 206
 
@@ -79,7 +79,6 @@ D: OpenBSD implementation.
 I: 615
 
 N: Justin Venus
-E: justin.venus@gmail.com
 D: Solaris support
 I: 18
 
@@ -93,28 +92,122 @@ W: https://github.com/ryoon
 D: NetBSD implementation (co-author).
 I: 557
 
+Donations
+-------------------------------------------------------------------------------
+
+N: aristocratos
+W: https://github.com/aristocratos
+
+N: Daniel Widdis
+C: Washington, USA
+W: https://github.com/dbwiddis
+
+N: Rodion Stratov
+C: Canada
+
+N: Remi Chateauneu
+C: London, UK
+
+N: Olivier Grisel
+C: Paris, France
+
+N: Praveen Bhamidipati
+C: Bellevue, USA
+
+N: Willem de Groot
+C: Netherlands
+
+N: Sigmund Vik
+
+N: Kahntent
+C: NYC, USA
+
+N: Gyula Áfra
+C: Budapest, Hungary
+
+N: Mahmut Dumlupinar
+
+N: Thomas Guettler
+C: Germany
+
+N: Karthik Kumar
+C: India
+
+N: Oche Ejembi
+C: UK
+
+N: Russell Robinson
+C: New Zealand
+
+N: Wompasoft
+C: Texas, USA
+
+N: Amit Kulkarni
+C: Santa Clara, USA
+
+N: Alexander Kaftan
+C: Augsburg Germany
+
+N: Andrew Bays
+C: Maynard, USA
+
+N: Carver Koella
+C: Pittsburgh, USA
+
+N: Kristjan Võrk
+C: Tallin, Estonia
+
+N: HTB Industries
+C: Willow Springs, USA
+
+N: Brett Harris
+C: Melbourne, Australia
+
+N: Peter Friedland
+C: CT, USA
+
+N: Matthew Callow
+C: Australia
+
+N: Marco Schrank
+C: Germany
+
+N: Mindview LLC
+C: USA
+
+N: Григорьев Андрей
+C: Russia
+
+N: Heijdemann Morgan
+C: Singapore
+
+N: Florian Bruhin
+C: Winterthur, Switzerland
+
+N: Heijdemann Morgan
+C: Singapore
+
+N: Morgan Heijdemann
+C: Singapore
+
 Contributors
-============
+-------------------------------------------------------------------------------
 
 N: wj32
-E: wj32.64@gmail.com
 D: process username() and get_connections() on Windows
 I: 114, 115
 
 N: Yan Raber
 C: Bologna, Italy
-E: yanraber@gmail.com
 D: help on Windows development (initial version of Process.username())
 
 N: Dave Daeschler
 C: USA
-E: david.daeschler@gmail.com
 W: http://daviddaeschler.com
 D: some contributions to initial design/bootstrap plus occasional bug fixing
 I: 522, 536
 
 N: cjgohlke
-E: cjgohlke@gmail.com
 D: Windows 64 bit support
 I: 107
 
@@ -133,64 +226,49 @@ I: 1368, 1348
 ----
 
 N: Jeffery Kline
-E: jeffery.kline@gmail.com
 I: 130
 
 N: Grabriel Monnerat
-E: gabrielmonnerat@gmail.com
 I: 146
 
 N: Philip Roberts
-E: philip.roberts@gmail.com
 I: 168
 
 N: jcscoobyrs
-E: jcscoobyrs@gmail.com
 I: 125
 
 N: Sandro Tosi
-E: sandro.tosi@gmail.com
 I: 200, 201
 
 N: Andrew Colin
-E: andrew.colin@gmail.com
 I: 248
 
 N: Amoser
-E: amoser@google.com
 I: 266, 267, 340
 
 N: Matthew Grant
-E: matthewgrant5@gmail.com
 I: 271
 
 N: oweidner
-E: oweidner@cct.lsu.edu
 I: 275
 
 N: Tarek Ziade
-E: ziade.tarek
 I: 281
 
 N: Luca Cipriani
 C: Turin, Italy
-E: luca.opensource@gmail.com
 I: 278
 
 N: Maciej Lach,
-E: maciej.lach@gmail.com
 I: 294
 
 N: James Pye
-E: james.pye@gmail.com
 I: 305, 306
 
 N: Stanchev Emil
-E: stanchev.emil
 I: 314
 
 N: Kim Gräsman
-E: kim.grasman@gmail.com
 D: ...also kindly donated some money.
 I: 316
 
@@ -199,15 +277,12 @@ C: Italy
 I: 318
 
 N: Florent Xicluna
-E: florent.xicluna@gmail.com
 I: 319
 
 N: Michal Spondr
-E: michal.spondr
 I: 313
 
 N: Jean Sebastien
-E: dumbboules@gmail.com
 I: 344
 
 N: Rob Smith
@@ -223,50 +298,39 @@ W: https://plus.google.com/116873264322260110710/posts
 I: 323
 
 N: André Oriani
-E: aoriani@gmail.com
 I: 361
 
 N: clackwell
-E: clackwell@gmail.com
 I: 356
 
 N: m.malycha
-E: m.malycha@gmail.com
 I: 351
 
 N: John Baldwin
-E: jhb@FreeBSD.org
 I: 370
 
 N: Jan Beich
-E: jbeich@tormail.org
 I: 325
 
 N: floppymaster
-E: floppymaster@gmail.com
 I: 380
 
 N: Arfrever.FTA
-E: Arfrever.FTA@gmail.com
 I: 369, 404
 
 N: danudey
-E: danudey@gmail.com
 I: 386
 
 N: Adrien Fallou
 I: 224
 
 N: Gisle Vanem
-E: gisle.vanem@gmail.com
 I: 411
 
 N: thepyr0
-E: thepyr0@gmail.com
 I: 414
 
 N: John Pankov
-E: john.pankov@gmail.com
 I: 435
 
 N: Matt Good
@@ -274,11 +338,9 @@ W: http://matt-good.net/
 I: 438
 
 N: Ulrich Klank
-E: ulrich.klank@scitics.de
 I: 448
 
 N: Josiah Carlson
-E: josiah.carlson@gmail.com
 I: 451, 452
 
 N: Raymond Hettinger
@@ -291,41 +353,31 @@ M: Ken Seeho
 D: @cached_property decorator
 
 N: crusaderky
-E: crusaderky@gmail.com
 I: 470, 477
 
-E: alex@mroja.net
 I: 471
 
 N: Gautam Singh
-E: gautam.singh@gmail.com
 I: 466
 
-E: lhn@hupfeldtit.dk
 I: 476, 479
 
 N: Francois Charron
-E: francois.charron.1@gmail.com
 I: 474
 
 N: Naveed Roudsari
-E: naveed.roudsari@gmail.com
 I: 421
 
 N: Alexander Grothe
-E: Alexander.Grothe@gmail.com
 I: 497
 
 N: Szigeti Gabor Niif
-E: szigeti.gabor.niif@gmail.com
 I: 446
 
 N: msabramo
-E: msabramo@gmail.com
 I: 492
 
 N: Yaolong Huang
-E: airekans@gmail.com
 W: http://airekans.github.io/
 I: 530
 
@@ -335,18 +387,15 @@ I: 496
 
 N: spacewander
 W: https://github.com/spacewander
-E: spacewanderlzx@gmail.com
 I: 561, 603
 
 N: Sylvain Mouquet
-E: sylvain.mouquet@gmail.com
 I: 565
 
 N: karthikrev
 I: 568
 
 N: Bruno Binet
-E: bruno.binet@gmail.com
 I: 572
 
 N: Gabi Davar
@@ -356,7 +405,6 @@ I: 578, 581, 587
 
 N: spacewanderlzx
 C: Guangzhou,China
-E: spacewanderlzx@gmail.com
 I: 555
 
 N: Fabian Groffen
@@ -373,8 +421,6 @@ C: Irvine, CA, US
 I: 614
 
 N: Árni Már Jónsson
-E: Reykjavik, Iceland
-E: https://github.com/arnimarj
 I: 634
 
 N: Bart van Kleef
@@ -406,12 +452,10 @@ W: https://github.com/syohex
 I: 730
 
 N: Visa Hankala
-E: visa@openbsd.org
 I: 741
 
 N: Sebastian-Gabriel Brestin
 C: Romania
-E: sebastianbrestin@gmail.com
 I: 704
 
 N: Timmy Konick
@@ -427,12 +471,11 @@ W: https://github.com/wxwright
 I: 776
 
 N: Farhan Khan
-E: khanzf@gmail.com
 I: 823
 
 N: Jake Omann
-E: https://github.com/jomann09
-I: 816, 775
+W: https://github.com/jomann09
+I: 816, 775, 1874
 
 N: Jeremy Humble
 W: https://github.com/jhumble
@@ -448,7 +491,6 @@ I: 798
 
 N: Andre Caron
 C: Montreal, QC, Canada
-E: andre.l.caron@gmail.com
 W: https://github.com/AndreLouisCaron
 I: 880
 
@@ -466,7 +508,6 @@ I: 936, 1133
 
 N: Pierre Fersing
 C: France
-E: pierre.fersing@bleemeo.com
 I: 950
 
 N: Thiago Borges Abdnur
@@ -504,7 +545,7 @@ I: 1042, 1079, 1070
 
 N: Oleksii Shevchuk
 W: https://github.com/alxchk
-I: 1077, 1093, 1091, 1220, 1346
+I: 1077, 1093, 1091, 1220, 1346, 1904
 
 N: Prodesire
 W: https://github.com/Prodesire
@@ -609,9 +650,8 @@ W: https://github.com/samertm
 I: 1480
 
 N: Ammar Askar
-E: ammar@ammaraskar.com
 W: http://ammaraskar.com/
-I: 604, 1484
+I: 604, 1484, 1781
 
 N: agnewee
 W: https://github.com/Agnewee
@@ -668,3 +708,39 @@ I: 1695
 N: Michał Górny
 W: https://github.com/mgorny
 I: 1726
+
+N: Julien Lebot
+W: https://github.com/julien-lebot
+I: 1768
+
+N: Armin Gruner
+W: https://github.com/ArminGruner
+I: 1800
+
+N: Chris Burger
+W: https://github.com/phobozad
+I: 1830
+
+N: aristocratos
+W: https://github.com/aristocratos
+I: 1837, 1838
+
+N: Vincent A. Arcila
+W: https://github.com/jandrovins
+I: 1620, 1727
+
+N: Tim Schlueter
+W: https://github.com/modelrockettier
+I: 1822
+
+N: marxin
+W: https://github.com/marxin
+I: 1851
+
+N: guille
+W: https://github.com/guille
+I: 1913
+
+N: David Knaack
+W: https://github.com/davidkna
+I: 1921

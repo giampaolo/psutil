@@ -14,6 +14,7 @@ import platform
 import re
 import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 import warnings
@@ -47,6 +48,7 @@ from _compat import PY3  # NOQA
 from _compat import which  # NOQA
 
 
+PYPY = '__pypy__' in sys.builtin_module_names
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
@@ -67,9 +69,16 @@ if POSIX:
     sources.append('psutil/_psutil_posix.c')
 
 
-extras_require = {}
-if sys.version_info[:2] <= (3, 3):
-    extras_require.update(dict(enum='enum34'))
+extras_require = {"test": [
+    "enum34; python_version <= '3.4'",
+    "ipaddress; python_version < '3.0'",
+    "mock; python_version < '3.0'",
+    "unittest2; python_version < '3.0'",
+]}
+if not PYPY:
+    extras_require['test'].extend([
+        "pywin32; sys.platform == 'win32'",
+        "wmi; sys.platform == 'win32'"])
 
 
 def get_version():
@@ -90,9 +99,17 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 
 def get_description():
-    README = os.path.join(HERE, 'README.rst')
-    with open(README, 'r') as f:
-        return f.read()
+    script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
+    readme = os.path.join(HERE, 'README.rst')
+    p = subprocess.Popen([sys.executable, script, readme],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        raise RuntimeError(stderr)
+    data = stdout.decode('utf8')
+    if WINDOWS:
+        data = data.replace('\r\n', '\n')
+    return data
 
 
 @contextlib.contextmanager
@@ -159,7 +176,7 @@ if WINDOWS:
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
-            "wtsapi32", "ws2_32", "PowrProf", "pdh",
+            "ws2_32", "PowrProf", "pdh",
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"]
@@ -172,6 +189,7 @@ elif MACOS:
         sources=sources + [
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
+            'psutil/arch/osx/cpu.c',
         ],
         define_macros=macros,
         extra_link_args=[
@@ -184,6 +202,7 @@ elif FREEBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
+            'psutil/arch/freebsd/cpu.c',
             'psutil/arch/freebsd/specific.c',
             'psutil/arch/freebsd/sys_socks.c',
             'psutil/arch/freebsd/proc_socks.c',
@@ -320,6 +339,7 @@ def main():
         version=VERSION,
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
+        long_description_content_type='text/x-rst',
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
@@ -412,14 +432,6 @@ def main():
             elif SUNOS:
                 missdeps("sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
                          "pkg install gcc")
-        elif not success and WINDOWS:
-            if PY3:
-                ur = "http://www.visualstudio.com/en-au/news/vs2015-preview-vs"
-            else:
-                ur = "http://www.microsoft.com/en-us/download/"
-                ur += "details.aspx?id=44266"
-            s = "VisualStudio is not installed; get it from %s" % ur
-            print(hilite(s, color="red"), file=sys.stderr)
 
 
 if __name__ == '__main__':

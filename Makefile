@@ -16,6 +16,7 @@ DEPS = \
 	flake8 \
 	flake8-print \
 	pyperf \
+	pypinfo \
 	requests \
 	setuptools \
 	twine \
@@ -37,7 +38,7 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=all PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1
 
 all: test
 
@@ -46,7 +47,7 @@ all: test
 # ===================================================================
 
 clean:  ## Remove all build files.
-	rm -rf `find . -type d -name __pycache__ \
+	@rm -rfv `find . -type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
 		-o -type f -name \*.pyc \
@@ -56,13 +57,12 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
 		-o -type f -name \*\$testfn`
-	rm -rf \
+	@rm -rfv \
 		*.core \
 		*.egg-info \
 		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
-		.tox \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -88,7 +88,7 @@ uninstall:  ## Uninstall this package via pip.
 	$(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
@@ -102,7 +102,7 @@ install-pip:  ## Install pip (no-op if already installed).
 		f.write(data); \
 		f.flush(); \
 		print('downloaded %s' % f.name); \
-		code = os.system('%s %s --user' % (sys.executable, f.name)); \
+		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
 		f.close(); \
 		sys.exit(code);"
 
@@ -162,7 +162,7 @@ test-platform:  ## Run specific platform tests only.
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memory_leaks.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
 
 test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
 	${MAKE} build
@@ -208,6 +208,19 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
+# Wheels
+# ===================================================================
+
+download-wheels-github:  ## Download latest wheels hosted on github.
+	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
+
+download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
+	$(PYTHON) scripts/internal/download_wheels_appveyor.py
+
+print-wheels:  ## Print downloaded wheels
+	$(PYTHON) scripts/internal/print_wheels.py
+
+# ===================================================================
 # Distribution
 # ===================================================================
 
@@ -218,18 +231,13 @@ git-tag-release:  ## Git-tag a new release.
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
-
-wheel:  ## Generate wheel.
-	$(PYTHON) setup.py bdist_wheel
-
-win-download-wheels:  ## Download wheels hosted on appveyor.
-	$(TEST_PREFIX) $(PYTHON) scripts/internal/win_download_wheels.py --user giampaolo --project psutil
+	$(PYTHON) -m twine check dist/*.tar.gz
 
 upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
 	${MAKE} sdist
-	$(PYTHON) setup.py sdist upload
+	$(PYTHON) -m twine upload dist/*.tar.gz
 
-upload-win-wheels:  ## Upload wheels in dist/* directory on PyPI.
+upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
 	$(PYTHON) -m twine upload dist/*.whl
 
 # --- others
@@ -250,8 +258,12 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} install
 	${MAKE} generate-manifest
 	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} win-download-wheels
 	${MAKE} sdist
+	${MAKE} download-wheels-github
+	${MAKE} download-wheels-appveyor
+	${MAKE} print-hashes
+	${MAKE} print-wheels
+	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -259,10 +271,9 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
-	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	${MAKE} pre-release
+	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 	${MAKE} tidelift-relnotes
@@ -290,6 +301,12 @@ print-access-denied: ## Print AD exceptions
 print-api-speed:  ## Benchmark all API calls
 	${MAKE} build
 	@$(TEST_PREFIX) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+
+print-downloads:  ## Print PYPI download statistics
+	$(PYTHON) scripts/internal/print_downloads.py
+
+print-hashes:  ## Prints hashes of files in dist/ directory
+	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 # ===================================================================
 # Misc

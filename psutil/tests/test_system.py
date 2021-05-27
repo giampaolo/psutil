@@ -35,6 +35,7 @@ from psutil.tests import check_net_address
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
@@ -42,11 +43,12 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import IS_64BIT
 from psutil.tests import mock
 from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import retry_on_failure
-from psutil.tests import TRAVIS
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
@@ -216,14 +218,6 @@ class TestMiscAPIs(PsutilTestCase):
             else:
                 psutil.Process(user.pid)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
-    def test_PAGESIZE(self):
-        # pagesize is used internally to perform different calculations
-        # and it's determined by using SC_PAGE_SIZE; make sure
-        # getpagesize() returns the same value.
-        import resource
-        self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
-
     def test_test(self):
         # test for psutil.test() function
         stdout = sys.stdout
@@ -322,16 +316,16 @@ class TestCpuAPIs(PsutilTestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
 
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         logical = psutil.cpu_count()
-        physical = psutil.cpu_count(logical=False)
-        if physical is None:
-            raise self.skipTest("physical cpu_count() is None")
+        cores = psutil.cpu_count(logical=False)
+        if cores is None:
+            raise self.skipTest("cpu_count_cores() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            self.assertIsNone(physical)
+            self.assertIsNone(cores)
         else:
-            self.assertGreaterEqual(physical, 1)
-            self.assertGreaterEqual(logical, physical)
+            self.assertGreaterEqual(cores, 1)
+            self.assertGreaterEqual(logical, cores)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -340,7 +334,7 @@ class TestCpuAPIs(PsutilTestCase):
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count())
                 assert m.called
-            with mock.patch('psutil._psplatform.cpu_count_physical',
+            with mock.patch('psutil._psplatform.cpu_count_cores',
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count(logical=False))
                 assert m.called
@@ -377,7 +371,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        stop_at = time.time() + 1
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
@@ -421,7 +415,7 @@ class TestCpuAPIs(PsutilTestCase):
         # Simulate some work load then make sure time have increased
         # between calls.
         tot1 = psutil.cpu_times(percpu=True)
-        giveup_at = time.time() + 1
+        giveup_at = time.time() + GLOBAL_TIMEOUT
         while True:
             if time.time() >= giveup_at:
                 return self.fail("timeout")
@@ -480,6 +474,8 @@ class TestCpuAPIs(PsutilTestCase):
                 self._test_cpu_percent(percent, last, new)
             self._test_cpu_percent(sum(new), last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_times_percent(interval=-1)
 
     def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
@@ -528,8 +524,6 @@ class TestCpuAPIs(PsutilTestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        if TRAVIS and not ls:
-            raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
             raise self.skipTest("returns empty list on FreeBSD")
 
@@ -542,8 +536,7 @@ class TestCpuAPIs(PsutilTestCase):
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
-        assert len(loadavg) == 3
-
+        self.assertEqual(len(loadavg), 3)
         for load in loadavg:
             self.assertIsInstance(load, float)
             self.assertGreaterEqual(load, 0.0)
@@ -551,6 +544,7 @@ class TestCpuAPIs(PsutilTestCase):
 
 class TestDiskAPIs(PsutilTestCase):
 
+    @unittest.skipIf(PYPY and not IS_64BIT, "unreliable on PYPY32 + 32BIT")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         self.assertEqual(usage._fields, ('total', 'used', 'free', 'percent'))
@@ -587,17 +581,23 @@ class TestDiskAPIs(PsutilTestCase):
         psutil.disk_usage(b'.')
 
     def test_disk_partitions(self):
+        def check_ntuple(nt):
+            self.assertIsInstance(nt.device, str)
+            self.assertIsInstance(nt.mountpoint, str)
+            self.assertIsInstance(nt.fstype, str)
+            self.assertIsInstance(nt.opts, str)
+            self.assertIsInstance(nt.maxfile, (int, type(None)))
+            self.assertIsInstance(nt.maxpath, (int, type(None)))
+            if nt.maxfile is not None and not GITHUB_ACTIONS:
+                self.assertGreater(nt.maxfile, 0)
+            if nt.maxpath is not None:
+                self.assertGreater(nt.maxpath, 0)
+
         # all = False
         ls = psutil.disk_partitions(all=False)
-        # on travis we get:
-        #     self.assertEqual(p.cpu_affinity(), [n])
-        # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+            check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -614,11 +614,12 @@ class TestDiskAPIs(PsutilTestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
+            check_ntuple(disk)
             if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and MACOS and err.errno == errno.EIO:
+                    if GITHUB_ACTIONS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
@@ -626,8 +627,8 @@ class TestDiskAPIs(PsutilTestCase):
                         raise
                 else:
                     assert os.path.exists(disk.mountpoint), disk
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+
+        # ---
 
         def find_mount_point(path):
             path = os.path.abspath(path)
@@ -639,7 +640,6 @@ class TestDiskAPIs(PsutilTestCase):
         mounts = [x.mountpoint.lower() for x in
                   psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
-        psutil.disk_usage(mount)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -745,7 +745,7 @@ class TestNetAPIs(PsutilTestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
-                if sys.version_info >= (3, 4):
+                if sys.version_info >= (3, 4) and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces
@@ -801,7 +801,6 @@ class TestNetAPIs(PsutilTestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics

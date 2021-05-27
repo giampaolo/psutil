@@ -16,42 +16,35 @@
 
 
 static PIP_ADAPTER_ADDRESSES
-psutil_get_nic_addresses() {
-    // Note: GetAdaptersAddresses() increase the handle count on first
-    // call (and not anymore later on).
-    // allocate a 15 KB buffer to start with
-    int outBufLen = 15000;
-    DWORD dwRetVal = 0;
-    ULONG attempts = 0;
-    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+psutil_get_nic_addresses(void) {
+    ULONG bufferLength = 0;
+    PIP_ADAPTER_ADDRESSES buffer;
 
-    do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
-        if (pAddresses == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-
-        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, pAddresses,
-                                        &outBufLen);
-        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            free(pAddresses);
-            pAddresses = NULL;
-        }
-        else {
-            break;
-        }
-
-        attempts++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
-
-    if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed.");
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength)
+            != ERROR_BUFFER_OVERFLOW)
+    {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
-    return pAddresses;
+    buffer = malloc(bufferLength);
+    if (buffer == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    memset(buffer, 0, bufferLength);
+
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, buffer, &bufferLength)
+            != ERROR_SUCCESS)
+    {
+        free(buffer);
+        PyErr_SetString(PyExc_RuntimeError,
+                        "GetAdaptersAddresses() syscall failed.");
+        return NULL;
+    }
+
+    return buffer;
 }
 
 
@@ -191,11 +184,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             for (i = 0; i < (int) pCurrAddresses->PhysicalAddressLength; i++) {
                 if (i == (pCurrAddresses->PhysicalAddressLength - 1)) {
                     sprintf_s(ptr, _countof(buff_macaddr), "%.2X\n",
-                            (int)pCurrAddresses->PhysicalAddress[i]);
+                              (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 else {
                     sprintf_s(ptr, _countof(buff_macaddr), "%.2X-",
-                            (int)pCurrAddresses->PhysicalAddress[i]);
+                              (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 ptr += 3;
             }
@@ -325,8 +318,7 @@ error:
 
 /*
  * Provides stats about NIC interfaces installed on the system.
- * TODO: get 'duplex' (currently it's hard coded to '2', aka
-         'full duplex')
+ * TODO: get 'duplex' (currently it's hard coded to '2', aka 'full duplex')
  */
 PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
