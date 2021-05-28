@@ -200,17 +200,20 @@ pcputimes = namedtuple('pcputimes',
                         'iowait'])
 
 # psutil.malloc_info() (mallinfo Linux struct)
-pmalloc = namedtuple('pmalloc', [
-    'arena',     # non-mmapped space allocated (bytes)
+pmallinfo = namedtuple('pmallinfo', [
+    'arena',     # total non-mmapped space allocated from system (bytes)
     'ordblks',   # number of free chunks
-    'smblks',    # number of free fastbin blocks
+    'smblks',    # the number of fastbin blocks (i.e., small chunks that
+                 # have been freed but not use resused or consolidated)
     'hblks',     # number of mmapped regions
     'hblkhd',    # space allocated in mmapped regions (bytes)
-    'usmblks',   # maximum total allocated space (bytes)
-    'fsmblks',   # space in freed fastbin blocks (bytes)
+    'usmblks',   # always 0
+    'fsmblks',   # space held in fastbin blocks (bytes)
     'uordblks',  # total allocated space (bytes)
     'fordblks',  # total free space (bytes)
-    'keepcost'   # top-most, releasable space (bytes)
+    'keepcost'   # the maximum number of bytes that could ideally be released
+                 # back to system via malloc_trim. ("ideally" means that
+                 # it ignores page restrictions etc.)
 ])
 
 
@@ -601,7 +604,7 @@ def swap_memory():
 
 
 def malloc_info():
-    return pmalloc(*cext.linux_mallinfo())
+    return pmallinfo(*cext.linux_mallinfo())
 
 
 # =====================================================================
