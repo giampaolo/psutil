@@ -1450,6 +1450,25 @@ class TestMisc(PsutilTestCase):
             assert psutil.pid_exists(os.getpid())
             assert m.called
 
+    def test_get_proc_inodes_fd_broken(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink
+        # points to a file with full path longer than PATH_MAX
+
+        def get_inodes():
+            connections = psutil._pslinux.Connections()
+            connections._procfs_path = psutil._common.get_procfs_path()
+            return connections.get_proc_inodes(os.getpid())
+
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            patch_point = 'psutil._pslinux.os.readlink'
+            with mock.patch(patch_point,
+                            side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+                assert not get_inodes()
+                assert m.called
 
 # =====================================================================
 # --- sensors
@@ -1830,6 +1849,22 @@ class TestProcess(PsutilTestCase):
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(patch_point,
                             side_effect=IOError(errno.ENOENT, "")) as m:
+                files = p.open_files()
+                assert not files
+                assert m.called
+
+    def test_open_files_fd_broken(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink
+        # points to a file with full path longer than PATH_MAX
+
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            patch_point = 'psutil._pslinux.os.readlink'
+            with mock.patch(patch_point,
+                            side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
                 files = p.open_files()
                 assert not files
                 assert m.called
