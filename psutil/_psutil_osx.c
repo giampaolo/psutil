@@ -22,6 +22,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
 
@@ -213,16 +214,23 @@ static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
+    uint64_t total_user, total_system;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
 
+    mach_timebase_info(&info);
+    total_user = pti.pti_total_user * info.numer;
+    total_user /= info.denom;
+    total_system = pti.pti_total_system * info.numer;
+    total_system /= info.denom;
+
     return Py_BuildValue(
         "(ddKKkkkk)",
-        (float)pti.pti_total_user / 1000000000.0,     // (float) cpu user time
-        (float)pti.pti_total_system / 1000000000.0,   // (float) cpu sys time
+        (float)total_user / 1000000000.0,     // (float) cpu user time
+        (float)total_system / 1000000000.0,   // (float) cpu sys time
         // Note about memory: determining other mem stats on macOS is a mess:
         // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
         // I just give up.
