@@ -121,9 +121,9 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img height="45" width="230" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
         </a>
-        &nbsp;&nbsp;&nbsp;&nbsp;
+        &nbsp;&nbsp
         <a href="https://sansec.io/">
             <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
@@ -142,6 +142,7 @@ Supporters
       <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
 
 Contributing
 ============
