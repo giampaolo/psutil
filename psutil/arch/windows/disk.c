@@ -203,7 +203,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     unsigned int old_mode = 0;
     char opts[20];
     HANDLE mp_h;
-    BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
     DWORD pflags = 0;
     DWORD lpMaximumComponentLength = 0;  // max file name
@@ -290,6 +289,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                 mp_h = FindFirstVolumeMountPoint(
                     drive_letter, mp_buf, MAX_PATH);
                 if (mp_h != INVALID_HANDLE_VALUE) {
+                    BOOL mp_flag = TRUE;
                     while (mp_flag) {
                         // Append full mount path with drive letter
                         strcpy_s(mp_path, _countof(mp_path), drive_letter);
