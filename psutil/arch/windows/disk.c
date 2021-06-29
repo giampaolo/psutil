@@ -201,7 +201,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     int type;
     int ret;
     unsigned int old_mode = 0;
-    char opts[20];
+    char opts[50];
     HANDLE mp_h;
     BOOL mp_flag= TRUE;
     LPTSTR fs_type[MAX_PATH + 1] = { 0 };
