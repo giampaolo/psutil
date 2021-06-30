@@ -23,6 +23,8 @@ XXXX-XX-XX
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 - 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+- 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
+  (patch by MaWe2019)
 - 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
   where it first finds one
 
