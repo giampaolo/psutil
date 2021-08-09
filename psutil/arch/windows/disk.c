@@ -140,6 +140,12 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                              "ignore PhysicalDrive%i", devNum);
                 goto next;
             }
+            else if (GetLastError() == ERROR_ACCESS_DENIED) {
+                // Ignore disks that we are not able to access.
+                psutil_debug("DeviceIoControl -> ERROR_ACCESS_DENIED; "
+                             "ignore PhysicalDrive%i", devNum);
+                goto next;
+            }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
             // https://sites.ualberta.ca/dept/aict/uts/software/openbsd/
             //     ports/4.1/i386/openafs/w-openafs-1.4.14-transarc/

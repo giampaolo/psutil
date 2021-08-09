@@ -50,6 +50,7 @@ XXXX-XX-XX
   by PetrPospisil)
 - 1991_: process_iter() can raise TypeError if invoked from multiple threads
   (not thread-safe).
+- 1974_: [Windows] psutil.disk_io_counters() raises permission error.
 
 5.8.0
 =====
