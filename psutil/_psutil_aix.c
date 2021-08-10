@@ -122,6 +122,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         } else {
             // Can't access /proc/<pid>/status (eg: access denied)
             // Continue without the process status
+            PyErr_Clear();
             pr_stat = 0;
         }
     }
