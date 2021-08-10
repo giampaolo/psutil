@@ -116,8 +116,11 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         status.pr_stat = SACTIVE;
     } else {
         sprintf(path, "%s/%i/status", procfs_path, pid);
-        if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
-            return NULL;
+        if (! psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
+            // Can't access /proc/<pid>/status (eg: access denied)
+            // Continue without the process status
+            status.pr_stat = 0;
+        }
     }
 
     return Py_BuildValue("KKKdiiiK",
