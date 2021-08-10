@@ -94,7 +94,6 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 static PyObject *
 psutil_proc_basic_info(PyObject *self, PyObject *args) {
     int pid;
-    int pr_stat;
     char path[100];
     psinfo_t info;
     pstatus_t status;
@@ -110,20 +109,18 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
         // From the /proc docs: "If the process is a zombie, the pr_nlwp
         // and pr_lwp.pr_lwpid flags are zero."
-        pr_stat = (int) SZOMB;
+        status.pr_stat = (int) SZOMB;
     } else if (info.pr_flag & SEXIT) {
         // "exiting" processes don't have /proc/<pid>/status
         // There are other "exiting" processes that 'ps' shows as "active"
-        pr_stat = (int) SACTIVE;
+        status.pr_stat = (int) SACTIVE;
     } else {
         sprintf(path, "%s/%i/status", procfs_path, pid);
-        if (psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
-            pr_stat = (int) status.pr_stat;
-        } else {
+        if (! psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
             // Can't access /proc/<pid>/status (eg: access denied)
             // Continue without the process status
             PyErr_Clear();
-            pr_stat = 0;
+            status.pr_stat = 0;
         }
     }
 
@@ -134,7 +131,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         TV2DOUBLE(info.pr_start),               // create time
         (int) info.pr_lwp.pr_nice,              // nice
         (int) info.pr_nlwp,                     // no. of threads
-        pr_stat,                                // status code
+        (int) status.pr_stat,                   // status code
         (unsigned long long)info.pr_ttydev      // tty nr
         );
 }
