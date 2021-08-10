@@ -109,11 +109,11 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (info.pr_nlwp == 0 && info.pr_lwp.pr_lwpid == 0) {
         // From the /proc docs: "If the process is a zombie, the pr_nlwp
         // and pr_lwp.pr_lwpid flags are zero."
-        status.pr_stat = (int) SZOMB;
+        status.pr_stat = SZOMB;
     } else if (info.pr_flag & SEXIT) {
         // "exiting" processes don't have /proc/<pid>/status
         // There are other "exiting" processes that 'ps' shows as "active"
-        status.pr_stat = (int) SACTIVE;
+        status.pr_stat = SACTIVE;
     } else {
         sprintf(path, "%s/%i/status", procfs_path, pid);
         if (! psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
