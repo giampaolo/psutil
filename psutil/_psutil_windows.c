@@ -339,7 +339,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
     NTSTATUS status;
     PVOID buffer;
-    ULONG bufferSize = 0x100;
+    ULONG bufferSize = 0x104 * 2; // WIN_MAX_PATH * sizeof(wchar_t)
     SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
     PyObject *py_exe;
 
@@ -363,7 +363,30 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         sizeof(SYSTEM_PROCESS_ID_INFORMATION),
         NULL);
 
-    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+    if (status == STATUS_INFO_LENGTH_MISMATCH && processIdInfo.ImageName.MaximumLength <= bufferSize) {
+        // Required length was NOT stored in MaximumLength (WOW64 issue).
+        
+        ULONG maxbufferSize = 0x7FFF * 2; //NTFS_MAX_PATH * sizeof(wchar_t)
+        
+        do {
+            // Iteratively double the size of the buffer up to maxbufferSize
+            bufferSize *= 2;
+            
+            FREE(buffer);
+            buffer = MALLOC_ZERO(bufferSize);
+            if (! buffer)
+                return PyErr_NoMemory();
+            processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+            processIdInfo.ImageName.Buffer = buffer;
+
+            status = NtQuerySystemInformation(
+                SystemProcessIdInformation,
+                &processIdInfo,
+                sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+                NULL);
+        } while(status == STATUS_INFO_LENGTH_MISMATCH && bufferSize <= maxbufferSize);
+    }
+    else if (status == STATUS_INFO_LENGTH_MISMATCH) {
         // Required length is stored in MaximumLength.
         FREE(buffer);
         buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
