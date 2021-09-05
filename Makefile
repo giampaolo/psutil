@@ -19,6 +19,7 @@ DEPS = \
 	pypinfo \
 	requests \
 	setuptools \
+	sphinx_rtd_theme \
 	twine \
 	virtualenv \
 	wheel

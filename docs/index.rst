@@ -63,11 +63,15 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
     </div>
-    <br />
 
+    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Supporters
@@ -79,6 +83,7 @@ Supporters
       <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
       <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
       <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
     </div>
     <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
@@ -256,7 +261,7 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-    Return CPU frequency as a nameduple including *current*, *min* and *max*
+    Return CPU frequency as a named tuple including *current*, *min* and *max*
     frequencies expressed in Mhz.
     On Linux *current* frequency reports the real-time value, on all other
     platforms it represents the nominal "fixed" value.
@@ -412,7 +417,7 @@ Disks
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   See `disk_usage.py`_ script providing an example usage.
-  Returns a list of namedtuples with the following fields:
+  Returns a list of named tuples with the following fields:
 
   * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
     drive letter (e.g. ``"C:\\"``).
