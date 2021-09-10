@@ -125,13 +125,15 @@ def print_header(procs_status, num_procs):
         dashes, empty_dashes = get_dashes(perc)
         line = " CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes, perc)
         printl(line, color=get_color(perc))
+
+    # memory usage
     mem = psutil.virtual_memory()
     dashes, empty_dashes = get_dashes(mem.percent)
     line = " Mem   [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         mem.percent,
-        str(int(mem.used / 1024 / 1024)) + "M",
-        str(int(mem.total / 1024 / 1024)) + "M"
+        bytes2human(mem.used),
+        bytes2human(mem.total),
     )
     printl(line, color=get_color(mem.percent))
 
@@ -141,8 +143,8 @@ def print_header(procs_status, num_procs):
     line = " Swap  [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         swap.percent,
-        str(int(swap.used / 1024 / 1024)) + "M",
-        str(int(swap.total / 1024 / 1024)) + "M"
+        bytes2human(swap.used),
+        bytes2human(swap.total),
     )
     printl(line, color=get_color(swap.percent))
 
