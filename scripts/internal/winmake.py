@@ -217,7 +217,9 @@ def build():
     """Build / compile"""
     # Make sure setuptools is installed (needed for 'develop' /
     # edit mode).
-    sh('%s -c "import setuptools"' % PYTHON)
+    # %s needs to be quoted here, to launch python interpreters with
+    # a blank in the path
+    sh('"%s" -c "import setuptools"' % PYTHON)
 
     # "build_ext -i" copies compiled *.pyd files in ./psutil directory in
     # order to allow "import psutil" when using the interactive interpreter
@@ -248,26 +250,26 @@ def build():
         p.wait()
 
     # Make sure it actually worked.
-    sh('%s -c "import psutil"' % PYTHON)
+    sh('"%s" -c "import psutil"' % PYTHON)
     win_colorprint("build + import successful", GREEN)
 
 
 def wheel():
     """Create wheel file."""
     build()
-    sh("%s setup.py bdist_wheel" % PYTHON)
+    sh('"%s" setup.py bdist_wheel' % PYTHON)
 
 
 def upload_wheels():
     """Upload wheel files on PyPI."""
     build()
-    sh("%s -m twine upload dist/*.whl" % PYTHON)
+    sh('"%s" -m twine upload dist/*.whl' % PYTHON)
 
 
 def install_pip():
     """Install pip"""
     try:
-        sh('%s -c "import pip"' % PYTHON)
+        sh('"%s" -c "import pip"' % PYTHON)
     except SystemExit:
         if PY3:
             from urllib.request import urlopen
@@ -288,7 +290,7 @@ def install_pip():
             f.write(data)
 
         try:
-            sh('%s %s --user' % (PYTHON, tfile))
+            sh('"%s" "%s" --user' % (PYTHON, tfile))
         finally:
             os.remove(tfile)
 
@@ -296,7 +298,7 @@ def install_pip():
 def install():
     """Install in develop / edit mode"""
     build()
-    sh("%s setup.py develop" % PYTHON)
+    sh('"%s" setup.py develop' % PYTHON)
 
 
 def uninstall():
@@ -317,7 +319,7 @@ def uninstall():
             except ImportError:
                 break
             else:
-                sh("%s -m pip uninstall -y psutil" % PYTHON)
+                sh('"%s" -m pip uninstall -y psutil' % PYTHON)
     finally:
         os.chdir(here)
 
@@ -375,7 +377,7 @@ def setup_dev_env():
     """Install useful deps"""
     install_pip()
     install_git_hooks()
-    sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
+    sh('"%s" -m pip install -U %s' % (PYTHON, " ".join(DEPS)))
 
 
 def lint():
@@ -385,89 +387,89 @@ def lint():
         py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
+    sh('"%s" -m flake8 %s' % (PYTHON, py_files), nolog=True)
 
 
 def test(name=RUNNER_PY):
     """Run tests"""
     build()
-    sh("%s %s" % (PYTHON, name))
+    sh('"%s" %s' % (PYTHON, name))
 
 
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
-    sh("%s -m coverage report" % PYTHON)
-    sh("%s -m coverage html" % PYTHON)
-    sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
+    sh('"%s" -m coverage run %s' % (PYTHON, RUNNER_PY))
+    sh('"%s" -m coverage report' % PYTHON)
+    sh('"%s" -m coverage html' % PYTHON)
+    sh('"%s" -m webbrowser -t htmlcov/index.html' % PYTHON)
 
 
 def test_process():
     """Run process tests"""
     build()
-    sh("%s psutil\\tests\\test_process.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_process.py' % PYTHON)
 
 
 def test_system():
     """Run system tests"""
     build()
-    sh("%s psutil\\tests\\test_system.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_system.py' % PYTHON)
 
 
 def test_platform():
     """Run windows only tests"""
     build()
-    sh("%s psutil\\tests\\test_windows.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_windows.py' % PYTHON)
 
 
 def test_misc():
     """Run misc tests"""
     build()
-    sh("%s psutil\\tests\\test_misc.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_misc.py' % PYTHON)
 
 
 def test_unicode():
     """Run unicode tests"""
     build()
-    sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_unicode.py' % PYTHON)
 
 
 def test_connections():
     """Run connections tests"""
     build()
-    sh("%s psutil\\tests\\test_connections.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_connections.py' % PYTHON)
 
 
 def test_contracts():
     """Run contracts tests"""
     build()
-    sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_contracts.py' % PYTHON)
 
 
 def test_testutils():
     """Run test utilities tests"""
     build()
-    sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_testutils.py' % PYTHON)
 
 
 def test_by_name(name):
     """Run test by name"""
     build()
-    sh("%s -m unittest -v %s" % (PYTHON, name))
+    sh('"%s" -m unittest -v %s' % (PYTHON, name))
 
 
 def test_failed():
     """Re-run tests which failed on last run."""
     build()
-    sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
+    sh('"%s" %s --last-failed' % (PYTHON, RUNNER_PY))
 
 
 def test_memleaks():
     """Run memory leaks tests"""
     build()
-    sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
+    sh('"%s" psutil\\tests\\test_memleaks.py' % PYTHON)
 
 
 def install_git_hooks():
@@ -484,29 +486,29 @@ def install_git_hooks():
 
 def bench_oneshot():
     """Benchmarks for oneshot() ctx manager (see #799)."""
-    sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
+    sh('"%s" -Wa scripts\\internal\\bench_oneshot.py' % PYTHON)
 
 
 def bench_oneshot_2():
     """Same as above but using perf module (supposed to be more precise)."""
-    sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+    sh('"%s" -Wa scripts\\internal\\bench_oneshot_2.py' % PYTHON)
 
 
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     build()
-    sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
+    sh('"%s" -Wa scripts\\internal\\print_access_denied.py' % PYTHON)
 
 
 def print_api_speed():
     """Benchmark all API calls."""
     build()
-    sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
+    sh('"%s" -Wa scripts\\internal\\print_api_speed.py' % PYTHON)
 
 
 def download_appveyor_wheels():
     """Download appveyor wheels."""
-    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+    sh('"%s" -Wa scripts\\internal\\download_wheels_appveyor.py '
        "--user giampaolo --project psutil" % PYTHON)
 
 
