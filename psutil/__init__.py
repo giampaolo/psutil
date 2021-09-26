@@ -1851,7 +1851,7 @@ def cpu_stats():
 if hasattr(_psplatform, "cpu_freq"):
 
     def cpu_freq(percpu=False):
-        """Return CPU frequency as a nameduple including current,
+        """Return CPU frequency as a namedtuple including current,
         min and max frequency expressed in Mhz.
 
         If *percpu* is True and the system supports per-cpu frequency

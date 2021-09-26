@@ -93,7 +93,7 @@ If you don't have pip you can install with wget::
 
     wget https://bootstrap.pypa.io/get-pip.py -O - | python3
 
-...ow with curl::
+...or with curl::
 
     python3 < <(curl -s https://bootstrap.pypa.io/get-pip.py)
 
