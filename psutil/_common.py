@@ -440,6 +440,7 @@ def memoize_when_activated(fun):
     >>> foo()
     >>>
     """
+
     @functools.wraps(fun)
     def wrapper(self):
         try:
@@ -451,7 +452,11 @@ def memoize_when_activated(fun):
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = self._cache[fun] = fun(self)
+            ret = fun(self)
+            try:
+                self._cache[fun] = ret
+            except AttributeError:
+                pass  # inconsistency caused by multi-threading, just ignore it
         return ret
 
     def cache_activate(proc):
