@@ -456,7 +456,9 @@ def memoize_when_activated(fun):
             try:
                 self._cache[fun] = ret
             except AttributeError:
-                pass  # inconsistency caused by multi-threading, just ignore it
+                # multi-threading race condition, see:
+                # https://github.com/giampaolo/psutil/issues/1948
+                pass
         return ret
 
     def cache_activate(proc):

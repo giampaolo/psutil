@@ -17,16 +17,18 @@ XXXX-XX-XX
   determined (instead of crashing).
 - 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
   for one connection; this is now ignored.
+- 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
+  where it first finds one
+- 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
-- 1874_: [Solaris] swap output error due to incorrect range.
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 - 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+- 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
+  by Xuehai Pan)
 - 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
   (patch by MaWe2019)
-- 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
-  where it first finds one
 
 5.8.0
 =====
