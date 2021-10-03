@@ -340,6 +340,7 @@ class Process(object):
         self._exe = None
         self._create_time = None
         self._gone = False
+        self._pid_reused = False
         self._hash = None
         self._lock = threading.RLock()
         # used for caching on Windows only (on POSIX ppid may change)
@@ -571,7 +572,7 @@ class Process(object):
         It also checks if PID has been reused by another process in
         which case return False.
         """
-        if self._gone:
+        if self._gone or self._pid_reused:
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
@@ -579,7 +580,8 @@ class Process(object):
             # verify process identity.
             # Process identity / uniqueness over time is guaranteed by
             # (PID + creation time) and that is verified in __eq__.
-            return self == Process(self.pid)
+            self._pid_reused = self != Process(self.pid)
+            return not self._pid_reused
         except ZombieProcess:
             # We should never get here as it's already handled in
             # Process.__init__; here just for extra safety.
