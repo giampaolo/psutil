@@ -1387,7 +1387,6 @@ def pid_exists(pid):
 
 
 _pmap = {}
-_lock = threading.Lock()
 
 
 def process_iter(attrs=None, ad_value=None):
@@ -1411,58 +1410,59 @@ def process_iter(attrs=None, ad_value=None):
     If *attrs* is an empty list it will retrieve all process info
     (slow).
     """
+    global _pmap
+
     def add(pid):
         proc = Process(pid)
         if attrs is not None:
             proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
-        with _lock:
-            _pmap[proc.pid] = proc
+        pmap[proc.pid] = proc
         return proc
 
     def remove(pid):
-        with _lock:
-            _pmap.pop(pid, None)
+        pmap.pop(pid, None)
 
+    pmap = _pmap.copy()
     a = set(pids())
-    b = set(_pmap.keys())
+    b = set(pmap.keys())
     new_pids = a - b
     gone_pids = b - a
     for pid in gone_pids:
         remove(pid)
-
-    with _lock:
-        ls = sorted(list(_pmap.items()) +
-                    list(dict.fromkeys(new_pids).items()))
-
-    for pid, proc in ls:
-        try:
-            if proc is None:  # new process
-                yield add(pid)
-            else:
-                # use is_running() to check whether PID has been reused by
-                # another process in which case yield a new Process instance
-                if proc.is_running():
-                    if attrs is not None:
-                        proc.info = proc.as_dict(
-                            attrs=attrs, ad_value=ad_value)
-                    yield proc
-                else:
+    try:
+        ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
+        for pid, proc in ls:
+            try:
+                if proc is None:  # new process
                     yield add(pid)
-        except NoSuchProcess:
-            remove(pid)
-        except AccessDenied:
-            # Process creation time can't be determined hence there's
-            # no way to tell whether the pid of the cached process
-            # has been reused. Just return the cached version.
-            if proc is None and pid in _pmap:
-                try:
-                    yield _pmap[pid]
-                except KeyError:
-                    # If we get here it is likely that 2 threads were
-                    # using process_iter().
-                    pass
-            else:
-                raise
+                else:
+                    # use is_running() to check whether PID has been
+                    # reused by another process in which case yield a
+                    # new Process instance
+                    if proc.is_running():
+                        if attrs is not None:
+                            proc.info = proc.as_dict(
+                                attrs=attrs, ad_value=ad_value)
+                        yield proc
+                    else:
+                        yield add(pid)
+            except NoSuchProcess:
+                remove(pid)
+            except AccessDenied:
+                # Process creation time can't be determined hence there's
+                # no way to tell whether the pid of the cached process
+                # has been reused. Just return the cached version.
+                if proc is None and pid in pmap:
+                    try:
+                        yield pmap[pid]
+                    except KeyError:
+                        # If we get here it is likely that 2 threads were
+                        # using process_iter().
+                        pass
+                else:
+                    raise
+    finally:
+        _pmap = pmap
 
 
 def wait_procs(procs, timeout=None, callback=None):

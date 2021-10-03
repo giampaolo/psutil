@@ -29,6 +29,8 @@ XXXX-XX-XX
   by Xuehai Pan)
 - 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
   (patch by MaWe2019)
+- 1991_: process_iter() can raise TypeError if invoked from multiple threads
+  (not thread-safe).
 
 5.8.0
 =====
