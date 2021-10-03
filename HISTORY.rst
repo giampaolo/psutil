@@ -10,6 +10,7 @@ XXXX-XX-XX
 - 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
   frequency values for all CPUs from /proc/cpuinfo instead of opening many
   files in /sys fs.  (patch by marxin)
+- XXXX_: NoSuchProcess message now specifies if the PID has been reused.
 
 **Bug fixes**
 
