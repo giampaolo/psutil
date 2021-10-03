@@ -107,7 +107,7 @@ class TestMisc(PsutilTestCase):
             "name='foo')")
         self.assertEqual(
             repr(psutil.NoSuchProcess(321, msg='foo')),
-            "psutil.NoSuchProcess foo")
+            "psutil.NoSuchProcess foo (pid=321)")
 
     def test_zombie_process__repr__(self, func=repr):
         self.assertEqual(
@@ -121,10 +121,10 @@ class TestMisc(PsutilTestCase):
         self.assertEqual(
             repr(psutil.ZombieProcess(321, name='foo', ppid=1)),
             "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo', ppid=1)")
+            "(pid=321, ppid=1, name='foo')")
         self.assertEqual(
             repr(psutil.ZombieProcess(321, msg='foo')),
-            "psutil.ZombieProcess foo")
+            "psutil.ZombieProcess foo (pid=321)")
 
     def test_access_denied__repr__(self, func=repr):
         self.assertEqual(
@@ -135,7 +135,7 @@ class TestMisc(PsutilTestCase):
             "psutil.AccessDenied (pid=321, name='foo')")
         self.assertEqual(
             repr(psutil.AccessDenied(321, msg='foo')),
-            "psutil.AccessDenied foo")
+            "psutil.AccessDenied foo (pid=321)")
 
     def test_timeout_expired__repr__(self, func=repr):
         self.assertEqual(

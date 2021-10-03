@@ -360,7 +360,6 @@ def proc_info(pid):
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)
-        assert exc.msg
 
     def do_wait():
         if pid != 0:

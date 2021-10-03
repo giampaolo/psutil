@@ -9,6 +9,7 @@
 
 from __future__ import division, print_function
 
+import collections
 import contextlib
 import errno
 import functools
@@ -18,7 +19,6 @@ import stat
 import sys
 import threading
 import warnings
-from collections import defaultdict
 from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
@@ -275,13 +275,22 @@ class Error(Exception):
     """
     __module__ = 'psutil'
 
-    def __init__(self, msg=""):
-        Exception.__init__(self, msg)
-        self.msg = msg
-
     def __repr__(self):
-        ret = "psutil.%s %s" % (self.__class__.__name__, self.msg)
-        return ret.strip()
+        try:
+            info = collections.OrderedDict()
+        except AttributeError:  # pragma: no cover
+            info = {}  # Python 2.6
+        for name in ("pid", "ppid", "name"):
+            value = getattr(self, name, None)
+            if value:
+                info[name] = value
+        a = "psutil.%s" % self.__class__.__name__
+        b = self.msg
+        if info:
+            c = "(%s)" % ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
+        else:
+            c = ""
+        return " ".join(x for x in (a, b, c) if x)
 
     __str__ = __repr__
 
@@ -293,16 +302,10 @@ class NoSuchProcess(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
-            else:
-                details = "(pid=%s)" % self.pid
-            self.msg = "process no longer exists " + details
+        self.msg = msg or "process no longer exists"
 
 
 class ZombieProcess(NoSuchProcess):
@@ -315,19 +318,9 @@ class ZombieProcess(NoSuchProcess):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
-        NoSuchProcess.__init__(self, msg)
-        self.pid = pid
+        NoSuchProcess.__init__(self, pid, name, msg)
         self.ppid = ppid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            args = ["pid=%s" % pid]
-            if name:
-                args.append("name=%s" % repr(self.name))
-            if ppid:
-                args.append("ppid=%s" % self.ppid)
-            details = "(%s)" % ", ".join(args)
-            self.msg = "process still exists but it's a zombie " + details
+        self.msg = msg or "process still exists but it's a zombie"
 
 
 class AccessDenied(Error):
@@ -335,17 +328,10 @@ class AccessDenied(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if (pid is not None) and (name is not None):
-                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
-                self.msg = "(pid=%s)" % self.pid
-            else:
-                self.msg = ""
+        self.msg = msg or ""
 
 
 class TimeoutExpired(Error):
@@ -355,14 +341,11 @@ class TimeoutExpired(Error):
     __module__ = 'psutil'
 
     def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self, "timeout after %s seconds" % seconds)
+        Error.__init__(self)
         self.seconds = seconds
         self.pid = pid
         self.name = name
-        if (pid is not None) and (name is not None):
-            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
-        elif (pid is not None):
-            self.msg += " (pid=%s)" % self.pid
+        self.msg = "timeout after %s seconds" % seconds
 
 
 # ===================================================================
@@ -629,8 +612,8 @@ class _WrapNumbers:
         assert name not in self.reminders
         assert name not in self.reminder_keys
         self.cache[name] = input_dict
-        self.reminders[name] = defaultdict(int)
-        self.reminder_keys[name] = defaultdict(set)
+        self.reminders[name] = collections.defaultdict(int)
+        self.reminder_keys[name] = collections.defaultdict(set)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
