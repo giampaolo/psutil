@@ -269,7 +269,11 @@ def _assert_pid_not_reused(fun):
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
-            raise NoSuchProcess(self.pid, self._name)
+            if self._pid_reused:
+                msg = "process no longer exists and its PID has been reused"
+            else:
+                msg = None
+            raise NoSuchProcess(self.pid, self._name, msg=msg)
         return fun(self, *args, **kwargs)
     return wrapper
 
