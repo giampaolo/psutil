@@ -1332,6 +1332,20 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
             assert m.called
 
+    def test_reused_pid(self):
+        # Emulate a case where PID has been reused by another process.
+        subp = self.spawn_testproc()
+        p = psutil.Process(subp.pid)
+        p._ident = (p.pid, p.create_time() + 100)
+        assert not p.is_running()
+        assert p != psutil.Process(subp.pid)
+        msg = "process no longer exists and its PID has been reused"
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.suspend)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.resume)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.terminate)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.kill)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.children)
+
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
