@@ -11,6 +11,8 @@ XXXX-XX-XX
   frequency values for all CPUs from /proc/cpuinfo instead of opening many
   files in /sys fs.  (patch by marxin)
 - XXXX_: NoSuchProcess message now specifies if the PID has been reused.
+- XXXX_: error classes (NoSuchProcess, AccessDenied, etc.) now have a separate
+  `__repr__` and `__str__` implementations, which are better formatted.
 
 **Bug fixes**
 

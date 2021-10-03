@@ -275,24 +275,32 @@ class Error(Exception):
     """
     __module__ = 'psutil'
 
-    def __repr__(self):
+    def _infodict(self, attrs):
         try:
             info = collections.OrderedDict()
         except AttributeError:  # pragma: no cover
             info = {}  # Python 2.6
-        for name in ("pid", "ppid", "name"):
+        for name in attrs:
             value = getattr(self, name, None)
             if value:
                 info[name] = value
-        a = "psutil.%s" % self.__class__.__name__
-        b = self.msg
-        if info:
-            c = "(%s)" % ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
-        else:
-            c = ""
-        return " ".join(x for x in (a, b, c) if x)
+        return info
 
-    __str__ = __repr__
+    def __str__(self):
+        # invoked on `raise Error`
+        info = self._infodict(("pid", "ppid", "name"))
+        if info:
+            details = "(%s)" % ", ".join(
+                ["%s=%r" % (k, v) for k, v in info.items()])
+        else:
+            details = None
+        return " ".join([x for x in (self.msg, details) if x])
+
+    def __repr__(self):
+        # invoked on `repr(Error)`
+        info = self._infodict(("pid", "ppid", "name", "seconds", "msg"))
+        details = ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
+        return "psutil.%s(%s)" % (self.__class__.__name__, details)
 
 
 class NoSuchProcess(Error):

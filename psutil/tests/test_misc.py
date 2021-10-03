@@ -97,57 +97,71 @@ class TestMisc(PsutilTestCase):
     def test_process__str__(self):
         self.test_process__repr__(func=str)
 
-    def test_no_such_process__repr__(self, func=repr):
+    def test_no_such_process__repr__(self):
         self.assertEqual(
             repr(psutil.NoSuchProcess(321)),
-            "psutil.NoSuchProcess process no longer exists (pid=321)")
+            "psutil.NoSuchProcess(pid=321, msg='process no longer exists')")
         self.assertEqual(
-            repr(psutil.NoSuchProcess(321, name='foo')),
-            "psutil.NoSuchProcess process no longer exists (pid=321, "
-            "name='foo')")
-        self.assertEqual(
-            repr(psutil.NoSuchProcess(321, msg='foo')),
-            "psutil.NoSuchProcess foo (pid=321)")
+            repr(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "psutil.NoSuchProcess(pid=321, name='name', msg='msg')")
 
-    def test_zombie_process__repr__(self, func=repr):
+    def test_no_such_process__str__(self):
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321)),
+            "process no longer exists (pid=321)")
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_zombie_process__repr__(self):
         self.assertEqual(
             repr(psutil.ZombieProcess(321)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321)")
+            'psutil.ZombieProcess(pid=321, msg="process still '
+            'exists but it\'s a zombie")')
         self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo')),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo', ppid=1)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, ppid=1, name='foo')")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, msg='foo')),
-            "psutil.ZombieProcess foo (pid=321)")
+            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "psutil.ZombieProcess(pid=321, ppid=320, name='name', msg='foo')")
 
-    def test_access_denied__repr__(self, func=repr):
+    def test_zombie_process__str__(self):
+        self.assertEqual(
+            str(psutil.ZombieProcess(321)),
+            "process still exists but it's a zombie (pid=321)")
+        self.assertEqual(
+            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "foo (pid=321, ppid=320, name='name')")
+
+    def test_access_denied__repr__(self):
         self.assertEqual(
             repr(psutil.AccessDenied(321)),
-            "psutil.AccessDenied (pid=321)")
+            "psutil.AccessDenied(pid=321)")
         self.assertEqual(
-            repr(psutil.AccessDenied(321, name='foo')),
-            "psutil.AccessDenied (pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.AccessDenied(321, msg='foo')),
-            "psutil.AccessDenied foo (pid=321)")
+            repr(psutil.AccessDenied(321, name="name", msg="msg")),
+            "psutil.AccessDenied(pid=321, name='name', msg='msg')")
 
-    def test_timeout_expired__repr__(self, func=repr):
+    def test_access_denied__str__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321)),
-            "psutil.TimeoutExpired timeout after 321 seconds")
+            str(psutil.AccessDenied(321)),
+            "(pid=321)")
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111)),
-            "psutil.TimeoutExpired timeout after 321 seconds (pid=111)")
+            str(psutil.AccessDenied(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_timeout_expired__repr__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111, name='foo')),
-            "psutil.TimeoutExpired timeout after 321 seconds "
-            "(pid=111, name='foo')")
+            repr(psutil.TimeoutExpired(5)),
+            "psutil.TimeoutExpired(seconds=5, msg='timeout after 5 seconds')")
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
+            "msg='timeout after 5 seconds')")
+
+    def test_timeout_expired__str__(self):
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5)),
+            "timeout after 5 seconds")
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "timeout after 5 seconds (pid=321, name='name')")
 
     def test_process__eq__(self):
         p1 = psutil.Process()
