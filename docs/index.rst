@@ -63,11 +63,15 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
     </div>
-    <br />
 
+    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Supporters
@@ -79,6 +83,9 @@ Supporters
       <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
       <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
       <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
     </div>
     <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
@@ -143,6 +150,12 @@ CPU
     scputimes(user=17411.7, nice=77.99, system=3797.02, idle=51266.57, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
+
+    .. warning::
+      CPU times are always supposed to increase over time, or at least remain
+      the same, and that's because time cannot go backwards.
+      Surprisingly sometimes this might not be the case (at least on Windows
+      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -250,7 +263,7 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-    Return CPU frequency as a nameduple including *current*, *min* and *max*
+    Return CPU frequency as a named tuple including *current*, *min* and *max*
     frequencies expressed in Mhz.
     On Linux *current* frequency reports the real-time value, on all other
     platforms it represents the nominal "fixed" value.
@@ -406,7 +419,7 @@ Disks
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   See `disk_usage.py`_ script providing an example usage.
-  Returns a list of namedtuples with the following fields:
+  Returns a list of named tuples with the following fields:
 
   * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
     drive letter (e.g. ``"C:\\"``).

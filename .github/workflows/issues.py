@@ -46,7 +46,7 @@ LABELS_MAP = {
     "macos": [
         "macos", "mac ", "osx", "os x", "mojave", "sierra", "capitan",
         "yosemite", "catalina", "mojave", "big sur", "xcode", "darwin",
-        "dylib",
+        "dylib", "m1",
     ],
     "aix": ["aix"],
     "cygwin": ["cygwin"],
