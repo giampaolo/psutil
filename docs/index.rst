@@ -985,31 +985,37 @@ Exceptions
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
   Raised by :class:`Process` class methods when no process with the given
-  *pid* is found in the current process list or when a process no longer
+  *pid* is found in the current process list, or when a process no longer
   exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name()` was previously called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
-  process on UNIX (Windows doesn't have zombie processes). Depending on the
-  method called the OS may be able to succeed in retrieving the process
-  information or not.
-  Note: this is a subclass of :class:`NoSuchProcess` so if you're not
-  interested in retrieving zombies (e.g. when using :func:`process_iter()`)
-  you can ignore this exception and just catch :class:`NoSuchProcess`.
+  process on UNIX (Windows doesn't have zombie processes).
+  *name* and *ppid* attributes are available if :meth:`Process.name()` or
+  :meth:`Process.ppid()` methods were called before the process turned into a
+  zombie.
+
+  .. note::
+
+    this is a subclass of :class:`NoSuchProcess` so if you're not interested
+    in retrieving zombies (e.g. when using :func:`process_iter()`) you can
+    ignore this exception and just catch :class:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
   Raised by :class:`Process` class methods when permission to perform an
-  action is denied. "name" is the name of the process (may be ``None``).
+  action is denied due to insufficient privileges.
+  *name* attribute is available if :meth:`Process.name()` was previously called.
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
-  Raised by :meth:`Process.wait` if timeout expires and process is still
-  alive.
+  Raised by :meth:`Process.wait` method if timeout expires and the process is
+  still alive.
+  *name* attribute is available if :meth:`Process.name()` was previously called.
 
 Process class
 -------------
