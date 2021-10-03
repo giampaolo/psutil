@@ -328,7 +328,7 @@ class ZombieProcess(NoSuchProcess):
     def __init__(self, pid, name=None, ppid=None, msg=None):
         NoSuchProcess.__init__(self, pid, name, msg)
         self.ppid = ppid
-        self.msg = msg or "process still exists but it's a zombie"
+        self.msg = msg or "PID still exists but it's a zombie"
 
 
 class AccessDenied(Error):

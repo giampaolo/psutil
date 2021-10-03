@@ -116,7 +116,7 @@ class TestMisc(PsutilTestCase):
     def test_zombie_process__repr__(self):
         self.assertEqual(
             repr(psutil.ZombieProcess(321)),
-            'psutil.ZombieProcess(pid=321, msg="process still '
+            'psutil.ZombieProcess(pid=321, msg="PID still '
             'exists but it\'s a zombie")')
         self.assertEqual(
             repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
@@ -125,7 +125,7 @@ class TestMisc(PsutilTestCase):
     def test_zombie_process__str__(self):
         self.assertEqual(
             str(psutil.ZombieProcess(321)),
-            "process still exists but it's a zombie (pid=321)")
+            "PID still exists but it's a zombie (pid=321)")
         self.assertEqual(
             str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
             "foo (pid=321, ppid=320, name='name')")
