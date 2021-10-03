@@ -556,7 +556,7 @@ Network
   numbers will always be increasing or remain the same, but never decrease.
   ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
-  On machines with no network iterfaces this function will return ``None`` or
+  On machines with no network interfaces this function will return ``None`` or
   ``{}`` if *pernic* is ``True``.
 
     >>> import psutil
