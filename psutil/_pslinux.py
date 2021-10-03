@@ -1390,7 +1390,10 @@ def sensors_battery():
         for path in paths:
             ret = cat(path, fallback=null)
             if ret != null:
-                return int(ret) if ret.isdigit() else ret
+                try:
+                    return int(ret)
+                except ValueError:
+                    return ret
         return None
 
     bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or

@@ -27,6 +27,7 @@ XXXX-XX-XX
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
+- 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
 - 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
 - 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
   by Xuehai Pan)

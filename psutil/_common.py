@@ -431,7 +431,6 @@ def memoize_when_activated(fun):
     >>> foo()
     >>>
     """
-
     @functools.wraps(fun)
     def wrapper(self):
         try:
