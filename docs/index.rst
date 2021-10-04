@@ -1453,9 +1453,16 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by process as a list of named tuples including thread
-    id and thread CPU times (user/system). On OpenBSD this method requires
-    root privileges.
+    Return threads opened by process as a list of named tuples. On OpenBSD this
+    method requires root privileges.
+
+    - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
+      to the current process, this matches the
+      `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`__
+      attribute of the `threading.Thread`_ class, and can be used to reference
+      individual Python threads running within your own Python app.
+    - **user_time**: time spent in user mode.
+    - **system_time**: time spent in kernel mode.
 
   .. method:: cpu_times()
 
@@ -2967,6 +2974,7 @@ Timeline
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
