@@ -1428,9 +1428,7 @@ class TestMisc(PsutilTestCase):
         # - Process(tid) is supposed to work
         # - pids() should not return the TID
         # See: https://github.com/giampaolo/psutil/issues/687
-        t = ThreadTask()
-        t.start()
-        try:
+        with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
             self.assertEqual(len(threads), 2)
@@ -1439,8 +1437,6 @@ class TestMisc(PsutilTestCase):
             pt = psutil.Process(tid)
             pt.as_dict()
             self.assertNotIn(tid, psutil.pids())
-        finally:
-            t.stop()
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
