@@ -1446,25 +1446,6 @@ class TestMisc(PsutilTestCase):
             assert psutil.pid_exists(os.getpid())
             assert m.called
 
-    def test_get_proc_inodes_fd_broken(self):
-        # Simulate a case where /proc/{pid}/fd/{fd} symlink
-        # points to a file with full path longer than PATH_MAX
-
-        def get_inodes():
-            connections = psutil._pslinux.Connections()
-            connections._procfs_path = psutil._common.get_procfs_path()
-            return connections.get_proc_inodes(os.getpid())
-
-        p = psutil.Process()
-        files = p.open_files()
-        with open(self.get_testfn(), 'w'):
-            # give the kernel some time to see the new file
-            call_until(p.open_files, "len(ret) != %i" % len(files))
-            patch_point = 'psutil._pslinux.os.readlink'
-            with mock.patch(patch_point,
-                            side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
-                assert not get_inodes()
-                assert m.called
 
 # =====================================================================
 # --- sensors
@@ -1849,10 +1830,10 @@ class TestProcess(PsutilTestCase):
                 assert not files
                 assert m.called
 
-    def test_open_files_fd_broken(self):
+    def test_open_files_enametoolong(self):
         # Simulate a case where /proc/{pid}/fd/{fd} symlink
-        # points to a file with full path longer than PATH_MAX
-
+        # points to a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
         p = psutil.Process()
         files = p.open_files()
         with open(self.get_testfn(), 'w'):
@@ -2099,6 +2080,16 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(gids.effective, 1005)
             self.assertEqual(gids.saved, 1006)
             self.assertEqual(p._proc._get_eligible_cpus(), list(range(0, 8)))
+
+    def test_connections_enametoolong(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
+        # a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
+        with mock.patch('psutil._pslinux.os.readlink',
+                        side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+            p = psutil.Process()
+            assert not p.connections()
+            assert m.called
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
