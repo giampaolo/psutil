@@ -673,7 +673,7 @@ class _WrapNumbers:
         return new_dict
 
     def cache_clear(self, name=None):
-        """Clear the internal cache, optionally only for key 'name'."""
+        """Clear the internal cache, optionally only for function's 'name'."""
         with self.lock:
             if name is None:
                 self.cache.clear()
@@ -691,7 +691,7 @@ class _WrapNumbers:
 
 
 def wrap_numbers(input_dict, name):
-    """Given an `input_dict` and a key `name`, adjust the numbers
+    """Given an `input_dict` and a function's `name`, adjust the numbers
     which "wrap" (restart from zero) across different calls by adding
     "old value" to "new value" and return an updated dict.
     """
