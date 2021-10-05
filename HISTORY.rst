@@ -24,6 +24,11 @@ XXXX-XX-XX
   where it first finds one
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1901_: [macOS] different functions, especially process' open_files() and
+  connections() methods, could randomly raise AccessDenied because the internal
+  buffer of `proc_pidinfo(PROC_PIDLISTFDS)` syscall was not big enough. We now
+  dynamically increase the buffer size until it's big enough instead of giving
+  up and raising AccessDenied, which was a fallback to avoid crashing.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
