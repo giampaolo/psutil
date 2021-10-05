@@ -719,6 +719,17 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
+def _cpu_get_cpuinfo_freq():
+    """Return current CPU frequency from cpuinfo if available.
+    """
+    ret = []
+    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+        for line in f:
+            if line.lower().startswith(b'cpu mhz'):
+                ret.append(float(line.split(b':', 1)[1]))
+    return ret
+
+
 if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq"):
     def cpu_freq():
@@ -726,13 +737,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         Contrarily to other OSes, Linux updates these values in
         real-time.
         """
+        cpuinfo_freqs = _cpu_get_cpuinfo_freq()
         paths = sorted(
             glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or
             glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"))
         ret = []
         pjoin = os.path.join
-        for path in paths:
-            curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
+        for i, path in enumerate(paths):
+            if len(paths) == len(cpuinfo_freqs):
+                # take cached value from cpuinfo if available, see:
+                # https://github.com/giampaolo/psutil/issues/1851
+                curr = cpuinfo_freqs[i]
+            else:
+                curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
                 # Likely an old RedHat, see:
                 # https://github.com/giampaolo/psutil/issues/1071
@@ -746,24 +763,12 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
             ret.append(_common.scpufreq(curr, min_, max_))
         return ret
 
-elif os.path.exists("/proc/cpuinfo"):
+else:
     def cpu_freq():
         """Alternate implementation using /proc/cpuinfo.
         min and max frequencies are not available and are set to None.
         """
-        ret = []
-        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
-            for line in f:
-                if line.lower().startswith(b'cpu mhz'):
-                    key, value = line.split(b':', 1)
-                    ret.append(_common.scpufreq(float(value), 0., 0.))
-        return ret
-
-else:
-    def cpu_freq():
-        """Dummy implementation when none of the above files are present.
-        """
-        return []
+        return [_common.scpufreq(x, 0., 0.) for x in _cpu_get_cpuinfo_freq()]
 
 
 # =====================================================================
@@ -1385,7 +1390,10 @@ def sensors_battery():
         for path in paths:
             ret = cat(path, fallback=null)
             if ret != null:
-                return int(ret) if ret.isdigit() else ret
+                try:
+                    return int(ret)
+                except ValueError:
+                    return ret
         return None
 
     bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or

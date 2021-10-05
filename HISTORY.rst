@@ -5,13 +5,38 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
+  frequency values for all CPUs from /proc/cpuinfo instead of opening many
+  files in /sys fs.  (patch by marxin)
+- 1992_: NoSuchProcess message now specifies if the PID has been reused.
+- 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
+  formatted and separated `__repr__` and `__str__` implementations.
+
 **Bug fixes**
 
 - 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
   determined (instead of crashing).
 - 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
   for one connection; this is now ignored.
+- 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
+  where it first finds one
+- 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
+  called after sprintf().  (patch by alxchk)
+- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
+- 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
+- 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+- 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
+  by Xuehai Pan)
+- 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
+  (patch by MaWe2019)
+- 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
+  psutil.users() multiple times.
+- 1991_: process_iter() can raise TypeError if invoked from multiple threads
+  (not thread-safe).
 
 5.8.0
 =====

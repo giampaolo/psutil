@@ -1252,6 +1252,7 @@ psutil_users(PyObject *self, PyObject *args) {
                 goto error;
         }
         else {
+            Py_INCREF(Py_None);
             py_address = Py_None;
         }
 

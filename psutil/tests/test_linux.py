@@ -243,7 +243,8 @@ class TestSystemVirtualMemory(PsutilTestCase):
         # self.assertEqual(free_value, psutil_value)
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
-        self.assertAlmostEqual(vmstat_value, psutil_value)
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_used(self):
@@ -768,18 +769,14 @@ class TestSystemCPUFrequency(PsutilTestCase):
             if path.startswith('/sys/devices/system/cpu/'):
                 return False
             else:
-                if path == "/proc/cpuinfo":
-                    flags.append(None)
                 return os_path_exists(path)
 
-        flags = []
         os_path_exists = os.path.exists
         try:
             with mock.patch("os.path.exists", side_effect=path_exists_mock):
                 reload_module(psutil._pslinux)
                 ret = psutil.cpu_freq()
                 assert ret
-                assert flags
                 self.assertEqual(ret.max, 0.0)
                 self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
@@ -1431,9 +1428,7 @@ class TestMisc(PsutilTestCase):
         # - Process(tid) is supposed to work
         # - pids() should not return the TID
         # See: https://github.com/giampaolo/psutil/issues/687
-        t = ThreadTask()
-        t.start()
-        try:
+        with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
             self.assertEqual(len(threads), 2)
@@ -1442,8 +1437,6 @@ class TestMisc(PsutilTestCase):
             pt = psutil.Process(tid)
             pt.as_dict()
             self.assertNotIn(tid, psutil.pids())
-        finally:
-            t.stop()
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
