@@ -33,6 +33,8 @@ XXXX-XX-XX
   by Xuehai Pan)
 - 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
   (patch by MaWe2019)
+- 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
+  psutil.users() multiple times.
 - 1991_: process_iter() can raise TypeError if invoked from multiple threads
   (not thread-safe).
 
