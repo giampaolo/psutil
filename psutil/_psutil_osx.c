@@ -109,7 +109,8 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
 
 
 /*
- * A wrapper around proc_pidinfo(PROC_PIDLISTFDS).
+ * A wrapper around proc_pidinfo(PROC_PIDLISTFDS), which dynamically sets
+ * the buffer size.
  */
 static struct proc_fdinfo*
 psutil_proc_list_fds(pid_t pid, int *num_fds) {
@@ -155,7 +156,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
         }
 
         if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
-            psutil_debug("list_fds: make room for 1 extra fd");
+            psutil_debug("PROC_PIDLISTFDS: make room for 1 extra fd");
             ret = fds_size + (int)PROC_PIDLISTFD_SIZE;
             continue;
         }
