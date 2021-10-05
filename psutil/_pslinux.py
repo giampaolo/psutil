@@ -832,6 +832,9 @@ class Connections:
                 if err.errno == errno.EINVAL:
                     # not a link
                     continue
+                if err.errno == errno.ENAMETOOLONG:
+                    # file name too long
+                    continue
                 raise
             else:
                 if inode.startswith('socket:['):
@@ -2100,6 +2103,9 @@ class Process(object):
             except OSError as err:
                 if err.errno == errno.EINVAL:
                     # not a link
+                    continue
+                if err.errno == errno.ENAMETOOLONG:
+                    # file name too long
                     continue
                 raise
             else:

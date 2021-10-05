@@ -34,6 +34,8 @@ XXXX-XX-XX
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 - 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
 - 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+- 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
+  file descriptors in procfs
 - 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
   by Xuehai Pan)
 - 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
