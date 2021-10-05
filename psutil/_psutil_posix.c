@@ -147,7 +147,7 @@ psutil_pid_exists(pid_t pid) {
  */
 void
 psutil_raise_for_pid(long pid, char *syscall) {
-    if (errno != 0)  // unlikely
+    if (errno != 0)
         PyErr_SetFromOSErrnoWithSyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         NoSuchProcess(syscall);
