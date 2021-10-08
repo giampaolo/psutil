@@ -725,7 +725,7 @@ class RemoteProcessTestCase(PsutilTestCase):
         p = psutil.Process(self.proc32.pid)
         e = p.environ()
         self.assertIn("THINK_OF_A_NUMBER", e)
-        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+        self.assertEqual(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
     def test_environ_64(self):
         p = psutil.Process(self.proc64.pid)
