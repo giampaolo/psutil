@@ -1094,6 +1094,7 @@ def net_if_stats():
 class RootFsDeviceFinder:
     """Resources:
     https://bootlin.com/blog/find-root-device/
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
     """
 
     def __init__(self):
