@@ -1116,7 +1116,8 @@ class RootFsDeviceFinder:
         files = glob.glob("/sys/class/block/*/dev")
         for file in files:
             with open_text(file) as f:
-                if f.read().strip() == needle:
+                data = f.read().strip()
+                if data == needle:
                     name = os.path.basename(os.path.dirname(file))
                     return "/dev/%s" % name
 
