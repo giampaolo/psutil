@@ -1260,6 +1260,19 @@ class TestSystemDiskIoCounters(PsutilTestCase):
             self.assertRaises(NotImplementedError, psutil.disk_io_counters)
 
 
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestRootFsDeviceFinder(PsutilTestCase):
+
+    def test_it(self):
+        from psutil._pslinux import RootFsDeviceFinder
+        finder = RootFsDeviceFinder()
+        a = finder.use_proc_partitions()
+        b = finder.use_sys_class_block()
+        self.assertEqual(a, b)
+        c = finder.use_sys_block_uevent()
+        self.assertEqual(b, c)
+
+
 # =====================================================================
 # --- misc
 # =====================================================================

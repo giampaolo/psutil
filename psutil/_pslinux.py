@@ -1091,6 +1091,44 @@ def net_if_stats():
 # =====================================================================
 
 
+class RootFsDeviceFinder:
+    """Resources:
+    https://bootlin.com/blog/find-root-device/
+    """
+
+    def __init__(self):
+        dev = os.stat("/").st_dev
+        self.major = os.major(dev)
+        self.minor = os.minor(dev)
+
+    def use_proc_partitions(self):
+        with open_text("%s/partitions" % get_procfs_path()) as f:
+            for line in f.readlines()[2:]:
+                fields = line.split()
+                major = int(fields[0])
+                minor = int(fields[1])
+                name = fields[3]
+                if major == self.major and minor == self.minor:
+                    return "/dev/%s" % name
+
+    def use_sys_class_block(self):
+        needle = "%d:%d" % (self.major, self.minor)
+        files = glob.glob("/sys/class/block/*/dev")
+        for file in files:
+            with open_text(file) as f:
+                if f.read().strip() == needle:
+                    name = os.path.basename(os.path.dirname(file))
+                    return "/dev/%s" % name
+
+    def use_sys_block_uevent(self):
+        path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        with open_text(path) as f:
+            for line in f:
+                if line.startswith("DEVNAME="):
+                    name = line.strip().rpartition("DEVNAME=")[2]
+                    return "/dev/%s" % name
+
+
 disk_usage = _psposix.disk_usage
 
 
