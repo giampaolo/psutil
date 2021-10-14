@@ -1276,28 +1276,28 @@ class TestRootFsDeviceFinder(PsutilTestCase):
     def test_call_methods(self):
         finder = RootFsDeviceFinder()
         if os.path.exists("/proc/partitions"):
-            finder.use_proc_partitions()
+            finder.ask_proc_partitions()
         else:
-            self.assertRaises(FileNotFoundError, finder.use_proc_partitions)
+            self.assertRaises(FileNotFoundError, finder.ask_proc_partitions)
         if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
                 self.major, self.minor)):
-            finder.use_sys_dev_block()
+            finder.ask_sys_dev_block()
         else:
-            self.assertRaises(FileNotFoundError, finder.use_sys_dev_block)
-        finder.use_sys_class_block()
+            self.assertRaises(FileNotFoundError, finder.ask_sys_dev_block)
+        finder.ask_sys_class_block()
 
     @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
-    def test_it(self):
+    def test_comparisons(self):
         finder = RootFsDeviceFinder()
         self.assertIsNotNone(finder.find())
 
         a = b = c = None
         if os.path.exists("/proc/partitions"):
-            a = finder.use_proc_partitions()
+            a = finder.ask_proc_partitions()
         if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
                 self.major, self.minor)):
-            b = finder.use_sys_class_block()
-        c = finder.use_sys_dev_block()
+            b = finder.ask_sys_class_block()
+        c = finder.ask_sys_dev_block()
 
         base = a or b or c
         if base and a:

@@ -1191,7 +1191,7 @@ def disk_io_counters(perdisk=False):
 
 class RootFsDeviceFinder:
     """disk_partitions() may return partitions with device == "/dev/root"
-    or "rootfs". This container class uses different strategies to
+    or "rootfs". This container class uses different strategies to try to
     obtain the real device path. Resources:
     https://bootlin.com/blog/find-root-device/
     https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
@@ -1202,7 +1202,7 @@ class RootFsDeviceFinder:
         self.major = os.major(dev)
         self.minor = os.minor(dev)
 
-    def use_proc_partitions(self):
+    def ask_proc_partitions(self):
         with open_text("%s/partitions" % get_procfs_path()) as f:
             for line in f.readlines()[2:]:
                 fields = line.split()
@@ -1215,7 +1215,7 @@ class RootFsDeviceFinder:
                     if name:  # just for extra safety
                         return "/dev/%s" % name
 
-    def use_sys_dev_block(self):
+    def ask_sys_dev_block(self):
         path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
         with open_text(path) as f:
             for line in f:
@@ -1224,7 +1224,7 @@ class RootFsDeviceFinder:
                     if name:  # just for extra safety
                         return "/dev/%s" % name
 
-    def use_sys_class_block(self):
+    def ask_sys_class_block(self):
         needle = "%s:%s" % (self.major, self.minor)
         files = glob.glob("/sys/class/block/*/dev")
         for file in files:
@@ -1243,17 +1243,17 @@ class RootFsDeviceFinder:
         path = None
         if path is None:
             try:
-                path = self.use_proc_partitions()
+                path = self.ask_proc_partitions()
             except (IOError, OSError) as err:
                 debug(err)
         if path is None:
             try:
-                path = self.use_sys_dev_block()
+                path = self.ask_sys_dev_block()
             except (IOError, OSError) as err:
                 debug(err)
         if path is None:
             try:
-                path = self.use_sys_class_block()
+                path = self.ask_sys_class_block()
             except (IOError, OSError) as err:
                 debug(err)
         # We use exists() because the "/dev/*" part of the path is hard
@@ -1285,7 +1285,8 @@ def disk_partitions(all=False):
 
     retlist = []
     partitions = cext.disk_partitions(mounts_path)
-    for device, mountpoint, fstype, opts in partitions:
+    for partition in partitions:
+        device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
         if device in ("/dev/root", "rootfs"):
