@@ -72,6 +72,9 @@ if sys.version_info >= (3, 4):
 else:
     enum = None
 
+if POSIX:
+    from psutil._psposix import wait_pid
+
 
 __all__ = [
     # constants
@@ -482,9 +485,6 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     Does nothing if the process does not exist.
     Return process exit status.
     """
-    if POSIX:
-        from psutil._psposix import wait_pid
-
     def wait(proc, timeout):
         if isinstance(proc, subprocess.Popen) and not PY3:
             proc.wait()

@@ -47,6 +47,11 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 from psutil.tests import which
 
+if LINUX:
+    from psutil._pslinux import calculate_avail_vmem
+    from psutil._pslinux import CLOCK_TICKS
+    from psutil._pslinux import open_binary
+
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
@@ -57,6 +62,7 @@ SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
 EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
+
 
 # =====================================================================
 # --- utils
@@ -358,9 +364,6 @@ class TestSystemVirtualMemory(PsutilTestCase):
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 15%.
-        from psutil._pslinux import calculate_avail_vmem
-        from psutil._pslinux import open_binary
-
         mems = {}
         with open_binary('/proc/meminfo') as f:
             for line in f:
@@ -2025,8 +2028,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(exc.exception.name, p.name())
 
     def test_stat_file_parsing(self):
-        from psutil._pslinux import CLOCK_TICKS
-
         args = [
             "0",      # pid
             "(cat)",  # name

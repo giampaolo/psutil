@@ -47,6 +47,10 @@ if WINDOWS and not PYPY:
         import win32process
         import wmi  # requires "pip install wmi" / "make setup-dev-env"
 
+if WINDOWS:
+    from psutil._pswindows import ACCESS_DENIED_SET
+    from psutil._pswindows import convert_oserror
+
 
 cext = psutil._psplatform.cext
 
@@ -56,7 +60,6 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            from psutil._pswindows import ACCESS_DENIED_SET
             if err.errno in ACCESS_DENIED_SET:
                 raise psutil.AccessDenied(None, None)
             if err.errno == errno.ESRCH:
@@ -633,7 +636,6 @@ class TestDualProcessImplementation(PsutilTestCase):
             assert fun.called
 
     def test_cmdline(self):
-        from psutil._pswindows import convert_oserror
         for pid in psutil.pids():
             try:
                 a = cext.proc_cmdline(pid, use_peb=True)
