@@ -1265,12 +1265,30 @@ class TestRootFsDeviceFinder(PsutilTestCase):
 
     def test_it(self):
         from psutil._pslinux import RootFsDeviceFinder
+        dev = os.stat("/").st_dev
+        major = os.major(dev)
+        minor = os.minor(dev)
         finder = RootFsDeviceFinder()
-        a = finder.use_proc_partitions()
-        b = finder.use_sys_class_block()
-        self.assertEqual(a, b)
+        self.assertIsNotNone(finder.find())
+
+        a = b = c = None
+        if os.path.exists("/proc/partitions"):
+            a = finder.use_proc_partitions()
+        else:
+            self.assertRaises(FileNotFoundError, finder.use_proc_partitions)
+        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (major, minor)):
+            b = finder.use_sys_class_block()
+        else:
+            self.assertRaises(FileNotFoundError, finder.use_sys_class_block)
         c = finder.use_sys_dev_block()
-        self.assertEqual(b, c)
+
+        base = a or b or c
+        if base and a:
+            self.assertEqual(base, a)
+        if base and b:
+            self.assertEqual(base, b)
+        if base and c:
+            self.assertEqual(base, c)
 
 
 # =====================================================================

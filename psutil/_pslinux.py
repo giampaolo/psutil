@@ -1225,7 +1225,7 @@ class RootFsDeviceFinder:
                         return "/dev/%s" % name
 
     def use_sys_class_block(self):
-        needle = "%d:%d" % (self.major, self.minor)
+        needle = "%s:%s" % (self.major, self.minor)
         files = glob.glob("/sys/class/block/*/dev")
         for file in files:
             try:
