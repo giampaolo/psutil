@@ -1269,7 +1269,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
         a = finder.use_proc_partitions()
         b = finder.use_sys_class_block()
         self.assertEqual(a, b)
-        c = finder.use_sys_block_uevent()
+        c = finder.use_sys_dev_block()
         self.assertEqual(b, c)
 
 

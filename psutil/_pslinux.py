@@ -1091,46 +1091,6 @@ def net_if_stats():
 # =====================================================================
 
 
-class RootFsDeviceFinder:
-    """Resources:
-    https://bootlin.com/blog/find-root-device/
-    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
-    """
-
-    def __init__(self):
-        dev = os.stat("/").st_dev
-        self.major = os.major(dev)
-        self.minor = os.minor(dev)
-
-    def use_proc_partitions(self):
-        with open_text("%s/partitions" % get_procfs_path()) as f:
-            for line in f.readlines()[2:]:
-                fields = line.split()
-                major = int(fields[0])
-                minor = int(fields[1])
-                name = fields[3]
-                if major == self.major and minor == self.minor:
-                    return "/dev/%s" % name
-
-    def use_sys_class_block(self):
-        needle = "%d:%d" % (self.major, self.minor)
-        files = glob.glob("/sys/class/block/*/dev")
-        for file in files:
-            with open_text(file) as f:
-                data = f.read().strip()
-                if data == needle:
-                    name = os.path.basename(os.path.dirname(file))
-                    return "/dev/%s" % name
-
-    def use_sys_block_uevent(self):
-        path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
-        with open_text(path) as f:
-            for line in f:
-                if line.startswith("DEVNAME="):
-                    name = line.strip().rpartition("DEVNAME=")[2]
-                    return "/dev/%s" % name
-
-
 disk_usage = _psposix.disk_usage
 
 
@@ -1229,6 +1189,71 @@ def disk_io_counters(perdisk=False):
     return retdict
 
 
+class RootFsDeviceFinder:
+    """disk_partitions() may return partitions with device == "/dev/root"
+    or "rootfs". This container class uses different strategies to
+    obtain the real device path. Resources:
+    https://bootlin.com/blog/find-root-device/
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
+    """
+
+    def __init__(self):
+        dev = os.stat("/").st_dev
+        self.major = os.major(dev)
+        self.minor = os.minor(dev)
+
+    def use_proc_partitions(self):
+        with open_text("%s/partitions" % get_procfs_path()) as f:
+            for line in f.readlines()[2:]:
+                fields = line.split()
+                if len(fields) < 4:  # just for extra safety
+                    continue
+                major = int(fields[0]) if fields[0].isdigit() else None
+                minor = int(fields[1]) if fields[1].isdigit() else None
+                name = fields[3]
+                if major == self.major and minor == self.minor:
+                    if name:  # just for extra safety
+                        return "/dev/%s" % name
+
+    def use_sys_dev_block(self):
+        path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        with open_text(path) as f:
+            for line in f:
+                if line.startswith("DEVNAME="):
+                    name = line.strip().rpartition("DEVNAME=")[2]
+                    if name:  # just for extra safety
+                        return "/dev/%s" % name
+
+    def use_sys_class_block(self):
+        needle = "%d:%d" % (self.major, self.minor)
+        files = glob.glob("/sys/class/block/*/dev")
+        for file in files:
+            with open_text(file) as f:
+                data = f.read().strip()
+                if data == needle:
+                    name = os.path.basename(os.path.dirname(file))
+                    return "/dev/%s" % name
+
+    def find(self):
+        path = None
+        if path is None:
+            try:
+                path = self.use_proc_partitions()
+            except FileNotFoundError as err:
+                debug(err)
+        if path is None:
+            try:
+                path = self.use_sys_dev_block()
+            except FileNotFoundError as err:
+                debug(err)
+        if path is None:
+            try:
+                path = self.use_sys_class_block()
+            except FileNotFoundError as err:
+                debug(err)
+        return path
+
+
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
@@ -1256,6 +1281,8 @@ def disk_partitions(all=False):
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
+        if device in ("/dev/root", "rootfs"):
+            device = RootFsDeviceFinder().find() or device
         if not all:
             if device == '' or fstype not in fstypes:
                 continue
