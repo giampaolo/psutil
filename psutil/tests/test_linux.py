@@ -28,6 +28,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
 from psutil._compat import u
 from psutil.tests import call_until
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
@@ -1267,22 +1268,35 @@ class TestSystemDiskIoCounters(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestRootFsDeviceFinder(PsutilTestCase):
 
-    def test_it(self):
+    def setUp(self):
         dev = os.stat("/").st_dev
-        major = os.major(dev)
-        minor = os.minor(dev)
+        self.major = os.major(dev)
+        self.minor = os.minor(dev)
+
+    def test_call_methods(self):
+        finder = RootFsDeviceFinder()
+        if os.path.exists("/proc/partitions"):
+            finder.use_proc_partitions()
+        else:
+            self.assertRaises(FileNotFoundError, finder.use_proc_partitions)
+        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
+                self.major, self.minor)):
+            finder.use_sys_class_block()
+        else:
+            self.assertRaises(FileNotFoundError, finder.use_sys_class_block)
+        finder.use_sys_dev_block()
+
+    @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
+    def test_it(self):
         finder = RootFsDeviceFinder()
         self.assertIsNotNone(finder.find())
 
         a = b = c = None
         if os.path.exists("/proc/partitions"):
             a = finder.use_proc_partitions()
-        else:
-            self.assertRaises(FileNotFoundError, finder.use_proc_partitions)
-        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (major, minor)):
+        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
+                self.major, self.minor)):
             b = finder.use_sys_class_block()
-        else:
-            self.assertRaises(FileNotFoundError, finder.use_sys_class_block)
         c = finder.use_sys_dev_block()
 
         base = a or b or c
@@ -1294,10 +1308,23 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             self.assertEqual(base, c)
 
     @unittest.skipIf(not which("findmnt"), "findmnt utility not available")
+    @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
     def test_against_findmnt(self):
         psutil_value = RootFsDeviceFinder().find()
         findmnt_value = sh("findmnt -o SOURCE -rn /")
         self.assertEqual(psutil_value, findmnt_value)
+
+    def test_disk_partitions_mocked(self):
+        with mock.patch(
+                'psutil._pslinux.cext.disk_partitions',
+                return_value=[('/dev/root', '/', 'ext4', 'rw')]) as m:
+            part = psutil.disk_partitions()[0]
+            assert m.called
+            if not GITHUB_ACTIONS:
+                self.assertNotEqual(part.device, "/dev/root")
+                self.assertEqual(part.device, RootFsDeviceFinder().find())
+            else:
+                self.assertEqual(part.device, "/dev/root")
 
 
 # =====================================================================

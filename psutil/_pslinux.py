@@ -1244,17 +1244,17 @@ class RootFsDeviceFinder:
         if path is None:
             try:
                 path = self.use_proc_partitions()
-            except FileNotFoundError as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.use_sys_dev_block()
-            except FileNotFoundError as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.use_sys_class_block()
-            except FileNotFoundError as err:
+            except OSError as err:
                 debug(err)
         return path
 
@@ -1282,8 +1282,7 @@ def disk_partitions(all=False):
 
     retlist = []
     partitions = cext.disk_partitions(mounts_path)
-    for partition in partitions:
-        device, mountpoint, fstype, opts = partition
+    for device, mountpoint, fstype, opts in partitions:
         if device == 'none':
             device = ''
         if device in ("/dev/root", "rootfs"):
