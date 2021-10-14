@@ -1227,7 +1227,7 @@ class RootFsDeviceFinder:
 
     def ask_sys_class_block(self):
         needle = "%s:%s" % (self.major, self.minor)
-        files = glob.glob("/sys/class/block/*/dev")
+        files = glob.iglob("/sys/class/block/*/dev")
         for file in files:
             try:
                 f = open_text(file)
