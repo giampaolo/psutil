@@ -1256,7 +1256,10 @@ class RootFsDeviceFinder:
                 path = self.use_sys_class_block()
             except (IOError, OSError) as err:
                 debug(err)
-        return path
+        # We use exists() because the "/dev/*" part of the path is hard
+        # coded, so we want to be sure.
+        if path is not None and os.path.exists(path):
+            return path
 
 
 def disk_partitions(all=False):
