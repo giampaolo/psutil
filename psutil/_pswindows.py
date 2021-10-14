@@ -767,7 +767,7 @@ class Process(object):
                 # 24 = ERROR_TOO_MANY_OPEN_FILES. Not sure why this happens
                 # (perhaps PyPy's JIT delaying garbage collection of files?).
                 if err.errno == 24:
-                    debug("%r forced into AccessDenied" % err)
+                    debug("%r translated into AccessDenied" % err)
                     raise AccessDenied(self.pid, self._name)
                 raise
         else:

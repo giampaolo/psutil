@@ -231,7 +231,7 @@ def disk_partitions(all=False):
                     continue
             except OSError as err:
                 # https://github.com/giampaolo/psutil/issues/1674
-                debug("skipping %r: %r" % (mountpoint, err))
+                debug("skipping %r: %s" % (mountpoint, err))
                 continue
         maxfile = maxpath = None  # set later
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,

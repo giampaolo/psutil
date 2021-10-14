@@ -834,6 +834,7 @@ class Connections:
                     continue
                 if err.errno == errno.ENAMETOOLONG:
                     # file name too long
+                    debug(err)
                     continue
                 raise
             else:
@@ -1081,6 +1082,8 @@ def net_if_stats():
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
                 raise
+            else:
+                debug(err)
         else:
             ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
@@ -1387,7 +1390,7 @@ def sensors_temperatures():
                 path = os.path.join(base, 'type')
                 unit_name = cat(path, binary=False)
             except (IOError, OSError, ValueError) as err:
-                debug("ignoring %r for file %r" % (err, path))
+                debug(err)
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
@@ -1443,7 +1446,7 @@ def sensors_fans():
         try:
             current = int(cat(base + '_input'))
         except (IOError, OSError) as err:
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            debug(err)
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
@@ -2182,6 +2185,7 @@ class Process(object):
                     continue
                 if err.errno == errno.ENAMETOOLONG:
                     # file name too long
+                    debug(err)
                     continue
                 raise
             else:

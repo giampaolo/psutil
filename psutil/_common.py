@@ -836,6 +836,8 @@ if bool(os.getenv('PSUTIL_DEBUG', 0)):
         """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
+        if isinstance(msg, Exception):
+            msg = "ignoring %s" % msg
         print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
 else:
