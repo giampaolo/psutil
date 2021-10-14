@@ -14,6 +14,8 @@ XXXX-XX-XX
 - 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
   formatted and separated `__repr__` and `__str__` implementations.
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
+- 1999_: [Linux] disk_partitions(): convert "/dev/root" device (an alias used
+  on some Linux distros) to real root device path.
 
 **Bug fixes**
 
