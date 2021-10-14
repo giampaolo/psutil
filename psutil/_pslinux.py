@@ -1244,17 +1244,17 @@ class RootFsDeviceFinder:
         if path is None:
             try:
                 path = self.use_proc_partitions()
-            except OSError as err:
+            except (IOError, OSError) as err:
                 debug(err)
         if path is None:
             try:
                 path = self.use_sys_dev_block()
-            except OSError as err:
+            except (IOError, OSError) as err:
                 debug(err)
         if path is None:
             try:
                 path = self.use_sys_class_block()
-            except OSError as err:
+            except (IOError, OSError) as err:
                 debug(err)
         return path
 

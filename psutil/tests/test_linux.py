@@ -1279,11 +1279,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             finder.use_proc_partitions()
         else:
             self.assertRaises(FileNotFoundError, finder.use_proc_partitions)
-        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
-                self.major, self.minor)):
-            finder.use_sys_class_block()
-        else:
-            self.assertRaises(FileNotFoundError, finder.use_sys_class_block)
+        finder.use_sys_class_block()
         finder.use_sys_dev_block()
 
     @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
