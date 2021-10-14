@@ -1196,6 +1196,7 @@ class RootFsDeviceFinder:
     https://bootlin.com/blog/find-root-device/
     https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
     """
+    __slots__ = ['major', 'minor']
 
     def __init__(self):
         dev = os.stat("/").st_dev
