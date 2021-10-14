@@ -51,6 +51,7 @@ if LINUX:
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import open_binary
+    from psutil._pslinux import RootFsDeviceFinder
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -1267,7 +1268,6 @@ class TestSystemDiskIoCounters(PsutilTestCase):
 class TestRootFsDeviceFinder(PsutilTestCase):
 
     def test_it(self):
-        from psutil._pslinux import RootFsDeviceFinder
         dev = os.stat("/").st_dev
         major = os.major(dev)
         minor = os.minor(dev)
@@ -1292,6 +1292,12 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             self.assertEqual(base, b)
         if base and c:
             self.assertEqual(base, c)
+
+    @unittest.skipIf(not which("findmnt"), "findmnt utility not available")
+    def test_against_findmnt(self):
+        psutil_value = RootFsDeviceFinder().find()
+        findmnt_value = sh("findmnt -o SOURCE -rn /")
+        self.assertEqual(psutil_value, findmnt_value)
 
 
 # =====================================================================
