@@ -837,7 +837,11 @@ if bool(os.getenv('PSUTIL_DEBUG', 0)):
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
         if isinstance(msg, Exception):
-            msg = "ignoring %s" % msg
+            if isinstance(msg, (OSError, IOError, EnvironmentError)):
+                # ...because str(exc) may contain info about the file name
+                msg = "ignoring %s" % msg
+            else:
+                msg = "ignoring %r" % msg
         print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
 else:

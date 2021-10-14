@@ -22,11 +22,13 @@ import sys
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
 from psutil._compat import PY3
+from psutil._compat import redirect_stderr
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
@@ -400,6 +402,35 @@ class TestMisc(PsutilTestCase):
             with self.assertRaises(ImportError) as cm:
                 reload_module(psutil)
             self.assertIn("version conflict", str(cm.exception).lower())
+
+    def test_debug(self):
+        if PY3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+
+        with redirect_stderr(StringIO()) as f:
+            debug("hello")
+        msg = f.getvalue()
+        assert msg.startswith("psutil-debug"), msg
+        self.assertIn("hello", msg)
+        self.assertIn(__file__, msg)
+
+        # supposed to use repr(exc)
+        with redirect_stderr(StringIO()) as f:
+            debug(ValueError("this is an error"))
+        msg = f.getvalue()
+        self.assertIn("ignoring ValueError", msg)
+        self.assertIn("'this is an error'", msg)
+
+        # supposed to use str(exc), because of extra info about file name
+        with redirect_stderr(StringIO()) as f:
+            exc = OSError(2, "no such file")
+            exc.filename = "/foo"
+            debug(exc)
+        msg = f.getvalue()
+        self.assertIn("no such file", msg)
+        self.assertIn("/foo", msg)
 
 
 # ===================================================================
