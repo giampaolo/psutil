@@ -431,7 +431,7 @@ except ImportError:
 try:
     from subprocess import TimeoutExpired as SubprocessTimeoutExpired
 except ImportError:
-    class SubprocessTimeoutExpired:
+    class SubprocessTimeoutExpired(Exception):
         pass
 
 
