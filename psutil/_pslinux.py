@@ -344,8 +344,7 @@ except ImportError:
                     pid, resource_, ctypes.byref(new), ctypes.byref(current))
 
             if ret != 0:
-                errno = ctypes.get_errno()
-                raise OSError(errno, os.strerror(errno))
+                raise OSError(errno, os.strerror(ctypes.get_errno()))
             return (current.rlim_cur, current.rlim_max)
 
 

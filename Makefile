@@ -195,7 +195,7 @@ lint-c:  ## Run  C linter.
 
 pylint:  ## Python files linting (via pylint)
 	# @git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=.pylint
-	$(PYTHON) -m pylint --rcfile=.pylint psutil/__init__.py
+	$(PYTHON) -m pylint --rcfile=.pylint psutil/_pslinux.py
 
 lint:  ## Run Python (flake8) and C linters.
 	${MAKE} lint-py
