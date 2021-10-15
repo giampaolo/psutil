@@ -230,7 +230,7 @@ if (int(__version__.replace('.', '')) !=
           "version of psutil" % getattr(_psplatform.cext, "__file__")
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
-            '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
+            '.'.join(str(_psplatform.cext.version)), __version__)
     else:
         msg += " (different than %s)" % __version__
     msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
