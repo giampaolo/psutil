@@ -338,8 +338,8 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
     NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize = 0x100;
+    PVOID buffer = NULL;
+    ULONG bufferSize = 0x104 * 2; // WIN_MAX_PATH * sizeof(wchar_t)
     SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
     PyObject *py_exe;
 
@@ -350,8 +350,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return AccessDenied("automatically set for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
-    if (! buffer)
-        return PyErr_NoMemory();
+    if (! buffer) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
     processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
     processIdInfo.ImageName.Length = 0;
     processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
@@ -363,12 +366,41 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         sizeof(SYSTEM_PROCESS_ID_INFORMATION),
         NULL);
 
-    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+    if (status == STATUS_INFO_LENGTH_MISMATCH && processIdInfo.ImageName.MaximumLength <= bufferSize) {
+        // Required length was NOT stored in MaximumLength (WOW64 issue).
+        
+        ULONG maxBufferSize = 0x7FFF * 2; // NTFS_MAX_PATH * sizeof(wchar_t)
+        
+        do {
+            // Iteratively double the size of the buffer up to maxBufferSize
+            bufferSize *= 2;
+            
+            FREE(buffer);
+            buffer = MALLOC_ZERO(bufferSize);
+            if (! buffer) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+
+            processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+            processIdInfo.ImageName.Buffer = buffer;
+
+            status = NtQuerySystemInformation(
+                SystemProcessIdInformation,
+                &processIdInfo,
+                sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+                NULL);
+        } while (status == STATUS_INFO_LENGTH_MISMATCH && bufferSize <= maxBufferSize);
+    }
+    else if (status == STATUS_INFO_LENGTH_MISMATCH) {
         // Required length is stored in MaximumLength.
         FREE(buffer);
         buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
-        if (! buffer)
-            return PyErr_NoMemory();
+        if (! buffer) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
         processIdInfo.ImageName.Buffer = buffer;
 
         status = NtQuerySystemInformation(
