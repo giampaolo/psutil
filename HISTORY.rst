@@ -45,6 +45,9 @@ XXXX-XX-XX
   (patch by MaWe2019)
 - 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
   psutil.users() multiple times.
+- 1980_: [Windows] 32bit / WOW64 processes fails to read process name longer
+  than 128 characters resulting in AccessDenied. This is now fixed.  (patch
+  by PetrPospisil)
 - 1991_: process_iter() can raise TypeError if invoked from multiple threads
   (not thread-safe).
 
