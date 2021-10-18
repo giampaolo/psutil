@@ -416,7 +416,7 @@ def spawn_zombie():
             zpid = int(conn.recv(1024))
             _pids_started.add(zpid)
             zombie = psutil.Process(zpid)
-            call_until(lambda: zombie.status(), "ret == psutil.STATUS_ZOMBIE")
+            call_until(zombie.status, "ret == psutil.STATUS_ZOMBIE")
             return (parent, zombie)
         finally:
             conn.close()
@@ -641,7 +641,7 @@ def get_winver():
 # ===================================================================
 
 
-class retry(object):
+class retry:
     """A retry decorator."""
 
     def __init__(self,
