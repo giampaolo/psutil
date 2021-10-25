@@ -1145,7 +1145,7 @@ static PyMethodDef mod_methods[] = {
 
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,
-     "Set psutil in testing mode"},
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };
