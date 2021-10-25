@@ -14,8 +14,6 @@
 // ====================================================================
 
 int PSUTIL_DEBUG = 0;
-int PSUTIL_TESTING = 0;
-// PSUTIL_CONN_NONE
 
 
 // ====================================================================
@@ -135,17 +133,26 @@ AccessDenied(const char *syscall) {
 // --- Global utils
 // ====================================================================
 
-/*
- * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
- * env var. This dual method exists because updating os.environ on
- * Windows has no effect. Called on unit tests setup.
- */
+
+// Enable or disable PSUTIL_DEBUG messages.
 PyObject *
-psutil_set_testing(PyObject *self, PyObject *args) {
-    PSUTIL_TESTING = 1;
-    PSUTIL_DEBUG = 1;
-    Py_INCREF(Py_None);
-    return Py_None;
+psutil_set_debug(PyObject *self, PyObject *args) {
+    PyObject *value;
+    int x;
+
+    if (!PyArg_ParseTuple(args, "O", &value))
+        return NULL;
+    x = PyObject_IsTrue(value);
+    if (x < 0) {
+        return NULL;
+    }
+    else if (x == 0) {
+        PSUTIL_DEBUG = 0;
+    }
+    else {
+        PSUTIL_DEBUG = 1;
+    }
+    Py_RETURN_NONE;
 }
 
 
@@ -156,8 +163,6 @@ int
 psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
-    if (getenv("PSUTIL_TESTING") != NULL)
-        PSUTIL_TESTING = 1;
     return 0;
 }
 

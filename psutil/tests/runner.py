@@ -304,10 +304,7 @@ def run_from_name(name):
 
 
 def setup():
-    # Note: doc states that altering os.environment may cause memory
-    # leaks on some platforms.
-    # Sets PSUTIL_TESTING and PSUTIL_DEBUG in the C module.
-    psutil._psplatform.cext.set_testing()
+    psutil._set_debug(True)
 
 
 def main():

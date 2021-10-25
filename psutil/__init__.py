@@ -2346,9 +2346,12 @@ if WINDOWS:
 
 
 def _set_debug(value):
-    """Enable or disable PSUTIL_DEBUG option. Used by TestMemoryLeak."""
+    """Enable or disable PSUTIL_DEBUG option, which prints debugging
+    messages to stderr.
+    """
     import psutil._common
     psutil._common.PSUTIL_DEBUG = bool(value)
+    _psplatform.cext.set_debug(bool(value))
 
 
 def test():  # pragma: no cover

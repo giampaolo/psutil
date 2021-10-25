@@ -1144,7 +1144,7 @@ static PyMethodDef mod_methods[] = {
 #endif
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
+    {"set_debug", psutil_set_debug, METH_VARARGS,
      "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}

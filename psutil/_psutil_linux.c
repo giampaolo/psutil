@@ -503,7 +503,7 @@ static PyMethodDef mod_methods[] = {
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
+    {"set_debug", psutil_set_debug, METH_VARARGS,
      "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}

@@ -1679,7 +1679,7 @@ PsutilMethods[] = {
      "Return CPU statistics"},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
+    {"set_debug", psutil_set_debug, METH_VARARGS,
      "Set psutil in testing mode"},
 
     {NULL, NULL, 0, NULL}
