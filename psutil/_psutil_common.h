@@ -101,8 +101,16 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // ====================================================================
 
 PyObject* psutil_set_testing(PyObject *self, PyObject *args);
-void psutil_debug(const char* format, ...);
 int psutil_setup(void);
+
+
+// Print a debug message on stderr.
+
+#define psutil_debug(...) do { \
+    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");} while(0)
+
 
 // ====================================================================
 // --- BSD
