@@ -2345,6 +2345,12 @@ if WINDOWS:
 # =====================================================================
 
 
+def _set_debug(value):
+    """Enable or disable PSUTIL_DEBUG option. Used by TestMemoryLeak."""
+    import psutil._common
+    psutil._common.PSUTIL_DEBUG = bool(value)
+
+
 def test():  # pragma: no cover
     from ._common import bytes2human
     from ._compat import get_terminal_size

@@ -952,6 +952,15 @@ class TestMemoryLeak(PsutilTestCase):
     retries = 10 if CI_TESTING else 5
     verbose = True
     _thisproc = psutil.Process()
+    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG', 0))
+
+    @classmethod
+    def setUpClass(cls):
+        psutil._set_debug(False)  # avoid spamming to stderr
+
+    @classmethod
+    def tearDownClass(cls):
+        psutil._set_debug(cls._psutil_debug_orig)
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
