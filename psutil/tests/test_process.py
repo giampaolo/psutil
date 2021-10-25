@@ -1389,7 +1389,6 @@ class TestProcess(PsutilTestCase):
     def test_environ(self):
         def clean_dict(d):
             # Most of these are problematic on Travis.
-            d.pop("PSUTIL_TESTING", None)
             d.pop("PLAT", None)
             d.pop("HOME", None)
             if MACOS:

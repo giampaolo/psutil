@@ -10,7 +10,6 @@
 // --- Global vars / constants
 // ====================================================================
 
-extern int PSUTIL_TESTING;
 extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
@@ -100,9 +99,18 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // --- Global utils
 // ====================================================================
 
-PyObject* psutil_set_testing(PyObject *self, PyObject *args);
-void psutil_debug(const char* format, ...);
+PyObject* psutil_set_debug(PyObject *self, PyObject *args);
 int psutil_setup(void);
+
+
+// Print a debug message on stderr.
+#define psutil_debug(...) do { \
+    if (! PSUTIL_DEBUG) \
+        break; \
+    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");} while(0)
+
 
 // ====================================================================
 // --- BSD

@@ -16,6 +16,8 @@ XXXX-XX-XX
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
 - 1999_: [Linux] disk_partitions(): convert "/dev/root" device (an alias used
   on some Linux distros) to real root device path.
+- 2005_: PSUTIL_DEBUG mode now prints file name and line number of the debug
+  messages coming from C extension modules.
 
 **Bug fixes**
 

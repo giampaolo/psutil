@@ -456,6 +456,9 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     def test_users(self):
         self.execute(psutil.users)
 
+    def test_set_debug(self):
+        self.execute(lambda: psutil._set_debug(False))
+
     if WINDOWS:
 
         # --- win services

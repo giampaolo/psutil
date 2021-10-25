@@ -16,7 +16,6 @@ environment:
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.ci\\appveyor\\run_with_compiler.cmd"
     PYTHONWARNINGS: always
     PYTHONUNBUFFERED: 1
-    PSUTIL_TESTING: 1
     PSUTIL_DEBUG: 1
   matrix:
     # 32 bits

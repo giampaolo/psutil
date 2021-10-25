@@ -2553,6 +2553,30 @@ Running tests
 
     $ python3 -m psutil.tests
 
+Debug mode
+==========
+
+If you want to debug unusual situations or want to report a bug, it may be
+useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable.
+In this mode, psutil may (or may not) print additional information to stderr.
+Usually these are error conditions which are not severe, and hence are ignored
+(instead of crashing).
+Unit tests automatically run with debug mode enabled.
+On UNIX:
+
+::
+
+  $ PSUTIL_DEBUG=1 python3 script.py
+  psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
+
+On Windows:
+
+::
+
+  set PSUTIL_DEBUG=1 python.exe script.py
+  psutil-debug [psutil/arch/windows/process_info.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
+
+
 Security
 ========
 
