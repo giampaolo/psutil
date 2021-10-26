@@ -1279,6 +1279,7 @@ class TestDiskSwaps(unittest.TestCase):
                              tuple(swaps[i]))
 
 
+@unittest.skipIf(not LINUX, "LINUX only")
 class TestRootFsDeviceFinder(PsutilTestCase):
 
     def setUp(self):
