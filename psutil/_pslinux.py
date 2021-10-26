@@ -1320,23 +1320,25 @@ def disk_swaps():
         with f:
             lines = f.readlines()
             lines.pop(0)  # header
-            for line in lines:
-                # Format is confusing:
-                #   Filename              Type\tSize    Used    Priority
-                #   /dev/nvme0n1p3   partition\t11718652    2724    -2
-                line = line.strip()
-                name_and_type, _, other_fields = line.partition('\t')
-                fstype = name_and_type.split()[-1]
-                # "/dev/nvme0n1p3   partition" -> "/dev/nvme0n1p3"
-                path = name_and_type.rstrip(fstype).strip()
-                # The priority column is useful when multiple swap
-                # files are in use. The lower the priority, the
-                # more likely the swap file is to be used.
-                total, used, priority = map(int, other_fields.split('\t'))
-                total *= 1024
-                used *= 1024
-                nt = sdiskswap(path, total, used, fstype, priority)
-                retlist.append(nt)
+        for line in lines:
+            # Format is confusing:
+            #   Filename              Type\tSize    Used    Priority
+            #   /dev/nvme0n1p3   partition\t11718652    2724    -2
+            line = line.strip()
+            if not line:
+                continue
+            name_and_type, _, other_fields = line.partition('\t')
+            fstype = name_and_type.split()[-1]
+            # "/dev/nvme0n1p3   partition" -> "/dev/nvme0n1p3"
+            path = name_and_type.rstrip(fstype).strip()
+            # The priority column is useful when multiple swap
+            # files are in use. The lower the priority, the
+            # more likely the swap file is to be used.
+            total, used, priority = map(int, other_fields.split('\t'))
+            total *= 1024
+            used *= 1024
+            nt = sdiskswap(path, total, used, fstype, priority)
+            retlist.append(nt)
         return retlist
 
 
