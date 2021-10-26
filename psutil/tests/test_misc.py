@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
@@ -11,68 +11,46 @@ Miscellaneous tests.
 
 import ast
 import collections
-import contextlib
 import errno
 import json
 import os
 import pickle
 import socket
 import stat
+import sys
 
-from psutil import FREEBSD
 from psutil import LINUX
-from psutil import NETBSD
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil._common import open_text
-from psutil._common import open_binary
 from psutil._compat import PY3
+from psutil._compat import redirect_stderr
 from psutil.tests import APPVEYOR
-from psutil.tests import bind_socket
-from psutil.tests import bind_unix_socket
-from psutil.tests import call_until
-from psutil.tests import chdir
 from psutil.tests import CI_TESTING
-from psutil.tests import create_proc_children_pair
-from psutil.tests import create_sockets
-from psutil.tests import create_zombie_proc
-from psutil.tests import DEVNULL
-from psutil.tests import get_free_port
-from psutil.tests import get_test_subprocess
 from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import import_module_by_path
-from psutil.tests import is_namedtuple
 from psutil.tests import mock
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
-from psutil.tests import reap_children
 from psutil.tests import reload_module
-from psutil.tests import retry
 from psutil.tests import ROOT_DIR
-from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
-from psutil.tests import tcp_socketpair
-from psutil.tests import TESTFN
-from psutil.tests import TOX
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
-from psutil.tests import unix_socket_path
-from psutil.tests import unix_socketpair
-from psutil.tests import wait_for_file
-from psutil.tests import wait_for_pid
 import psutil
 import psutil.tests
+
+
+PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 # ===================================================================
@@ -80,21 +58,29 @@ import psutil.tests
 # ===================================================================
 
 
-class TestMisc(unittest.TestCase):
+class TestMisc(PsutilTestCase):
 
     def test_process__repr__(self, func=repr):
-        p = psutil.Process()
+        p = psutil.Process(self.spawn_testproc().pid)
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name=", r)
-        self.assertIn(p.name(), r)
+        self.assertIn("name='%s'" % str(p.name()),
+                      r.replace("name=u'", "name='"))
+        self.assertIn("status=", r)
+        self.assertNotIn("exitcode=", r)
+        p.terminate()
+        p.wait()
+        r = func(p)
+        self.assertIn("status='terminated'", r)
+        self.assertIn("exitcode=", r)
+
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
             p = psutil.Process()
             r = func(p)
             self.assertIn("pid=%s" % p.pid, r)
-            self.assertIn("zombie", r)
+            self.assertIn("status='zombie'", r)
             self.assertNotIn("name=", r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.NoSuchProcess(os.getpid())):
@@ -113,57 +99,71 @@ class TestMisc(unittest.TestCase):
     def test_process__str__(self):
         self.test_process__repr__(func=str)
 
-    def test_no_such_process__repr__(self, func=repr):
+    def test_no_such_process__repr__(self):
         self.assertEqual(
             repr(psutil.NoSuchProcess(321)),
-            "psutil.NoSuchProcess process no longer exists (pid=321)")
+            "psutil.NoSuchProcess(pid=321, msg='process no longer exists')")
         self.assertEqual(
-            repr(psutil.NoSuchProcess(321, name='foo')),
-            "psutil.NoSuchProcess process no longer exists (pid=321, "
-            "name='foo')")
-        self.assertEqual(
-            repr(psutil.NoSuchProcess(321, msg='foo')),
-            "psutil.NoSuchProcess foo")
+            repr(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "psutil.NoSuchProcess(pid=321, name='name', msg='msg')")
 
-    def test_zombie_process__repr__(self, func=repr):
+    def test_no_such_process__str__(self):
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321)),
+            "process no longer exists (pid=321)")
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_zombie_process__repr__(self):
         self.assertEqual(
             repr(psutil.ZombieProcess(321)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321)")
+            'psutil.ZombieProcess(pid=321, msg="PID still '
+            'exists but it\'s a zombie")')
         self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo')),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo', ppid=1)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo', ppid=1)")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, msg='foo')),
-            "psutil.ZombieProcess foo")
+            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "psutil.ZombieProcess(pid=321, ppid=320, name='name', msg='foo')")
 
-    def test_access_denied__repr__(self, func=repr):
+    def test_zombie_process__str__(self):
+        self.assertEqual(
+            str(psutil.ZombieProcess(321)),
+            "PID still exists but it's a zombie (pid=321)")
+        self.assertEqual(
+            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "foo (pid=321, ppid=320, name='name')")
+
+    def test_access_denied__repr__(self):
         self.assertEqual(
             repr(psutil.AccessDenied(321)),
-            "psutil.AccessDenied (pid=321)")
+            "psutil.AccessDenied(pid=321)")
         self.assertEqual(
-            repr(psutil.AccessDenied(321, name='foo')),
-            "psutil.AccessDenied (pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.AccessDenied(321, msg='foo')),
-            "psutil.AccessDenied foo")
+            repr(psutil.AccessDenied(321, name="name", msg="msg")),
+            "psutil.AccessDenied(pid=321, name='name', msg='msg')")
 
-    def test_timeout_expired__repr__(self, func=repr):
+    def test_access_denied__str__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321)),
-            "psutil.TimeoutExpired timeout after 321 seconds")
+            str(psutil.AccessDenied(321)),
+            "(pid=321)")
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111)),
-            "psutil.TimeoutExpired timeout after 321 seconds (pid=111)")
+            str(psutil.AccessDenied(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_timeout_expired__repr__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111, name='foo')),
-            "psutil.TimeoutExpired timeout after 321 seconds "
-            "(pid=111, name='foo')")
+            repr(psutil.TimeoutExpired(5)),
+            "psutil.TimeoutExpired(seconds=5, msg='timeout after 5 seconds')")
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
+            "msg='timeout after 5 seconds')")
+
+    def test_timeout_expired__str__(self):
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5)),
+            "timeout after 5 seconds")
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "timeout after 5 seconds (pid=321, name='name')")
 
     def test_process__eq__(self):
         p1 = psutil.Process()
@@ -180,9 +180,7 @@ class TestMisc(unittest.TestCase):
     def test__all__(self):
         dir_psutil = dir(psutil)
         for name in dir_psutil:
-            if name in ('callable', 'error', 'namedtuple', 'tests',
-                        'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
-                        'TOTAL_PHYMEM', 'PermissionError',
+            if name in ('long', 'tests', 'test', 'PermissionError',
                         'ProcessLookupError'):
                 continue
             if not name.startswith('_'):
@@ -327,7 +325,10 @@ class TestMisc(unittest.TestCase):
         else:
             with self.assertRaises(Exception):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                sock.bind(("::1", 0))
+                try:
+                    sock.bind(("::1", 0))
+                finally:
+                    sock.close()
 
     def test_isfile_strict(self):
         from psutil._common import isfile_strict
@@ -341,7 +342,7 @@ class TestMisc(unittest.TestCase):
                         side_effect=OSError(errno.EACCES, "foo")):
             self.assertRaises(OSError, isfile_strict, this_file)
         with mock.patch('psutil._common.os.stat',
-                        side_effect=OSError(errno.EINVAL, "foo")):
+                        side_effect=OSError(errno.ENOENT, "foo")):
             assert not isfile_strict(this_file)
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
@@ -371,7 +372,7 @@ class TestMisc(unittest.TestCase):
 
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if TRAVIS and not os.path.exists(setup_py):
+        if CI_TESTING and not os.path.exists(setup_py):
             return self.skipTest("can't find setup.py")
         module = import_module_by_path(setup_py)
         self.assertRaises(SystemExit, module.setup)
@@ -402,6 +403,35 @@ class TestMisc(unittest.TestCase):
                 reload_module(psutil)
             self.assertIn("version conflict", str(cm.exception).lower())
 
+    def test_debug(self):
+        if PY3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+
+        with redirect_stderr(StringIO()) as f:
+            debug("hello")
+        msg = f.getvalue()
+        assert msg.startswith("psutil-debug"), msg
+        self.assertIn("hello", msg)
+        self.assertIn(__file__, msg)
+
+        # supposed to use repr(exc)
+        with redirect_stderr(StringIO()) as f:
+            debug(ValueError("this is an error"))
+        msg = f.getvalue()
+        self.assertIn("ignoring ValueError", msg)
+        self.assertIn("'this is an error'", msg)
+
+        # supposed to use str(exc), because of extra info about file name
+        with redirect_stderr(StringIO()) as f:
+            exc = OSError(2, "no such file")
+            exc.filename = "/foo"
+            debug(exc)
+        msg = f.getvalue()
+        self.assertIn("no such file", msg)
+        self.assertIn("/foo", msg)
+
 
 # ===================================================================
 # --- Tests for wrap_numbers() function.
@@ -411,7 +441,7 @@ class TestMisc(unittest.TestCase):
 nt = collections.namedtuple('foo', 'a b c')
 
 
-class TestWrapNumbers(unittest.TestCase):
+class TestWrapNumbers(PsutilTestCase):
 
     def setUp(self):
         wrap_numbers.cache_clear()
@@ -650,11 +680,9 @@ class TestWrapNumbers(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(TOX, "can't test on TOX")
-# See: https://travis-ci.org/giampaolo/psutil/jobs/295224806
-@unittest.skipIf(TRAVIS and not os.path.exists(SCRIPTS_DIR),
+@unittest.skipIf(not os.path.exists(SCRIPTS_DIR),
                  "can't locate scripts directory")
-class TestScripts(unittest.TestCase):
+class TestScripts(PsutilTestCase):
     """Tests for scripts in the "scripts" directory."""
 
     @staticmethod
@@ -727,8 +755,6 @@ class TestScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    # permission denied on travis
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
@@ -739,7 +765,7 @@ class TestScripts(unittest.TestCase):
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
             raise self.skipTest("not supported")
-        self.assert_stdout('procsmem.py', stderr=DEVNULL)
+        self.assert_stdout('procsmem.py')
 
     def test_killall(self):
         self.assert_syntax('killall.py')
@@ -765,14 +791,12 @@ class TestScripts(unittest.TestCase):
         self.assert_syntax('cpu_distribution.py')
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
             self.skipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_fans(self):
         if not psutil.sensors_fans():
             self.skipTest("no fans")
@@ -783,283 +807,12 @@ class TestScripts(unittest.TestCase):
     def test_battery(self):
         self.assert_stdout('battery.py')
 
+    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
+    @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
 
-# ===================================================================
-# --- Unit tests for test utilities.
-# ===================================================================
-
-
-class TestRetryDecorator(unittest.TestCase):
-
-    @mock.patch('time.sleep')
-    def test_retry_success(self, sleep):
-        # Fail 3 times out of 5; make sure the decorated fun returns.
-
-        @retry(retries=5, interval=1, logfun=None)
-        def foo():
-            while queue:
-                queue.pop()
-                1 / 0
-            return 1
-
-        queue = list(range(3))
-        self.assertEqual(foo(), 1)
-        self.assertEqual(sleep.call_count, 3)
-
-    @mock.patch('time.sleep')
-    def test_retry_failure(self, sleep):
-        # Fail 6 times out of 5; th function is supposed to raise exc.
-
-        @retry(retries=5, interval=1, logfun=None)
-        def foo():
-            while queue:
-                queue.pop()
-                1 / 0
-            return 1
-
-        queue = list(range(6))
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 5)
-
-    @mock.patch('time.sleep')
-    def test_exception_arg(self, sleep):
-        @retry(exception=ValueError, interval=1)
-        def foo():
-            raise TypeError
-
-        self.assertRaises(TypeError, foo)
-        self.assertEqual(sleep.call_count, 0)
-
-    @mock.patch('time.sleep')
-    def test_no_interval_arg(self, sleep):
-        # if interval is not specified sleep is not supposed to be called
-
-        @retry(retries=5, interval=None, logfun=None)
-        def foo():
-            1 / 0
-
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 0)
-
-    @mock.patch('time.sleep')
-    def test_retries_arg(self, sleep):
-
-        @retry(retries=5, interval=1, logfun=None)
-        def foo():
-            1 / 0
-
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 5)
-
-    @mock.patch('time.sleep')
-    def test_retries_and_timeout_args(self, sleep):
-        self.assertRaises(ValueError, retry, retries=5, timeout=1)
-
-
-class TestSyncTestUtils(unittest.TestCase):
-
-    def tearDown(self):
-        safe_rmpath(TESTFN)
-
-    def test_wait_for_pid(self):
-        wait_for_pid(os.getpid())
-        nopid = max(psutil.pids()) + 99999
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
-
-    def test_wait_for_file(self):
-        with open(TESTFN, 'w') as f:
-            f.write('foo')
-        wait_for_file(TESTFN)
-        assert not os.path.exists(TESTFN)
-
-    def test_wait_for_file_empty(self):
-        with open(TESTFN, 'w'):
-            pass
-        wait_for_file(TESTFN, empty=True)
-        assert not os.path.exists(TESTFN)
-
-    def test_wait_for_file_no_file(self):
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(IOError, wait_for_file, TESTFN)
-
-    def test_wait_for_file_no_delete(self):
-        with open(TESTFN, 'w') as f:
-            f.write('foo')
-        wait_for_file(TESTFN, delete=False)
-        assert os.path.exists(TESTFN)
-
-    def test_call_until(self):
-        ret = call_until(lambda: 1, "ret == 1")
-        self.assertEqual(ret, 1)
-
-
-class TestFSTestUtils(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
-
-    tearDown = setUp
-
-    def test_open_text(self):
-        with open_text(__file__) as f:
-            self.assertEqual(f.mode, 'rt')
-
-    def test_open_binary(self):
-        with open_binary(__file__) as f:
-            self.assertEqual(f.mode, 'rb')
-
-    def test_safe_mkdir(self):
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
-        safe_mkdir(TESTFN)
-        assert os.path.isdir(TESTFN)
-
-    def test_safe_rmpath(self):
-        # test file is removed
-        open(TESTFN, 'w').close()
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
-        # test no exception if path does not exist
-        safe_rmpath(TESTFN)
-        # test dir is removed
-        os.mkdir(TESTFN)
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
-        # test other exceptions are raised
-        with mock.patch('psutil.tests.os.stat',
-                        side_effect=OSError(errno.EINVAL, "")) as m:
-            with self.assertRaises(OSError):
-                safe_rmpath(TESTFN)
-            assert m.called
-
-    def test_chdir(self):
-        base = os.getcwd()
-        os.mkdir(TESTFN)
-        with chdir(TESTFN):
-            self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
-        self.assertEqual(os.getcwd(), base)
-
-
-class TestProcessUtils(unittest.TestCase):
-
-    def test_reap_children(self):
-        subp = get_test_subprocess()
-        p = psutil.Process(subp.pid)
-        assert p.is_running()
-        reap_children()
-        assert not p.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
-
-    def test_create_proc_children_pair(self):
-        p1, p2 = create_proc_children_pair()
-        self.assertNotEqual(p1.pid, p2.pid)
-        assert p1.is_running()
-        assert p2.is_running()
-        children = psutil.Process().children(recursive=True)
-        self.assertEqual(len(children), 2)
-        self.assertIn(p1, children)
-        self.assertIn(p2, children)
-        self.assertEqual(p1.ppid(), os.getpid())
-        self.assertEqual(p2.ppid(), p1.pid)
-
-        # make sure both of them are cleaned up
-        reap_children()
-        assert not p1.is_running()
-        assert not p2.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
-
-    @unittest.skipIf(not POSIX, "POSIX only")
-    def test_create_zombie_proc(self):
-        zpid = create_zombie_proc()
-        self.addCleanup(reap_children, recursive=True)
-        p = psutil.Process(zpid)
-        self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
-
-
-class TestNetUtils(unittest.TestCase):
-
-    def bind_socket(self):
-        port = get_free_port()
-        with contextlib.closing(bind_socket(addr=('', port))) as s:
-            self.assertEqual(s.getsockname()[1], port)
-
-    @unittest.skipIf(not POSIX, "POSIX only")
-    def test_bind_unix_socket(self):
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.family, socket.AF_UNIX)
-                self.assertEqual(sock.type, socket.SOCK_STREAM)
-                self.assertEqual(sock.getsockname(), name)
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
-        # UDP
-        with unix_socket_path() as name:
-            sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
-            with contextlib.closing(sock):
-                self.assertEqual(sock.type, socket.SOCK_DGRAM)
-
-    def tcp_tcp_socketpair(self):
-        addr = ("127.0.0.1", get_free_port())
-        server, client = tcp_socketpair(socket.AF_INET, addr=addr)
-        with contextlib.closing(server):
-            with contextlib.closing(client):
-                # Ensure they are connected and the positions are
-                # correct.
-                self.assertEqual(server.getsockname(), addr)
-                self.assertEqual(client.getpeername(), addr)
-                self.assertNotEqual(client.getsockname(), addr)
-
-    @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(NETBSD or FREEBSD,
-                     "/var/run/log UNIX socket opened by default")
-    def test_unix_socketpair(self):
-        p = psutil.Process()
-        num_fds = p.num_fds()
-        assert not p.connections(kind='unix')
-        with unix_socket_path() as name:
-            server, client = unix_socketpair(name)
-            try:
-                assert os.path.exists(name)
-                assert stat.S_ISSOCK(os.stat(name).st_mode)
-                self.assertEqual(p.num_fds() - num_fds, 2)
-                self.assertEqual(len(p.connections(kind='unix')), 2)
-                self.assertEqual(server.getsockname(), name)
-                self.assertEqual(client.getpeername(), name)
-            finally:
-                client.close()
-                server.close()
-
-    def test_create_sockets(self):
-        with create_sockets() as socks:
-            fams = collections.defaultdict(int)
-            types = collections.defaultdict(int)
-            for s in socks:
-                fams[s.family] += 1
-                # work around http://bugs.python.org/issue30204
-                types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
-            self.assertGreaterEqual(fams[socket.AF_INET], 2)
-            if supports_ipv6():
-                self.assertGreaterEqual(fams[socket.AF_INET6], 2)
-            if POSIX and HAS_CONNECTIONS_UNIX:
-                self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
-            self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
-            self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
-
-
-class TestOtherUtils(unittest.TestCase):
-
-    def test_is_namedtuple(self):
-        assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
-        assert not is_namedtuple(tuple())
-
-
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

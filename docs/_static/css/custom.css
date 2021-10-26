@@ -4,7 +4,7 @@
 }
 
 .rst-content dl:not(.docutils) {
-    margin: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 0px !important;
 }
 
 .data dd {

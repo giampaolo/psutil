@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -15,7 +15,6 @@ import shutil
 import signal
 import socket
 import sys
-import tempfile
 import time
 
 import psutil
@@ -36,7 +35,7 @@ from psutil.tests import check_net_address
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
 from psutil.tests import enum
-from psutil.tests import get_test_subprocess
+from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_DISK_SWAPS
@@ -45,14 +44,13 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import IS_64BIT
 from psutil.tests import mock
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
-from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import safe_rmpath
-from psutil.tests import TESTFN
-from psutil.tests import TESTFN_UNICODE
-from psutil.tests import TRAVIS
+from psutil.tests import GITHUB_ACTIONS
+from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import unittest
 
 
@@ -61,17 +59,11 @@ from psutil.tests import unittest
 # ===================================================================
 
 
-class TestProcessAPIs(unittest.TestCase):
-
-    def setUp(self):
-        safe_rmpath(TESTFN)
-
-    def tearDown(self):
-        reap_children()
+class TestProcessAPIs(PsutilTestCase):
 
     def test_process_iter(self):
         self.assertIn(os.getpid(), [x.pid for x in psutil.process_iter()])
-        sproc = get_test_subprocess()
+        sproc = self.spawn_testproc()
         self.assertIn(sproc.pid, [x.pid for x in psutil.process_iter()])
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -106,32 +98,16 @@ class TestProcessAPIs(unittest.TestCase):
                 self.assertGreaterEqual(p.info['pid'], 0)
             assert m.called
 
-    def test_process_iter_new_only(self):
-        ls1 = list(psutil.process_iter(attrs=['pid']))
-        ls2 = list(psutil.process_iter(attrs=['pid'], new_only=True))
-        self.assertGreater(len(ls1), len(ls2))
-        # assume no more than 3 new processes were created in the meantime
-        self.assertIn(len(ls2), [0, 1, 2, 3, 4, 5])
-
-        sproc = get_test_subprocess()
-        ls = list(psutil.process_iter(attrs=['pid'], new_only=True))
-        self.assertIn(len(ls2), [0, 1, 2, 3, 4, 5])
-        for p in ls:
-            if p.pid == sproc.pid:
-                break
-        else:
-            self.fail("subprocess not found")
-
     @unittest.skipIf(PYPY and WINDOWS,
-                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
+                     "spawn_testproc() unreliable on PYPY + WINDOWS")
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
 
         pids = []
-        sproc1 = get_test_subprocess()
-        sproc2 = get_test_subprocess()
-        sproc3 = get_test_subprocess()
+        sproc1 = self.spawn_testproc()
+        sproc2 = self.spawn_testproc()
+        sproc3 = self.spawn_testproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         self.assertRaises(ValueError, psutil.wait_procs, procs, timeout=-1)
         self.assertRaises(TypeError, psutil.wait_procs, procs, callback=1)
@@ -180,18 +156,18 @@ class TestProcessAPIs(unittest.TestCase):
             self.assertTrue(hasattr(p, 'returncode'))
 
     @unittest.skipIf(PYPY and WINDOWS,
-                     "get_test_subprocess() unreliable on PYPY + WINDOWS")
+                     "spawn_testproc() unreliable on PYPY + WINDOWS")
     def test_wait_procs_no_timeout(self):
-        sproc1 = get_test_subprocess()
-        sproc2 = get_test_subprocess()
-        sproc3 = get_test_subprocess()
+        sproc1 = self.spawn_testproc()
+        sproc2 = self.spawn_testproc()
+        sproc3 = self.spawn_testproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         for p in procs:
             p.terminate()
         gone, alive = psutil.wait_procs(procs)
 
     def test_pid_exists(self):
-        sproc = get_test_subprocess()
+        sproc = self.spawn_testproc()
         self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -201,7 +177,6 @@ class TestProcessAPIs(unittest.TestCase):
         self.assertEqual(psutil.pid_exists(0), 0 in psutil.pids())
 
     def test_pid_exists_2(self):
-        reap_children()
         pids = psutil.pids()
         for pid in pids:
             try:
@@ -216,15 +191,8 @@ class TestProcessAPIs(unittest.TestCase):
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
-    def test_pids(self):
-        pidslist = psutil.pids()
-        procslist = [x.pid for x in psutil.process_iter()]
-        # make sure every pid is unique
-        self.assertEqual(sorted(set(pidslist)), pidslist)
-        self.assertEqual(pidslist, procslist)
 
-
-class TestMiscAPIs(unittest.TestCase):
+class TestMiscAPIs(PsutilTestCase):
 
     def test_boot_time(self):
         bt = psutil.boot_time()
@@ -250,14 +218,6 @@ class TestMiscAPIs(unittest.TestCase):
                 self.assertIsNone(user.pid)
             else:
                 psutil.Process(user.pid)
-
-    @unittest.skipIf(not POSIX, 'POSIX only')
-    def test_PAGESIZE(self):
-        # pagesize is used internally to perform different calculations
-        # and it's determined by using SC_PAGE_SIZE; make sure
-        # getpagesize() returns the same value.
-        import resource
-        self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
     def test_test(self):
         # test for psutil.test() function
@@ -306,7 +266,7 @@ class TestMiscAPIs(unittest.TestCase):
             self.assertIs(getattr(psutil, name), False, msg=name)
 
 
-class TestMemoryAPIs(unittest.TestCase):
+class TestMemoryAPIs(PsutilTestCase):
 
     def test_virtual_memory(self):
         mem = psutil.virtual_memory()
@@ -343,7 +303,7 @@ class TestMemoryAPIs(unittest.TestCase):
         assert mem.sout >= 0, mem
 
 
-class TestCpuAPIs(unittest.TestCase):
+class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_count_logical(self):
         logical = psutil.cpu_count()
@@ -357,16 +317,16 @@ class TestCpuAPIs(unittest.TestCase):
             if "physical id" not in cpuinfo_data:
                 raise unittest.SkipTest("cpuinfo doesn't include physical id")
 
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         logical = psutil.cpu_count()
-        physical = psutil.cpu_count(logical=False)
-        if physical is None:
-            raise self.skipTest("physical cpu_count() is None")
+        cores = psutil.cpu_count(logical=False)
+        if cores is None:
+            raise self.skipTest("cpu_count_cores() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
-            self.assertIsNone(physical)
+            self.assertIsNone(cores)
         else:
-            self.assertGreaterEqual(physical, 1)
-            self.assertGreaterEqual(logical, physical)
+            self.assertGreaterEqual(cores, 1)
+            self.assertGreaterEqual(logical, cores)
 
     def test_cpu_count_none(self):
         # https://github.com/giampaolo/psutil/issues/1085
@@ -375,7 +335,7 @@ class TestCpuAPIs(unittest.TestCase):
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count())
                 assert m.called
-            with mock.patch('psutil._psplatform.cpu_count_physical',
+            with mock.patch('psutil._psplatform.cpu_count_cores',
                             return_value=val) as m:
                 self.assertIsNone(psutil.cpu_count(logical=False))
                 assert m.called
@@ -412,7 +372,7 @@ class TestCpuAPIs(unittest.TestCase):
     def test_cpu_times_time_increases(self):
         # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
-        stop_at = time.time() + 1
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
@@ -456,7 +416,7 @@ class TestCpuAPIs(unittest.TestCase):
         # Simulate some work load then make sure time have increased
         # between calls.
         tot1 = psutil.cpu_times(percpu=True)
-        giveup_at = time.time() + 1
+        giveup_at = time.time() + GLOBAL_TIMEOUT
         while True:
             if time.time() >= giveup_at:
                 return self.fail("timeout")
@@ -515,6 +475,8 @@ class TestCpuAPIs(unittest.TestCase):
                 self._test_cpu_percent(percent, last, new)
             self._test_cpu_percent(sum(new), last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_times_percent(interval=-1)
 
     def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
@@ -563,8 +525,6 @@ class TestCpuAPIs(unittest.TestCase):
                     self.assertGreaterEqual(value, 0)
 
         ls = psutil.cpu_freq(percpu=True)
-        if TRAVIS and not ls:
-            raise self.skipTest("skipped on Travis")
         if FREEBSD and not ls:
             raise self.skipTest("returns empty list on FreeBSD")
 
@@ -577,15 +537,15 @@ class TestCpuAPIs(unittest.TestCase):
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
-        assert len(loadavg) == 3
-
+        self.assertEqual(len(loadavg), 3)
         for load in loadavg:
             self.assertIsInstance(load, float)
             self.assertGreaterEqual(load, 0.0)
 
 
-class TestDiskAPIs(unittest.TestCase):
+class TestDiskAPIs(PsutilTestCase):
 
+    @unittest.skipIf(PYPY and not IS_64BIT, "unreliable on PYPY32 + 32BIT")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         self.assertEqual(usage._fields, ('total', 'used', 'free', 'percent'))
@@ -608,31 +568,37 @@ class TestDiskAPIs(unittest.TestCase):
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
-        fname = tempfile.mktemp()
+        fname = self.get_testfn()
         with self.assertRaises(FileNotFoundError):
             psutil.disk_usage(fname)
 
+    @unittest.skipIf(not ASCII_FS, "not an ASCII fs")
     def test_disk_usage_unicode(self):
         # See: https://github.com/giampaolo/psutil/issues/416
-        if ASCII_FS:
-            with self.assertRaises(UnicodeEncodeError):
-                psutil.disk_usage(TESTFN_UNICODE)
+        with self.assertRaises(UnicodeEncodeError):
+            psutil.disk_usage(UNICODE_SUFFIX)
 
     def test_disk_usage_bytes(self):
         psutil.disk_usage(b'.')
 
     def test_disk_partitions(self):
+        def check_ntuple(nt):
+            self.assertIsInstance(nt.device, str)
+            self.assertIsInstance(nt.mountpoint, str)
+            self.assertIsInstance(nt.fstype, str)
+            self.assertIsInstance(nt.opts, str)
+            self.assertIsInstance(nt.maxfile, (int, type(None)))
+            self.assertIsInstance(nt.maxpath, (int, type(None)))
+            if nt.maxfile is not None and not GITHUB_ACTIONS:
+                self.assertGreater(nt.maxfile, 0)
+            if nt.maxpath is not None:
+                self.assertGreater(nt.maxpath, 0)
+
         # all = False
         ls = psutil.disk_partitions(all=False)
-        # on travis we get:
-        #     self.assertEqual(p.cpu_affinity(), [n])
-        # AssertionError: Lists differ: [0, 1, 2, 3, 4, 5, 6, 7,... != [0]
         self.assertTrue(ls, msg=ls)
         for disk in ls:
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+            check_ntuple(disk)
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -649,11 +615,12 @@ class TestDiskAPIs(unittest.TestCase):
         ls = psutil.disk_partitions(all=True)
         self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
+            check_ntuple(disk)
             if not WINDOWS and disk.mountpoint:
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
-                    if TRAVIS and MACOS and err.errno == errno.EIO:
+                    if GITHUB_ACTIONS and MACOS and err.errno == errno.EIO:
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
@@ -661,8 +628,8 @@ class TestDiskAPIs(unittest.TestCase):
                         raise
                 else:
                     assert os.path.exists(disk.mountpoint), disk
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+
+        # ---
 
         def find_mount_point(path):
             path = os.path.abspath(path)
@@ -674,7 +641,6 @@ class TestDiskAPIs(unittest.TestCase):
         mounts = [x.mountpoint.lower() for x in
                   psutil.disk_partitions(all=True) if x.mountpoint]
         self.assertIn(mount, mounts)
-        psutil.disk_usage(mount)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -747,7 +713,7 @@ class TestDiskAPIs(unittest.TestCase):
                 sum([x.used for x in psutil.disk_swaps()]))
 
 
-class TestNetAPIs(unittest.TestCase):
+class TestNetAPIs(PsutilTestCase):
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
@@ -809,7 +775,7 @@ class TestNetAPIs(unittest.TestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
-                if sys.version_info >= (3, 4):
+                if sys.version_info >= (3, 4) and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces
@@ -865,7 +831,6 @@ class TestNetAPIs(unittest.TestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics
@@ -892,7 +857,7 @@ class TestNetAPIs(unittest.TestCase):
             assert m.called
 
 
-class TestSensorsAPIs(unittest.TestCase):
+class TestSensorsAPIs(PsutilTestCase):
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
@@ -946,5 +911,5 @@ class TestSensorsAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

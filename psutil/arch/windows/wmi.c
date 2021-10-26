@@ -10,6 +10,8 @@
 #include <windows.h>
 #include <pdh.h>
 
+#include "../../_psutil_common.h"
+
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation
@@ -30,7 +32,7 @@ double load_avg_5m = 0;
 double load_avg_15m = 0;
 
 
-VOID CALLBACK LoadAvgCallback(PVOID hCounter) {
+VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
     PDH_STATUS err;
@@ -62,22 +64,28 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     HANDLE event;
     HANDLE waitHandle;
 
-    if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS)
-        goto error;
+    if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        return NULL;
+    }
 
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
-    if (s != ERROR_SUCCESS)
-        goto error;
+    if (s != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhAddEnglishCounterW failed");
+        return NULL;
+    }
 
     event = CreateEventW(NULL, FALSE, FALSE, L"LoadUpdateEvent");
     if (event == NULL) {
-        PyErr_SetFromWindowsErr(GetLastError());
+        PyErr_SetFromOSErrnoWithSyscall("CreateEventW");
         return NULL;
     }
 
     s = PdhCollectQueryDataEx(hQuery, SAMPLING_INTERVAL, event);
-    if (s != ERROR_SUCCESS)
-        goto error;
+    if (s != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhCollectQueryDataEx failed");
+        return NULL;
+    }
 
     ret = RegisterWaitForSingleObject(
         &waitHandle,
@@ -89,15 +97,11 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
         WT_EXECUTEDEFAULT);
 
     if (ret == 0) {
-        PyErr_SetFromWindowsErr(GetLastError());
+        PyErr_SetFromOSErrnoWithSyscall("RegisterWaitForSingleObject");
         return NULL;
     }
 
     Py_RETURN_NONE;
-
-error:
-    PyErr_SetFromWindowsErr(0);
-    return NULL;
 }
 
 

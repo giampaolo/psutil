@@ -15,7 +15,7 @@
  * - psutil.Process.io_counters read count is always 0
  * - psutil.Process.io_counters may not be available on older AIX versions
  * - psutil.Process.threads may not be available on older AIX versions
- # - psutil.net_io_counters may not be available on older AIX versions
+ * - psutil.net_io_counters may not be available on older AIX versions
  * - reading basic process info may fail or return incorrect values when
  *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
  * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
@@ -679,7 +679,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     if (sock == -1)
         goto error;
 
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // is up?
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
@@ -876,7 +876,7 @@ error:
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int rc;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;
 
     rc = perfstat_memory_total(
@@ -902,7 +902,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int rc;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     perfstat_memory_total_t memory;
 
     rc = perfstat_memory_total(
@@ -1039,8 +1039,8 @@ PsutilMethods[] =
      "Return CPU statistics"},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };

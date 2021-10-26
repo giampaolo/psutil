@@ -31,5 +31,4 @@ struct ifaddrs {
 
 extern int getifaddrs(struct ifaddrs **);
 extern void freeifaddrs(struct ifaddrs *);
-
 #endif

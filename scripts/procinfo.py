@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -8,7 +8,7 @@
 Print detailed information about a process.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python scripts/procinfo.py
+$ python3 scripts/procinfo.py
 pid           4600
 name          chrome
 parent        4554 (bash)
@@ -102,17 +102,19 @@ RLIMITS_MAP = {
     "RLIMIT_CPU": "cputime",
     "RLIMIT_DATA": "datasize",
     "RLIMIT_FSIZE": "filesize",
-    "RLIMIT_LOCKS": "locks",
     "RLIMIT_MEMLOCK": "memlock",
     "RLIMIT_MSGQUEUE": "msgqueue",
     "RLIMIT_NICE": "nice",
     "RLIMIT_NOFILE": "openfiles",
     "RLIMIT_NPROC": "maxprocesses",
+    "RLIMIT_NPTS": "pseudoterms",
     "RLIMIT_RSS": "rss",
     "RLIMIT_RTPRIO": "realtimeprio",
     "RLIMIT_RTTIME": "rtimesched",
+    "RLIMIT_SBSIZE": "sockbufsize",
     "RLIMIT_SIGPENDING": "sigspending",
     "RLIMIT_STACK": "stack",
+    "RLIMIT_SWAP": "swapuse",
 }
 
 
@@ -317,7 +319,7 @@ def run(pid, verbose=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="print information about a process")
-    parser.add_argument("pid", type=int, help="process pid")
+    parser.add_argument("pid", type=int, help="process pid", nargs='?')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="print more info")
     args = parser.parse_args()

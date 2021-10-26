@@ -19,6 +19,12 @@ typedef LONG NTSTATUS;
 #define STATUS_NOT_FOUND ((NTSTATUS)0xC0000225L)
 #define STATUS_BUFFER_OVERFLOW ((NTSTATUS)0x80000005L)
 
+// WtsApi32.h
+#define WTS_CURRENT_SERVER_HANDLE  ((HANDLE)NULL)
+#define WINSTATIONNAME_LENGTH    32
+#define DOMAIN_LENGTH            17
+#define USERNAME_LENGTH          20
+
 // ================================================================
 // Enums
 // ================================================================
@@ -94,6 +100,53 @@ typedef enum _KWAIT_REASON {
     WrDeferredPreempt,
     MaximumWaitReason
 } KWAIT_REASON, *PKWAIT_REASON;
+
+// users()
+typedef enum _WTS_INFO_CLASS {
+    WTSInitialProgram,
+    WTSApplicationName,
+    WTSWorkingDirectory,
+    WTSOEMId,
+    WTSSessionId,
+    WTSUserName,
+    WTSWinStationName,
+    WTSDomainName,
+    WTSConnectState,
+    WTSClientBuildNumber,
+    WTSClientName,
+    WTSClientDirectory,
+    WTSClientProductId,
+    WTSClientHardwareId,
+    WTSClientAddress,
+    WTSClientDisplay,
+    WTSClientProtocolType,
+    WTSIdleTime,
+    WTSLogonTime,
+    WTSIncomingBytes,
+    WTSOutgoingBytes,
+    WTSIncomingFrames,
+    WTSOutgoingFrames,
+    WTSClientInfo,
+    WTSSessionInfo,
+    WTSSessionInfoEx,
+    WTSConfigInfo,
+    WTSValidationInfo,   // Info Class value used to fetch Validation Information through the WTSQuerySessionInformation
+    WTSSessionAddressV4,
+    WTSIsRemoteSession
+} WTS_INFO_CLASS;
+
+typedef enum _WTS_CONNECTSTATE_CLASS {
+    WTSActive,              // User logged on to WinStation
+    WTSConnected,           // WinStation connected to client
+    WTSConnectQuery,        // In the process of connecting to client
+    WTSShadow,              // Shadowing another WinStation
+    WTSDisconnected,        // WinStation logged on without client
+    WTSIdle,                // Waiting for client to connect
+    WTSListen,              // WinStation is listening for connection
+    WTSReset,               // WinStation is being reset
+    WTSDown,                // WinStation is down due to error
+    WTSInit,                // WinStation in initialization
+} WTS_CONNECTSTATE_CLASS;
 
 // ================================================================
 // Structs.
@@ -311,19 +364,44 @@ typedef struct {
 } RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
 
 // users()
-typedef struct _WINSTATION_INFO {
-    BYTE Reserved1[72];
-    ULONG SessionId;
-    BYTE Reserved2[4];
-    FILETIME ConnectTime;
-    FILETIME DisconnectTime;
-    FILETIME LastInputTime;
-    FILETIME LoginTime;
-    BYTE Reserved3[1096];
-    FILETIME CurrentTime;
-} WINSTATION_INFO, *PWINSTATION_INFO;
+typedef struct _WTS_SESSION_INFOW {
+    DWORD SessionId;             // session id
+    LPWSTR pWinStationName;      // name of WinStation this session is
+                                 // connected to
+    WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
+} WTS_SESSION_INFOW, * PWTS_SESSION_INFOW;
 
-// cpu_count_phys()
+#define PWTS_SESSION_INFO PWTS_SESSION_INFOW
+
+typedef struct _WTS_CLIENT_ADDRESS {
+    DWORD AddressFamily;  // AF_INET, AF_INET6, AF_IPX, AF_NETBIOS, AF_UNSPEC
+    BYTE  Address[20];    // client network address
+} WTS_CLIENT_ADDRESS, * PWTS_CLIENT_ADDRESS;
+
+typedef struct _WTSINFOW {
+    WTS_CONNECTSTATE_CLASS State; // connection state (see enum)
+    DWORD SessionId;             // session id
+    DWORD IncomingBytes;
+    DWORD OutgoingBytes;
+    DWORD IncomingFrames;
+    DWORD OutgoingFrames;
+    DWORD IncomingCompressedBytes;
+    DWORD OutgoingCompressedBytes;
+    WCHAR WinStationName[WINSTATIONNAME_LENGTH];
+    WCHAR Domain[DOMAIN_LENGTH];
+    WCHAR UserName[USERNAME_LENGTH + 1];// name of WinStation this session is
+                                 // connected to
+    LARGE_INTEGER ConnectTime;
+    LARGE_INTEGER DisconnectTime;
+    LARGE_INTEGER LastInputTime;
+    LARGE_INTEGER LogonTime;
+    LARGE_INTEGER CurrentTime;
+
+} WTSINFOW, * PWTSINFOW;
+
+#define PWTSINFO PWTSINFOW
+
+// cpu_count_cores()
 #if (_WIN32_WINNT < 0x0601)  // Windows < 7 (Vista and XP)
 typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
     LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
@@ -560,6 +638,32 @@ DWORD (CALLBACK *_GetActiveProcessorCount) (
     WORD GroupNumber);
 
 #define GetActiveProcessorCount _GetActiveProcessorCount
+
+BOOL(CALLBACK *_WTSQuerySessionInformationW) (
+    HANDLE hServer,
+    DWORD SessionId,
+    WTS_INFO_CLASS WTSInfoClass,
+    LPWSTR* ppBuffer,
+    DWORD* pBytesReturned
+    );
+
+#define WTSQuerySessionInformationW _WTSQuerySessionInformationW
+
+BOOL(CALLBACK *_WTSEnumerateSessionsW)(
+    HANDLE hServer,
+    DWORD Reserved,
+    DWORD Version,
+    PWTS_SESSION_INFO* ppSessionInfo,
+    DWORD* pCount
+    );
+
+#define WTSEnumerateSessionsW _WTSEnumerateSessionsW
+
+VOID(CALLBACK *_WTSFreeMemory)(
+    IN PVOID pMemory
+    );
+
+#define WTSFreeMemory _WTSFreeMemory
 
 ULONGLONG (CALLBACK *_GetTickCount64) (
     void);

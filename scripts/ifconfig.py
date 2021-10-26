@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -7,7 +7,7 @@
 """
 A clone of 'ifconfig' on UNIX.
 
-$ python scripts/ifconfig.py
+$ python3 scripts/ifconfig.py
 lo:
     stats          : speed=0MB, duplex=?, mtu=65536, up=yes
     incoming       : bytes=1.95M, pkts=22158, errs=0, drops=0

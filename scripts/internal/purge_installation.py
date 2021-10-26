@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009 Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -30,7 +30,7 @@ def rmpath(path):
 
 def main():
     locations = [site.getusersitepackages()]
-    locations.extend(site.getsitepackages())
+    locations += site.getsitepackages()
     for root in locations:
         if os.path.isdir(root):
             for name in os.listdir(root):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009 Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -12,8 +12,8 @@ import os
 import subprocess
 
 
-SKIP_EXTS = ('.png', '.jpg', '.jpeg')
-SKIP_FILES = ('.travis.yml', 'appveyor.yml')
+SKIP_EXTS = ('.png', '.jpg', '.jpeg', '.svg')
+SKIP_FILES = ('appveyor.yml')
 SKIP_PREFIXES = ('.ci/', '.github/')
 
 

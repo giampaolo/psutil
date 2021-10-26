@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -14,20 +14,14 @@
 #include <stdio.h>
 #include <utmpx.h>
 #include <sys/sysctl.h>
-#include <sys/vmmeter.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <pwd.h>
-
+#include <unistd.h>
 #include <mach/mach.h>
-#include <mach/task.h>
-#include <mach/mach_init.h>
-#include <mach/host_info.h>
-#include <mach/mach_host.h>
-#include <mach/mach_traps.h>
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
 
@@ -44,6 +38,7 @@
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 #include "arch/osx/process_info.h"
+#include "arch/osx/cpu.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -98,7 +93,8 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess("task_for_pid");
         else if (psutil_is_zombie(pid) == 1)
-            PyErr_SetString(ZombieProcessError, "task_for_pid() failed");
+            PyErr_SetString(ZombieProcessError,
+                            "task_for_pid -> psutil_is_zombie -> 1");
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
@@ -109,6 +105,72 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
         return 1;
     }
     return 0;
+}
+
+
+/*
+ * A wrapper around proc_pidinfo(PROC_PIDLISTFDS), which dynamically sets
+ * the buffer size.
+ */
+static struct proc_fdinfo*
+psutil_proc_list_fds(pid_t pid, int *num_fds) {
+    int ret;
+    int fds_size = 0;
+    int max_size = 24 * 1024 * 1024;  // 24M
+    struct proc_fdinfo *fds_pointer = NULL;
+
+    errno = 0;
+    ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 1/2");
+        goto error;
+    }
+
+    while (1) {
+        if (ret > fds_size) {
+            while (ret > fds_size) {
+                fds_size += PROC_PIDLISTFD_SIZE * 32;
+                if (fds_size > max_size) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "prevent malloc() to allocate > 24M");
+                    goto error;
+                }
+            }
+
+            if (fds_pointer != NULL) {
+                free(fds_pointer);
+            }
+            fds_pointer = malloc(fds_size);
+
+            if (fds_pointer == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+        }
+
+        errno = 0;
+        ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer, fds_size);
+        if (ret <= 0) {
+            psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 2/2");
+            goto error;
+        }
+
+        if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
+            psutil_debug("PROC_PIDLISTFDS: make room for 1 extra fd");
+            ret = fds_size + (int)PROC_PIDLISTFD_SIZE;
+            continue;
+        }
+
+        break;
+    }
+
+    *num_fds = (ret / (int)PROC_PIDLISTFD_SIZE);
+    return fds_pointer;
+
+error:
+    if (fds_pointer != NULL)
+        free(fds_pointer);
+    return NULL;
 }
 
 
@@ -297,11 +359,21 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        if (pid == 0)
+        if (pid == 0) {
             AccessDenied("automatically set for PID 0");
-        else
+            return NULL;
+        }
+        else if (errno == ENOENT) {
+            // It may happen (file not found error) if the process is
+            // still alive but the executable which launched it got
+            // deleted, see:
+            // https://github.com/giampaolo/psutil/issues/1738
+            return Py_BuildValue("s", "");
+        }
+        else {
             psutil_raise_for_pid(pid, "proc_pidpath()");
-        return NULL;
+            return NULL;
+        }
     }
     return PyUnicode_DecodeFSDefault(buf);
 }
@@ -338,50 +410,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // get the environment block, defined in arch/osx/process_info.c
     py_retdict = psutil_get_environ(pid);
     return py_retdict;
-}
-
-
-/*
- * Return the number of logical CPUs in the system.
- * XXX this could be shared with BSD.
- */
-static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args) {
-    /*
-    int mib[2];
-    int ncpu;
-    size_t len;
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", ncpu);
-    */
-    int num;
-    size_t size = sizeof(int);
-
-    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 2))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
-}
-
-
-/*
- * Return the number of physical CPUs in the system.
- */
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    int num;
-    size_t size = sizeof(int);
-
-    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
 }
 
 
@@ -429,7 +457,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_vm_size_t size = 0;
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
-    vm_size_t page_size;
+    long pagesize = psutil_getpagesize();
     mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
@@ -493,11 +521,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     }
 
     mach_port_deallocate(mach_task_self(), task);
-
-    if (host_page_size(mach_host_self(), &page_size) != KERN_SUCCESS)
-        page_size = PAGE_SIZE;
-
-    return Py_BuildValue("K", private_pages * page_size);
+    return Py_BuildValue("K", private_pages * pagesize);
 }
 
 
@@ -513,7 +537,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     uint64_t total;
     size_t   len = sizeof(total);
     vm_statistics_data_t vm;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
     // physical mem
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
@@ -553,7 +577,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size;
     struct xsw_usage totals;
     vm_statistics_data_t vmstat;
-    int pagesize = getpagesize();
+    long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
@@ -576,36 +600,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         totals.xsu_avail,
         (unsigned long long)vmstat.pageins * pagesize,
         (unsigned long long)vmstat.pageouts * pagesize);
-}
-
-
-/*
- * Return a Python tuple representing user, kernel and idle CPU times
- */
-static PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args) {
-    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
-    kern_return_t error;
-    host_cpu_load_info_data_t r_load;
-
-    mach_port_t host_port = mach_host_self();
-    error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
-                            (host_info_t)&r_load, &count);
-    if (error != KERN_SUCCESS) {
-        return PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
-            mach_error_string(error));
-    }
-    mach_port_deallocate(mach_task_self(), host_port);
-
-    return Py_BuildValue(
-        "(dddd)",
-        (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
-        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
-    );
 }
 
 
@@ -672,37 +666,6 @@ error:
             PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
     return NULL;
-}
-
-
-/*
- * Retrieve CPU frequency.
- */
-static PyObject *
-psutil_cpu_freq(PyObject *self, PyObject *args) {
-    int64_t curr;
-    int64_t min;
-    int64_t max;
-    size_t size = sizeof(int64_t);
-
-    if (sysctlbyname("hw.cpufrequency", &curr, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.cpufrequency')");
-    }
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.cpufrequency_min')");
-    }
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.cpufrequency_max')");
-    }
-
-    return Py_BuildValue(
-        "KKK",
-        curr / 1000 / 1000,
-        min / 1000 / 1000,
-        max / 1000 / 1000);
 }
 
 
@@ -894,7 +857,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied("task_info");
+            AccessDenied("task_info(TASK_BASIC_INFO)");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
@@ -969,15 +932,12 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int iterations;
+    int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
@@ -988,23 +948,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
+    if (fds_pointer == NULL)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
-
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -1071,15 +1019,12 @@ error:
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int iterations;
+    int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -1100,25 +1045,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    if (pid == 0)
-        return py_retlist;
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
+    if (fds_pointer == NULL)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
@@ -1130,9 +1061,18 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if ((nb <= 0) || (nb < sizeof(si))) {
+            if ((nb <= 0) || (nb < sizeof(si)) || (errno != 0)) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
+                    psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
+                                 "EBADF (ignored)");
+                    continue;
+                }
+                else if (errno == EOPNOTSUPP) {
+                    // may happen sometimes, see:
+                    // https://github.com/giampaolo/psutil/issues/1512
+                    psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
+                                 "EOPNOTSUPP (ignored)");
                     continue;
                 }
                 else {
@@ -1165,11 +1105,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             Py_DECREF(py_type);
             if (inseq == 0)
                 continue;
-
-            if (errno != 0) {
-                PyErr_SetFromErrno(PyExc_OSError);
-                goto error;
-            }
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
@@ -1275,30 +1210,18 @@ error:
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int num;
+    int num_fds;
     struct proc_fdinfo *fds_pointer;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
-        return PyErr_NoMemory();
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
-    if (pidinfo_result <= 0) {
-        free(fds_pointer);
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
+        return NULL;
 
-    num = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     free(fds_pointer);
-    return Py_BuildValue("i", num);
+    return Py_BuildValue("i", num_fds);
 }
 
 
@@ -1624,37 +1547,6 @@ error:
 
 
 /*
- * Return CPU statistics.
- */
-static PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    struct vmmeter vmstat;
-    kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
-    mach_port_t mport = mach_host_self();
-
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
-    if (ret != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_VM_INFO) failed: %s",
-            mach_error_string(ret));
-        return NULL;
-    }
-    mach_port_deallocate(mach_task_self(), mport);
-
-    return Py_BuildValue(
-        "IIIII",
-        vmstat.v_swtch,  // ctx switches
-        vmstat.v_intr,  // interrupts
-        vmstat.v_soft,  // software interrupts
-        vmstat.v_syscall,  // syscalls
-        vmstat.v_trap  // traps
-    );
-}
-
-
-/*
  * Return battery information.
  */
 static PyObject *
@@ -1778,8 +1670,8 @@ static PyMethodDef mod_methods[] = {
      "Returns a list of PIDs currently running on the system"},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return number of physical CPUs on the system"},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Return number of CPU cores on the system"},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
@@ -1807,8 +1699,8 @@ static PyMethodDef mod_methods[] = {
      "Return battery information."},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };

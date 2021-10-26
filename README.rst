@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage| |quality|
 |  |version| |py-versions| |packages| |license|
-|  |travis| |appveyor| |cirrus| |doc| |twitter| |tidelift|
+|  |github-actions| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -22,24 +22,20 @@
     :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
     :alt: Code quality
 
-.. |travis| image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux,%20OSX,%20PyPy
-    :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Linux tests (Travis)
+.. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
+    :alt: Linux, macOS, Windows tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-.. |cirrus| image:: https://img.shields.io/cirrus/github/giampaolo/psutil?label=FreeBSD
-    :target: https://cirrus-ci.com/github/giampaolo/psutil-cirrus-ci
-    :alt: FreeBSD tests (Cirrus-Ci)
-
-.. |coverage| image:: https://img.shields.io/coveralls/github/giampaolo/psutil.svg?label=test%20coverage
+.. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
 .. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
-    :target: http://psutil.readthedocs.io/en/latest/?badge=latest
+    :target: https://psutil.readthedocs.io/en/latest/
     :alt: Documentation Status
 
 .. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
@@ -47,7 +43,6 @@
     :alt: Latest version
 
 .. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
-    :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
 
 .. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
@@ -68,18 +63,21 @@
 
 -----
 
-Quick links
-===========
+.. raw:: html
 
-- `Home page <https://github.com/giampaolo/psutil>`_
-- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.org/project/psutil/#files>`_
-- `Forum <http://groups.google.com/group/psutil/topics>`_
-- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
-- `Blog <http://grodola.blogspot.com/search/label/psutil>`_
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+    <div align="center">
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.png" /></a>
+        <br />
+        <br />
+        <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/INSTALL.rst"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
+    </div>
 
 Summary
 =======
@@ -100,81 +98,58 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-...both **32-bit** and **64-bit** architectures. Supported Python versions are **2.6**, **2.7** and **3.4+**. `PyPy3 <http://pypy.org/>`__ is also known to work.
+Supported Python versions are **2.6**, **2.7**, **3.4+** and
+`PyPy <http://pypy.org/>`__.
 
-psutil for enterprise
-=====================
+Funding
+=======
 
-.. |tideliftlogo| image:: https://nedbatchelder.com/pix/Tidelift_Logos_RGB_Tidelift_Shorthand_On-White_small.png
-   :width: 150
-   :alt: Tidelift
-   :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+While psutil is free software and will always be, the project would benefit
+immensely from some funding.
+Keeping up with bug reports and maintenance has become hardly sustainable for
+me alone in terms of time.
+If you're a company that's making significant use of psutil you can consider
+becoming a sponsor via `GitHub Sponsors <https://github.com/sponsors/giampaolo>`__,
+`Open Collective <https://opencollective.com/psutil>`__ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
+and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
 
-.. list-table::
-   :widths: 10 150
-
-   * - |tideliftlogo|
-     - The maintainer of psutil and thousands of other packages are working
-       with Tidelift to deliver commercial support and maintenance for the open
-       source dependencies you use to build your applications. Save time,
-       reduce risk, and improve code health, while paying the maintainers of
-       the exact dependencies you use.
-       `Learn more <https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`__.
-
-       By subscribing to Tidelift you will help me (`Giampaolo Rodola`_) support
-       psutil future development. Alternatively consider making a small
-       `donation`_.
-
-Security
+Sponsors
 ========
 
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
+.. raw:: html
 
-Example applications
-====================
+    <div>
+        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
+        </a>
+    </div>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
-| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/top-small.png      |
-|    :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo.png          |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/top.png          |
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
-| .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap-small.png     |
-|     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
-+------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
+Supporters
+==========
 
-Also see `scripts directory <https://github.com/giampaolo/psutil/tree/master/scripts>`__
-and `doc recipes <http://psutil.readthedocs.io/#recipes/>`__.
+.. raw:: html
 
-Projects using psutil
-=====================
-
-psutil has roughly the following monthly downloads:
-
-.. image:: https://img.shields.io/pypi/dm/psutil.svg
-    :target: https://pepy.tech/project/psutil
-    :alt: Downloads
-
-There are over
-`10.000 open source projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
-on github which depend from psutil.
-Here's some I find particularly interesting:
-
-- https://github.com/google/grr
-- https://github.com/facebook/osquery/
-- https://github.com/nicolargo/glances
-- https://github.com/Jahaja/psdash
-- https://github.com/ajenti/ajenti
-- https://github.com/home-assistant/home-assistant/
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+    </div>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 
-Portings
-========
+Contributing
+============
 
-- Go: https://github.com/shirou/gopsutil
-- C: https://github.com/hamon-in/cpslib
-- Rust: https://github.com/borntyping/rust-psutil
-- Nim: https://github.com/johnscillieri/psutil-nim
-
+See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
 
 Example usages
 ==============
@@ -243,8 +218,8 @@ Disks
 .. code-block:: python
 
     >>> psutil.disk_partitions()
-    [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
-     sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
+    [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid', maxfile=255, maxpath=4096),
+     sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw', maxfile=255, maxpath=4096)]
     >>>
     >>> psutil.disk_usage('/')
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
@@ -262,7 +237,7 @@ Network
     {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
      'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
     >>>
-    >>> psutil.net_connections()
+    >>> psutil.net_connections(kind='tcp')
     [sconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
      sconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING', pid=2987),
      ...]
@@ -320,18 +295,20 @@ Process management
 
     >>> import psutil
     >>> psutil.pids()
-    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224, 268, 1215, 1216, 1220, 1221, 1243, 1244,
-     1301, 1601, 2237, 2355, 2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 4263, 4282,
-     4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, 4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446,
-     5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
+    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224, 268, 1215,
+     1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355, 2637, 2774, 3932,
+     4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 4263, 4282, 4306, 4311,
+     4312, 4313, 4314, 4337, 4339, 4357, 4358, 4363, 4383, 4395, 4408, 4433,
+     4443, 4445, 4446, 5167, 5234, 5235, 5252, 5318, 5424, 5644, 6987, 7054,
+     7055, 7071]
     >>>
     >>> p = psutil.Process(7055)
     >>> p
-    psutil.Process(pid=7055, name='python', started='09:04:44')
+    psutil.Process(pid=7055, name='python3', status='running', started='09:04:44')
     >>> p.name()
-    'python'
+    'python3'
     >>> p.exe()
-    '/usr/bin/python'
+    '/usr/bin/python3'
     >>> p.cwd()
     '/home/giampaolo'
     >>> p.cmdline()
@@ -342,15 +319,15 @@ Process management
     >>> p.ppid()
     7054
     >>> p.children(recursive=True)
-    [psutil.Process(pid=29835, name='python2.7', started='11:45:38'),
-     psutil.Process(pid=29836, name='python2.7', started='11:43:39')]
+    [psutil.Process(pid=29835, name='python3', status='sleeping', started='11:45:38'),
+     psutil.Process(pid=29836, name='python3', status='waking', started='11:43:39')]
     >>>
     >>> p.parent()
-    psutil.Process(pid=4699, name='bash', started='09:06:44')
+    psutil.Process(pid=4699, name='bash', status='sleeping', started='09:06:44')
     >>> p.parents()
     [psutil.Process(pid=4699, name='bash', started='09:06:44'),
-     psutil.Process(pid=4689, name='gnome-terminal-server', started='0:06:44'),
-     psutil.Process(pid=1, name='systemd', started='05:56:55')]
+     psutil.Process(pid=4689, name='gnome-terminal-server', status='sleeping', started='0:06:44'),
+     psutil.Process(pid=1, name='systemd', status='sleeping', started='05:56:55')]
     >>>
     >>> p.status()
     'running'
@@ -396,7 +373,7 @@ Process management
     [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
      popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
-    >>> p.connections()
+    >>> p.connections(kind='tcp')
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING')]
     >>>
@@ -438,7 +415,7 @@ Process management
     >>> p.terminate()
     >>> p.kill()
     >>> p.wait(timeout=3)
-    0
+    <Exitcode.EX_OK: 0>
     >>>
     >>> psutil.test()
     USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
@@ -456,7 +433,7 @@ Further process APIs
 .. code-block:: python
 
     >>> import psutil
-    >>> for proc in psutil.process_iter(attrs=['pid', 'name']):
+    >>> for proc in psutil.process_iter(['pid', 'name']):
     ...     print(proc.info)
     ...
     {'pid': 1, 'name': 'systemd'}
@@ -472,23 +449,6 @@ Further process APIs
     ...
     >>> # waits for multiple processes to terminate
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
-    >>>
-
-Popen wrapper:
-
-.. code-block:: python
-
-    >>> import psutil
-    >>> from subprocess import PIPE
-    >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
-    >>> p.name()
-    'python'
-    >>> p.username()
-    'giampaolo'
-    >>> p.communicate()
-    ('hello\n', None)
-    >>> p.wait(timeout=2)
-    0
     >>>
 
 Windows services
@@ -513,9 +473,22 @@ Windows services
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
 
+Projects using psutil
+=====================
 
-.. _`Giampaolo Rodola`: http://grodola.blogspot.com/p/about.html
-.. _`donation`: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
-.. _Tidelift security contact: https://tidelift.com/security
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+Here's some I find particularly interesting:
 
+- https://github.com/google/grr
+- https://github.com/facebook/osquery/
+- https://github.com/nicolargo/glances
+- https://github.com/Jahaja/psdash
+- https://github.com/ajenti/ajenti
+- https://github.com/home-assistant/home-assistant/
+
+Portings
+========
+
+- Go: https://github.com/shirou/gopsutil
+- C: https://github.com/hamon-in/cpslib
+- Rust: https://github.com/rust-psutil/rust-psutil
+- Nim: https://github.com/johnscillieri/psutil-nim

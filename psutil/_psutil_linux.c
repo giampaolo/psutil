@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <sys/resource.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
@@ -41,18 +42,6 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 
 // Linux >= 2.6.13
 #define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
-
-// Linux >= 2.6.36 (supposedly) and glibc >= 13
-#define PSUTIL_HAVE_PRLIMIT \
-    (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)) && \
-    (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13) && \
-    defined(__NR_prlimit64)
-
-#if PSUTIL_HAVE_PRLIMIT
-    #define _FILE_OFFSET_BITS 64
-    #include <time.h>
-    #include <sys/resource.h>
-#endif
 
 // Should exist starting from CentOS 6 (year 2011).
 #ifdef CPU_ALLOC
@@ -130,68 +119,6 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
     Py_RETURN_NONE;
-}
-#endif
-
-
-#if PSUTIL_HAVE_PRLIMIT
-/*
- * A wrapper around prlimit(2); sets process resource limits.
- * This can be used for both get and set, in which case extra
- * 'soft' and 'hard' args must be provided.
- */
-static PyObject *
-psutil_linux_prlimit(PyObject *self, PyObject *args) {
-    pid_t pid;
-    int ret, resource;
-    struct rlimit old, new;
-    struct rlimit *newp = NULL;
-    PyObject *py_soft = NULL;
-    PyObject *py_hard = NULL;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i|OO", &pid, &resource,
-                           &py_soft, &py_hard)) {
-        return NULL;
-    }
-
-    // get
-    if (py_soft == NULL && py_hard == NULL) {
-        ret = prlimit(pid, resource, NULL, &old);
-        if (ret == -1)
-            return PyErr_SetFromErrno(PyExc_OSError);
-#if defined(PSUTIL_HAVE_LONG_LONG)
-        if (sizeof(old.rlim_cur) > sizeof(long)) {
-            return Py_BuildValue("LL",
-                                 (PY_LONG_LONG)old.rlim_cur,
-                                 (PY_LONG_LONG)old.rlim_max);
-        }
-#endif
-        return Py_BuildValue("ll", (long)old.rlim_cur, (long)old.rlim_max);
-    }
-
-    // set
-    else {
-#if defined(PSUTIL_HAVE_LARGEFILE_SUPPORT)
-        new.rlim_cur = PyLong_AsLongLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLongLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-#else
-        new.rlim_cur = PyLong_AsLong(py_soft);
-        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-        new.rlim_max = PyLong_AsLong(py_hard);
-        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
-            return NULL;
-#endif
-        newp = &new;
-        ret = prlimit(pid, resource, newp, &old);
-        if (ret == -1)
-            return PyErr_SetFromErrno(PyExc_OSError);
-        Py_RETURN_NONE;
-    }
 }
 #endif
 
@@ -501,7 +428,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
         return PyErr_SetFromOSErrnoWithSyscall("socket()");
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
@@ -548,7 +475,7 @@ error:
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
-#ifdef PSUTIL_HAVE_IOPRIO
+#if PSUTIL_HAVE_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
@@ -575,13 +502,9 @@ static PyMethodDef mod_methods[] = {
 
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-#if PSUTIL_HAVE_PRLIMIT
-    {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
-     "Get or set process resource limits."},
-#endif
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -609,7 +532,6 @@ static PyMethodDef mod_methods[] = {
     void init_psutil_linux(void)
 #endif  /* PY_MAJOR_VERSION */
 {
-    PyObject *v;
 #if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
 #else
@@ -619,51 +541,11 @@ static PyMethodDef mod_methods[] = {
         INITERR;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
-#if PSUTIL_HAVE_PRLIMIT
-    if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS)) INITERR;
-    if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK)) INITERR;
-
-#if defined(HAVE_LONG_LONG)
-    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
-        v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
-    } else
-#endif
-    {
-        v = PyLong_FromLong((long) RLIM_INFINITY);
-    }
-    if (v) {
-        PyModule_AddObject(mod, "RLIM_INFINITY", v);
-    }
-
-#ifdef RLIMIT_MSGQUEUE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE)) INITERR;
-#endif
-#ifdef RLIMIT_NICE
-    if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE)) INITERR;
-#endif
-#ifdef RLIMIT_RTPRIO
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO)) INITERR;
-#endif
-#ifdef RLIMIT_RTTIME
-    if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME)) INITERR;
-#endif
-#ifdef RLIMIT_SIGPENDING
-    if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
-        INITERR;
-#endif
-#endif
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
+
+    psutil_setup();
 
     if (mod == NULL)
         INITERR;

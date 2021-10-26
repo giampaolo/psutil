@@ -1,22 +1,27 @@
-# Build: 2 (bump this up by 1 to force an appveyor run)
+# Build: 3 (bump this up by 1 to force an appveyor run)
 
 os: Visual Studio 2015
-
+# avoid 2 builds when pushing on PRs
+skip_branch_with_pr: true
+# avoid build on new GIT tag
+skip_tags: true
+matrix:
+  # stop build on first failure
+  fast_finish: true
 environment:
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.ci\\appveyor\\run_with_compiler.cmd"
+    PYTHONWARNINGS: always
+    PYTHONUNBUFFERED: 1
+    PSUTIL_DEBUG: 1
   matrix:
     # 32 bits
 
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python36"
@@ -31,14 +36,15 @@ environment:
       PYTHON_VERSION: "3.8.x"
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python39"
+      PYTHON_VERSION: "3.9.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON_ARCH: "32"
+
     # 64 bits
 
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python36-x64"
@@ -51,6 +57,11 @@ environment:
 
     - PYTHON: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python39-x64"
+      PYTHON_VERSION: "3.9.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON_ARCH: "64"
 
 init:
@@ -69,9 +80,11 @@ build: off
 
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test-memleaks"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_hashes.py dist"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_access_denied.py"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/print_api_speed.py"
 
@@ -85,7 +98,7 @@ cache:
 #   - might want to upload the content of dist/*.whl to a public wheelhouse
 
 skip_commits:
-  message: skip-ci
+  message: skip-appveyor
 
 # run build only if one of the following files is modified on commit
 only_commits:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
@@ -23,19 +23,23 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import CI_TESTING
-from psutil.tests import get_kernel_version
-from psutil.tests import get_test_subprocess
+from psutil.tests import spawn_testproc
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import mock
+from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
-from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
-from psutil.tests import TRAVIS
+from psutil.tests import terminate
 from psutil.tests import unittest
-from psutil.tests import wait_for_pid
 from psutil.tests import which
+
+if POSIX:
+    import mmap
+    import resource
+
+    from psutil._psutil_posix import getpagesize
 
 
 def ps(fmt, pid=None):
@@ -58,8 +62,7 @@ def ps(fmt, pid=None):
             cmd.append('ax')
 
     if SUNOS:
-        fmt_map = {'command', 'comm',
-                   'start', 'stime'}
+        fmt_map = set(('command', 'comm', 'start', 'stime'))
         fmt = fmt_map.get(fmt, fmt)
 
     cmd.extend(['-o', fmt])
@@ -128,18 +131,17 @@ def ps_vsz(pid):
 
 
 @unittest.skipIf(not POSIX, "POSIX only")
-class TestProcess(unittest.TestCase):
+class TestProcess(PsutilTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess([PYTHON_EXE, "-E", "-O"],
-                                      stdin=subprocess.PIPE).pid
-        wait_for_pid(cls.pid)
+        cls.pid = spawn_testproc([PYTHON_EXE, "-E", "-O"],
+                                 stdin=subprocess.PIPE).pid
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     def test_ppid(self):
         ppid_ps = ps('ppid', self.pid)
@@ -285,50 +287,9 @@ class TestProcess(unittest.TestCase):
         psutil_nice = psutil.Process().nice()
         self.assertEqual(ps_nice, psutil_nice)
 
-    def test_num_fds(self):
-        # Note: this fails from time to time; I'm keen on thinking
-        # it doesn't mean something is broken
-        def call(p, attr):
-            args = ()
-            attr = getattr(p, name, None)
-            if attr is not None and callable(attr):
-                if name == 'rlimit':
-                    args = (psutil.RLIMIT_NOFILE,)
-                attr(*args)
-            else:
-                attr
-
-        p = psutil.Process(os.getpid())
-        failures = []
-        ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'children', 'as_dict',
-                         'memory_info_ex', 'parent', 'parents']
-        if LINUX and get_kernel_version() < (2, 6, 36):
-            ignored_names.append('rlimit')
-        if LINUX and get_kernel_version() < (2, 6, 23):
-            ignored_names.append('num_ctx_switches')
-        for name in dir(psutil.Process):
-            if (name.startswith('_') or name in ignored_names):
-                continue
-            else:
-                try:
-                    num1 = p.num_fds()
-                    for x in range(2):
-                        call(p, name)
-                    num2 = p.num_fds()
-                except psutil.AccessDenied:
-                    pass
-                else:
-                    if abs(num2 - num1) > 1:
-                        fail = "failure while processing Process.%s method " \
-                               "(before=%s, after=%s)" % (name, num1, num2)
-                        failures.append(fail)
-        if failures:
-            self.fail('\n' + '\n'.join(failures))
-
 
 @unittest.skipIf(not POSIX, "POSIX only")
-class TestSystemAPIs(unittest.TestCase):
+class TestSystemAPIs(PsutilTestCase):
     """Test some system APIs."""
 
     @retry_on_failure()
@@ -351,7 +312,6 @@ class TestSystemAPIs(unittest.TestCase):
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @unittest.skipIf(SUNOS, "unreliable on SUNOS")
-    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
@@ -369,9 +329,9 @@ class TestSystemAPIs(unittest.TestCase):
     @retry_on_failure()
     def test_users(self):
         out = sh("who")
-        lines = out.split('\n')
-        if not lines:
+        if not out.strip():
             raise self.skipTest("no users on this system")
+        lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
         self.assertEqual(len(users), len(psutil.users()))
@@ -415,6 +375,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @unittest.skipIf(AIX, "unreliable on AIX")
+    @retry_on_failure()
     def test_disk_usage(self):
         def df(device):
             out = sh("df -k %s" % device).strip()
@@ -449,6 +410,16 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertAlmostEqual(usage.percent, percent, delta=1)
 
 
+@unittest.skipIf(not POSIX, "POSIX only")
+class TestMisc(PsutilTestCase):
+
+    def test_getpagesize(self):
+        pagesize = getpagesize()
+        self.assertGreater(pagesize, 0)
+        self.assertEqual(pagesize, resource.getpagesize())
+        self.assertEqual(pagesize, mmap.PAGESIZE)
+
+
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

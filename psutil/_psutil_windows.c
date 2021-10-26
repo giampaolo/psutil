@@ -22,7 +22,6 @@
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
-#include <wtsapi32.h>  // users()
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -42,35 +41,6 @@
 // Raised by Process.wait().
 static PyObject *TimeoutExpired;
 static PyObject *TimeoutAbandoned;
-
-
-/*
- * Return the number of logical, active CPUs. Return 0 if undetermined.
- * See discussion at: https://bugs.python.org/issue33166#msg314631
- */
-unsigned int
-psutil_get_num_cpus(int fail_on_err) {
-    unsigned int ncpus = 0;
-
-    // Minimum requirement: Windows 7
-    if (GetActiveProcessorCount != NULL) {
-        ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-        if ((ncpus == 0) && (fail_on_err == 1)) {
-            PyErr_SetFromWindowsErr(0);
-        }
-    }
-    else {
-        psutil_debug("GetActiveProcessorCount() not available; "
-                     "using GetSystemInfo()");
-        ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
-        if ((ncpus <= 0) && (fail_on_err == 1)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "GetSystemInfo() failed to retrieve CPU count");
-        }
-    }
-    return ncpus;
-}
 
 
 /*
@@ -160,22 +130,15 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         return AccessDenied("automatically set for PID 0");
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    hProcess = psutil_check_phandle(hProcess, pid, 0);
     if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://github.com/giampaolo/psutil/issues/24
-            psutil_debug("OpenProcess -> ERROR_INVALID_PARAMETER turned "
-                         "into NoSuchProcess");
-            NoSuchProcess("OpenProcess");
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
         return NULL;
     }
 
     if (! TerminateProcess(hProcess, SIGTERM)) {
         // ERROR_ACCESS_DENIED may happen if the process already died. See:
         // https://github.com/giampaolo/psutil/issues/1099
+        // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
             PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
             return NULL;
@@ -212,7 +175,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             Py_RETURN_NONE;
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
             return NULL;
         }
     }
@@ -281,7 +244,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            NoSuchProcess("GetProcessTimes");
+            NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -333,7 +296,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -357,7 +320,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -375,8 +338,8 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
     NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize = 0x100;
+    PVOID buffer = NULL;
+    ULONG bufferSize = 0x104 * 2; // WIN_MAX_PATH * sizeof(wchar_t)
     SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
     PyObject *py_exe;
 
@@ -384,11 +347,14 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
 
     if (pid == 0)
-        return AccessDenied("forced for PID 0");
+        return AccessDenied("automatically set for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
-    if (! buffer)
-        return PyErr_NoMemory();
+    if (! buffer) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
     processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
     processIdInfo.ImageName.Length = 0;
     processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
@@ -400,12 +366,41 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         sizeof(SYSTEM_PROCESS_ID_INFORMATION),
         NULL);
 
-    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+    if ((status == STATUS_INFO_LENGTH_MISMATCH) &&
+            (processIdInfo.ImageName.MaximumLength <= bufferSize))
+    {
+        // Required length was NOT stored in MaximumLength (WOW64 issue).
+        ULONG maxBufferSize = 0x7FFF * 2;  // NTFS_MAX_PATH * sizeof(wchar_t)
+        do {
+            // Iteratively double the size of the buffer up to maxBufferSize
+            bufferSize *= 2;
+            FREE(buffer);
+            buffer = MALLOC_ZERO(bufferSize);
+            if (! buffer) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+
+            processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+            processIdInfo.ImageName.Buffer = buffer;
+
+            status = NtQuerySystemInformation(
+                SystemProcessIdInformation,
+                &processIdInfo,
+                sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+                NULL);
+        } while ((status == STATUS_INFO_LENGTH_MISMATCH) &&
+                    (bufferSize <= maxBufferSize));
+    }
+    else if (status == STATUS_INFO_LENGTH_MISMATCH) {
         // Required length is stored in MaximumLength.
         FREE(buffer);
         buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
-        if (! buffer)
-            return PyErr_NoMemory();
+        if (! buffer) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
         processIdInfo.ImageName.Buffer = buffer;
 
         status = NtQuerySystemInformation(
@@ -418,7 +413,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! NT_SUCCESS(status)) {
         FREE(buffer);
         if (psutil_pid_is_running(pid) == 0)
-            NoSuchProcess("NtQuerySystemInformation");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         else
             psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
@@ -537,10 +532,10 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("NtQueryVirtualMemory");
+            AccessDenied("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
-            NoSuchProcess("psutil_pid_is_running");
+            NoSuchProcess("psutil_pid_is_running -> 0");
         }
         else {
             PyErr_Clear();
@@ -645,7 +640,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running");
+        return NoSuchProcess("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -704,13 +699,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("automatically set for PID 0");
+        AccessDenied("forced for PID 0");
         goto error;
     }
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess("psutil_pid_is_running");
+        NoSuchProcess("psutil_pid_is_running -> 0");
         goto error;
     }
     if (pid_return == -1)
@@ -810,54 +805,34 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process username as a "DOMAIN//USERNAME" string.
- */
-static PyObject *
-psutil_proc_username(PyObject *self, PyObject *args) {
-    DWORD pid;
-    HANDLE processHandle = NULL;
-    HANDLE tokenHandle = NULL;
-    PTOKEN_USER user = NULL;
-    ULONG bufferSize;
-    WCHAR *name = NULL;
-    WCHAR *domainName = NULL;
-    ULONG nameSize;
-    ULONG domainNameSize;
-    SID_NAME_USE nameUse;
-    PyObject *py_username = NULL;
-    PyObject *py_domain = NULL;
-    PyObject *py_tuple = NULL;
+static PTOKEN_USER
+_psutil_user_token_from_pid(DWORD pid) {
+    HANDLE hProcess = NULL;
+    HANDLE hToken = NULL;
+    PTOKEN_USER userToken = NULL;
+    ULONG bufferSize = 0x100;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (hProcess == NULL)
         return NULL;
 
-    processHandle = psutil_handle_from_pid(
-        pid, PROCESS_QUERY_LIMITED_INFORMATION);
-    if (processHandle == NULL)
-        return NULL;
-
-    if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
+    if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
         PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
         goto error;
     }
 
-    CloseHandle(processHandle);
-    processHandle = NULL;
-
     // Get the user SID.
-    bufferSize = 0x100;
     while (1) {
-        user = malloc(bufferSize);
-        if (user == NULL) {
+        userToken = malloc(bufferSize);
+        if (userToken == NULL) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!GetTokenInformation(tokenHandle, TokenUser, user, bufferSize,
+        if (!GetTokenInformation(hToken, TokenUser, userToken, bufferSize,
                                  &bufferSize))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                free(user);
+                free(userToken);
                 continue;
             }
             else {
@@ -868,15 +843,45 @@ psutil_proc_username(PyObject *self, PyObject *args) {
         break;
     }
 
-    CloseHandle(tokenHandle);
-    tokenHandle = NULL;
+    CloseHandle(hProcess);
+    CloseHandle(hToken);
+    return userToken;
+
+error:
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    if (hToken != NULL)
+        CloseHandle(hToken);
+    return NULL;
+}
+
+
+/*
+ * Return process username as a "DOMAIN//USERNAME" string.
+ */
+static PyObject *
+psutil_proc_username(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PTOKEN_USER userToken = NULL;
+    WCHAR *userName = NULL;
+    WCHAR *domainName = NULL;
+    ULONG nameSize = 0x100;
+    ULONG domainNameSize = 0x100;
+    SID_NAME_USE nameUse;
+    PyObject *py_username = NULL;
+    PyObject *py_domain = NULL;
+    PyObject *py_tuple = NULL;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    userToken = _psutil_user_token_from_pid(pid);
+    if (userToken == NULL)
+        return NULL;
 
     // resolve the SID to a name
-    nameSize = 0x100;
-    domainNameSize = 0x100;
     while (1) {
-        name = malloc(nameSize * sizeof(WCHAR));
-        if (name == NULL) {
+        userName = malloc(nameSize * sizeof(WCHAR));
+        if (userName == NULL) {
             PyErr_NoMemory();
             goto error;
         }
@@ -885,13 +890,26 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             PyErr_NoMemory();
             goto error;
         }
-        if (!LookupAccountSidW(NULL, user->User.Sid, name, &nameSize,
+        if (!LookupAccountSidW(NULL, userToken->User.Sid, userName, &nameSize,
                                domainName, &domainNameSize, &nameUse))
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                free(name);
+                free(userName);
                 free(domainName);
                 continue;
+            }
+            else if (GetLastError() == ERROR_NONE_MAPPED) {
+                // From MS doc:
+                // https://docs.microsoft.com/en-us/windows/win32/api/winbase/
+                //     nf-winbase-lookupaccountsida
+                // If the function cannot find an account name for the SID,
+                // GetLastError returns ERROR_NONE_MAPPED. This can occur if
+                // a network time-out prevents the function from finding the
+                // name. It also occurs for SIDs that have no corresponding
+                // account name, such as a logon SID that identifies a logon
+                // session.
+                AccessDenied("LookupAccountSidW -> ERROR_NONE_MAPPED");
+                goto error;
             }
             else {
                 PyErr_SetFromOSErrnoWithSyscall("LookupAccountSidW");
@@ -904,7 +922,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     py_domain = PyUnicode_FromWideChar(domainName, wcslen(domainName));
     if (! py_domain)
         goto error;
-    py_username = PyUnicode_FromWideChar(name, wcslen(name));
+    py_username = PyUnicode_FromWideChar(userName, wcslen(userName));
     if (! py_username)
         goto error;
     py_tuple = Py_BuildValue("OO", py_domain, py_username);
@@ -913,23 +931,18 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     Py_DECREF(py_domain);
     Py_DECREF(py_username);
 
-    free(name);
+    free(userName);
     free(domainName);
-    free(user);
-
+    free(userToken);
     return py_tuple;
 
 error:
-    if (processHandle != NULL)
-        CloseHandle(processHandle);
-    if (tokenHandle != NULL)
-        CloseHandle(tokenHandle);
-    if (name != NULL)
-        free(name);
+    if (userName != NULL)
+        free(userName);
     if (domainName != NULL)
         free(domainName);
-    if (user != NULL)
-        free(user);
+    if (userToken != NULL)
+        free(userToken);
     Py_XDECREF(py_domain);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tuple);
@@ -1186,17 +1199,17 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
-    WCHAR *buffer_user = NULL;
-    LPTSTR buffer_addr = NULL;
-    PWTS_SESSION_INFO sessions = NULL;
+    LPWSTR buffer_user = NULL;
+    LPWSTR buffer_addr = NULL;
+    LPWSTR buffer_info = NULL;
+    PWTS_SESSION_INFOW sessions = NULL;
     DWORD count;
     DWORD i;
     DWORD sessionId;
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
-    WINSTATION_INFO station_info;
-    ULONG returnLen;
+    PWTSINFOW wts_info;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
@@ -1205,8 +1218,21 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
-        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessions");
+    if (WTSEnumerateSessionsW == NULL ||
+        WTSQuerySessionInformationW == NULL ||
+        WTSFreeMemory == NULL) {
+            // If we don't run in an environment that is a Remote Desktop Services environment
+            // the Wtsapi32 proc might not be present.
+            // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+            return py_retlist;
+    }
+
+    if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
+        if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
+            // On Windows Nano server, the Wtsapi32 API can be present, but return WinError 120.
+            return py_retlist;
+        }
+        PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessionsW");
         goto error;
     }
 
@@ -1218,9 +1244,12 @@ psutil_users(PyObject *self, PyObject *args) {
             WTSFreeMemory(buffer_user);
         if (buffer_addr != NULL)
             WTSFreeMemory(buffer_addr);
+        if (buffer_info != NULL)
+            WTSFreeMemory(buffer_info);
 
         buffer_user = NULL;
         buffer_addr = NULL;
+        buffer_info = NULL;
 
         // username
         bytes = 0;
@@ -1234,50 +1263,49 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
-                                       &buffer_addr, &bytes) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformation");
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSClientAddress,
+                                        &buffer_addr, &bytes) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
-        if (address->AddressFamily == 0) {  // AF_INET
+        if (address->AddressFamily == 2) {  // AF_INET == 2
             sprintf_s(address_str,
                       _countof(address_str),
                       "%u.%u.%u.%u",
-                      address->Address[0],
-                      address->Address[1],
+                      // The IP address is offset by two bytes from the start of the Address member of the WTS_CLIENT_ADDRESS structure.
                       address->Address[2],
-                      address->Address[3]);
+                      address->Address[3],
+                      address->Address[4],
+                      address->Address[5]);
             py_address = Py_BuildValue("s", address_str);
             if (!py_address)
                 goto error;
         }
         else {
+            Py_INCREF(Py_None);
             py_address = Py_None;
         }
 
         // login time
-        if (! WinStationQueryInformationW(
-                hServer,
-                sessionId,
-                WinStationInformation,
-                &station_info,
-                sizeof(station_info),
-                &returnLen))
-        {
-            PyErr_SetFromOSErrnoWithSyscall("WinStationQueryInformationW");
+        bytes = 0;
+        if (WTSQuerySessionInformationW(hServer, sessionId, WTSSessionInfo,
+                                        &buffer_info, &bytes) == 0) {
+            PyErr_SetFromOSErrnoWithSyscall("WTSQuerySessionInformationW");
             goto error;
         }
+        wts_info = (PWTSINFOW)buffer_info;
 
         py_username = PyUnicode_FromWideChar(buffer_user, wcslen(buffer_user));
         if (py_username == NULL)
             goto error;
+
         py_tuple = Py_BuildValue(
             "OOd",
             py_username,
             py_address,
-            psutil_FiletimeToUnixTime(station_info.ConnectTime)
+            psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
         );
         if (!py_tuple)
             goto error;
@@ -1291,6 +1319,7 @@ psutil_users(PyObject *self, PyObject *args) {
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
+    WTSFreeMemory(buffer_info);
     return py_retlist;
 
 error:
@@ -1305,6 +1334,8 @@ error:
         WTSFreeMemory(buffer_user);
     if (buffer_addr != NULL)
         WTSFreeMemory(buffer_addr);
+    if (buffer_info != NULL)
+        WTSFreeMemory(buffer_info);
     return NULL;
 }
 
@@ -1584,8 +1615,8 @@ PsutilMethods[] = {
      "Determine if the process exists in the current process list."},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Returns the number of logical CPUs on the system"},
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Returns the number of physical CPUs on the system"},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
+     "Returns the number of CPU cores on the system"},
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
@@ -1641,12 +1672,12 @@ PsutilMethods[] = {
      "Stop a service"},
 
     // --- windows API bindings
-    {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
+    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };

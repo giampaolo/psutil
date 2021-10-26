@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola', Himanshu Shekhar.
 # All rights reserved. Use of this source code is governed by a
@@ -40,7 +40,6 @@ Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 """
 
 from __future__ import print_function
-
 import concurrent.futures
 import functools
 import os
@@ -175,7 +174,7 @@ def get_urls(fname):
         return parse_c(fname)
     else:
         with open(fname, 'rt', errors='ignore') as f:
-            if f.readline().strip().startswith('#!/usr/bin/env python'):
+            if f.readline().strip().startswith('#!/usr/bin/env python3'):
                 return parse_py(fname)
         return parse_generic(fname)
 

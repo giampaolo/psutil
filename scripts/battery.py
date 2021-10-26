@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -7,7 +7,7 @@
 """
 Show battery information.
 
-$ python scripts/battery.py
+$ python3 scripts/battery.py
 charge:     74%
 left:       2:11:31
 status:     discharging

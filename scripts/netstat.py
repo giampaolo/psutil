@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -7,7 +7,7 @@
 """
 A clone of 'netstat -antp' on Linux.
 
-$ python scripts/netstat.py
+$ python3 scripts/netstat.py
 Proto Local address      Remote address   Status        PID    Program name
 tcp   127.0.0.1:48256    127.0.0.1:45884  ESTABLISHED   13646  chrome
 tcp   127.0.0.1:47073    127.0.0.1:45884  ESTABLISHED   13646  chrome
@@ -41,20 +41,21 @@ def main():
         "Proto", "Local address", "Remote address", "Status", "PID",
         "Program name"))
     proc_names = {}
-    for p in psutil.process_iter(attrs=['pid', 'name']):
+    for p in psutil.process_iter(['pid', 'name']):
         proc_names[p.info['pid']] = p.info['name']
     for c in psutil.net_connections(kind='inet'):
         laddr = "%s:%s" % (c.laddr)
         raddr = ""
         if c.raddr:
             raddr = "%s:%s" % (c.raddr)
+        name = proc_names.get(c.pid, '?') or ''
         print(templ % (
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,
             c.status,
             c.pid or AD,
-            proc_names.get(c.pid, '?')[:15],
+            name[:15],
         ))
 
 

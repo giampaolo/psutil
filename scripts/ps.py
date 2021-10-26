@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -7,7 +7,7 @@
 """
 A clone of 'ps aux'.
 
-$ python scripts/ps.py
+$ python3 scripts/ps.py
 USER         PID  %MEM     VSZ     RSS  NICE STATUS  START   TIME  CMDLINE
 root           1   0.0  220.9M    6.5M        sleep  Mar27  09:10  /lib/systemd
 root           2   0.0    0.0B    0.0B        sleep  Mar27  00:00  kthreadd

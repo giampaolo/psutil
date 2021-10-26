@@ -1,28 +1,29 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""MACOS specific tests."""
+"""macOS specific tests."""
 
-import os
 import re
 import time
 
 import psutil
 from psutil import MACOS
-from psutil.tests import create_zombie_proc
-from psutil.tests import get_test_subprocess
+from psutil import POSIX
 from psutil.tests import HAS_BATTERY
-from psutil.tests import MEMORY_TOLERANCE
-from psutil.tests import reap_children
+from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
+from psutil.tests import spawn_testproc
+from psutil.tests import terminate
+from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 
-
-PAGESIZE = os.sysconf("SC_PAGE_SIZE") if MACOS else None
+if POSIX:
+    from psutil._psutil_posix import getpagesize
 
 
 def sysctl(cmdline):
@@ -45,7 +46,7 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return int(re.search(r'\d+', line).group(0)) * PAGESIZE
+    return int(re.search(r'\d+', line).group(0)) * getpagesize()
 
 
 # http://code.activestate.com/recipes/578019/
@@ -76,15 +77,15 @@ def human2bytes(s):
 
 
 @unittest.skipIf(not MACOS, "MACOS only")
-class TestProcess(unittest.TestCase):
+class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
+        cls.pid = spawn_testproc().pid
 
     @classmethod
     def tearDownClass(cls):
-        reap_children()
+        terminate(cls.pid)
 
     def test_process_create_time(self):
         output = sh("ps -o lstart -p %s" % self.pid)
@@ -101,68 +102,11 @@ class TestProcess(unittest.TestCase):
 
 
 @unittest.skipIf(not MACOS, "MACOS only")
-class TestZombieProcessAPIs(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        zpid = create_zombie_proc()
-        cls.p = psutil.Process(zpid)
-
-    @classmethod
-    def tearDownClass(cls):
-        reap_children(recursive=True)
-
-    def test_pidtask_info(self):
-        self.assertEqual(self.p.status(), psutil.STATUS_ZOMBIE)
-        self.p.ppid()
-        self.p.uids()
-        self.p.gids()
-        self.p.terminal()
-        self.p.create_time()
-
-    def test_exe(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.exe)
-
-    def test_cmdline(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.cmdline)
-
-    def test_environ(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.environ)
-
-    def test_cwd(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.cwd)
-
-    def test_memory_full_info(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.memory_full_info)
-
-    def test_cpu_times(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.cpu_times)
-
-    def test_num_ctx_switches(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.num_ctx_switches)
-
-    def test_num_threads(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.num_threads)
-
-    def test_open_files(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.open_files)
-
-    def test_connections(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.connections)
-
-    def test_num_fds(self):
-        self.assertRaises(psutil.ZombieProcess, self.p.num_fds)
-
-    def test_threads(self):
-        self.assertRaises((psutil.ZombieProcess, psutil.AccessDenied),
-                          self.p.threads)
-
-
-@unittest.skipIf(not MACOS, "MACOS only")
-class TestSystemAPIs(unittest.TestCase):
+class TestSystemAPIs(PsutilTestCase):
 
     # --- disk
 
+    @retry_on_failure()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
@@ -184,11 +128,10 @@ class TestSystemAPIs(unittest.TestCase):
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)
             self.assertEqual(usage.total, total)
-            # 10 MB tollerance
-            if abs(usage.free - free) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.free, free)
-            if abs(usage.used - used) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.used, used)
+            self.assertAlmostEqual(usage.free, free,
+                                   delta=TOLERANCE_DISK_USAGE)
+            self.assertAlmostEqual(usage.used, used,
+                                   delta=TOLERANCE_DISK_USAGE)
 
     # --- cpu
 
@@ -196,7 +139,7 @@ class TestSystemAPIs(unittest.TestCase):
         num = sysctl("sysctl hw.logicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=True))
 
-    def test_cpu_count_physical(self):
+    def test_cpu_count_cores(self):
         num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
@@ -219,25 +162,25 @@ class TestSystemAPIs(unittest.TestCase):
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_vmem_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_vmem_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     # --- swap mem
 
@@ -290,5 +233,5 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

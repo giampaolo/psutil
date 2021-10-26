@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -9,7 +9,7 @@ A clone of top / htop.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python scripts/top.py
+$ python3 scripts/top.py
  CPU0  [||||                                    ]  10.9%
  CPU1  [|||||                                   ]  13.1%
  CPU2  [|||||                                   ]  12.8%
@@ -33,7 +33,6 @@ PID    USER       NI   VIRT    RES  CPU%  MEM%     TIME+  NAME
 ...
 """
 
-import atexit
 import datetime
 import sys
 import time
@@ -46,30 +45,28 @@ import psutil
 from psutil._common import bytes2human
 
 
-# --- curses stuff
-
-def tear_down():
-    win.keypad(0)
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
-
-
 win = curses.initscr()
-atexit.register(tear_down)
-curses.endwin()
 lineno = 0
+colors_map = dict(
+    green=3,
+    red=10,
+    yellow=4,
+)
 
 
-def print_line(line, highlight=False):
+def printl(line, color=None, bold=False, highlight=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
     try:
+        flags = 0
+        if color:
+            flags |= curses.color_pair(colors_map[color])
+        if bold:
+            flags |= curses.A_BOLD
         if highlight:
             line += " " * (win.getmaxyx()[1] - len(line))
-            win.addstr(lineno, 0, line, curses.A_REVERSE)
-        else:
-            win.addstr(lineno, 0, line, 0)
+            flags |= curses.A_STANDOUT
+        win.addstr(lineno, 0, line, flags)
     except curses.error:
         lineno = 0
         win.refresh()
@@ -105,6 +102,15 @@ def poll(interval):
     return (processes, procs_status)
 
 
+def get_color(perc):
+    if perc <= 30:
+        return "green"
+    elif perc <= 80:
+        return "yellow"
+    else:
+        return "red"
+
+
 def print_header(procs_status, num_procs):
     """Print system-related info, above the process list."""
 
@@ -117,17 +123,19 @@ def print_header(procs_status, num_procs):
     percs = psutil.cpu_percent(interval=0, percpu=True)
     for cpu_num, perc in enumerate(percs):
         dashes, empty_dashes = get_dashes(perc)
-        print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes,
-                                              perc))
+        line = " CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes, perc)
+        printl(line, color=get_color(perc))
+
+    # memory usage
     mem = psutil.virtual_memory()
     dashes, empty_dashes = get_dashes(mem.percent)
     line = " Mem   [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         mem.percent,
-        str(int(mem.used / 1024 / 1024)) + "M",
-        str(int(mem.total / 1024 / 1024)) + "M"
+        bytes2human(mem.used),
+        bytes2human(mem.total),
     )
-    print_line(line)
+    printl(line, color=get_color(mem.percent))
 
     # swap usage
     swap = psutil.swap_memory()
@@ -135,10 +143,10 @@ def print_header(procs_status, num_procs):
     line = " Swap  [%s%s] %5s%% %6s / %s" % (
         dashes, empty_dashes,
         swap.percent,
-        str(int(swap.used / 1024 / 1024)) + "M",
-        str(int(swap.total / 1024 / 1024)) + "M"
+        bytes2human(swap.used),
+        bytes2human(swap.total),
     )
-    print_line(line)
+    printl(line, color=get_color(swap.percent))
 
     # processes number and status
     st = []
@@ -146,14 +154,14 @@ def print_header(procs_status, num_procs):
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
-    print_line(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
+    printl(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
     # load average, uptime
     uptime = datetime.datetime.now() - \
         datetime.datetime.fromtimestamp(psutil.boot_time())
     av1, av2, av3 = psutil.getloadavg()
     line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
         % (av1, av2, av3, str(uptime).split('.')[0])
-    print_line(line)
+    printl(line)
 
 
 def refresh_window(procs, procs_status):
@@ -164,8 +172,8 @@ def refresh_window(procs, procs_status):
     header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                       "TIME+", "NAME")
     print_header(procs_status, len(procs))
-    print_line("")
-    print_line(header, highlight=True)
+    printl("")
+    printl(header, bold=True, highlight=True)
     for p in procs:
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
@@ -197,21 +205,42 @@ def refresh_window(procs, procs_status):
                         p.dict['name'] or '',
                         )
         try:
-            print_line(line)
+            printl(line)
         except curses.error:
             break
         win.refresh()
 
 
+def setup():
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+    curses.endwin()
+    win.nodelay(1)
+
+
+def tear_down():
+    win.keypad(0)
+    curses.nocbreak()
+    curses.echo()
+    curses.endwin()
+
+
 def main():
+    setup()
     try:
         interval = 0
         while True:
+            if win.getch() == ord('q'):
+                break
             args = poll(interval)
             refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass
+    finally:
+        tear_down()
 
 
 if __name__ == '__main__':

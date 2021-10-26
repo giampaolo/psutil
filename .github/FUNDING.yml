@@ -1,9 +1,9 @@
 # These are supported funding model platforms
 
 tidelift: "pypi/psutil"
-github: # Replace with up to 4 GitHub Sponsors-enabled usernames e.g., [user1, user2]
+github: giampaolo
 patreon: # Replace with a single Patreon username
-open_collective: # Replace with a single Open Collective username
+open_collective: psutil
 ko_fi: # Replace with a single Ko-fi username
 community_bridge: # Replace with a single Community Bridge project-name e.g., cloud-foundry
-custom: # Replace with a single custom sponsorship URL
+custom: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8

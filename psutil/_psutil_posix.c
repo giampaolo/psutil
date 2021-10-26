@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <unistd.h>
 
 #ifdef PSUTIL_SUNOS10
     #include "arch/solaris/v10/ifaddrs.h"
@@ -28,21 +29,59 @@
     #include <netdb.h>
     #include <linux/types.h>
     #include <linux/if_packet.h>
-#elif defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#endif
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     #include <netdb.h>
     #include <netinet/in.h>
     #include <net/if_dl.h>
     #include <sys/sockio.h>
     #include <net/if_media.h>
     #include <net/if.h>
-#elif defined(PSUTIL_SUNOS)
+#endif
+#if defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
-#elif defined(PSUTIL_AIX)
+#endif
+#if defined(PSUTIL_AIX)
     #include <netdb.h>
+#endif
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+    #include <sys/resource.h>
 #endif
 
 #include "_psutil_common.h"
+
+
+// ====================================================================
+// --- Utils
+// ====================================================================
+
+
+/*
+ * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
+ *
+ * > In SUSv2 the getpagesize() call is labeled LEGACY, and in POSIX.1-2001
+ * > it has been dropped.
+ * > Portable applications should employ sysconf(_SC_PAGESIZE) instead
+ * > of getpagesize().
+ * > Most systems allow the synonym _SC_PAGE_SIZE for _SC_PAGESIZE.
+ * > Whether getpagesize() is present as a Linux system call depends on the
+ * > architecture.
+ */
+long
+psutil_getpagesize(void) {
+#ifdef _SC_PAGESIZE
+    // recommended POSIX
+    return sysconf(_SC_PAGESIZE);
+#elif _SC_PAGE_SIZE
+    // alias
+    return sysconf(_SC_PAGE_SIZE);
+#else
+    // legacy
+    return (long) getpagesize();
+#endif
+}
+
 
 /*
  * Check if PID exists. Return values:
@@ -108,12 +147,24 @@ psutil_pid_exists(pid_t pid) {
  */
 void
 psutil_raise_for_pid(long pid, char *syscall) {
-    if (errno != 0)  // unlikely
+    if (errno != 0)
         PyErr_SetFromOSErrnoWithSyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         NoSuchProcess(syscall);
     else
         PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall);
+}
+
+
+// ====================================================================
+// --- Python wrappers
+// ====================================================================
+
+
+// Exposed so we can test it against Python's stdlib.
+static PyObject *
+psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
+    return Py_BuildValue("l", psutil_getpagesize());
 }
 
 
@@ -192,8 +243,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             // XXX we get here on FreeBSD when processing 'lo' / AF_INET6
             // broadcast. Not sure what to do other than returning None.
             // ifconfig does not show anything BTW.
-            //PyErr_Format(PyExc_RuntimeError, gai_strerror(err));
-            //return NULL;
+            // PyErr_Format(PyExc_RuntimeError, gai_strerror(err));
+            // return NULL;
             Py_INCREF(Py_None);
             return Py_None;
         }
@@ -356,10 +407,10 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
         goto error;
 
 #ifdef PSUTIL_SUNOS10
-    strncpy(lifr.lifr_name, nic_name, sizeof(lifr.lifr_name));
+    PSUTIL_STRNCPY(lifr.lifr_name, nic_name, sizeof(lifr.lifr_name));
     ret = ioctl(sock, SIOCGIFMTU, &lifr);
 #else
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
 #endif
     if (ret == -1)
@@ -385,7 +436,7 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_flags(PyObject *self, PyObject *args) {
+psutil_net_if_is_running(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = -1;
     int ret;
@@ -398,13 +449,13 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
 
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1)
         goto error;
 
     close(sock);
-    if ((ifr.ifr_flags & IFF_UP) != 0)
+    if ((ifr.ifr_flags & IFF_RUNNING) != 0)
         return Py_BuildValue("O", Py_True);
     else
         return Py_BuildValue("O", Py_False);
@@ -578,7 +629,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
-    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
@@ -621,8 +672,10 @@ static PyMethodDef mod_methods[] = {
      "Retrieve NICs information"},
     {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS,
      "Retrieve NIC MTU"},
-    {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
-     "Retrieve NIC flags"},
+    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS,
+     "Return True if the NIC is running."},
+    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS,
+     "Return memory page size."},
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},
@@ -667,6 +720,102 @@ static PyMethodDef mod_methods[] = {
         defined(PSUTIL_AIX)
     if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK)) INITERR;
 #endif
+
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+    PyObject *v;
+
+#ifdef RLIMIT_AS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS)) INITERR;
+#endif
+
+#ifdef RLIMIT_CORE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE)) INITERR;
+#endif
+
+#ifdef RLIMIT_CPU
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU)) INITERR;
+#endif
+
+#ifdef RLIMIT_DATA
+    if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA)) INITERR;
+#endif
+
+#ifdef RLIMIT_FSIZE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE)) INITERR;
+#endif
+
+#ifdef RLIMIT_MEMLOCK
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK)) INITERR;
+#endif
+
+#ifdef RLIMIT_NOFILE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE)) INITERR;
+#endif
+
+#ifdef RLIMIT_NPROC
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC)) INITERR;
+#endif
+
+#ifdef RLIMIT_RSS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS)) INITERR;
+#endif
+
+#ifdef RLIMIT_STACK
+    if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK)) INITERR;
+#endif
+
+// Linux specific
+
+#ifdef RLIMIT_LOCKS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
+#endif
+
+#ifdef RLIMIT_MSGQUEUE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE)) INITERR;
+#endif
+
+#ifdef RLIMIT_NICE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE)) INITERR;
+#endif
+
+#ifdef RLIMIT_RTPRIO
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO)) INITERR;
+#endif
+
+#ifdef RLIMIT_RTTIME
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME)) INITERR;
+#endif
+
+#ifdef RLIMIT_SIGPENDING
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING)) INITERR;
+#endif
+
+// Free specific
+
+#ifdef RLIMIT_SWAP
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP)) INITERR;
+#endif
+
+#ifdef RLIMIT_SBSIZE
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE)) INITERR;
+#endif
+
+#ifdef RLIMIT_NPTS
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NPTS", RLIMIT_NPTS)) INITERR;
+#endif
+
+#if defined(HAVE_LONG_LONG)
+    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
+        v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
+    } else
+#endif
+    {
+        v = PyLong_FromLong((long) RLIM_INFINITY);
+    }
+    if (v) {
+        PyModule_AddObject(mod, "RLIM_INFINITY", v);
+    }
+#endif  // defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
 
     if (mod == NULL)
         INITERR;

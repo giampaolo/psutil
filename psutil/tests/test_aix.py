@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'
 # Copyright (c) 2017, Arnon Yaari
@@ -11,13 +11,14 @@
 import re
 
 from psutil import AIX
+from psutil.tests import PsutilTestCase
 from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
 
 
 @unittest.skipIf(not AIX, "AIX only")
-class AIXSpecificTestCase(unittest.TestCase):
+class AIXSpecificTestCase(PsutilTestCase):
 
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
@@ -37,17 +38,17 @@ class AIXSpecificTestCase(unittest.TestCase):
 
         psutil_result = psutil.virtual_memory()
 
-        # MEMORY_TOLERANCE from psutil.tests is not enough. For some reason
+        # TOLERANCE_SYS_MEM from psutil.tests is not enough. For some reason
         # we're seeing differences of ~1.2 MB. 2 MB is still a good tolerance
         # when compared to GBs.
-        MEMORY_TOLERANCE = 2 * KB * KB   # 2 MB
+        TOLERANCE_SYS_MEM = 2 * KB * KB   # 2 MB
         self.assertEqual(psutil_result.total, total)
         self.assertAlmostEqual(
-            psutil_result.used, used, delta=MEMORY_TOLERANCE)
+            psutil_result.used, used, delta=TOLERANCE_SYS_MEM)
         self.assertAlmostEqual(
-            psutil_result.available, available, delta=MEMORY_TOLERANCE)
+            psutil_result.available, available, delta=TOLERANCE_SYS_MEM)
         self.assertAlmostEqual(
-            psutil_result.free, free, delta=MEMORY_TOLERANCE)
+            psutil_result.free, free, delta=TOLERANCE_SYS_MEM)
 
     def test_swap_memory(self):
         out = sh('/usr/sbin/lsps -a')
@@ -117,5 +118,5 @@ class AIXSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from psutil.tests.runner import run
-    run(__file__)
+    from psutil.tests.runner import run_from_name
+    run_from_name(__file__)

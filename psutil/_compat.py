@@ -2,26 +2,46 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Module which provides compatibility with older Python versions."""
+"""Module which provides compatibility with older Python versions.
+This is more future-compatible rather than the opposite (prefer latest
+Python 3 way of doing things).
+"""
 
 import collections
+import contextlib
 import errno
 import functools
 import os
 import sys
+import types
 
-__all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
-           "lru_cache", "which", "get_terminal_size",
-           "FileNotFoundError", "PermissionError", "ProcessLookupError",
-           "InterruptedError", "ChildProcessError", "FileExistsError"]
+__all__ = [
+    # constants
+    "PY3",
+    # builtins
+    "long", "range", "super", "unicode", "basestring",
+    # literals
+    "u", "b",
+    # collections module
+    "lru_cache",
+    # shutil module
+    "which", "get_terminal_size",
+    # contextlib module
+    "redirect_stderr",
+    # python 3 exceptions
+    "FileNotFoundError", "PermissionError", "ProcessLookupError",
+    "InterruptedError", "ChildProcessError", "FileExistsError"]
+
 
 PY3 = sys.version_info[0] == 3
+_SENTINEL = object()
 
 if PY3:
     long = int
     xrange = range
     unicode = str
     basestring = str
+    range = range
 
     def u(s):
         return s
@@ -30,7 +50,7 @@ if PY3:
         return s.encode("latin-1")
 else:
     long = long
-    xrange = xrange
+    range = xrange
     unicode = unicode
     basestring = basestring
 
@@ -39,6 +59,70 @@ else:
 
     def b(s):
         return s
+
+
+# --- builtins
+
+
+# Python 3 super().
+# Taken from "future" package.
+# Credit: Ryan Kelly
+if PY3:
+    super = super
+else:
+    _builtin_super = super
+
+    def super(type_=_SENTINEL, type_or_obj=_SENTINEL, framedepth=1):
+        """Like Python 3 builtin super(). If called without any arguments
+        it attempts to infer them at runtime.
+        """
+        if type_ is _SENTINEL:
+            f = sys._getframe(framedepth)
+            try:
+                # Get the function's first positional argument.
+                type_or_obj = f.f_locals[f.f_code.co_varnames[0]]
+            except (IndexError, KeyError):
+                raise RuntimeError('super() used in a function with no args')
+            try:
+                # Get the MRO so we can crawl it.
+                mro = type_or_obj.__mro__
+            except (AttributeError, RuntimeError):
+                try:
+                    mro = type_or_obj.__class__.__mro__
+                except AttributeError:
+                    raise RuntimeError('super() used in a non-newstyle class')
+            for type_ in mro:
+                #  Find the class that owns the currently-executing method.
+                for meth in type_.__dict__.values():
+                    # Drill down through any wrappers to the underlying func.
+                    # This handles e.g. classmethod() and staticmethod().
+                    try:
+                        while not isinstance(meth, types.FunctionType):
+                            if isinstance(meth, property):
+                                # Calling __get__ on the property will invoke
+                                # user code which might throw exceptions or
+                                # have side effects
+                                meth = meth.fget
+                            else:
+                                try:
+                                    meth = meth.__func__
+                                except AttributeError:
+                                    meth = meth.__get__(type_or_obj, type_)
+                    except (AttributeError, TypeError):
+                        continue
+                    if meth.func_code is f.f_code:
+                        break  # found
+                else:
+                    # Not found. Move onto the next class in MRO.
+                    continue
+                break  # found
+            else:
+                raise RuntimeError('super() called outside a method')
+
+        # Dispatch to builtin super().
+        if type_or_obj is not _SENTINEL:
+            return _builtin_super(type_, type_or_obj)
+        return _builtin_super(type_)
 
 
 # --- exceptions
@@ -56,9 +140,7 @@ else:
     #     src/future/types/exceptions/pep3151.py
     import platform
 
-    _singleton = object()
-
-    def instance_checking_exception(base_exception=Exception):
+    def _instance_checking_exception(base_exception=Exception):
         def wrapped(instance_checker):
             class TemporaryClass(base_exception):
 
@@ -85,30 +167,30 @@ else:
 
         return wrapped
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def FileNotFoundError(inst):
-        return getattr(inst, 'errno', _singleton) == errno.ENOENT
+        return getattr(inst, 'errno', _SENTINEL) == errno.ENOENT
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def ProcessLookupError(inst):
-        return getattr(inst, 'errno', _singleton) == errno.ESRCH
+        return getattr(inst, 'errno', _SENTINEL) == errno.ESRCH
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def PermissionError(inst):
-        return getattr(inst, 'errno', _singleton) in (
+        return getattr(inst, 'errno', _SENTINEL) in (
             errno.EACCES, errno.EPERM)
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def InterruptedError(inst):
-        return getattr(inst, 'errno', _singleton) == errno.EINTR
+        return getattr(inst, 'errno', _SENTINEL) == errno.EINTR
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def ChildProcessError(inst):
-        return getattr(inst, 'errno', _singleton) == errno.ECHILD
+        return getattr(inst, 'errno', _SENTINEL) == errno.ECHILD
 
-    @instance_checking_exception(EnvironmentError)
+    @_instance_checking_exception(EnvironmentError)
     def FileExistsError(inst):
-        return getattr(inst, 'errno', _singleton) == errno.EEXIST
+        return getattr(inst, 'errno', _SENTINEL) == errno.EEXIST
 
     if platform.python_implementation() != "CPython":
         try:
@@ -117,7 +199,7 @@ else:
             pass
         except OSError:
             raise RuntimeError(
-                "broken / incompatible Python implementation, see: "
+                "broken or incompatible Python implementation, see: "
                 "https://github.com/giampaolo/psutil/issues/1659")
 
 
@@ -343,3 +425,25 @@ except ImportError:
                 return (res[1], res[0])
             except Exception:
                 return fallback
+
+
+# python 3.3
+try:
+    from subprocess import TimeoutExpired as SubprocessTimeoutExpired
+except ImportError:
+    class SubprocessTimeoutExpired:
+        pass
+
+
+# python 3.5
+try:
+    from contextlib import redirect_stderr
+except ImportError:
+    @contextlib.contextmanager
+    def redirect_stderr(new_target):
+        original = getattr(sys, "stderr")
+        try:
+            setattr(sys, "stderr", new_target)
+            yield new_target
+        finally:
+            setattr(sys, "stderr", original)

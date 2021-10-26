@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -7,7 +7,7 @@
 r"""
 List all Windows services installed.
 
-$ python scripts/winservices.py
+$ python3 scripts/winservices.py
 AeLookupSvc (Application Experience)
 status: stopped, start: manual, username: localSystem, pid: None
 binpath: C:\Windows\system32\svchost.exe -k netsvcs

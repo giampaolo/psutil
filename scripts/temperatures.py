@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
@@ -8,7 +8,7 @@
 """
 A clone of 'sensors' utility on Linux printing hardware temperatures.
 
-$ python scripts/sensors.py
+$ python3 scripts/sensors.py
 asus
     asus                 47.0 °C (high = None °C, critical = None °C)
 

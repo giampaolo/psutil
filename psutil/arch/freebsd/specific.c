@@ -263,7 +263,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists");
+            return NoSuchProcess("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }
@@ -364,37 +364,6 @@ error:
 }
 
 
-PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    // Return an XML string from which we'll determine the number of
-    // physical CPU cores in the system.
-    void *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
-
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
-
-    py_str = Py_BuildValue("s", topology);
-    free(topology);
-    return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
-}
-
-
 /*
  * Return virtual memory usage statistics.
  */
@@ -405,7 +374,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size_t         size = sizeof(total);
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = getpagesize();
+    long           pagesize = psutil_getpagesize();
 #if __FreeBSD_version > 702101
     long buffers;
 #else
@@ -466,7 +435,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
     size_t size = sizeof(unsigned int);
-    int pagesize;
+    long pagesize = psutil_getpagesize();
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
@@ -500,12 +469,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
             "sysctlbyname('vm.stats.vm.v_vnodeout)'");
     }
 
-    pagesize = getpagesize();
-    if (pagesize <= 0) {
-        PyErr_SetString(PyExc_ValueError, "invalid getpagesize()");
-        return NULL;
-    }
-
     return Py_BuildValue(
         "(KKKII)",
         (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
@@ -518,7 +481,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 }
 
 
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 701000
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -730,7 +693,7 @@ error:
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
-    //'procstat' cmdline utility has been used as an example.
+    // 'procstat' cmdline utility has been used as an example.
     pid_t pid;
     int ptrwidth;
     int i, cnt;
@@ -796,9 +759,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 case KVME_TYPE_DEAD:
                     path = "[dead]";
                     break;
+#ifdef KVME_TYPE_SG
                 case KVME_TYPE_SG:
                     path = "[sg]";
                     break;
+#endif
                 case KVME_TYPE_UNKNOWN:
                     path = "[unknown]";
                     break;
@@ -937,47 +902,6 @@ error:
 }
 
 
-PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    unsigned int v_soft;
-    unsigned int v_intr;
-    unsigned int v_syscall;
-    unsigned int v_trap;
-    unsigned int v_swtch;
-    size_t size = sizeof(v_soft);
-
-    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_soft')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_intr')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_syscall')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_trap')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_swtch')");
-    }
-
-    return Py_BuildValue(
-        "IIIII",
-        v_swtch,  // ctx switches
-        v_intr,  // interrupts
-        v_soft,  // software interrupts
-        v_syscall,  // syscalls
-        v_trap  // traps
-    );
-}
-
-
 /*
  * Return battery information.
  */
@@ -1042,39 +966,87 @@ error:
 
 
 /*
- * Return frequency information of a given CPU.
- * As of Dec 2018 only CPU 0 appears to be supported and all other
- * cores match the frequency of CPU 0.
+ * An emulation of Linux prlimit(). Returns a (soft, hard) tuple.
  */
 PyObject *
-psutil_cpu_freq(PyObject *self, PyObject *args) {
-    int current;
-    int core;
-    char sensor[26];
-    char available_freq_levels[1000];
-    size_t size = sizeof(current);
+psutil_proc_getrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    size_t len;
+    int name[5];
+    struct rlimit rlp;
 
-    if (! PyArg_ParseTuple(args, "i", &core))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &resource))
         return NULL;
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
-    sprintf(sensor, "dev.cpu.%d.freq", core);
-    if (sysctlbyname(sensor, &current, &size, NULL, 0))
-        goto error;
 
-    size = sizeof(available_freq_levels);
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
-    // In case of failure, an empty string is returned.
-    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
-    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+    len = sizeof(rlp);
 
-    return Py_BuildValue("is", current, available_freq_levels);
+    ret = sysctl(name, 5, &rlp, &len, NULL, 0);
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
 
-error:
-    if (errno == ENOENT)
-        PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
-    else
-        PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
+#if defined(HAVE_LONG_LONG)
+    return Py_BuildValue("LL",
+                         (PY_LONG_LONG) rlp.rlim_cur,
+                         (PY_LONG_LONG) rlp.rlim_max);
+#else
+    return Py_BuildValue("ll",
+                         (long) rlp.rlim_cur,
+                         (long) rlp.rlim_max);
+#endif
+}
+
+
+/*
+ * An emulation of Linux prlimit() (set).
+ */
+PyObject *
+psutil_proc_setrlimit(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int ret;
+    int resource;
+    int name[5];
+    struct rlimit new;
+    struct rlimit *newp = NULL;
+    PyObject *py_soft = NULL;
+    PyObject *py_hard = NULL;
+
+    if (! PyArg_ParseTuple(
+            args, _Py_PARSE_PID "iOO", &pid, &resource, &py_soft, &py_hard))
+        return NULL;
+
+    name[0] = CTL_KERN;
+    name[1] = KERN_PROC;
+    name[2] = KERN_PROC_RLIMIT;
+    name[3] = pid;
+    name[4] = resource;
+
+#if defined(HAVE_LONG_LONG)
+    new.rlim_cur = PyLong_AsLongLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLongLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+#else
+    new.rlim_cur = PyLong_AsLong(py_soft);
+    if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+    new.rlim_max = PyLong_AsLong(py_hard);
+    if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
+        return NULL;
+#endif
+    newp = &new;
+    ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
+    if (ret == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    Py_RETURN_NONE;
 }
 
 
