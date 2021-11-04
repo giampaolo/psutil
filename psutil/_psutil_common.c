@@ -177,7 +177,7 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 #ifdef PSUTIL_OSX
 #include <mach/mach_time.h>
 
-struct mach_timebase_info MACH_TIMEBASE_INFO;
+struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 #endif
 
 // ====================================================================
@@ -415,7 +415,7 @@ psutil_setup(void) {
 #endif
 
 #ifdef PSUTIL_OSX
-    mach_timebase_info(&MACH_TIMEBASE_INFO);
+    mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
 #endif
 
     return 0;
