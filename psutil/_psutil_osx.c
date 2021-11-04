@@ -280,6 +280,7 @@ static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
+    struct mach_timebase_info info;
     uint64_t total_user, total_system;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
