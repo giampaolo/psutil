@@ -129,11 +129,6 @@ AccessDenied(const char *syscall) {
 }
 
 
-// ====================================================================
-// --- Global utils
-// ====================================================================
-
-
 // Enable or disable PSUTIL_DEBUG messages.
 PyObject *
 psutil_set_debug(PyObject *self, PyObject *args) {
@@ -153,17 +148,6 @@ psutil_set_debug(PyObject *self, PyObject *args) {
         PSUTIL_DEBUG = 1;
     }
     Py_RETURN_NONE;
-}
-
-
-/*
- * Called on module import on all platforms.
- */
-int
-psutil_setup(void) {
-    if (getenv("PSUTIL_DEBUG") != NULL)
-        PSUTIL_DEBUG = 1;
-    return 0;
 }
 
 
@@ -369,18 +353,6 @@ psutil_set_winver() {
 }
 
 
-int
-psutil_load_globals() {
-    if (psutil_loadlibs() != 0)
-        return 1;
-    if (psutil_set_winver() != 0)
-        return 1;
-    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
-    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
-    return 0;
-}
-
-
 /*
  * Convert the hi and lo parts of a FILETIME structure or a LARGE_INTEGER
  * to a UNIX time.
@@ -416,3 +388,22 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
                          (ULONGLONG)li.LowPart);
 }
 #endif  // PSUTIL_WINDOWS
+
+
+// Called on module import on all platforms.
+int
+psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
+
+#ifdef PSUTIL_WINDOWS
+    if (psutil_loadlibs() != 0)
+        return 1;
+    if (psutil_set_winver() != 0)
+        return 1;
+    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
+    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
+#endif
+
+    return 0;
+}

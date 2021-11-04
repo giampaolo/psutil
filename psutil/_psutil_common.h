@@ -157,7 +157,6 @@ void convert_kvm_err(const char *syscall, char *errbuf);
         #define AF_INET6 23
     #endif
 
-    int psutil_load_globals();
     PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
     PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);

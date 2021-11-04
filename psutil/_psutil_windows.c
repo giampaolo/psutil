@@ -1736,8 +1736,6 @@ void init_psutil_windows(void)
 
     if (psutil_setup() != 0)
         INITERROR;
-    if (psutil_load_globals() != 0)
-        INITERROR;
     if (psutil_set_se_debug() != 0)
         INITERROR;
 
