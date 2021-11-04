@@ -119,6 +119,16 @@ int psutil_setup(void);
 void convert_kvm_err(const char *syscall, char *errbuf);
 
 // ====================================================================
+// --- macOS
+// ====================================================================
+
+#ifdef PSUTIL_OSX
+#include <mach/mach_time.h>
+
+extern struct mach_timebase_info MACH_TIMEBASE_INFO;
+#endif
+
+// ====================================================================
 // --- Windows
 // ====================================================================
 

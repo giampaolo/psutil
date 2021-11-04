@@ -22,7 +22,6 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <mach/mach.h>
-#include <mach/mach_time.h>
 #include <mach/mach_vm.h>
 #include <mach/shared_region.h>
 
@@ -280,7 +279,6 @@ static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
-    struct mach_timebase_info info;
     uint64_t total_user, total_system;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -288,11 +286,10 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
 
-    mach_timebase_info(&info);
-    total_user = pti.pti_total_user * info.numer;
-    total_user /= info.denom;
-    total_system = pti.pti_total_system * info.numer;
-    total_system /= info.denom;
+    total_user = pti.pti_total_user * MACH_TIMEBASE_INFO.numer;
+    total_user /= MACH_TIMEBASE_INFO.denom;
+    total_system = pti.pti_total_system * MACH_TIMEBASE_INFO.numer;
+    total_system /= MACH_TIMEBASE_INFO.denom;
 
     return Py_BuildValue(
         "(ddKKkkkk)",

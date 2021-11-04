@@ -170,6 +170,15 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 }
 #endif
 
+// ====================================================================
+// --- macOS
+// ====================================================================
+
+#ifdef PSUTIL_OSX
+#include <mach/mach_time.h>
+
+struct mach_timebase_info MACH_TIMEBASE_INFO;
+#endif
 
 // ====================================================================
 // --- Windows
@@ -403,6 +412,10 @@ psutil_setup(void) {
         return 1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
+#endif
+
+#ifdef PSUTIL_OSX
+    mach_timebase_info(&MACH_TIMEBASE_INFO);
 #endif
 
     return 0;
