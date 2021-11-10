@@ -182,7 +182,7 @@ def free_physmem():
 
 
 def vmstat(stat):
-    out = sh("vmstat -s", env={"LANG": "C.UTF-8"})
+    out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
         line = line.strip()
         if stat in line:
