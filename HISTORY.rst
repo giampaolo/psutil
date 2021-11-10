@@ -52,6 +52,8 @@ XXXX-XX-XX
   by PetrPospisil)
 - 1991_: process_iter() can raise TypeError if invoked from multiple threads
   (not thread-safe).
+- 1956_: [macOS] Process.cpu_times() reports incorrect timings on M1 machines.
+  (patch by Olivier Dormond)
 
 5.8.0
 =====

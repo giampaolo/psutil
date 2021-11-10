@@ -413,10 +413,8 @@ psutil_setup(void) {
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
 #endif
-
 #ifdef PSUTIL_OSX
     mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
 #endif
-
     return 0;
 }
