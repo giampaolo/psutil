@@ -17,7 +17,6 @@ import time
 import psutil
 from psutil import AIX
 from psutil import BSD
-from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
@@ -50,9 +49,6 @@ def ps(fmt, pid=None):
 
     cmd = ['ps']
 
-    if LINUX:
-        cmd.append('--no-headers')
-
     if pid is not None:
         cmd.extend(['-p', str(pid)])
     else:
@@ -68,11 +64,7 @@ def ps(fmt, pid=None):
     cmd.extend(['-o', fmt])
 
     output = sh(cmd)
-
-    if LINUX:
-        output = output.splitlines()
-    else:
-        output = output.splitlines()[1:]
+    output = output.splitlines()[1:]
 
     all_output = []
     for line in output:
