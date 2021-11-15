@@ -22,7 +22,7 @@ name: build
 jobs:
   linux-macos-win:
     # name: ${{ matrix.os }}
-    name: ${{ matrix.platform_id }}-${{ matrix.manylinux_image }}-${{ matrix.python }}
+    name: ${{ matrix.os }}-py${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -78,46 +78,46 @@ jobs:
         mv dist/psutil*.tar.gz wheelhouse/
         python scripts/internal/print_hashes.py wheelhouse/
 
-  freebsd:
-    runs-on: macos-latest
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.6.0
-      with:
-        access_token: ${{ github.token }}
+  # freebsd:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - name: Cancel previous runs
+  #     uses: styfle/cancel-workflow-action@0.6.0
+  #     with:
+  #       access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
+  #   - uses: actions/checkout@v2
 
-    - name: Run tests
-      id: test
-      uses: vmactions/freebsd-vm@v0.1.4
-      with:
-        usesh: true
-        prepare: pkg install -y gcc python3
-        run: |
-          set +e
-          export \
-            PYTHONUNBUFFERED=1 \
-            PYTHONWARNINGS=always \
-            PSUTIL_DEBUG=1
-          python3 -m pip install --user setuptools
-          python3 setup.py install
-          python3 psutil/tests/runner.py
-          python3 psutil/tests/test_memleaks.py
+  #   - name: Run tests
+  #     id: test
+  #     uses: vmactions/freebsd-vm@v0.1.4
+  #     with:
+  #       usesh: true
+  #       prepare: pkg install -y gcc python3
+  #       run: |
+  #         set +e
+  #         export \
+  #           PYTHONUNBUFFERED=1 \
+  #           PYTHONWARNINGS=always \
+  #           PSUTIL_DEBUG=1
+  #         python3 -m pip install --user setuptools
+  #         python3 setup.py install
+  #         python3 psutil/tests/runner.py
+  #         python3 psutil/tests/test_memleaks.py
 
-  linters:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: 'Run linters'
-      run: |
-        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-        python2 get-pip.py
-        python2 -m pip install flake8
-        python3 -m pip install flake8
-        python2 -m flake8 .
-        python3 -m flake8 .
-        echo "flake8 linting OK"
-        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
-        echo "C linting OK"
+  # linters:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/setup-python@v2
+  #   - name: 'Run linters'
+  #     run: |
+  #       curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+  #       python2 get-pip.py
+  #       python2 -m pip install flake8
+  #       python3 -m pip install flake8
+  #       python2 -m flake8 .
+  #       python3 -m flake8 .
+  #       echo "flake8 linting OK"
+  #       find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
+  #       echo "C linting OK"
