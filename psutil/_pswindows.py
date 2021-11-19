@@ -1059,7 +1059,14 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        suspended = cext.proc_is_suspended(self.pid)
+        try:
+            suspended = cext.proc_is_suspended(self.pid)
+        except ProcessLookupError as e:
+            # Workaround for calling `status()` on a terminated process:
+            if e.strerror == "NtQuerySystemInformation (no PID found)":
+                suspended = True
+            else:
+                raise e
         if suspended:
             return _common.STATUS_STOPPED
         else:
