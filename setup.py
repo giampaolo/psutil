@@ -424,7 +424,10 @@ def main():
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
                              "is not installed"), color="red", file=sys.stderr)
             elif FREEBSD:
-                missdeps("pkg install gcc python%s" % py3)
+                if which('pkg'):
+                    missdeps("pkg install gcc python%s" % py3)
+                elif which('mport'):   # MidnightBSD
+                    missdeps("mport install gcc python%s" % py3)
             elif OPENBSD:
                 missdeps("pkg_add -v gcc python%s" % py3)
             elif NETBSD:
