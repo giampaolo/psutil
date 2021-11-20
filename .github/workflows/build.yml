@@ -34,6 +34,7 @@ jobs:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
       CIBW_TEST_COMMAND:
+        apk add --update coreutils &&
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
