@@ -298,6 +298,8 @@ def get_runner(parallel=False):
 
 # Used by test_*,py modules.
 def run_from_name(name):
+    if CI_TESTING:
+        print_sysinfo()
     suite = TestLoader().from_name(name)
     runner = get_runner()
     runner.run(suite)
