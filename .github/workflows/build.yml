@@ -20,10 +20,9 @@
 on: [push, pull_request]
 name: build
 jobs:
-  linux-macos-win:
-    # name: ${{ matrix.os }}
-    name: ${{ matrix.os }}-py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
+  linux:
+    name: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -33,13 +32,12 @@ jobs:
         os: [ubuntu-latest]
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
-        python-version: [37, 38, 39, 310]
     env:
       CIBW_TEST_COMMAND:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
-      CIBW_SKIP: cp35-* cp36-* pp*
+      CIBW_BUILD: 'cp37-* cp38-* cp39-* cp310-*'
 
     steps:
     - name: Cancel previous runs
