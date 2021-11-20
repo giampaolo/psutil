@@ -33,7 +33,7 @@ jobs:
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
-      CIBW_BEFORE_BUILD_LINUX: apt install -y procps
+      CIBW_BEFORE_BUILD_LINUX: yum install -y procps
       CIBW_TEST_COMMAND:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
