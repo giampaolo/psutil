@@ -22,9 +22,9 @@ name: build
 jobs:
   linux-macos-win:
     # name: ${{ matrix.os }}
-    name: ${{ matrix.os }}-py${{ matrix.python }}
+    name: ${{ matrix.os }}-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +33,7 @@ jobs:
         os: [ubuntu-latest]
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
+        python-version: [37, 38, 39, 310]
     env:
       CIBW_TEST_COMMAND:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
