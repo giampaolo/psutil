@@ -80,7 +80,7 @@ __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
+    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX', 'BUSYBOX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -145,6 +145,13 @@ if CI_TESTING:
     GLOBAL_TIMEOUT *= 3
     TOLERANCE_SYS_MEM *= 3
     TOLERANCE_DISK_USAGE *= 3
+
+BUSYBOX = False
+if GITHUB_ACTIONS and LINUX:
+    try:
+        BUSYBOX = psutil.Process().exe().endswith("busybox")
+    except Exception:
+        pass
 
 # --- file names
 
@@ -1104,6 +1111,8 @@ def print_sysinfo():
         list(platform.architecture()) + [platform.machine()])
     if psutil.POSIX:
         info['kernel'] = platform.uname()[2]
+    if BUSYBOX:
+        info['busybox'] = 'true'
 
     # python
     info['python'] = ', '.join([

@@ -17,10 +17,12 @@ import time
 import psutil
 from psutil import AIX
 from psutil import BSD
+from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil.tests import BUSYBOX
 from psutil.tests import CI_TESTING
 from psutil.tests import spawn_testproc
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -50,6 +52,9 @@ def ps(fmt, pid=None):
     cmd = ['ps']
 
     if pid is not None:
+        if LINUX and BUSYBOX:
+            # else it fails with "ps: unrecognized option: p"
+            raise unittest.SkipTest("GITHUB_ACTIONS + LINUX + BUSYBOX")
         cmd.extend(['-p', str(pid)])
     else:
         if SUNOS or AIX:
