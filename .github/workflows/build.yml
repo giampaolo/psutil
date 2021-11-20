@@ -34,7 +34,8 @@ jobs:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
       CIBW_BEFORE_BUILD_LINUX:
-        if [ `builtin type -p yum` ]; then yum install -y procps; fi
+        if [ `builtin type -p yum` ]; then yum install -y procps; fi &&
+        if [ `builtin type -p apt` ]; then apt install -y procps; fi
       CIBW_TEST_COMMAND:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_posix.py
         # PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
