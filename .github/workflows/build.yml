@@ -54,7 +54,7 @@ jobs:
         python-version: 3.9
 
     - name: Install cibuildwheel
-      run: pip install cibuildwheel
+      run: pip install cibuildwheel==1.12.0
 
     # - name: (Windows) install Visual C++ for Python 2.7
     #   if: matrix.os == 'windows-latest'
