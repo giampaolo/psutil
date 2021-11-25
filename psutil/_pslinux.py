@@ -738,9 +738,10 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         real-time.
         """
         cpuinfo_freqs = _cpu_get_cpuinfo_freq()
-        paths = sorted(
-            glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or
-            glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"))
+        paths = \
+            glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or \
+            glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
+        paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
         ret = []
         pjoin = os.path.join
         for i, path in enumerate(paths):

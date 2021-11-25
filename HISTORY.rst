@@ -54,6 +54,7 @@ XXXX-XX-XX
   (not thread-safe).
 - 1956_: [macOS] Process.cpu_times() reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
+- 2023_: [Linux] cpu_freq() return order is wrong on systems with > 9 CPUs.
 
 5.8.0
 =====
