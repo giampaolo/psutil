@@ -41,7 +41,7 @@ INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
-all: test
+_: help
 
 # ===================================================================
 # Install
