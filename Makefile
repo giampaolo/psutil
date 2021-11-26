@@ -213,10 +213,12 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # ===================================================================
 
 download-wheels-github:  ## Download latest wheels hosted on github.
+	rm -rf dist/*.whl
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
 	${MAKE} print-wheels
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
+	rm -rf dist/*.whl
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-wheels
 

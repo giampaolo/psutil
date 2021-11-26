@@ -74,7 +74,7 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-90s %7s %7s %7s"
+    templ = "%-100s %10s %7s %7s"
     for platf, wheels in groups.items():
         ppn = "%s (total = %s)" % (platf, len(wheels))
         s = templ % (ppn, "size", "arch", "pyver")
