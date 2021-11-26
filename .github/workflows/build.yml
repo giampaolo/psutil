@@ -22,9 +22,9 @@ name: build
 jobs:
   # Linux + macOS + Python 3
   linux-macos-py3:
-    name: ${{ matrix.os }}-py3
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    name: ${{ matrix.os }}-{{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -79,9 +79,9 @@ jobs:
 
   # Linux + Python 2
   linux-py2:
-    name: ${{ matrix.os }}-py2
+    name: ${{ matrix.os }}-{{ matrix.python-version }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
