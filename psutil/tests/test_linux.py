@@ -182,8 +182,6 @@ def free_physmem():
 
 
 def vmstat(stat):
-    if not which("vmstat"):
-        raise unittest.SkipTest("vmstat utility not installed")
     out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
         line = line.strip()
