@@ -3,7 +3,7 @@
 #
 # * Linux
 # * macOS
-# * Windows (commented)
+# * Windows (disabled)
 # * FreeBSD
 #
 # To skip certain builds see:
@@ -20,7 +20,8 @@
 on: [push, pull_request]
 name: build
 jobs:
-  linux:
+  # Linux / macOS + Python 3
+  linux-macos-py3:
     name: ${{ matrix.os }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -77,6 +78,61 @@ jobs:
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
         python scripts/internal/print_hashes.py wheelhouse/
+
+  # Linux / macOS + Python 2
+  linux-macos-py3:
+    name: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [ubuntu-latest, macos-latest, windows-latest]
+        # os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
+        include:
+          - {name: Linux, python: '3.9', os: ubuntu-latest}
+    env:
+      CIBW_ARCHS: 'x86_64 i686'
+      CIBW_TEST_COMMAND:
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_posix.py
+        # PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
+        # PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_EXTRAS: test
+      CIBW_BUILD: 'cp27-*'
+      CIBW_SKIP: '*-musllinux_*'
+
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.9.1
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install cibuildwheel
+      run: pip install cibuildwheel==1.12.0
+
+    - name: Run tests
+      run: cibuildwheel .
+
+    - name: Create wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Print hashes
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+        python scripts/internal/print_hashes.py wheelhouse/
+
 
   # freebsd:
   #   runs-on: macos-latest
