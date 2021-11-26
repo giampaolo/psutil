@@ -22,7 +22,7 @@ name: build
 jobs:
   # Linux + macOS + Python 3
   linux-macos-py3:
-    name: ${{ matrix.os }}-{{ matrix.python-version }}
+    name: ${{ matrix.os }}-${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
