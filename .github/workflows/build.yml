@@ -77,7 +77,7 @@ jobs:
         python scripts/internal/print_hashes.py wheelhouse/
 
   # Linux + macOS + Python 2
-  linux-macos-py3:
+  linux-macos-py2:
     name: ${{ matrix.os }}-py2
     runs-on: ubuntu-latest
     timeout-minutes: 20
