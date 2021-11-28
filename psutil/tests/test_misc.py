@@ -414,7 +414,7 @@ class TestMisc(PsutilTestCase):
         msg = f.getvalue()
         assert msg.startswith("psutil-debug"), msg
         self.assertIn("hello", msg)
-        self.assertIn(__file__, msg)
+        self.assertIn(__file__.replace('.pyc', '.py'), msg)
 
         # supposed to use repr(exc)
         with redirect_stderr(StringIO()) as f:
