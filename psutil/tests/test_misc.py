@@ -17,7 +17,6 @@ import os
 import pickle
 import socket
 import stat
-import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -48,9 +47,6 @@ from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
 import psutil.tests
-
-
-PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 # ===================================================================
