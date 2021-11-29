@@ -8,7 +8,6 @@
 
 import os
 import socket
-import sys
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -47,7 +46,6 @@ from psutil.tests import wait_for_file
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
-PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 @serialrun

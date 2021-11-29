@@ -149,7 +149,7 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    out = sh('free -b', env={"LANG": "C.UTF-8"})
+    out = sh(["free", "-b"], env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
@@ -168,7 +168,7 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    out = sh('free -b', env={"LANG": "C.UTF-8"})
+    out = sh(["free", "-b"], env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
@@ -182,7 +182,7 @@ def free_physmem():
 
 
 def vmstat(stat):
-    out = sh("vmstat -s", env={"LANG": "C.UTF-8"})
+    out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
         line = line.strip()
         if stat in line:
@@ -191,7 +191,7 @@ def vmstat(stat):
 
 
 def get_free_version_info():
-    out = sh("free -V").strip()
+    out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
         raise unittest.SkipTest("can't determine free version")
     return tuple(map(int, out.split()[-1].split('.')))
@@ -312,7 +312,7 @@ class TestSystemVirtualMemory(PsutilTestCase):
     def test_available(self):
         # "free" output format has changed at some point:
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
-        out = sh("free -b")
+        out = sh(["free", "-b"])
         lines = out.split('\n')
         if 'available' not in lines[0]:
             raise unittest.SkipTest("free does not support 'available' column")

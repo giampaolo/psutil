@@ -17,7 +17,6 @@ import os
 import pickle
 import socket
 import stat
-import sys
 
 from psutil import LINUX
 from psutil import POSIX
@@ -48,9 +47,6 @@ from psutil.tests import sh
 from psutil.tests import unittest
 import psutil
 import psutil.tests
-
-
-PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 # ===================================================================
@@ -414,7 +410,7 @@ class TestMisc(PsutilTestCase):
         msg = f.getvalue()
         assert msg.startswith("psutil-debug"), msg
         self.assertIn("hello", msg)
-        self.assertIn(__file__, msg)
+        self.assertIn(__file__.replace('.pyc', '.py'), msg)
 
         # supposed to use repr(exc)
         with redirect_stderr(StringIO()) as f:

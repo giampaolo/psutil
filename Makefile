@@ -41,7 +41,7 @@ INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
-all: test
+all: help
 
 # ===================================================================
 # Install
@@ -214,9 +214,11 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
+	${MAKE} print-wheels
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
+	${MAKE} print-wheels
 
 print-wheels:  ## Print downloaded wheels
 	$(PYTHON) scripts/internal/print_wheels.py
