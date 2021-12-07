@@ -200,11 +200,21 @@ def disk_usage(path):
     # to root's because the user has less space (usually -5%).
     usage_percent_user = usage_percent(used, total_user, round_=1)
 
+    # Save as above, but for inodes
+    total_inodes = st.f_files
+    avail_inodes_to_root = st.f_ffree
+    avail_inodes_to_user = st.f_favail
+    used_inodes = (total_inodes - avail_inodes_to_root)
+    total_inodes_user = used_inodes + avail_inodes_to_user
+    usage_percent_inodes_user = usage_percent(used_inodes, total_inodes_user, round_=1)
+
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
     # https://github.com/giampaolo/psutil/issues/829#issuecomment-223750462
     return sdiskusage(
-        total=total, used=used, free=avail_to_user, percent=usage_percent_user)
+        total=total, used=used, free=avail_to_user, percent=usage_percent_user,
+        total_inodes=total_inodes, used_inodes=used_inodes,
+        free_inodes=avail_inodes_to_user, percent_inodes=usage_percent_inodes_user)
 
 
 @memoize
