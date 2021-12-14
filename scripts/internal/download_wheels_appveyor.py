@@ -13,10 +13,12 @@ http://code.saghul.net/index.php/2015/09/09/
 """
 
 from __future__ import print_function
+
 import concurrent.futures
 import os
-import requests
 import sys
+
+import requests
 
 from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human

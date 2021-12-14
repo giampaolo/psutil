@@ -20,7 +20,9 @@ tcp   172.17.42.1:55797  127.0.0.1:443    CLOSE_WAIT    13651  GoogleTalkPlugi
 """
 
 import socket
-from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+from socket import AF_INET
+from socket import SOCK_DGRAM
+from socket import SOCK_STREAM
 
 import psutil
 

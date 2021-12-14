@@ -31,10 +31,9 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil.tests import ASCII_FS
-from psutil.tests import check_net_address
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
-from psutil.tests import enum
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
@@ -44,12 +43,13 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
-from psutil.tests import retry_on_failure
-from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
+from psutil.tests import PsutilTestCase
+from psutil.tests import check_net_address
+from psutil.tests import enum
+from psutil.tests import mock
+from psutil.tests import retry_on_failure
 from psutil.tests import unittest
 
 

@@ -15,6 +15,7 @@ import os
 import sys
 import types
 
+
 __all__ = [
     # constants
     "PY3",
@@ -413,8 +414,8 @@ except ImportError:
     def get_terminal_size(fallback=(80, 24)):
         try:
             import fcntl
-            import termios
             import struct
+            import termios
         except ImportError:
             return fallback
         else:

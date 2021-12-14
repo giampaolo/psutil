@@ -21,6 +21,7 @@ Parallel:
 """
 
 from __future__ import print_function
+
 import atexit
 import optparse
 import os
@@ -28,6 +29,8 @@ import sys
 import textwrap
 import time
 import unittest
+
+
 try:
     import ctypes
 except ImportError:

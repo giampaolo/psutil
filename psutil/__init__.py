@@ -21,6 +21,7 @@ Works with Python versions from 2.6 to 3.4+.
 """
 
 from __future__ import division
+
 import collections
 import contextlib
 import datetime
@@ -31,25 +32,16 @@ import subprocess
 import sys
 import threading
 import time
+
+
 try:
     import pwd
 except ImportError:
     pwd = None
 
 from . import _common
-from ._common import AccessDenied
-from ._common import Error
-from ._common import memoize_when_activated
-from ._common import NoSuchProcess
-from ._common import TimeoutExpired
-from ._common import wrap_numbers as _wrap_numbers
-from ._common import ZombieProcess
-from ._compat import long
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
-from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
-from ._compat import PY3 as _PY3
-
+from ._common import AIX
+from ._common import BSD
 from ._common import CONN_CLOSE
 from ._common import CONN_CLOSE_WAIT
 from ._common import CONN_CLOSING
@@ -62,9 +54,16 @@ from ._common import CONN_NONE
 from ._common import CONN_SYN_RECV
 from ._common import CONN_SYN_SENT
 from ._common import CONN_TIME_WAIT
+from ._common import FREEBSD  # NOQA
+from ._common import LINUX
+from ._common import MACOS
+from ._common import NETBSD  # NOQA
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import OPENBSD  # NOQA
+from ._common import OSX  # deprecated alias
+from ._common import POSIX  # NOQA
 from ._common import POWER_TIME_UNKNOWN
 from ._common import POWER_TIME_UNLIMITED
 from ._common import STATUS_DEAD
@@ -79,18 +78,21 @@ from ._common import STATUS_TRACING_STOP
 from ._common import STATUS_WAITING
 from ._common import STATUS_WAKING
 from ._common import STATUS_ZOMBIE
-
-from ._common import AIX
-from ._common import BSD
-from ._common import FREEBSD  # NOQA
-from ._common import LINUX
-from ._common import MACOS
-from ._common import NETBSD  # NOQA
-from ._common import OPENBSD  # NOQA
-from ._common import OSX  # deprecated alias
-from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import AccessDenied
+from ._common import Error
+from ._common import NoSuchProcess
+from ._common import TimeoutExpired
+from ._common import ZombieProcess
+from ._common import memoize_when_activated
+from ._common import wrap_numbers as _wrap_numbers
+from ._compat import PY3 as _PY3
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
+from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
+from ._compat import long
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -98,7 +100,6 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-
     from ._pslinux import IOPRIO_CLASS_BE  # NOQA
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
@@ -113,10 +114,10 @@ elif WINDOWS:
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
-    from ._pswindows import IOPRIO_VERYLOW  # NOQA
+    from ._pswindows import IOPRIO_HIGH  # NOQA
     from ._pswindows import IOPRIO_LOW  # NOQA
     from ._pswindows import IOPRIO_NORMAL  # NOQA
-    from ._pswindows import IOPRIO_HIGH  # NOQA
+    from ._pswindows import IOPRIO_VERYLOW  # NOQA
 
 elif MACOS:
     from . import _psosx as _psplatform

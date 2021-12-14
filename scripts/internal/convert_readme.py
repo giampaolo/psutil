@@ -11,6 +11,7 @@ Convert README.rst format to make it compatible with PyPI (no raw html).
 import re
 import sys
 
+
 summary = """\
 Quick links
 ===========

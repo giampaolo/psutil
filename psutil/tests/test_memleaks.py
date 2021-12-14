@@ -16,6 +16,7 @@ because of how its JIT handles memory, so tests are skipped.
 """
 
 from __future__ import print_function
+
 import functools
 import os
 
@@ -29,8 +30,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
 from psutil._compat import super
-from psutil.tests import create_sockets
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
@@ -43,12 +42,14 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import TestMemoryLeak
+from psutil.tests import create_sockets
+from psutil.tests import get_testfn
 from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
-from psutil.tests import TestMemoryLeak
 from psutil.tests import unittest
 
 

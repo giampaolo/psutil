@@ -44,6 +44,7 @@ wlp3s0:
 """
 
 from __future__ import print_function
+
 import socket
 
 import psutil

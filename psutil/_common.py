@@ -7,7 +7,8 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division, print_function
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import contextlib
@@ -23,6 +24,7 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
 
 try:
     from socket import AF_INET6

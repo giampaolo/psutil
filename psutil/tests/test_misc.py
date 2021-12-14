@@ -18,6 +18,8 @@ import pickle
 import socket
 import stat
 
+import psutil
+import psutil.tests
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
@@ -36,17 +38,15 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import import_module_by_path
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
-from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
+from psutil.tests import PsutilTestCase
+from psutil.tests import import_module_by_path
+from psutil.tests import mock
+from psutil.tests import reload_module
 from psutil.tests import sh
 from psutil.tests import unittest
-import psutil
-import psutil.tests
 
 
 # ===================================================================

@@ -12,9 +12,9 @@ supposed to be more precise.
 import sys
 
 import pyperf  # requires "pip install pyperf"
+from bench_oneshot import names
 
 import psutil
-from bench_oneshot import names
 
 
 p = psutil.Process()
