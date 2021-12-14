@@ -188,21 +188,29 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-lint-py:  ## Run Python (flake8) linter.
+check-flake8:  ## Run flake8 linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
 
-lint-imports:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only
+check-imports:  ## Run isort linter.
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg --check-only
 
-lint-c:  ## Run  C linter.
+check-c-code:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-lint:  ## Run Python (flake8) and C linters.
-	${MAKE} lint-py
-	${MAKE} lint-c
+lint:  ## Run all linters
+	${MAKE} check-flake8
+	${MAKE} check-imports
+	${MAKE} check-c-code
 
-fix-lint:  ## Attempt to automatically fix some Python lint issues.
+# ===================================================================
+# Fixers
+# ===================================================================
+
+fix-flake8:  ## Attempt to automatically fix some Python flake8 issues.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
+
+fix-imports:  ## Fix imports with isort.
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg
 
 # ===================================================================
 # GIT
