@@ -56,6 +56,7 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
+
 if PY3:
     import unittest
 else:

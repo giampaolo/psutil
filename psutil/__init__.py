@@ -33,6 +33,7 @@ import sys
 import threading
 import time
 
+
 try:
     import pwd
 except ImportError:
@@ -91,6 +92,7 @@ from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
 from ._compat import long
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py

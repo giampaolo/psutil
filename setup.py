@@ -20,6 +20,7 @@ import sys
 import tempfile
 import warnings
 
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
@@ -49,6 +50,7 @@ from _common import WINDOWS  # NOQA
 from _common import hilite  # NOQA
 from _compat import PY3  # NOQA
 from _compat import which  # NOQA
+
 
 PYPY = '__pypy__' in sys.builtin_module_names
 macros = []

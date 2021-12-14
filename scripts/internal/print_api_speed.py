@@ -35,6 +35,7 @@ from timeit import default_timer as timer
 import psutil
 from psutil._common import print_color
 
+
 timings = []
 templ = "%-25s %s"
 

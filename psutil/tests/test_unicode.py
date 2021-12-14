@@ -110,6 +110,7 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import unittest
 
+
 if APPVEYOR:
     def safe_rmpath(path):  # NOQA
         # TODO - this is quite random and I'm not sure why it happens,

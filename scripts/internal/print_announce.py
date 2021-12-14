@@ -16,6 +16,7 @@ import sys
 
 from psutil import __version__ as PRJ_VERSION
 
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.realpath(os.path.join(HERE, '..', '..'))
 HISTORY = os.path.join(ROOT, 'HISTORY.rst')

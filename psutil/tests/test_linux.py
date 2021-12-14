@@ -49,6 +49,7 @@ from psutil.tests import skip_on_not_implemented
 from psutil.tests import unittest
 from psutil.tests import which
 
+
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder

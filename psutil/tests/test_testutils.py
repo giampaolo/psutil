@@ -53,6 +53,7 @@ from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
 
+
 # ===================================================================
 # --- Unit tests for test utilities.
 # ===================================================================

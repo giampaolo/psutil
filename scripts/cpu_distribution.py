@@ -49,6 +49,7 @@ import time
 import psutil
 from psutil._compat import get_terminal_size
 
+
 if not hasattr(psutil.Process, "cpu_num"):
     sys.exit("platform not supported")
 

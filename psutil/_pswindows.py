@@ -39,6 +39,7 @@ from ._psutil_windows import IDLE_PRIORITY_CLASS
 from ._psutil_windows import NORMAL_PRIORITY_CLASS
 from ._psutil_windows import REALTIME_PRIORITY_CLASS
 
+
 try:
     from . import _psutil_windows as cext
 except ImportError as err:

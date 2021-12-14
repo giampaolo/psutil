@@ -15,6 +15,7 @@ import os
 import sys
 import types
 
+
 __all__ = [
     # constants
     "PY3",

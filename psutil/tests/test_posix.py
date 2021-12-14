@@ -35,6 +35,7 @@ from psutil.tests import terminate
 from psutil.tests import unittest
 from psutil.tests import which
 
+
 if POSIX:
     import mmap
     import resource

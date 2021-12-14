@@ -22,6 +22,7 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import unittest
 
+
 if POSIX:
     from psutil._psutil_posix import getpagesize
 

@@ -23,6 +23,7 @@ import pypinfo  # NOQA
 
 from psutil._common import memoize
 
+
 AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'
 DAYS = 30

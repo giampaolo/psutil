@@ -24,6 +24,7 @@ from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human
 from psutil._common import print_color
 
+
 USER = "giampaolo"
 PROJECT = "psutil"
 BASE_URL = 'https://ci.appveyor.com/api'

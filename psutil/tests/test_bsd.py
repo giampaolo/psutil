@@ -30,6 +30,7 @@ from psutil.tests import terminate
 from psutil.tests import unittest
 from psutil.tests import which
 
+
 if BSD:
     from psutil._psutil_posix import getpagesize
 

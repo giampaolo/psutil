@@ -19,6 +19,7 @@ import timeit
 
 import psutil
 
+
 ITERATIONS = 1000
 
 # The list of Process methods which gets collected in one shot and

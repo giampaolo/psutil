@@ -25,6 +25,7 @@
 import datetime
 import os
 
+
 PROJECT_NAME = "psutil"
 AUTHOR = u"Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)

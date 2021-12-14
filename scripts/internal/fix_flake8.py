@@ -18,6 +18,7 @@ from collections import defaultdict
 from collections import namedtuple
 from pprint import pprint as pp  # NOQA
 
+
 ntentry = namedtuple('ntentry', 'msg, issue, lineno, pos, descr')
 
 

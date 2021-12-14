@@ -52,6 +52,7 @@ from psutil.tests import mock
 from psutil.tests import retry_on_failure
 from psutil.tests import unittest
 
+
 # ===================================================================
 # --- System-related API tests
 # ===================================================================

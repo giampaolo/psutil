@@ -22,6 +22,7 @@ from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import unicode
 
+
 if sys.version_info >= (3, 4):
     import enum
 else:

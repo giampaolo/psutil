@@ -18,6 +18,7 @@ from pprint import pprint as pp
 
 from github import Github
 
+
 ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')

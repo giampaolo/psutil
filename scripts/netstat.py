@@ -26,6 +26,7 @@ from socket import SOCK_STREAM
 
 import psutil
 
+
 AD = "-"
 AF_INET6 = getattr(socket, 'AF_INET6', object())
 proto_map = {

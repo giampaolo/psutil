@@ -52,6 +52,7 @@ from psutil.tests import system_namespace
 from psutil.tests import terminate
 from psutil.tests import unittest
 
+
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 FEW_TIMES = 5

@@ -38,6 +38,7 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import unittest
 
+
 if WINDOWS and not PYPY:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

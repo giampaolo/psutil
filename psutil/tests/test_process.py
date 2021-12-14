@@ -65,6 +65,7 @@ from psutil.tests import skip_on_not_implemented
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
+
 # ===================================================================
 # --- psutil.Process class tests
 # ===================================================================

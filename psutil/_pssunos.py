@@ -34,6 +34,7 @@ from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import b
 
+
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 
 

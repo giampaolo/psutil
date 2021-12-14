@@ -43,6 +43,7 @@ from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
+
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 

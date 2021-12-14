@@ -33,6 +33,7 @@ from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 
+
 __extra__all__ = ["PROCFS_PATH"]
 
 

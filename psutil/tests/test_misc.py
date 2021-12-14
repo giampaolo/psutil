@@ -48,6 +48,7 @@ from psutil.tests import reload_module
 from psutil.tests import sh
 from psutil.tests import unittest
 
+
 # ===================================================================
 # --- Misc / generic tests.
 # ===================================================================

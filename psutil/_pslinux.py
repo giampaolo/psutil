@@ -50,6 +50,7 @@ from ._compat import ProcessLookupError
 from ._compat import b
 from ._compat import basestring
 
+
 if sys.version_info >= (3, 4):
     import enum
 else:

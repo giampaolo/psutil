@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 
+
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 if APPVEYOR:
     PYTHON = sys.executable

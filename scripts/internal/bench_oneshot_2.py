@@ -16,6 +16,7 @@ from bench_oneshot import names
 
 import psutil
 
+
 p = psutil.Process()
 funs = [getattr(p, n) for n in names]
 
