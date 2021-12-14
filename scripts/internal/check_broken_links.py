@@ -40,6 +40,7 @@ Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 """
 
 from __future__ import print_function
+
 import concurrent.futures
 import functools
 import os
@@ -48,7 +49,6 @@ import sys
 import traceback
 
 import requests
-
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(

@@ -12,6 +12,7 @@ that they should be deemed illegal!
 """
 
 from __future__ import print_function
+
 import argparse
 import atexit
 import ctypes
@@ -24,7 +25,6 @@ import ssl
 import subprocess
 import sys
 import tempfile
-
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 if APPVEYOR:

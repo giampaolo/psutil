@@ -36,6 +36,7 @@ PID    USER       NI   VIRT    RES  CPU%  MEM%     TIME+  NAME
 import datetime
 import sys
 import time
+
 try:
     import curses
 except ImportError:
@@ -43,7 +44,6 @@ except ImportError:
 
 import psutil
 from psutil._common import bytes2human
-
 
 win = curses.initscr()
 lineno = 0

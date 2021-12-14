@@ -13,6 +13,7 @@ Useful sites:
 """
 
 from __future__ import print_function
+
 import json
 import os
 import subprocess
@@ -21,7 +22,6 @@ import sys
 import pypinfo  # NOQA
 
 from psutil._common import memoize
-
 
 AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'

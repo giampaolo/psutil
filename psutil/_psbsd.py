@@ -9,29 +9,28 @@ import errno
 import functools
 import os
 import xml.etree.ElementTree as ET
-from collections import namedtuple
 from collections import defaultdict
+from collections import namedtuple
 
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
+from ._common import FREEBSD
+from ._common import NETBSD
+from ._common import OPENBSD
 from ._common import AccessDenied
+from ._common import NoSuchProcess
+from ._common import ZombieProcess
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
-from ._common import FREEBSD
 from ._common import memoize
 from ._common import memoize_when_activated
-from ._common import NETBSD
-from ._common import NoSuchProcess
-from ._common import OPENBSD
 from ._common import usage_percent
-from ._common import ZombieProcess
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import which
-
 
 __extra__all__ = []
 

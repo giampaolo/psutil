@@ -10,8 +10,8 @@ import collections
 import glob
 import os
 
-from psutil._common import print_color
 from psutil._common import bytes2human
+from psutil._common import print_color
 
 
 class Wheel:

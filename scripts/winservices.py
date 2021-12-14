@@ -36,7 +36,6 @@ import sys
 
 import psutil
 
-
 if os.name != 'nt':
     sys.exit("platform not supported (Windows only)")
 

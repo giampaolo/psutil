@@ -10,7 +10,6 @@ Prints releases' timeline in RST format.
 
 import subprocess
 
-
 entry = """\
 - {date}:
   `{ver} <https://pypi.org/project/psutil/#files>`__ -

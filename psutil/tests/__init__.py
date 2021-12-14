@@ -9,6 +9,7 @@ Test utilities.
 """
 
 from __future__ import print_function
+
 import atexit
 import contextlib
 import ctypes
@@ -46,9 +47,9 @@ from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 from psutil._common import supports_ipv6
+from psutil._compat import PY3
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
-from psutil._compat import PY3
 from psutil._compat import range
 from psutil._compat import super
 from psutil._compat import u
@@ -1733,8 +1734,8 @@ else:
         in memory via ctypes.
         Return the new absolutized, normcased path.
         """
-        from ctypes import wintypes
         from ctypes import WinError
+        from ctypes import wintypes
         ext = ".dll"
         dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if

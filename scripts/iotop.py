@@ -30,8 +30,9 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import time
 import sys
+import time
+
 try:
     import curses
 except ImportError:
@@ -39,7 +40,6 @@ except ImportError:
 
 import psutil
 from psutil._common import bytes2human
-
 
 win = curses.initscr()
 lineno = 0

@@ -7,6 +7,7 @@
 """Cross-platform lib for process and system monitoring in Python."""
 
 from __future__ import print_function
+
 import contextlib
 import io
 import os
@@ -23,10 +24,12 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import setuptools
-        from setuptools import setup, Extension
+        from setuptools import Extension
+        from setuptools import setup
     except ImportError:
         setuptools = None
-        from distutils.core import setup, Extension
+        from distutils.core import Extension
+        from distutils.core import setup
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -36,7 +39,6 @@ sys.path.insert(0, os.path.join(HERE, "psutil"))
 from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
-from _common import hilite  # NOQA
 from _common import LINUX  # NOQA
 from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
@@ -44,9 +46,9 @@ from _common import OPENBSD  # NOQA
 from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
+from _common import hilite  # NOQA
 from _compat import PY3  # NOQA
 from _compat import which  # NOQA
-
 
 PYPY = '__pypy__' in sys.builtin_module_names
 macros = []
@@ -236,8 +238,8 @@ elif NETBSD:
 elif LINUX:
     def get_ethtool_macro():
         # see: https://github.com/giampaolo/psutil/issues/659
-        from distutils.unixccompiler import UnixCCompiler
         from distutils.errors import CompileError
+        from distutils.unixccompiler import UnixCCompiler
 
         with tempfile.NamedTemporaryFile(
                 suffix='.c', delete=False, mode="wt") as f:

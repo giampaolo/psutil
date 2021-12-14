@@ -21,6 +21,7 @@ Parallel:
 """
 
 from __future__ import print_function
+
 import atexit
 import optparse
 import os
@@ -28,6 +29,7 @@ import sys
 import textwrap
 import time
 import unittest
+
 try:
     import ctypes
 except ImportError:
@@ -48,7 +50,6 @@ from psutil.tests import import_module_by_path
 from psutil.tests import print_sysinfo
 from psutil.tests import reap_children
 from psutil.tests import safe_rmpath
-
 
 VERBOSITY = 2
 FAILED_TESTS_FNAME = '.failed-tests.txt'

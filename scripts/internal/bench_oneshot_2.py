@@ -12,10 +12,9 @@ supposed to be more precise.
 import sys
 
 import pyperf  # requires "pip install pyperf"
-
-import psutil
 from bench_oneshot import names
 
+import psutil
 
 p = psutil.Process()
 funs = [getattr(p, n) for n in names]
