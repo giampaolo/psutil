@@ -15,6 +15,7 @@ DEPS = \
 	coverage \
 	flake8 \
 	flake8-print \
+	isort \
 	pyperf \
 	pypinfo \
 	requests \
@@ -189,6 +190,9 @@ test-coverage:  ## Run test coverage.
 
 lint-py:  ## Run Python (flake8) linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
+
+lint-imports:  ## Run isort linter.
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only
 
 lint-c:  ## Run  C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
