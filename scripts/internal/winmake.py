@@ -156,11 +156,11 @@ def rm(pattern, directory=False):
             safe_remove(pattern)
         return
 
-    for root, subdirs, subfiles in os.walk('.'):
+    for root, dirs, files in os.walk('.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
-        found = fnmatch.filter(subdirs if directory else subfiles, pattern)
+        found = fnmatch.filter(dirs if directory else files, pattern)
         for name in found:
             path = os.path.join(root, name)
             if directory:
@@ -195,15 +195,15 @@ def safe_rmtree(path):
 
 def recursive_rm(*patterns):
     """Recursively remove a file or matching a list of patterns."""
-    for root, subdirs, subfiles in os.walk(u'.'):
+    for root, dirs, files in os.walk(u'.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
-        for file in subfiles:
+        for file in files:
             for pattern in patterns:
                 if fnmatch.fnmatch(file, pattern):
                     safe_remove(os.path.join(root, file))
-        for dir in subdirs:
+        for dir in dirs:
             for pattern in patterns:
                 if fnmatch.fnmatch(dir, pattern):
                     safe_rmtree(os.path.join(root, dir))

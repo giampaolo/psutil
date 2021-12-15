@@ -720,11 +720,12 @@ class TestScripts(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_executable(self):
-        for name in os.listdir(SCRIPTS_DIR):
-            if name.endswith('.py'):
-                path = os.path.join(SCRIPTS_DIR, name)
-                if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
-                    self.fail('%r is not executable' % path)
+        for root, dirs, files in os.walk(SCRIPTS_DIR):
+            for file in files:
+                if file.endswith('.py'):
+                    path = os.path.join(root, file)
+                    if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
+                        raise self.fail('%r is not executable' % path)
 
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')

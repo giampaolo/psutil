@@ -13,6 +13,7 @@ the files which were modified in the commit. Checks:
 - assert not pdb.set_trace in code
 - assert no bare except clause ("except:") in code
 - assert "flake8" checks pass
+- assert "isort" checks pass
 - assert C linter checks pass
 - abort if files were added/renamed/removed and MANIFEST.in was not updated
 
@@ -124,7 +125,7 @@ def main():
         cmd = "%s -m flake8 --config=.flake8 %s" % (PYTHON, " ".join(py_files))
         ret = subprocess.call(shlex.split(cmd))
         if ret != 0:
-            return exit("python code is not flake8 compliant; "
+            return exit("python code didn't pass 'flake8' style check; "
                         "try running 'make fix-flake8'")
         # isort
         assert os.path.exists('.isort.cfg')
@@ -132,7 +133,7 @@ def main():
             PYTHON, " ".join(py_files))
         ret = subprocess.call(shlex.split(cmd))
         if ret != 0:
-            return exit("python code is not flake8 compliant; "
+            return exit("python code didn't pass 'isort' style check; "
                         "try running 'make fix-imports'")
     # C linter
     if c_files:
