@@ -325,8 +325,12 @@ def disk_partitions(all=False):
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         maxfile = maxpath = None  # set later
+
+        # Not yet implemented
+        rotational = None
+
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
-                                   maxfile, maxpath)
+                                   maxfile, maxpath, rotational)
         retlist.append(ntuple)
     return retlist
 
