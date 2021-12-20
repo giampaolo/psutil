@@ -258,7 +258,7 @@ def net_if_stats():
                 duplex = re_result.group(2)
 
         duplex = duplex_map.get(duplex, NIC_DUPLEX_UNKNOWN)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu, None)
     return ret
 
 

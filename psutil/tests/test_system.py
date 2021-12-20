@@ -808,7 +808,7 @@ class TestNetAPIs(PsutilTestCase):
                         psutil.NIC_DUPLEX_UNKNOWN)
         for name, stats in nics.items():
             self.assertIsInstance(name, str)
-            isup, duplex, speed, mtu = stats
+            isup, duplex, speed, mtu, flags = stats
             self.assertIsInstance(isup, bool)
             self.assertIn(duplex, all_duplexes)
             self.assertIn(duplex, all_duplexes)

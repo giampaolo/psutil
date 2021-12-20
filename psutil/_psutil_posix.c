@@ -431,6 +431,106 @@ error:
 
 
 /*
+ * Get all of the NIC flags and return them.
+ */
+static PyObject *
+psutil_net_if_flags(PyObject *self, PyObject *args) {
+    char *nic_name;
+    int sock = -1;
+    int ret;
+    struct ifreq ifr;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_flag = NULL;
+    short int flags;
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        return NULL;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        return NULL;
+
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    if (ret == -1)
+        goto error;
+
+    close(sock);
+    sock = -1;
+
+    flags = ifr.ifr_flags & 0xFFFF;
+
+    if (flags & IFF_UP) {
+        py_flag = PyUnicode_DecodeFSDefault("up");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_BROADCAST) {
+        py_flag = PyUnicode_DecodeFSDefault("broadcast");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_DEBUG) {
+        py_flag = PyUnicode_DecodeFSDefault("debug");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_LOOPBACK) {
+        py_flag = PyUnicode_DecodeFSDefault("loopback");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_POINTOPOINT) {
+        py_flag = PyUnicode_DecodeFSDefault("pointopoint");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_NOTRAILERS) {
+        py_flag = PyUnicode_DecodeFSDefault("notrailers");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_RUNNING) {
+        py_flag = PyUnicode_DecodeFSDefault("running");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_NOARP) {
+        py_flag = PyUnicode_DecodeFSDefault("noarp");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_PROMISC) {
+        py_flag = PyUnicode_DecodeFSDefault("promisc");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_ALLMULTI) {
+        py_flag = PyUnicode_DecodeFSDefault("allmulti");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+    if (flags & IFF_MULTICAST) {
+        py_flag = PyUnicode_DecodeFSDefault("multicast");
+        if (PyList_Append(py_retlist, py_flag))
+            goto error;
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_flag);
+    Py_DECREF(py_retlist);
+    if (sock != -1)
+        close(sock);
+    return NULL;
+}
+
+
+/*
  * Inspect NIC flags, returns a bool indicating whether the NIC is
  * running. References:
  * http://www.i-scream.org/libstatgrab/
@@ -667,6 +767,7 @@ static PyMethodDef mod_methods[] = {
     {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
     {"getpriority", psutil_posix_getpriority, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
+    {"net_if_flags", psutil_net_if_flags, METH_VARARGS},
     {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
     {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS},
     {"setpriority", psutil_posix_setpriority, METH_VARARGS},
