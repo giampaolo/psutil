@@ -311,51 +311,55 @@ psutil_convert_iff_flags(int flags) {
     if (py_retlist == NULL)
         return NULL;
     if ((flags & IFF_UP) && (psutil_append_iff_flag(py_retlist, "up") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_BROADCAST) && (psutil_append_iff_flag(py_retlist, "broadcast") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_DEBUG) && (psutil_append_iff_flag(py_retlist, "debug") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_LOOPBACK) && (psutil_append_iff_flag(py_retlist, "loopback") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_POINTOPOINT) && (psutil_append_iff_flag(py_retlist, "pointopoint") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_RUNNING) && (psutil_append_iff_flag(py_retlist, "running") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_NOARP) && (psutil_append_iff_flag(py_retlist, "noarp") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_PROMISC) && (psutil_append_iff_flag(py_retlist, "promisc") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_NOTRAILERS) && (psutil_append_iff_flag(py_retlist, "notrailers") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_ALLMULTI) && (psutil_append_iff_flag(py_retlist, "allmulti") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_MASTER) && (psutil_append_iff_flag(py_retlist, "master") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_SLAVE) && (psutil_append_iff_flag(py_retlist, "slave") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_MULTICAST) && (psutil_append_iff_flag(py_retlist, "multicast") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_PORTSEL) && (psutil_append_iff_flag(py_retlist, "portsel") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_AUTOMEDIA) && (psutil_append_iff_flag(py_retlist, "automedia") != 0))
-        return NULL;
+        goto error;
     if ((flags & IFF_DYNAMIC) && (psutil_append_iff_flag(py_retlist, "dynamic") != 0))
-        return NULL;
+        goto error;
 #ifdef IFF_LOWER_UP  // Linux 2.6.17+
     if ((flags & IFF_LOWER_UP) && (psutil_append_iff_flag(py_retlist, "lower_up") != 0))
-        return NULL;
+        goto error;
 #endif
 #ifdef IFF_DORMANT  // Linux 2.6.17+
     if ((flags & IFF_DORMANT) && (psutil_append_iff_flag(py_retlist, "dormant") != 0))
-        return NULL;
+        goto error;
 #endif
 #ifdef IFF_ECHO  // Linux 2.6.25+
     if ((flags & IFF_ECHO) && (psutil_append_iff_flag(py_retlist, "echo") != 0))
-        return NULL;
+        goto error;
 #endif
 
     return py_retlist;
+
+error:
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 
