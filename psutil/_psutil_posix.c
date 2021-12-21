@@ -291,7 +291,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 
 
 int
-_append_flag(PyObject *py_flags, char *str) {
+_psutil_append_flag(PyObject *py_flags, char *str) {
     PyObject *py_str;
 
     py_str = Py_BuildValue("s", str);
@@ -301,6 +301,46 @@ _append_flag(PyObject *py_flags, char *str) {
         return 1;
     Py_CLEAR(py_str);
     return 0;
+}
+
+
+PyObject*
+_psutil_convert_iff_flags(int flags) {
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    if (flags & IFF_UP) {
+        if (_psutil_append_flag(py_retlist, "up") != 0)
+            return NULL;
+    }
+    if (flags & IFF_BROADCAST) {
+        if (_psutil_append_flag(py_retlist, "broadcast") != 0)
+            return NULL;
+    }
+    if (flags & IFF_DEBUG) {
+        if (_psutil_append_flag(py_retlist, "debug") != 0)
+            return NULL;
+    }
+    if (flags & IFF_LOOPBACK) {
+        if (_psutil_append_flag(py_retlist, "loopback") != 0)
+            return NULL;
+    }
+    if (flags & IFF_POINTOPOINT) {
+        if (_psutil_append_flag(py_retlist, "pointopoint") != 0)
+            return NULL;
+    }
+    if (flags & IFF_RUNNING) {
+        if (_psutil_append_flag(py_retlist, "running") != 0)
+            return NULL;
+    }
+    if (flags & IFF_NOARP) {
+        if (_psutil_append_flag(py_retlist, "noarp") != 0)
+            return NULL;
+    }
+
+    return py_retlist;
 }
 
 
@@ -314,12 +354,12 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
     int family;
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_flags = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
     PyObject *py_ptp = NULL;
+    PyObject *py_flags = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -363,39 +403,9 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
 
-        // handle flags
-        py_flags = PyList_New(0);
+        py_flags = _psutil_convert_iff_flags(ifa->ifa_flags);
         if (py_flags == NULL)
             goto error;
-
-        if (ifa->ifa_flags & IFF_UP) {
-            if (_append_flag(py_flags, "up") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_BROADCAST) {
-            if (_append_flag(py_flags, "broadcast") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_DEBUG) {
-            if (_append_flag(py_flags, "debug") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_LOOPBACK) {
-            if (_append_flag(py_flags, "loopback") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_POINTOPOINT) {
-            if (_append_flag(py_flags, "pointopoint") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_RUNNING) {
-            if (_append_flag(py_flags, "running") != 0)
-                goto error;
-        }
-        if (ifa->ifa_flags & IFF_NOARP) {
-            if (_append_flag(py_flags, "noarp") != 0)
-                goto error;
-        }
 
         py_tuple = Py_BuildValue(
             "(siOOOOO)",
