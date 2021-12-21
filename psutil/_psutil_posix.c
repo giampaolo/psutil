@@ -310,6 +310,7 @@ psutil_convert_iff_flags(int flags) {
 
     if (py_retlist == NULL)
         return NULL;
+
     if ((flags & IFF_UP) && (psutil_append_iff_flag(py_retlist, "up")))
         goto error;
     if ((flags & IFF_BROADCAST) && (psutil_append_iff_flag(py_retlist, "broadcast")))
@@ -324,24 +325,44 @@ psutil_convert_iff_flags(int flags) {
         goto error;
     if ((flags & IFF_NOARP) && (psutil_append_iff_flag(py_retlist, "noarp")))
         goto error;
+    // Not sure what IFF_* flags are available across POSIX variants.
+    // For extra safety let's #ifdef from here on.
+#ifdef IFF_PROMISC
     if ((flags & IFF_PROMISC) && (psutil_append_iff_flag(py_retlist, "promisc")))
         goto error;
+#endif
+#ifdef IFF_NOTRAILERS
     if ((flags & IFF_NOTRAILERS) && (psutil_append_iff_flag(py_retlist, "notrailers")))
         goto error;
+#endif
+#ifdef IFF_ALLMULTI
     if ((flags & IFF_ALLMULTI) && (psutil_append_iff_flag(py_retlist, "allmulti")))
         goto error;
+#endif
+#ifdef IFF_MASTER
     if ((flags & IFF_MASTER) && (psutil_append_iff_flag(py_retlist, "master")))
         goto error;
+#endif
+#ifdef IFF_SLAVE
     if ((flags & IFF_SLAVE) && (psutil_append_iff_flag(py_retlist, "slave")))
         goto error;
+#endif
+#ifdef IFF_MULTICAST
     if ((flags & IFF_MULTICAST) && (psutil_append_iff_flag(py_retlist, "multicast")))
         goto error;
+#endif
+#ifdef IFF_PORTSEL
     if ((flags & IFF_PORTSEL) && (psutil_append_iff_flag(py_retlist, "portsel")))
         goto error;
+#endif
+#ifdef IFF_AUTOMEDIA
     if ((flags & IFF_AUTOMEDIA) && (psutil_append_iff_flag(py_retlist, "automedia")))
         goto error;
+#endif
+#ifdef IFF_DYNAMIC
     if ((flags & IFF_DYNAMIC) && (psutil_append_iff_flag(py_retlist, "dynamic")))
         goto error;
+#endif
 #ifdef IFF_LOWER_UP  // Linux 2.6.17+
     if ((flags & IFF_LOWER_UP) && (psutil_append_iff_flag(py_retlist, "lower_up")))
         goto error;
