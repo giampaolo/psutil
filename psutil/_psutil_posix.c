@@ -310,48 +310,48 @@ psutil_convert_iff_flags(int flags) {
 
     if (py_retlist == NULL)
         return NULL;
-    if ((flags & IFF_UP) && (psutil_append_iff_flag(py_retlist, "up") != 0))
+    if ((flags & IFF_UP) && (psutil_append_iff_flag(py_retlist, "up")))
         goto error;
-    if ((flags & IFF_BROADCAST) && (psutil_append_iff_flag(py_retlist, "broadcast") != 0))
+    if ((flags & IFF_BROADCAST) && (psutil_append_iff_flag(py_retlist, "broadcast")))
         goto error;
-    if ((flags & IFF_DEBUG) && (psutil_append_iff_flag(py_retlist, "debug") != 0))
+    if ((flags & IFF_DEBUG) && (psutil_append_iff_flag(py_retlist, "debug")))
         goto error;
-    if ((flags & IFF_LOOPBACK) && (psutil_append_iff_flag(py_retlist, "loopback") != 0))
+    if ((flags & IFF_LOOPBACK) && (psutil_append_iff_flag(py_retlist, "loopback")))
         goto error;
-    if ((flags & IFF_POINTOPOINT) && (psutil_append_iff_flag(py_retlist, "pointopoint") != 0))
+    if ((flags & IFF_POINTOPOINT) && (psutil_append_iff_flag(py_retlist, "pointopoint")))
         goto error;
-    if ((flags & IFF_RUNNING) && (psutil_append_iff_flag(py_retlist, "running") != 0))
+    if ((flags & IFF_RUNNING) && (psutil_append_iff_flag(py_retlist, "running")))
         goto error;
-    if ((flags & IFF_NOARP) && (psutil_append_iff_flag(py_retlist, "noarp") != 0))
+    if ((flags & IFF_NOARP) && (psutil_append_iff_flag(py_retlist, "noarp")))
         goto error;
-    if ((flags & IFF_PROMISC) && (psutil_append_iff_flag(py_retlist, "promisc") != 0))
+    if ((flags & IFF_PROMISC) && (psutil_append_iff_flag(py_retlist, "promisc")))
         goto error;
-    if ((flags & IFF_NOTRAILERS) && (psutil_append_iff_flag(py_retlist, "notrailers") != 0))
+    if ((flags & IFF_NOTRAILERS) && (psutil_append_iff_flag(py_retlist, "notrailers")))
         goto error;
-    if ((flags & IFF_ALLMULTI) && (psutil_append_iff_flag(py_retlist, "allmulti") != 0))
+    if ((flags & IFF_ALLMULTI) && (psutil_append_iff_flag(py_retlist, "allmulti")))
         goto error;
-    if ((flags & IFF_MASTER) && (psutil_append_iff_flag(py_retlist, "master") != 0))
+    if ((flags & IFF_MASTER) && (psutil_append_iff_flag(py_retlist, "master")))
         goto error;
-    if ((flags & IFF_SLAVE) && (psutil_append_iff_flag(py_retlist, "slave") != 0))
+    if ((flags & IFF_SLAVE) && (psutil_append_iff_flag(py_retlist, "slave")))
         goto error;
-    if ((flags & IFF_MULTICAST) && (psutil_append_iff_flag(py_retlist, "multicast") != 0))
+    if ((flags & IFF_MULTICAST) && (psutil_append_iff_flag(py_retlist, "multicast")))
         goto error;
-    if ((flags & IFF_PORTSEL) && (psutil_append_iff_flag(py_retlist, "portsel") != 0))
+    if ((flags & IFF_PORTSEL) && (psutil_append_iff_flag(py_retlist, "portsel")))
         goto error;
-    if ((flags & IFF_AUTOMEDIA) && (psutil_append_iff_flag(py_retlist, "automedia") != 0))
+    if ((flags & IFF_AUTOMEDIA) && (psutil_append_iff_flag(py_retlist, "automedia")))
         goto error;
-    if ((flags & IFF_DYNAMIC) && (psutil_append_iff_flag(py_retlist, "dynamic") != 0))
+    if ((flags & IFF_DYNAMIC) && (psutil_append_iff_flag(py_retlist, "dynamic")))
         goto error;
 #ifdef IFF_LOWER_UP  // Linux 2.6.17+
-    if ((flags & IFF_LOWER_UP) && (psutil_append_iff_flag(py_retlist, "lower_up") != 0))
+    if ((flags & IFF_LOWER_UP) && (psutil_append_iff_flag(py_retlist, "lower_up")))
         goto error;
 #endif
 #ifdef IFF_DORMANT  // Linux 2.6.17+
-    if ((flags & IFF_DORMANT) && (psutil_append_iff_flag(py_retlist, "dormant") != 0))
+    if ((flags & IFF_DORMANT) && (psutil_append_iff_flag(py_retlist, "dormant")))
         goto error;
 #endif
 #ifdef IFF_ECHO  // Linux 2.6.25+
-    if ((flags & IFF_ECHO) && (psutil_append_iff_flag(py_retlist, "echo") != 0))
+    if ((flags & IFF_ECHO) && (psutil_append_iff_flag(py_retlist, "echo")))
         goto error;
 #endif
 
@@ -456,12 +456,12 @@ error:
     if (ifaddr != NULL)
         freeifaddrs(ifaddr);
     Py_DECREF(py_retlist);
-    Py_DECREF(py_flags);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_netmask);
     Py_XDECREF(py_broadcast);
     Py_XDECREF(py_ptp);
+    Py_XDECREF(py_flags);
     return NULL;
 }
 
