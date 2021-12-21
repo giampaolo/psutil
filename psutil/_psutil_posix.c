@@ -290,6 +290,20 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 }
 
 
+int
+_append_flag(PyObject *py_flags, char *str) {
+    PyObject *py_str;
+
+    py_str = Py_BuildValue("s", str);
+    if (!py_str)
+        return 1;
+    if (PyList_Append(py_flags, py_str))
+        return 1;
+    Py_CLEAR(py_str);
+    return 0;
+}
+
+
 /*
  * Return NICs information a-la ifconfig as a list of tuples.
  * TODO: on Solaris we won't get any MAC address.
@@ -300,6 +314,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
     int family;
 
     PyObject *py_retlist = PyList_New(0);
+    PyObject *py_flags = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_netmask = NULL;
@@ -347,14 +362,50 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
 
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
+
+        // handle flags
+        py_flags = PyList_New(0);
+        if (py_flags == NULL)
+            goto error;
+
+        if (ifa->ifa_flags & IFF_UP) {
+            if (_append_flag(py_flags, "up") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_BROADCAST) {
+            if (_append_flag(py_flags, "broadcast") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_DEBUG) {
+            if (_append_flag(py_flags, "debug") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_LOOPBACK) {
+            if (_append_flag(py_flags, "loopback") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_POINTOPOINT) {
+            if (_append_flag(py_flags, "pointopoint") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_RUNNING) {
+            if (_append_flag(py_flags, "running") != 0)
+                goto error;
+        }
+        if (ifa->ifa_flags & IFF_NOARP) {
+            if (_append_flag(py_flags, "noarp") != 0)
+                goto error;
+        }
+
         py_tuple = Py_BuildValue(
-            "(siOOOO)",
+            "(siOOOOO)",
             ifa->ifa_name,
             family,
             py_address,
             py_netmask,
             py_broadcast,
-            py_ptp
+            py_ptp,
+            py_flags
         );
 
         if (! py_tuple)
@@ -366,6 +417,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
         Py_CLEAR(py_netmask);
         Py_CLEAR(py_broadcast);
         Py_CLEAR(py_ptp);
+        Py_CLEAR(py_flags);
     }
 
     freeifaddrs(ifaddr);
@@ -375,6 +427,7 @@ error:
     if (ifaddr != NULL)
         freeifaddrs(ifaddr);
     Py_DECREF(py_retlist);
+    Py_DECREF(py_flags);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_netmask);

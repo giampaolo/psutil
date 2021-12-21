@@ -2185,7 +2185,7 @@ def net_if_addrs():
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
     ret = collections.defaultdict(list)
-    for name, fam, addr, mask, broadcast, ptp in rawlist:
+    for name, fam, addr, mask, broadcast, ptp, flags in rawlist:
         if has_enums:
             try:
                 fam = socket.AddressFamily(fam)
@@ -2205,7 +2205,8 @@ def net_if_addrs():
             separator = ":" if POSIX else "-"
             while addr.count(separator) < 5:
                 addr += "%s00" % separator
-        ret[name].append(_common.snicaddr(fam, addr, mask, broadcast, ptp))
+        nt = _common.snicaddr(fam, addr, mask, broadcast, ptp, ','.join(flags))
+        ret[name].append(nt)
     return dict(ret)
 
 
