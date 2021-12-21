@@ -159,6 +159,12 @@ TCP_STATUSES = {
     "0B": _common.CONN_CLOSING
 }
 
+DUPLEX_MAP = {
+    cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
+    cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
+    cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN
+}
+
 
 # =====================================================================
 # --- named tuples
@@ -1070,9 +1076,6 @@ def net_io_counters():
 
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    duplex_map = {cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
-                  cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
-                  cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN}
     names = net_io_counters().keys()
     ret = {}
     for name in names:
@@ -1087,7 +1090,7 @@ def net_if_stats():
             else:
                 debug(err)
         else:
-            ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
+            ret[name] = _common.snicstats(isup, DUPLEX_MAP[duplex], speed, mtu)
     return ret
 
 
