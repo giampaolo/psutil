@@ -291,7 +291,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 
 
 int
-_psutil_append_flag(PyObject *py_flags, char *str) {
+psutil_append_iff_flag(PyObject *py_flags, char *str) {
     PyObject *py_str;
 
     py_str = Py_BuildValue("s", str);
@@ -305,40 +305,55 @@ _psutil_append_flag(PyObject *py_flags, char *str) {
 
 
 PyObject*
-_psutil_convert_iff_flags(int flags) {
+psutil_convert_iff_flags(int flags) {
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-
-    if (flags & IFF_UP) {
-        if (_psutil_append_flag(py_retlist, "up") != 0)
-            return NULL;
-    }
-    if (flags & IFF_BROADCAST) {
-        if (_psutil_append_flag(py_retlist, "broadcast") != 0)
-            return NULL;
-    }
-    if (flags & IFF_DEBUG) {
-        if (_psutil_append_flag(py_retlist, "debug") != 0)
-            return NULL;
-    }
-    if (flags & IFF_LOOPBACK) {
-        if (_psutil_append_flag(py_retlist, "loopback") != 0)
-            return NULL;
-    }
-    if (flags & IFF_POINTOPOINT) {
-        if (_psutil_append_flag(py_retlist, "pointopoint") != 0)
-            return NULL;
-    }
-    if (flags & IFF_RUNNING) {
-        if (_psutil_append_flag(py_retlist, "running") != 0)
-            return NULL;
-    }
-    if (flags & IFF_NOARP) {
-        if (_psutil_append_flag(py_retlist, "noarp") != 0)
-            return NULL;
-    }
+    if ((flags & IFF_UP) && (psutil_append_iff_flag(py_retlist, "up") != 0))
+        return NULL;
+    if ((flags & IFF_BROADCAST) && (psutil_append_iff_flag(py_retlist, "broadcast") != 0))
+        return NULL;
+    if ((flags & IFF_DEBUG) && (psutil_append_iff_flag(py_retlist, "debug") != 0))
+        return NULL;
+    if ((flags & IFF_LOOPBACK) && (psutil_append_iff_flag(py_retlist, "loopback") != 0))
+        return NULL;
+    if ((flags & IFF_POINTOPOINT) && (psutil_append_iff_flag(py_retlist, "pointopoint") != 0))
+        return NULL;
+    if ((flags & IFF_RUNNING) && (psutil_append_iff_flag(py_retlist, "running") != 0))
+        return NULL;
+    if ((flags & IFF_NOARP) && (psutil_append_iff_flag(py_retlist, "noarp") != 0))
+        return NULL;
+    if ((flags & IFF_PROMISC) && (psutil_append_iff_flag(py_retlist, "promisc") != 0))
+        return NULL;
+    if ((flags & IFF_NOTRAILERS) && (psutil_append_iff_flag(py_retlist, "notrailers") != 0))
+        return NULL;
+    if ((flags & IFF_ALLMULTI) && (psutil_append_iff_flag(py_retlist, "allmulti") != 0))
+        return NULL;
+    if ((flags & IFF_MASTER) && (psutil_append_iff_flag(py_retlist, "master") != 0))
+        return NULL;
+    if ((flags & IFF_SLAVE) && (psutil_append_iff_flag(py_retlist, "slave") != 0))
+        return NULL;
+    if ((flags & IFF_MULTICAST) && (psutil_append_iff_flag(py_retlist, "multicast") != 0))
+        return NULL;
+    if ((flags & IFF_PORTSEL) && (psutil_append_iff_flag(py_retlist, "portsel") != 0))
+        return NULL;
+    if ((flags & IFF_AUTOMEDIA) && (psutil_append_iff_flag(py_retlist, "automedia") != 0))
+        return NULL;
+    if ((flags & IFF_DYNAMIC) && (psutil_append_iff_flag(py_retlist, "dynamic") != 0))
+        return NULL;
+#ifdef IFF_LOWER_UP  // Linux 2.6.17+
+    if ((flags & IFF_LOWER_UP) && (psutil_append_iff_flag(py_retlist, "lower_up") != 0))
+        return NULL;
+#endif
+#ifdef IFF_DORMANT  // Linux 2.6.17+
+    if ((flags & IFF_DORMANT) && (psutil_append_iff_flag(py_retlist, "dormant") != 0))
+        return NULL;
+#endif
+#ifdef IFF_ECHO  // Linux 2.6.25+
+    if ((flags & IFF_ECHO) && (psutil_append_iff_flag(py_retlist, "echo") != 0))
+        return NULL;
+#endif
 
     return py_retlist;
 }
@@ -403,7 +418,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
 
-        py_flags = _psutil_convert_iff_flags(ifa->ifa_flags);
+        py_flags = psutil_convert_iff_flags(ifa->ifa_flags);
         if (py_flags == NULL)
             goto error;
 
