@@ -27,7 +27,7 @@ DEPS = \
 PY2_DEPS = \
 	futures \
 	ipaddress \
-	mock==1.0.1 \
+	mock \
 	unittest2
 DEPS += `$(PYTHON) -c \
 	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`

@@ -1574,7 +1574,7 @@ class TestPopen(PsutilTestCase):
             self.assertRaises(psutil.NoSuchProcess, proc.kill)
             self.assertRaises(psutil.NoSuchProcess, proc.send_signal,
                               signal.SIGTERM)
-            if WINDOWS and sys.version_info >= (2, 7):
+            if WINDOWS:
                 self.assertRaises(psutil.NoSuchProcess, proc.send_signal,
                                   signal.CTRL_C_EVENT)
                 self.assertRaises(psutil.NoSuchProcess, proc.send_signal,

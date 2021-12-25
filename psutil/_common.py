@@ -281,10 +281,7 @@ class Error(Exception):
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
-        try:
-            info = collections.OrderedDict()
-        except AttributeError:  # pragma: no cover
-            info = {}  # Python 2.6
+        info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
             if value:
