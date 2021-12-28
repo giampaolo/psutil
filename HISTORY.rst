@@ -767,7 +767,7 @@ XXXX-XX-XX
 - 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning None and
   assumes 1 instead.
 - 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
-- 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
+- 1094_: [Windows] `pid_exists()`_ may lie. Also, all process APIs relying
   on OpenProcess Windows API now check whether the PID is actually running.
 - 1098_: [Windows] `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
@@ -897,7 +897,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 687_: [Linux] pid_exists() no longer returns True if passed a process thread
+- 687_: [Linux] `pid_exists()`_ no longer returns True if passed a process thread
   ID.
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
 - 950_: [Windows] `Process.cpu_percent()`_ was calculated incorrectly and showed
@@ -1497,7 +1497,7 @@ XXXX-XX-XX
   (set) on systems with more than 64 CPUs.
 - 448_: [Windows] get_children() and ppid() memory leak (patch by Ulrich
   Klank).
-- 457_: [POSIX] pid_exists() always returns True for PID 0.
+- 457_: [POSIX] `pid_exists()`_ always returns True for PID 0.
 - 461_: namedtuples are not pickle-able.
 - 466_: [Linux] process exe improper null bytes handling.  (patch by
   Gautam Singh)
@@ -2300,7 +2300,7 @@ DeprecationWarning.
 - 17_: get_process_list() ignores NoSuchProcess and AccessDenied
   exceptions during building of the list.
 - 22_: [Windows] `Process.kill()`_ for PID 0 was failing with an unset exception.
-- 23_: Special case for pid_exists(0)
+- 23_: Special case for `pid_exists()`_ with PID 0.
 - 24_: [Windows] `Process.kill()`_ for PID 0 now raises AccessDenied exception
   instead of WindowsError.
 - 30_: psutil.get_pid_list() was returning two ins
