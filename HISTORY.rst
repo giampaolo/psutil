@@ -306,8 +306,9 @@ XXXX-XX-XX
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 - 1476_: [Windows] it is now possible to set process high I/O priority
-  (ionice()).Also, I/O priority values are now exposed as 4 new constants:
-  IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
+  (`Process.ionice()`_). Also, I/O priority values are now exposed as 4 new
+  constants: ``IOPRIO_VERYLOW``, ``IOPRIO_LOW``, ``IOPRIO_NORMAL``,
+  ``IOPRIO_HIGH``.
 - 1478_: add make command to re-run tests failed on last run.
 
 **Bug fixes**
@@ -436,7 +437,7 @@ XXXX-XX-XX
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 - 1357_: [Linux] `Process.memory_maps()`_ and io_counters() method are no longer
   exposed if not supported by the kernel.
-- 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
+- 1368_: [Windows] fix `Process.ionice()`_ mismatch.  (patch by
   EccoTheFlintstone)
 - 1370_: [Windows] improper usage of CloseHandle() may lead to override the
   original error code when raising an exception.
@@ -1264,7 +1265,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 603_: [Linux] ionice_set value range is incorrect.  (patch by spacewander)
+- 603_: [Linux] `Process.ionice()`_ set value range is incorrect.
+  (patch by spacewander)
 - 645_: [Linux] psutil.cpu_times_percent() may produce negative results.
 - 656_: 'from psutil import *' does not work.
 
@@ -1322,7 +1324,7 @@ XXXX-XX-XX
   speed, MTU).
 - 376_: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
-  returned by psutil.Process' ionice() and nice() methods are enums instead of
+  returned by psutil.Process' `Process.ionice()`_ and nice() methods are enums instead of
   plain integers.
 - 581_: add .gitignore. (patch by Gabi Davar)
 - 582_: connection constants returned by psutil.net_connections() and
@@ -2306,21 +2308,22 @@ DeprecationWarning.
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
-.. _`process_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.process_iter
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
 .. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
-.. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
 .. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
+.. _`Process.ionice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ionice
+.. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
+.. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
-.. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
+.. _`process_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.process_iter
 .. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
