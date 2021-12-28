@@ -1043,7 +1043,7 @@ XXXX-XX-XX
 - 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
 - 812_: [NetBSD] fix compilation on NetBSD-5.x.
 - 823_: [NetBSD] virtual_memory() raises TypeError on Python 3.
-- 829_: [UNIX] psutil.`disk_usage()`_ percent field takes root reserved space
+- 829_: [UNIX] `disk_usage()`_ percent field takes root reserved space
   into account.
 - 816_: [Windows] fixed `net_io_counters()`_ values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
@@ -1082,7 +1082,7 @@ XXXX-XX-XX
 - 779_: `Process.cpu_times()`_ returns two new fields, 'children_user' and
   'children_system' (always set to 0 on macOS and Windows).
 - 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
-  "dpc". Same for psutil.`cpu_times_percent()`_.
+  "dpc". Same for `cpu_times_percent()`_.
 - 792_: new psutil.cpu_stats() function returning number of CPU ctx switches
   interrupts, soft interrupts and syscalls.
 
@@ -1133,7 +1133,7 @@ XXXX-XX-XX
 - 751_: [Linux] fixed call to Py_DECREF on possible Null object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
-- 761_: [Windows] psutil.`boot_time()`_ wraps to 0 after 49 days.
+- 761_: [Windows] `boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
 - 767_: [Linux] `disk_io_counters()`_ may raise ValueError on 2.6 kernels and it's
@@ -1268,7 +1268,7 @@ XXXX-XX-XX
 
 - 603_: [Linux] `Process.ionice()`_ set value range is incorrect.
   (patch by spacewander)
-- 645_: [Linux] psutil.`cpu_times_percent()`_ may produce negative results.
+- 645_: [Linux] `cpu_times_percent()`_ may produce negative results.
 - 656_: 'from psutil import *' does not work.
 
 3.1.0
@@ -1434,7 +1434,7 @@ XXXX-XX-XX
   Daeschler)
 - 529_: [Windows] `Process.exe()`_ may raise unhandled WindowsError exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
-- 530_: [Linux] psutil.`disk_io_counters()`_ may crash on old Linux distros
+- 530_: [Linux] `disk_io_counters()`_ may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
 - 533_: [Linux] `Process.memory_maps()`_ may raise TypeError on old Linux distros.
 
@@ -1708,7 +1708,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 391_: [Windows] psutil.`cpu_times_percent()`_ returns negative percentages.
+- 391_: [Windows] `cpu_times_percent()`_ returns negative percentages.
 - 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] Process.get_memory_info() leaks memory.
@@ -1758,7 +1758,7 @@ DeprecationWarning.
   constant object (``psutil.CONN_*``).
 - `Process.connections()`_ 'local_address' and 'remote_address' fields
   renamed to 'laddr' and 'raddr'.
-- psutil.network_io_counters() renamed to psutil.`net_io_counters()`_.
+- psutil.network_io_counters() renamed to `net_io_counters()`_.
 
 0.7.1
 =====
