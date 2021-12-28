@@ -476,7 +476,7 @@ XXXX-XX-XX
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
-- 1307_: [Linux] `disk_partitions()`_ does not honour PROCFS_PATH.
+- 1307_: [Linux] `disk_partitions()`_ does not honour `PROCFS_PATH`_.
 - 1320_: [AIX] system CPU times (`cpu_times()`_) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
@@ -702,7 +702,7 @@ XXXX-XX-XX
 - 928_: `net_connections()`_ and `Process.connections()`_ "laddr" and
   "raddr" are now named tuples.
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
-  so that it can be used in conjunction with PROCFS_PATH in order to retrieve
+  so that it can be used in conjunction with `PROCFS_PATH`_ in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
 - 1022_: `users()`_ provides a new "pid" field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
@@ -1154,7 +1154,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 728_: [Solaris] exposed psutil.PROCFS_PATH constant to change the default
+- 728_: [Solaris] exposed `PROCFS_PATH`_ constant to change the default
   location of /proc filesystem.
 
 **Bug fixes**
@@ -1192,7 +1192,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 558_: [Linux] exposed psutil.PROCFS_PATH constant to change the default
+- 558_: [Linux] exposed `PROCFS_PATH`_ constant to change the default
   location of /proc filesystem.
 - 615_: [OpenBSD] added OpenBSD support.  (contributed by Landry Breuil)
 
@@ -2319,6 +2319,8 @@ DeprecationWarning.
   instead of ``WindowsError``.
 - 30_: psutil.get_pid_list() was returning two ins
 
+
+.. _`PROCFS_PATH`: https://psutil.readthedocs.io/en/latest/#psutil.PROCFS_PATH
 
 .. _`boot_time()`: https://psutil.readthedocs.io/en/latest/#psutil.boot_time
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
