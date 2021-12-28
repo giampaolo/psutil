@@ -2202,7 +2202,7 @@ DeprecationWarning.
 
 - psutil.Process.path property is deprecated and works as an alias for "exe"
   property.
-- psutil.Process.kill(): signal argument was removed - to send a signal to the
+- `Process.kill()`_: signal argument was removed - to send a signal to the
   process use send_signal(signal) method instead.
 - psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
 - psutil.cpu_times() returns a nametuple instead of a tuple.
@@ -2238,11 +2238,11 @@ DeprecationWarning.
 - 55_: test_pid_4 was failing on Windows Vista
 - 57_: some unit tests were failing on systems where no swap memory is
   available
-- 58_: is_running() is now called before kill() to make sure we are going
-  to kill the correct process.
+- 58_: is_running() is now called before `Process.kill()`_ to make sure we are
+  going to kill the correct process.
 - 73_: virtual memory size reported on macOS includes shared library size
-- 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
-  used first.
+- 77_: NoSuchProcess wasn't raised on Process.create_time if `Process.kill()`_
+  was used first.
 
 0.1.2
 =====
@@ -2296,10 +2296,10 @@ DeprecationWarning.
   otherwise would return an "invalid parameter" exception.
 - 17_: get_process_list() ignores NoSuchProcess and AccessDenied
   exceptions during building of the list.
-- 22_: [Windows] Process(0).kill() was failing with an unset exception.
+- 22_: [Windows] `Process.kill()`_ for PID 0 was failing with an unset exception.
 - 23_: Special case for pid_exists(0)
-- 24_: [Windows] Process(0).kill() now raises AccessDenied exception instead
-  of WindowsError.
+- 24_: [Windows] `Process.kill()`_ for PID 0 now raises AccessDenied exception
+  instead of WindowsError.
 - 30_: psutil.get_pid_list() was returning two ins
 
 
@@ -2316,6 +2316,7 @@ DeprecationWarning.
 .. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
+.. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
