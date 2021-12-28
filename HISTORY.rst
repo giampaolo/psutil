@@ -553,7 +553,7 @@ XXXX-XX-XX
   (smaller) number on systems using process groups (> 64 cores).
 - 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
   process groups (> 64 cores).
-- 771_: [Windows] cpu_stats() and `cpu_freq()`_ may return incorrect results on
+- 771_: [Windows] `cpu_stats()`_ and `cpu_freq()`_ may return incorrect results on
   systems using process groups (> 64 cores).
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
@@ -906,7 +906,7 @@ XXXX-XX-XX
 - 959_: psutil exception objects could not be pickled.
 - 960_: `psutil.Popen`_'s ``wait()`` did not return the correct negative exit
   status if process is ``kill()``ed by a signal.
-- 961_: [Windows] WindowsService.description() may fail with
+- 961_: [Windows] `WindowsService`_ ``description()`` method may fail with
   ERROR_MUI_FILE_NOT_FOUND.
 
 5.0.1
@@ -944,7 +944,8 @@ XXXX-XX-XX
 
 - 932_: [NetBSD] `net_connections()`_ and `Process.connections()`_ may fail without
   raising an exception.
-- 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
+- 933_: [Windows] memory leak in `cpu_stats()`_ and `WindowsService`_
+  ``description()`` method.
 
 4.4.2
 =====
@@ -1083,7 +1084,7 @@ XXXX-XX-XX
   'children_system' (always set to 0 on macOS and Windows).
 - 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
   "dpc". Same for `cpu_times_percent()`_.
-- 792_: new psutil.cpu_stats() function returning number of CPU ctx switches
+- 792_: new `cpu_stats()`_ function returning number of CPU ctx switches
   interrupts, soft interrupts and syscalls.
 
 **Bug fixes**
