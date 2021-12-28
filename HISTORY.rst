@@ -7,28 +7,28 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
+- 1851_: [Linux] `cpu_freq()`_ is slow on systems with many CPUs. Read current
   frequency values for all CPUs from /proc/cpuinfo instead of opening many
   files in /sys fs.  (patch by marxin)
 - 1992_: NoSuchProcess message now specifies if the PID has been reused.
 - 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
   formatted and separated `__repr__` and `__str__` implementations.
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
-- 1999_: [Linux] disk_partitions(): convert "/dev/root" device (an alias used
+- 1999_: [Linux] `disk_partitions()`_: convert "/dev/root" device (an alias used
   on some Linux distros) to real root device path.
 - 2005_: PSUTIL_DEBUG mode now prints file name and line number of the debug
   messages coming from C extension modules.
 
 **Bug fixes**
 
-- 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
+- 1456_: [macOS] `cpu_freq()`_'s min and max are set to 0 if can't be
   determined (instead of crashing).
 - 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
   for one connection; this is now ignored.
-- 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
+- 1598_: [Windows] `disk_partitions()`_ only returns mountpoints on drives
   where it first finds one
 - 1874_: [Solaris] swap output error due to incorrect range.
-- 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
+- 1892_: [macOS] `cpu_freq()`_ broken on Apple M1.
 - 1901_: [macOS] different functions, especially process' open_files() and
   connections() methods, could randomly raise AccessDenied because the internal
   buffer of `proc_pidinfo(PROC_PIDLISTFDS)` syscall was not big enough. We now
@@ -43,7 +43,7 @@ XXXX-XX-XX
   file descriptors in procfs.  (patch by Nikita Radchenko)
 - 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
   by Xuehai Pan)
-- 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
+- 1953_: [Windows] `disk_partitions()`_ crashes due to insufficient buffer len.
   (patch by MaWe2019)
 - 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
   psutil.users() multiple times.
@@ -54,7 +54,7 @@ XXXX-XX-XX
   (not thread-safe).
 - 1956_: [macOS] Process.cpu_times() reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
-- 2023_: [Linux] cpu_freq() return order is wrong on systems with > 9 CPUs.
+- 2023_: [Linux] `cpu_freq()`_ return order is wrong on systems with > 9 CPUs.
 
 5.8.0
 =====
@@ -63,7 +63,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+- 1863_: `disk_partitions()`_ exposes 2 extra fields: `maxfile` and `maxpath`,
   which are the maximum file name and path name length.
 - 1872_: [Windows] added support for PyPy 2.7.
 - 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
@@ -154,7 +154,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
+- 1726_: [Linux] `cpu_freq()`_ parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
 - 1760_: [Linux] Process.rlimit() does not handle long long type properly.
 - 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
@@ -199,7 +199,7 @@ XXXX-XX-XX
   (long) was almost always assumed, which is wrong on most platforms.
 - 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
   improper exception if process is gone.
-- 1674_: [SunOS] disk_partitions() may raise OSError.
+- 1674_: [SunOS] `disk_partitions()`_ may raise OSError.
 - 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
   having /proc/diskstats.
 - 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
@@ -312,16 +312,16 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1223_: [Windows] boot_time() may return value on Windows XP.
-- 1456_: [Linux] cpu_freq() returns None instead of 0.0 when min/max not
+- 1456_: [Linux] `cpu_freq()`_ returns None instead of 0.0 when min/max not
   available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
   Benjamin Drung)
 - 1463_: cpu_distribution.py script was broken.
-- 1470_: [Linux] disk_partitions(): fix corner case when /etc/mtab doesn't
+- 1470_: [Linux] `disk_partitions()`_: fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
-- 1472_: [Linux] cpu_freq() does not return all CPUs on Rasbperry-pi 3.
+- 1472_: [Linux] `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
   in WindowsError being raised instead of AccessDenied.
@@ -333,7 +333,7 @@ XXXX-XX-XX
   involved into oneshot() context.
 - 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
   Agnewee)
-- 1493_: [Linux] cpu_freq(): handle the case where
+- 1493_: [Linux] `cpu_freq()`_: handle the case where
   /sys/devices/system/cpu/cpufreq/ exists but is empty.
 
 5.6.1
@@ -454,7 +454,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1197_: [Linux] cpu_freq() is now implemented by parsing /proc/cpuinfo in case
+- 1197_: [Linux] `cpu_freq()`_ is now implemented by parsing /proc/cpuinfo in case
   /sys/devices/system/cpu/* filesystem is not available.
 - 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
   in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
@@ -470,7 +470,7 @@ XXXX-XX-XX
   not accurate.
 - 1294_: [Windows] psutil.Process().connections() may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
-- 1307_: [Linux] disk_partitions() does not honour PROCFS_PATH.
+- 1307_: [Linux] `disk_partitions()`_ does not honour PROCFS_PATH.
 - 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
@@ -551,7 +551,7 @@ XXXX-XX-XX
   (smaller) number on systems using process groups (> 64 cores).
 - 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
   process groups (> 64 cores).
-- 771_: [Windows] cpu_stats() and cpu_freq() may return incorrect results on
+- 771_: [Windows] cpu_stats() and `cpu_freq()`_ may return incorrect results on
   systems using process groups (> 64 cores).
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
@@ -588,7 +588,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 775_: disk_partitions() on Windows return mount points.
+- 775_: `disk_partitions()`_ on Windows return mount points.
 
 **Bug fixes**
 
@@ -736,7 +736,7 @@ XXXX-XX-XX
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
 - 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
   zombie processes.
-- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
+- 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
@@ -752,7 +752,7 @@ XXXX-XX-XX
 - 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
-- 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
+- 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
 - 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
 - 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
@@ -801,7 +801,7 @@ XXXX-XX-XX
 - 1002_: [SunOS] remove C macro which will not be available on new Solaris
   versions. (patch by Danek Duvall)
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
-- 1006_: [Linux] cpu_freq() may return None on some Linux versions does not
+- 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
   support the function; now the function is not declared instead.
 - 1009_: [Linux] sensors_temperatures() may raise OSError.
 - 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
@@ -813,7 +813,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 981_: [Linux] cpu_freq() may return an empty list.
+- 981_: [Linux] `cpu_freq()`_ may return an empty list.
 - 993_: [Windows] Process.memory_maps() on Python 3 may raise
   UnicodeDecodeError.
 - 996_: [Linux] sensors_temperatures() may not show all temperatures.
@@ -888,7 +888,7 @@ XXXX-XX-XX
 
 - 357_: added psutil.Process.cpu_num() (what CPU a process is on).
 - 371_: added psutil.sensors_temperatures() (Linux only).
-- 941_: added psutil.cpu_freq() (CPU frequency).
+- 941_: added `cpu_freq()`_ (CPU frequency).
 - 955_: added psutil.sensors_battery() (Linux, Windows, only).
 - 956_: cpu_affinity([]) can now be used as an alias to set affinity against
   all eligible CPUs.
@@ -988,8 +988,8 @@ XXXX-XX-XX
   functions.
 - 892_: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
   set; now ValueError is raised.
-- 906_: [BSD] disk_partitions(all=False) returned an empty list. Now the
-  argument is ignored and all partitions are always returned.
+- 906_: [BSD] `disk_partitions()`_ with `all=False` returned an empty list.
+  Now the argument is ignored and all partitions are always returned.
 - 907_: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
@@ -1274,7 +1274,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 534_: [Linux] disk_partitions() added support for ZFS filesystems.
+- 534_: [Linux] `disk_partitions()`_ added support for ZFS filesystems.
 - 646_: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
@@ -1459,7 +1459,7 @@ XXXX-XX-XX
 
 - 421_: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
   Roudsari)
-- 489_: [Linux] psutil.disk_partitions() return an empty list.
+- 489_: [Linux] `disk_partitions()`_ return an empty list.
 
 2.0.0
 =====
@@ -1788,7 +1788,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 234_: [Windows] disk_io_counters() fails to list certain disks.
-- 264_: [Windows] use of psutil.disk_partitions() may cause a message box to
+- 264_: [Windows] use of `disk_partitions()`_ may cause a message box to
   appear.
 - 313_: [Linux] psutil.virtual_memory() and psutil.swap_memory() can crash on
   certain exotic Linux flavors having an incomplete /proc interface.
@@ -1964,7 +1964,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 195_: [Windows] number of handles opened by process.
-- 209_: psutil.disk_partitions() now provides also mount options.
+- 209_: `disk_partitions()`_ now provides also mount options.
 - 229_: list users currently connected on the system (psutil.get_users()).
 - 238_: [Linux, Windows] process CPU affinity (get and set).
 - 242_: Process.get_children(recursive=True): return all process
@@ -1974,7 +1974,7 @@ DeprecationWarning.
 - 258_: [Linux] Process.get_memory_info() is now 0.5x faster.
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
-- 262_: [Windows] psutil.disk_partitions() was slow due to inspecting the
+- 262_: [Windows] `disk_partitions()`_ was slow due to inspecting the
   floppy disk drive also when "all" argument was False.
 - 273_: psutil.get_process_list() is deprecated.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
@@ -2299,6 +2299,10 @@ DeprecationWarning.
 - 24_: [Windows] Process(0).kill() now raises AccessDenied exception instead
   of WindowsError.
 - 30_: psutil.get_pid_list() was returning two ins
+
+
+.. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
+.. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2
