@@ -77,7 +77,7 @@ XXXX-XX-XX
   Schlueter).
 - 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
   from 32 bit ones (NtWoW64 APIs).
-- 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
+- 1866_: [Windows] `Process.exe()`_, cmdline(), `Process.environ()`_ may raise "invalid
   access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
 - 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
@@ -253,7 +253,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 875_: [Windows] Process' cmdline(), environ() or cwd() may occasionally fail
+- 875_: [Windows] Process' cmdline(), `Process.environ()`_ or cwd() may occasionally fail
   with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
 - 1126_: [Linux] `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
@@ -383,7 +383,7 @@ XXXX-XX-XX
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
-- 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
+- 1427_: [OSX] Process cmdline() and `Process.environ()`_ may erroneously raise OSError
   on failed malloc().
 - 1429_: [Windows] SE DEBUG was not properly set for current process. It is
   now, and it should result in less AccessDenied exceptions for low-pid
@@ -1709,7 +1709,7 @@ DeprecationWarning.
 - 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] Process.get_memory_info() leaks memory.
-- 414_: [Windows] Process.exe on Windows XP may raise ERROR_INVALID_PARAMETER.
+- 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
 - 416_: psutil.disk_usage() doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
 - 435_: [Linux] psutil.net_io_counters() might report erreneous NIC names.
