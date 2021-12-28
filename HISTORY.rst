@@ -305,7 +305,8 @@ XXXX-XX-XX
   (read from ``/sys/devices/system/cpu/cpu[0-9]/topology/core_id``) in order to
   determine the number of CPU cores in case ``/proc/cpuinfo`` does not provide this
   info.
-- 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
+- 1458_: provide coloured test output. Also show failures on
+  ``KeyboardInterrupt``.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 - 1476_, [Windows]: it is now possible to set process high I/O priority
   (`Process.ionice()`_). Also, I/O priority values are now exposed as 4 new
@@ -329,8 +330,8 @@ XXXX-XX-XX
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
 - 1475_, [Windows]: ``OSError.winerror`` attribute wasn't properly checked resuling
   in ``WindowsError`` being raised instead of `AccessDenied`_.
-- 1477_, [Windows]: wrong or absent error handling for private NTSTATUS Windows
-  APIs. Different process methods were affected by this.
+- 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
+  Windows APIs. Different process methods were affected by this.
 - 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
   cause a crash due to fixed read violation.  (patch by Samer Masterson)
 - 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with Process methods
@@ -397,8 +398,8 @@ XXXX-XX-XX
   because we're not using the actual system ``PAGESIZE``.
 - 1439_, [NetBSD]: `Process.connections()`_ may return incomplete results if using
   `Process.oneshot()`_.
-- 1447_: original exception wasn't turned into NSP/AD exceptions when using
-  `Process.oneshot()`_ ctx manager.
+- 1447_: original exception wasn't turned into `NoSuchProcess`_ / `AccessDenied`_
+  exceptions when using `Process.oneshot()`_ ctx manager.
 
 **Incompatible API changes**
 
@@ -507,7 +508,7 @@ XXXX-XX-XX
 - 1279_, [Linux], [macOS], [BSD]: `net_if_stats()`_ may return ``ENODEV``.
 - 1294_, [Windows]: `Process.connections()`_ may sometime fail with
   ``MemoryError``.  (patch by sylvainduchesne)
-- 1305_, [Linux]: disk_io_stats() may report inflated r/w bytes values.
+- 1305_, [Linux]: `disk_io_counters()`_ may report inflated r/w bytes values.
 - 1309_, [Linux]: `Process.status()`_ is unable to recognize ``"idle"`` and
   ``"parked"`` statuses (returns ``"?"``).
 - 1313_, [Linux]: `disk_io_counters()`_ can report inflated IO counters due to
@@ -524,7 +525,7 @@ XXXX-XX-XX
 - 1258_, [Windows], **[critical]**: `Process.username()`_ may cause a segfault
   (Python interpreter crash).  (patch by Jean-Luc Migot)
 - 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from ``snic`` to
-  ``snicaddr``
+  ``snicaddr``.
 - 1274_, [Linux]: there was a small chance `Process.children()`_ may swallow
   `AccessDenied`_ exceptions.
 
@@ -561,7 +562,7 @@ XXXX-XX-XX
   systems using process groups (> 64 cores).
 - 1193_, [SunOS]: Return uid/gid from ``/proc/pid/psinfo`` if there aren't
   enough permissions for ``/proc/pid/cred``.  (patch by Georg Sauthoff)
-- 1194_, [SunOS]: Return nice value from psinfo as ``getpriority()`` doesn't
+- 1194_, [SunOS]: Return nice value from ``psinfo`` as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
 - 1194_, [SunOS]: Fix double ``free()`` in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
@@ -733,7 +734,7 @@ XXXX-XX-XX
   cards installed.
 - 1021_, [Linux]: `Process.open_files()`_ may erroneously raise `NoSuchProcess`_
   instead of skipping a file which gets deleted while open files are retrieved.
-- 1029_, [macOS], [FreeBSD]: `Process.connections()`_ with `family=unix` on Python
+- 1029_, [macOS], [FreeBSD]: `Process.connections()`_ with ``family=unix`` on Python
   3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
 - 1033_, [macOS], [FreeBSD]: memory leak for `net_connections()`_ and
   `Process.connections()`_ when retrieving UNIX sockets (``kind='unix'``).
@@ -904,7 +905,7 @@ XXXX-XX-XX
 - 951_, [Windows]: the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
 - 960_: `psutil.Popen`_ ``wait()`` did not return the correct negative exit
-  status if process is ``kill()``ed by a signal.
+  status if process is killed by a signal.
 - 961_, [Windows]: ``WindowsService.description()`` method may fail with
   ``ERROR_MUI_FILE_NOT_FOUND``.
 
@@ -1018,7 +1019,7 @@ XXXX-XX-XX
   returned as a fallback.
 - 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
   because it's deprecated.
-- 863_, [Windows]: memory_map truncates addresses above 32 bits
+- 863_, [Windows]: `Process.memory_maps()`_ truncates addresses above 32 bits.
 - 866_, [Windows]: `win_service_iter()`_ and services in general are not able to
   handle unicode service names / descriptions.
 - 869_, [Windows]: `Process.wait()`_ may raise `TimeoutExpired`_ with wrong timeout
@@ -1033,10 +1034,10 @@ XXXX-XX-XX
 **Enhancements**
 
 - 819_, [Linux]: different speedup improvements:
-  - `Process.ppid()`_ is 20% faster
-  - `Process.status()`_ is 28% faster
-  - `Process.name()`_ is 25% faster
-  - `Process.num_threads`_ is 20% faster on Python 3
+  `Process.ppid()`_ +20% faster.
+  `Process.status()`_ +28% faster.
+  `Process.name()`_ +25% faster.
+  `Process.num_threads`_ +20% faster on Python 3.
 
 **Bug fixes**
 
@@ -1059,10 +1060,10 @@ XXXX-XX-XX
   and `win_service_get()`_.
 - 800_, [Linux]: `virtual_memory()`_ returns a new ``shared`` memory field.
 - 819_, [Linux]: speedup ``/proc`` parsing:
-  - `Process.ppid()`_ is 20% faster
-  - `Process.status()`_ is 28% faster
-  - `Process.name()`_ is 25% faster
-  - `Process.num_threads()`_ is 20% faster on Python 3
+  `Process.ppid()`_ +20% faster.
+  `Process.status()`_ +28% faster.
+  `Process.name()`_ +25% faster.
+  `Process.num_threads()`_ +20% faster on Python 3.
 
 **Bug fixes**
 
@@ -1126,7 +1127,7 @@ XXXX-XX-XX
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for
   `Process.name()`_, `Process.cwd()`_, `Process.exe()`_, `Process.cmdline()`_
   and `Process.open_files()`_ methods resulting in ``UnicodeDecodeError``
-  exceptions. 'surrogateescape' error handler is now used as a workaround for
+  exceptions. ``'surrogateescape'`` error handler is now used as a workaround for
   replacing the corrupted data.
 - 737_, [Windows]: when the bitness of psutil and the target process was
   different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
@@ -1211,7 +1212,7 @@ XXXX-XX-XX
 - 610_, [SunOS]: fix build and tests on Solaris 10
 - 623_, [Linux]: process or system connections raises ``ValueError`` if IPv6 is not
   supported by the system.
-- 678_, [Linux]: can't install psutil due to bug in setup.py.
+- 678_, [Linux], **[critical]**: can't install psutil due to bug in setup.py.
 - 688_, [Windows]: compilation fails with MSVC 2015, Python 3.5. (patch by
   Mike Sarahan)
 
@@ -1222,7 +1223,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 677_, [Linux]: can't install psutil due to bug in setup.py.
+- 677_, [Linux], **[critical]**: can't install psutil due to bug in setup.py.
 
 3.2.0
 =====
@@ -1238,13 +1239,8 @@ XXXX-XX-XX
 - 655_, [Windows]: different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
-  - `net_if_addrs()`_
-  - `net_if_stats()`_
-  - `net_io_counters()`_
-  - `Process.cmdline()`_
-  - `Process.name()`_
-  - `Process.username()`_
-  - `users()`_
+  `net_if_addrs()`_, `net_if_stats()`_, `net_io_counters()`_,
+  `Process.cmdline()`_, `Process.name()`_, `Process.username()`_, `users()`_.
 
 **Bug fixes**
 
@@ -1595,7 +1591,7 @@ In most cases accessing the old names will work but it will cause a
   | Old name             | Replacement                     |
   +======================+=================================+
   | p.set_nice()         | p.nice(value)                   |
-  +----------------------+---------------------------------+
+/  +----------------------+---------------------------------+
   | p.set_ionice()       | p.ionice(ioclass, value=None)   |
   +----------------------+---------------------------------+
   | p.set_cpu_affinity() | p.cpu_affinity(cpus)            |
@@ -2417,7 +2413,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`pidof.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pidof.py
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
 .. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
-.. _`procsmem.py `: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
 .. _`ps.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ps.py
 .. _`pstree.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pstree.py
 .. _`top.py`: https://github.com/giampaolo/psutil/blob/master/scripts/top.py
