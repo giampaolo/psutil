@@ -1,4 +1,5 @@
-*Bug tracker at https://github.com/giampaolo/psutil/issues*
+* *Bug tracker at https://github.com/giampaolo/psutil/issues*
+* *Timeline at: https://psutil.readthedocs.io/en/latest/#timeline*
 
 5.9.0 (IN DEVELOPMENT)
 ======================
