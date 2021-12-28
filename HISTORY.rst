@@ -213,7 +213,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1630_, [Windows]: can't compile source distribution due to C syntax error.
+- 1630_, [Windows], **[critical]**: can't compile source distribution due to C
+  syntax error.
 
 5.6.6
 =====
@@ -228,8 +229,8 @@ XXXX-XX-XX
   result in double ``free()`` and segfault
   (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
-- 1619_, [OpenBSD]: compilation fails due to C syntax error.  (patch by Nathan
-  Houghton)
+- 1619_, [OpenBSD], **[critical]**: compilation fails due to C syntax error.
+  (patch by Nathan Houghton)
 
 5.6.5
 =====
@@ -259,8 +260,8 @@ XXXX-XX-XX
   `AccessDenied`_.
 - 1126_, [Linux], **[critical]**: `Process.cpu_affinity()`_ segfaults on CentOS
   5 / manylinux. `Process.cpu_affinity()`_ support for CentOS 5 was removed.
-- 1528_, [AIX]: compilation error on AIX 7.2 due to 32 vs 64 bit differences.
-  (patch by Arnon Yaari)
+- 1528_, [AIX], **[critical]**: compilation error on AIX 7.2 due to 32 vs 64
+  bit differences. (patch by Arnon Yaari)
 - 1535_: ``type`` and ``family`` fields returned by `net_connections()`_ are not
   always turned into enums.
 - 1536_, [NetBSD]: `Process.cmdline()`_ erroneously raise `ZombieProcess`_ error if
@@ -272,7 +273,8 @@ XXXX-XX-XX
 - 1570_, [Windows]: ``NtWow64*`` syscalls fail to raise the proper error code
 - 1585_, [OSX]: avoid calling ``close()`` (in C) on possible negative integers.
   (patch by Athos Ribeiro)
-- 1606_, [SunOS]: compilation fails on SunOS 5.10.  (patch by vser1)
+- 1606_, [SunOS], **[critical]**: compilation fails on SunOS 5.10.
+  (patch by vser1)
 
 5.6.3
 =====
@@ -422,8 +424,8 @@ XXXX-XX-XX
 - 1394_, [Windows]: `Process.exe()`_ returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
 - 1402_: psutil exceptions' ``repr()`` show the internal private module path.
-- 1408_, [AIX]: psutil won't compile on AIX 7.1 due to missing header.  (patch
-  by Arnon Yaari)
+- 1408_, [AIX], **[critical]**: psutil won't compile on AIX 7.1 due to missing
+  header.  (patch by Arnon Yaari)
 
 5.5.0
 =====
@@ -644,7 +646,8 @@ XXXX-XX-XX
 - 1150_, [Windows]: when a process is terminate()d now the exit code is set to
   ``SIGTERM`` instead of ``0``.  (patch by Akos Kiss)
 - 1151_: ``python -m psutil.tests`` fail
-- 1154_, [AIX]: psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
+- 1154_, [AIX], **[critical]**: psutil won't compile on AIX 6.1.0.
+  (patch by Arnon Yaari)
 - 1167_, [Windows]: `net_io_counters()`_ packets count now include also non-unicast
   packets.  (patch by Matthew Long)
 
@@ -740,7 +743,7 @@ XXXX-XX-XX
   `Process.connections()`_ when retrieving UNIX sockets (``kind='unix'``).
 - 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
-- 1042_, [FreeBSD]: psutil won't compile on FreeBSD 12.
+- 1042_, [FreeBSD], **[critical]**: psutil won't compile on FreeBSD 12.
 - 1044_, [macOS]: different Process methods incorrectly raise `AccessDenied`_ for
   zombie processes.
 - 1046_, [Windows]: `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
@@ -922,7 +925,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 609_, [SunOS]: psutil does not compile on Solaris 10.
+- 609_, [SunOS], **[critical]**: psutil does not compile on Solaris 10.
 - 936_, [Windows]: fix compilation error on VS 2013 (patch by Max Bélanger).
 - 940_, [Linux]: `cpu_percent()`_ and `cpu_times_percent()`_ was calculated
   incorrectly as ``iowait``, ``guest`` and ``guest_nice`` times were not properly
@@ -954,7 +957,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 931_: psutil no longer compiles on Solaris.
+- 931_, **[critical]**: psutil no longer compiles on Solaris.
 
 4.4.1
 =====
@@ -1042,7 +1045,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 810_, [Windows]: Windows wheels are incompatible with pip 7.1.2.
-- 812_, [NetBSD]: fix compilation on NetBSD-5.x.
+- 812_, [NetBSD], **[critical]**: fix compilation on NetBSD-5.x.
 - 823_, [NetBSD]: `virtual_memory()`_ raises ``TypeError`` on Python 3.
 - 829_, [UNIX]: `disk_usage()`_ ``percent`` field takes root reserved space
   into account.
@@ -1097,7 +1100,7 @@ XXXX-XX-XX
 - 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
 - 788_, [NetBSD]: `virtual_memory()`_ ``buffers`` and ``shared`` values were
   set to 0.
-- 790_, [macOS]: psutil won't compile on macOS 10.4.
+- 790_, [macOS], **[critical]**: psutil won't compile on macOS 10.4.
 
 4.0.0
 =====
@@ -1528,15 +1531,15 @@ In most cases accessing the old names will work but it will cause a
 
 - Renamed ``psutil.*`` functions:
 
-  +--------------------------+-------------------------------+
-  | Old name                 | Replacement                   |
-  +==========================+===============================+
-  | - psutil.get_pid_list()  | psutil.pids()                 |
-  +--------------------------+-------------------------------+
-  | - psutil.get_users()     | psutil.users()                |
-  +--------------------------+-------------------------------+
-  | - psutil.get_boot_time() | psutil.boot_time()            |
-  +--------------------------+-------------------------------+
+  +------------------------+-------------------------------+
+  | Old name               | Replacement                   |
+  +========================+===============================+
+  | psutil.get_pid_list()  | psutil.pids()                 |
+  +------------------------+-------------------------------+
+  | psutil.get_users()     | psutil.users()                |
+  +------------------------+-------------------------------+
+  | psutil.get_boot_time() | psutil.boot_time()            |
+  +------------------------+-------------------------------+
 
 - All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
   E.g. ``get_ext_memory_info()`` was renamed to ``memory_info_ex()``.
@@ -1653,15 +1656,15 @@ In most cases accessing the old names will work but it will cause a
 
 **Enhancements**
 
-- 439_: assume os.getpid() if no argument is passed to psutil.Process
+- 439_: assume ``os.getpid()`` if no argument is passed to psutil.Process
   constructor.
 - 440_: new `wait_procs()`_ utility function which waits for multiple
   processes to terminate.
 
 **Bug fixes**
 
-- 348_, [Windows :XP/Vista] fix "ImportError: DLL load failed" occurring on
-  module import.
+- 348_, [Windows]: fix "ImportError: DLL load failed" occurring on module
+  import on Windows XP / Vista.
 
 1.1.3
 =====
@@ -1670,8 +1673,8 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 442_, [Linux]: psutil won't compile on certain version of Linux because of
-  missing ``prlimit(2)`` syscall.
+- 442_, [Linux], **[critical]**: psutil won't compile on certain version of
+  Linux because of missing ``prlimit(2)`` syscall.
 
 1.1.2
 =====
@@ -1680,8 +1683,8 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 442_, [Linux]: psutil won't compile on Debian 6.0 because of missing
-  ``prlimit(2)`` syscall.
+- 442_, [Linux], **[critical]**: psutil won't compile on Debian 6.0 because of
+  missing ``prlimit(2)`` syscall.
 
 1.1.1
 =====
