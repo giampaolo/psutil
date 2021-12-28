@@ -80,7 +80,7 @@ XXXX-XX-XX
 - 1866_: [Windows] `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
   may raise "invalid access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
-- 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
+- 1875_: [Windows] `Process.username()`_ may raise ERROR_NONE_MAPPED if the SID
   has no corresponding account name. In this case AccessDenied is now raised.
 - 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
@@ -516,7 +516,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1258_: [Windows] Process.username() may cause a segfault (Python interpreter
+- 1258_: [Windows] `Process.username()`_ may cause a segfault (Python interpreter
   crash).  (patch by Jean-Luc Migot)
 - 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
   "snicaddr".
@@ -738,7 +738,7 @@ XXXX-XX-XX
 - 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
   zombie processes.
 - 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's SetErrorMode.
-- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
+- 1047_: [Windows] `Process.username()`_: memory leak in case exception is thrown.
 - 1048_: [Windows] `users()`_'s ``host`` field report an invalid IP address.
 - 1050_: [Windows] `Process.memory_maps()`_ leaks memory.
 - 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
@@ -873,7 +873,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 964_: [Windows] Process.username() and `users()`_ may return badly
+- 964_: [Windows] `Process.username()`_ and `users()`_ may return badly
   decoding character on Python 3.
 - 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
   wrong number of bytes read and written.
@@ -1237,7 +1237,7 @@ XXXX-XX-XX
   - psutil.net_io_counters()
   - psutil.`Process.cmdline()`_
   - psutil.`Process.name()`_
-  - psutil.Process.username()
+  - psutil.`Process.username()`_
   - `users()`_
 
 **Bug fixes**
@@ -1385,13 +1385,13 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 496_: [Solaris] can't import psutil.
-- 547_: [UNIX] Process.username() may raise KeyError if UID can't be resolved.
+- 547_: [UNIX] `Process.username()`_ may raise KeyError if UID can't be resolved.
 - 551_: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
 - 556_: [Linux] lots of file handles were left open.
 - 561_: [Linux] net_connections() might skip some legitimate UNIX sockets.
   (patch by spacewander)
-- 565_: [Windows] use proper encoding for psutil.Process.username() and
-  `users()`_. (patch by Sylvain Mouquet)
+- 565_: [Windows] use proper encoding for `Process.username()`_ and `users()`_.
+  (patch by Sylvain Mouquet)
 - 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
 - 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
@@ -2317,6 +2317,7 @@ DeprecationWarning.
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
+.. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
