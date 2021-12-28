@@ -2176,7 +2176,7 @@ DeprecationWarning.
 - 107_: add support for Windows 64 bit. (patch by cjgohlke)
 - 111_: per-process executable name.
 - 113_: exception messages now include process name and pid.
-- 114_: process username Windows implementation has been rewritten in pure
+- 114_: `Process.username()`_ Windows implementation has been rewritten in pure
   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
   longer required as a third-party dependancy. (patch by wj32)
 - 117_: added support for Windows 2000.
@@ -2224,8 +2224,8 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 14_: per-process username
-- 51_: per-process current working directory (Windows and Linux only)
+- 14_: `Process.username()`_
+- 51_: `Process.cwd()`_ (Windows and Linux only)
 - 59_: Process.is_running() is now 10 times faster
 - 61_: added supoprt for FreeBSD 64 bit
 - 71_: implemented suspend/resume process
