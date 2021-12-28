@@ -1234,7 +1234,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 644_: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
-  to use with Process.send_signal().
+  to use with `Process.send_signal()`_.
 - 648_: CI test integration for macOS. (patch by Jeff Tang)
 - 663_: [UNIX] `net_if_addrs()`_ now returns point-to-point (VPNs) addresses.
 - 655_: [Windows] different issues regarding unicode handling were fixed. On
@@ -2176,7 +2176,7 @@ DeprecationWarning.
 - 79_: per-process open files.
 - 88_: total system physical cached memory.
 - 88_: total system physical memory buffers used by the kernel.
-- 91_: per-process send_signal() and terminate() methods.
+- 91_: add `Process.send_signal()`_ and `Process.terminate()`_ methods.
 - 95_: NoSuchProcess and AccessDenied exception classes now provide "pid",
   "name" and "msg" attributes.
 - 97_: per-process children.
