@@ -468,7 +468,7 @@ XXXX-XX-XX
 
 - 715_: do not print exception on import time in case cpu_times() fails.
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
-- 1277_: [OSX] available and used memory (psutil.virtual_memory()) metrics are
+- 1277_: [OSX] available and used memory (`virtual_memory()`_) metrics are
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
@@ -541,7 +541,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1239_: [Linux] expose kernel "slab" memory for psutil.virtual_memory().
+- 1239_: [Linux] expose kernel "slab" memory for `virtual_memory()`_.
   (patch by Maxime Mouial)
 
 **Bug fixes**
@@ -806,7 +806,7 @@ XXXX-XX-XX
 - 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
   support the function; now the function is not declared instead.
 - 1009_: [Linux] `sensors_temperatures()`_ may raise OSError.
-- 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
+- 1010_: [Linux] `virtual_memory()`_ may raise ValueError on Ubuntu 14.04.
 
 5.2.1
 =====
@@ -819,7 +819,7 @@ XXXX-XX-XX
 - 993_: [Windows] `Process.memory_maps()`_ on Python 3 may raise
   UnicodeDecodeError.
 - 996_: [Linux] `sensors_temperatures()`_ may not show all temperatures.
-- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
+- 997_: [FreeBSD] `virtual_memory()`_ may fail due to missing sysctl parameter on
   FreeBSD 12.
 
 5.2.0
@@ -972,9 +972,9 @@ XXXX-XX-XX
 **Enhancements**
 
 - 874_: [Windows] `net_if_addrs()`_ returns also the netmask.
-- 887_: [Linux] virtual_memory()'s 'available' and 'used' values are more
-  precise and match "free" cmdline utility.  "available" also takes into
-  account LCX containers preventing "available" to overflow "total".
+- 887_: [Linux] `virtual_memory()`_'s ``available`` and ``used`` values are more
+  precise and match "free" cmdline utility.  ``available`` also takes into
+  account LCX containers preventing ``available`` to overflow ``total``.
 - 891_: procinfo.py script has been updated and provides a lot more info.
 
 **Bug fixes**
@@ -1042,7 +1042,7 @@ XXXX-XX-XX
 
 - 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
 - 812_: [NetBSD] fix compilation on NetBSD-5.x.
-- 823_: [NetBSD] virtual_memory() raises TypeError on Python 3.
+- 823_: [NetBSD] `virtual_memory()`_ raises TypeError on Python 3.
 - 829_: [UNIX] `disk_usage()`_ percent field takes root reserved space
   into account.
 - 816_: [Windows] fixed `net_io_counters()`_ values wrapping after 4.3GB in
@@ -1057,7 +1057,7 @@ XXXX-XX-XX
 
 - 795_: [Windows] new APIs to deal with Windows services: win_service_iter()
   and win_service_get().
-- 800_: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
+- 800_: [Linux] `virtual_memory()`_ returns a new "shared" memory field.
 - 819_: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
@@ -1094,7 +1094,8 @@ XXXX-XX-XX
   (patch by wxwright)
 - 780_: [macOS] psutil does not compile with some gcc versions.
 - 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
-- 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
+- 788_: [NetBSD] `virtual_memory()`_'s ``buffers`` and ``shared`` values were
+  set to 0.
 - 790_: [macOS] psutil won't compile on macOS 10.4.
 
 4.0.0
@@ -1152,8 +1153,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 724_: [FreeBSD] psutil.virtual_memory().total is incorrect.
-- 730_: [FreeBSD] psutil.virtual_memory() crashes.
+- 724_: [FreeBSD] `virtual_memory()`_.total is incorrect.
+- 730_: [FreeBSD] `virtual_memory()`_ crashes.
 
 3.4.1
 =====
@@ -1171,12 +1172,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 714_: [OpenBSD] virtual_memory().cached value was always set to 0.
+- 714_: [OpenBSD] `virtual_memory()`_'s ``cached`` value was always set to 0.
 - 715_: don't crash at import time if cpu_times() fail for some reason.
 - 717_: [Linux] Process.open_files fails if deleted files still visible.
 - 722_: [Linux] `swap_memory()`_ no longer crashes if sin/sout can't be determined
   due to missing /proc/vmstat.
-- 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
+- 724_: [FreeBSD] `virtual_memory()`_'s ``total`` is slightly incorrect.
 
 3.3.0
 =====
@@ -1519,11 +1520,11 @@ DeprecationWarning.
   +-----------------------+----------------------------------+
   | Old name              | Replacement                      |
   +=======================+==================================+
-  | psutil.NUM_CPUS       | `psutil.cpu_count()`_            |
+  | psutil.NUM_CPUS       | psutil.cpu_count()               |
   +-----------------------+----------------------------------+
-  | psutil.BOOT_TIME      | `psutil.boot_time()`_            |
+  | psutil.BOOT_TIME      | psutil.boot_time()               |
   +-----------------------+----------------------------------+
-  | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total    |
+  | psutil.TOTAL_PHYMEM   | virtual_memory.total             |
   +-----------------------+----------------------------------+
 
 - Renamed psutil.* functions:
@@ -1767,7 +1768,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 325_: [BSD] psutil.virtual_memory() can raise SystemError.
+- 325_: [BSD] `virtual_memory()`_ can raise SystemError.
   (patch by Jan Beich)
 - 370_: [BSD] `Process.connections()`_ requires root.  (patch by John Baldwin)
 - 372_: [BSD] different process methods raise NoSuchProcess instead of
@@ -1794,7 +1795,7 @@ DeprecationWarning.
 - 234_: [Windows] `disk_io_counters()`_ fails to list certain disks.
 - 264_: [Windows] use of `disk_partitions()`_ may cause a message box to
   appear.
-- 313_: [Linux] psutil.virtual_memory() and `swap_memory()`_ can crash on
+- 313_: [Linux] `virtual_memory()`_ and `swap_memory()`_ can crash on
   certain exotic Linux flavors having an incomplete /proc interface.
   If that's the case we now set the unretrievable stats to 0 and raise a
   RuntimeWarning.
@@ -1895,7 +1896,7 @@ DeprecationWarning.
 - 305_: add examples/netstat.py script.
 - 311_: system memory functions has been refactorized and rewritten and now
   provide a more detailed and consistent representation of the system
-  memory. New psutil.virtual_memory() function provides the following
+  memory. New `virtual_memory()`_ function provides the following
   memory amounts:
   - total
   - available
@@ -1939,10 +1940,10 @@ DeprecationWarning.
 
 **API changes**
 
-- psutil.phymem_usage() is deprecated       (use psutil.virtual_memory())
-- psutil.virtmem_usage() is deprecated      (use `swap_memory()`_)
-- psutil.phymem_buffers() on Linux is deprecated  (use psutil.virtual_memory())
-- psutil.cached_phymem() on Linux is deprecated   (use psutil.virtual_memory())
+- psutil.phymem_usage() is deprecated (use `virtual_memory()`_)
+- psutil.virtmem_usage() is deprecated (use `swap_memory()`_)
+- psutil.phymem_buffers() on Linux is deprecated (use `virtual_memory()`_)
+- psutil.cached_phymem() on Linux is deprecated (use `virtual_memory()`_)
 - [Windows and BSD] psutil.virtmem_usage() now returns information about swap
   memory instead of virtual memory.
 
