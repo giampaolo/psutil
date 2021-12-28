@@ -198,8 +198,8 @@ XXXX-XX-XX
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
   (long) was almost always assumed, which is wrong on most platforms.
-- 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
-  improper exception if process is gone.
+- 1673_: [OpenBSD] `Process.connections()`_, `Process.num_fds()`_ and
+  `Process.threads()`_ returned improper exception if process is gone.
 - 1674_: [SunOS] `disk_partitions()`_ may raise OSError.
 - 1684_: [Linux] `disk_io_counters()`_ may raise ValueError on systems not
   having /proc/diskstats.
@@ -631,7 +631,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
+- 1164_: [AIX] add support for `Process.num_ctx_switches()`_.  (patch by Arnon
   Yaari)
 - 1053_: abandon Python 3.3 support (psutil still works but it's no longer
   tested).
@@ -1831,8 +1831,9 @@ DeprecationWarning.
   case returns None.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
-- 366_: [FreeBSD] `Process.memory_maps()`_, get_num_fds(), get_open_files() and
-  `Process.cwd()`_ methods raise RuntimeError instead of AccessDenied.
+- 366_: [FreeBSD] `Process.memory_maps()`_, `Process.num_fds()`_,
+  `Process.open_files()`_ and `Process.cwd()`_ methods raise RuntimeError instead
+  of AccessDenied.
 
 **API changes**
 
@@ -1927,7 +1928,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 298_: [macOS and BSD] memory leak in get_num_fds().
+- 298_: [macOS and BSD] memory leak in `Process.num_fds()`_.
 - 299_: potential memory leak every time PyList_New(0) is used.
 - 303_: [Windows] potential heap corruption in get_num_threads() and
   get_status() Process methods.
