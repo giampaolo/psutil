@@ -270,8 +270,8 @@ XXXX-XX-XX
   incorrect.
 - 1568_, [Linux]: use CC compiler env var if defined.
 - 1570_, [Windows]: ``NtWow64*`` syscalls fail to raise the proper error code
-- 1585_, [OSX]: calling close() (in C) on possible negative integers.  (patch
-  by Athos Ribeiro)
+- 1585_, [OSX]: avoid calling ``close()`` (in C) on possible negative integers.
+  (patch by Athos Ribeiro)
 - 1606_, [SunOS]: compilation fails on SunOS 5.10.  (patch by vser1)
 
 5.6.3
@@ -316,8 +316,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1223_, [Windows]: `boot_time()`_ may return incorrect value on Windows XP.
-- 1456_, [Linux]: `cpu_freq()`_ returns ``None`` instead of 0.0 when min/max not
-  available (patch by Alex Manuskin)
+- 1456_, [Linux]: `cpu_freq()`_ returns ``None`` instead of 0.0 when ``min``
+  and ``max`` fields can't be determined. (patch by Alex Manuskin)
 - 1462_, [Linux]: (tests) make tests invariant to LANG setting (patch by
   Benjamin Drung)
 - 1463_: `cpu_distribution.py`_ script was broken.
@@ -333,7 +333,7 @@ XXXX-XX-XX
   APIs. Different process methods were affected by this.
 - 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
   cause a crash due to fixed read violation.  (patch by Samer Masterson)
-- 1486_, [AIX,: SunOS] AttributeError when interacting with Process methods
+- 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with Process methods
   involved into `Process.oneshot()`_ context.
 - 1491_, [SunOS]: `net_if_addrs()`_: ``free()`` ifap struct on error.  (patch by
   Agnewee)
@@ -504,7 +504,7 @@ XXXX-XX-XX
   ``task_for_pid()`` syscall. `AccessDenied`_ is now raised instead.
 - 1278_, [macOS]: `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
-- 1279_, [Linux,: macOS, BSD] `net_if_stats()`_ may return ``ENODEV``.
+- 1279_, [Linux], [macOS], [BSD]: `net_if_stats()`_ may return ``ENODEV``.
 - 1294_, [Windows]: `Process.connections()`_ may sometime fail with
   ``MemoryError``.  (patch by sylvainduchesne)
 - 1305_, [Linux]: disk_io_stats() may report inflated r/w bytes values.
@@ -733,9 +733,9 @@ XXXX-XX-XX
   cards installed.
 - 1021_, [Linux]: `Process.open_files()`_ may erroneously raise `NoSuchProcess`_
   instead of skipping a file which gets deleted while open files are retrieved.
-- 1029_, [macOS,: FreeBSD] `Process.connections()`_ with `family=unix` on Python
+- 1029_, [macOS], [FreeBSD]: `Process.connections()`_ with `family=unix` on Python
   3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
-- 1033_, [macOS,: FreeBSD] memory leak for `net_connections()`_ and
+- 1033_, [macOS], [FreeBSD]: memory leak for `net_connections()`_ and
   `Process.connections()`_ when retrieving UNIX sockets (``kind='unix'``).
 - 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
@@ -996,7 +996,7 @@ XXXX-XX-XX
 - 906_, [BSD]: `disk_partitions()`_ with `all=False` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
 - 907_, [FreeBSD]: `Process.exe()`_ may fail with ``OSError(ENOENT)``.
-- 908_, [macOS,: BSD] different process methods could errounesuly mask the real
+- 908_, [macOS], [BSD]: different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise `NoSuchProcess`_ and `AccessDenied`_
   instead of ``OSError`` and ``RuntimeError``.
 - 909_, [macOS]: `Process.open_files()`_ and `Process.connections()`_ methods
@@ -1108,12 +1108,12 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 523_, [Linux,: FreeBSD] `disk_io_counters()`_ return a new ``busy_time`` field.
+- 523_, [Linux], [FreeBSD]: `disk_io_counters()`_ return a new ``busy_time`` field.
 - 660_, [Windows]: make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - 732_: `Process.environ()`_.  (patch by Frank Benkstein)
-- 753_, [Linux,: macOS, Windows] Process USS and PSS (Linux) "real" memory stats.
-  (patch by Eric Rahm)
+- 753_, [Linux], [macOS], [Windows]: Process USS and PSS (Linux) "real" memory
+  stats. (patch by Eric Rahm)
 - 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
 - 760_: expose OS constants (``psutil.LINUX``, ``psutil.OSX``, etc.)
@@ -1980,7 +1980,7 @@ DeprecationWarning.
 - 195_, [Windows]: number of handles opened by process.
 - 209_: `disk_partitions()`_ now provides also mount options.
 - 229_: list users currently connected on the system (`users()`_).
-- 238_, [Linux,: Windows] process CPU affinity (get and set).
+- 238_, [Linux], [Windows]: process CPU affinity (get and set).
 - 242_: add ``recursive=True`` to `Process.children()`_: return all process
   descendants.
 - 245_, [POSIX]: `Process.wait()`_ incrementally consumes less CPU cycles.
