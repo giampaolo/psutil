@@ -1736,7 +1736,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 18_:  Solaris support (yay!)  (thanks Justin Venus)
-- 367_: Process.get_connections() 'status' strings are now constants.
+- 367_: `Process.connections()`_ 'status' strings are now constants.
 - 380_: test suite exits with non-zero on failure.  (patch by floppymaster)
 - 391_: introduce unittest2 facilities and provide workarounds if unittest2
   is not installed (python < 2.7).
@@ -1751,9 +1751,9 @@ DeprecationWarning.
 
 **API changes**
 
-- Process.get_connections() 'status' field is no longer a string but a
-  constant object (psutil.CONN_*).
-- Process.get_connections() 'local_address' and 'remote_address' fields
+- `Process.connections()`_ 'status' field is no longer a string but a
+  constant object (``psutil.CONN_*``).
+- `Process.connections()`_ 'local_address' and 'remote_address' fields
   renamed to 'laddr' and 'raddr'.
 - psutil.network_io_counters() renamed to psutil.net_io_counters().
 
@@ -1766,7 +1766,7 @@ DeprecationWarning.
 
 - 325_: [BSD] psutil.virtual_memory() can raise SystemError.
   (patch by Jan Beich)
-- 370_: [BSD] Process.get_connections() requires root.  (patch by John Baldwin)
+- 370_: [BSD] `Process.connections()`_ requires root.  (patch by John Baldwin)
 - 372_: [BSD] different process methods raise NoSuchProcess instead of
   AccessDenied.
 
@@ -1996,7 +1996,7 @@ DeprecationWarning.
 
 - 193_: psutil.Popen constructor can throw an exception if the spawned process
   terminates quickly.
-- 240_: [macOS] incorrect use of free() for Process.get_connections().
+- 240_: [macOS] incorrect use of free() for `Process.connections()`_.
 - 244_: [POSIX] Process.wait() can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
@@ -2004,7 +2004,7 @@ DeprecationWarning.
   processes owned by another user.  It now raises AccessDenied instead.
 - 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
   (patch by Amoser)
-- 267_: [macOS] Process.get_connections() - an erroneous remote address was
+- 267_: [macOS] `Process.connections()`_ - an erroneous remote address was
   returned. (Patch by Amoser)
 - 272_: [Linux] Porcess.get_open_files() - potential race condition can lead to
   unexpected NoSuchProcess exception.  Also, we can get incorrect reports
@@ -2035,7 +2035,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 228_: some example scripts were not working with python 3.
-- 230_: [Windows / macOS] memory leak in Process.get_connections().
+- 230_: [Windows / macOS] memory leak in `Process.connections()`_.
 - 232_: [Linux] psutil.phymem_usage() can report erroneous values which are
   different than "free" command.
 - 236_: [Windows] memory/handle leak in Process's get_memory_info(),
@@ -2055,7 +2055,7 @@ DeprecationWarning.
   immediately.
 - 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 213_: examples/iotop.py script.
-- 217_: Process.get_connections() now has a "kind" argument to filter
+- 217_: `Process.connections()`_ now has a "kind" argument to filter
   for connections with different criteria.
 - 221_: [FreeBSD] Process.get_open_files has been rewritten in C and no longer
   relies on lsof.
@@ -2069,11 +2069,11 @@ DeprecationWarning.
 - 188_: [Linux] psutil import error on Linux ARM architectures.
 - 194_: [POSIX] psutil.Process.get_cpu_percent() now reports a percentage over
   100 on multicore processors.
-- 197_: [Linux] Process.get_connections() is broken on platforms not
+- 197_: [Linux] `Process.connections()`_ is broken on platforms not
   supporting IPv6.
 - 200_: [Linux] psutil.NUM_CPUS not working on armel and sparc architectures
   and causing crash on module import.
-- 201_: [Linux] Process.get_connections() is broken on big-endian
+- 201_: [Linux] `Process.connections()`_ is broken on big-endian
   architectures.
 - 211_: Process instance can unexpectedly raise NoSuchProcess if tested for
   equality with another object.
