@@ -360,9 +360,10 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1379_: [Windows] Process suspend() and resume() now use NtSuspendProcess
-  and NtResumeProcess instead of stopping/resuming all threads of a process.
-  This is faster and more reliable (aka this is what ProcessHacker does).
+- 1379_: [Windows] `Process.suspend()`_ and `Process.resume()`_ now use
+  ``NtSuspendProcess`` and ``NtResumeProcess`` instead of stopping/resuming all
+  threads of a process. This is faster and more reliable (aka this is what
+  ProcessHacker does).
 - 1420_: [Windows] in case of exception `disk_usage()`_ now also shows the path
   name.
 - 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
@@ -2154,7 +2155,7 @@ DeprecationWarning.
 - 130_: a race condition can cause IOError exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
 - 145_: WindowsError was raised instead of psutil.AccessDenied when using
-  process resume() or suspend() on Windows.
+  `Process.resume()`_ or `Process.suspend()`_ on Windows.
 - 146_: `Process.exe()`_ property on Linux can raise TypeError if path contains
   NULL bytes.
 - 151_: `Process.exe()`_ and `Process.cwd()`_ for PID 0 on Linux return
@@ -2240,7 +2241,7 @@ DeprecationWarning.
 - 51_: `Process.cwd()`_ (Windows and Linux only)
 - 59_: `Process.is_running()`_ is now 10 times faster
 - 61_: added supoprt for FreeBSD 64 bit
-- 71_: implemented suspend/resume process
+- 71_: implemented `Process.suspend()`_ and `Process.resume()`_ process
 - 75_: python 3 support
 
 **Bug fixes**
