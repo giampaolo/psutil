@@ -255,8 +255,8 @@ XXXX-XX-XX
 
 - 875_: [Windows] Process' cmdline(), environ() or cwd() may occasionally fail
   with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
-- 1126_: [Linux] cpu_affinity() segfaults on CentOS 5 / manylinux.
-  cpu_affinity() support for CentOS 5 was removed.
+- 1126_: [Linux] `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
+  `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
 - 1535_: 'type' and 'family' fields returned by net_connections() are not
@@ -891,8 +891,8 @@ XXXX-XX-XX
 - 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
 - 955_: added psutil.sensors_battery() (Linux, Windows, only).
-- 956_: cpu_affinity([]) can now be used as an alias to set affinity against
-  all eligible CPUs.
+- 956_: `Process.cpu_affinity()`_ can now be passed ``[]``` argument as an
+  alias to set affinity against all eligible CPUs.
 
 **Bug fixes**
 
@@ -982,13 +982,13 @@ XXXX-XX-XX
 - 783_: [macOS] Process.status() may erroneously return "running" for zombie
   processes.
 - 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
-- 825_: [Linux] cpu_affinity; fix possible double close and use of unopened
-  socket.
+- 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
+  unopened socket.
 - 880_: [Windows] Handle race condition inside psutil_net_connections.
 - 885_: ValueError is raised if a negative integer is passed to cpu_percent()
   functions.
-- 892_: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
-  set; now ValueError is raised.
+- 892_: [Linux] `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
+  SystemError with no error set; now ValueError is raised.
 - 906_: [BSD] `disk_partitions()`_ with `all=False` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
 - 907_: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
@@ -1088,7 +1088,7 @@ XXXX-XX-XX
 
 - 774_: [FreeBSD] net_io_counters() dropout is no longer set to 0 if the kernel
   provides it.
-- 776_: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
+- 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise NoSuchProcess.
   (patch by wxwright)
 - 780_: [macOS] psutil does not compile with some gcc versions.
 - 786_: net_if_addrs() may report incomplete MAC addresses.
@@ -1328,7 +1328,7 @@ XXXX-XX-XX
 - 582_: connection constants returned by psutil.net_connections() and
   `Process.connections()`_ were turned from int to enums on Python > 3.4.
 - 587_: Move native extension into the package.
-- 589_: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
+- 589_: `Process.cpu_affinity()`_ accepts any kind of iterable (set, tuple, ...),
   not only lists.
 - 594_: all deprecated APIs were removed.
 - 599_: [Windows] process name() can now be determined for all processes even
@@ -1347,7 +1347,7 @@ XXXX-XX-XX
 - 579_: [Windows] Fixed open_files() for PID>64K.
 - 579_: [Windows] fixed many compiler warnings.
 - 585_: [FreeBSD] net_connections() may raise KeyError.
-- 586_: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
+- 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
@@ -1427,7 +1427,7 @@ XXXX-XX-XX
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
-- 522_: [Linux] Process.cpu_affinity() might return EINVAL.  (patch by David
+- 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
   Daeschler)
 - 529_: [Windows] Process.exe() may raise unhandled WindowsError exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
@@ -1490,8 +1490,8 @@ XXXX-XX-XX
   terminates quickly.
 - 340_: [Windows] process get_open_files() no longer hangs.  (patch by
   jtang@vahna.net)
-- 443_: [Linux] fix a potential overflow issue for Process.set_cpu_affinity()
-  on systems with more than 64 CPUs.
+- 443_: [Linux] fix a potential overflow issue for `Process.cpu_affinity()`_
+  (set) on systems with more than 64 CPUs.
 - 448_: [Windows] get_children() and ppid() memory leak (patch by Ulrich
   Klank).
 - 457_: [POSIX] pid_exists() always returns True for PID 0.
@@ -2307,6 +2307,7 @@ DeprecationWarning.
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
+.. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
