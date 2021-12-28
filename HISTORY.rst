@@ -29,11 +29,11 @@ XXXX-XX-XX
   where it first finds one
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] `cpu_freq()`_ broken on Apple M1.
-- 1901_: [macOS] different functions, especially process' open_files() and
-  connections() methods, could randomly raise AccessDenied because the internal
-  buffer of `proc_pidinfo(PROC_PIDLISTFDS)` syscall was not big enough. We now
-  dynamically increase the buffer size until it's big enough instead of giving
-  up and raising AccessDenied, which was a fallback to avoid crashing.
+- 1901_: [macOS] different functions, especially `Process.open_files()`_ and
+  `Process.connectionsn()`_, could randomly raise AccessDenied because the
+  internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
+  We now dynamically increase the buffer size until it's big enough instead of
+  giving up and raising AccessDenied, which was a fallback to avoid crashing.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
@@ -109,7 +109,7 @@ XXXX-XX-XX
 - 1738_: [macOS] `Process.exe()`_ may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().
-- 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
+- 1823_: [Windows] `Process.open_files()`_ may cause a segfault due to a NULL
   pointer.
 - 1838_: [Linux] `sensors_battery()`_: if `percent` can be determined but not
   the remaining values, still return a result instead of None.
@@ -192,7 +192,7 @@ XXXX-XX-XX
   due to a backward incompatible change in a C type introduced in 12.0.
 - 1656_: [Windows] `Process.memory_full_info()`_ raises AccessDenied even for the
   current user and os.getpid().
-- 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
+- 1660_: [Windows] `Process.open_files()`_ complete rewrite + check of errors.
 - 1662_: [Windows] `Process.exe()`_ may raise WinError 0.
 - 1665_: [Linux] `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
@@ -659,8 +659,8 @@ XXXX-XX-XX
 - 1009_: [Linux] `sensors_temperatures()`_ may crash with IOError.
 - 1012_: [Windows] `disk_io_counters()`_'s read_time and write_time were expressed
   in tens of micro seconds instead of milliseconds.
-- 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
-  segfault.  (patch by Jakub Bacic)
+- 1127_: [macOS] invalid reference counting in `Process.open_files()`_ may lead
+  to segfault.  (patch by Jakub Bacic)
 - 1129_: [Linux] `sensors_fans()`_ may crash with IOError.  (patch by Sebastian
   Saip)
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
@@ -729,8 +729,8 @@ XXXX-XX-XX
 - 1016_: `disk_io_counters()`_ raises RuntimeError on a system with no disks.
 - 1017_: `net_io_counters()`_ raises RuntimeError on a system with no network
   cards installed.
-- 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
-  skipping a file which gets deleted while open files are retrieved.
+- 1021_: [Linux] `Process.open_files()`_ may erroneously raise NoSuchProcess
+  instead of skipping a file which gets deleted while open files are retrieved.
 - 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
   3 doesn't properly handle unicode paths and may raise `UnicodeDecodeError`.
 - 1033_: [macOS, FreeBSD] memory leak for `net_connections()`_ and
@@ -840,8 +840,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 872_: [Linux] can now compile on Linux by using MUSL C library.
-- 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread
-  for `NtQueryObject` times out.
+- 985_: [Windows] Fix a crash in `Process.open_files()`_ when the worker thread
+  for ``NtQueryObject`` times out.
 - 986_: [Linux] `Process.cwd()`_ may raise NoSuchProcess instead of ZombieProcess.
 
 5.1.3
@@ -985,7 +985,7 @@ XXXX-XX-XX
 - 514_: [macOS] possibly fix `Process.memory_maps()`_ segfault (critical!).
 - 783_: [macOS] Process.status() may erroneously return "running" for zombie
   processes.
-- 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
+- 798_: [Windows] `Process.open_files()`_ returns and empty list on Windows 10.
 - 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
   unopened socket.
 - 880_: [Windows] Handle race condition inside `net_connections()`_.
@@ -999,8 +999,8 @@ XXXX-XX-XX
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
   instead of OSError and RuntimeError.
-- 909_: [macOS] Process open_files() and connections() methods may raise
-  OSError with no exception set if process is gone.
+- 909_: [macOS] `Process.open_files()`_ and `Process.connections()`_ methods
+  may raise OSError with no exception set if process is gone.
 - 916_: [macOS] fix many compilation warnings.
 
 4.3.1
@@ -1080,7 +1080,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 777_: [Linux] Process.open_files() on Linux return 3 new fields: position,
+- 777_: [Linux] `Process.open_files()`_ on Linux return 3 new fields: position,
   mode and flags.
 - 779_: `Process.cpu_times()`_ returns two new fields, ``children_user`` and
   ``children_system`` (always set to 0 on macOS and Windows).
@@ -1178,7 +1178,7 @@ XXXX-XX-XX
 
 - 714_: [OpenBSD] `virtual_memory()`_'s ``cached`` value was always set to 0.
 - 715_: don't crash at import time if `cpu_times()`_ fail for some reason.
-- 717_: [Linux] Process.open_files fails if deleted files still visible.
+- 717_: [Linux] `Process.open_files()`_ fails if deleted files still visible.
 - 722_: [Linux] `swap_memory()`_ no longer crashes if sin/sout can't be determined
   due to missing /proc/vmstat.
 - 724_: [FreeBSD] `virtual_memory()`_'s ``total`` is slightly incorrect.
@@ -1292,7 +1292,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 340_: [Windows] Process.open_files() no longer hangs. Instead it uses a
+- 340_: [Windows] `Process.open_files()`_ no longer hangs. Instead it uses a
   thred which times out and skips the file handle in case it's taking too long
   to be retrieved.  (patch by Jeff Tang, PR #597)
 - 627_: [Windows] `Process.name()`_ no longer raises AccessDenied for pids owned
@@ -1352,7 +1352,7 @@ XXXX-XX-XX
 - 512_: [BSD] fix segfault in `net_connections()`_.
 - 555_: [Linux] `users()`_ correctly handles ":0" as an alias for
   "localhost"
-- 579_: [Windows] Fixed open_files() for PID>64K.
+- 579_: [Windows] Fixed `Process.open_files()`_ for PID>64K.
 - 579_: [Windows] fixed many compiler warnings.
 - 585_: [FreeBSD] `net_connections()`_ may raise KeyError.
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
@@ -1403,7 +1403,7 @@ XXXX-XX-XX
 - 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
 - 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
-- 571_: [Linux] Process.open_files() might swallow AccessDenied exceptions and
+- 571_: [Linux] `Process.open_files()`_ might swallow AccessDenied exceptions and
   return an incomplete list of open files.
 
 2.1.3
@@ -1428,7 +1428,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 340_: [Windows] Process.get_open_files() no longer hangs.  (patch by
+- 340_: [Windows] `Process.open_files()`_ no longer hangs.  (patch by
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
@@ -1496,7 +1496,7 @@ XXXX-XX-XX
 
 - 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
-- 340_: [Windows] process get_open_files() no longer hangs.  (patch by
+- 340_: [Windows] `Process.open_files()`_ no longer hangs.  (patch by
   jtang@vahna.net)
 - 443_: [Linux] fix a potential overflow issue for `Process.cpu_affinity()`_
   (set) on systems with more than 64 CPUs.
@@ -1940,7 +1940,7 @@ DeprecationWarning.
 - 308_: [BSD / Windows] psutil.virtmem_usage() wasn't actually returning
   information about swap memory usage as it was supposed to do. It does
   now.
-- 309_: get_open_files() might not return files which can not be accessed
+- 309_: `Process.open_files()`_ might not return files which can not be accessed
   due to limited permissions. AccessDenied is now raised instead.
 
 **API changes**
@@ -2017,7 +2017,7 @@ DeprecationWarning.
   (patch by Amoser)
 - 267_: [macOS] `Process.connections()`_ - an erroneous remote address was
   returned. (Patch by Amoser)
-- 272_: [Linux] Porcess.get_open_files() - potential race condition can lead to
+- 272_: [Linux] `Process.open_files()`_ - potential race condition can lead to
   unexpected NoSuchProcess exception.  Also, we can get incorrect reports
   of not absolutized path names.
 - 275_: [Linux] ``Process.io_counters()`` erroneously raise NoSuchProcess on
@@ -2069,7 +2069,7 @@ DeprecationWarning.
 - 213_: examples/iotop.py script.
 - 217_: `Process.connections()`_ now has a "kind" argument to filter
   for connections with different criteria.
-- 221_: [FreeBSD] Process.get_open_files has been rewritten in C and no longer
+- 221_: [FreeBSD] `Process.open_files()`_ has been rewritten in C and no longer
   relies on lsof.
 - 223_: examples/top.py script.
 - 227_: examples/nettop.py script.
@@ -2143,9 +2143,9 @@ DeprecationWarning.
 - 147_: per-process I/O nice (priority) - Linux only.
 - 148_: `psutil.Popen`_ class which tidies up subprocess.Popen and psutil.Process
   in a unique interface.
-- 152_: [macOS] get_process_open_files() implementation has been rewritten
+- 152_: [macOS] `Process.open_files()`_ implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
-- 153_: [macOS] get_process_connection() implementation has been rewritten
+- 153_: [macOS] `Process.connections()`_ implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
 
 **Bug fixes**
@@ -2219,8 +2219,8 @@ DeprecationWarning.
   process use send_signal(signal) method instead.
 - `Process.memory_info()`_ returns a nametuple instead of a tuple.
 - `cpu_times()`_ returns a nametuple instead of a tuple.
-- New psutil.Process methods: get_open_files(), get_connections(),
-  send_signal() and terminate().
+- New psutil.Process methods: `Process.open_files()`_, `Process.connections()`_,
+  `Process.send_signal()`_ and `Process.terminate()`_.
 - `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
   `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
   properties are no longer cached and raise NoSuchProcess exception if process
