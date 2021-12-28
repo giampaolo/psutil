@@ -563,7 +563,7 @@ XXXX-XX-XX
   Sauthoff)
 - 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
   and warnings.  (patch by Georg Sauthoff)
-- 1210_: [Linux] cpu_percent() steal time may remain stuck at 100% due to Linux
+- 1210_: [Linux] `cpu_percent()`_ steal time may remain stuck at 100% due to Linux
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
@@ -848,7 +848,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 971_: [Linux] `sensors_temperatures()`_ didn't work on CentOS 7.
-- 973_: cpu_percent() may raise ZeroDivisionError.
+- 973_: `cpu_percent()`_ may raise ZeroDivisionError.
 
 5.1.2
 =====
@@ -924,7 +924,7 @@ XXXX-XX-XX
 
 - 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
-- 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
+- 940_: [Linux] `cpu_percent()`_ and cpu_times_percent() was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly
   taken into account.
 - 944_: [OpenBSD] psutil.pids() was omitting PID 0.
@@ -986,7 +986,7 @@ XXXX-XX-XX
 - 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
   unopened socket.
 - 880_: [Windows] Handle race condition inside `net_connections()`_.
-- 885_: ValueError is raised if a negative integer is passed to cpu_percent()
+- 885_: ValueError is raised if a negative integer is passed to `cpu_percent()`_
   functions.
 - 892_: [Linux] `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
   SystemError with no error set; now ValueError is raised.
@@ -1012,9 +1012,10 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 854_: Process.as_dict() raises ValueError if passed an erroneous attrs name.
-- 857_: [SunOS] Process cpu_times(), cpu_percent(), threads() and `Process.memory_maps()`_
-  may raise RuntimeError if attempting to query a 64bit process with a 32bit
-  python. "Null" values are returned as a fallback.
+- 857_: [SunOS] `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.threads()`_ and `Process.memory_maps()`_ may raise RuntimeError if
+  attempting to query a 64bit process with a 32bit python. "Null" values are
+  returned as a fallback.
 - 858_: Process.as_dict() should not return memory_info_ex() because it's
   deprecated.
 - 863_: [Windows] memory_map truncates addresses above 32 bits
@@ -1478,10 +1479,10 @@ XXXX-XX-XX
 - 453_: tests on Python < 2.7 require unittest2 module.
 - 459_: add a make file for running tests and other repetitive tasks (also
   on Windows).
-- 463_: make timeout parameter of cpu_percent* functions default to 0.0 'cause
+- 463_: make timeout parameter of ``cpu_percent*`` functions default to 0.0 'cause
   it's a common trap to introduce slowdowns.
 - 468_: move documentation to readthedocs.com.
-- 477_: process cpu_percent() is about 30% faster.  (suggested by crusaderky)
+- 477_: `Process.cpu_percent()`_ is about 30% faster.  (suggested by crusaderky)
 - 478_: [Linux] almost all APIs are about 30% faster on Python 3.X.
 - 479_: long deprecated psutil.error module is gone; exception classes now
   live in "psutil" namespace only.
@@ -1626,7 +1627,7 @@ DeprecationWarning.
   | p.create_time | p.create_time() |
   +---------------+-----------------+
 
-- timeout parameter of cpu_percent* functions defaults to 0.0 instead of 0.1.
+- timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of 0.1.
 - long deprecated psutil.error module is gone; exception classes now live in
   "psutil" namespace only.
 - Process instances' "retcode" attribute returned by psutil.wait_procs() has
@@ -1785,7 +1786,7 @@ DeprecationWarning.
 - 359_: psutil.get_boot_time()
 - 361_: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
   'guest_nice' fields available on recent Linux kernels.
-  Also, psutil.cpu_percent() is more accurate.
+  Also, `cpu_percent()`_ is more accurate.
 - 362_: cpu_times_percent() (per-CPU-time utilization as a percentage)
 
 **Bug fixes**
@@ -2070,7 +2071,7 @@ DeprecationWarning.
 - 135_: [macOS] psutil cannot create Process object.
 - 144_: [Linux] no longer support 0 special PID.
 - 188_: [Linux] psutil import error on Linux ARM architectures.
-- 194_: [POSIX] psutil.Process.get_cpu_percent() now reports a percentage over
+- 194_: [POSIX] `Process.cpu_percent()`_ now reports a percentage over
   100 on multicore processors.
 - 197_: [Linux] `Process.connections()`_ is broken on platforms not
   supporting IPv6.
@@ -2107,7 +2108,7 @@ DeprecationWarning.
   returns -1 .
 - 165_: process.status raises an unhandled exception.
 - 166_: get_memory_info() leaks handles hogging system resources.
-- 168_: psutil.cpu_percent() returns erroneous results when used in
+- 168_: `cpu_percent()`_ returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
 - 178_: macOS - Process.get_threads() leaks memory
 - 180_: [Windows] Process's get_num_threads() and get_threads() methods can
@@ -2179,7 +2180,7 @@ DeprecationWarning.
   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
   longer required as a third-party dependancy. (patch by wj32)
 - 117_: added support for Windows 2000.
-- 123_: psutil.cpu_percent() and `Process.cpu_percent()`_ accept a
+- 123_: `cpu_percent()`_ and `Process.cpu_percent()`_ accept a
   new 'interval' parameter.
 - 129_: per-process number of threads.
 
@@ -2193,7 +2194,7 @@ DeprecationWarning.
   left behind every time Process class was instantiated.
 - 111_: path and name Process properties report truncated or erroneous
   values on UNIX.
-- 120_: cpu_percent() always returning 100% on macOS.
+- 120_: `cpu_percent()`_ always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
 - 126_: ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time
@@ -2212,9 +2213,9 @@ DeprecationWarning.
   send_signal() and terminate().
 - ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time properties
   are no longer cached and raise NoSuchProcess exception if process disappears.
-- psutil.cpu_percent() no longer returns immediately (see issue 123).
-- psutil.Process.get_cpu_percent() and psutil.cpu_percent() no longer returns
-  immediately by default (see issue 123).
+- `cpu_percent()`_ no longer returns immediately (see issue 123).
+- `Process.cpu_percent()`_ and `cpu_percent()`_ no longer returns immediately
+  by default (see issue 123).
 
 0.1.3
 =====
@@ -2306,6 +2307,7 @@ DeprecationWarning.
 
 
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
+.. _`cpu_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
