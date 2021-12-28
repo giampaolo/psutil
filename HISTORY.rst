@@ -136,11 +136,13 @@ XXXX-XX-XX
   on UNIX.
 - 1747_: `Process.wait()`_ on POSIX returns an enum, showing the negative signal
   which was used to terminate the process::
+
     >>> import psutil
     >>> p = psutil.Process(9891)
     >>> p.terminate()
     >>> p.wait()
     <Negsignal.SIGTERM: -15>
+
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
 - 1747_: Process provides more info about the process on str() and repr()
@@ -501,7 +503,7 @@ XXXX-XX-XX
 
 - 1209_: [macOS] `Process.memory_maps()`_ may fail with EINVAL due to poor
   task_for_pid() syscall. AccessDenied is now raised instead.
-- 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
+- 1278_: [macOS] `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ENODEV.
 - 1294_: [Windows] `Process.connections()`_ may sometime fail with
@@ -774,7 +776,7 @@ XXXX-XX-XX
   on OpenProcess Windows API now check whether the PID is actually running.
 - 1098_: [Windows] `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
-- 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
+- 1099_: [Windows] `Process.terminate()`_ may raise AccessDenied even if the
   process already died.
 - 1101_: [Linux] `sensors_temperatures()`_ may raise ENODEV.
 
@@ -2102,7 +2104,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 125_: system per-cpu percentage utilization and times.
-- 163_: per-process associated terminal (TTY).
+- 163_: per-process associated `Process.terminal()`_ (TTY).
 - 171_: added get_phymem() and get_virtmem() functions returning system
   memory information (total, used, free) and memory percent usage.
   ``total_*``, ``avail_*`` and ``used_*`` memory functions are deprecated.
@@ -2131,9 +2133,9 @@ DeprecationWarning.
 **Enhancements**
 
 - 64_: per-process I/O counters.
-- 116_: per-process wait() (wait for process to terminate and return its exit
+- 116_: per-process `Process.wait()`_ (wait for process to terminate and return its exit
   code).
-- 134_: per-process get_threads() returning information (id, user and kernel
+- 134_: per-process `Process.threads()`_ returning information (id, user and kernel
   times) about threads opened by process.
 - 136_: `Process.exe()`_ path on FreeBSD is now determined by asking the
   kernel instead of guessing it from cmdline[0].
@@ -2198,7 +2200,7 @@ DeprecationWarning.
 
 - 80_: fixed warnings when installing psutil with easy_install.
 - 81_: psutil fails to compile with Visual Studio.
-- 94_: suspend() raises OSError instead of AccessDenied.
+- 94_: `Process.suspend()`_ raises OSError instead of AccessDenied.
 - 86_: psutil didn't compile against FreeBSD 6.x.
 - 102_: orphaned process handles obtained by using OpenProcess in C were
   left behind every time Process class was instantiated.
