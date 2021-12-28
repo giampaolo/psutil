@@ -179,8 +179,9 @@ XXXX-XX-XX
 - 1679_: [Windows] `net_connections()`_ and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
-- 1693_: [Windows] `boot_time()`_, Process.create_time() and `users()`_'s login time
-  now have 1 micro second precision (before the precision was of 1 second).
+- 1693_: [Windows] `boot_time()`_, `Process.create_time()`_ and `users()`_'s
+  login time now have 1 micro second precision (before the precision was of 1
+  second).
 
 **Bug fixes**
 
@@ -1987,8 +1988,8 @@ DeprecationWarning.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
 - 278_: new `Process.as_dict()`_ method.
-- 281_: ppid, name, exe, `Process.cmdline()`_ and create_time properties of
-  Process class are now cached after being accessed.
+- 281_: ppid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
+  properties of Process class are now cached after being accessed.
 - 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 - 283_: speedup `Process.is_running()`_ by caching its return value in case the
@@ -2027,9 +2028,9 @@ DeprecationWarning.
 - Process.nice property is deprecated in favor of new get_nice() and set_nice()
   methods.
 - psutil.get_process_list() is deprecated.
-- ppid, name, exe, `Process.cmdline()`_ and create_time properties of Process
-  class are now cached after being accessed, meaning NoSuchProcess will no
-  longer be raised in case the process is gone in the meantime.
+- ppid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_ properties
+  of Process class are now cached after being accessed, meaning NoSuchProcess
+  will no longer be raised in case the process is gone in the meantime.
 - psutil.STATUS_* constants can now be compared by using their string
   representation.
 
@@ -2199,7 +2200,7 @@ DeprecationWarning.
 - 120_: `cpu_percent()`_ always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
-- 126_: ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time
+- 126_: ppid, uid, gid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
   properties are no longer cached and correctly raise NoSuchProcess exception
   if the process disappears.
 
@@ -2213,8 +2214,9 @@ DeprecationWarning.
 - `cpu_times()`_ returns a nametuple instead of a tuple.
 - New psutil.Process methods: get_open_files(), get_connections(),
   send_signal() and terminate().
-- ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time properties
-  are no longer cached and raise NoSuchProcess exception if process disappears.
+- ppid, uid, gid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
+  properties are no longer cached and raise NoSuchProcess exception if process
+  disappears.
 - `cpu_percent()`_ no longer returns immediately (see issue 123).
 - `Process.cpu_percent()`_ and `cpu_percent()`_ no longer returns immediately
   by default (see issue 123).
@@ -2246,7 +2248,7 @@ DeprecationWarning.
 - 58_: `Process.is_running()`_ is now called before `Process.kill()`_ to make
   sure we are going to kill the correct process.
 - 73_: virtual memory size reported on macOS includes shared library size
-- 77_: NoSuchProcess wasn't raised on Process.create_time if `Process.kill()`_
+- 77_: NoSuchProcess wasn't raised on `Process.create_time()`_ if `Process.kill()`_
   was used first.
 
 0.1.2
