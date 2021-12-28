@@ -95,7 +95,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 809_: [FreeBSD] add support for `Process.rlimit()`.
+- 809_: [FreeBSD] add support for `Process.rlimit()`_.
 - 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
 - 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
@@ -156,7 +156,7 @@ XXXX-XX-XX
 
 - 1726_: [Linux] `cpu_freq()`_ parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
-- 1760_: [Linux] Process.rlimit() does not handle long long type properly.
+- 1760_: [Linux] `Process.rlimit()`_ does not handle long long type properly.
 - 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
 - 1781_: fix signature of callback function for `getloadavg()`_.  (patch by
   Ammar Askar)
@@ -2313,6 +2313,7 @@ DeprecationWarning.
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
+.. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
 .. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
