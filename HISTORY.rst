@@ -23,7 +23,7 @@ XXXX-XX-XX
 
 - 1456_: [macOS] `cpu_freq()`_'s min and max are set to 0 if can't be
   determined (instead of crashing).
-- 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
+- 1512_: [macOS] sometimes `Process.connections()`_ will crash with EOPNOTSUPP
   for one connection; this is now ignored.
 - 1598_: [Windows] `disk_partitions()`_ only returns mountpoints on drives
   where it first finds one
@@ -176,7 +176,7 @@ XXXX-XX-XX
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 - 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
   raising AccessDenied).
-- 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
+- 1679_: [Windows] net_connections() and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
 - 1693_: [Windows] boot_time(), Process.create_time() and users()'s login time
@@ -389,7 +389,7 @@ XXXX-XX-XX
   processes.
 - 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
-- 1439_: [NetBSD] Process.connections() may return incomplete results if using
+- 1439_: [NetBSD] `Process.connections()`_ may return incomplete results if using
   oneshot().
 - 1447_: original exception wasn't turned into NSP/AD exceptions when using
   Process.oneshot() ctx manager.
@@ -693,7 +693,7 @@ XXXX-XX-XX
 
 - 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
   (restart from 0). Introduced a new "nowrap" argument.
-- 928_: psutil.net_connections() and psutil.Process.connections() "laddr" and
+- 928_: psutil.net_connections() and `Process.connections()`_ "laddr" and
   "raddr" are now named tuples.
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
@@ -727,10 +727,10 @@ XXXX-XX-XX
   cards installed.
 - 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
   skipping a file which gets deleted while open files are retrieved.
-- 1029_: [macOS, FreeBSD] Process.connections('unix') on Python 3 doesn't
-  properly handle unicode paths and may raise UnicodeDecodeError.
+- 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
+  3 doesn't properly handle unicode paths and may raise `UnicodeDecodeError`.
 - 1033_: [macOS, FreeBSD] memory leak for net_connections() and
-  Process.connections() when retrieving UNIX sockets (kind='unix').
+  `Process.connections()`_ when retrieving UNIX sockets (kind='unix').
 - 1040_: fixed many unicode related issues such as UnicodeDecodeError on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
@@ -940,7 +940,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 932_: [NetBSD] net_connections() and Process.connections() may fail without
+- 932_: [NetBSD] net_connections() and `Process.connections()`_ may fail without
   raising an exception.
 - 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
 
@@ -1161,7 +1161,7 @@ XXXX-XX-XX
 
 - 557_: [NetBSD] added NetBSD support.  (contributed by Ryo Onodera and
   Thomas Klausner)
-- 708_: [Linux] psutil.net_connections() and Process.connections() on Python 2
+- 708_: [Linux] psutil.net_connections() and `Process.connections()`_ on Python 2
   can be up to 3x faster in case of many connections.
   Also psutil.Process.memory_maps() is slightly faster.
 - 718_: process_iter() is now thread safe.
@@ -1325,7 +1325,7 @@ XXXX-XX-XX
   plain integers.
 - 581_: add .gitignore. (patch by Gabi Davar)
 - 582_: connection constants returned by psutil.net_connections() and
-  psutil.Process.connections() were turned from int to enums on Python > 3.4.
+  `Process.connections()`_ were turned from int to enums on Python > 3.4.
 - 587_: Move native extension into the package.
 - 589_: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
   not only lists.
@@ -2303,7 +2303,9 @@ DeprecationWarning.
 
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
+.. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
+
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2
