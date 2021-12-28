@@ -702,7 +702,7 @@ XXXX-XX-XX
   memory info about Linux containers such as Docker and Heroku.
 - 1022_: `users()`_ provides a new "pid" field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
-  Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
+  `Process.as_dict()`_: "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
 - 1040_: implemented full unicode support.
@@ -1011,12 +1011,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 854_: Process.as_dict() raises ValueError if passed an erroneous attrs name.
+- 854_: `Process.as_dict()`_ raises ValueError if passed an erroneous attrs name.
 - 857_: [SunOS] `Process.cpu_times()`_, `Process.cpu_percent()`_,
   `Process.threads()`_ and `Process.memory_maps()`_ may raise RuntimeError if
   attempting to query a 64bit process with a 32bit python. "Null" values are
   returned as a fallback.
-- 858_: Process.as_dict() should not return memory_info_ex() because it's
+- 858_: `Process.as_dict()`_ should not return memory_info_ex() because it's
   deprecated.
 - 863_: [Windows] memory_map truncates addresses above 32 bits
 - 866_: [Windows] win_service_iter() and services in general are not able to
@@ -1067,7 +1067,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 797_: [Linux] net_if_stats() may raise OSError for certain NIC cards.
-- 813_: Process.as_dict() should ignore extraneous attribute names which gets
+- 813_: `Process.as_dict()`_ should ignore extraneous attribute names which gets
   attached to the Process instance.
 
 4.1.0
@@ -1811,7 +1811,7 @@ DeprecationWarning.
 - 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
 - 337_: [Linux] process methods not working because of a poor /proc
   implementation will raise NotImplementedError rather than RuntimeError
-  and Process.as_dict() will not blow up.  (patch by Curtin1060)
+  and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
 - 338_: [Linux] disk_io_counters() fails to find some disks.
 - 339_: [FreeBSD] get_pid_list() can allocate all the memory on system.
 - 341_: [Linux] psutil might crash on import due to error in retrieving system
@@ -1984,12 +1984,12 @@ DeprecationWarning.
 - 273_: psutil.get_process_list() is deprecated.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
-- 278_: new Process.as_dict() method.
+- 278_: new `Process.as_dict()`_ method.
 - 281_: ppid, name, exe, `Process.cmdline()`_ and create_time properties of
   Process class are now cached after being accessed.
 - 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
-- 283_: speedup Process.is_running() by caching its return value in case the
+- 283_: speedup `Process.is_running()`_ by caching its return value in case the
   process is terminated.
 - 284_: [POSIX] per-process number of opened file descriptors.
 - 287_: `process_iter()`_ now caches Process instances between calls.
@@ -2016,7 +2016,7 @@ DeprecationWarning.
 - 275_: [Linux] Process.get_io_counters() erroneously raise NoSuchProcess on
   old Linux versions. Where not available it now raises
   NotImplementedError.
-- 286_: Process.is_running() doesn't actually check whether PID has been
+- 286_: `Process.is_running()`_ doesn't actually check whether PID has been
   reused.
 - 314_: `Process.children()`_ can sometimes return non-children.
 
@@ -2226,7 +2226,7 @@ DeprecationWarning.
 
 - 14_: `Process.username()`_
 - 51_: `Process.cwd()`_ (Windows and Linux only)
-- 59_: Process.is_running() is now 10 times faster
+- 59_: `Process.is_running()`_ is now 10 times faster
 - 61_: added supoprt for FreeBSD 64 bit
 - 71_: implemented suspend/resume process
 - 75_: python 3 support
@@ -2241,8 +2241,8 @@ DeprecationWarning.
 - 55_: test_pid_4 was failing on Windows Vista
 - 57_: some unit tests were failing on systems where no swap memory is
   available
-- 58_: is_running() is now called before `Process.kill()`_ to make sure we are
-  going to kill the correct process.
+- 58_: `Process.is_running()`_ is now called before `Process.kill()`_ to make
+  sure we are going to kill the correct process.
 - 73_: virtual memory size reported on macOS includes shared library size
 - 77_: NoSuchProcess wasn't raised on Process.create_time if `Process.kill()`_
   was used first.
@@ -2313,6 +2313,7 @@ DeprecationWarning.
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 .. _`net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.net_connections
+.. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
@@ -2322,6 +2323,7 @@ DeprecationWarning.
 .. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
 .. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
 .. _`Process.ionice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ionice
+.. _`Process.is_running()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.is_running
 .. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
