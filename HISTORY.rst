@@ -96,7 +96,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 809_: [FreeBSD] add support for `Process.rlimit()`_.
-- 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
+- 893_: [BSD] add support for `Process.environ()`_ (patch by Armin Gruner)
 - 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
 - 1837_: [Linux] improved battery detection and charge "secsleft" calculation
@@ -106,7 +106,7 @@ XXXX-XX-XX
 
 - 1620_: [Linux] `cpu_count()`_ with ``logical=False`` result is incorrect on
   systems with more than one CPU socket.  (patch by Vincent A. Arcila)
-- 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
+- 1738_: [macOS] `Process.exe()`_ may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().
 - 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
@@ -279,7 +279,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1494_: [AIX] added support for Process.environ().  (patch by Arnon Yaari)
+- 1494_: [AIX] added support for `Process.environ()`_.  (patch by Arnon Yaari)
 
 **Bug fixes**
 
@@ -381,7 +381,7 @@ XXXX-XX-XX
   in order to prevent that.
 - 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
   instantiation.
-- 1419_: [Windows] Process.environ() raises NotImplementedError when querying
+- 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 - 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
   on failed malloc().
@@ -413,7 +413,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
+- 1394_: [Windows] `Process.exe()`_ returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
 - 1402_: psutil exceptions' repr() show the internal private module path.
 - 1408_: [AIX] psutil won't compile on AIX 7.1 due to missing header.  (patch
@@ -711,7 +711,7 @@ XXXX-XX-XX
   relevant files.
 - 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
   (instead of -1).  (patch by Gleb Smirnoff)
-- 1091_: [SunOS] implemented Process.environ().  (patch by Oleksii Shevchuk)
+- 1091_: [SunOS] implemented `Process.environ()`_.  (patch by Oleksii Shevchuk)
 
 **Bug fixes**
 
@@ -991,7 +991,7 @@ XXXX-XX-XX
   SystemError with no error set; now ValueError is raised.
 - 906_: [BSD] `disk_partitions()`_ with `all=False` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
-- 907_: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
+- 907_: [FreeBSD] `Process.exe()`_ may fail with OSError(ENOENT).
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
   instead of OSError and RuntimeError.
@@ -1105,7 +1105,7 @@ XXXX-XX-XX
 - 523_: [Linux, FreeBSD] disk_io_counters() return a new "busy_time" field.
 - 660_: [Windows] make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
-- 732_: Process.environ().  (patch by Frank Benkstein)
+- 732_: `Process.environ()`_.  (patch by Frank Benkstein)
 - 753_: [Linux, macOS, Windows] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
 - 755_: Process.memory_percent() "memtype" parameter.
@@ -1429,7 +1429,7 @@ XXXX-XX-XX
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
   Daeschler)
-- 529_: [Windows] Process.exe() may raise unhandled WindowsError exception
+- 529_: [Windows] `Process.exe()`_ may raise unhandled WindowsError exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
 - 530_: [Linux] psutil.disk_io_counters() may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
@@ -2311,6 +2311,8 @@ DeprecationWarning.
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
 .. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
+.. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
+.. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
