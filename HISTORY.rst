@@ -706,9 +706,9 @@ XXXX-XX-XX
   retrieve memory info about Linux containers such as Docker and Heroku.
 - 1022_: `users()`_ provides a new ``pid`` field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
-  `Process.as_dict()`_: "attrs" and "ad_value". With this you can iterate over all
-  processes in one shot without needing to catch `NoSuchProcess`_ and do list/dict
-  comprehensions.
+  `Process.as_dict()`_: ``attrs`` and ``ad_value``. With these you can iterate
+  over all processes in one shot without needing to catch `NoSuchProcess`_ and
+  do list/dict comprehensions.
 - 1040_: implemented full unicode support.
 - 1051_: `disk_usage()`_ on Python 3 is now able to accept bytes.
 - 1058_: test suite now enables all warnings by default.
@@ -787,12 +787,9 @@ XXXX-XX-XX
   when retrieving UNIX sockets.
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
-  unicode:
-  - `Process.memory_maps()`_.path
-  - WindowsService.bin_path()
-  - WindowsService.description()
-  - WindowsService.display_name()
-  - WindowsService.username()
+  unicode: ``Process.memory_maps().path``, ``WindowsService.bin_path()``,
+  ``WindowsService.description()``, ``WindowsService.display_name()``,
+  ``WindowsService.username()``.
 
 5.2.2
 =====
