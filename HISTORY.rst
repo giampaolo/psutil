@@ -904,8 +904,8 @@ XXXX-XX-XX
   higher number than real usage.
 - 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
-- 960_: Popen.wait() did not return the correct negative exit status if process
-  is ``kill()``ed by a signal.
+- 960_: `psutil.Popen`_'s ``wait()`` did not return the correct negative exit
+  status if process is ``kill()``ed by a signal.
 - 961_: [Windows] WindowsService.description() may fail with
   ERROR_MUI_FILE_NOT_FOUND.
 
@@ -962,7 +962,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 927_: ``Popen.__del__`` may cause maximum recursion depth error.
+- 927_: `psutil.Popen`_ ``__del__`` may cause maximum recursion depth error.
 
 4.4.0
 =====
@@ -1490,7 +1490,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 193_: psutil.Popen constructor can throw an exception if the spawned process
+- 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
 - 340_: [Windows] process get_open_files() no longer hangs.  (patch by
   jtang@vahna.net)
@@ -1505,7 +1505,7 @@ XXXX-XX-XX
 - 470_: `wait_procs()`_ might not wait.  (patch by crusaderky)
 - 471_: [Windows] process exe improper unicode handling. (patch by
   alex@mroja.net)
-- 473_: psutil.Popen.wait() does not set returncode attribute.
+- 473_: `psutil.Popen`_'s ``wait()`` method does not set returncode attribute.
 - 474_: [Windows] `Process.cpu_percent()`_ is no longer capped at 100%.
 - 476_: [Linux] encoding error for `Process.name()`_ and `Process.cmdline()`_.
 
@@ -1999,7 +1999,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 193_: psutil.Popen constructor can throw an exception if the spawned process
+- 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
 - 240_: [macOS] incorrect use of free() for `Process.connections()`_.
 - 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
@@ -2134,7 +2134,7 @@ DeprecationWarning.
 - 142_: per-process get and set niceness (priority).
 - 143_: per-process status.
 - 147_: per-process I/O nice (priority) - Linux only.
-- 148_: psutil.Popen class which tidies up subprocess.Popen and psutil.Process
+- 148_: `psutil.Popen`_ class which tidies up subprocess.Popen and psutil.Process
   in a unique interface.
 - 152_: [macOS] get_process_open_files() implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
