@@ -372,7 +372,7 @@ XXXX-XX-XX
   startup.
 - 1428_: in case of error, the traceback message now shows the underlying C
   function called which failed.
-- 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
+- 1433_: new `Process.parents()`_ method.  (idea by Ghislain Le Meur)
 - 1437_: `pids()`_ are returned in sorted order.
 - 1442_: python3 is now the default interpreter used by Makefile.
 
@@ -1358,7 +1358,7 @@ XXXX-XX-XX
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
-- 606_: Process.parent() may swallow NoSuchProcess exceptions.
+- 606_: `Process.parent()`_ may swallow NoSuchProcess exceptions.
 - 611_: [SunOS] `net_io_counters()`_ has send and received swapped
 - 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
   sockets instead of cores.
@@ -1827,7 +1827,7 @@ DeprecationWarning.
 - 351_: [Windows] if psutil is compiled with mingw32 (provided installers for
   py2.4 and py2.5 are) `disk_io_counters()`_ will fail. (Patch by m.malycha)
 - 353_: [macOS] get_users() returns an empty list on macOS 10.8.
-- 356_: Process.parent now checks whether parent PID has been reused in which
+- 356_: `Process.parent()`_ now checks whether parent PID has been reused in which
   case returns None.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
@@ -2291,7 +2291,7 @@ DeprecationWarning.
 
 - 4_: FreeBSD support for all functions of psutil
 - 9_: Process.uid and Process.gid now retrieve process UID and GID.
-- 11_: Support for parent/ppid - Process.parent property returns a
+- 11_: Support for parent/ppid - `Process.parent()`_ property returns a
   Process object representing the parent process, and Process.ppid returns
   the parent PID.
 - 12_ & 15:
