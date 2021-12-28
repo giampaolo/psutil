@@ -185,7 +185,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1538_: [NetBSD] process cwd() may return ENOENT instead of NoSuchProcess.
+- 1538_: [NetBSD] `Process.cwd()`_ may return ENOENT instead of NoSuchProcess.
 - 1627_: [Linux] `Process.memory_maps()`_ can raise KeyError.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
@@ -254,8 +254,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 875_: [Windows] `Process.cmdline()`_, `Process.environ()`_ or cwd() may occasionally fail
-  with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
+- 875_: [Windows] `Process.cmdline()`_, `Process.environ()`_ or `Process.cwd()`_
+  may occasionally fail with ``ERROR_PARTIAL_COPY`` which now gets translated to
+  AccessDenied.
 - 1126_: [Linux] `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
@@ -841,7 +842,7 @@ XXXX-XX-XX
 - 872_: [Linux] can now compile on Linux by using MUSL C library.
 - 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread
   for `NtQueryObject` times out.
-- 986_: [Linux] Process.cwd() may raise NoSuchProcess instead of ZombieProcess.
+- 986_: [Linux] `Process.cwd()`_ may raise NoSuchProcess instead of ZombieProcess.
 
 5.1.3
 =====
@@ -1125,13 +1126,14 @@ XXXX-XX-XX
 - 685_: [Linux] virtual_memory() provides wrong results on systems with a lot
   of physical memory.
 - 704_: [Solaris] psutil does not compile on Solaris sparc.
-- 734_: on Python 3 invalid UTF-8 data is not correctly handled for process
-  name(), cwd(), `Process.exe()`_, `Process.cmdline()`_ and open_files() methods
-  resulting in UnicodeDecodeError exceptions. 'surrogateescape' error handler
-  is now used as a workaround for replacing the corrupted data.
+- 734_: on Python 3 invalid UTF-8 data is not correctly handled for
+  `Process.name()`_, `Process.cwd()`_, `Process.exe()`_, `Process.cmdline()`_
+  and `Process.open_files()`_ methods resulting in UnicodeDecodeError exceptions.
+  'surrogateescape' error handler is now used as a workaround for replacing the
+  corrupted data.
 - 737_: [Windows] when the bitness of psutil and the target process was
-  different, `Process.cmdline()`_ and cwd() could return a wrong result or
-  incorrectly report an AccessDenied error.
+  different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
+  result or incorrectly report an AccessDenied error.
 - 741_: [OpenBSD] psutil does not compile on mips64.
 - 751_: [Linux] fixed call to Py_DECREF on possible Null object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
@@ -1830,7 +1832,7 @@ DeprecationWarning.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
 - 366_: [FreeBSD] `Process.memory_maps()`_, get_num_fds(), get_open_files() and
-  getcwd() Process methods raise RuntimeError instead of AccessDenied.
+  `Process.cwd()`_ methods raise RuntimeError instead of AccessDenied.
 
 **API changes**
 
@@ -1870,7 +1872,7 @@ DeprecationWarning.
 - 216_: [POSIX] get_connections() UNIX sockets support.
 - 220_: [FreeBSD] get_connections() has been rewritten in C and no longer
   requires lsof.
-- 222_: [macOS] add support for process cwd.
+- 222_: [macOS] add support for `Process.cwd()`_.
 - 261_: process extended memory info.
 - 295_: [macOS] process executable path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
@@ -2007,7 +2009,7 @@ DeprecationWarning.
 - 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
-- 252_: [Windows] process getcwd() erroneously raise NoSuchProcess for
+- 252_: [Windows] `Process.cwd()`_ erroneously raise NoSuchProcess for
   processes owned by another user.  It now raises AccessDenied instead.
 - 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
   (patch by Amoser)
@@ -2056,7 +2058,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 150_: network I/O counters. (macOS and Windows patch by Jeremy Whitlock)
-- 154_: [FreeBSD] add support for process getcwd()
+- 154_: [FreeBSD] add support for `Process.cwd()`_.
 - 157_: [Windows] provide installer for Python 3.2 64-bit.
 - 198_: `Process.wait()`_ with ``timeout=0`` can now be used to make wait() return
   immediately.
@@ -2152,7 +2154,8 @@ DeprecationWarning.
   process resume() or suspend() on Windows.
 - 146_: 'exe' property on Linux can raise TypeError if path contains NULL
   bytes.
-- 151_: exe and getcwd() for PID 0 on Linux return inconsistent data.
+- 151_: `Process.exe()`_ and `Process.cwd()`_ for PID 0 on Linux return
+  inconsistent data.
 
 **API changes**
 
