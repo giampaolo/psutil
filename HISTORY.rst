@@ -559,7 +559,7 @@ XXXX-XX-XX
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
   support real-time processes.  (patch by Georg Sauthoff)
-- 1194_: [SunOS] Fix double free in psutil_proc_cpu_num().  (patch by Georg
+- 1194_: [SunOS] Fix double free in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
 - 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
   and warnings.  (patch by Georg Sauthoff)
@@ -752,7 +752,7 @@ XXXX-XX-XX
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
 - 1065_: [OpenBSD] `Process.cmdline()`_ may raise SystemError.
 - 1067_: [NetBSD] `Process.cmdline()`_ leaks memory if process has terminated.
-- 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
+- 1069_: [FreeBSD] `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
@@ -888,7 +888,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 357_: added psutil.Process.cpu_num() (what CPU a process is on).
+- 357_: added `Process.cpu_num()`_ (what CPU a process is on).
 - 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
 - 955_: added psutil.sensors_battery() (Linux, Windows, only).
@@ -2314,6 +2314,7 @@ DeprecationWarning.
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
 .. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
+.. _`Process.cpu_num()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_num
 .. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
 .. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
 .. _`Process.ionice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ionice
