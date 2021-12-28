@@ -97,7 +97,7 @@ XXXX-XX-XX
 
 - 809_: [FreeBSD] add support for `Process.rlimit()`_.
 - 893_: [BSD] add support for `Process.environ()`_ (patch by Armin Gruner)
-- 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
+- 1830_: [UNIX] `net_if_stats()`_ `isup` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
 - 1837_: [Linux] improved battery detection and charge "secsleft" calculation
   (patch by aristocratos)
@@ -500,7 +500,7 @@ XXXX-XX-XX
   task_for_pid() syscall. AccessDenied is now raised instead.
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
-- 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
+- 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ENODEV.
 - 1294_: [Windows] `Process.connections()`_ may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
@@ -1066,7 +1066,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 797_: [Linux] net_if_stats() may raise OSError for certain NIC cards.
+- 797_: [Linux] `net_if_stats()`_ may raise OSError for certain NIC cards.
 - 813_: `Process.as_dict()`_ should ignore extraneous attribute names which gets
   attached to the Process instance.
 
@@ -1235,7 +1235,7 @@ XXXX-XX-XX
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
   - `net_if_addrs()`_
-  - psutil.net_if_stats()
+  - `net_if_stats()`_
   - psutil.net_io_counters()
   - `Process.cmdline()`_
   - `Process.name()`_
@@ -1248,7 +1248,7 @@ XXXX-XX-XX
 - 641_: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
 - 652_: [Windows] `net_if_addrs()`_ UnicodeDecodeError in case of non-ASCII NIC
   names.
-- 655_: [Windows] net_if_stats() UnicodeDecodeError in case of non-ASCII NIC
+- 655_: [Windows] `net_if_stats()`_ UnicodeDecodeError in case of non-ASCII NIC
   names.
 - 659_: [Linux] compilation error on Suse 10. (patch by maozguttman)
 - 664_: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
@@ -1321,7 +1321,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 250_: new psutil.net_if_stats() returning NIC statistics (isup, duplex,
+- 250_: new `net_if_stats()`_ returning NIC statistics (isup, duplex,
   speed, MTU).
 - 376_: new `net_if_addrs()`_ returning all NIC addresses a-la ifconfig.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
