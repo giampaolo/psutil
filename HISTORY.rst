@@ -348,10 +348,11 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
-- 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
+- 1448_: [Windows] crash on import due to ``rtlIpv6AddressToStringA`` not available
   on Wine.
-- 1451_: [Windows] `Process.memory_full_info()`_ segfaults. NtQueryVirtualMemory
-  is now used instead of QueryWorkingSet to calculate USS memory.
+- 1451_: [Windows] `Process.memory_full_info()`_ segfaults.
+  ``NtQueryVirtualMemory`` is now used instead of ``QueryWorkingSet`` to
+  calculate USS memory.
 
 5.6.0
 =====
@@ -369,7 +370,7 @@ XXXX-XX-XX
 - 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
   libraries are now loaded only once on startup (instead of on per function
   call) significantly speeding up different functions and methods.
-- 1426_: [Windows] PAGESIZE and number of processors is now calculated on
+- 1426_: [Windows] ``PAGESIZE`` and number of processors is now calculated on
   startup.
 - 1428_: in case of error, the traceback message now shows the underlying C
   function called which failed.
@@ -393,7 +394,7 @@ XXXX-XX-XX
   now, and it should result in less AccessDenied exceptions for low-pid
   processes.
 - 1432_: [Windows] `Process.memory_info_ex()`_'s USS memory is miscalculated
-  because we're not using the actual system PAGESIZE.
+  because we're not using the actual system ``PAGESIZE``.
 - 1439_: [NetBSD] `Process.connections()`_ may return incomplete results if using
   `Process.oneshot()`_.
 - 1447_: original exception wasn't turned into NSP/AD exceptions when using
@@ -412,8 +413,8 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1348_: [Windows] on Windows >= 8.1 if `Process.cmdline()`_ fails due to
-  ERROR_ACCESS_DENIED attempt using NtQueryInformationProcess +
-  ProcessCommandLineInformation. (patch by EccoTheFlintstone)
+  ``ERROR_ACCESS_DENIED`` attempt using ``NtQueryInformationProcess`` +
+  ``ProcessCommandLineInformation``. (patch by EccoTheFlintstone)
 
 **Bug fixes**
 
