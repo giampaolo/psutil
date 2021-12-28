@@ -52,7 +52,7 @@ XXXX-XX-XX
   by PetrPospisil)
 - 1991_: process_iter() can raise TypeError if invoked from multiple threads
   (not thread-safe).
-- 1956_: [macOS] Process.cpu_times() reports incorrect timings on M1 machines.
+- 1956_: [macOS] `Process.cpu_times()`_ reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
 - 2023_: [Linux] `cpu_freq()`_ return order is wrong on systems with > 9 CPUs.
 
@@ -246,7 +246,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
+- 1527_: [Linux] added `Process.cpu_times()`_.iowait counter, which is the time
   spent waiting for blocking I/O to complete.
 - 1565_: add PEP 517/8 build backend and requirements specification for better
   pip integration.  (patch by Bernát Gábor)
@@ -777,7 +777,7 @@ XXXX-XX-XX
 **Porting notes**
 
 - 1039_: returned types consolidation:
-  - Windows / Process.cpu_times(): fields #3 and #4 were int instead of float
+  - Windows / `Process.cpu_times()`_: fields #3 and #4 were int instead of float
   - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
     None
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
@@ -1077,7 +1077,7 @@ XXXX-XX-XX
 
 - 777_: [Linux] Process.open_files() on Linux return 3 new fields: position,
   mode and flags.
-- 779_: Process.cpu_times() returns two new fields, 'children_user' and
+- 779_: `Process.cpu_times()`_ returns two new fields, 'children_user' and
   'children_system' (always set to 0 on macOS and Windows).
 - 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
   "dpc". Same for psutil.cpu_times_percent().
@@ -2305,16 +2305,17 @@ DeprecationWarning.
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
+.. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
+.. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
+.. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
-.. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
-.. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
