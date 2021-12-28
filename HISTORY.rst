@@ -174,7 +174,7 @@ XXXX-XX-XX
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
-- 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
+- 1677_: [Windows] `Process.exe()`_ will succeed for all process PIDs (instead of
   raising AccessDenied).
 - 1679_: [Windows] net_connections() and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
@@ -192,7 +192,7 @@ XXXX-XX-XX
 - 1656_: [Windows] Process.memory_full_info() raises AccessDenied even for the
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
-- 1662_: [Windows] process exe() may raise WinError 0.
+- 1662_: [Windows] `Process.exe()`_ may raise WinError 0.
 - 1665_: [Linux] disk_io_counters() does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
@@ -284,9 +284,9 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1276_: [AIX] can't get whole `Process.cmdline()`_.  (patch by Arnon Yaari)
-- 1501_: [Windows] `Process.cmdline()`_ and exe() raise unhandled "WinError 1168
-  element not found" exceptions for "Registry" and "Memory Compression" psuedo
-  processes on Windows 10.
+- 1501_: [Windows] `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
+  "WinError 1168 element not found" exceptions for "Registry" and
+  "Memory Compression" psuedo processes on Windows 10.
 - 1526_: [NetBSD] `Process.cmdline()`_ could raise MemoryError.  (patch by
   Kamil Rytarowski)
 
@@ -376,9 +376,9 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1353_: process_iter() is now thread safe (it rarely raised TypeError).
-- 1394_: [Windows] Process name() and exe() may erroneously return "Registry".
-  QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
-  in order to prevent that.
+- 1394_: [Windows] Process name() and `Process.exe()`_ may erroneously return
+  "Registry". ``QueryFullProcessImageNameW`` is now used instead of
+  ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
@@ -1121,9 +1121,9 @@ XXXX-XX-XX
   of physical memory.
 - 704_: [Solaris] psutil does not compile on Solaris sparc.
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for process
-  name(), cwd(), exe(), `Process.cmdline()`_ and open_files() methods resulting in
-  UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
-  used as a workaround for replacing the corrupted data.
+  name(), cwd(), `Process.exe()`_, `Process.cmdline()`_ and open_files() methods
+  resulting in UnicodeDecodeError exceptions. 'surrogateescape' error handler
+  is now used as a workaround for replacing the corrupted data.
 - 737_: [Windows] when the bitness of psutil and the target process was
   different, `Process.cmdline()`_ and cwd() could return a wrong result or
   incorrectly report an AccessDenied error.
@@ -1423,7 +1423,7 @@ XXXX-XX-XX
 - 340_: [Windows] Process.get_open_files() no longer hangs.  (patch by
   Jeff Tang)
 - 501_: [Windows] disk_io_counters() may return negative values.
-- 503_: [Linux] in rare conditions Process exe(), open_files() and
+- 503_: [Linux] in rare conditions `Process.exe()`_, open_files() and
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
