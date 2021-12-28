@@ -371,7 +371,7 @@ XXXX-XX-XX
 - 1428_: in case of error, the traceback message now shows the underlying C
   function called which failed.
 - 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
-- 1437_: pids() are returned in sorted order.
+- 1437_: `pids()`_ are returned in sorted order.
 - 1442_: python3 is now the default interpreter used by Makefile.
 
 **Bug fixes**
@@ -594,7 +594,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1193_: pids() may return False on macOS.
+- 1193_: `pids()`_ may return False on macOS.
 
 5.4.2
 =====
@@ -620,7 +620,7 @@ XXXX-XX-XX
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
 - 1181_: [macOS] `Process.memory_maps()`_ may raise ENOENT.
-- 1187_: [macOS] pids() does not return PID 0 on recent macOS versions.
+- 1187_: [macOS] `pids()`_ does not return PID 0 on recent macOS versions.
 
 5.4.1
 =====
@@ -927,7 +927,7 @@ XXXX-XX-XX
 - 940_: [Linux] `cpu_percent()`_ and `cpu_times_percent()`_ was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly
   taken into account.
-- 944_: [OpenBSD] psutil.pids() was omitting PID 0.
+- 944_: [OpenBSD] `pids()`_ was omitting PID 0.
 
 5.0.0
 =====
@@ -1531,7 +1531,7 @@ DeprecationWarning.
   +--------------------------+----------------------------------+
   | Old name                 | Replacement                      |
   +==========================+==================================+
-  | - psutil.get_pid_list()  | psutil.pids()                    |
+  | - psutil.get_pid_list()  | `psutil.pids()`_                 |
   +--------------------------+----------------------------------+
   | - psutil.get_users()     | `psutil.users()`_                |
   +--------------------------+----------------------------------+
