@@ -45,7 +45,7 @@ XXXX-XX-XX
   (patch by Xuehai Pan)
 - 1953_: [Windows] `disk_partitions()`_ crashes due to insufficient buffer len.
   (patch by MaWe2019)
-- 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
+- 1965_: [Windows] fix "Fatal Python error: deallocating ``None``" when calling
   `users()`_ multiple times.
 - 1980_: [Windows] 32bit / WOW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in AccessDenied. This is now fixed.  (patch
@@ -112,7 +112,7 @@ XXXX-XX-XX
 - 1823_: [Windows] `Process.open_files()`_ may cause a segfault due to a NULL
   pointer.
 - 1838_: [Linux] `sensors_battery()`_: if `percent` can be determined but not
-  the remaining values, still return a result instead of None.
+  the remaining values, still return a result instead of ``None``.
   (patch by aristocratos)
 
 5.7.2
@@ -131,8 +131,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
-- 1741_: "make build/install" is now run in parallel and it's about 15% faster
+- 1729_: parallel tests on UNIX (``make test-parallel``). They're twice as fast!
+- 1741_: ``make build/install`` is now run in parallel and it's about 15% faster
   on UNIX.
 - 1747_: `Process.wait()`_ on POSIX returns an enum, showing the negative signal
   which was used to terminate the process::
@@ -143,7 +143,7 @@ XXXX-XX-XX
     <Negsignal.SIGTERM: -15>
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
-- 1747_: Process provides more info about the process on str() and repr()
+- 1747_: Process provides more info about the process on ``str()`` and ``repr()``
   (status and exit code)::
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
@@ -204,7 +204,7 @@ XXXX-XX-XX
 - 1684_: [Linux] `disk_io_counters()`_ may raise ``ValueError`` on systems not
   having /proc/diskstats.
 - 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
-  PSUTIL_HAVE_IOPRIO not being defined.  (patch by Anselm Kruis)
+  ``PSUTIL_HAVE_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
 5.6.7
 =====
@@ -299,8 +299,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 604_: [Windows, Windows] add new `getloadavg()`_, returning system load
-  average calculation, including on Windows (emulated).  (patch by Ammar Askar)
+- 604_: [Windows] add new `getloadavg()`_, returning system load average
+  calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] `cpu_count()`_ with ``logical=False`` uses a second method
   (read from `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to
   determine the number of CPU cores in case /proc/cpuinfo does not provide this
@@ -316,7 +316,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1223_: [Windows] `boot_time()`_ may return incorrect value on Windows XP.
-- 1456_: [Linux] `cpu_freq()`_ returns None instead of 0.0 when min/max not
+- 1456_: [Linux] `cpu_freq()`_ returns ``None`` instead of 0.0 when min/max not
   available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
   Benjamin Drung)
@@ -574,7 +574,7 @@ XXXX-XX-XX
 - 1222_: [Linux] `Process.memory_full_info()`_ was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
-- 1238_: [Linux] `sensors_battery()`_ may return None in case battery is not
+- 1238_: [Linux] `sensors_battery()`_ may return ``None`` in case battery is not
   listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] `cpu_times()`_ float loses accuracy in a long running system.
   (patch by stswandering)
@@ -585,7 +585,7 @@ XXXX-XX-XX
 **Backward compatibility**
 
 - 771_: [Windows] `cpu_count()`_ with ``logical=False`` on Windows XP and Vista
-  is no longer supported and returns `None`.
+  is no longer supported and returns ``None``.
 
 5.4.3
 =====
@@ -619,7 +619,7 @@ XXXX-XX-XX
 - 1152_: [Windows] `disk_io_counters()`_ may return an empty dict.
 - 1169_: [Linux] `users()`_ "hostname" returns username instead.  (patch by
   janderbrain)
-- 1172_: [Windows] `make test` does not work.
+- 1172_: [Windows] ``make test`` does not work.
 - 1179_: [Linux] `Process.cmdline()`_ is now able to split cmdline args for
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
@@ -767,8 +767,8 @@ XXXX-XX-XX
   Oleksii Shevchuk)
 - 1079_: [FreeBSD] `net_connections()`_ didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
-- 1085_: `cpu_count()`_ return value is now checked and forced to None if <= 1.
-- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning None and
+- 1085_: `cpu_count()`_ return value is now checked and forced to ``None`` if <= 1.
+- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning ``None`` and
   assumes 1 instead.
 - 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_: [Windows] `pid_exists()`_ may lie. Also, all process APIs relying
@@ -784,9 +784,9 @@ XXXX-XX-XX
 - 1039_: returned types consolidation:
   - Windows / `Process.cpu_times()`_: fields #3 and #4 were int instead of float
   - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
-    None
+    ``None``
   - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
-    None
+    ``None``
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
@@ -807,7 +807,7 @@ XXXX-XX-XX
 - 1002_: [SunOS] remove C macro which will not be available on new Solaris
   versions. (patch by Danek Duvall)
 - 1004_: [Linux] `Process.io_counters()`_ may raise ``ValueError``.
-- 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
+- 1006_: [Linux] `cpu_freq()`_ may return ``None`` on some Linux versions does not
   support the function; now the function is not declared instead.
 - 1009_: [Linux] `sensors_temperatures()`_ may raise ``OSError``.
 - 1010_: [Linux] `virtual_memory()`_ may raise ``ValueError`` on Ubuntu 14.04.
@@ -861,7 +861,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may erroneously return None on
+- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may erroneously return ``None`` on
   Python 3.
 - 968_: [Linux] `disk_io_counters()`_ raises ``TypeError`` on python 3.
 - 970_: [Linux] `sensors_battery()`_'s ``name`` and ``label`` fields on Python 3 are bytes
@@ -896,7 +896,7 @@ XXXX-XX-XX
 - 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
 - 955_: added psutil.`sensors_battery()`_ (Linux, Windows, only).
-- 956_: `Process.cpu_affinity()`_ can now be passed ``[]``` argument as an
+- 956_: `Process.cpu_affinity()`_ can now be passed ``[]`` argument as an
   alias to set affinity against all eligible CPUs.
 
 **Bug fixes**
@@ -1012,7 +1012,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 881_: "make install" now works also when using a virtual env.
+- 881_: ``make install`` now works also when using a virtual env.
 
 **Bug fixes**
 
@@ -1303,9 +1303,9 @@ XXXX-XX-XX
 - 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
 - 639_: [Linux] `Process.cmdline()`_ can be truncated.
-- 640_: [Linux] *connections functions may swallow errors and return an
+- 640_: [Linux] ``*connections`` functions may swallow errors and return an
   incomplete list of connnections.
-- 642_: repr() of exceptions is incorrect.
+- 642_: ``repr()`` of exceptions is incorrect.
 - 653_: [Windows] Add inet_ntop function for Windows XP to support IPv6.
 - 641_: [Windows] Replace deprecated string functions with safe equivalents.
 
@@ -1434,7 +1434,7 @@ XXXX-XX-XX
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
-  `Process.connections()`_ can raise ````OSError(ESRCH)`` instead of NoSuchProcess.
+  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
@@ -1830,7 +1830,7 @@ DeprecationWarning.
   py2.4 and py2.5 are) `disk_io_counters()`_ will fail. (Patch by m.malycha)
 - 353_: [macOS] get_users() returns an empty list on macOS 10.8.
 - 356_: `Process.parent()`_ now checks whether parent PID has been reused in which
-  case returns None.
+  case returns ``None``.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
 - 366_: [FreeBSD] `Process.memory_maps()`_, `Process.num_fds()`_,
