@@ -744,7 +744,7 @@ XXXX-XX-XX
 - 1050_: [Windows] `Process.memory_maps()`_ leaks memory.
 - 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
-  Process.cpu_percent() which no longer uses the cache.
+  `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.
@@ -764,7 +764,7 @@ XXXX-XX-XX
 - 1079_: [FreeBSD] `net_connections()`_ didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
 - 1085_: `cpu_count()`_ return value is now checked and forced to None if <= 1.
-- 1087_: Process.cpu_percent() guard against `cpu_count()`_ returning None and
+- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning None and
   assumes 1 instead.
 - 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
@@ -900,7 +900,7 @@ XXXX-XX-XX
 - 687_: [Linux] pid_exists() no longer returns True if passed a process thread
   ID.
 - 948_: cannot install psutil with PYTHONOPTIMIZE=2.
-- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+- 950_: [Windows] `Process.cpu_percent()`_ was calculated incorrectly and showed
   higher number than real usage.
 - 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
@@ -1504,7 +1504,7 @@ XXXX-XX-XX
 - 471_: [Windows] process exe improper unicode handling. (patch by
   alex@mroja.net)
 - 473_: psutil.Popen.wait() does not set returncode attribute.
-- 474_: [Windows] Process.cpu_percent() is no longer capped at 100%.
+- 474_: [Windows] `Process.cpu_percent()`_ is no longer capped at 100%.
 - 476_: [Linux] encoding error for `Process.name()`_ and `Process.cmdline()`_.
 
 **API changes**
@@ -2179,7 +2179,7 @@ DeprecationWarning.
   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
   longer required as a third-party dependancy. (patch by wj32)
 - 117_: added support for Windows 2000.
-- 123_: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a
+- 123_: psutil.cpu_percent() and `Process.cpu_percent()`_ accept a
   new 'interval' parameter.
 - 129_: per-process number of threads.
 
@@ -2313,6 +2313,7 @@ DeprecationWarning.
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
+.. _`Process.cpu_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_percent
 .. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
 .. _`Process.cpu_num()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_num
 .. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
