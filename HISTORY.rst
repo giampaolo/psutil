@@ -26,7 +26,7 @@ XXXX-XX-XX
 - 1512_, [macOS]: sometimes `Process.connections()`_ will crash with
   ``EOPNOTSUPP`` for one connection; this is now ignored.
 - 1598_, [Windows]: `disk_partitions()`_ only returns mountpoints on drives
-  where it first finds one
+  where it first finds one.
 - 1874_, [Solaris]: swap output error due to incorrect range.
 - 1892_, [macOS]: `cpu_freq()`_ broken on Apple M1.
 - 1901_, [macOS]: different functions, especially `Process.open_files()`_ and
@@ -2075,7 +2075,7 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 135_, [macOS]: psutil cannot create`Process`_ object.
+- 135_, [macOS]: psutil cannot create `Process`_ object.
 - 144_, [Linux]: no longer support 0 special PID.
 - 188_, [Linux]: psutil import error on Linux ARM architectures.
 - 194_, [POSIX]: `Process.cpu_percent()`_ now reports a percentage over
