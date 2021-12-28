@@ -7,7 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- #1851_, [Linux]: `cpu_freq()`_ is slow on systems with many CPUs. Read current
+- 1851_, [Linux]: `cpu_freq()`_ is slow on systems with many CPUs. Read current
   frequency values for all CPUs from ``/proc/cpuinfo`` instead of opening many
   files in ``/sys`` fs.  (patch by marxin)
 - 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
@@ -84,7 +84,7 @@ XXXX-XX-XX
   has no corresponding account name. In this case `AccessDenied`_ is now raised.
 - 1877_, [Windows]: ``OpenProcess`` may fail with ``ERROR_SUCCESS``. Turn it into
   `AccessDenied`_ or `NoSuchProcess`_ depending on whether the PID is alive.
-- 1886_, [macOS]: EIO error may be raised on `Process.cmdline()`_ and
+- 1886_, [macOS]: ``EIO`` error may be raised on `Process.cmdline()`_ and
   `Process.environ()`_. Now it gets translated into `AccessDenied`_.
 - 1891_, [macOS]: get rid of deprecated ``getpagesize()``.
 
@@ -134,8 +134,8 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (``make test-parallel``). They're twice as fast!
 - 1741_: ``make build/install`` is now run in parallel and it's about 15% faster
   on UNIX.
-- 1747_: `Process.wait()`_ on POSIX returns an enum, showing the negative signal
-  which was used to terminate the process::
+- 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
+  negative signal which was used to terminate the process::
     >>> import psutil
     >>> p = psutil.Process(9891)
     >>> p.terminate()
@@ -193,7 +193,7 @@ XXXX-XX-XX
 - 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
 - 1660_, [Windows]: `Process.open_files()`_ complete rewrite + check of errors.
-- 1662_, [Windows]: `Process.exe()`_ may raise WinError 0.
+- 1662_, [Windows]: `Process.exe()`_ may raise ``WinError 0``.
 - 1665_, [Linux]: `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
@@ -326,8 +326,8 @@ XXXX-XX-XX
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
-- 1474_: fix formatting of ``psutil.tests()`` which mimicks 'ps aux' output.
-- 1475_, [Windows]: ``OSError``.winerror attribute wasn't properly checked resuling
+- 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
+- 1475_, [Windows]: ``OSError.winerror`` attribute wasn't properly checked resuling
   in ``WindowsError`` being raised instead of `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
@@ -612,7 +612,7 @@ XXXX-XX-XX
 - 1177_: added support for `sensors_battery()`_ on macOS.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on UNIX and 2.4x faster on Linux.
 - 1188_: deprecated method `Process.memory_info_ex()`_ now warns by using
-  FutureWarning instead of DeprecationWarning.
+  ``FutureWarning`` instead of ``DeprecationWarning``.
 
 **Bug fixes**
 
@@ -1519,7 +1519,7 @@ XXXX-XX-XX
 
 For the sake of consistency a lot of psutil APIs have been renamed.
 In most cases accessing the old names will work but it will cause a
-DeprecationWarning.
+``DeprecationWarning``.
 
 - ``psutil.*`` module level constants have being replaced by functions:
 
@@ -1805,7 +1805,7 @@ DeprecationWarning.
 - 313_, [Linux]: `virtual_memory()`_ and `swap_memory()`_ can crash on
   certain exotic Linux flavors having an incomplete ``/proc`` interface.
   If that's the case we now set the unretrievable stats to 0 and raise a
-  RuntimeWarning.
+  ``RuntimeWarning``.
 - 315_, [macOS]: fix some compilation warnings.
 - 317_, [Windows]: cannot set process CPU affinity above 31 cores.
 - 319_, [Linux]: `Process.memory_maps()`_ raises ``KeyError`` 'Anonymous' on Debian
@@ -4276,7 +4276,7 @@ DeprecationWarning.
 .. _1848: https://github.com/giampaolo/psutil/issues/1848
 .. _1849: https://github.com/giampaolo/psutil/issues/1849
 .. _1850: https://github.com/giampaolo/psutil/issues/1850
-.. _#1851: https://github.com/giampaolo/psutil/issues/1851
+.. _1851: https://github.com/giampaolo/psutil/issues/1851
 .. _1852: https://github.com/giampaolo/psutil/issues/1852
 .. _1853: https://github.com/giampaolo/psutil/issues/1853
 .. _1854: https://github.com/giampaolo/psutil/issues/1854
