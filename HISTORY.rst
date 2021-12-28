@@ -1019,7 +1019,7 @@ XXXX-XX-XX
 - 858_: `Process.as_dict()`_ should not return memory_info_ex() because it's
   deprecated.
 - 863_: [Windows] memory_map truncates addresses above 32 bits
-- 866_: [Windows] win_service_iter() and services in general are not able to
+- 866_: [Windows] `win_service_iter()`_ and services in general are not able to
   handle unicode service names / descriptions.
 - 869_: [Windows] `Process.wait()`_ may raise TimeoutExpired with wrong timeout
   unit (ms instead of sec).
@@ -1055,8 +1055,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 795_: [Windows] new APIs to deal with Windows services: win_service_iter()
-  and win_service_get().
+- 795_: [Windows] new APIs to deal with Windows services: `win_service_iter()`_
+  and `win_service_get()`_.
 - 800_: [Linux] `virtual_memory()`_ returns a new "shared" memory field.
 - 819_: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
