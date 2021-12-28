@@ -466,14 +466,14 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 715_: do not print exception on import time in case cpu_times() fails.
+- 715_: do not print exception on import time in case `cpu_times()`_ fails.
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
 - 1277_: [OSX] available and used memory (`virtual_memory()`_) metrics are
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
 - 1307_: [Linux] `disk_partitions()`_ does not honour PROCFS_PATH.
-- 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
+- 1320_: [AIX] system CPU times (`cpu_times()`_) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
   (patch by Ilya Yanok)
@@ -551,8 +551,8 @@ XXXX-XX-XX
   address space first.  (patch by Georg Sauthoff)
 - 771_: [Windows] `cpu_count()`_ (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
-- 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
-  process groups (> 64 cores).
+- 771_: [Windows] `cpu_times()`_ with ``percpu=True`` return fewer CPUs on
+  systems using process groups (> 64 cores).
 - 771_: [Windows] `cpu_stats()`_ and `cpu_freq()`_ may return incorrect results on
   systems using process groups (> 64 cores).
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
@@ -572,7 +572,7 @@ XXXX-XX-XX
 - 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
 - 1238_: [Linux] `sensors_battery()`_ may return None in case battery is not
   listed as "BAT0" under /sys/class/power_supply.
-- 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
+- 1240_: [Windows] `cpu_times()`_ float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] `sensors_temperatures()`_ may fail with IOError "no such file".
 - 1255_: [FreeBSD] `swap_memory()`_ stats were erroneously represented in KB.
@@ -1080,10 +1080,10 @@ XXXX-XX-XX
 
 - 777_: [Linux] Process.open_files() on Linux return 3 new fields: position,
   mode and flags.
-- 779_: `Process.cpu_times()`_ returns two new fields, 'children_user' and
-  'children_system' (always set to 0 on macOS and Windows).
-- 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
-  "dpc". Same for `cpu_times_percent()`_.
+- 779_: `Process.cpu_times()`_ returns two new fields, ``children_user`` and
+  ``children_system`` (always set to 0 on macOS and Windows).
+- 789_: [Windows] `cpu_times()`_ return two new fields: ``interrupt`` and
+  ``dpc``. Same for `cpu_times_percent()`_.
 - 792_: new `cpu_stats()`_ function returning number of CPU ctx switches
   interrupts, soft interrupts and syscalls.
 
@@ -1174,7 +1174,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 714_: [OpenBSD] `virtual_memory()`_'s ``cached`` value was always set to 0.
-- 715_: don't crash at import time if cpu_times() fail for some reason.
+- 715_: don't crash at import time if `cpu_times()`_ fail for some reason.
 - 717_: [Linux] Process.open_files fails if deleted files still visible.
 - 722_: [Linux] `swap_memory()`_ no longer crashes if sin/sout can't be determined
   due to missing /proc/vmstat.
@@ -1784,10 +1784,10 @@ DeprecationWarning.
 
 - 233_: code migrated to Mercurial (yay!)
 - 246_: psutil.error module is deprecated and scheduled for removal.
-- 328_: [Windows] process IO nice/priority support.
-- 359_: psutil.get_boot_time()`
-- 361_: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
-  'guest_nice' fields available on recent Linux kernels.
+- 328_: [Windows] `Process.ionice()`_ support.
+- 359_: psutil.get_boot_time()
+- 361_: [Linux] `cpu_times()`_ now includes new ``steal``, ``guest`` and
+  ``guest_nice`` fields available on recent Linux kernels.
   Also, `cpu_percent()`_ is more accurate.
 - 362_: `cpu_times_percent()`_ (per-CPU-time utilization as a percentage)
 
@@ -2172,7 +2172,7 @@ DeprecationWarning.
 - 95_: NoSuchProcess and AccessDenied exception classes now provide "pid",
   "name" and "msg" attributes.
 - 97_: per-process children.
-- 98_: Process.get_cpu_times() and Process.get_memory_info now return
+- 98_: `Process.cpu_times()`_ and `Process.memory_info()`_ now return
   a namedtuple instead of a tuple.
 - 103_: per-process opened TCP and UDP connections.
 - 107_: add support for Windows 64 bit. (patch by cjgohlke)
@@ -2210,7 +2210,7 @@ DeprecationWarning.
 - `Process.kill()`_: signal argument was removed - to send a signal to the
   process use send_signal(signal) method instead.
 - psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
-- psutil.cpu_times() returns a nametuple instead of a tuple.
+- `cpu_times()`_ returns a nametuple instead of a tuple.
 - New psutil.Process methods: get_open_files(), get_connections(),
   send_signal() and terminate().
 - ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time properties
@@ -2235,8 +2235,8 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 36_: process cpu_times() and memory_info() functions succeeded also for dead
-  processes while a NoSuchProcess exception is supposed to be raised.
+- 36_: `Process.cpu_times()`_ and `Process.memory_info()`_ functions succeeded
+  also for dead processes while a NoSuchProcess exception is supposed to be raised.
 - 48_: incorrect size for mib array defined in getcmdargs for BSD
 - 49_: possible memory leak due to missing free() on error condition on
 - 50_: fixed getcmdargs() memory fragmentation on BSD
