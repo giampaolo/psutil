@@ -46,7 +46,7 @@ XXXX-XX-XX
 - 1953_: [Windows] `disk_partitions()`_ crashes due to insufficient buffer len.
   (patch by MaWe2019)
 - 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
-  psutil.users() multiple times.
+  `users()`_ multiple times.
 - 1980_: [Windows] 32bit / WOW64 processes fails to read process name longer
   than 128 characters resulting in AccessDenied. This is now fixed.  (patch
   by PetrPospisil)
@@ -179,7 +179,7 @@ XXXX-XX-XX
 - 1679_: [Windows] net_connections() and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
-- 1693_: [Windows] boot_time(), Process.create_time() and users()'s login time
+- 1693_: [Windows] boot_time(), Process.create_time() and `users()`_'s login time
   now have 1 micro second precision (before the precision was of 1 second).
 
 **Bug fixes**
@@ -612,7 +612,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1152_: [Windows] disk_io_counters() may return an empty dict.
-- 1169_: [Linux] users() "hostname" returns username instead.  (patch by
+- 1169_: [Linux] `users()`_ "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
 - 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
@@ -699,7 +699,7 @@ XXXX-XX-XX
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
-- 1022_: psutil.users() provides a new "pid" field.
+- 1022_: `users()`_ provides a new "pid" field.
 - 1025_: process_iter() accepts two new parameters in order to invoke
   Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
@@ -739,7 +739,7 @@ XXXX-XX-XX
   zombie processes.
 - 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
-- 1048_: [Windows] users()'s host field report an invalid IP address.
+- 1048_: [Windows] `users()`_'s ``host`` field report an invalid IP address.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
 - 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
@@ -873,7 +873,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 964_: [Windows] Process.username() and psutil.users() may return badly
+- 964_: [Windows] Process.username() and `users()`_ may return badly
   decoding character on Python 3.
 - 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
   wrong number of bytes read and written.
@@ -1238,7 +1238,7 @@ XXXX-XX-XX
   - psutil.Process.cmdline()
   - psutil.`Process.name()`_
   - psutil.Process.username()
-  - psutil.users()
+  - `users()`_
 
 **Bug fixes**
 
@@ -1342,7 +1342,7 @@ XXXX-XX-XX
 - 428_: [all UNIXes except Linux] correct handling of zombie processes;
   introduced new ZombieProcess exception class.
 - 512_: [BSD] fix segfault in net_connections().
-- 555_: [Linux] psutil.users() correctly handles ":0" as an alias for
+- 555_: [Linux] `users()`_ correctly handles ":0" as an alias for
   "localhost"
 - 579_: [Windows] Fixed open_files() for PID>64K.
 - 579_: [Windows] fixed many compiler warnings.
@@ -1391,7 +1391,7 @@ XXXX-XX-XX
 - 561_: [Linux] net_connections() might skip some legitimate UNIX sockets.
   (patch by spacewander)
 - 565_: [Windows] use proper encoding for psutil.Process.username() and
-  psutil.users(). (patch by Sylvain Mouquet)
+  `users()`_. (patch by Sylvain Mouquet)
 - 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
 - 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
@@ -1525,15 +1525,15 @@ DeprecationWarning.
 
 - Renamed psutil.* functions:
 
-  +--------------------------+-------------------------------+
-  | Old name                 | Replacement                   |
-  +==========================+===============================+
-  | - psutil.get_pid_list()  | psutil.pids()                 |
-  +--------------------------+-------------------------------+
-  | - psutil.get_users()     | psutil.users()                |
-  +--------------------------+-------------------------------+
-  | - psutil.get_boot_time() | psutil.boot_time()            |
-  +--------------------------+-------------------------------+
+  +--------------------------+----------------------------------+
+  | Old name                 | Replacement                      |
+  +==========================+==================================+
+  | - psutil.get_pid_list()  | psutil.pids()                    |
+  +--------------------------+----------------------------------+
+  | - psutil.get_users()     | `psutil.users()`_                |
+  +--------------------------+----------------------------------+
+  | - psutil.get_boot_time() | psutil.boot_time()               |
+  +--------------------------+----------------------------------+
 
 - All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
   get_ext_memory_info() renamed to memory_info_ex().
