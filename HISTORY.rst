@@ -73,7 +73,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1708_: [Linux] get rid of sensors_temperatures() duplicates.  (patch by Tim
+- 1708_: [Linux] get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
 - 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
   from 32 bit ones (NtWoW64 APIs).
@@ -169,7 +169,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1637_: [SunOS] add partial support for old SunOS 5.10 Update 0 to 3.
-- 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
+- 1648_: [Linux] `sensors_temperatures()`_ looks into an additional /sys/device/
   directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
@@ -323,7 +323,7 @@ XXXX-XX-XX
 - 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
   by Daniel Beer)
 - 1472_: [Linux] `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
-- 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
+- 1474_: fix formatting of ``psutil.tests()`` which mimicks 'ps aux' output.
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
   in WindowsError being raised instead of AccessDenied.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
@@ -426,7 +426,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1350_: [FreeBSD] added support for sensors_temperatures().  (patch by Alex
+- 1350_: [FreeBSD] added support for `sensors_temperatures()`_.  (patch by Alex
   Manuskin)
 - 1352_: [FreeBSD] added support for CPU frequency.  (patch by Alex Manuskin)
 
@@ -457,7 +457,7 @@ XXXX-XX-XX
 
 - 1197_: [Linux] `cpu_freq()`_ is now implemented by parsing /proc/cpuinfo in case
   /sys/devices/system/cpu/* filesystem is not available.
-- 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
+- 1310_: [Linux] `sensors_temperatures()`_ now parses /sys/class/thermal
   in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
 - 1320_: [Posix] better compilation support when using g++ instead of gcc.
@@ -507,7 +507,7 @@ XXXX-XX-XX
   statuses (returns '?').
 - 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
-- 1323_: [Linux] sensors_temperatures() may fail with ValueError.
+- 1323_: [Linux] `sensors_temperatures()`_ may fail with ValueError.
 
 5.4.6
 =====
@@ -573,7 +573,7 @@ XXXX-XX-XX
   listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
-- 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
+- 1245_: [Linux] `sensors_temperatures()`_ may fail with IOError "no such file".
 - 1255_: [FreeBSD] `swap_memory()`_ stats were erroneously represented in KB.
   (patch by Denis Krienbühl)
 
@@ -653,7 +653,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1009_: [Linux] sensors_temperatures() may crash with IOError.
+- 1009_: [Linux] `sensors_temperatures()`_ may crash with IOError.
 - 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
   in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
@@ -772,7 +772,7 @@ XXXX-XX-XX
   is still alive.
 - 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
   process already died.
-- 1101_: [Linux] sensors_temperatures() may raise ENODEV.
+- 1101_: [Linux] `sensors_temperatures()`_ may raise ENODEV.
 
 **Porting notes**
 
@@ -804,7 +804,7 @@ XXXX-XX-XX
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
 - 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
   support the function; now the function is not declared instead.
-- 1009_: [Linux] sensors_temperatures() may raise OSError.
+- 1009_: [Linux] `sensors_temperatures()`_ may raise OSError.
 - 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
 
 5.2.1
@@ -817,7 +817,7 @@ XXXX-XX-XX
 - 981_: [Linux] `cpu_freq()`_ may return an empty list.
 - 993_: [Windows] Process.memory_maps() on Python 3 may raise
   UnicodeDecodeError.
-- 996_: [Linux] sensors_temperatures() may not show all temperatures.
+- 996_: [Linux] `sensors_temperatures()`_ may not show all temperatures.
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
   FreeBSD 12.
 
@@ -846,7 +846,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 971_: [Linux] sensors_temperatures() didn't work on CentOS 7.
+- 971_: [Linux] `sensors_temperatures()`_ didn't work on CentOS 7.
 - 973_: cpu_percent() may raise ZeroDivisionError.
 
 5.1.2
@@ -888,7 +888,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 357_: added psutil.Process.cpu_num() (what CPU a process is on).
-- 371_: added psutil.sensors_temperatures() (Linux only).
+- 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
 - 955_: added psutil.sensors_battery() (Linux, Windows, only).
 - 956_: cpu_affinity([]) can now be used as an alias to set affinity against
@@ -2311,6 +2311,7 @@ DeprecationWarning.
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
+.. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
