@@ -640,7 +640,7 @@ XXXX-XX-XX
   SIGTERM instead of 0.  (patch by Akos Kiss)
 - 1151_: python -m psutil.tests fail
 - 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
-- 1167_: [Windows] net_io_counter() packets count now include also non-unicast
+- 1167_: [Windows] `net_io_counters()`_ packets count now include also non-unicast
   packets.  (patch by Matthew Long)
 
 5.4.0
@@ -693,7 +693,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 802_: `disk_io_counters()`_ and net_io_counters() numbers no longer wrap
+- 802_: `disk_io_counters()`_ and `net_io_counters()`_ numbers no longer wrap
   (restart from 0). Introduced a new "nowrap" argument.
 - 928_: `net_connections()`_ and `Process.connections()`_ "laddr" and
   "raddr" are now named tuples.
@@ -725,7 +725,7 @@ XXXX-XX-XX
 - 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
   NoSuchProcess.
 - 1016_: `disk_io_counters()`_ raises RuntimeError on a system with no disks.
-- 1017_: net_io_counters() raises RuntimeError on a system with no network
+- 1017_: `net_io_counters()`_ raises RuntimeError on a system with no network
   cards installed.
 - 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
   skipping a file which gets deleted while open files are retrieved.
@@ -746,7 +746,7 @@ XXXX-XX-XX
   Linux where CPUs can be disabled at runtime. This also reflects on
   `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
-- 1062_: `disk_io_counters()`_ and net_io_counters() raise TypeError if no disks
+- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise TypeError if no disks
   or NICs are installed on the system.
 - 1063_: [NetBSD] `net_connections()`_ may list incorrect sockets.
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
@@ -1045,7 +1045,7 @@ XXXX-XX-XX
 - 823_: [NetBSD] virtual_memory() raises TypeError on Python 3.
 - 829_: [UNIX] psutil.`disk_usage()`_ percent field takes root reserved space
   into account.
-- 816_: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
+- 816_: [Windows] fixed `net_io_counters()`_ values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
 4.2.0
@@ -1088,7 +1088,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 774_: [FreeBSD] net_io_counters() dropout is no longer set to 0 if the kernel
+- 774_: [FreeBSD] `net_io_counters()`_ dropout is no longer set to 0 if the kernel
   provides it.
 - 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise NoSuchProcess.
   (patch by wxwright)
@@ -1200,7 +1200,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 517_: [SunOS] net_io_counters failed to detect network interfaces
+- 517_: [SunOS] `net_io_counters()`_ failed to detect network interfaces
   correctly on Solaris 10
 - 541_: [FreeBSD] `disk_io_counters()`_ r/w times were expressed in seconds instead
   of milliseconds.  (patch by dasumin)
@@ -1236,7 +1236,7 @@ XXXX-XX-XX
   by using sys.getfilesystemencoding() codec. The APIs involved are:
   - `net_if_addrs()`_
   - `net_if_stats()`_
-  - psutil.net_io_counters()
+  - `net_io_counters()`_
   - `Process.cmdline()`_
   - `Process.name()`_
   - `Process.username()`_
@@ -1354,7 +1354,7 @@ XXXX-XX-XX
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
-- 611_: [SunOS] net_io_counters has send and received swapped
+- 611_: [SunOS] `net_io_counters()`_ has send and received swapped
 - 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
   sockets instead of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
@@ -1389,7 +1389,7 @@ XXXX-XX-XX
 
 - 496_: [Solaris] can't import psutil.
 - 547_: [UNIX] `Process.username()`_ may raise KeyError if UID can't be resolved.
-- 551_: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
+- 551_: [Windows] get rid of the unicode hack for `net_io_counters()`_ NIC names.
 - 556_: [Linux] lots of file handles were left open.
 - 561_: [Linux] `net_connections()`_ might skip some legitimate UNIX sockets.
   (patch by spacewander)
@@ -1445,9 +1445,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 446_: [Windows] fix encoding error when using net_io_counters() on Python 3.
+- 446_: [Windows] fix encoding error when using `net_io_counters()`_ on Python 3.
   (patch by Szigeti Gabor Niif)
-- 460_: [Windows] net_io_counters() wraps after 4G.
+- 460_: [Windows] `net_io_counters()`_ wraps after 4G.
 - 491_: [Linux] `net_connections()`_ exceptions. (patch by Alexander Grothe)
 
 2.1.0
@@ -1713,10 +1713,10 @@ DeprecationWarning.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] Process.get_memory_info() leaks memory.
 - 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
-- 416_: psutil.`disk_usage()`_ doesn't work well with unicode path names.
+- 416_: `disk_usage()`_ doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
-- 435_: [Linux] psutil.net_io_counters() might report erreneous NIC names.
-- 436_: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
+- 435_: [Linux] `net_io_counters()`_ might report erreneous NIC names.
+- 436_: [Linux] `net_io_counters()`_ reports a wrong 'dropin' value.
 
 **API changes**
 
@@ -1758,7 +1758,7 @@ DeprecationWarning.
   constant object (``psutil.CONN_*``).
 - `Process.connections()`_ 'local_address' and 'remote_address' fields
   renamed to 'laddr' and 'raddr'.
-- psutil.network_io_counters() renamed to psutil.net_io_counters().
+- psutil.network_io_counters() renamed to psutil.`net_io_counters()`_.
 
 0.7.1
 =====
