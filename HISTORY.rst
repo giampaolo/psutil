@@ -2350,12 +2350,12 @@ DeprecationWarning.
 
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 .. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
-
-.. _`AccessDenied()`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
-.. _`NoSuchProcess()`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
-.. _`TimeoutExpired()`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
 .. _`WindowsService()`: https://psutil.readthedocs.io/en/latest/#psutil.WindowsService
-.. _`ZombieProcess()`: https://psutil.readthedocs.io/en/latest/#psutil.`ZombieProcess`_
+
+.. _`AccessDenied`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
+.. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
+.. _`TimeoutExpired`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
+.. _`ZombieProcess`: https://psutil.readthedocs.io/en/latest/#psutil.ZombieProcess
 
 .. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
