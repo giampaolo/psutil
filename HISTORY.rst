@@ -361,7 +361,7 @@ XXXX-XX-XX
 - 1379_: [Windows] Process suspend() and resume() now use NtSuspendProcess
   and NtResumeProcess instead of stopping/resuming all threads of a process.
   This is faster and more reliable (aka this is what ProcessHacker does).
-- 1420_: [Windows] in case of exception disk_usage() now also shows the path
+- 1420_: [Windows] in case of exception `disk_usage()`_ now also shows the path
   name.
 - 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
   libraries are now loaded only once on startup (instead of on per function
@@ -706,7 +706,7 @@ XXXX-XX-XX
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
 - 1040_: implemented full unicode support.
-- 1051_: disk_usage() on Python 3 is now able to accept bytes.
+- 1051_: `disk_usage()`_ on Python 3 is now able to accept bytes.
 - 1058_: test suite now enables all warnings by default.
 - 1060_: source distribution is dynamically generated so that it only includes
   relevant files.
@@ -1043,7 +1043,7 @@ XXXX-XX-XX
 - 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
 - 812_: [NetBSD] fix compilation on NetBSD-5.x.
 - 823_: [NetBSD] virtual_memory() raises TypeError on Python 3.
-- 829_: [UNIX] psutil.disk_usage() percent field takes root reserved space
+- 829_: [UNIX] psutil.`disk_usage()`_ percent field takes root reserved space
   into account.
 - 816_: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
@@ -1713,7 +1713,7 @@ DeprecationWarning.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] Process.get_memory_info() leaks memory.
 - 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
-- 416_: psutil.disk_usage() doesn't work well with unicode path names.
+- 416_: psutil.`disk_usage()`_ doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
 - 435_: [Linux] psutil.net_io_counters() might report erreneous NIC names.
 - 436_: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
