@@ -84,8 +84,8 @@ XXXX-XX-XX
   has no corresponding account name. In this case AccessDenied is now raised.
 - 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
-- 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and environment().
-  Now it gets translated into AccessDenied.
+- 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and
+  `Process.environ()`_. Now it gets translated into AccessDenied.
 - 1891_: [macOS] get rid of deprecated getpagesize().
 
 5.7.3
@@ -134,14 +134,14 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
 - 1741_: "make build/install" is now run in parallel and it's about 15% faster
   on UNIX.
-- 1747_: `Process.wait()` on POSIX returns an enum, showing the negative signal
+- 1747_: `Process.wait()`_ on POSIX returns an enum, showing the negative signal
   which was used to terminate the process::
     >>> import psutil
     >>> p = psutil.Process(9891)
     >>> p.terminate()
     >>> p.wait()
     <Negsignal.SIGTERM: -15>
-- 1747_: `Process.wait()` return value is cached so that the exit code can be
+- 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
 - 1747_: Process provides more info about the process on str() and repr()
   (status and exit code)::
@@ -568,7 +568,7 @@ XXXX-XX-XX
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
 - 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
-- 1224_: [Windows] Process.wait() may erroneously raise TimeoutExpired.
+- 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
 - 1238_: [Linux] sensors_battery() may return None in case battery is not
   listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
@@ -768,7 +768,7 @@ XXXX-XX-XX
 - 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
   on OpenProcess Windows API now check whether the PID is actually running.
-- 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
+- 1098_: [Windows] `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
 - 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
   process already died.
@@ -1019,7 +1019,7 @@ XXXX-XX-XX
 - 863_: [Windows] memory_map truncates addresses above 32 bits
 - 866_: [Windows] win_service_iter() and services in general are not able to
   handle unicode service names / descriptions.
-- 869_: [Windows] Process.wait() may raise TimeoutExpired with wrong timeout
+- 869_: [Windows] `Process.wait()`_ may raise TimeoutExpired with wrong timeout
   unit (ms instead of sec).
 - 870_: [Windows] Handle leak inside psutil_get_process_data.
 
@@ -1971,7 +1971,7 @@ DeprecationWarning.
 - 238_: [Linux, Windows] process CPU affinity (get and set).
 - 242_: add ``recursive=True`` to `Process.children()`_: return all process
   descendants.
-- 245_: [POSIX] Process.wait() incrementally consumes less CPU cycles.
+- 245_: [POSIX] `Process.wait()`_ incrementally consumes less CPU cycles.
 - 257_: [Windows] removed Windows 2000 support.
 - 258_: [Linux] Process.get_memory_info() is now 0.5x faster.
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
@@ -1998,7 +1998,7 @@ DeprecationWarning.
 - 193_: psutil.Popen constructor can throw an exception if the spawned process
   terminates quickly.
 - 240_: [macOS] incorrect use of free() for `Process.connections()`_.
-- 244_: [POSIX] Process.wait() can hog CPU resources if called against a
+- 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
 - 252_: [Windows] process getcwd() erroneously raise NoSuchProcess for
@@ -2052,7 +2052,7 @@ DeprecationWarning.
 - 150_: network I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 154_: [FreeBSD] add support for process getcwd()
 - 157_: [Windows] provide installer for Python 3.2 64-bit.
-- 198_: Process.wait(timeout=0) can now be used to make wait() return
+- 198_: `Process.wait()`_ with ``timeout=0`` can now be used to make wait() return
   immediately.
 - 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 213_: examples/iotop.py script.
@@ -2319,6 +2319,7 @@ DeprecationWarning.
 .. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
+.. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
 .. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
