@@ -7,7 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1851_, [Linux]: `cpu_freq()`_ is slow on systems with many CPUs. Read current
+- #1851_, [Linux]: `cpu_freq()`_ is slow on systems with many CPUs. Read current
   frequency values for all CPUs from ``/proc/cpuinfo`` instead of opening many
   files in ``/sys`` fs.  (patch by marxin)
 - 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
@@ -4276,7 +4276,7 @@ DeprecationWarning.
 .. _1848: https://github.com/giampaolo/psutil/issues/1848
 .. _1849: https://github.com/giampaolo/psutil/issues/1849
 .. _1850: https://github.com/giampaolo/psutil/issues/1850
-.. _1851: https://github.com/giampaolo/psutil/issues/1851
+.. _#1851: https://github.com/giampaolo/psutil/issues/1851
 .. _1852: https://github.com/giampaolo/psutil/issues/1852
 .. _1853: https://github.com/giampaolo/psutil/issues/1853
 .. _1854: https://github.com/giampaolo/psutil/issues/1854
