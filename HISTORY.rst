@@ -190,7 +190,7 @@ XXXX-XX-XX
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
-- 1656_: [Windows] Process.memory_full_info() raises AccessDenied even for the
+- 1656_: [Windows] `Process.memory_full_info()`_ raises AccessDenied even for the
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
 - 1662_: [Windows] `Process.exe()`_ may raise WinError 0.
@@ -350,7 +350,7 @@ XXXX-XX-XX
 - 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
 - 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
   on Wine.
-- 1451_: [Windows] Process.memory_full_info() segfaults. NtQueryVirtualMemory
+- 1451_: [Windows] `Process.memory_full_info()`_ segfaults. NtQueryVirtualMemory
   is now used instead of QueryWorkingSet to calculate USS memory.
 
 5.6.0
@@ -391,7 +391,7 @@ XXXX-XX-XX
 - 1429_: [Windows] SE DEBUG was not properly set for current process. It is
   now, and it should result in less AccessDenied exceptions for low-pid
   processes.
-- 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
+- 1432_: [Windows] `Process.memory_info_ex()`_'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
 - 1439_: [NetBSD] `Process.connections()`_ may return incomplete results if using
   oneshot().
@@ -569,7 +569,7 @@ XXXX-XX-XX
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
-- 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
+- 1222_: [Linux] `Process.memory_full_info()`_ was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
 - 1238_: [Linux] `sensors_battery()`_ may return None in case battery is not
@@ -609,7 +609,7 @@ XXXX-XX-XX
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for `sensors_battery()`_ on macOS.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on UNIX and 2.4x faster on Linux.
-- 1188_: deprecated method Process.memory_info_ex() now warns by using
+- 1188_: deprecated method `Process.memory_info_ex()`_ now warns by using
   FutureWarning instead of DeprecationWarning.
 
 **Bug fixes**
@@ -1019,8 +1019,8 @@ XXXX-XX-XX
   `Process.threads()`_ and `Process.memory_maps()`_ may raise RuntimeError if
   attempting to query a 64bit process with a 32bit python. "Null" values are
   returned as a fallback.
-- 858_: `Process.as_dict()`_ should not return memory_info_ex() because it's
-  deprecated.
+- 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
+  because it's deprecated.
 - 863_: [Windows] memory_map truncates addresses above 32 bits
 - 866_: [Windows] `win_service_iter()`_ and services in general are not able to
   handle unicode service names / descriptions.
@@ -1297,7 +1297,7 @@ XXXX-XX-XX
   to be retrieved.  (patch by Jeff Tang, PR #597)
 - 627_: [Windows] `Process.name()`_ no longer raises AccessDenied for pids owned
   by another user.
-- 636_: [Windows] Process.memory_info() raise AccessDenied.
+- 636_: [Windows] `Process.memory_info()`_ raise AccessDenied.
 - 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
 - 639_: [Linux] `Process.cmdline()`_ can be truncated.
@@ -1716,7 +1716,7 @@ DeprecationWarning.
 - 391_: [Windows] `cpu_times_percent()`_ returns negative percentages.
 - 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
-- 413_: [Windows] Process.get_memory_info() leaks memory.
+- 413_: [Windows] `Process.memory_info()`_ leaks memory.
 - 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
 - 416_: `disk_usage()`_ doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
@@ -1981,7 +1981,7 @@ DeprecationWarning.
   descendants.
 - 245_: [POSIX] `Process.wait()`_ incrementally consumes less CPU cycles.
 - 257_: [Windows] removed Windows 2000 support.
-- 258_: [Linux] Process.get_memory_info() is now 0.5x faster.
+- 258_: [Linux] `Process.memory_info()`_ is now 0.5x faster.
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
 - 262_: [Windows] `disk_partitions()`_ was slow due to inspecting the
@@ -2049,8 +2049,8 @@ DeprecationWarning.
 - 230_: [Windows / macOS] memory leak in `Process.connections()`_.
 - 232_: [Linux] psutil.phymem_usage() can report erroneous values which are
   different than "free" command.
-- 236_: [Windows] memory/handle leak in Process's get_memory_info(),
-  suspend() and resume() methods.
+- 236_: [Windows] memory/handle leak in `Process.memory_info()`_,
+  `Process.suspend()`_ and `Process.resume()`_ methods.
 
 0.4.0
 =====
@@ -2114,7 +2114,7 @@ DeprecationWarning.
 - 164_: [Windows] wait function raises a TimeoutException when a process
   returns -1 .
 - 165_: process.status raises an unhandled exception.
-- 166_: get_memory_info() leaks handles hogging system resources.
+- 166_: `Process.memory_info()`_ leaks handles hogging system resources.
 - 168_: `cpu_percent()`_ returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
 - 178_: macOS - Process.get_threads() leaks memory
@@ -2216,7 +2216,7 @@ DeprecationWarning.
   property.
 - `Process.kill()`_: signal argument was removed - to send a signal to the
   process use send_signal(signal) method instead.
-- psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
+- `Process.memory_info()`_ returns a nametuple instead of a tuple.
 - `cpu_times()`_ returns a nametuple instead of a tuple.
 - New psutil.Process methods: get_open_files(), get_connections(),
   send_signal() and terminate().
