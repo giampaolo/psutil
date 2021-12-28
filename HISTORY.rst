@@ -10,8 +10,8 @@ XXXX-XX-XX
 - 1851_: [Linux] `cpu_freq()`_ is slow on systems with many CPUs. Read current
   frequency values for all CPUs from /proc/cpuinfo instead of opening many
   files in /sys fs.  (patch by marxin)
-- 1992_: NoSuchProcess message now specifies if the PID has been reused.
-- 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
+- 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
+- 1992_: error classes (`NoSuchProcess`_, `AccessDenied`_, etc.) now have a better
   formatted and separated ``__repr__`` and ``__str__`` implementations.
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
 - 1999_: [Linux] `disk_partitions()`_: convert "/dev/root" device (an alias used
@@ -30,10 +30,10 @@ XXXX-XX-XX
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] `cpu_freq()`_ broken on Apple M1.
 - 1901_: [macOS] different functions, especially `Process.open_files()`_ and
-  `Process.connections()`_, could randomly raise AccessDenied because the
+  `Process.connections()`_, could randomly raise `AccessDenied`_ because the
   internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
   We now dynamically increase the buffer size until it's ``big`` enough instead of
-  giving up and raising AccessDenied, which was a fallback to avoid crashing.
+  giving up and raising `AccessDenied`_, which was a fallback to avoid crashing.
 - 1904_: [Windows] ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
   ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
 - 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
@@ -48,7 +48,7 @@ XXXX-XX-XX
 - 1965_: [Windows] fix "Fatal Python error: deallocating ``None``" when calling
   `users()`_ multiple times.
 - 1980_: [Windows] 32bit / WOW64 processes fails to read `Process.name()`_ longer
-  than 128 characters resulting in AccessDenied. This is now fixed.  (patch
+  than 128 characters resulting in `AccessDenied`_. This is now fixed.  (patch
   by PetrPospisil)
 - 1991_: `process_iter()`_ can raise ``TypeError`` if invoked from multiple threads
   (not thread-safe).
@@ -75,17 +75,17 @@ XXXX-XX-XX
 
 - 1708_: [Linux] get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
-- 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
+- 1839_: [Windows] always raise `AccessDenied`_ when failing to query 64 processes
   from 32 bit ones (``NtWoW64`` APIs).
 - 1866_: [Windows] `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
   may raise "invalid access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
 - 1875_: [Windows] `Process.username()`_ may raise ``ERROR_NONE_MAPPED`` if the SID
-  has no corresponding account name. In this case AccessDenied is now raised.
+  has no corresponding account name. In this case `AccessDenied`_ is now raised.
 - 1877_: [Windows] ``OpenProcess`` may fail with ``ERROR_SUCCESS``. Turn it into
-  AccessDenied or NoSuchProcess depending on whether the PID is alive.
+  `AccessDenied`_ or `NoSuchProcess`_ depending on whether the PID is alive.
 - 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and
-  `Process.environ()`_. Now it gets translated into AccessDenied.
+  `Process.environ()`_. Now it gets translated into `AccessDenied`_.
 - 1891_: [macOS] get rid of deprecated ``getpagesize()``.
 
 5.7.3
@@ -157,7 +157,7 @@ XXXX-XX-XX
 - 1726_: [Linux] `cpu_freq()`_ parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
 - 1760_: [Linux] `Process.rlimit()`_ does not handle long long type properly.
-- 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
+- 1766_: [macOS] `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
 - 1781_: fix signature of callback function for `getloadavg()`_.  (patch by
   Ammar Askar)
 
@@ -175,7 +175,7 @@ XXXX-XX-XX
   Minimum supported Windows version now is Windows Vista.
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 - 1677_: [Windows] `Process.exe()`_ will succeed for all process PIDs (instead of
-  raising AccessDenied).
+  raising `AccessDenied`_).
 - 1679_: [Windows] `net_connections()`_ and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
@@ -185,12 +185,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1538_: [NetBSD] `Process.cwd()`_ may return ``ENOENT`` instead of NoSuchProcess.
+- 1538_: [NetBSD] `Process.cwd()`_ may return ``ENOENT`` instead of `NoSuchProcess`_.
 - 1627_: [Linux] `Process.memory_maps()`_ can raise ``KeyError``.
 - 1642_: [SunOS] querying basic info for PID 0 results in ``FileNotFoundError``.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
-- 1656_: [Windows] `Process.memory_full_info()`_ raises AccessDenied even for the
+- 1656_: [Windows] `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
 - 1660_: [Windows] `Process.open_files()`_ complete rewrite + check of errors.
 - 1662_: [Windows] `Process.exe()`_ may raise WinError 0.
@@ -256,14 +256,14 @@ XXXX-XX-XX
 
 - 875_: [Windows] `Process.cmdline()`_, `Process.environ()`_ or `Process.cwd()`_
   may occasionally fail with ``ERROR_PARTIAL_COPY`` which now gets translated to
-  AccessDenied.
+  `AccessDenied`_.
 - 1126_: [Linux] `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
 - 1535_: ``type`` and ``family`` fields returned by `net_connections()`_ are not
   always turned into enums.
-- 1536_: [NetBSD] `Process.cmdline()`_ erroneously raise ZombieProcess error if
+- 1536_: [NetBSD] `Process.cmdline()`_ erroneously raise `ZombieProcess`_ error if
   cmdline has non encodable chars.
 - 1546_: usage percent may be rounded to 0 on Python 2.
 - 1552_: [Windows] `getloadavg()`_ math for calculating 5 and 15 mins values is
@@ -328,7 +328,7 @@ XXXX-XX-XX
 - 1472_: [Linux] `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks 'ps aux' output.
 - 1475_: [Windows] ``OSError``.winerror attribute wasn't properly checked resuling
-  in ``WindowsError`` being raised instead of AccessDenied.
+  in ``WindowsError`` being raised instead of `AccessDenied`_.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
 - 1480_: [Windows] `cpu_count()`_ with ``logical=False`` could cause a crash
@@ -387,11 +387,11 @@ XXXX-XX-XX
 - 1411_: [BSD] lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises ``NotImplementedError`` when querying
-  a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
+  a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
 - 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
   on failed malloc().
 - 1429_: [Windows] SE DEBUG was not properly set for current process. It is
-  now, and it should result in less AccessDenied exceptions for low-pid
+  now, and it should result in less `AccessDenied`_ exceptions for low-pid
   processes.
 - 1432_: [Windows] `Process.memory_info_ex()`_'s USS memory is miscalculated
   because we're not using the actual system ``PAGESIZE``.
@@ -448,7 +448,7 @@ XXXX-XX-XX
 - 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
   Process instances to return incorrect results.
 - 1376_: [Windows] ``OpenProcess``() now uses PROCESS_QUERY_LIMITED_INFORMATION
-  access rights wherever possible, resulting in less AccessDenied exceptions
+  access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
 - 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
   EccoTheFlintstone)
@@ -501,7 +501,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1209_: [macOS] `Process.memory_maps()`_ may fail with ``EINVAL`` due to poor
-  task_for_pid() syscall. AccessDenied is now raised instead.
+  task_for_pid() syscall. `AccessDenied`_ is now raised instead.
 - 1278_: [macOS] `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ``ENODEV``.
@@ -526,7 +526,7 @@ XXXX-XX-XX
 - 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from ``snic`` to
   ``snicaddr``
 - 1274_: [Linux] there was a small chance `Process.children()`_ may swallow
-  AccessDenied exceptions.
+  `AccessDenied`_ exceptions.
 
 5.4.5
 =====
@@ -707,7 +707,7 @@ XXXX-XX-XX
 - 1022_: `users()`_ provides a new ``pid`` field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
   `Process.as_dict()`_: "attrs" and "ad_value". With this you can iterate over all
-  processes in one shot without needing to catch NoSuchProcess and do list/dict
+  processes in one shot without needing to catch `NoSuchProcess`_ and do list/dict
   comprehensions.
 - 1040_: implemented full unicode support.
 - 1051_: `disk_usage()`_ on Python 3 is now able to accept bytes.
@@ -727,11 +727,11 @@ XXXX-XX-XX
 - 1013_: [FreeBSD] `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
 - 1014_: [Linux] Process class can mask legitimate ``ENOENT`` exceptions as
-  NoSuchProcess.
+  `NoSuchProcess`_.
 - 1016_: `disk_io_counters()`_ raises ``RuntimeError`` on a system with no disks.
 - 1017_: `net_io_counters()`_ raises ``RuntimeError`` on a system with no network
   cards installed.
-- 1021_: [Linux] `Process.open_files()`_ may erroneously raise NoSuchProcess
+- 1021_: [Linux] `Process.open_files()`_ may erroneously raise `NoSuchProcess`_
   instead of skipping a file which gets deleted while open files are retrieved.
 - 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
   3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
@@ -740,7 +740,7 @@ XXXX-XX-XX
 - 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
-- 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
+- 1044_: [macOS] different Process methods incorrectly raise `AccessDenied`_ for
   zombie processes.
 - 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
 - 1047_: [Windows] `Process.username()`_: memory leak in case exception is thrown.
@@ -775,7 +775,7 @@ XXXX-XX-XX
   on ``OpenProcess`` Windows API now check whether the PID is actually running.
 - 1098_: [Windows] `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
-- 1099_: [Windows] `Process.terminate()`_ may raise AccessDenied even if the
+- 1099_: [Windows] `Process.terminate()`_ may raise `AccessDenied`_ even if the
   process already died.
 - 1101_: [Linux] `sensors_temperatures()`_ may raise ``ENODEV``.
 
@@ -842,7 +842,7 @@ XXXX-XX-XX
 - 872_: [Linux] can now compile on Linux by using MUSL C library.
 - 985_: [Windows] Fix a crash in `Process.open_files()`_ when the worker thread
   for ``NtQueryObject`` times out.
-- 986_: [Linux] `Process.cwd()`_ may raise NoSuchProcess instead of ZombieProcess.
+- 986_: [Linux] `Process.cwd()`_ may raise `NoSuchProcess`_ instead of `ZombieProcess`_.
 
 5.1.3
 =====
@@ -997,7 +997,7 @@ XXXX-XX-XX
   Now the argument is ignored and all partitions are always returned.
 - 907_: [FreeBSD] `Process.exe()`_ may fail with ``OSError(ENOENT)``.
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
-  error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
+  error for high-privileged PIDs and raise `NoSuchProcess`_ and `AccessDenied`_
   instead of ``OSError`` and ``RuntimeError``.
 - 909_: [macOS] `Process.open_files()`_ and `Process.connections()`_ methods
   may raise ``OSError`` with no exception set if process is gone.
@@ -1093,7 +1093,7 @@ XXXX-XX-XX
 
 - 774_: [FreeBSD] `net_io_counters()`_ dropout is no longer set to 0 if the kernel
   provides it.
-- 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise NoSuchProcess.
+- 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise `NoSuchProcess`_.
   (patch by wxwright)
 - 780_: [macOS] psutil does not compile with some gcc versions.
 - 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
@@ -1133,7 +1133,7 @@ XXXX-XX-XX
   corrupted data.
 - 737_: [Windows] when the bitness of psutil and the target process was
   different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
-  result or incorrectly report an AccessDenied error.
+  result or incorrectly report an `AccessDenied`_ error.
 - 741_: [OpenBSD] psutil does not compile on mips64.
 - 751_: [Linux] fixed call to ``Py_DECREF`` on possible Null object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
@@ -1295,9 +1295,9 @@ XXXX-XX-XX
 - 340_: [Windows] `Process.open_files()`_ no longer hangs. Instead it uses a
   thred which times out and skips the file handle in case it's taking too long
   to be retrieved.  (patch by Jeff Tang, PR #597)
-- 627_: [Windows] `Process.name()`_ no longer raises AccessDenied for pids owned
+- 627_: [Windows] `Process.name()`_ no longer raises `AccessDenied`_ for pids owned
   by another user.
-- 636_: [Windows] `Process.memory_info()`_ raise AccessDenied.
+- 636_: [Windows] `Process.memory_info()`_ raise `AccessDenied`_.
 - 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
 - 639_: [Linux] `Process.cmdline()`_ can be truncated.
@@ -1348,7 +1348,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 428_: [all UNIXes except Linux] correct handling of zombie processes;
-  introduced new ZombieProcess exception class.
+  introduced new `ZombieProcess`_ exception class.
 - 512_: [BSD] fix segfault in `net_connections()`_.
 - 555_: [Linux] `users()`_ correctly handles ":0" as an alias for
   "localhost"
@@ -1358,7 +1358,7 @@ XXXX-XX-XX
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
-- 606_: `Process.parent()`_ may swallow NoSuchProcess exceptions.
+- 606_: `Process.parent()`_ may swallow `NoSuchProcess`_ exceptions.
 - 611_: [SunOS] `net_io_counters()`_ has send and received swapped
 - 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
   sockets instead of cores.
@@ -1403,7 +1403,7 @@ XXXX-XX-XX
 - 567_: [Linux] in the alternative implementation of CPU affinity ``PyList_Append``
   and ``Py_BuildValue`` return values are not checked.
 - 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
-- 571_: [Linux] `Process.open_files()`_ might swallow AccessDenied exceptions and
+- 571_: [Linux] `Process.open_files()`_ might swallow `AccessDenied`_ exceptions and
   return an incomplete list of open files.
 
 2.1.3
@@ -1432,7 +1432,7 @@ XXXX-XX-XX
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
-  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of NoSuchProcess.
+  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of `NoSuchProcess`_.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return ``EINVAL``.  (patch by David
@@ -1775,8 +1775,8 @@ DeprecationWarning.
 - 325_: [BSD] `virtual_memory()`_ can raise ``SystemError``.
   (patch by Jan Beich)
 - 370_: [BSD] `Process.connections()`_ requires root.  (patch by John Baldwin)
-- 372_: [BSD] different process methods raise NoSuchProcess instead of
-  AccessDenied.
+- 372_: [BSD] different process methods raise `NoSuchProcess`_ instead of
+  `AccessDenied`_.
 
 0.7.0
 =====
@@ -1833,7 +1833,7 @@ DeprecationWarning.
   process.
 - 366_: [FreeBSD] `Process.memory_maps()`_, `Process.num_fds()`_,
   `Process.open_files()`_ and `Process.cwd()`_ methods raise ``RuntimeError`` instead
-  of AccessDenied.
+  of `AccessDenied`_.
 
 **API changes**
 
@@ -1860,7 +1860,7 @@ DeprecationWarning.
 
 **API changes**
 
-- `Process.exe()`_ can now return an empty string instead of raising AccessDenied.
+- `Process.exe()`_ can now return an empty string instead of raising `AccessDenied`_.
 - `Process.exe()`_ is no longer resolved in case it's a symlink.
 
 0.6.0
@@ -1877,7 +1877,7 @@ DeprecationWarning.
 - 261_: process extended memory info.
 - 295_: [macOS] `Process.exe()`_ path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
-- 297_: [macOS] the Process methods below were always raising AccessDenied for
+- 297_: [macOS] the Process methods below were always raising `AccessDenied`_ for
   any process except the current one. Now this is no longer true. Also
   they are 2.5x faster.
   - name
@@ -1889,7 +1889,7 @@ DeprecationWarning.
 - 300_: examples/pmap.py script.
 - 301_: `process_iter()`_ now yields processes sorted by their PIDs.
 - 302_: process number of voluntary and involuntary context switches.
-- 303_: [Windows] the Process methods below were always raising AccessDenied
+- 303_: [Windows] the Process methods below were always raising `AccessDenied`_
   for any process not owned by current user. Now this is no longer true:
   - create_time
   - get_cpu_times()
@@ -1941,7 +1941,7 @@ DeprecationWarning.
   information about swap memory usage as it was supposed to do. It does
   now.
 - 309_: `Process.open_files()`_ might not return files which can not be accessed
-  due to limited permissions. AccessDenied is now raised instead.
+  due to limited permissions. `AccessDenied`_ is now raised instead.
 
 **API changes**
 
@@ -2011,16 +2011,16 @@ DeprecationWarning.
 - 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] `net_io_counters()`_ might return erroneous NIC names.
-- 252_: [Windows] `Process.cwd()`_ erroneously raise NoSuchProcess for
-  processes owned by another user.  It now raises AccessDenied instead.
+- 252_: [Windows] `Process.cwd()`_ erroneously raise `NoSuchProcess`_ for
+  processes owned by another user.  It now raises `AccessDenied`_ instead.
 - 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
   (patch by Amoser)
 - 267_: [macOS] `Process.connections()`_ - an erroneous remote address was
   returned. (Patch by Amoser)
 - 272_: [Linux] `Process.open_files()`_ - potential race condition can lead to
-  unexpected NoSuchProcess exception.  Also, we can get incorrect reports
+  unexpected `NoSuchProcess`_ exception.  Also, we can get incorrect reports
   of not absolutized path names.
-- 275_: [Linux] ``Process.io_counters()`` erroneously raise NoSuchProcess on
+- 275_: [Linux] ``Process.io_counters()`` erroneously raise `NoSuchProcess`_ on
   old Linux versions. Where not available it now raises
   ``NotImplementedError``.
 - 286_: `Process.is_running()`_ doesn't actually check whether PID has been
@@ -2034,7 +2034,7 @@ DeprecationWarning.
 - psutil.get_process_list() is deprecated.
 - `Process.ppid()`_, `Process.name()`_, `Process.exe()`_, `Process.cmdline()`_
   and `Process.create_time()`_ properties of Process class are now cached after
-  being accessed, meaning NoSuchProcess will no longer be raised in case the
+  being accessed, meaning `NoSuchProcess`_ will no longer be raised in case the
   process is gone in the meantime.
 - ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
@@ -2087,7 +2087,7 @@ DeprecationWarning.
   and causing crash on module import.
 - 201_: [Linux] `Process.connections()`_ is broken on big-endian
   architectures.
-- 211_: Process instance can unexpectedly raise NoSuchProcess if tested for
+- 211_: Process instance can unexpectedly raise `NoSuchProcess`_ if tested for
   equality with another object.
 - 218_: [Linux] crash at import time on Debian 64-bit because of a missing
   line in /proc/meminfo.
@@ -2120,7 +2120,7 @@ DeprecationWarning.
   non-blocking mode.  (patch by Philip Roberts)
 - 178_: macOS - Process.get_threads() leaks memory
 - 180_: [Windows] Process's get_num_threads() and get_threads() methods can
-  raise NoSuchProcess exception while process still exists.
+  raise `NoSuchProcess`_ exception while process still exists.
 
 0.2.1
 =====
@@ -2153,7 +2153,7 @@ DeprecationWarning.
 - 83_:  `Process.cmdline()`_ is empty on macOS 64-bit.
 - 130_: a race condition can cause ``IOError`` exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
-- 145_: ``WindowsError`` was raised instead of psutil.AccessDenied when using
+- 145_: ``WindowsError`` was raised instead of psutil.`AccessDenied`_ when using
   `Process.resume()`_ or `Process.suspend()`_ on Windows.
 - 146_: `Process.exe()`_ property on Linux can raise ``TypeError`` if path contains
   NULL bytes.
@@ -2176,7 +2176,7 @@ DeprecationWarning.
 - 88_: total system physical cached memory.
 - 88_: total system physical memory buffers used by the kernel.
 - 91_: add `Process.send_signal()`_ and `Process.terminate()`_ methods.
-- 95_: NoSuchProcess and AccessDenied exception classes now provide "pid",
+- 95_: `NoSuchProcess`_ and `AccessDenied`_ exception classes now provide "pid",
   "name" and "msg" attributes.
 - 97_: per-process children.
 - 98_: `Process.cpu_times()`_ and `Process.memory_info()`_ now return
@@ -2197,7 +2197,7 @@ DeprecationWarning.
 
 - 80_: fixed warnings when installing psutil with easy_install.
 - 81_: psutil fails to compile with Visual Studio.
-- 94_: `Process.suspend()`_ raises ``OSError`` instead of AccessDenied.
+- 94_: `Process.suspend()`_ raises ``OSError`` instead of `AccessDenied`_.
 - 86_: psutil didn't compile against FreeBSD 6.x.
 - 102_: orphaned process handles obtained by using ``OpenProcess`` in C were
   left behind every time Process class was instantiated.
@@ -2208,7 +2208,7 @@ DeprecationWarning.
   user/group id at some point.
 - 126_: `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
   `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
-  properties are no longer cached and correctly raise NoSuchProcess exception
+  properties are no longer cached and correctly raise `NoSuchProcess`_ exception
   if the process disappears.
 
 **API changes**
@@ -2223,7 +2223,7 @@ DeprecationWarning.
   `Process.send_signal()`_ and `Process.terminate()`_.
 - `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
   `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
-  properties are no longer cached and raise NoSuchProcess exception if process
+  properties are no longer cached and raise `NoSuchProcess`_ exception if process
   disappears.
 - `cpu_percent()`_ no longer returns immediately (see issue 123).
 - `Process.cpu_percent()`_ and `cpu_percent()`_ no longer returns immediately
@@ -2246,7 +2246,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 36_: `Process.cpu_times()`_ and `Process.memory_info()`_ functions succeeded
-  also for dead processes while a NoSuchProcess exception is supposed to be raised.
+  also for dead processes while a `NoSuchProcess`_ exception is supposed to be raised.
 - 48_: incorrect size for mib array defined in getcmdargs for BSD
 - 49_: possible memory leak due to missing free() on error condition on
 - 50_: fixed getcmdargs() memory fragmentation on BSD
@@ -2256,7 +2256,7 @@ DeprecationWarning.
 - 58_: `Process.is_running()`_ is now called before `Process.kill()`_ to make
   sure we are going to kill the correct process.
 - 73_: virtual memory size reported on macOS includes shared library size
-- 77_: NoSuchProcess wasn't raised on `Process.create_time()`_ if `Process.kill()`_
+- 77_: `NoSuchProcess`_ wasn't raised on `Process.create_time()`_ if `Process.kill()`_
   was used first.
 
 0.1.2
@@ -2278,9 +2278,9 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
+- 36_: [Windows] `NoSuchProcess`_ not raised when accessing timing methods.
 - 40_: test_get_cpu_times() failing on FreeBSD and macOS.
-- 42_: [Windows] `Process.memory_percent()`_ raises AccessDenied.
+- 42_: [Windows] `Process.memory_percent()`_ raises `AccessDenied`_.
 
 0.1.1
 =====
@@ -2295,10 +2295,10 @@ DeprecationWarning.
   Process object representing the parent process, and Process.ppid returns
   the parent PID.
 - 12_ & 15:
-  NoSuchProcess exception now raised when creating an object
+  `NoSuchProcess`_ exception now raised when creating an object
   for a nonexistent process, or when retrieving information about a process
   that has gone away.
-- 21_: AccessDenied exception created for raising access denied errors
+- 21_: `AccessDenied`_ exception created for raising access denied errors
   from ``OSError`` or ``WindowsError`` on individual platforms.
 - 26_: `process_iter()`_ function to iterate over processes as
   Process objects with a generator.
@@ -2309,11 +2309,11 @@ DeprecationWarning.
 
 - 16_: [Windows] Special case for "System Idle Process" (PID 0) which
   otherwise would return an "invalid parameter" exception.
-- 17_: get_process_list() ignores NoSuchProcess and AccessDenied
+- 17_: get_process_list() ignores `NoSuchProcess`_ and `AccessDenied`_
   exceptions during building of the list.
 - 22_: [Windows] `Process.kill()`_ for PID 0 was failing with an unset exception.
 - 23_: Special case for `pid_exists()`_ with PID 0.
-- 24_: [Windows] `Process.kill()`_ for PID 0 now raises AccessDenied exception
+- 24_: [Windows] `Process.kill()`_ for PID 0 now raises `AccessDenied`_ exception
   instead of ``WindowsError``.
 - 30_: psutil.get_pid_list() was returning two ins
 
@@ -2350,7 +2350,12 @@ DeprecationWarning.
 
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 .. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
+
+.. _`AccessDenied()`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
+.. _`NoSuchProcess()`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
+.. _`TimeoutExpired()`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
 .. _`WindowsService()`: https://psutil.readthedocs.io/en/latest/#psutil.WindowsService
+.. _`ZombieProcess()`: https://psutil.readthedocs.io/en/latest/#psutil.`ZombieProcess`_
 
 .. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
