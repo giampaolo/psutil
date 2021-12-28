@@ -179,7 +179,7 @@ XXXX-XX-XX
 - 1679_: [Windows] `net_connections()`_ and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
-- 1693_: [Windows] boot_time(), Process.create_time() and `users()`_'s login time
+- 1693_: [Windows] `boot_time()`_, Process.create_time() and `users()`_'s login time
   now have 1 micro second precision (before the precision was of 1 second).
 
 **Bug fixes**
@@ -313,7 +313,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1223_: [Windows] boot_time() may return value on Windows XP.
+- 1223_: [Windows] `boot_time()`_ may return incorrect value on Windows XP.
 - 1456_: [Linux] `cpu_freq()`_ returns None instead of 0.0 when min/max not
   available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
@@ -716,9 +716,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 989_: [Windows] boot_time() may return a negative value.
-- 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
-  value of the first call is now cached so that boot_time() always returns the
+- 989_: [Windows] `boot_time()`_ may return a negative value.
+- 1007_: [Windows] `boot_time()`_ can have a 1 sec fluctuation between calls; the
+  value of the first call is now cached so that `boot_time()`_ always returns the
   same value if fluctuation is <= 1 second.
 - 1013_: [FreeBSD] `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
@@ -1133,7 +1133,7 @@ XXXX-XX-XX
 - 751_: [Linux] fixed call to Py_DECREF on possible Null object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
-- 761_: [Windows] psutil.boot_time() wraps to 0 after 49 days.
+- 761_: [Windows] psutil.`boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
 - 767_: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
@@ -1521,7 +1521,7 @@ DeprecationWarning.
   +=======================+==================================+
   | psutil.NUM_CPUS       | `psutil.cpu_count()`_            |
   +-----------------------+----------------------------------+
-  | psutil.BOOT_TIME      | psutil.boot_time()               |
+  | psutil.BOOT_TIME      | `psutil.boot_time()`_            |
   +-----------------------+----------------------------------+
   | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total    |
   +-----------------------+----------------------------------+
@@ -1535,7 +1535,7 @@ DeprecationWarning.
   +--------------------------+----------------------------------+
   | - psutil.get_users()     | `psutil.users()`_                |
   +--------------------------+----------------------------------+
-  | - psutil.get_boot_time() | psutil.boot_time()               |
+  | - psutil.get_boot_time() | `psutil.boot_time()`_            |
   +--------------------------+----------------------------------+
 
 - All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
@@ -1783,7 +1783,7 @@ DeprecationWarning.
 - 233_: code migrated to Mercurial (yay!)
 - 246_: psutil.error module is deprecated and scheduled for removal.
 - 328_: [Windows] process IO nice/priority support.
-- 359_: psutil.get_boot_time()
+- 359_: psutil.get_boot_time()`
 - 361_: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
   'guest_nice' fields available on recent Linux kernels.
   Also, `cpu_percent()`_ is more accurate.
