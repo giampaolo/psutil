@@ -34,10 +34,10 @@ XXXX-XX-XX
   internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
   We now dynamically increase the buffer size until it's ``big`` enough instead of
   giving up and raising AccessDenied, which was a fallback to avoid crashing.
-- 1904_: [Windows] OpenProcess fails with ``ERROR_SUCCESS`` due to GetLastError()
-  called after sprintf().  (patch by alxchk)
+- 1904_: [Windows] OpenProcess fails with ``ERROR_SUCCESS`` due to
+  ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
 - 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
-- 1919_: [Linux] `sensors_battery()`_ can raise TypeError on PureOS.
+- 1919_: [Linux] `sensors_battery()`_ can raise ``TypeError`` on PureOS.
 - 1921_: [Windows] `swap_memory()`_ shows committed memory instead of swap
 - 1940_: [Linux] psutil does not handle ``ENAMETOOLONG`` when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
@@ -50,7 +50,7 @@ XXXX-XX-XX
 - 1980_: [Windows] 32bit / WOW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in AccessDenied. This is now fixed.  (patch
   by PetrPospisil)
-- 1991_: `process_iter()`_ can raise TypeError if invoked from multiple threads
+- 1991_: `process_iter()`_ can raise ``TypeError`` if invoked from multiple threads
   (not thread-safe).
 - 1956_: [macOS] `Process.cpu_times()`_ reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
@@ -106,7 +106,7 @@ XXXX-XX-XX
 
 - 1620_: [Linux] `cpu_count()`_ with ``logical=False`` result is incorrect on
   systems with more than one CPU socket.  (patch by Vincent A. Arcila)
-- 1738_: [macOS] `Process.exe()`_ may raise FileNotFoundError if process is still
+- 1738_: [macOS] `Process.exe()`_ may raise ``FileNotFoundError`` if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for ``getpagesize()``.
 - 1823_: [Windows] `Process.open_files()`_ may cause a segfault due to a NULL
@@ -190,8 +190,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1538_: [NetBSD] `Process.cwd()`_ may return ENOENT instead of NoSuchProcess.
-- 1627_: [Linux] `Process.memory_maps()`_ can raise KeyError.
-- 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
+- 1627_: [Linux] `Process.memory_maps()`_ can raise ``KeyError``.
+- 1642_: [SunOS] querying basic info for PID 0 results in ``FileNotFoundError``.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
 - 1656_: [Windows] `Process.memory_full_info()`_ raises AccessDenied even for the
@@ -204,8 +204,8 @@ XXXX-XX-XX
   (long) was almost always assumed, which is wrong on most platforms.
 - 1673_: [OpenBSD] `Process.connections()`_, `Process.num_fds()`_ and
   `Process.threads()`_ returned improper exception if process is gone.
-- 1674_: [SunOS] `disk_partitions()`_ may raise OSError.
-- 1684_: [Linux] `disk_io_counters()`_ may raise ValueError on systems not
+- 1674_: [SunOS] `disk_partitions()`_ may raise ``OSError``.
+- 1684_: [Linux] `disk_io_counters()`_ may raise ``ValueError`` on systems not
   having /proc/diskstats.
 - 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
   PSUTIL_HAVE_IOPRIO not being defined.  (patch by Anselm Kruis)
@@ -293,7 +293,7 @@ XXXX-XX-XX
 - 1501_: [Windows] `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
   "WinError 1168 element not found" exceptions for "Registry" and
   "Memory Compression" psuedo processes on Windows 10.
-- 1526_: [NetBSD] `Process.cmdline()`_ could raise MemoryError.  (patch by
+- 1526_: [NetBSD] `Process.cmdline()`_ could raise ``MemoryError``.  (patch by
   Kamil Rytarowski)
 
 5.6.2
@@ -328,11 +328,11 @@ XXXX-XX-XX
 - 1470_: [Linux] `disk_partitions()`_: fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] `Process.name()`_ and `Process.cmdline()`_ can return
-  SystemError.  (patch by Daniel Beer)
+  ``SystemError``.  (patch by Daniel Beer)
 - 1472_: [Linux] `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks 'ps aux' output.
-- 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
-  in WindowsError being raised instead of AccessDenied.
+- 1475_: [Windows] ``OSError``.winerror attribute wasn't properly checked resuling
+  in ``WindowsError`` being raised instead of AccessDenied.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
 - 1480_: [Windows] `cpu_count()`_ with ``logical=False`` could cause a crash
@@ -383,7 +383,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1353_: `process_iter()`_ is now thread safe (it rarely raised TypeError).
+- 1353_: `process_iter()`_ is now thread safe (it rarely raised ``TypeError``).
 - 1394_: [Windows] `Process.name()`_ and `Process.exe()`_ may erroneously return
   "Registry". ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
@@ -391,7 +391,7 @@ XXXX-XX-XX
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
-- 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise OSError
+- 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
   on failed malloc().
 - 1429_: [Windows] SE DEBUG was not properly set for current process. It is
   now, and it should result in less AccessDenied exceptions for low-pid
@@ -474,7 +474,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 715_: do not print exception on import time in case `cpu_times()`_ fails.
-- 1004_: [Linux] `Process.io_counters()`_ may raise ValueError.
+- 1004_: [Linux] `Process.io_counters()`_ may raise ``ValueError``.
 - 1277_: [OSX] available and used memory (`virtual_memory()`_) metrics are
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
@@ -509,13 +509,13 @@ XXXX-XX-XX
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ENODEV.
 - 1294_: [Windows] `Process.connections()`_ may sometime fail with
-  MemoryError.  (patch by sylvainduchesne)
+  ``MemoryError``.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
 - 1309_: [Linux] `Process.status()`_ is unable to recognize ``"idle"`` and
   ``"parked"`` statuses (returns ``"?"``).
 - 1313_: [Linux] `disk_io_counters()`_ can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
-- 1323_: [Linux] `sensors_temperatures()`_ may fail with ValueError.
+- 1323_: [Linux] `sensors_temperatures()`_ may fail with ``ValueError``.
 
 5.4.6
 =====
@@ -686,7 +686,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
-- 1125_: [BSD] `net_connections()`_ raises TypeError.
+- 1125_: [BSD] `net_connections()`_ raises ``TypeError``.
 
 **Compatibility notes**
 
@@ -753,16 +753,16 @@ XXXX-XX-XX
   Linux where CPUs can be disabled at runtime. This also reflects on
   `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
-- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise TypeError if no disks
+- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise ``TypeError`` if no disks
   or NICs are installed on the system.
 - 1063_: [NetBSD] `net_connections()`_ may list incorrect sockets.
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
-- 1065_: [OpenBSD] `Process.cmdline()`_ may raise SystemError.
+- 1065_: [OpenBSD] `Process.cmdline()`_ may raise ``SystemError``.
 - 1067_: [NetBSD] `Process.cmdline()`_ leaks memory if process has terminated.
 - 1069_: [FreeBSD] `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
-- 1074_: [FreeBSD] `sensors_battery()`_ raises OSError in case of no battery.
+- 1074_: [FreeBSD] `sensors_battery()`_ raises ``OSError`` in case of no battery.
 - 1075_: [Windows] `net_if_addrs()`_: inet_ntop() return value is not checked.
 - 1077_: [SunOS] `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
@@ -809,11 +809,11 @@ XXXX-XX-XX
 - 1000_: fixed some setup.py warnings.
 - 1002_: [SunOS] remove C macro which will not be available on new Solaris
   versions. (patch by Danek Duvall)
-- 1004_: [Linux] `Process.io_counters()`_ may raise ValueError.
+- 1004_: [Linux] `Process.io_counters()`_ may raise ``ValueError``.
 - 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
   support the function; now the function is not declared instead.
-- 1009_: [Linux] `sensors_temperatures()`_ may raise OSError.
-- 1010_: [Linux] `virtual_memory()`_ may raise ValueError on Ubuntu 14.04.
+- 1009_: [Linux] `sensors_temperatures()`_ may raise ``OSError``.
+- 1010_: [Linux] `virtual_memory()`_ may raise ``ValueError`` on Ubuntu 14.04.
 
 5.2.1
 =====
@@ -866,7 +866,7 @@ XXXX-XX-XX
 
 - 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may erroneously return None on
   Python 3.
-- 968_: [Linux] `disk_io_counters()`_ raises TypeError on python 3.
+- 968_: [Linux] `disk_io_counters()`_ raises ``TypeError`` on python 3.
 - 970_: [Linux] `sensors_battery()`_'s ``name`` and ``label`` fields on Python 3 are bytes
   instead of str.
 
@@ -994,18 +994,18 @@ XXXX-XX-XX
 - 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
   unopened socket.
 - 880_: [Windows] Handle race condition inside `net_connections()`_.
-- 885_: ValueError is raised if a negative integer is passed to `cpu_percent()`_
+- 885_: ``ValueError`` is raised if a negative integer is passed to `cpu_percent()`_
   functions.
 - 892_: [Linux] `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
-  SystemError with no error set; now ValueError is raised.
+  ``SystemError`` with no error set; now ``ValueError`` is raised.
 - 906_: [BSD] `disk_partitions()`_ with `all=False` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
-- 907_: [FreeBSD] `Process.exe()`_ may fail with OSError(ENOENT).
+- 907_: [FreeBSD] `Process.exe()`_ may fail with ``OSError``(ENOENT).
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
-  instead of OSError and RuntimeError.
+  instead of ``OSError`` and RuntimeError.
 - 909_: [macOS] `Process.open_files()`_ and `Process.connections()`_ methods
-  may raise OSError with no exception set if process is gone.
+  may raise ``OSError`` with no exception set if process is gone.
 - 916_: [macOS] fix many compilation warnings.
 
 4.3.1
@@ -1019,7 +1019,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 854_: `Process.as_dict()`_ raises ValueError if passed an erroneous attrs name.
+- 854_: `Process.as_dict()`_ raises ``ValueError`` if passed an erroneous attrs name.
 - 857_: [SunOS] `Process.cpu_times()`_, `Process.cpu_percent()`_,
   `Process.threads()`_ and `Process.memory_maps()`_ may raise RuntimeError if
   attempting to query a 64bit process with a 32bit python. "Null" values are
@@ -1050,7 +1050,7 @@ XXXX-XX-XX
 
 - 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
 - 812_: [NetBSD] fix compilation on NetBSD-5.x.
-- 823_: [NetBSD] `virtual_memory()`_ raises TypeError on Python 3.
+- 823_: [NetBSD] `virtual_memory()`_ raises ``TypeError`` on Python 3.
 - 829_: [UNIX] `disk_usage()`_ percent field takes root reserved space
   into account.
 - 816_: [Windows] fixed `net_io_counters()`_ values wrapping after 4.3GB in
@@ -1074,7 +1074,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 797_: [Linux] `net_if_stats()`_ may raise OSError for certain NIC cards.
+- 797_: [Linux] `net_if_stats()`_ may raise ``OSError`` for certain NIC cards.
 - 813_: `Process.as_dict()`_ should ignore extraneous attribute names which gets
   attached to the Process instance.
 
@@ -1146,7 +1146,7 @@ XXXX-XX-XX
 - 761_: [Windows] `boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
-- 767_: [Linux] `disk_io_counters()`_ may raise ValueError on 2.6 kernels and it's
+- 767_: [Linux] `disk_io_counters()`_ may raise ``ValueError`` on 2.6 kernels and it's
   broken on 2.4 kernels.
 - 770_: [NetBSD] `disk_io_counters()`_ metrics didn't update.
 
@@ -1215,7 +1215,7 @@ XXXX-XX-XX
 - 541_: [FreeBSD] `disk_io_counters()`_ r/w times were expressed in seconds instead
   of milliseconds.  (patch by dasumin)
 - 610_: [SunOS] fix build and tests on Solaris 10
-- 623_: [Linux] process or system connections raises ValueError if IPv6 is not
+- 623_: [Linux] process or system connections raises ``ValueError`` if IPv6 is not
   supported by the system.
 - 678_: [Linux] can't install psutil due to bug in setup.py.
 - 688_: [Windows] compilation fails with MSVC 2015, Python 3.5. (patch by
@@ -1359,7 +1359,7 @@ XXXX-XX-XX
   "localhost"
 - 579_: [Windows] Fixed `Process.open_files()`_ for PID>64K.
 - 579_: [Windows] fixed many compiler warnings.
-- 585_: [FreeBSD] `net_connections()`_ may raise KeyError.
+- 585_: [FreeBSD] `net_connections()`_ may raise ``KeyError``.
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
@@ -1378,7 +1378,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 496_: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
+- 496_: [Linux] fix "``ValueError``: ambiguos inode with multiple PIDs references"
   (patch by Bruno Binet)
 
 2.2.0
@@ -1398,7 +1398,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 496_: [Solaris] can't import psutil.
-- 547_: [UNIX] `Process.username()`_ may raise KeyError if UID can't be resolved.
+- 547_: [UNIX] `Process.username()`_ may raise ``KeyError`` if UID can't be resolved.
 - 551_: [Windows] get rid of the unicode hack for `net_io_counters()`_ NIC names.
 - 556_: [Linux] lots of file handles were left open.
 - 561_: [Linux] `net_connections()`_ might skip some legitimate UNIX sockets.
@@ -1437,16 +1437,16 @@ XXXX-XX-XX
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
-  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of NoSuchProcess.
+  `Process.connections()`_ can raise ````OSError``(ESRCH)`` instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
   Daeschler)
-- 529_: [Windows] `Process.exe()`_ may raise unhandled WindowsError exception
+- 529_: [Windows] `Process.exe()`_ may raise unhandled ``WindowsError`` exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
 - 530_: [Linux] `disk_io_counters()`_ may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
-- 533_: [Linux] `Process.memory_maps()`_ may raise TypeError on old Linux distros.
+- 533_: [Linux] `Process.memory_maps()`_ may raise ``TypeError`` on old Linux distros.
 
 2.1.1
 =====
@@ -1758,7 +1758,7 @@ DeprecationWarning.
 
 - 374_: [Windows] negative memory usage reported if process uses a lot of
   memory.
-- 379_: [Linux] `Process.memory_maps()`_ may raise ValueError.
+- 379_: [Linux] `Process.memory_maps()`_ may raise ``ValueError``.
 - 394_: [macOS] Mapped memory regions report incorrect file name.
 - 404_: [Linux] ``sched_*affinity()`` are implicitly declared. (patch by Arfrever)
 
@@ -1777,7 +1777,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 325_: [BSD] `virtual_memory()`_ can raise SystemError.
+- 325_: [BSD] `virtual_memory()`_ can raise ``SystemError``.
   (patch by Jan Beich)
 - 370_: [BSD] `Process.connections()`_ requires root.  (patch by John Baldwin)
 - 372_: [BSD] different process methods raise NoSuchProcess instead of
@@ -1810,7 +1810,7 @@ DeprecationWarning.
   RuntimeWarning.
 - 315_: [macOS] fix some compilation warnings.
 - 317_: [Windows] cannot set process CPU affinity above 31 cores.
-- 319_: [Linux] `Process.memory_maps()`_ raises KeyError 'Anonymous' on Debian
+- 319_: [Linux] `Process.memory_maps()`_ raises ``KeyError`` 'Anonymous' on Debian
   squeeze.
 - 321_: [UNIX] `Process.ppid()`_ property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
@@ -2158,9 +2158,9 @@ DeprecationWarning.
 - 83_:  `Process.cmdline()`_ is empty on macOS 64-bit.
 - 130_: a race condition can cause IOError exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
-- 145_: WindowsError was raised instead of psutil.AccessDenied when using
+- 145_: ``WindowsError`` was raised instead of psutil.AccessDenied when using
   `Process.resume()`_ or `Process.suspend()`_ on Windows.
-- 146_: `Process.exe()`_ property on Linux can raise TypeError if path contains
+- 146_: `Process.exe()`_ property on Linux can raise ``TypeError`` if path contains
   NULL bytes.
 - 151_: `Process.exe()`_ and `Process.cwd()`_ for PID 0 on Linux return
   inconsistent data.
@@ -2202,7 +2202,7 @@ DeprecationWarning.
 
 - 80_: fixed warnings when installing psutil with easy_install.
 - 81_: psutil fails to compile with Visual Studio.
-- 94_: `Process.suspend()`_ raises OSError instead of AccessDenied.
+- 94_: `Process.suspend()`_ raises ``OSError`` instead of AccessDenied.
 - 86_: psutil didn't compile against FreeBSD 6.x.
 - 102_: orphaned process handles obtained by using OpenProcess in C were
   left behind every time Process class was instantiated.
@@ -2304,7 +2304,7 @@ DeprecationWarning.
   for a nonexistent process, or when retrieving information about a process
   that has gone away.
 - 21_: AccessDenied exception created for raising access denied errors
-  from OSError or WindowsError on individual platforms.
+  from ``OSError`` or ``WindowsError`` on individual platforms.
 - 26_: `process_iter()`_ function to iterate over processes as
   Process objects with a generator.
 - Process objects can now also be compared with == operator for equality
@@ -2319,7 +2319,7 @@ DeprecationWarning.
 - 22_: [Windows] `Process.kill()`_ for PID 0 was failing with an unset exception.
 - 23_: Special case for `pid_exists()`_ with PID 0.
 - 24_: [Windows] `Process.kill()`_ for PID 0 now raises AccessDenied exception
-  instead of WindowsError.
+  instead of ``WindowsError``.
 - 30_: psutil.get_pid_list() was returning two ins
 
 
