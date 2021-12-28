@@ -390,7 +390,7 @@ XXXX-XX-XX
   a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
 - 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
   on failed malloc().
-- 1429_: [Windows] SE DEBUG was not properly set for current process. It is
+- 1429_: [Windows] ``SE DEBUG`` was not properly set for current process. It is
   now, and it should result in less `AccessDenied`_ exceptions for low-pid
   processes.
 - 1432_: [Windows] `Process.memory_info_ex()`_'s USS memory is miscalculated
@@ -447,7 +447,7 @@ XXXX-XX-XX
   original error code when raising an exception.
 - 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
   Process instances to return incorrect results.
-- 1376_: [Windows] ``OpenProcess``() now uses PROCESS_QUERY_LIMITED_INFORMATION
+- 1376_: [Windows] ``OpenProcess`` now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
 - 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
@@ -465,7 +465,7 @@ XXXX-XX-XX
 - 1310_: [Linux] `sensors_temperatures()`_ now parses /sys/class/thermal
   in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
-- 1320_: [Posix] better compilation support when using g++ instead of gcc.
+- 1320_: [Posix] better compilation support when using g++ instead of GCC.
   (patch by Jaime Fullaondo)
 
 **Bug fixes**
@@ -491,8 +491,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
-  psutil.MACOS.
+- 1286_: [macOS] ``psutil.OSX`` constant is now deprecated in favor of new
+  ``psutil.MACOS``.
 - 1309_: [Linux] added ``psutil.STATUS_PARKED`` constant for `Process.status()`_.
 - 1321_: [Linux] add `disk_io_counters()`_ dual implementation relying on
   /sys/block filesystem in case /proc/diskstats is not available. (patch by
@@ -545,7 +545,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1239_: [Linux] expose kernel "slab" memory for `virtual_memory()`_.
+- 1239_: [Linux] expose kernel ``slab`` memory field for `virtual_memory()`_.
   (patch by Maxime Mouial)
 
 **Bug fixes**
@@ -561,7 +561,7 @@ XXXX-XX-XX
   systems using process groups (> 64 cores).
 - 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
   enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
-- 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
+- 1194_: [SunOS] Return nice value from psinfo as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Fix double free in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
@@ -641,8 +641,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1150_: [Windows] when a process is terminate()d now the exit code is set to
-  SIGTERM instead of 0.  (patch by Akos Kiss)
-- 1151_: python -m psutil.tests fail
+  ``SIGTERM`` instead of ``0``.  (patch by Akos Kiss)
+- 1151_: ``python -m psutil.tests`` fail
 - 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
 - 1167_: [Windows] `net_io_counters()`_ packets count now include also non-unicast
   packets.  (patch by Matthew Long)
@@ -699,8 +699,8 @@ XXXX-XX-XX
 
 - 802_: `disk_io_counters()`_ and `net_io_counters()`_ numbers no longer wrap
   (restart from 0). Introduced a new "nowrap" argument.
-- 928_: `net_connections()`_ and `Process.connections()`_ "laddr" and
-  "raddr" are now named tuples.
+- 928_: `net_connections()`_ and `Process.connections()`_ ``laddr`` and
+  ``raddr`` are now named tuples.
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with `PROCFS_PATH`_ in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
@@ -781,10 +781,10 @@ XXXX-XX-XX
 
 **Porting notes**
 
-- 1039_: returned types consolidation:
-  - Windows / `Process.cpu_times()`_: fields #3 and #4 were int instead of float
-  - Linux / FreeBSD / OpenBSD: `Process.connections()`_ ``raddr`` is now set to
-    ``""`` instead of ``None`` when retrieving UNIX sockets.
+- 1039_: returned types consolidation. 1) Windows / `Process.cpu_times()`_:
+  fields #3 and #4 were int instead of float. 2) Linux / FreeBSD / OpenBSD:
+  `Process.connections()`_ ``raddr`` is now set to  ``""`` instead of ``None``
+  when retrieving UNIX sockets.
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
@@ -893,7 +893,7 @@ XXXX-XX-XX
 - 357_: added `Process.cpu_num()`_ (what CPU a process is on).
 - 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
-- 955_: added psutil.`sensors_battery()`_ (Linux, Windows, only).
+- 955_: added `sensors_battery()`_ (Linux, Windows, only).
 - 956_: `Process.cpu_affinity()`_ can now be passed ``[]`` argument as an
   alias to set affinity against all eligible CPUs.
 
@@ -927,7 +927,7 @@ XXXX-XX-XX
 - 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
 - 940_: [Linux] `cpu_percent()`_ and `cpu_times_percent()`_ was calculated
-  incorrectly as "iowait", "guest" and "guest_nice" times were not properly
+  incorrectly as ``iowait``, ``guest`` and ``guest_nice`` times were not properly
   taken into account.
 - 944_: [OpenBSD] `pids()`_ was omitting PID 0.
 
@@ -1086,8 +1086,8 @@ XXXX-XX-XX
   ``children_system`` (always set to 0 on macOS and Windows).
 - 789_: [Windows] `cpu_times()`_ return two new fields: ``interrupt`` and
   ``dpc``. Same for `cpu_times_percent()`_.
-- 792_: new `cpu_stats()`_ function returning number of CPU ctx switches
-  interrupts, soft interrupts and syscalls.
+- 792_: new `cpu_stats()`_ function returning number of CPU ``ctx_switches``,
+  ``interrupts``, ``soft_interrupts`` and ``syscalls``.
 
 **Bug fixes**
 
@@ -1095,7 +1095,7 @@ XXXX-XX-XX
   provides it.
 - 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise `NoSuchProcess`_.
   (patch by wxwright)
-- 780_: [macOS] psutil does not compile with some gcc versions.
+- 780_: [macOS] psutil does not compile with some GCC versions.
 - 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
 - 788_: [NetBSD] `virtual_memory()`_'s ``buffers`` and ``shared`` values were
   set to 0.
@@ -1116,7 +1116,7 @@ XXXX-XX-XX
   (patch by Eric Rahm)
 - 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
-- 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
+- 760_: expose OS constants (``psutil.LINUX``, ``psutil.OSX``, etc.)
 - 756_: [Linux] `disk_io_counters()`_ return 2 new fields: ``read_merged_count``
   and ``write_merged_count``.
 - 762_: new scripts/procsmem.py script.
@@ -1489,7 +1489,7 @@ XXXX-XX-XX
 - 468_: move documentation to readthedocs.com.
 - 477_: `Process.cpu_percent()`_ is about 30% faster.  (suggested by crusaderky)
 - 478_: [Linux] almost all APIs are about 30% faster on Python 3.X.
-- 479_: long deprecated psutil.error module is gone; exception classes now
+- 479_: long deprecated ``psutil.error`` module is gone; exception classes now
   live in "psutil" namespace only.
 
 **Bug fixes**
@@ -1519,7 +1519,7 @@ For the sake of consistency a lot of psutil APIs have been renamed.
 In most cases accessing the old names will work but it will cause a
 DeprecationWarning.
 
-- psutil.* module level constants have being replaced by functions:
+- ``psutil.*`` module level constants have being replaced by functions:
 
   +-----------------------+----------------------------------+
   | Old name              | Replacement                      |
@@ -1841,7 +1841,7 @@ DeprecationWarning.
 - `Process.ppid()`_ property is no longer cached after first access.
 - [Linux] Process methods not working because of a poor /proc implementation
   will raise ``NotImplementedError`` instead of ``RuntimeError``.
-- psutil.error module is deprecated and scheduled for removal.
+- ``psutil.error`` module is deprecated and scheduled for removal.
 
 0.6.1
 =====
@@ -1976,7 +1976,7 @@ DeprecationWarning.
 
 - 195_: [Windows] number of handles opened by process.
 - 209_: `disk_partitions()`_ now provides also mount options.
-- 229_: list users currently connected on the system (psutil.get_users()).
+- 229_: list users currently connected on the system (`users()`_).
 - 238_: [Linux, Windows] process CPU affinity (get and set).
 - 242_: add ``recursive=True`` to `Process.children()`_: return all process
   descendants.
@@ -2083,7 +2083,7 @@ DeprecationWarning.
   100 on multicore processors.
 - 197_: [Linux] `Process.connections()`_ is broken on platforms not
   supporting IPv6.
-- 200_: [Linux] psutil.NUM_CPUS not working on armel and sparc architectures
+- 200_: [Linux] ``psutil.NUM_CPUS`` not working on armel and sparc architectures
   and causing crash on module import.
 - 201_: [Linux] `Process.connections()`_ is broken on big-endian
   architectures.
@@ -2153,7 +2153,7 @@ DeprecationWarning.
 - 83_:  `Process.cmdline()`_ is empty on macOS 64-bit.
 - 130_: a race condition can cause ``IOError`` exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
-- 145_: ``WindowsError`` was raised instead of psutil.`AccessDenied`_ when using
+- 145_: ``WindowsError`` was raised instead of `AccessDenied`_ when using
   `Process.resume()`_ or `Process.suspend()`_ on Windows.
 - 146_: `Process.exe()`_ property on Linux can raise ``TypeError`` if path contains
   NULL bytes.
