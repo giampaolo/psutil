@@ -189,7 +189,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1538_: [NetBSD] `Process.cwd()`_ may return ENOENT instead of NoSuchProcess.
+- 1538_: [NetBSD] `Process.cwd()`_ may return ``ENOENT`` instead of NoSuchProcess.
 - 1627_: [Linux] `Process.memory_maps()`_ can raise ``KeyError``.
 - 1642_: [SunOS] querying basic info for PID 0 results in ``FileNotFoundError``.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
@@ -389,7 +389,7 @@ XXXX-XX-XX
   ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_: [BSD] lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
-- 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
+- 1419_: [Windows] `Process.environ()`_ raises ``NotImplementedError`` when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
 - 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
   on failed malloc().
@@ -581,7 +581,7 @@ XXXX-XX-XX
   listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] `cpu_times()`_ float loses accuracy in a long running system.
   (patch by stswandering)
-- 1245_: [Linux] `sensors_temperatures()`_ may fail with IOError "no such file".
+- 1245_: [Linux] `sensors_temperatures()`_ may fail with ``IOError`` "no such file".
 - 1255_: [FreeBSD] `swap_memory()`_ stats were erroneously represented in KB.
   (patch by Denis Krienbühl)
 
@@ -626,7 +626,7 @@ XXXX-XX-XX
 - 1179_: [Linux] `Process.cmdline()`_ is now able to split cmdline args for
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
-- 1181_: [macOS] `Process.memory_maps()`_ may raise ENOENT.
+- 1181_: [macOS] `Process.memory_maps()`_ may raise ``ENOENT``.
 - 1187_: [macOS] `pids()`_ does not return PID 0 on recent macOS versions.
 
 5.4.1
@@ -661,12 +661,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1009_: [Linux] `sensors_temperatures()`_ may crash with IOError.
+- 1009_: [Linux] `sensors_temperatures()`_ may crash with ``IOError``.
 - 1012_: [Windows] `disk_io_counters()`_'s read_time and write_time were expressed
   in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in `Process.open_files()`_ may lead
   to segfault.  (patch by Jakub Bacic)
-- 1129_: [Linux] `sensors_fans()`_ may crash with IOError.  (patch by Sebastian
+- 1129_: [Linux] `sensors_fans()`_ may crash with ``IOError``.  (patch by Sebastian
   Saip)
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
 - 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
@@ -729,23 +729,23 @@ XXXX-XX-XX
   same value if fluctuation is <= 1 second.
 - 1013_: [FreeBSD] `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
-- 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
+- 1014_: [Linux] Process class can mask legitimate ``ENOENT`` exceptions as
   NoSuchProcess.
-- 1016_: `disk_io_counters()`_ raises RuntimeError on a system with no disks.
-- 1017_: `net_io_counters()`_ raises RuntimeError on a system with no network
+- 1016_: `disk_io_counters()`_ raises ``RuntimeError`` on a system with no disks.
+- 1017_: `net_io_counters()`_ raises ``RuntimeError`` on a system with no network
   cards installed.
 - 1021_: [Linux] `Process.open_files()`_ may erroneously raise NoSuchProcess
   instead of skipping a file which gets deleted while open files are retrieved.
 - 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
-  3 doesn't properly handle unicode paths and may raise `UnicodeDecodeError`.
+  3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
 - 1033_: [macOS, FreeBSD] memory leak for `net_connections()`_ and
   `Process.connections()`_ when retrieving UNIX sockets (kind='unix').
-- 1040_: fixed many unicode related issues such as UnicodeDecodeError on
+- 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
 - 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
   zombie processes.
-- 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's SetErrorMode.
+- 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
 - 1047_: [Windows] `Process.username()`_: memory leak in case exception is thrown.
 - 1048_: [Windows] `users()`_'s ``host`` field report an invalid IP address.
 - 1050_: [Windows] `Process.memory_maps()`_ leaks memory.
@@ -761,7 +761,7 @@ XXXX-XX-XX
 - 1067_: [NetBSD] `Process.cmdline()`_ leaks memory if process has terminated.
 - 1069_: [FreeBSD] `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
-- 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
+- 1071_: [Linux] `cpu_freq()`_ may raise ``IOError`` on old RedHat distros.
 - 1074_: [FreeBSD] `sensors_battery()`_ raises ``OSError`` in case of no battery.
 - 1075_: [Windows] `net_if_addrs()`_: inet_ntop() return value is not checked.
 - 1077_: [SunOS] `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
@@ -824,7 +824,7 @@ XXXX-XX-XX
 
 - 981_: [Linux] `cpu_freq()`_ may return an empty list.
 - 993_: [Windows] `Process.memory_maps()`_ on Python 3 may raise
-  UnicodeDecodeError.
+  ``UnicodeDecodeError``.
 - 996_: [Linux] `sensors_temperatures()`_ may not show all temperatures.
 - 997_: [FreeBSD] `virtual_memory()`_ may fail due to missing sysctl parameter on
   FreeBSD 12.
@@ -855,7 +855,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 971_: [Linux] `sensors_temperatures()`_ didn't work on CentOS 7.
-- 973_: `cpu_percent()`_ may raise ZeroDivisionError.
+- 973_: `cpu_percent()`_ may raise ``ZeroDivisionError``.
 
 5.1.2
 =====
@@ -1000,10 +1000,10 @@ XXXX-XX-XX
   ``SystemError`` with no error set; now ``ValueError`` is raised.
 - 906_: [BSD] `disk_partitions()`_ with `all=False` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
-- 907_: [FreeBSD] `Process.exe()`_ may fail with ``OSError``(ENOENT).
+- 907_: [FreeBSD] `Process.exe()`_ may fail with ``OSError(ENOENT)``.
 - 908_: [macOS, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
-  instead of ``OSError`` and RuntimeError.
+  instead of ``OSError`` and ``RuntimeError``.
 - 909_: [macOS] `Process.open_files()`_ and `Process.connections()`_ methods
   may raise ``OSError`` with no exception set if process is gone.
 - 916_: [macOS] fix many compilation warnings.
@@ -1021,7 +1021,7 @@ XXXX-XX-XX
 
 - 854_: `Process.as_dict()`_ raises ``ValueError`` if passed an erroneous attrs name.
 - 857_: [SunOS] `Process.cpu_times()`_, `Process.cpu_percent()`_,
-  `Process.threads()`_ and `Process.memory_maps()`_ may raise RuntimeError if
+  `Process.threads()`_ and `Process.memory_maps()`_ may raise ``RuntimeError`` if
   attempting to query a 64bit process with a 32bit python. "Null" values are
   returned as a fallback.
 - 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
@@ -1133,7 +1133,7 @@ XXXX-XX-XX
 - 704_: [Solaris] psutil does not compile on Solaris sparc.
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for
   `Process.name()`_, `Process.cwd()`_, `Process.exe()`_, `Process.cmdline()`_
-  and `Process.open_files()`_ methods resulting in UnicodeDecodeError exceptions.
+  and `Process.open_files()`_ methods resulting in ``UnicodeDecodeError`` exceptions.
   'surrogateescape' error handler is now used as a workaround for replacing the
   corrupted data.
 - 737_: [Windows] when the bitness of psutil and the target process was
@@ -1256,9 +1256,9 @@ XXXX-XX-XX
 
 - 513_: [Linux] fixed integer overflow for RLIM_INFINITY.
 - 641_: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
-- 652_: [Windows] `net_if_addrs()`_ UnicodeDecodeError in case of non-ASCII NIC
+- 652_: [Windows] `net_if_addrs()`_ ``UnicodeDecodeError`` in case of non-ASCII NIC
   names.
-- 655_: [Windows] `net_if_stats()`_ UnicodeDecodeError in case of non-ASCII NIC
+- 655_: [Windows] `net_if_stats()`_ ``UnicodeDecodeError`` in case of non-ASCII NIC
   names.
 - 659_: [Linux] compilation error on Suse 10. (patch by maozguttman)
 - 664_: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
@@ -1266,7 +1266,7 @@ XXXX-XX-XX
   (patch by sk6249)
 - 672_: [Windows] compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
-- 675_: [Linux] `net_connections()`_: UnicodeDecodeError may occur when listing
+- 675_: [Linux] `net_connections()`_: ``UnicodeDecodeError`` may occur when listing
   UNIX sockets.
 
 3.1.1
@@ -1437,7 +1437,7 @@ XXXX-XX-XX
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
-  `Process.connections()`_ can raise ````OSError``(ESRCH)`` instead of NoSuchProcess.
+  `Process.connections()`_ can raise ````OSError(ESRCH)`` instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
@@ -1820,7 +1820,7 @@ DeprecationWarning.
   change.
 - 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
 - 337_: [Linux] process methods not working because of a poor /proc
-  implementation will raise NotImplementedError rather than RuntimeError
+  implementation will raise ``NotImplementedError`` rather than ``RuntimeError``
   and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
 - 338_: [Linux] `disk_io_counters()`_ fails to find some disks.
 - 339_: [FreeBSD] get_pid_list() can allocate all the memory on system.
@@ -1837,7 +1837,7 @@ DeprecationWarning.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
 - 366_: [FreeBSD] `Process.memory_maps()`_, `Process.num_fds()`_,
-  `Process.open_files()`_ and `Process.cwd()`_ methods raise RuntimeError instead
+  `Process.open_files()`_ and `Process.cwd()`_ methods raise ``RuntimeError`` instead
   of AccessDenied.
 
 **API changes**
@@ -1845,7 +1845,7 @@ DeprecationWarning.
 - `Process.cmdline()`_ property is no longer cached after first access.
 - `Process.ppid()`_ property is no longer cached after first access.
 - [Linux] Process methods not working because of a poor /proc implementation
-  will raise NotImplementedError instead of RuntimeError.
+  will raise ``NotImplementedError`` instead of ``RuntimeError``.
 - psutil.error module is deprecated and scheduled for removal.
 
 0.6.1
@@ -2027,7 +2027,7 @@ DeprecationWarning.
   of not absolutized path names.
 - 275_: [Linux] ``Process.io_counters()`` erroneously raise NoSuchProcess on
   old Linux versions. Where not available it now raises
-  NotImplementedError.
+  ``NotImplementedError``.
 - 286_: `Process.is_running()`_ doesn't actually check whether PID has been
   reused.
 - 314_: `Process.children()`_ can sometimes return non-children.
@@ -2156,7 +2156,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 83_:  `Process.cmdline()`_ is empty on macOS 64-bit.
-- 130_: a race condition can cause IOError exception be raised on
+- 130_: a race condition can cause ``IOError`` exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
 - 145_: ``WindowsError`` was raised instead of psutil.AccessDenied when using
   `Process.resume()`_ or `Process.suspend()`_ on Windows.
