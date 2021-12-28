@@ -221,7 +221,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1179_: [Linux] Process cmdline() now takes into account misbehaving processes
+- 1179_: [Linux] `Process.cmdline()`_ now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
 - 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
   segfault
@@ -253,7 +253,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 875_: [Windows] Process' cmdline(), `Process.environ()`_ or cwd() may occasionally fail
+- 875_: [Windows] `Process.cmdline()`_, `Process.environ()`_ or cwd() may occasionally fail
   with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
 - 1126_: [Linux] `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
@@ -261,7 +261,7 @@ XXXX-XX-XX
   (patch by Arnon Yaari)
 - 1535_: 'type' and 'family' fields returned by net_connections() are not
   always turned into enums.
-- 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
+- 1536_: [NetBSD] `Process.cmdline()`_ erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
 - 1546_: usage percent may be rounded to 0 on Python 2.
 - 1552_: [Windows] `getloadavg()`_ math for calculating 5 and 15 mins values is
@@ -283,11 +283,11 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1276_: [AIX] can't get whole cmdline().  (patch by Arnon Yaari)
-- 1501_: [Windows] Process cmdline() and exe() raise unhandled "WinError 1168
+- 1276_: [AIX] can't get whole `Process.cmdline()`_.  (patch by Arnon Yaari)
+- 1501_: [Windows] `Process.cmdline()`_ and exe() raise unhandled "WinError 1168
   element not found" exceptions for "Registry" and "Memory Compression" psuedo
   processes on Windows 10.
-- 1526_: [NetBSD] process cmdline() could raise MemoryError.  (patch by
+- 1526_: [NetBSD] `Process.cmdline()`_ could raise MemoryError.  (patch by
   Kamil Rytarowski)
 
 5.6.2
@@ -320,8 +320,8 @@ XXXX-XX-XX
 - 1463_: cpu_distribution.py script was broken.
 - 1470_: [Linux] `disk_partitions()`_: fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
-- 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
-  by Daniel Beer)
+- 1471_: [SunOS] `Process.name()`_ and `Process.cmdline()`_ can return
+  SystemError.  (patch by Daniel Beer)
 - 1472_: [Linux] `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks 'ps aux' output.
 - 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
@@ -383,7 +383,7 @@ XXXX-XX-XX
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
-- 1427_: [OSX] Process cmdline() and `Process.environ()`_ may erroneously raise OSError
+- 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise OSError
   on failed malloc().
 - 1429_: [Windows] SE DEBUG was not properly set for current process. It is
   now, and it should result in less AccessDenied exceptions for low-pid
@@ -407,7 +407,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1348_: [Windows] on Windows >= 8.1 if Process.cmdline() fails due to
+- 1348_: [Windows] on Windows >= 8.1 if `Process.cmdline()`_ fails due to
   ERROR_ACCESS_DENIED attempt using NtQueryInformationProcess +
   ProcessCommandLineInformation. (patch by EccoTheFlintstone)
 
@@ -545,7 +545,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 694_: [SunOS] cmdline() could be truncated at the 15th character when
+- 694_: [SunOS] `Process.cmdline()`_ could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
 - 771_: [Windows] `cpu_count()`_ (both logical and cores) return a wrong
@@ -615,7 +615,7 @@ XXXX-XX-XX
 - 1169_: [Linux] `users()`_ "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
-- 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
+- 1179_: [Linux] `Process.cmdline()`_ is now able to split cmdline args for
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
 - 1181_: [macOS] `Process.memory_maps()`_ may raise ENOENT.
@@ -749,8 +749,8 @@ XXXX-XX-XX
   or NICs are installed on the system.
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
-- 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
-- 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
+- 1065_: [OpenBSD] `Process.cmdline()`_ may raise SystemError.
+- 1067_: [NetBSD] `Process.cmdline()`_ leaks memory if process has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
@@ -1121,15 +1121,15 @@ XXXX-XX-XX
   of physical memory.
 - 704_: [Solaris] psutil does not compile on Solaris sparc.
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for process
-  name(), cwd(), exe(), cmdline() and open_files() methods resulting in
+  name(), cwd(), exe(), `Process.cmdline()`_ and open_files() methods resulting in
   UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
   used as a workaround for replacing the corrupted data.
 - 737_: [Windows] when the bitness of psutil and the target process was
-  different cmdline() and cwd() could return a wrong result or incorrectly
-  report an AccessDenied error.
+  different, `Process.cmdline()`_ and cwd() could return a wrong result or
+  incorrectly report an AccessDenied error.
 - 741_: [OpenBSD] psutil does not compile on mips64.
 - 751_: [Linux] fixed call to Py_DECREF on possible Null object.
-- 754_: [Linux] cmdline() can be wrong in case of zombie process.
+- 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
 - 761_: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
@@ -1235,7 +1235,7 @@ XXXX-XX-XX
   - psutil.net_if_addrs()
   - psutil.net_if_stats()
   - psutil.net_io_counters()
-  - psutil.Process.cmdline()
+  - psutil.`Process.cmdline()`_
   - psutil.`Process.name()`_
   - psutil.Process.username()
   - `users()`_
@@ -1292,7 +1292,7 @@ XXXX-XX-XX
 - 636_: [Windows] Process.memory_info() raise AccessDenied.
 - 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
-- 639_: [Linux] Process.cmdline() can be truncated.
+- 639_: [Linux] `Process.cmdline()`_ can be truncated.
 - 640_: [Linux] *connections functions may swallow errors and return an
   incomplete list of connnections.
 - 642_: repr() of exceptions is incorrect.
