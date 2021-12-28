@@ -1114,7 +1114,7 @@ XXXX-XX-XX
 - 732_: `Process.environ()`_.  (patch by Frank Benkstein)
 - 753_: [Linux, macOS, Windows] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
-- 755_: Process.memory_percent() "memtype" parameter.
+- 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
 - 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
 - 756_: [Linux] `disk_io_counters()`_ return 2 new fields: read_merged_count and
@@ -2279,7 +2279,7 @@ DeprecationWarning.
 
 - 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
 - 40_: test_get_cpu_times() failing on FreeBSD and macOS.
-- 42_: [Windows] get_memory_percent() raises AccessDenied.
+- 42_: [Windows] `Process.memory_percent()`_ raises AccessDenied.
 
 0.1.1
 =====
