@@ -77,15 +77,15 @@ XXXX-XX-XX
   Schlueter).
 - 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
   from 32 bit ones (NtWoW64 APIs).
-- 1866_: [Windows] `Process.exe()`_, cmdline(), `Process.environ()`_ may raise "invalid
-  access to memory location" on Python 3.9.
+- 1866_: [Windows] `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
+  may raise "invalid access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
 - 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
   has no corresponding account name. In this case AccessDenied is now raised.
 - 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
-- 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
-  it gets translated into AccessDenied.
+- 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and environment().
+  Now it gets translated into AccessDenied.
 - 1891_: [macOS] get rid of deprecated getpagesize().
 
 5.7.3
@@ -1307,7 +1307,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 632_: [Linux] better error message if cannot parse process UNIX connections.
-- 634_: [Linux] Proces.cmdline() does not include empty string arguments.
+- 634_: [Linux] `Process.cmdline()`_ does not include empty string arguments.
 - 635_: [UNIX] crash on module import if 'enum' package is installed on python
   < 3.4.
 
@@ -1503,7 +1503,7 @@ XXXX-XX-XX
   alex@mroja.net)
 - 473_: psutil.Popen.wait() does not set returncode attribute.
 - 474_: [Windows] Process.cpu_percent() is no longer capped at 100%.
-- 476_: [Linux] encoding error for process name and cmdline.
+- 476_: [Linux] encoding error for `Process.name()`_ and `Process.cmdline()`_.
 
 **API changes**
 
@@ -1701,7 +1701,7 @@ DeprecationWarning.
 - 415_: [Windows] `Process.children()`_ is an order of magnitude faster.
 - 426_: [Windows] `Process.name()`_ is an order of magnitude faster.
 - 431_: [UNIX] `Process.name()`_ is slightly faster because it unnecessarily
-  retrieved also process cmdline.
+  retrieved also `Process.cmdline()`_.
 
 **Bug fixes**
 
@@ -1803,7 +1803,8 @@ DeprecationWarning.
   the ppid to 1 in case of a zombie process.
 - 323_: [macOS] disk_io_counters()'s read_time and write_time parameters were
   reporting microseconds not milliseconds.  (patch by Gregory Szorc)
-- 331_: Process cmdline is no longer cached after first acces as it may change.
+- 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
+  change.
 - 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
 - 337_: [Linux] process methods not working because of a poor /proc
   implementation will raise NotImplementedError rather than RuntimeError
@@ -1827,7 +1828,7 @@ DeprecationWarning.
 
 **API changes**
 
-- Process.cmdline property is no longer cached after first access.
+- `Process.cmdline()`_ property is no longer cached after first access.
 - Process.ppid property is no longer cached after first access.
 - [Linux] Process methods not working because of a poor /proc implementation
   will raise NotImplementedError instead of RuntimeError.
@@ -1840,8 +1841,8 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 316_: process cmdline property now makes a better job at guessing the process
-  executable from the cmdline.
+- 316_: `Process.cmdline()`_ property now makes a better job at guessing the
+  process executable from the cmdline.
 
 **Bug fixes**
 
@@ -1866,7 +1867,7 @@ DeprecationWarning.
 - 222_: [macOS] add support for process cwd.
 - 261_: process extended memory info.
 - 295_: [macOS] process executable path is now determined by asking the OS
-  instead of being guessed from process cmdline.
+  instead of being guessed from `Process.cmdline()`_.
 - 297_: [macOS] the Process methods below were always raising AccessDenied for
   any process except the current one. Now this is no longer true. Also
   they are 2.5x faster.
@@ -1950,7 +1951,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 293_: [Windows] process executable path is now determined by asking the OS
-  instead of being guessed from process cmdline.
+  instead of being guessed from `Process.cmdline()`_.
 
 **Bug fixes**
 
@@ -1981,8 +1982,8 @@ DeprecationWarning.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
 - 278_: new Process.as_dict() method.
-- 281_: ppid, name, exe, cmdline and create_time properties of Process class
-  are now cached after being accessed.
+- 281_: ppid, name, exe, `Process.cmdline()`_ and create_time properties of
+  Process class are now cached after being accessed.
 - 282_: psutil.STATUS_* constants can now be compared by using their string
   representation.
 - 283_: speedup Process.is_running() by caching its return value in case the
@@ -2021,9 +2022,9 @@ DeprecationWarning.
 - Process.nice property is deprecated in favor of new get_nice() and set_nice()
   methods.
 - psutil.get_process_list() is deprecated.
-- ppid, name, exe, cmdline and create_time properties of Process class are now
-  cached after being accessed, meaning NoSuchProcess will no longer be raised
-  in case the process is gone in the meantime.
+- ppid, name, exe, `Process.cmdline()`_ and create_time properties of Process
+  class are now cached after being accessed, meaning NoSuchProcess will no
+  longer be raised in case the process is gone in the meantime.
 - psutil.STATUS_* constants can now be compared by using their string
   representation.
 
@@ -2138,7 +2139,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 83_:  process cmdline is empty on macOS 64-bit.
+- 83_:  `Process.cmdline()`_ is empty on macOS 64-bit.
 - 130_: a race condition can cause IOError exception be raised on
   Linux if process disappears between open() and subsequent read() calls.
 - 145_: WindowsError was raised instead of psutil.AccessDenied when using
@@ -2193,9 +2194,9 @@ DeprecationWarning.
 - 120_: cpu_percent() always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
-- 126_: ppid, uid, gid, name, exe, cmdline and create_time properties are
-  no longer cached and correctly raise NoSuchProcess exception if the process
-  disappears.
+- 126_: ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time
+  properties are no longer cached and correctly raise NoSuchProcess exception
+  if the process disappears.
 
 **API changes**
 
@@ -2207,8 +2208,8 @@ DeprecationWarning.
 - psutil.cpu_times() returns a nametuple instead of a tuple.
 - New psutil.Process methods: get_open_files(), get_connections(),
   send_signal() and terminate().
-- ppid, uid, gid, name, exe, cmdline and create_time properties are no longer
-  cached and raise NoSuchProcess exception if process disappears.
+- ppid, uid, gid, name, exe, `Process.cmdline()`_ and create_time properties
+  are no longer cached and raise NoSuchProcess exception if process disappears.
 - psutil.cpu_percent() no longer returns immediately (see issue 123).
 - psutil.Process.get_cpu_percent() and psutil.cpu_percent() no longer returns
   immediately by default (see issue 123).
