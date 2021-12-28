@@ -16,7 +16,7 @@ XXXX-XX-XX
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
 - 1999_: [Linux] `disk_partitions()`_: convert "/dev/root" device (an alias used
   on some Linux distros) to real root device path.
-- 2005_: PSUTIL_DEBUG mode now prints file name and line number of the debug
+- 2005_: ``PSUTIL_DEBUG`` mode now prints file name and line number of the debug
   messages coming from C extension modules.
 
 **Bug fixes**
@@ -136,22 +136,18 @@ XXXX-XX-XX
   on UNIX.
 - 1747_: `Process.wait()`_ on POSIX returns an enum, showing the negative signal
   which was used to terminate the process::
-
     >>> import psutil
     >>> p = psutil.Process(9891)
     >>> p.terminate()
     >>> p.wait()
     <Negsignal.SIGTERM: -15>
-
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
 - 1747_: Process provides more info about the process on str() and repr()
   (status and exit code)::
-
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
-
 - 1757_: memory leak tests are now stable.
 - 1768_: [Windows] added support for Windows Nano Server. (contributed by
   Julien Lebot)
@@ -273,7 +269,7 @@ XXXX-XX-XX
 - 1552_: [Windows] `getloadavg()`_ math for calculating 5 and 15 mins values is
   incorrect.
 - 1568_: [Linux] use CC compiler env var if defined.
-- 1570_: [Windows] `NtWow64*` syscalls fail to raise the proper error code
+- 1570_: [Windows] ``NtWow64*`` syscalls fail to raise the proper error code
 - 1585_: [OSX] calling close() (in C) on possible negative integers.  (patch
   by Athos Ribeiro)
 - 1606_: [SunOS] compilation fails on SunOS 5.10.  (patch by vser1)
@@ -610,7 +606,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
+- 1173_: introduced ``PSUTIL_DEBUG`` environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for `sensors_battery()`_ on macOS.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on UNIX and 2.4x faster on Linux.
@@ -2357,6 +2353,7 @@ DeprecationWarning.
 
 .. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
+.. _`Process.cmdline()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
 .. _`Process.cpu_num()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_num
