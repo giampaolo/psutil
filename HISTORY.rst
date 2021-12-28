@@ -38,7 +38,7 @@ XXXX-XX-XX
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
 - 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
-- 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
+- 1921_: [Windows] `swap_memory()`_ shows committed memory instead of swap
 - 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
 - 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
@@ -573,7 +573,7 @@ XXXX-XX-XX
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
-- 1255_: [FreeBSD] swap_memory() stats were erroneously represented in KB.
+- 1255_: [FreeBSD] `swap_memory()`_ stats were erroneously represented in KB.
   (patch by Denis Krienbühl)
 
 **Backward compatibility**
@@ -695,7 +695,7 @@ XXXX-XX-XX
   (restart from 0). Introduced a new "nowrap" argument.
 - 928_: psutil.net_connections() and psutil.Process.connections() "laddr" and
   "raddr" are now named tuples.
-- 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
+- 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
 - 1022_: psutil.users() provides a new "pid" field.
@@ -747,7 +747,7 @@ XXXX-XX-XX
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.
 - 1063_: [NetBSD] net_connections() may list incorrect sockets.
-- 1064_: [NetBSD] swap_memory() may segfault in case of error.
+- 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
 - 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
 - 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
 - 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
@@ -1171,7 +1171,7 @@ XXXX-XX-XX
 - 714_: [OpenBSD] virtual_memory().cached value was always set to 0.
 - 715_: don't crash at import time if cpu_times() fail for some reason.
 - 717_: [Linux] Process.open_files fails if deleted files still visible.
-- 722_: [Linux] swap_memory() no longer crashes if sin/sout can't be determined
+- 722_: [Linux] `swap_memory()`_ no longer crashes if sin/sout can't be determined
   due to missing /proc/vmstat.
 - 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
 
@@ -1790,7 +1790,7 @@ DeprecationWarning.
 - 234_: [Windows] disk_io_counters() fails to list certain disks.
 - 264_: [Windows] use of `disk_partitions()`_ may cause a message box to
   appear.
-- 313_: [Linux] psutil.virtual_memory() and psutil.swap_memory() can crash on
+- 313_: [Linux] psutil.virtual_memory() and `swap_memory()`_ can crash on
   certain exotic Linux flavors having an incomplete /proc interface.
   If that's the case we now set the unretrievable stats to 0 and raise a
   RuntimeWarning.
@@ -1811,7 +1811,7 @@ DeprecationWarning.
 - 339_: [FreeBSD] get_pid_list() can allocate all the memory on system.
 - 341_: [Linux] psutil might crash on import due to error in retrieving system
   terminals map.
-- 344_: [FreeBSD] swap_memory() might return incorrect results due to
+- 344_: [FreeBSD] `swap_memory()`_ might return incorrect results due to
   kvm_open(3) not being called. (patch by Jean Sebastien)
 - 338_: [Linux] disk_io_counters() fails to find some disks.
 - 351_: [Windows] if psutil is compiled with mingw32 (provided installers for
@@ -1902,7 +1902,7 @@ DeprecationWarning.
   - cached (BSD, macOS)
   - wired (macOS, BSD)
   - shared [FreeBSD]
-  New psutil.swap_memory() provides:
+  New `swap_memory()`_ provides:
   - total
   - used
   - free
@@ -1935,7 +1935,7 @@ DeprecationWarning.
 **API changes**
 
 - psutil.phymem_usage() is deprecated       (use psutil.virtual_memory())
-- psutil.virtmem_usage() is deprecated      (use psutil.swap_memory())
+- psutil.virtmem_usage() is deprecated      (use `swap_memory()`_)
 - psutil.phymem_buffers() on Linux is deprecated  (use psutil.virtual_memory())
 - psutil.cached_phymem() on Linux is deprecated   (use psutil.virtual_memory())
 - [Windows and BSD] psutil.virtmem_usage() now returns information about swap
@@ -2303,6 +2303,7 @@ DeprecationWarning.
 
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
+.. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2
