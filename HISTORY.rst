@@ -1431,8 +1431,8 @@ XXXX-XX-XX
 - 340_: [Windows] Process.get_open_files() no longer hangs.  (patch by
   Jeff Tang)
 - 501_: [Windows] `disk_io_counters()`_ may return negative values.
-- 503_: [Linux] in rare conditions `Process.exe()`_, open_files() and
-  connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
+- 503_: [Linux] in rare conditions `Process.exe()`_, `Process.open_files()`_ and
+  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
 - 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
@@ -1504,10 +1504,10 @@ XXXX-XX-XX
   Klank).
 - 457_: [POSIX] `pid_exists()`_ always returns True for PID 0.
 - 461_: namedtuples are not pickle-able.
-- 466_: [Linux] process exe improper null bytes handling.  (patch by
+- 466_: [Linux] `Process.exe()`_ improper null bytes handling.  (patch by
   Gautam Singh)
 - 470_: `wait_procs()`_ might not wait.  (patch by crusaderky)
-- 471_: [Windows] process exe improper unicode handling. (patch by
+- 471_: [Windows] `Process.exe()`_ improper unicode handling. (patch by
   alex@mroja.net)
 - 473_: `psutil.Popen`_'s ``wait()`` method does not set returncode attribute.
 - 474_: [Windows] `Process.cpu_percent()`_ is no longer capped at 100%.
@@ -1854,13 +1854,13 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 316_: process exe was resolved in case it was a symlink.
+- 316_: `Process.exe()`_ was resolved in case it was a symlink.
 - 318_: python 2.4 compatibility was broken.
 
 **API changes**
 
-- process exe can now return an empty string instead of raising AccessDenied.
-- process exe is no longer resolved in case it's a symlink.
+- `Process.exe()`_ can now return an empty string instead of raising AccessDenied.
+- `Process.exe()`_ is no longer resolved in case it's a symlink.
 
 0.6.0
 =====
@@ -1874,7 +1874,7 @@ DeprecationWarning.
   requires lsof.
 - 222_: [macOS] add support for `Process.cwd()`_.
 - 261_: process extended memory info.
-- 295_: [macOS] process executable path is now determined by asking the OS
+- 295_: [macOS] `Process.exe()`_ path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
 - 297_: [macOS] the Process methods below were always raising AccessDenied for
   any process except the current one. Now this is no longer true. Also
@@ -1958,7 +1958,7 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 293_: [Windows] process executable path is now determined by asking the OS
+- 293_: [Windows] `Process.exe()`_ path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
 
 **Bug fixes**
@@ -1990,8 +1990,9 @@ DeprecationWarning.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
 - 278_: new `Process.as_dict()`_ method.
-- 281_: ppid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
-  properties of Process class are now cached after being accessed.
+- 281_: `Process.ppid()`_, `Process.name()`_, `Process.exe()`_,
+  `Process.cmdline()`_ and `Process.create_time()`_ properties of Process class
+  are now cached after being accessed.
 - 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 - 283_: speedup `Process.is_running()`_ by caching its return value in case the
@@ -2030,9 +2031,10 @@ DeprecationWarning.
 - Process.nice property is deprecated in favor of new get_nice() and set_nice()
   methods.
 - psutil.get_process_list() is deprecated.
-- ppid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_ properties
-  of Process class are now cached after being accessed, meaning NoSuchProcess
-  will no longer be raised in case the process is gone in the meantime.
+- `Process.ppid()`_, `Process.name()`_, `Process.exe()`_, `Process.cmdline()`_
+  and `Process.create_time()`_ properties of Process class are now cached after
+  being accessed, meaning NoSuchProcess will no longer be raised in case the
+  process is gone in the meantime.
 - psutil.STATUS_* constants can now be compared by using their string
   representation.
 
@@ -2131,7 +2133,7 @@ DeprecationWarning.
   code).
 - 134_: per-process get_threads() returning information (id, user and kernel
   times) about threads opened by process.
-- 136_: process executable path on FreeBSD is now determined by asking the
+- 136_: `Process.exe()`_ path on FreeBSD is now determined by asking the
   kernel instead of guessing it from cmdline[0].
 - 137_: per-process real, effective and saved user and group ids.
 - 140_: system boot time.
@@ -2152,8 +2154,8 @@ DeprecationWarning.
   Linux if process disappears between open() and subsequent read() calls.
 - 145_: WindowsError was raised instead of psutil.AccessDenied when using
   process resume() or suspend() on Windows.
-- 146_: 'exe' property on Linux can raise TypeError if path contains NULL
-  bytes.
+- 146_: `Process.exe()`_ property on Linux can raise TypeError if path contains
+  NULL bytes.
 - 151_: `Process.exe()`_ and `Process.cwd()`_ for PID 0 on Linux return
   inconsistent data.
 
@@ -2180,7 +2182,7 @@ DeprecationWarning.
   a namedtuple instead of a tuple.
 - 103_: per-process opened TCP and UDP connections.
 - 107_: add support for Windows 64 bit. (patch by cjgohlke)
-- 111_: per-process executable name.
+- 111_: per-process executable name (`Process.exe()`_).
 - 113_: exception messages now include process name and pid.
 - 114_: `Process.username()`_ Windows implementation has been rewritten in pure
   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
@@ -2203,7 +2205,8 @@ DeprecationWarning.
 - 120_: `cpu_percent()`_ always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
   user/group id at some point.
-- 126_: ppid, uid, gid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
+- 126_: `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
+  `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
   properties are no longer cached and correctly raise NoSuchProcess exception
   if the process disappears.
 
@@ -2217,7 +2220,8 @@ DeprecationWarning.
 - `cpu_times()`_ returns a nametuple instead of a tuple.
 - New psutil.Process methods: get_open_files(), get_connections(),
   send_signal() and terminate().
-- ppid, uid, gid, name, exe, `Process.cmdline()`_ and `Process.create_time()`_
+- `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
+  `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
   properties are no longer cached and raise NoSuchProcess exception if process
   disappears.
 - `cpu_percent()`_ no longer returns immediately (see issue 123).
