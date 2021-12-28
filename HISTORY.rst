@@ -333,7 +333,7 @@ XXXX-XX-XX
   due to fixed read violation.  (patch by Samer Masterson)
 - 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
   involved into oneshot() context.
-- 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
+- 1491_: [SunOS] `net_if_addrs()`_: free() ifap struct on error.  (patch by
   Agnewee)
 - 1493_: [Linux] `cpu_freq()`_: handle the case where
   /sys/devices/system/cpu/cpufreq/ exists but is empty.
@@ -519,7 +519,7 @@ XXXX-XX-XX
 
 - 1258_: [Windows] `Process.username()`_ may cause a segfault (Python interpreter
   crash).  (patch by Jean-Luc Migot)
-- 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
+- 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from "snic" to
   "snicaddr".
 - 1274_: [Linux] there was a small chance `Process.children()`_ may swallow
   AccessDenied exceptions.
@@ -756,8 +756,8 @@ XXXX-XX-XX
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
 - 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
-- 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
-- 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
+- 1075_: [Windows] `net_if_addrs()`_: inet_ntop() return value is not checked.
+- 1077_: [SunOS] `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
 - 1077_: [SunOS] `net_connections()`_ does not work on SunOS 5.10. (patch by
   Oleksii Shevchuk)
@@ -971,7 +971,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 874_: [Windows] net_if_addrs() returns also the netmask.
+- 874_: [Windows] `net_if_addrs()`_ returns also the netmask.
 - 887_: [Linux] virtual_memory()'s 'available' and 'used' values are more
   precise and match "free" cmdline utility.  "available" also takes into
   account LCX containers preventing "available" to overflow "total".
@@ -1093,7 +1093,7 @@ XXXX-XX-XX
 - 776_: [Linux] `Process.cpu_affinity()`_ may erroneously raise NoSuchProcess.
   (patch by wxwright)
 - 780_: [macOS] psutil does not compile with some gcc versions.
-- 786_: net_if_addrs() may report incomplete MAC addresses.
+- 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
 - 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
 - 790_: [macOS] psutil won't compile on macOS 10.4.
 
@@ -1230,29 +1230,29 @@ XXXX-XX-XX
 - 644_: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
   to use with Process.send_signal().
 - 648_: CI test integration for macOS. (patch by Jeff Tang)
-- 663_: [UNIX] net_if_addrs() now returns point-to-point (VPNs) addresses.
+- 663_: [UNIX] `net_if_addrs()`_ now returns point-to-point (VPNs) addresses.
 - 655_: [Windows] different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
-  - psutil.net_if_addrs()
+  - `net_if_addrs()`_
   - psutil.net_if_stats()
   - psutil.net_io_counters()
-  - psutil.`Process.cmdline()`_
-  - psutil.`Process.name()`_
-  - psutil.`Process.username()`_
+  - `Process.cmdline()`_
+  - `Process.name()`_
+  - `Process.username()`_
   - `users()`_
 
 **Bug fixes**
 
 - 513_: [Linux] fixed integer overflow for RLIM_INFINITY.
 - 641_: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
-- 652_: [Windows] net_if_addrs() UnicodeDecodeError in case of non-ASCII NIC
+- 652_: [Windows] `net_if_addrs()`_ UnicodeDecodeError in case of non-ASCII NIC
   names.
 - 655_: [Windows] net_if_stats() UnicodeDecodeError in case of non-ASCII NIC
   names.
 - 659_: [Linux] compilation error on Suse 10. (patch by maozguttman)
 - 664_: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
-- 670_: [Windows] segfgault of net_if_addrs() in case of non-ASCII NIC names.
+- 670_: [Windows] segfgault of `net_if_addrs()`_ in case of non-ASCII NIC names.
   (patch by sk6249)
 - 672_: [Windows] compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
@@ -1323,7 +1323,7 @@ XXXX-XX-XX
 
 - 250_: new psutil.net_if_stats() returning NIC statistics (isup, duplex,
   speed, MTU).
-- 376_: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
+- 376_: new `net_if_addrs()`_ returning all NIC addresses a-la ifconfig.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
   returned by `Process.ionice()`_ and `Process.nice()`_ are enums instead of
   plain integers.
