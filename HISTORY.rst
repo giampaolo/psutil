@@ -492,7 +492,7 @@ XXXX-XX-XX
 
 - 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
   psutil.MACOS.
-- 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
+- 1309_: [Linux] added ``psutil.STATUS_PARKED`` constant for `Process.status()`_.
 - 1321_: [Linux] add `disk_io_counters()`_ dual implementation relying on
   /sys/block filesystem in case /proc/diskstats is not available. (patch by
   Lawrence Ye)
@@ -507,8 +507,8 @@ XXXX-XX-XX
 - 1294_: [Windows] `Process.connections()`_ may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
-- 1309_: [Linux] Process.status() is unable to recognize "idle" and "parked"
-  statuses (returns '?').
+- 1309_: [Linux] `Process.status()`_ is unable to recognize ``"idle"`` and
+  ``"parked"`` statuses (returns ``"?"``).
 - 1313_: [Linux] `disk_io_counters()`_ can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
 - 1323_: [Linux] `sensors_temperatures()`_ may fail with ValueError.
@@ -984,7 +984,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 514_: [macOS] possibly fix `Process.memory_maps()`_ segfault (critical!).
-- 783_: [macOS] Process.status() may erroneously return "running" for zombie
+- 783_: [macOS] `Process.status()`_ may erroneously return "running" for zombie
   processes.
 - 798_: [Windows] `Process.open_files()`_ returns and empty list on Windows 10.
 - 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
@@ -1715,7 +1715,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 391_: [Windows] `cpu_times_percent()`_ returns negative percentages.
-- 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
+- 408_: ``STATUS_*`` and ``CONN_*`` constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] `Process.memory_info()`_ leaks memory.
 - 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
@@ -1726,7 +1726,7 @@ DeprecationWarning.
 
 **API changes**
 
-- 408_: turn STATUS_* and CONN_* constants into plain Python strings.
+- 408_: turn ``STATUS_*`` and ``CONN_*`` constants into plain Python strings.
 
 1.0.1
 =====
@@ -1745,7 +1745,7 @@ DeprecationWarning.
 **Enhancements**
 
 - 18_:  Solaris support (yay!)  (thanks Justin Venus)
-- 367_: `Process.connections()`_ 'status' strings are now constants.
+- 367_: `Process.connections()`_ ``status`` strings are now constants.
 - 380_: test suite exits with non-zero on failure.  (patch by floppymaster)
 - 391_: introduce unittest2 facilities and provide workarounds if unittest2
   is not installed (python < 2.7).
@@ -1756,11 +1756,11 @@ DeprecationWarning.
   memory.
 - 379_: [Linux] `Process.memory_maps()`_ may raise ValueError.
 - 394_: [macOS] Mapped memory regions report incorrect file name.
-- 404_: [Linux] sched_*affinity() are implicitly declared. (patch by Arfrever)
+- 404_: [Linux] ``sched_*affinity()`` are implicitly declared. (patch by Arfrever)
 
 **API changes**
 
-- `Process.connections()`_ 'status' field is no longer a string but a
+- `Process.connections()`_ ``status`` field is no longer a string but a
   constant object (``psutil.CONN_*``).
 - `Process.connections()`_ 'local_address' and 'remote_address' fields
   renamed to 'laddr' and 'raddr'.
@@ -1931,8 +1931,8 @@ DeprecationWarning.
 
 - 298_: [macOS and BSD] memory leak in `Process.num_fds()`_.
 - 299_: potential memory leak every time PyList_New(0) is used.
-- 303_: [Windows] potential heap corruption in get_num_threads() and
-  get_status() Process methods.
+- 303_: [Windows] potential heap corruption in `Process.num_threads()`_ and
+  `Process.status()`_ methods.
 - 305_: [FreeBSD] psutil can't compile on FreeBSD 9 due to removal of utmp.h.
 - 306_: at C level, errors are not checked when invoking ``Py*`` functions which
   create or manipulate Python objects leading to potential memory related
@@ -2037,7 +2037,7 @@ DeprecationWarning.
   and `Process.create_time()`_ properties of Process class are now cached after
   being accessed, meaning NoSuchProcess will no longer be raised in case the
   process is gone in the meantime.
-- psutil.STATUS_* constants can now be compared by using their string
+- ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 
 0.4.1
@@ -2105,7 +2105,7 @@ DeprecationWarning.
 - 163_: per-process associated terminal (TTY).
 - 171_: added get_phymem() and get_virtmem() functions returning system
   memory information (total, used, free) and memory percent usage.
-  total_* avail_* and used_* memory functions are deprecated.
+  ``total_*``, ``avail_*`` and ``used_*`` memory functions are deprecated.
 - 172_: disk usage statistics.
 - 174_: mounted disk partitions.
 - 179_: setuptools is now used in setup.py
@@ -2115,7 +2115,7 @@ DeprecationWarning.
 - 159_: SetSeDebug() does not close handles or unset impersonation on return.
 - 164_: [Windows] wait function raises a TimeoutException when a process
   returns -1 .
-- 165_: process.status raises an unhandled exception.
+- 165_: `Process.status()`_ raises an unhandled exception.
 - 166_: `Process.memory_info()`_ leaks handles hogging system resources.
 - 168_: `cpu_percent()`_ returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
@@ -2140,7 +2140,7 @@ DeprecationWarning.
 - 137_: per-process real, effective and saved user and group ids.
 - 140_: system boot time.
 - 142_: per-process get and set niceness (priority).
-- 143_: per-process status.
+- 143_: add `Process.status()`_.
 - 147_: per-process I/O nice (priority) - Linux only.
 - 148_: `psutil.Popen`_ class which tidies up subprocess.Popen and psutil.Process
   in a unique interface.
