@@ -261,7 +261,7 @@ XXXX-XX-XX
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
-- 1535_: 'type' and 'family' fields returned by `net_connections()`_ are not
+- 1535_: ``type`` and ``family`` fields returned by `net_connections()`_ are not
   always turned into enums.
 - 1536_: [NetBSD] `Process.cmdline()`_ erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
@@ -704,7 +704,7 @@ XXXX-XX-XX
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with `PROCFS_PATH`_ in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
-- 1022_: `users()`_ provides a new "pid" field.
+- 1022_: `users()`_ provides a new ``pid`` field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
   `Process.as_dict()`_: "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
@@ -760,7 +760,7 @@ XXXX-XX-XX
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise ``IOError`` on old RedHat distros.
 - 1074_: [FreeBSD] `sensors_battery()`_ raises ``OSError`` in case of no battery.
-- 1075_: [Windows] `net_if_addrs()`_: inet_ntop() return value is not checked.
+- 1075_: [Windows] `net_if_addrs()`_: ``inet_ntop()`` return value is not checked.
 - 1077_: [SunOS] `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
 - 1077_: [SunOS] `net_connections()`_ does not work on SunOS 5.10. (patch by
@@ -783,10 +783,8 @@ XXXX-XX-XX
 
 - 1039_: returned types consolidation:
   - Windows / `Process.cpu_times()`_: fields #3 and #4 were int instead of float
-  - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
-    ``None``
-  - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
-    ``None``
+  - Linux / FreeBSD / OpenBSD: `Process.connections()`_ ``raddr`` is now set to
+    ``""`` instead of ``None`` when retrieving UNIX sockets.
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
@@ -903,7 +901,7 @@ XXXX-XX-XX
 
 - 687_: [Linux] `pid_exists()`_ no longer returns True if passed a process thread
   ID.
-- 948_: cannot install psutil with PYTHONOPTIMIZE=2.
+- 948_: cannot install psutil with ``PYTHONOPTIMIZE=2``.
 - 950_: [Windows] `Process.cpu_percent()`_ was calculated incorrectly and showed
   higher number than real usage.
 - 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
@@ -1028,7 +1026,7 @@ XXXX-XX-XX
   handle unicode service names / descriptions.
 - 869_: [Windows] `Process.wait()`_ may raise TimeoutExpired with wrong timeout
   unit (ms instead of sec).
-- 870_: [Windows] Handle leak inside psutil_get_process_data.
+- 870_: [Windows] Handle leak inside ``psutil_get_process_data``.
 
 4.3.0
 =====
@@ -1048,7 +1046,7 @@ XXXX-XX-XX
 - 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
 - 812_: [NetBSD] fix compilation on NetBSD-5.x.
 - 823_: [NetBSD] `virtual_memory()`_ raises ``TypeError`` on Python 3.
-- 829_: [UNIX] `disk_usage()`_ percent field takes root reserved space
+- 829_: [UNIX] `disk_usage()`_ ``percent`` field takes root reserved space
   into account.
 - 816_: [Windows] fixed `net_io_counters()`_ values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
@@ -1062,7 +1060,7 @@ XXXX-XX-XX
 
 - 795_: [Windows] new APIs to deal with Windows services: `win_service_iter()`_
   and `win_service_get()`_.
-- 800_: [Linux] `virtual_memory()`_ returns a new "shared" memory field.
+- 800_: [Linux] `virtual_memory()`_ returns a new ``shared`` memory field.
 - 819_: [Linux] speedup /proc parsing:
   - `Process.ppid()`_ is 20% faster
   - `Process.status()`_ is 28% faster
@@ -1082,8 +1080,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 777_: [Linux] `Process.open_files()`_ on Linux return 3 new fields: position,
-  mode and flags.
+- 777_: [Linux] `Process.open_files()`_ on Linux return 3 new fields:
+  ``position``, ``mode`` and ``flags``.
 - 779_: `Process.cpu_times()`_ returns two new fields, ``children_user`` and
   ``children_system`` (always set to 0 on macOS and Windows).
 - 789_: [Windows] `cpu_times()`_ return two new fields: ``interrupt`` and
@@ -1110,7 +1108,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 523_: [Linux, FreeBSD] `disk_io_counters()`_ return a new "busy_time" field.
+- 523_: [Linux, FreeBSD] `disk_io_counters()`_ return a new ``busy_time`` field.
 - 660_: [Windows] make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - 732_: `Process.environ()`_.  (patch by Frank Benkstein)
@@ -1119,8 +1117,8 @@ XXXX-XX-XX
 - 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
 - 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
-- 756_: [Linux] `disk_io_counters()`_ return 2 new fields: read_merged_count and
-  write_merged_count.
+- 756_: [Linux] `disk_io_counters()`_ return 2 new fields: ``read_merged_count``
+  and ``write_merged_count``.
 - 762_: new scripts/procsmem.py script.
 
 **Bug fixes**
@@ -1306,7 +1304,7 @@ XXXX-XX-XX
 - 640_: [Linux] ``*connections`` functions may swallow errors and return an
   incomplete list of connnections.
 - 642_: ``repr()`` of exceptions is incorrect.
-- 653_: [Windows] Add inet_ntop function for Windows XP to support IPv6.
+- 653_: [Windows] Add ``inet_ntop()`` function for Windows XP to support IPv6.
 - 641_: [Windows] Replace deprecated string functions with safe equivalents.
 
 3.0.1
@@ -1345,7 +1343,7 @@ XXXX-XX-XX
   when running as a limited user.
 - 602_: pre-commit GIT hook.
 - 629_: enhanced support for py.test and nose test discovery and tests run.
-- 616_: [Windows] Add inet_ntop function for Windows XP.
+- 616_: [Windows] Add ``inet_ntop()`` function for Windows XP.
 
 **Bug fixes**
 
@@ -1763,8 +1761,8 @@ DeprecationWarning.
 
 - `Process.connections()`_ ``status`` field is no longer a string but a
   constant object (``psutil.CONN_*``).
-- `Process.connections()`_ 'local_address' and 'remote_address' fields
-  renamed to 'laddr' and 'raddr'.
+- `Process.connections()`_ ``local_address`` and ``remote_address`` fields
+  renamed to ``laddr`` and ``raddr``.
 - psutil.network_io_counters() renamed to `net_io_counters()`_.
 
 0.7.1
