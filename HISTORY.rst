@@ -36,7 +36,7 @@ XXXX-XX-XX
   up and raising AccessDenied, which was a fallback to avoid crashing.
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
-- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
+- 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
 - 1919_: [Linux] `sensors_battery()`_ can raise TypeError on PureOS.
 - 1921_: [Windows] `swap_memory()`_ shows committed memory instead of swap
 - 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
@@ -1475,7 +1475,7 @@ XXXX-XX-XX
 
 - 424_: [Windows] installer for Python 3.X 64 bit.
 - 427_: number of logical CPUs and physical cores (`cpu_count()`_).
-- 447_: psutil.wait_procs() timeout parameter is now optional.
+- 447_: `wait_procs()`_'s ``timeout`` parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
 - 453_: tests on Python < 2.7 require unittest2 module.
 - 459_: add a make file for running tests and other repetitive tasks (also
@@ -1502,7 +1502,7 @@ XXXX-XX-XX
 - 461_: namedtuples are not pickle-able.
 - 466_: [Linux] process exe improper null bytes handling.  (patch by
   Gautam Singh)
-- 470_: wait_procs() might not wait.  (patch by crusaderky)
+- 470_: `wait_procs()`_ might not wait.  (patch by crusaderky)
 - 471_: [Windows] process exe improper unicode handling. (patch by
   alex@mroja.net)
 - 473_: psutil.Popen.wait() does not set returncode attribute.
@@ -1631,7 +1631,7 @@ DeprecationWarning.
 - timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of 0.1.
 - long deprecated psutil.error module is gone; exception classes now live in
   "psutil" namespace only.
-- Process instances' "retcode" attribute returned by psutil.wait_procs() has
+- Process instances' "retcode" attribute returned by `wait_procs()`_ has
   been renamed to "returncode" for consistency with subprocess.Popen.
 
 1.2.1
@@ -1655,7 +1655,7 @@ DeprecationWarning.
 
 - 439_: assume os.getpid() if no argument is passed to psutil.Process
   constructor.
-- 440_: new psutil.wait_procs() utility function which waits for multiple
+- 440_: new `wait_procs()`_ utility function which waits for multiple
   processes to terminate.
 
 **Bug fixes**
