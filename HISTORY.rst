@@ -109,8 +109,8 @@ XXXX-XX-XX
 - 1738_, [macOS]: `Process.exe()`_ may raise ``FileNotFoundError`` if process is still
   alive but the exe file which launched it got deleted.
 - 1791_, [macOS]: fix missing include for ``getpagesize()``.
-- 1823_, [Windows]: `Process.open_files()`_ may cause a segfault due to a NULL
-  pointer.
+- 1823_, [Windows], **[critical]**: `Process.open_files()`_ may cause a segfault
+  due to a NULL pointer.
 - 1838_, [Linux]: `sensors_battery()`_: if `percent` can be determined but not
   the remaining values, still return a result instead of ``None``.
   (patch by aristocratos)
@@ -188,8 +188,8 @@ XXXX-XX-XX
 - 1538_, [NetBSD]: `Process.cwd()`_ may return ``ENOENT`` instead of `NoSuchProcess`_.
 - 1627_, [Linux]: `Process.memory_maps()`_ can raise ``KeyError``.
 - 1642_, [SunOS]: querying basic info for PID 0 results in ``FileNotFoundError``.
-- 1646_, [FreeBSD]: many Process methods may cause a segfault on FreeBSD 12.0
-  due to a backward incompatible change in a C type introduced in 12.0.
+- 1646_, [FreeBSD], **[critical]**: many Process methods may cause a segfault on
+  FreeBSD 12.0 due to a backward incompatible change in a C type introduced in 12.0.
 - 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
 - 1660_, [Windows]: `Process.open_files()`_ complete rewrite + check of errors.
@@ -224,8 +224,8 @@ XXXX-XX-XX
 
 - 1179_, [Linux]: `Process.cmdline()`_ now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
-- 1616_: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will result in double
-  ``free()`` and segfault
+- 1616_, **[critical]**: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will
+  result in double ``free()`` and segfault
   (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
 - 1619_, [OpenBSD]: compilation fails due to C syntax error.  (patch by Nathan
@@ -257,8 +257,8 @@ XXXX-XX-XX
 - 875_, [Windows]: `Process.cmdline()`_, `Process.environ()`_ or `Process.cwd()`_
   may occasionally fail with ``ERROR_PARTIAL_COPY`` which now gets translated to
   `AccessDenied`_.
-- 1126_, [Linux]: `Process.cpu_affinity()`_ segfaults on CentOS 5 / manylinux.
-  `Process.cpu_affinity()`_ support for CentOS 5 was removed.
+- 1126_, [Linux], **[critical]**: `Process.cpu_affinity()`_ segfaults on CentOS
+  5 / manylinux. `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_, [AIX]: compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
 - 1535_: ``type`` and ``family`` fields returned by `net_connections()`_ are not
@@ -350,7 +350,7 @@ XXXX-XX-XX
 - 1329_, [AIX]: psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
 - 1448_, [Windows]: crash on import due to ``rtlIpv6AddressToStringA`` not available
   on Wine.
-- 1451_, [Windows]: `Process.memory_full_info()`_ segfaults.
+- 1451_, [Windows], **[critical]**: `Process.memory_full_info()`_ segfaults.
   ``NtQueryVirtualMemory`` is now used instead of ``QueryWorkingSet`` to
   calculate USS memory.
 
@@ -402,8 +402,8 @@ XXXX-XX-XX
 
 **Incompatible API changes**
 
-- 1291_, [OSX]: `Process.memory_maps()`_ was removed because inherently broken
-  (segfault) for years.
+- 1291_, [OSX], **[critical]**: `Process.memory_maps()`_ was removed because
+  inherently broken (segfault) for years.
 
 5.5.1
 =====
@@ -521,8 +521,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1258_, [Windows]: `Process.username()`_ may cause a segfault (Python interpreter
-  crash).  (patch by Jean-Luc Migot)
+- 1258_, [Windows], **[critical]**: `Process.username()`_ may cause a segfault
+  (Python interpreter crash).  (patch by Jean-Luc Migot)
 - 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from ``snic`` to
   ``snicaddr``
 - 1274_, [Linux]: there was a small chance `Process.children()`_ may swallow
@@ -661,8 +661,8 @@ XXXX-XX-XX
 - 1009_, [Linux]: `sensors_temperatures()`_ may crash with ``IOError``.
 - 1012_, [Windows]: `disk_io_counters()`_ ``read_time`` and ``write_time``
   were expressed in tens of micro seconds instead of milliseconds.
-- 1127_, [macOS]: invalid reference counting in `Process.open_files()`_ may lead
-  to segfault.  (patch by Jakub Bacic)
+- 1127_, [macOS], **[critical]**: invalid reference counting in
+  `Process.open_files()`_ may lead to segfault.  (patch by Jakub Bacic)
 - 1129_, [Linux]: `sensors_fans()`_ may crash with ``IOError``.  (patch by Sebastian
   Saip)
 - 1131_, [SunOS]: fix compilation warnings.  (patch by Arnon Yaari)
@@ -753,7 +753,7 @@ XXXX-XX-XX
 - 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise ``TypeError`` if no disks
   or NICs are installed on the system.
 - 1063_, [NetBSD]: `net_connections()`_ may list incorrect sockets.
-- 1064_, [NetBSD]: `swap_memory()`_ may segfault in case of error.
+- 1064_, [NetBSD], **[critical]**: `swap_memory()`_ may segfault in case of error.
 - 1065_, [OpenBSD]: `Process.cmdline()`_ may raise ``SystemError``.
 - 1067_, [NetBSD]: `Process.cmdline()`_ leaks memory if process has terminated.
 - 1069_, [FreeBSD]: `Process.cpu_num()`_ may return 255 for certain kernel
@@ -982,7 +982,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 514_, [macOS]: possibly fix `Process.memory_maps()`_ segfault (critical!).
+- 514_, [macOS], **[critical]**: possibly fix `Process.memory_maps()`_ segfault.
 - 783_, [macOS]: `Process.status()`_ may erroneously return "running" for zombie
   processes.
 - 798_, [Windows]: `Process.open_files()`_ returns and empty list on Windows 10.
@@ -1350,14 +1350,14 @@ XXXX-XX-XX
 
 - 428_, [all :UNIXes except Linux] correct handling of zombie processes;
   introduced new `ZombieProcess`_ exception class.
-- 512_, [BSD]: fix segfault in `net_connections()`_.
+- 512_, [BSD], **[critical]**: fix segfault in `net_connections()`_.
 - 555_, [Linux]: `users()`_ correctly handles ":0" as an alias for
   "localhost"
 - 579_, [Windows]: Fixed `Process.open_files()`_ for PID > 64K.
 - 579_, [Windows]: fixed many compiler warnings.
 - 585_, [FreeBSD]: `net_connections()`_ may raise ``KeyError``.
-- 586_, [FreeBSD]: `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
-  number is provided.
+- 586_, [FreeBSD], **[critical]**: `Process.cpu_affinity()`_ segfaults on set
+  in case an invalid CPU number is provided.
 - 593_, [FreeBSD]: `Process.memory_maps()`_ segfaults.
 - 606_: `Process.parent()`_ may swallow `NoSuchProcess`_ exceptions.
 - 611_, [SunOS]: `net_io_counters()`_ has send and received swapped
