@@ -924,7 +924,7 @@ XXXX-XX-XX
 
 - 609_: [SunOS] psutil does not compile on Solaris 10.
 - 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
-- 940_: [Linux] `cpu_percent()`_ and cpu_times_percent() was calculated
+- 940_: [Linux] `cpu_percent()`_ and `cpu_times_percent()`_ was calculated
   incorrectly as "iowait", "guest" and "guest_nice" times were not properly
   taken into account.
 - 944_: [OpenBSD] psutil.pids() was omitting PID 0.
@@ -1082,7 +1082,7 @@ XXXX-XX-XX
 - 779_: `Process.cpu_times()`_ returns two new fields, 'children_user' and
   'children_system' (always set to 0 on macOS and Windows).
 - 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
-  "dpc". Same for psutil.cpu_times_percent().
+  "dpc". Same for psutil.`cpu_times_percent()`_.
 - 792_: new psutil.cpu_stats() function returning number of CPU ctx switches
   interrupts, soft interrupts and syscalls.
 
@@ -1268,7 +1268,7 @@ XXXX-XX-XX
 
 - 603_: [Linux] `Process.ionice()`_ set value range is incorrect.
   (patch by spacewander)
-- 645_: [Linux] psutil.cpu_times_percent() may produce negative results.
+- 645_: [Linux] psutil.`cpu_times_percent()`_ may produce negative results.
 - 656_: 'from psutil import *' does not work.
 
 3.1.0
@@ -1708,7 +1708,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 391_: [Windows] psutil.cpu_times_percent() returns negative percentages.
+- 391_: [Windows] psutil.`cpu_times_percent()`_ returns negative percentages.
 - 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] Process.get_memory_info() leaks memory.
@@ -1787,7 +1787,7 @@ DeprecationWarning.
 - 361_: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
   'guest_nice' fields available on recent Linux kernels.
   Also, `cpu_percent()`_ is more accurate.
-- 362_: cpu_times_percent() (per-CPU-time utilization as a percentage)
+- 362_: `cpu_times_percent()`_ (per-CPU-time utilization as a percentage)
 
 **Bug fixes**
 
@@ -2308,6 +2308,7 @@ DeprecationWarning.
 
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
 .. _`cpu_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
+.. _`cpu_times_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_times_percent
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
