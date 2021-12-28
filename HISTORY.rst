@@ -21,8 +21,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1456_, [macOS]: `cpu_freq()`_ ``min`` and ``max`` are set to 0 if can't be
-  determined (instead of crashing).
+- 1456_, [macOS], **[critical]**: `cpu_freq()`_ ``min`` and ``max`` are set to
+  0 if can't be determined (instead of crashing).
 - 1512_, [macOS]: sometimes `Process.connections()`_ will crash with
   ``EOPNOTSUPP`` for one connection; this is now ignored.
 - 1598_, [Windows]: `disk_partitions()`_ only returns mountpoints on drives
@@ -43,8 +43,8 @@ XXXX-XX-XX
   file descriptors in procfs.  (patch by Nikita Radchenko)
 - 1948_: Process' ``memoize_when_activated`` decorator was not thread-safe.
   (patch by Xuehai Pan)
-- 1953_, [Windows]: `disk_partitions()`_ crashes due to insufficient buffer len.
-  (patch by MaWe2019)
+- 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
+  insufficient buffer len. (patch by MaWe2019)
 - 1965_, [Windows]: fix "Fatal Python error: deallocating ``None``" when calling
   `users()`_ multiple times.
 - 1980_, [Windows]: 32bit / WOW64 processes fails to read `Process.name()`_ longer
@@ -331,8 +331,8 @@ XXXX-XX-XX
   in ``WindowsError`` being raised instead of `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
-- 1480_, [Windows]: `cpu_count()`_ with ``logical=False`` could cause a crash
-  due to fixed read violation.  (patch by Samer Masterson)
+- 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
+  cause a crash due to fixed read violation.  (patch by Samer Masterson)
 - 1486_, [AIX,: SunOS] AttributeError when interacting with Process methods
   involved into `Process.oneshot()`_ context.
 - 1491_, [SunOS]: `net_if_addrs()`_: ``free()`` ifap struct on error.  (patch by
@@ -348,8 +348,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1329_, [AIX]: psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
-- 1448_, [Windows]: crash on import due to ``rtlIpv6AddressToStringA`` not available
-  on Wine.
+- 1448_, [Windows], **[critical]**: crash on import due to ``rtlIpv6AddressToStringA``
+  not available on Wine.
 - 1451_, [Windows], **[critical]**: `Process.memory_full_info()`_ segfaults.
   ``NtQueryVirtualMemory`` is now used instead of ``QueryWorkingSet`` to
   calculate USS memory.
@@ -1159,7 +1159,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 724_, [FreeBSD]: `virtual_memory()`_ ``total`` is incorrect.
-- 730_, [FreeBSD]: `virtual_memory()`_ crashes.
+- 730_, [FreeBSD], **[critical]**: `virtual_memory()`_ crashes.
 
 3.4.1
 =====
@@ -1178,7 +1178,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 714_, [OpenBSD]: `virtual_memory()`_ ``cached`` value was always set to 0.
-- 715_: don't crash at import time if `cpu_times()`_ fail for some reason.
+- 715_, **[critical]**: don't crash at import time if `cpu_times()`_ fail for
+  some reason.
 - 717_, [Linux]: `Process.open_files()`_ fails if deleted files still visible.
 - 722_, [Linux]: `swap_memory()`_ no longer crashes if ``sin`` / ``sout`` can't
   be determined due to missing ``/proc/vmstat``.
@@ -1317,8 +1318,8 @@ XXXX-XX-XX
 
 - 632_, [Linux]: better error message if cannot parse process UNIX connections.
 - 634_, [Linux]: `Process.cmdline()`_ does not include empty string arguments.
-- 635_, [UNIX]: crash on module import if 'enum' package is installed on python
-  < 3.4.
+- 635_, [UNIX], **[critical]**: crash on module import if 'enum' package is
+  installed on python < 3.4.
 
 3.0.0
 =====
@@ -1648,7 +1649,8 @@ DeprecationWarning.
 
 - 348_, [Windows :XP] fixed "ImportError: DLL load failed" occurring on module
   import.
-- 425_, [Solaris]: crash on import due to failure at determining BOOT_TIME.
+- 425_, [Solaris], **[critical]**: crash on import due to failure at determining
+  BOOT_TIME.
 - 443_, [Linux]: can't set CPU affinity on systems with more than 64 cores.
 
 1.2.0
@@ -1820,8 +1822,8 @@ DeprecationWarning.
   and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
 - 338_, [Linux]: `disk_io_counters()`_ fails to find some disks.
 - 339_, [FreeBSD]: get_pid_list() can allocate all the memory on system.
-- 341_, [Linux]: psutil might crash on import due to error in retrieving system
-  terminals map.
+- 341_, [Linux], **[critical]**: psutil might crash on import due to error in
+  retrieving system terminals map.
 - 344_, [FreeBSD]: `swap_memory()`_ might return incorrect results due to
   kvm_open(3) not being called. (patch by Jean Sebastien)
 - 338_, [Linux]: `disk_io_counters()`_ fails to find some disks.
@@ -2084,15 +2086,15 @@ DeprecationWarning.
   100 on multicore processors.
 - 197_, [Linux]: `Process.connections()`_ is broken on platforms not
   supporting IPv6.
-- 200_, [Linux]: ``psutil.NUM_CPUS`` not working on armel and sparc architectures
-  and causing crash on module import.
+- 200_, [Linux], **[critical]**: ``psutil.NUM_CPUS`` not working on armel and
+  sparc architectures and causing crash on module import.
 - 201_, [Linux]: `Process.connections()`_ is broken on big-endian
   architectures.
 - 211_: Process instance can unexpectedly raise `NoSuchProcess`_ if tested for
   equality with another object.
-- 218_, [Linux]: crash at import time on Debian 64-bit because of a missing
-  line in ``/proc/meminfo``.
-- 226_, [FreeBSD]: crash at import time on FreeBSD 7 and minor.
+- 218_, [Linux], **[critical]**: crash at import time on Debian 64-bit because
+  of a missing line in ``/proc/meminfo``.
+- 226_, [FreeBSD], **[critical]**: crash at import time on FreeBSD 7 and minor.
 
 0.3.0
 =====
