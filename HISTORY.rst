@@ -334,7 +334,7 @@ XXXX-XX-XX
 - 1480_: [Windows] `cpu_count()`_ with ``logical=False`` could cause a crash
   due to fixed read violation.  (patch by Samer Masterson)
 - 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
-  involved into oneshot() context.
+  involved into `Process.oneshot()`_ context.
 - 1491_: [SunOS] `net_if_addrs()`_: free() ifap struct on error.  (patch by
   Agnewee)
 - 1493_: [Linux] `cpu_freq()`_: handle the case where
@@ -394,7 +394,7 @@ XXXX-XX-XX
 - 1432_: [Windows] `Process.memory_info_ex()`_'s USS memory is miscalculated
   because we're not using the actual system PAGESIZE.
 - 1439_: [NetBSD] `Process.connections()`_ may return incomplete results if using
-  oneshot().
+  `Process.oneshot()`_.
 - 1447_: original exception wasn't turned into NSP/AD exceptions when using
   `Process.oneshot()`_ ctx manager.
 
