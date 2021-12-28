@@ -420,7 +420,7 @@ XXXX-XX-XX
 
 - 1394_: [Windows] `Process.exe()`_ returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
-- 1402_: psutil exceptions' repr() show the internal private module path.
+- 1402_: psutil exceptions' ``repr()`` show the internal private module path.
 - 1408_: [AIX] psutil won't compile on AIX 7.1 due to missing header.  (patch
   by Arnon Yaari)
 
@@ -475,7 +475,7 @@ XXXX-XX-XX
 - 1277_: [OSX] available and used memory (`virtual_memory()`_) metrics are
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
-  intermittent 0xC0000001.  (patch by Sylvain Duchesne)
+  intermittent ``0xC0000001``.  (patch by Sylvain Duchesne)
 - 1307_: [Linux] `disk_partitions()`_ does not honour `PROCFS_PATH`_.
 - 1320_: [AIX] system CPU times (`cpu_times()`_) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
@@ -500,11 +500,11 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1209_: [macOS] `Process.memory_maps()`_ may fail with EINVAL due to poor
+- 1209_: [macOS] `Process.memory_maps()`_ may fail with ``EINVAL`` due to poor
   task_for_pid() syscall. AccessDenied is now raised instead.
 - 1278_: [macOS] `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
-- 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ENODEV.
+- 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ``ENODEV``.
 - 1294_: [Windows] `Process.connections()`_ may sometime fail with
   ``MemoryError``.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
@@ -523,8 +523,8 @@ XXXX-XX-XX
 
 - 1258_: [Windows] `Process.username()`_ may cause a segfault (Python interpreter
   crash).  (patch by Jean-Luc Migot)
-- 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from "snic" to
-  "snicaddr".
+- 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from ``snic`` to
+  ``snicaddr``
 - 1274_: [Linux] there was a small chance `Process.children()`_ may swallow
   AccessDenied exceptions.
 
@@ -617,7 +617,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1152_: [Windows] `disk_io_counters()`_ may return an empty dict.
-- 1169_: [Linux] `users()`_ "hostname" returns username instead.  (patch by
+- 1169_: [Linux] `users()`_ ``hostname`` returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] ``make test`` does not work.
 - 1179_: [Linux] `Process.cmdline()`_ is now able to split cmdline args for
@@ -659,8 +659,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1009_: [Linux] `sensors_temperatures()`_ may crash with ``IOError``.
-- 1012_: [Windows] `disk_io_counters()`_'s read_time and write_time were expressed
-  in tens of micro seconds instead of milliseconds.
+- 1012_: [Windows] `disk_io_counters()`_'s ``read_time`` and ``write_time``
+  were expressed in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in `Process.open_files()`_ may lead
   to segfault.  (patch by Jakub Bacic)
 - 1129_: [Linux] `sensors_fans()`_ may crash with ``IOError``.  (patch by Sebastian
@@ -736,7 +736,7 @@ XXXX-XX-XX
 - 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
   3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
 - 1033_: [macOS, FreeBSD] memory leak for `net_connections()`_ and
-  `Process.connections()`_ when retrieving UNIX sockets (kind='unix').
+  `Process.connections()`_ when retrieving UNIX sockets (``kind='unix'``).
 - 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
@@ -777,7 +777,7 @@ XXXX-XX-XX
   is still alive.
 - 1099_: [Windows] `Process.terminate()`_ may raise AccessDenied even if the
   process already died.
-- 1101_: [Linux] `sensors_temperatures()`_ may raise ENODEV.
+- 1101_: [Linux] `sensors_temperatures()`_ may raise ``ENODEV``.
 
 **Porting notes**
 
@@ -1437,7 +1437,7 @@ XXXX-XX-XX
   `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
 - 506_: [Linux] python 2.4 support was broken.
-- 522_: [Linux] `Process.cpu_affinity()`_ might return EINVAL.  (patch by David
+- 522_: [Linux] `Process.cpu_affinity()`_ might return ``EINVAL``.  (patch by David
   Daeschler)
 - 529_: [Windows] `Process.exe()`_ may raise unhandled ``WindowsError`` exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
@@ -1811,8 +1811,8 @@ DeprecationWarning.
   squeeze.
 - 321_: [UNIX] `Process.ppid()`_ property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
-- 323_: [macOS] `disk_io_counters()`_'s read_time and write_time parameters were
-  reporting microseconds not milliseconds.  (patch by Gregory Szorc)
+- 323_: [macOS] `disk_io_counters()`_'s ``read_time`` and ``write_time``
+  parameters were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
 - 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
   change.
 - 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
