@@ -1697,7 +1697,7 @@ DeprecationWarning.
 
 - 410_: host tar.gz and windows binary files are on PyPI.
 - 412_: [Linux] get/set process resource limits.
-- 415_: [Windows] Process.get_children() is an order of magnitude faster.
+- 415_: [Windows] `Process.get_children()`_ is an order of magnitude faster.
 - 426_: [Windows] Process.name is an order of magnitude faster.
 - 431_: [UNIX] Process.name is slightly faster because it unnecessarily
   retrieved also process cmdline.
@@ -1967,7 +1967,7 @@ DeprecationWarning.
 - 209_: `disk_partitions()`_ now provides also mount options.
 - 229_: list users currently connected on the system (psutil.get_users()).
 - 238_: [Linux, Windows] process CPU affinity (get and set).
-- 242_: Process.get_children(recursive=True): return all process
+- 242_: add ``recursive=True`` to `Process.get_children()`_: return all process
   descendants.
 - 245_: [POSIX] Process.wait() incrementally consumes less CPU cycles.
 - 257_: [Windows] removed Windows 2000 support.
@@ -2013,7 +2013,7 @@ DeprecationWarning.
   NotImplementedError.
 - 286_: Process.is_running() doesn't actually check whether PID has been
   reused.
-- 314_: Process.get_children() can sometimes return non-children.
+- 314_: `Process.get_children()`_ can sometimes return non-children.
 
 **API changes**
 
@@ -2304,6 +2304,7 @@ DeprecationWarning.
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
+.. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 
 
