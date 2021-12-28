@@ -8,8 +8,8 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1851_: [Linux] `cpu_freq()`_ is slow on systems with many CPUs. Read current
-  frequency values for all CPUs from /proc/cpuinfo instead of opening many
-  files in /sys fs.  (patch by marxin)
+  frequency values for all CPUs from ``/proc/cpuinfo`` instead of opening many
+  files in ``/sys`` fs.  (patch by marxin)
 - 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
 - 1992_: error classes (`NoSuchProcess`_, `AccessDenied`_, etc.) now have a better
   formatted and separated ``__repr__`` and ``__str__`` implementations.
@@ -169,8 +169,8 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1637_: [SunOS] add partial support for old SunOS 5.10 Update 0 to 3.
-- 1648_: [Linux] `sensors_temperatures()`_ looks into an additional /sys/device/
-  directory for additional data.  (patch by Javad Karabi)
+- 1648_: [Linux] `sensors_temperatures()`_ looks into an additional
+  ``/sys/device/`` directory for additional data.  (patch by Javad Karabi)
 - 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
@@ -202,7 +202,7 @@ XXXX-XX-XX
   `Process.threads()`_ returned improper exception if process is gone.
 - 1674_: [SunOS] `disk_partitions()`_ may raise ``OSError``.
 - 1684_: [Linux] `disk_io_counters()`_ may raise ``ValueError`` on systems not
-  having /proc/diskstats.
+  having ``/proc/diskstats``.
 - 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
   ``PSUTIL_HAVE_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
@@ -302,8 +302,8 @@ XXXX-XX-XX
 - 604_: [Windows] add new `getloadavg()`_, returning system load average
   calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] `cpu_count()`_ with ``logical=False`` uses a second method
-  (read from `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to
-  determine the number of CPU cores in case /proc/cpuinfo does not provide this
+  (read from ``/sys/devices/system/cpu/cpu[0-9]/topology/core_id``) in order to
+  determine the number of CPU cores in case ``/proc/cpuinfo`` does not provide this
   info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
@@ -338,7 +338,7 @@ XXXX-XX-XX
 - 1491_: [SunOS] `net_if_addrs()`_: free() ifap struct on error.  (patch by
   Agnewee)
 - 1493_: [Linux] `cpu_freq()`_: handle the case where
-  /sys/devices/system/cpu/cpufreq/ exists but is empty.
+  ``/sys/devices/system/cpu/cpufreq/`` exists but is empty.
 
 5.6.1
 =====
@@ -460,10 +460,10 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1197_: [Linux] `cpu_freq()`_ is now implemented by parsing /proc/cpuinfo in case
-  /sys/devices/system/cpu/* filesystem is not available.
-- 1310_: [Linux] `sensors_temperatures()`_ now parses /sys/class/thermal
-  in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
+- 1197_: [Linux] `cpu_freq()`_ is now implemented by parsing ``/proc/cpuinfo``
+  in case ``/sys/devices/system/cpu/*`` filesystem is not available.
+- 1310_: [Linux] `sensors_temperatures()`_ now parses ``/sys/class/thermal``
+  in case ``/sys/class/hwmon`` fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
 - 1320_: [Posix] better compilation support when using g++ instead of GCC.
   (patch by Jaime Fullaondo)
@@ -495,13 +495,13 @@ XXXX-XX-XX
   ``psutil.MACOS``.
 - 1309_: [Linux] added ``psutil.STATUS_PARKED`` constant for `Process.status()`_.
 - 1321_: [Linux] add `disk_io_counters()`_ dual implementation relying on
-  /sys/block filesystem in case /proc/diskstats is not available. (patch by
-  Lawrence Ye)
+  ``/sys/block`` filesystem in case ``/proc/diskstats`` is not available.
+  (patch by Lawrence Ye)
 
 **Bug fixes**
 
 - 1209_: [macOS] `Process.memory_maps()`_ may fail with ``EINVAL`` due to poor
-  task_for_pid() syscall. `AccessDenied`_ is now raised instead.
+  ``task_for_pid()`` syscall. `AccessDenied`_ is now raised instead.
 - 1278_: [macOS] `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] `net_if_stats()`_ may return ``ENODEV``.
@@ -551,7 +551,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 694_: [SunOS] `Process.cmdline()`_ could be truncated at the 15th character when
-  reading it from /proc. An extra effort is made by reading it from process
+  reading it from ``/proc``. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
 - 771_: [Windows] `cpu_count()`_ (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
@@ -559,8 +559,8 @@ XXXX-XX-XX
   systems using process groups (> 64 cores).
 - 771_: [Windows] `cpu_stats()`_ and `cpu_freq()`_ may return incorrect results on
   systems using process groups (> 64 cores).
-- 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
-  enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
+- 1193_: [SunOS] Return uid/gid from ``/proc/pid/psinfo`` if there aren't
+  enough permissions for ``/proc/pid/cred``.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Return nice value from psinfo as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Fix double free in `Process.cpu_num()`_.  (patch by Georg
@@ -575,7 +575,7 @@ XXXX-XX-XX
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
 - 1238_: [Linux] `sensors_battery()`_ may return ``None`` in case battery is not
-  listed as "BAT0" under /sys/class/power_supply.
+  listed as "BAT0" under ``/sys/class/power_supply``.
 - 1240_: [Windows] `cpu_times()`_ float loses accuracy in a long running system.
   (patch by stswandering)
 - 1245_: [Linux] `sensors_temperatures()`_ may fail with ``IOError`` "no such file".
@@ -621,7 +621,7 @@ XXXX-XX-XX
   janderbrain)
 - 1172_: [Windows] ``make test`` does not work.
 - 1179_: [Linux] `Process.cmdline()`_ is now able to split cmdline args for
-  misbehaving processes which overwrite /proc/pid/cmdline and use spaces
+  misbehaving processes which overwrite ``/proc/pid/cmdline`` and use spaces
   instead of null bytes as args separator.
 - 1181_: [macOS] `Process.memory_maps()`_ may raise ``ENOENT``.
 - 1187_: [macOS] `pids()`_ does not return PID 0 on recent macOS versions.
@@ -701,9 +701,9 @@ XXXX-XX-XX
   (restart from 0). Introduced a new "nowrap" argument.
 - 928_: `net_connections()`_ and `Process.connections()`_ ``laddr`` and
   ``raddr`` are now named tuples.
-- 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
-  so that it can be used in conjunction with `PROCFS_PATH`_ in order to retrieve
-  memory info about Linux containers such as Docker and Heroku.
+- 1015_: `swap_memory()`_ now relies on ``/proc/meminfo`` instead of ``sysinfo()``
+  syscall so that it can be used in conjunction with `PROCFS_PATH`_ in order to
+  retrieve memory info about Linux containers such as Docker and Heroku.
 - 1022_: `users()`_ provides a new ``pid`` field.
 - 1025_: `process_iter()`_ accepts two new parameters in order to invoke
   `Process.as_dict()`_: "attrs" and "ad_value". With this you can iterate over all
@@ -908,7 +908,7 @@ XXXX-XX-XX
 - 959_: psutil exception objects could not be pickled.
 - 960_: `psutil.Popen`_'s ``wait()`` did not return the correct negative exit
   status if process is ``kill()``ed by a signal.
-- 961_: [Windows] `WindowsService`_ ``description()`` method may fail with
+- 961_: [Windows] ``WindowsService.description()`` method may fail with
   ``ERROR_MUI_FILE_NOT_FOUND``.
 
 5.0.1
@@ -946,8 +946,8 @@ XXXX-XX-XX
 
 - 932_: [NetBSD] `net_connections()`_ and `Process.connections()`_ may fail without
   raising an exception.
-- 933_: [Windows] memory leak in `cpu_stats()`_ and `WindowsService`_
-  ``description()`` method.
+- 933_: [Windows] memory leak in `cpu_stats()`_ and
+  ``WindowsService.description()`` method.
 
 4.4.2
 =====
@@ -1061,7 +1061,7 @@ XXXX-XX-XX
 - 795_: [Windows] new APIs to deal with Windows services: `win_service_iter()`_
   and `win_service_get()`_.
 - 800_: [Linux] `virtual_memory()`_ returns a new ``shared`` memory field.
-- 819_: [Linux] speedup /proc parsing:
+- 819_: [Linux] speedup ``/proc`` parsing:
   - `Process.ppid()`_ is 20% faster
   - `Process.status()`_ is 28% faster
   - `Process.name()`_ is 25% faster
@@ -1140,7 +1140,8 @@ XXXX-XX-XX
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
 - 761_: [Windows] `boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
-- 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
+- 766_: [Linux] `net_connections()`_ can't handle malformed ``/proc/net/unix``
+  file.
 - 767_: [Linux] `disk_io_counters()`_ may raise ``ValueError`` on 2.6 kernels and it's
   broken on 2.4 kernels.
 - 770_: [NetBSD] `disk_io_counters()`_ metrics didn't update.
@@ -1153,7 +1154,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 728_: [Solaris] exposed `PROCFS_PATH`_ constant to change the default
-  location of /proc filesystem.
+  location of ``/proc`` filesystem.
 
 **Bug fixes**
 
@@ -1179,8 +1180,8 @@ XXXX-XX-XX
 - 714_: [OpenBSD] `virtual_memory()`_'s ``cached`` value was always set to 0.
 - 715_: don't crash at import time if `cpu_times()`_ fail for some reason.
 - 717_: [Linux] `Process.open_files()`_ fails if deleted files still visible.
-- 722_: [Linux] `swap_memory()`_ no longer crashes if sin/sout can't be determined
-  due to missing /proc/vmstat.
+- 722_: [Linux] `swap_memory()`_ no longer crashes if ``sin`` / ``sout`` can't
+  be determined due to missing ``/proc/vmstat``.
 - 724_: [FreeBSD] `virtual_memory()`_'s ``total`` is slightly incorrect.
 
 3.3.0
@@ -1191,7 +1192,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 558_: [Linux] exposed `PROCFS_PATH`_ constant to change the default
-  location of /proc filesystem.
+  location of ``/proc`` filesystem.
 - 615_: [OpenBSD] added OpenBSD support.  (contributed by Landry Breuil)
 
 **Bug fixes**
@@ -1274,7 +1275,7 @@ XXXX-XX-XX
 - 603_: [Linux] `Process.ionice()`_ set value range is incorrect.
   (patch by spacewander)
 - 645_: [Linux] `cpu_times_percent()`_ may produce negative results.
-- 656_: 'from psutil import *' does not work.
+- 656_: ``from psutil import *`` does not work.
 
 3.1.0
 =====
@@ -1326,8 +1327,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 250_: new `net_if_stats()`_ returning NIC statistics (isup, duplex,
-  speed, MTU).
+- 250_: new `net_if_stats()`_ returning NIC statistics (``isup``, ``duplex``,
+  ``speed``, ``mtu``).
 - 376_: new `net_if_addrs()`_ returning all NIC addresses a-la ifconfig.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
   returned by `Process.ionice()`_ and `Process.nice()`_ are enums instead of
@@ -1352,7 +1353,7 @@ XXXX-XX-XX
 - 512_: [BSD] fix segfault in `net_connections()`_.
 - 555_: [Linux] `users()`_ correctly handles ":0" as an alias for
   "localhost"
-- 579_: [Windows] Fixed `Process.open_files()`_ for PID>64K.
+- 579_: [Windows] Fixed `Process.open_files()`_ for PID > 64K.
 - 579_: [Windows] fixed many compiler warnings.
 - 585_: [FreeBSD] `net_connections()`_ may raise ``KeyError``.
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
@@ -1675,7 +1676,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 442_: [Linux] psutil won't compile on certain version of Linux because of
-  missing prlimit(2) syscall.
+  missing ``prlimit(2)`` syscall.
 
 1.1.2
 =====
@@ -1685,7 +1686,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 442_: [Linux] psutil won't compile on Debian 6.0 because of missing
-  prlimit(2) syscall.
+  ``prlimit(2)`` syscall.
 
 1.1.1
 =====
@@ -1695,7 +1696,7 @@ DeprecationWarning.
 **Bug fixes**
 
 - 442_: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
-  prlimit(2) syscall.
+  ``prlimit(2)`` syscall.
 
 1.1.0
 =====
@@ -1721,7 +1722,7 @@ DeprecationWarning.
 - 416_: `disk_usage()`_ doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
 - 435_: [Linux] `net_io_counters()`_ might report erreneous NIC names.
-- 436_: [Linux] `net_io_counters()`_ reports a wrong 'dropin' value.
+- 436_: [Linux] `net_io_counters()`_ reports a wrong ``dropin`` value.
 
 **API changes**
 
@@ -1800,7 +1801,7 @@ DeprecationWarning.
 - 264_: [Windows] use of `disk_partitions()`_ may cause a message box to
   appear.
 - 313_: [Linux] `virtual_memory()`_ and `swap_memory()`_ can crash on
-  certain exotic Linux flavors having an incomplete /proc interface.
+  certain exotic Linux flavors having an incomplete ``/proc`` interface.
   If that's the case we now set the unretrievable stats to 0 and raise a
   RuntimeWarning.
 - 315_: [macOS] fix some compilation warnings.
@@ -1814,7 +1815,7 @@ DeprecationWarning.
 - 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
   change.
 - 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
-- 337_: [Linux] process methods not working because of a poor /proc
+- 337_: [Linux] process methods not working because of a poor ``/proc``
   implementation will raise ``NotImplementedError`` rather than ``RuntimeError``
   and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
 - 338_: [Linux] `disk_io_counters()`_ fails to find some disks.
@@ -1839,7 +1840,7 @@ DeprecationWarning.
 
 - `Process.cmdline()`_ property is no longer cached after first access.
 - `Process.ppid()`_ property is no longer cached after first access.
-- [Linux] Process methods not working because of a poor /proc implementation
+- [Linux] Process methods not working because of a poor ``/proc`` implementation
   will raise ``NotImplementedError`` instead of ``RuntimeError``.
 - ``psutil.error`` module is deprecated and scheduled for removal.
 
@@ -2090,7 +2091,7 @@ DeprecationWarning.
 - 211_: Process instance can unexpectedly raise `NoSuchProcess`_ if tested for
   equality with another object.
 - 218_: [Linux] crash at import time on Debian 64-bit because of a missing
-  line in /proc/meminfo.
+  line in ``/proc/meminfo``.
 - 226_: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
 0.3.0
@@ -2350,7 +2351,6 @@ DeprecationWarning.
 
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 .. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
-.. _`WindowsService()`: https://psutil.readthedocs.io/en/latest/#psutil.WindowsService
 
 .. _`AccessDenied`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
 .. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
