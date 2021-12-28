@@ -47,7 +47,7 @@ XXXX-XX-XX
   (patch by MaWe2019)
 - 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
   `users()`_ multiple times.
-- 1980_: [Windows] 32bit / WOW64 processes fails to read process name longer
+- 1980_: [Windows] 32bit / WOW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in AccessDenied. This is now fixed.  (patch
   by PetrPospisil)
 - 1991_: `process_iter()`_ can raise TypeError if invoked from multiple threads
@@ -379,7 +379,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1353_: `process_iter()`_ is now thread safe (it rarely raised TypeError).
-- 1394_: [Windows] Process name() and `Process.exe()`_ may erroneously return
+- 1394_: [Windows] `Process.name()`_ and `Process.exe()`_ may erroneously return
   "Registry". ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
@@ -1339,7 +1339,7 @@ XXXX-XX-XX
 - 589_: `Process.cpu_affinity()`_ accepts any kind of iterable (set, tuple, ...),
   not only lists.
 - 594_: all deprecated APIs were removed.
-- 599_: [Windows] process name() can now be determined for all processes even
+- 599_: [Windows] `Process.name()`_ can now be determined for all processes even
   when running as a limited user.
 - 602_: pre-commit GIT hook.
 - 629_: enhanced support for py.test and nose test discovery and tests run.
@@ -1363,8 +1363,8 @@ XXXX-XX-XX
 - 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
   sockets instead of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
-- 628_: [Linux] `Process.name()`_ truncates process name in case it contains
-  spaces or parentheses.
+- 628_: [Linux] `Process.name()`_ truncates string in case it contains spaces
+  or parentheses.
 
 2.2.1
 =====
@@ -2183,7 +2183,7 @@ DeprecationWarning.
 - 103_: per-process opened TCP and UDP connections.
 - 107_: add support for Windows 64 bit. (patch by cjgohlke)
 - 111_: per-process executable name (`Process.exe()`_).
-- 113_: exception messages now include process name and pid.
+- 113_: exception messages now include `Process.name()`_ and `Process.pid`_.
 - 114_: `Process.username()`_ Windows implementation has been rewritten in pure
   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
   longer required as a third-party dependancy. (patch by wj32)
