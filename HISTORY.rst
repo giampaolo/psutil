@@ -12,7 +12,7 @@ XXXX-XX-XX
   files in /sys fs.  (patch by marxin)
 - 1992_: NoSuchProcess message now specifies if the PID has been reused.
 - 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
-  formatted and separated `__repr__` and `__str__` implementations.
+  formatted and separated ``__repr__`` and ``__str__`` implementations.
 - 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
 - 1999_: [Linux] `disk_partitions()`_: convert "/dev/root" device (an alias used
   on some Linux distros) to real root device path.
@@ -21,28 +21,28 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1456_: [macOS] `cpu_freq()`_'s min and max are set to 0 if can't be
+- 1456_: [macOS] `cpu_freq()`_'s ``min`` and ``max`` are set to 0 if can't be
   determined (instead of crashing).
-- 1512_: [macOS] sometimes `Process.connections()`_ will crash with EOPNOTSUPP
-  for one connection; this is now ignored.
+- 1512_: [macOS] sometimes `Process.connections()`_ will crash with
+  ``EOPNOTSUPP`` for one connection; this is now ignored.
 - 1598_: [Windows] `disk_partitions()`_ only returns mountpoints on drives
   where it first finds one
 - 1874_: [Solaris] swap output error due to incorrect range.
 - 1892_: [macOS] `cpu_freq()`_ broken on Apple M1.
 - 1901_: [macOS] different functions, especially `Process.open_files()`_ and
-  `Process.connectionsn()`_, could randomly raise AccessDenied because the
+  `Process.connections()`_, could randomly raise AccessDenied because the
   internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
-  We now dynamically increase the buffer size until it's big enough instead of
+  We now dynamically increase the buffer size until it's ``big`` enough instead of
   giving up and raising AccessDenied, which was a fallback to avoid crashing.
-- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
+- 1904_: [Windows] OpenProcess fails with ``ERROR_SUCCESS`` due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
 - 1919_: [Linux] `sensors_battery()`_ can raise TypeError on PureOS.
 - 1921_: [Windows] `swap_memory()`_ shows committed memory instead of swap
-- 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
+- 1940_: [Linux] psutil does not handle ``ENAMETOOLONG`` when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
-- 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
-  by Xuehai Pan)
+- 1948_: Process' ``memoize_when_activated`` decorator was not thread-safe.
+  (patch by Xuehai Pan)
 - 1953_: [Windows] `disk_partitions()`_ crashes due to insufficient buffer len.
   (patch by MaWe2019)
 - 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
@@ -63,7 +63,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1863_: `disk_partitions()`_ exposes 2 extra fields: `maxfile` and `maxpath`,
+- 1863_: `disk_partitions()`_ exposes 2 extra fields: ``maxfile`` and ``maxpath``,
   which are the maximum file name and path name length.
 - 1872_: [Windows] added support for PyPy 2.7.
 - 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
@@ -80,13 +80,13 @@ XXXX-XX-XX
 - 1866_: [Windows] `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
   may raise "invalid access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
-- 1875_: [Windows] `Process.username()`_ may raise ERROR_NONE_MAPPED if the SID
+- 1875_: [Windows] `Process.username()`_ may raise ``ERROR_NONE_MAPPED`` if the SID
   has no corresponding account name. In this case AccessDenied is now raised.
-- 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
+- 1877_: [Windows] OpenProcess may fail with ``ERROR_SUCCESS``. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
 - 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and
   `Process.environ()`_. Now it gets translated into AccessDenied.
-- 1891_: [macOS] get rid of deprecated getpagesize().
+- 1891_: [macOS] get rid of deprecated ``getpagesize()``.
 
 5.7.3
 =====
@@ -108,7 +108,7 @@ XXXX-XX-XX
   systems with more than one CPU socket.  (patch by Vincent A. Arcila)
 - 1738_: [macOS] `Process.exe()`_ may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
-- 1791_: [macOS] fix missing include for getpagesize().
+- 1791_: [macOS] fix missing include for ``getpagesize()``.
 - 1823_: [Windows] `Process.open_files()`_ may cause a segfault due to a NULL
   pointer.
 - 1838_: [Linux] `sensors_battery()`_: if `percent` can be determined but not
@@ -147,9 +147,11 @@ XXXX-XX-XX
   retrieved on then next call.
 - 1747_: Process provides more info about the process on str() and repr()
   (status and exit code)::
+
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
+
 - 1757_: memory leak tests are now stable.
 - 1768_: [Windows] added support for Windows Nano Server. (contributed by
   Julien Lebot)
@@ -226,7 +228,7 @@ XXXX-XX-XX
 
 - 1179_: [Linux] `Process.cmdline()`_ now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
-- 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
+- 1616_: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will result in double free and
   segfault
   (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
@@ -385,7 +387,7 @@ XXXX-XX-XX
 - 1394_: [Windows] `Process.name()`_ and `Process.exe()`_ may erroneously return
   "Registry". ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
-- 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
+- 1411_: [BSD] lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
 - 1419_: [Windows] `Process.environ()`_ raises NotImplementedError when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
@@ -1138,7 +1140,7 @@ XXXX-XX-XX
   different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
   result or incorrectly report an AccessDenied error.
 - 741_: [OpenBSD] psutil does not compile on mips64.
-- 751_: [Linux] fixed call to Py_DECREF on possible Null object.
+- 751_: [Linux] fixed call to ``Py_DECREF`` on possible Null object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
 - 761_: [Windows] `boot_time()`_ wraps to 0 after 49 days.
@@ -1403,8 +1405,8 @@ XXXX-XX-XX
   (patch by spacewander)
 - 565_: [Windows] use proper encoding for `Process.username()`_ and `users()`_.
   (patch by Sylvain Mouquet)
-- 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
-  and Py_BuildValue return values are not checked.
+- 567_: [Linux] in the alternative implementation of CPU affinity ``PyList_Append``
+  and ``Py_BuildValue`` return values are not checked.
 - 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
 - 571_: [Linux] `Process.open_files()`_ might swallow AccessDenied exceptions and
   return an incomplete list of open files.
