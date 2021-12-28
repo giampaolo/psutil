@@ -34,7 +34,7 @@ XXXX-XX-XX
   internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
   We now dynamically increase the buffer size until it's ``big`` enough instead of
   giving up and raising AccessDenied, which was a fallback to avoid crashing.
-- 1904_: [Windows] OpenProcess fails with ``ERROR_SUCCESS`` due to
+- 1904_: [Windows] ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
   ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
 - 1913_: [Linux] `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
 - 1919_: [Linux] `sensors_battery()`_ can raise ``TypeError`` on PureOS.
@@ -76,13 +76,13 @@ XXXX-XX-XX
 - 1708_: [Linux] get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
 - 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
-  from 32 bit ones (NtWoW64 APIs).
+  from 32 bit ones (``NtWoW64`` APIs).
 - 1866_: [Windows] `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
   may raise "invalid access to memory location" on Python 3.9.
 - 1874_: [Solaris] wrong swap output given when encrypted column is present.
 - 1875_: [Windows] `Process.username()`_ may raise ``ERROR_NONE_MAPPED`` if the SID
   has no corresponding account name. In this case AccessDenied is now raised.
-- 1877_: [Windows] OpenProcess may fail with ``ERROR_SUCCESS``. Turn it into
+- 1877_: [Windows] ``OpenProcess`` may fail with ``ERROR_SUCCESS``. Turn it into
   AccessDenied or NoSuchProcess depending on whether the PID is alive.
 - 1886_: [macOS] EIO error may be raised on `Process.cmdline()`_ and
   `Process.environ()`_. Now it gets translated into AccessDenied.
@@ -447,7 +447,7 @@ XXXX-XX-XX
   original error code when raising an exception.
 - 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
   Process instances to return incorrect results.
-- 1376_: [Windows] OpenProcess() now uses PROCESS_QUERY_LIMITED_INFORMATION
+- 1376_: [Windows] ``OpenProcess``() now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less AccessDenied exceptions
   being thrown for system processes.
 - 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
@@ -772,7 +772,7 @@ XXXX-XX-XX
   assumes 1 instead.
 - 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_: [Windows] `pid_exists()`_ may lie. Also, all process APIs relying
-  on OpenProcess Windows API now check whether the PID is actually running.
+  on ``OpenProcess`` Windows API now check whether the PID is actually running.
 - 1098_: [Windows] `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
 - 1099_: [Windows] `Process.terminate()`_ may raise AccessDenied even if the
@@ -911,7 +911,7 @@ XXXX-XX-XX
 - 960_: `psutil.Popen`_'s ``wait()`` did not return the correct negative exit
   status if process is ``kill()``ed by a signal.
 - 961_: [Windows] `WindowsService`_ ``description()`` method may fail with
-  ERROR_MUI_FILE_NOT_FOUND.
+  ``ERROR_MUI_FILE_NOT_FOUND``.
 
 5.0.1
 =====
@@ -1719,7 +1719,7 @@ DeprecationWarning.
 - 408_: ``STATUS_*`` and ``CONN_*`` constants don't properly serialize on JSON.
 - 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
 - 413_: [Windows] `Process.memory_info()`_ leaks memory.
-- 414_: [Windows] `Process.exe()`_ on Windows XP may raise ERROR_INVALID_PARAMETER.
+- 414_: [Windows] `Process.exe()`_ on Windows XP may raise ``ERROR_INVALID_PARAMETER``.
 - 416_: `disk_usage()`_ doesn't work well with unicode path names.
 - 430_: [Linux] process IO counters report wrong number of r/w syscalls.
 - 435_: [Linux] `net_io_counters()`_ might report erreneous NIC names.
@@ -2201,7 +2201,7 @@ DeprecationWarning.
 - 81_: psutil fails to compile with Visual Studio.
 - 94_: `Process.suspend()`_ raises ``OSError`` instead of AccessDenied.
 - 86_: psutil didn't compile against FreeBSD 6.x.
-- 102_: orphaned process handles obtained by using OpenProcess in C were
+- 102_: orphaned process handles obtained by using ``OpenProcess`` in C were
   left behind every time Process class was instantiated.
 - 111_: path and name Process properties report truncated or erroneous
   values on UNIX.
