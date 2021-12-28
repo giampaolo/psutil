@@ -1457,7 +1457,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 387_: system-wide open connections a-la netstat.
+- 387_: system-wide open connections a-la ``netstat``.
 
 **Bug fixes**
 
@@ -1476,7 +1476,7 @@ XXXX-XX-XX
 - 427_: number of logical CPUs and physical cores (`cpu_count()`_).
 - 447_: `wait_procs()`_ ``timeout`` parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
-- 453_: tests on Python < 2.7 require unittest2 module.
+- 453_: tests on Python < 2.7 require ``unittest2`` module.
 - 459_: add a make file for running tests and other repetitive tasks (also
   on Windows).
 - 463_: make timeout parameter of ``cpu_percent*`` functions default to ``0.0``
@@ -1526,20 +1526,20 @@ In most cases accessing the old names will work but it will cause a
   | psutil.TOTAL_PHYMEM   | virtual_memory.total             |
   +-----------------------+----------------------------------+
 
-- Renamed psutil.* functions:
+- Renamed ``psutil.*`` functions:
 
-  +--------------------------+----------------------------------+
-  | Old name                 | Replacement                      |
-  +==========================+==================================+
-  | - psutil.get_pid_list()  | `psutil.pids()`_                 |
-  +--------------------------+----------------------------------+
-  | - psutil.get_users()     | `psutil.users()`_                |
-  +--------------------------+----------------------------------+
-  | - psutil.get_boot_time() | `psutil.boot_time()`_            |
-  +--------------------------+----------------------------------+
+  +--------------------------+-------------------------------+
+  | Old name                 | Replacement                   |
+  +==========================+===============================+
+  | - psutil.get_pid_list()  | psutil.pids()                 |
+  +--------------------------+-------------------------------+
+  | - psutil.get_users()     | psutil.users()                |
+  +--------------------------+-------------------------------+
+  | - psutil.get_boot_time() | psutil.boot_time()            |
+  +--------------------------+-------------------------------+
 
 - All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
-  get_ext_memory_info() renamed to memory_info_ex().
+  E.g. ``get_ext_memory_info()`` was renamed to ``memory_info_ex()``.
   Assuming ``p = psutil.Process()``:
 
   +--------------------------+----------------------+
@@ -1591,7 +1591,7 @@ In most cases accessing the old names will work but it will cause a
   | Old name             | Replacement                     |
   +======================+=================================+
   | p.set_nice()         | p.nice(value)                   |
-/  +----------------------+---------------------------------+
+  +----------------------+---------------------------------+
   | p.set_ionice()       | p.ionice(ioclass, value=None)   |
   +----------------------+---------------------------------+
   | p.set_cpu_affinity() | p.cpu_affinity(cpus)            |
