@@ -158,7 +158,7 @@ XXXX-XX-XX
   (patch by Michał Górny)
 - 1760_: [Linux] Process.rlimit() does not handle long long type properly.
 - 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
-- 1781_: fix signature of callback function for getloadavg().  (patch by
+- 1781_: fix signature of callback function for `getloadavg()`_.  (patch by
   Ammar Askar)
 
 5.7.0
@@ -264,7 +264,7 @@ XXXX-XX-XX
 - 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
 - 1546_: usage percent may be rounded to 0 on Python 2.
-- 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
+- 1552_: [Windows] `getloadavg()`_ math for calculating 5 and 15 mins values is
   incorrect.
 - 1568_: [Linux] use CC compiler env var if defined.
 - 1570_: [Windows] `NtWow64*` syscalls fail to raise the proper error code
@@ -297,7 +297,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 604_: [Windows, Windows] add new psutil.getloadavg(), returning system load
+- 604_: [Windows, Windows] add new `getloadavg()`_, returning system load
   average calculation, including on Windows (emulated).  (patch by Ammar Askar)
 - 1404_: [Linux] `cpu_count()`_ with ``logical=False`` uses a second method
   (read from `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to
@@ -2309,6 +2309,8 @@ DeprecationWarning.
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
+.. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
+.. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
