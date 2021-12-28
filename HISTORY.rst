@@ -104,8 +104,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1620_: [Linux] cpu_count(logical=False) result is incorrect on systems with
-  more than one CPU socket.  (patch by Vincent A. Arcila)
+- 1620_: [Linux] `cpu_count()`_ with ``logical=False`` result is incorrect on
+  systems with more than one CPU socket.  (patch by Vincent A. Arcila)
 - 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
   alive but the exe file which launched it got deleted.
 - 1791_: [macOS] fix missing include for getpagesize().
@@ -299,9 +299,10 @@ XXXX-XX-XX
 
 - 604_: [Windows, Windows] add new psutil.getloadavg(), returning system load
   average calculation, including on Windows (emulated).  (patch by Ammar Askar)
-- 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
-  `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
-  the number of CPU cores in case /proc/cpuinfo does not provide this info.
+- 1404_: [Linux] `cpu_count()`_ with ``logical=False`` uses a second method
+  (read from `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to
+  determine the number of CPU cores in case /proc/cpuinfo does not provide this
+  info.
 - 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
 - 1464_: various docfixes (always point to python3 doc, fix links, etc.).
 - 1476_: [Windows] it is now possible to set process high I/O priority
@@ -327,8 +328,8 @@ XXXX-XX-XX
   in WindowsError being raised instead of AccessDenied.
 - 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
   APIs. Different process methods were affected by this.
-- 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
-  fixed read violation.  (patch by Samer Masterson)
+- 1480_: [Windows] `cpu_count()`_ with ``logical=False`` could cause a crash
+  due to fixed read violation.  (patch by Samer Masterson)
 - 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
   involved into oneshot() context.
 - 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
@@ -547,7 +548,7 @@ XXXX-XX-XX
 - 694_: [SunOS] cmdline() could be truncated at the 15th character when
   reading it from /proc. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
-- 771_: [Windows] cpu_count() (both logical and cores) return a wrong
+- 771_: [Windows] `cpu_count()`_ (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
 - 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
   process groups (> 64 cores).
@@ -578,8 +579,8 @@ XXXX-XX-XX
 
 **Backward compatibility**
 
-- 771_: [Windows] cpu_count(logical=False) on Windows XP and Vista is no
-  longer supported and returns None.
+- 771_: [Windows] `cpu_count()`_ with ``logical=False`` on Windows XP and Vista
+  is no longer supported and returns `None`.
 
 5.4.3
 =====
@@ -740,7 +741,7 @@ XXXX-XX-XX
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] users()'s host field report an invalid IP address.
 - 1050_: [Windows] Process.memory_maps memory() leaks memory.
-- 1055_: cpu_count() is no longer cached; this is useful on systems such as
+- 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
   Process.cpu_percent() which no longer uses the cache.
 - 1058_: fixed Python warnings.
@@ -761,8 +762,8 @@ XXXX-XX-XX
   Oleksii Shevchuk)
 - 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
-- 1085_: cpu_count() return value is now checked and forced to None if <= 1.
-- 1087_: Process.cpu_percent() guard against cpu_count() returning None and
+- 1085_: `cpu_count()`_ return value is now checked and forced to None if <= 1.
+- 1087_: Process.cpu_percent() guard against `cpu_count()`_ returning None and
   assumes 1 instead.
 - 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
 - 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
@@ -1351,8 +1352,8 @@ XXXX-XX-XX
 - 593_: [FreeBSD] Process().memory_maps() segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
 - 611_: [SunOS] net_io_counters has send and received swapped
-- 614_: [Linux]: cpu_count(logical=False) return the number of sockets instead
-  of cores.
+- 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
+  sockets instead of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
 - 628_: [Linux] `Process.name()`_ truncates process name in case it contains
   spaces or parentheses.
@@ -1393,7 +1394,7 @@ XXXX-XX-XX
   psutil.users(). (patch by Sylvain Mouquet)
 - 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
-- 569_: [FreeBSD] fix memory leak in psutil.cpu_count(logical=False).
+- 569_: [FreeBSD] fix memory leak in `cpu_count()`_ with ``logical=False``.
 - 571_: [Linux] Process.open_files() might swallow AccessDenied exceptions and
   return an incomplete list of open files.
 
@@ -1469,7 +1470,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 424_: [Windows] installer for Python 3.X 64 bit.
-- 427_: number of logical CPUs and physical cores (psutil.cpu_count()).
+- 427_: number of logical CPUs and physical cores (`cpu_count()`_).
 - 447_: psutil.wait_procs() timeout parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
 - 453_: tests on Python < 2.7 require unittest2 module.
@@ -1512,15 +1513,15 @@ DeprecationWarning.
 
 - psutil.* module level constants have being replaced by functions:
 
-  +-----------------------+-------------------------------+
-  | Old name              | Replacement                   |
-  +=======================+===============================+
-  | psutil.NUM_CPUS       | psutil.cpu_cpunt()            |
-  +-----------------------+-------------------------------+
-  | psutil.BOOT_TIME      | psutil.boot_time()            |
-  +-----------------------+-------------------------------+
-  | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
-  +-----------------------+-------------------------------+
+  +-----------------------+----------------------------------+
+  | Old name              | Replacement                      |
+  +=======================+==================================+
+  | psutil.NUM_CPUS       | `psutil.cpu_count()`_            |
+  +-----------------------+----------------------------------+
+  | psutil.BOOT_TIME      | psutil.boot_time()               |
+  +-----------------------+----------------------------------+
+  | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total    |
+  +-----------------------+----------------------------------+
 
 - Renamed psutil.* functions:
 
@@ -2301,10 +2302,11 @@ DeprecationWarning.
 - 30_: psutil.get_pid_list() was returning two ins
 
 
+.. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
-.. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
+.. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 
