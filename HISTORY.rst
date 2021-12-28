@@ -37,7 +37,7 @@ XXXX-XX-XX
 - 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
   called after sprintf().  (patch by alxchk)
 - 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
-- 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
+- 1919_: [Linux] `sensors_battery()`_ can raise TypeError on PureOS.
 - 1921_: [Windows] `swap_memory()`_ shows committed memory instead of swap
 - 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
@@ -111,7 +111,7 @@ XXXX-XX-XX
 - 1791_: [macOS] fix missing include for getpagesize().
 - 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
   pointer.
-- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
+- 1838_: [Linux] `sensors_battery()`_: if `percent` can be determined but not
   the remaining values, still return a result instead of None.
   (patch by aristocratos)
 
@@ -570,7 +570,7 @@ XXXX-XX-XX
 - 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1224_: [Windows] `Process.wait()`_ may erroneously raise TimeoutExpired.
-- 1238_: [Linux] sensors_battery() may return None in case battery is not
+- 1238_: [Linux] `sensors_battery()`_ may return None in case battery is not
   listed as "BAT0" under /sys/class/power_supply.
 - 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
   (patch by stswandering)
@@ -605,7 +605,7 @@ XXXX-XX-XX
 
 - 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
-- 1177_: added support for sensors_battery() on macOS.  (patch by Arnon Yaari)
+- 1177_: added support for `sensors_battery()`_ on macOS.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on UNIX and 2.4x faster on Linux.
 - 1188_: deprecated method Process.memory_info_ex() now warns by using
   FutureWarning instead of DeprecationWarning.
@@ -755,7 +755,7 @@ XXXX-XX-XX
 - 1069_: [FreeBSD] `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
 - 1071_: [Linux] `cpu_freq()`_ may raise IOError on old RedHat distros.
-- 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
+- 1074_: [FreeBSD] `sensors_battery()`_ raises OSError in case of no battery.
 - 1075_: [Windows] `net_if_addrs()`_: inet_ntop() return value is not checked.
 - 1077_: [SunOS] `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
@@ -857,10 +857,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 966_: [Linux] sensors_battery().power_plugged may erroneously return None on
+- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may erroneously return None on
   Python 3.
 - 968_: [Linux] `disk_io_counters()`_ raises TypeError on python 3.
-- 970_: [Linux] sensors_battery()'s name and label fields on Python 3 are bytes
+- 970_: [Linux] `sensors_battery()`_'s ``name`` and ``label`` fields on Python 3 are bytes
   instead of str.
 
 5.1.1
@@ -870,7 +870,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 966_: [Linux] sensors_battery().percent is a float and is more precise.
+- 966_: [Linux] `sensors_battery()`_'s ``percent`` is a float and is more precise.
 
 **Bug fixes**
 
@@ -878,8 +878,8 @@ XXXX-XX-XX
   decoding character on Python 3.
 - 965_: [Linux] `disk_io_counters()`_ may miscalculate sector size and report the
   wrong number of bytes read and written.
-- 966_: [Linux] sensors_battery() may fail with "no such file error".
-- 966_: [Linux] sensors_battery().power_plugged may lie.
+- 966_: [Linux] `sensors_battery()`_ may fail with "no such file error".
+- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may lie.
 
 5.1.0
 =====
@@ -891,7 +891,7 @@ XXXX-XX-XX
 - 357_: added `Process.cpu_num()`_ (what CPU a process is on).
 - 371_: added `sensors_temperatures()`_ (Linux only).
 - 941_: added `cpu_freq()`_ (CPU frequency).
-- 955_: added psutil.sensors_battery() (Linux, Windows, only).
+- 955_: added psutil.`sensors_battery()`_ (Linux, Windows, only).
 - 956_: `Process.cpu_affinity()`_ can now be passed ``[]``` argument as an
   alias to set affinity against all eligible CPUs.
 
