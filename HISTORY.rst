@@ -185,7 +185,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1538_: [NetBSD] process cwd() may return ENOENT instead of NoSuchProcess.
-- 1627_: [Linux] Process.memory_maps() can raise KeyError.
+- 1627_: [Linux] `Process.memory_maps()`_ can raise KeyError.
 - 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
 - 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
   due to a backward incompatible change in a C type introduced in 12.0.
@@ -397,7 +397,7 @@ XXXX-XX-XX
 
 **Incompatible API changes**
 
-- 1291_: [OSX] Process.memory_maps() was removed because inherently broken
+- 1291_: [OSX] `Process.memory_maps()`_ was removed because inherently broken
   (segfault) for years.
 
 5.5.1
@@ -434,7 +434,7 @@ XXXX-XX-XX
 
 - 1111_: `Process.oneshot()`_ is now thread safe.
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
-- 1357_: [Linux] Process' memory_maps() and io_counters() method are no longer
+- 1357_: [Linux] `Process.memory_maps()`_ and io_counters() method are no longer
   exposed if not supported by the kernel.
 - 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
   EccoTheFlintstone)
@@ -495,7 +495,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1209_: [macOS] Process.memory_maps() may fail with EINVAL due to poor
+- 1209_: [macOS] `Process.memory_maps()`_ may fail with EINVAL due to poor
   task_for_pid() syscall. AccessDenied is now raised instead.
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
@@ -618,7 +618,7 @@ XXXX-XX-XX
 - 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
   misbehaving processes which overwrite /proc/pid/cmdline and use spaces
   instead of null bytes as args separator.
-- 1181_: [macOS] Process.memory_maps() may raise ENOENT.
+- 1181_: [macOS] `Process.memory_maps()`_ may raise ENOENT.
 - 1187_: [macOS] pids() does not return PID 0 on recent macOS versions.
 
 5.4.1
@@ -740,7 +740,7 @@ XXXX-XX-XX
 - 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's SetErrorMode.
 - 1047_: [Windows] Process username(): memory leak in case exception is thrown.
 - 1048_: [Windows] `users()`_'s ``host`` field report an invalid IP address.
-- 1050_: [Windows] Process.memory_maps memory() leaks memory.
+- 1050_: [Windows] `Process.memory_maps()`_ leaks memory.
 - 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
   Process.cpu_percent() which no longer uses the cache.
@@ -765,7 +765,7 @@ XXXX-XX-XX
 - 1085_: `cpu_count()`_ return value is now checked and forced to None if <= 1.
 - 1087_: Process.cpu_percent() guard against `cpu_count()`_ returning None and
   assumes 1 instead.
-- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
+- 1093_: [SunOS] `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
   on OpenProcess Windows API now check whether the PID is actually running.
 - 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
@@ -785,7 +785,7 @@ XXXX-XX-XX
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
   unicode:
-  - Process.memory_maps().path
+  - `Process.memory_maps()`_.path
   - WindowsService.bin_path()
   - WindowsService.description()
   - WindowsService.display_name()
@@ -815,7 +815,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 981_: [Linux] `cpu_freq()`_ may return an empty list.
-- 993_: [Windows] Process.memory_maps() on Python 3 may raise
+- 993_: [Windows] `Process.memory_maps()`_ on Python 3 may raise
   UnicodeDecodeError.
 - 996_: [Linux] `sensors_temperatures()`_ may not show all temperatures.
 - 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
@@ -978,7 +978,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 514_: [macOS] possibly fix Process.memory_maps() segfault (critical!).
+- 514_: [macOS] possibly fix `Process.memory_maps()`_ segfault (critical!).
 - 783_: [macOS] Process.status() may erroneously return "running" for zombie
   processes.
 - 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
@@ -1011,7 +1011,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 854_: Process.as_dict() raises ValueError if passed an erroneous attrs name.
-- 857_: [SunOS] Process cpu_times(), cpu_percent(), threads() amd memory_maps()
+- 857_: [SunOS] Process cpu_times(), cpu_percent(), threads() and `Process.memory_maps()`_
   may raise RuntimeError if attempting to query a 64bit process with a 32bit
   python. "Null" values are returned as a fallback.
 - 858_: Process.as_dict() should not return memory_info_ex() because it's
@@ -1130,7 +1130,7 @@ XXXX-XX-XX
 - 741_: [OpenBSD] psutil does not compile on mips64.
 - 751_: [Linux] fixed call to Py_DECREF on possible Null object.
 - 754_: [Linux] cmdline() can be wrong in case of zombie process.
-- 759_: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
+- 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
 - 761_: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] net_connections() can't handle malformed /proc/net/unix file.
@@ -1164,7 +1164,7 @@ XXXX-XX-XX
   Thomas Klausner)
 - 708_: [Linux] psutil.net_connections() and `Process.connections()`_ on Python 2
   can be up to 3x faster in case of many connections.
-  Also psutil.Process.memory_maps() is slightly faster.
+  Also `Process.memory_maps()`_ is slightly faster.
 - 718_: process_iter() is now thread safe.
 
 **Bug fixes**
@@ -1349,7 +1349,7 @@ XXXX-XX-XX
 - 585_: [FreeBSD] net_connections() may raise KeyError.
 - 586_: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
   number is provided.
-- 593_: [FreeBSD] Process().memory_maps() segfaults.
+- 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
 - 606_: Process.parent() may swallow NoSuchProcess exceptions.
 - 611_: [SunOS] net_io_counters has send and received swapped
 - 614_: [Linux]: `cpu_count()`_ with ``logical=False`` return the number of
@@ -1433,7 +1433,7 @@ XXXX-XX-XX
   for PIDs 0 and 4.  (patch by Jeff Tang)
 - 530_: [Linux] psutil.disk_io_counters() may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
-- 533_: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
+- 533_: [Linux] `Process.memory_maps()`_ may raise TypeError on old Linux distros.
 
 2.1.1
 =====
@@ -1745,7 +1745,7 @@ DeprecationWarning.
 
 - 374_: [Windows] negative memory usage reported if process uses a lot of
   memory.
-- 379_: [Linux] Process.get_memory_maps() may raise ValueError.
+- 379_: [Linux] `Process.memory_maps()`_ may raise ValueError.
 - 394_: [macOS] Mapped memory regions report incorrect file name.
 - 404_: [Linux] sched_*affinity() are implicitly declared. (patch by Arfrever)
 
@@ -1797,7 +1797,7 @@ DeprecationWarning.
   RuntimeWarning.
 - 315_: [macOS] fix some compilation warnings.
 - 317_: [Windows] cannot set process CPU affinity above 31 cores.
-- 319_: [Linux] process get_memory_maps() raises KeyError 'Anonymous' on Debian
+- 319_: [Linux] `Process.memory_maps()`_ raises KeyError 'Anonymous' on Debian
   squeeze.
 - 321_: [UNIX] Process.ppid property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
@@ -1822,7 +1822,7 @@ DeprecationWarning.
   case returns None.
 - 365_: Process.set_nice() should check PID has not been reused by another
   process.
-- 366_: [FreeBSD] get_memory_maps(), get_num_fds(), get_open_files() and
+- 366_: [FreeBSD] `Process.memory_maps()`_, get_num_fds(), get_open_files() and
   getcwd() Process methods raise RuntimeError instead of AccessDenied.
 
 **API changes**
@@ -2307,6 +2307,7 @@ DeprecationWarning.
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
+.. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
