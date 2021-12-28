@@ -320,7 +320,7 @@ XXXX-XX-XX
   available (patch by Alex Manuskin)
 - 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
   Benjamin Drung)
-- 1463_: cpu_distribution.py script was broken.
+- 1463_: `cpu_distribution.py`_ script was broken.
 - 1470_: [Linux] `disk_partitions()`_: fix corner case when /etc/mtab doesn't
   exist.  (patch by Cedric Lamoriniere)
 - 1471_: [SunOS] `Process.name()`_ and `Process.cmdline()`_ can return
@@ -978,7 +978,7 @@ XXXX-XX-XX
 - 887_: [Linux] `virtual_memory()`_'s ``available`` and ``used`` values are more
   precise and match "free" cmdline utility.  ``available`` also takes into
   account LCX containers preventing ``available`` to overflow ``total``.
-- 891_: procinfo.py script has been updated and provides a lot more info.
+- 891_: `procinfo.py`_ script has been updated and provides a lot more info.
 
 **Bug fixes**
 
@@ -1119,7 +1119,7 @@ XXXX-XX-XX
 - 760_: expose OS constants (``psutil.LINUX``, ``psutil.OSX``, etc.)
 - 756_: [Linux] `disk_io_counters()`_ return 2 new fields: ``read_merged_count``
   and ``write_merged_count``.
-- 762_: new scripts/procsmem.py script.
+- 762_: new `procsmem.py`_ script.
 
 **Bug fixes**
 
@@ -1385,10 +1385,10 @@ XXXX-XX-XX
 **Enhancements**
 
 - 521_: drop support for Python 2.4 and 2.5.
-- 553_: new examples/pstree.py script.
+- 553_: new `pstree.py`_ script.
 - 564_: C extension version mismatch in case the user messed up with psutil
   installation or with sys.path is now detected at import time.
-- 568_: New examples/pidof.py script.
+- 568_: New `pidof.py`_ script.
 - 569_: [FreeBSD] add support for process CPU affinity.
 
 **Bug fixes**
@@ -1425,7 +1425,7 @@ XXXX-XX-XX
   to Git.
 - 492_: use tox to run tests on multiple python versions.  (patch by msabramo)
 - 505_: [Windows] distribution as wheel packages.
-- 511_: new examples/ps.py sample code.
+- 511_: new `ps.py`_ sample code.
 
 **Bug fixes**
 
@@ -1716,7 +1716,7 @@ DeprecationWarning.
 
 - 391_: [Windows] `cpu_times_percent()`_ returns negative percentages.
 - 408_: ``STATUS_*`` and ``CONN_*`` constants don't properly serialize on JSON.
-- 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
+- 411_: [Windows] `disk_usage.py`_ may pop-up a GUI error.
 - 413_: [Windows] `Process.memory_info()`_ leaks memory.
 - 414_: [Windows] `Process.exe()`_ on Windows XP may raise ``ERROR_INVALID_PARAMETER``.
 - 416_: `disk_usage()`_ doesn't work well with unicode path names.
@@ -1887,7 +1887,7 @@ DeprecationWarning.
   - get_cpu_times()
   - get_cpu_percent()
   - get_num_threads()
-- 300_: examples/pmap.py script.
+- 300_: `pmap.py`_ script.
 - 301_: `process_iter()`_ now yields processes sorted by their PIDs.
 - 302_: process number of voluntary and involuntary context switches.
 - 303_: [Windows] the Process methods below were always raising `AccessDenied`_
@@ -1899,7 +1899,7 @@ DeprecationWarning.
   - get_memory_percent()
   - get_num_handles()
   - get_io_counters()
-- 305_: add examples/netstat.py script.
+- 305_: add `netstat.py`_ script.
 - 311_: system memory functions has been refactorized and rewritten and now
   provide a more detailed and consistent representation of the system
   memory. New `virtual_memory()`_ function provides the following
@@ -1922,7 +1922,7 @@ DeprecationWarning.
   - sin (no. of bytes the system has swapped in from disk (cumulative))
   - sout (no. of bytes the system has swapped out from disk (cumulative))
   All old memory-related functions are deprecated.
-  Also two new example scripts were added:  free.py and meminfo.py.
+  Also two new example scripts were added:  `free.py`_ and `meminfo.py`_.
 - 312_: ``net_io_counters()`` namedtuple includes 4 new fields:
   ``errin``, ``errout``, ``dropin`` and ``dropout``, reflecting the number of
    packets dropped and with errors.
@@ -2067,13 +2067,13 @@ DeprecationWarning.
 - 198_: `Process.wait()`_ with ``timeout=0`` can now be used to make wait() return
   immediately.
 - 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
-- 213_: examples/iotop.py script.
+- 213_: add `iotop.py`_ script.
 - 217_: `Process.connections()`_ now has a "kind" argument to filter
   for connections with different criteria.
 - 221_: [FreeBSD] `Process.open_files()`_ has been rewritten in C and no longer
   relies on lsof.
-- 223_: examples/top.py script.
-- 227_: examples/nettop.py script.
+- 223_: add `top.py`_ script.
+- 227_: add `nettop.py`_ script.
 
 **Bug fixes**
 
@@ -2349,13 +2349,16 @@ DeprecationWarning.
 .. _`win_service_get()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_get
 .. _`win_service_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_iter
 
+
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 .. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
+
 
 .. _`AccessDenied`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
 .. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
 .. _`TimeoutExpired`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
 .. _`ZombieProcess`: https://psutil.readthedocs.io/en/latest/#psutil.ZombieProcess
+
 
 .. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
@@ -2401,6 +2404,24 @@ DeprecationWarning.
 .. _`Process.uids()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.uids
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
+
+
+.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`free.py`: https://github.com/giampaolo/psutil/blob/master/scripts/free.py
+.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
+.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`pidof.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pidof.py
+.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
+.. _`procsmem.py `: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`ps.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ps.py
+.. _`pstree.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pstree.py
+.. _`top.py`: https://github.com/giampaolo/psutil/blob/master/scripts/top.py
+
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2
