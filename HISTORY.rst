@@ -193,14 +193,14 @@ XXXX-XX-XX
   current user and os.getpid().
 - 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
 - 1662_: [Windows] `Process.exe()`_ may raise WinError 0.
-- 1665_: [Linux] disk_io_counters() does not take into account extra fields
+- 1665_: [Linux] `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
   (long) was almost always assumed, which is wrong on most platforms.
 - 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
   improper exception if process is gone.
 - 1674_: [SunOS] `disk_partitions()`_ may raise OSError.
-- 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
+- 1684_: [Linux] `disk_io_counters()`_ may raise ValueError on systems not
   having /proc/diskstats.
 - 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
   PSUTIL_HAVE_IOPRIO not being defined.  (patch by Anselm Kruis)
@@ -434,7 +434,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1111_: `Process.oneshot()`_ is now thread safe.
-- 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
+- 1354_: [Linux] `disk_io_counters()`_ fails on Linux kernel 4.18+.
 - 1357_: [Linux] `Process.memory_maps()`_ and io_counters() method are no longer
   exposed if not supported by the kernel.
 - 1368_: [Windows] fix `Process.ionice()`_ mismatch.  (patch by
@@ -490,7 +490,7 @@ XXXX-XX-XX
 - 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
   psutil.MACOS.
 - 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
-- 1321_: [Linux] add disk_io_counters() dual implementation relying on
+- 1321_: [Linux] add `disk_io_counters()`_ dual implementation relying on
   /sys/block filesystem in case /proc/diskstats is not available. (patch by
   Lawrence Ye)
 
@@ -506,7 +506,7 @@ XXXX-XX-XX
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
 - 1309_: [Linux] Process.status() is unable to recognize "idle" and "parked"
   statuses (returns '?').
-- 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
+- 1313_: [Linux] `disk_io_counters()`_ can report inflated IO counters due to
   erroneously counting base disk device and its partition(s) twice.
 - 1323_: [Linux] `sensors_temperatures()`_ may fail with ValueError.
 
@@ -612,7 +612,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1152_: [Windows] disk_io_counters() may return an empty dict.
+- 1152_: [Windows] `disk_io_counters()`_ may return an empty dict.
 - 1169_: [Linux] `users()`_ "hostname" returns username instead.  (patch by
   janderbrain)
 - 1172_: [Windows] `make test` does not work.
@@ -655,7 +655,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1009_: [Linux] `sensors_temperatures()`_ may crash with IOError.
-- 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
+- 1012_: [Windows] `disk_io_counters()`_'s read_time and write_time were expressed
   in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
   segfault.  (patch by Jakub Bacic)
@@ -693,7 +693,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
+- 802_: `disk_io_counters()`_ and net_io_counters() numbers no longer wrap
   (restart from 0). Introduced a new "nowrap" argument.
 - 928_: `net_connections()`_ and `Process.connections()`_ "laddr" and
   "raddr" are now named tuples.
@@ -724,7 +724,7 @@ XXXX-XX-XX
   by Gleb Smirnoff)
 - 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
   NoSuchProcess.
-- 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
+- 1016_: `disk_io_counters()`_ raises RuntimeError on a system with no disks.
 - 1017_: net_io_counters() raises RuntimeError on a system with no network
   cards installed.
 - 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
@@ -746,7 +746,7 @@ XXXX-XX-XX
   Linux where CPUs can be disabled at runtime. This also reflects on
   `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
-- 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
+- 1062_: `disk_io_counters()`_ and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.
 - 1063_: [NetBSD] `net_connections()`_ may list incorrect sockets.
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
@@ -859,7 +859,7 @@ XXXX-XX-XX
 
 - 966_: [Linux] sensors_battery().power_plugged may erroneously return None on
   Python 3.
-- 968_: [Linux] disk_io_counters() raises TypeError on python 3.
+- 968_: [Linux] `disk_io_counters()`_ raises TypeError on python 3.
 - 970_: [Linux] sensors_battery()'s name and label fields on Python 3 are bytes
   instead of str.
 
@@ -876,7 +876,7 @@ XXXX-XX-XX
 
 - 964_: [Windows] `Process.username()`_ and `users()`_ may return badly
   decoding character on Python 3.
-- 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
+- 965_: [Linux] `disk_io_counters()`_ may miscalculate sector size and report the
   wrong number of bytes read and written.
 - 966_: [Linux] sensors_battery() may fail with "no such file error".
 - 966_: [Linux] sensors_battery().power_plugged may lie.
@@ -1104,7 +1104,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 523_: [Linux, FreeBSD] disk_io_counters() return a new "busy_time" field.
+- 523_: [Linux, FreeBSD] `disk_io_counters()`_ return a new "busy_time" field.
 - 660_: [Windows] make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - 732_: `Process.environ()`_.  (patch by Frank Benkstein)
@@ -1113,7 +1113,7 @@ XXXX-XX-XX
 - 755_: Process.memory_percent() "memtype" parameter.
 - 758_: tests now live in psutil namespace.
 - 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
-- 756_: [Linux] disk_io_counters() return 2 new fields: read_merged_count and
+- 756_: [Linux] `disk_io_counters()`_ return 2 new fields: read_merged_count and
   write_merged_count.
 - 762_: new scripts/procsmem.py script.
 
@@ -1136,9 +1136,9 @@ XXXX-XX-XX
 - 761_: [Windows] psutil.`boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
-- 767_: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
+- 767_: [Linux] `disk_io_counters()`_ may raise ValueError on 2.6 kernels and it's
   broken on 2.4 kernels.
-- 770_: [NetBSD] disk_io_counters() metrics didn't update.
+- 770_: [NetBSD] `disk_io_counters()`_ metrics didn't update.
 
 3.4.2
 =====
@@ -1202,7 +1202,7 @@ XXXX-XX-XX
 
 - 517_: [SunOS] net_io_counters failed to detect network interfaces
   correctly on Solaris 10
-- 541_: [FreeBSD] disk_io_counters r/w times were expressed in seconds instead
+- 541_: [FreeBSD] `disk_io_counters()`_ r/w times were expressed in seconds instead
   of milliseconds.  (patch by dasumin)
 - 610_: [SunOS] fix build and tests on Solaris 10
 - 623_: [Linux] process or system connections raises ValueError if IPv6 is not
@@ -1425,7 +1425,7 @@ XXXX-XX-XX
 
 - 340_: [Windows] Process.get_open_files() no longer hangs.  (patch by
   Jeff Tang)
-- 501_: [Windows] disk_io_counters() may return negative values.
+- 501_: [Windows] `disk_io_counters()`_ may return negative values.
 - 503_: [Linux] in rare conditions `Process.exe()`_, open_files() and
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - 504_: [Linux] can't build RPM packages via setup.py
@@ -1434,7 +1434,7 @@ XXXX-XX-XX
   Daeschler)
 - 529_: [Windows] `Process.exe()`_ may raise unhandled WindowsError exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
-- 530_: [Linux] psutil.disk_io_counters() may crash on old Linux distros
+- 530_: [Linux] psutil.`disk_io_counters()`_ may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
 - 533_: [Linux] `Process.memory_maps()`_ may raise TypeError on old Linux distros.
 
@@ -1791,7 +1791,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 234_: [Windows] disk_io_counters() fails to list certain disks.
+- 234_: [Windows] `disk_io_counters()`_ fails to list certain disks.
 - 264_: [Windows] use of `disk_partitions()`_ may cause a message box to
   appear.
 - 313_: [Linux] psutil.virtual_memory() and `swap_memory()`_ can crash on
@@ -1804,7 +1804,7 @@ DeprecationWarning.
   squeeze.
 - 321_: [UNIX] Process.ppid property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
-- 323_: [macOS] disk_io_counters()'s read_time and write_time parameters were
+- 323_: [macOS] `disk_io_counters()`_'s read_time and write_time parameters were
   reporting microseconds not milliseconds.  (patch by Gregory Szorc)
 - 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
   change.
@@ -1812,15 +1812,15 @@ DeprecationWarning.
 - 337_: [Linux] process methods not working because of a poor /proc
   implementation will raise NotImplementedError rather than RuntimeError
   and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
-- 338_: [Linux] disk_io_counters() fails to find some disks.
+- 338_: [Linux] `disk_io_counters()`_ fails to find some disks.
 - 339_: [FreeBSD] get_pid_list() can allocate all the memory on system.
 - 341_: [Linux] psutil might crash on import due to error in retrieving system
   terminals map.
 - 344_: [FreeBSD] `swap_memory()`_ might return incorrect results due to
   kvm_open(3) not being called. (patch by Jean Sebastien)
-- 338_: [Linux] disk_io_counters() fails to find some disks.
+- 338_: [Linux] `disk_io_counters()`_ fails to find some disks.
 - 351_: [Windows] if psutil is compiled with mingw32 (provided installers for
-  py2.4 and py2.5 are) disk_io_counters() will fail. (Patch by m.malycha)
+  py2.4 and py2.5 are) `disk_io_counters()`_ will fail. (Patch by m.malycha)
 - 353_: [macOS] get_users() returns an empty list on macOS 10.8.
 - 356_: Process.parent now checks whether parent PID has been reused in which
   case returns None.
