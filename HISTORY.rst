@@ -393,7 +393,7 @@ XXXX-XX-XX
 - 1439_: [NetBSD] `Process.connections()`_ may return incomplete results if using
   oneshot().
 - 1447_: original exception wasn't turned into NSP/AD exceptions when using
-  Process.oneshot() ctx manager.
+  `Process.oneshot()`_ ctx manager.
 
 **Incompatible API changes**
 
@@ -432,7 +432,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1111_: Process.oneshot() is now thread safe.
+- 1111_: `Process.oneshot()`_ is now thread safe.
 - 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
 - 1357_: [Linux] Process' memory_maps() and io_counters() method are no longer
   exposed if not supported by the kernel.
@@ -440,7 +440,7 @@ XXXX-XX-XX
   EccoTheFlintstone)
 - 1370_: [Windows] improper usage of CloseHandle() may lead to override the
   original error code when raising an exception.
-- 1373_: incorrect handling of cache in Process.oneshot() context causes
+- 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
   Process instances to return incorrect results.
 - 1376_: [Windows] OpenProcess() now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less AccessDenied exceptions
@@ -935,7 +935,7 @@ XXXX-XX-XX
 
 **Enhncements**
 
-- 799_: new Process.oneshot() context manager making Process methods around
+- 799_: new `Process.oneshot()`_ context manager making Process methods around
   +2x faster in general and from +2x to +6x faster on Windows.
 - 943_: better error message in case of version conflict on import.
 
@@ -2308,6 +2308,7 @@ DeprecationWarning.
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
+.. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 .. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
