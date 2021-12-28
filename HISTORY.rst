@@ -50,7 +50,7 @@ XXXX-XX-XX
 - 1980_: [Windows] 32bit / WOW64 processes fails to read process name longer
   than 128 characters resulting in AccessDenied. This is now fixed.  (patch
   by PetrPospisil)
-- 1991_: process_iter() can raise TypeError if invoked from multiple threads
+- 1991_: `process_iter()`_ can raise TypeError if invoked from multiple threads
   (not thread-safe).
 - 1956_: [macOS] `Process.cpu_times()`_ reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
@@ -375,7 +375,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1353_: process_iter() is now thread safe (it rarely raised TypeError).
+- 1353_: `process_iter()`_ is now thread safe (it rarely raised TypeError).
 - 1394_: [Windows] Process name() and `Process.exe()`_ may erroneously return
   "Registry". ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
@@ -700,7 +700,7 @@ XXXX-XX-XX
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
   memory info about Linux containers such as Docker and Heroku.
 - 1022_: `users()`_ provides a new "pid" field.
-- 1025_: process_iter() accepts two new parameters in order to invoke
+- 1025_: `process_iter()`_ accepts two new parameters in order to invoke
   Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
   processes in one shot without needing to catch NoSuchProcess and do list/dict
   comprehensions.
@@ -1165,7 +1165,7 @@ XXXX-XX-XX
 - 708_: [Linux] psutil.net_connections() and `Process.connections()`_ on Python 2
   can be up to 3x faster in case of many connections.
   Also `Process.memory_maps()`_ is slightly faster.
-- 718_: process_iter() is now thread safe.
+- 718_: `process_iter()`_ is now thread safe.
 
 **Bug fixes**
 
@@ -1878,7 +1878,7 @@ DeprecationWarning.
   - get_cpu_percent()
   - get_num_threads()
 - 300_: examples/pmap.py script.
-- 301_: process_iter() now yields processes sorted by their PIDs.
+- 301_: `process_iter()`_ now yields processes sorted by their PIDs.
 - 302_: process number of voluntary and involuntary context switches.
 - 303_: [Windows] the Process methods below were always raising AccessDenied
   for any process not owned by current user. Now this is no longer true:
@@ -1984,12 +1984,12 @@ DeprecationWarning.
 - 278_: new Process.as_dict() method.
 - 281_: ppid, name, exe, `Process.cmdline()`_ and create_time properties of
   Process class are now cached after being accessed.
-- 282_: psutil.STATUS_* constants can now be compared by using their string
+- 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 - 283_: speedup Process.is_running() by caching its return value in case the
   process is terminated.
 - 284_: [POSIX] per-process number of opened file descriptors.
-- 287_: psutil.process_iter() now caches Process instances between calls.
+- 287_: `process_iter()`_ now caches Process instances between calls.
 - 290_: Process.nice property is deprecated in favor of new get_nice() and
   set_nice() methods.
 
@@ -2285,7 +2285,7 @@ DeprecationWarning.
   that has gone away.
 - 21_: AccessDenied exception created for raising access denied errors
   from OSError or WindowsError on individual platforms.
-- 26_: psutil.process_iter() function to iterate over processes as
+- 26_: `process_iter()`_ function to iterate over processes as
   Process objects with a generator.
 - Process objects can now also be compared with == operator for equality
   (PID, name, command line are compared).
@@ -2306,6 +2306,7 @@ DeprecationWarning.
 .. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
+.. _`process_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.process_iter
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
