@@ -659,7 +659,7 @@ XXXX-XX-XX
   in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
   segfault.  (patch by Jakub Bacic)
-- 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
+- 1129_: [Linux] `sensors_fans()`_ may crash with IOError.  (patch by Sebastian
   Saip)
 - 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
 - 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
@@ -829,7 +829,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 971_: [Linux] Add psutil.sensors_fans() function.  (patch by Nicolas Hennion)
+- 971_: [Linux] Add `sensors_fans()`_ function.  (patch by Nicolas Hennion)
 - 976_: [Windows] Process.io_counters() has 2 new fields: *other_count* and
   *other_bytes*.
 - 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
