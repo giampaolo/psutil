@@ -41,7 +41,7 @@ XXXX-XX-XX
 - 1921_, [Windows]: `swap_memory()`_ shows committed memory instead of swap
 - 1940_, [Linux]: psutil does not handle ``ENAMETOOLONG`` when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
-- 1948_: Process' ``memoize_when_activated`` decorator was not thread-safe.
+- 1948_: ``memoize_when_activated`` decorator was not thread-safe.
   (patch by Xuehai Pan)
 - 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
   insufficient buffer len. (patch by MaWe2019)
@@ -143,8 +143,8 @@ XXXX-XX-XX
     <Negsignal.SIGTERM: -15>
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
-- 1747_: Process provides more info about the process on ``str()`` and ``repr()``
-  (status and exit code)::
+- 1747_: `Process`_ class provides more info about the process on ``str()``
+  and ``repr()`` (status and exit code)::
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
@@ -188,7 +188,7 @@ XXXX-XX-XX
 - 1538_, [NetBSD]: `Process.cwd()`_ may return ``ENOENT`` instead of `NoSuchProcess`_.
 - 1627_, [Linux]: `Process.memory_maps()`_ can raise ``KeyError``.
 - 1642_, [SunOS]: querying basic info for PID 0 results in ``FileNotFoundError``.
-- 1646_, [FreeBSD], **[critical]**: many Process methods may cause a segfault on
+- 1646_, [FreeBSD], **[critical]**: many `Process`_ methods may cause a segfault on
   FreeBSD 12.0 due to a backward incompatible change in a C type introduced in 12.0.
 - 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
@@ -336,8 +336,8 @@ XXXX-XX-XX
   Windows APIs. Different process methods were affected by this.
 - 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
   cause a crash due to fixed read violation.  (patch by Samer Masterson)
-- 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with Process methods
-  involved into `Process.oneshot()`_ context.
+- 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with `Process`_
+  methods involved into `Process.oneshot()`_ context.
 - 1491_, [SunOS]: `net_if_addrs()`_: use ``free()`` against ``ifap`` struct
   on error.  (patch by Agnewee)
 - 1493_, [Linux]: `cpu_freq()`_: handle the case where
@@ -449,7 +449,7 @@ XXXX-XX-XX
 - 1370_, [Windows]: improper usage of ``CloseHandle()`` may lead to override the
   original error code when raising an exception.
 - 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
-  Process instances to return incorrect results.
+  `Process`_ instances to return incorrect results.
 - 1376_, [Windows]: ``OpenProcess`` now uses ``PROCESS_QUERY_LIMITED_INFORMATION``
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
@@ -730,7 +730,7 @@ XXXX-XX-XX
   same value if fluctuation is <= 1 second.
 - 1013_, [FreeBSD]: `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
-- 1014_, [Linux]: Process class can mask legitimate ``ENOENT`` exceptions as
+- 1014_, [Linux]: `Process`_ class can mask legitimate ``ENOENT`` exceptions as
   `NoSuchProcess`_.
 - 1016_: `disk_io_counters()`_ raises ``RuntimeError`` on a system with no disks.
 - 1017_: `net_io_counters()`_ raises ``RuntimeError`` on a system with no network
@@ -744,8 +744,8 @@ XXXX-XX-XX
 - 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
   Python 3 + UNIX and invalid encoded data on Windows.
 - 1042_, [FreeBSD], **[critical]**: psutil won't compile on FreeBSD 12.
-- 1044_, [macOS]: different Process methods incorrectly raise `AccessDenied`_ for
-  zombie processes.
+- 1044_, [macOS]: different `Process`_ methods incorrectly raise `AccessDenied`_
+  for zombie processes.
 - 1046_, [Windows]: `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
 - 1047_, [Windows]: `Process.username()`_: memory leak in case exception is thrown.
 - 1048_, [Windows]: `users()`_ ``host`` field report an invalid IP address.
@@ -939,7 +939,7 @@ XXXX-XX-XX
 
 **Enhncements**
 
-- 799_: new `Process.oneshot()`_ context manager making Process methods around
+- 799_: new `Process.oneshot()`_ context manager making `Process`_ methods around
   +2x faster in general and from +2x to +6x faster on Windows.
 - 943_: better error message in case of version conflict on import.
 
@@ -1072,7 +1072,7 @@ XXXX-XX-XX
 
 - 797_, [Linux]: `net_if_stats()`_ may raise ``OSError`` for certain NIC cards.
 - 813_: `Process.as_dict()`_ should ignore extraneous attribute names which gets
-  attached to the Process instance.
+  attached to the `Process`_ instance.
 
 4.1.0
 =====
@@ -1113,7 +1113,7 @@ XXXX-XX-XX
 - 660_, [Windows]: make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - 732_: `Process.environ()`_.  (patch by Frank Benkstein)
-- 753_, [Linux], [macOS], [Windows]: Process USS and PSS (Linux) "real" memory
+- 753_, [Linux], [macOS], [Windows]: process USS and PSS (Linux) "real" memory
   stats. (patch by Eric Rahm)
 - 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
@@ -1296,8 +1296,8 @@ XXXX-XX-XX
 - 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids owned
   by another user.
 - 636_, [Windows]: `Process.memory_info()`_ raise `AccessDenied`_.
-- 637_, [UNIX]: raise exception if trying to send signal to Process PID 0 as it
-  will affect os.getpid()'s process group instead of PID 0.
+- 637_, [UNIX]: raise exception if trying to send signal to PID 0 as it will
+  affect ``os.getpid()`` 's process group and not PID 0.
 - 639_, [Linux]: `Process.cmdline()`_ can be truncated.
 - 640_, [Linux]: ``*connections`` functions may swallow errors and return an
   incomplete list of connnections.
@@ -1478,7 +1478,7 @@ XXXX-XX-XX
 - 424_, [Windows]: installer for Python 3.X 64 bit.
 - 427_: number of logical CPUs and physical cores (`cpu_count()`_).
 - 447_: `wait_procs()`_ ``timeout`` parameter is now optional.
-- 452_: make Process instances hashable and usable with set()s.
+- 452_: make `Process`_ instances hashable and usable with ``set()`` s.
 - 453_: tests on Python < 2.7 require ``unittest2`` module.
 - 459_: add a make file for running tests and other repetitive tasks (also
   on Windows).
@@ -1541,7 +1541,7 @@ In most cases accessing the old names will work but it will cause a
   | psutil.get_boot_time() | psutil.boot_time()            |
   +------------------------+-------------------------------+
 
-- All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
+- All `Process`_ ``get_*`` methods lost the ``get_`` prefix.
   E.g. ``get_ext_memory_info()`` was renamed to ``memory_info_ex()``.
   Assuming ``p = psutil.Process()``:
 
@@ -1587,7 +1587,7 @@ In most cases accessing the old names will work but it will cause a
   | p.getcwd()               | p.cwd()              |
   +--------------------------+----------------------+
 
-- All psutil.Process ``set_*`` methods lost the ``set_`` prefix.
+- All `Process`_ ``set_*`` methods lost the ``set_`` prefix.
   Assuming ``p = psutil.Process()``:
 
   +----------------------+---------------------------------+
@@ -1602,7 +1602,7 @@ In most cases accessing the old names will work but it will cause a
   | p.set_rlimit()       | p.rlimit(resource, limits=None) |
   +----------------------+---------------------------------+
 
-- Except for ``pid``, all psutil.Process class properties have been turned into
+- Except for ``pid``, all `Process`_ class properties have been turned into
   methods. This is the only case which there are no aliases.
   Assuming ``p = psutil.Process()``:
 
@@ -1633,7 +1633,7 @@ In most cases accessing the old names will work but it will cause a
 - timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of 0.1.
 - long deprecated psutil.error module is gone; exception classes now live in
   "psutil" namespace only.
-- Process instances' ``retcode`` attribute returned by `wait_procs()`_ has
+- `Process`_ instances' ``retcode`` attribute returned by `wait_procs()`_ has
   been renamed to ``returncode`` for consistency with subprocess.Popen.
 
 1.2.1
@@ -1656,7 +1656,7 @@ In most cases accessing the old names will work but it will cause a
 
 **Enhancements**
 
-- 439_: assume ``os.getpid()`` if no argument is passed to psutil.Process
+- 439_: assume ``os.getpid()`` if no argument is passed to `Process`_ class
   constructor.
 - 440_: new `wait_procs()`_ utility function which waits for multiple
   processes to terminate.
@@ -1838,8 +1838,8 @@ In most cases accessing the old names will work but it will cause a
 
 - `Process.cmdline()`_ property is no longer cached after first access.
 - `Process.ppid()`_ property is no longer cached after first access.
-- [Linux] Process methods not working because of a poor ``/proc`` implementation
-  will raise ``NotImplementedError`` instead of ``RuntimeError``.
+- [Linux] `Process`_ methods not working because of a poor ``/proc``
+  implementation will raise ``NotImplementedError`` instead of ``RuntimeError``.
 - ``psutil.error`` module is deprecated and scheduled for removal.
 
 0.6.1
@@ -1876,8 +1876,8 @@ In most cases accessing the old names will work but it will cause a
 - 261_: process extended memory info.
 - 295_, [macOS]: `Process.exe()`_ path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
-- 297_, [macOS]: the Process methods below were always raising `AccessDenied`_ for
-  any process except the current one. Now this is no longer true. Also
+- 297_, [macOS]: the `Process`_ methods below were always raising `AccessDenied`_
+  for any process except the current one. Now this is no longer true. Also
   they are 2.5x faster.
   - name
   - get_memory_info()
@@ -1888,7 +1888,7 @@ In most cases accessing the old names will work but it will cause a
 - 300_: `pmap.py`_ script.
 - 301_: `process_iter()`_ now yields processes sorted by their PIDs.
 - 302_: process number of voluntary and involuntary context switches.
-- 303_, [Windows]: the Process methods below were always raising `AccessDenied`_
+- 303_, [Windows]: the`Process`_ methods below were always raising `AccessDenied`_
   for any process not owned by current user. Now this is no longer true:
   - create_time
   - get_cpu_times()
@@ -1964,7 +1964,7 @@ In most cases accessing the old names will work but it will cause a
 **Bug fixes**
 
 - 292_, [Linux]: race condition in process files/threads/connections.
-- 294_, [Windows]: Process CPU affinity is only able to set CPU #0.
+- 294_, [Windows]: `Process.cpu_affinity()`_ is only able to set CPU #0.
 
 0.5.0
 =====
@@ -1991,14 +1991,14 @@ In most cases accessing the old names will work but it will cause a
   with Python 3.
 - 278_: new `Process.as_dict()`_ method.
 - 281_: `Process.ppid()`_, `Process.name()`_, `Process.exe()`_,
-  `Process.cmdline()`_ and `Process.create_time()`_ properties of Process class
+  `Process.cmdline()`_ and `Process.create_time()`_ properties of `Process`_ class
   are now cached after being accessed.
 - 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 - 283_: speedup `Process.is_running()`_ by caching its return value in case the
   process is terminated.
 - 284_, [POSIX]: per-process number of opened file descriptors.
-- 287_: `process_iter()`_ now caches Process instances between calls.
+- 287_: `process_iter()`_ now caches `Process`_ instances between calls.
 - 290_: Process.nice property is deprecated in favor of new get_nice() and
   set_nice() methods.
 
@@ -2032,7 +2032,7 @@ In most cases accessing the old names will work but it will cause a
   methods.
 - psutil.get_process_list() is deprecated.
 - `Process.ppid()`_, `Process.name()`_, `Process.exe()`_, `Process.cmdline()`_
-  and `Process.create_time()`_ properties of Process class are now cached after
+  and `Process.create_time()`_ properties of `Process`_ class are now cached after
   being accessed, meaning `NoSuchProcess`_ will no longer be raised in case the
   process is gone in the meantime.
 - ``psutil.STATUS_*`` constants can now be compared by using their string
@@ -2075,7 +2075,7 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 135_, [macOS]: psutil cannot create Process object.
+- 135_, [macOS]: psutil cannot create`Process`_ object.
 - 144_, [Linux]: no longer support 0 special PID.
 - 188_, [Linux]: psutil import error on Linux ARM architectures.
 - 194_, [POSIX]: `Process.cpu_percent()`_ now reports a percentage over
@@ -2086,8 +2086,8 @@ In most cases accessing the old names will work but it will cause a
   sparc architectures and causing crash on module import.
 - 201_, [Linux]: `Process.connections()`_ is broken on big-endian
   architectures.
-- 211_: Process instance can unexpectedly raise `NoSuchProcess`_ if tested for
-  equality with another object.
+- 211_: `Process`_ instance can unexpectedly raise `NoSuchProcess`_ if tested
+  for equality with another object.
 - 218_, [Linux], **[critical]**: crash at import time on Debian 64-bit because
   of a missing line in ``/proc/meminfo``.
 - 226_, [FreeBSD], **[critical]**: crash at import time on FreeBSD 7 and minor.
@@ -2117,9 +2117,9 @@ In most cases accessing the old names will work but it will cause a
 - 166_: `Process.memory_info()`_ leaks handles hogging system resources.
 - 168_: `cpu_percent()`_ returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
-- 178_: macOS - Process.get_threads() leaks memory
-- 180_, [Windows]: Process's get_num_threads() and get_threads() methods can
-  raise `NoSuchProcess`_ exception while process still exists.
+- 178_, [macOS]: `Process.threads()`_ leaks memory.
+- 180_, [Windows]: `Process.num_threads()`_ and `Process.threads()`_ methods
+  can raise `NoSuchProcess`_ exception while process still exists.
 
 0.2.1
 =====
@@ -2140,8 +2140,8 @@ In most cases accessing the old names will work but it will cause a
 - 142_: per-process get and set niceness (priority).
 - 143_: add `Process.status()`_.
 - 147_: per-process I/O nice (priority) - Linux only.
-- 148_: `psutil.Popen`_ class which tidies up subprocess.Popen and psutil.Process
-  in a unique interface.
+- 148_: `psutil.Popen`_ class which tidies up subprocess.Popen and `Process`_
+  class in a unique interface.
 - 152_, [macOS]: `Process.open_files()`_ implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
 - 153_, [macOS]: `Process.connections()`_ implementation has been rewritten
@@ -2161,7 +2161,7 @@ In most cases accessing the old names will work but it will cause a
 
 **API changes**
 
-- Process "uid" and "gid" properties are deprecated in favor of "uids" and
+- `Process`_ "uid" and "gid" properties are deprecated in favor of "uids" and
   "gids" properties.
 
 0.2.0
@@ -2199,8 +2199,8 @@ In most cases accessing the old names will work but it will cause a
 - 94_: `Process.suspend()`_ raises ``OSError`` instead of `AccessDenied`_.
 - 86_: psutil didn't compile against FreeBSD 6.x.
 - 102_: orphaned process handles obtained by using ``OpenProcess`` in C were
-  left behind every time Process class was instantiated.
-- 111_: path and name Process properties report truncated or erroneous
+  left behind every time `Process`_ class was instantiated.
+- 111_: path and name `Process`_ properties report truncated or erroneous
   values on UNIX.
 - 120_: `cpu_percent()`_ always returning 100% on macOS.
 - 112_: uid and gid properties don't change if process changes effective
@@ -2218,7 +2218,7 @@ In most cases accessing the old names will work but it will cause a
   process use send_signal(signal) method instead.
 - `Process.memory_info()`_ returns a nametuple instead of a tuple.
 - `cpu_times()`_ returns a nametuple instead of a tuple.
-- New psutil.Process methods: `Process.open_files()`_, `Process.connections()`_,
+- New `Process`_ methods: `Process.open_files()`_, `Process.connections()`_,
   `Process.send_signal()`_ and `Process.terminate()`_.
 - `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
   `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
@@ -2266,7 +2266,7 @@ In most cases accessing the old names will work but it will cause a
 **Enhancements**
 
 - 32_: Per-process CPU user/kernel times
-- 33_: Process create time
+- 33_: Per-process create time
 - 34_: Per-process CPU utilization percentage
 - 38_: Per-process memory usage (bytes)
 - 41_: Per-process memory utilization (percent)
@@ -2291,17 +2291,17 @@ In most cases accessing the old names will work but it will cause a
 - 4_: FreeBSD support for all functions of psutil
 - 9_: Process.uid and Process.gid now retrieve process UID and GID.
 - 11_: Support for parent/ppid - `Process.parent()`_ property returns a
-  Process object representing the parent process, and Process.ppid returns
-  the parent PID.
-- 12_ & 15:
+  `Process`_ object representing the parent process, and `Process.ppid()`_
+  returns the parent PID.
+- 12_, 15_:
   `NoSuchProcess`_ exception now raised when creating an object
   for a nonexistent process, or when retrieving information about a process
   that has gone away.
 - 21_: `AccessDenied`_ exception created for raising access denied errors
   from ``OSError`` or ``WindowsError`` on individual platforms.
 - 26_: `process_iter()`_ function to iterate over processes as
-  Process objects with a generator.
-- Process objects can now also be compared with == operator for equality
+  `Process`_ objects with a generator.
+- `Process`_ objects can now also be compared with == operator for equality
   (PID, name, command line are compared).
 
 **Bug fixes**
@@ -2348,6 +2348,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`win_service_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_iter
 
 
+.. _`Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 .. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
 
