@@ -519,7 +519,7 @@ XXXX-XX-XX
   crash).  (patch by Jean-Luc Migot)
 - 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
   "snicaddr".
-- 1274_: [Linux] there was a small chance Process.children() may swallow
+- 1274_: [Linux] there was a small chance `Process.children()`_ may swallow
   AccessDenied exceptions.
 
 5.4.5
@@ -604,7 +604,7 @@ XXXX-XX-XX
 - 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_: added support for sensors_battery() on macOS.  (patch by Arnon Yaari)
-- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
+- 1183_: `Process.children()`_ is 2x faster on UNIX and 2.4x faster on Linux.
 - 1188_: deprecated method Process.memory_info_ex() now warns by using
   FutureWarning instead of DeprecationWarning.
 
@@ -1032,7 +1032,7 @@ XXXX-XX-XX
 - 819_: [Linux] different speedup improvements:
   Process.ppid() is 20% faster
   Process.status() is 28% faster
-  Process.name() is 25% faster
+  `Process.name()`_ is 25% faster
   Process.num_threads is 20% faster on Python 3
 
 **Bug fixes**
@@ -1058,7 +1058,7 @@ XXXX-XX-XX
 - 819_: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
-  - Process.name() is 25% faster
+  - `Process.name()`_ is 25% faster
   - Process.num_threads is 20% faster on Python 3
 
 **Bug fixes**
@@ -1188,7 +1188,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 692_: [UNIX] Process.name() is no longer cached as it may change.
+- 692_: [UNIX] `Process.name()`_ is no longer cached as it may change.
 
 3.2.2
 =====
@@ -1235,7 +1235,7 @@ XXXX-XX-XX
   - psutil.net_if_stats()
   - psutil.net_io_counters()
   - psutil.Process.cmdline()
-  - psutil.Process.name()
+  - psutil.`Process.name()`_
   - psutil.Process.username()
   - psutil.users()
 
@@ -1286,7 +1286,7 @@ XXXX-XX-XX
 - 340_: [Windows] Process.open_files() no longer hangs. Instead it uses a
   thred which times out and skips the file handle in case it's taking too long
   to be retrieved.  (patch by Jeff Tang, PR #597)
-- 627_: [Windows] Process.name() no longer raises AccessDenied for pids owned
+- 627_: [Windows] `Process.name()`_ no longer raises AccessDenied for pids owned
   by another user.
 - 636_: [Windows] Process.memory_info() raise AccessDenied.
 - 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
@@ -1354,7 +1354,7 @@ XXXX-XX-XX
 - 614_: [Linux]: cpu_count(logical=False) return the number of sockets instead
   of cores.
 - 618_: [SunOS] swap tests fail on Solaris when run as normal user
-- 628_: [Linux] Process.name() truncates process name in case it contains
+- 628_: [Linux] `Process.name()`_ truncates process name in case it contains
   spaces or parentheses.
 
 2.2.1
@@ -1697,9 +1697,9 @@ DeprecationWarning.
 
 - 410_: host tar.gz and windows binary files are on PyPI.
 - 412_: [Linux] get/set process resource limits.
-- 415_: [Windows] `Process.get_children()`_ is an order of magnitude faster.
-- 426_: [Windows] Process.name is an order of magnitude faster.
-- 431_: [UNIX] Process.name is slightly faster because it unnecessarily
+- 415_: [Windows] `Process.children()`_ is an order of magnitude faster.
+- 426_: [Windows] `Process.name()`_ is an order of magnitude faster.
+- 431_: [UNIX] `Process.name()`_ is slightly faster because it unnecessarily
   retrieved also process cmdline.
 
 **Bug fixes**
@@ -1967,7 +1967,7 @@ DeprecationWarning.
 - 209_: `disk_partitions()`_ now provides also mount options.
 - 229_: list users currently connected on the system (psutil.get_users()).
 - 238_: [Linux, Windows] process CPU affinity (get and set).
-- 242_: add ``recursive=True`` to `Process.get_children()`_: return all process
+- 242_: add ``recursive=True`` to `Process.children()`_: return all process
   descendants.
 - 245_: [POSIX] Process.wait() incrementally consumes less CPU cycles.
 - 257_: [Windows] removed Windows 2000 support.
@@ -2013,7 +2013,7 @@ DeprecationWarning.
   NotImplementedError.
 - 286_: Process.is_running() doesn't actually check whether PID has been
   reused.
-- 314_: `Process.get_children()`_ can sometimes return non-children.
+- 314_: `Process.children()`_ can sometimes return non-children.
 
 **API changes**
 
@@ -2305,6 +2305,7 @@ DeprecationWarning.
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
+.. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
 .. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
 
 
