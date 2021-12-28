@@ -1036,8 +1036,8 @@ XXXX-XX-XX
 **Enhancements**
 
 - 819_: [Linux] different speedup improvements:
-  Process.ppid() is 20% faster
-  Process.status() is 28% faster
+  `Process.ppid()`_ is 20% faster
+  `Process.status()`_ is 28% faster
   `Process.name()`_ is 25% faster
   Process.num_threads is 20% faster on Python 3
 
@@ -1062,10 +1062,10 @@ XXXX-XX-XX
   and `win_service_get()`_.
 - 800_: [Linux] `virtual_memory()`_ returns a new "shared" memory field.
 - 819_: [Linux] speedup /proc parsing:
-  - Process.ppid() is 20% faster
-  - Process.status() is 28% faster
+  - `Process.ppid()`_ is 20% faster
+  - `Process.status()`_ is 28% faster
   - `Process.name()`_ is 25% faster
-  - Process.num_threads is 20% faster on Python 3
+  - `Process.num_threads()`_ is 20% faster on Python 3
 
 **Bug fixes**
 
@@ -1500,8 +1500,8 @@ XXXX-XX-XX
   jtang@vahna.net)
 - 443_: [Linux] fix a potential overflow issue for `Process.cpu_affinity()`_
   (set) on systems with more than 64 CPUs.
-- 448_: [Windows] get_children() and ppid() memory leak (patch by Ulrich
-  Klank).
+- 448_: [Windows] `Process.children()`_ and `Process.ppid()`_ memory leak (patch
+  by Ulrich Klank).
 - 457_: [POSIX] `pid_exists()`_ always returns True for PID 0.
 - 461_: namedtuples are not pickle-able.
 - 466_: [Linux] `Process.exe()`_ improper null bytes handling.  (patch by
@@ -1807,7 +1807,7 @@ DeprecationWarning.
 - 317_: [Windows] cannot set process CPU affinity above 31 cores.
 - 319_: [Linux] `Process.memory_maps()`_ raises KeyError 'Anonymous' on Debian
   squeeze.
-- 321_: [UNIX] Process.ppid property is no longer cached as the kernel may set
+- 321_: [UNIX] `Process.ppid()`_ property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
 - 323_: [macOS] `disk_io_counters()`_'s read_time and write_time parameters were
   reporting microseconds not milliseconds.  (patch by Gregory Szorc)
@@ -1838,7 +1838,7 @@ DeprecationWarning.
 **API changes**
 
 - `Process.cmdline()`_ property is no longer cached after first access.
-- Process.ppid property is no longer cached after first access.
+- `Process.ppid()`_ property is no longer cached after first access.
 - [Linux] Process methods not working because of a poor /proc implementation
   will raise NotImplementedError instead of RuntimeError.
 - psutil.error module is deprecated and scheduled for removal.
