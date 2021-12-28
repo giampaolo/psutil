@@ -224,8 +224,8 @@ XXXX-XX-XX
 
 - 1179_: [Linux] `Process.cmdline()`_ now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
-- 1616_: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will result in double free and
-  segfault
+- 1616_: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will result in double
+  ``free()`` and segfault
   (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
 - 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
@@ -335,7 +335,7 @@ XXXX-XX-XX
   due to fixed read violation.  (patch by Samer Masterson)
 - 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
   involved into `Process.oneshot()`_ context.
-- 1491_: [SunOS] `net_if_addrs()`_: free() ifap struct on error.  (patch by
+- 1491_: [SunOS] `net_if_addrs()`_: ``free()`` ifap struct on error.  (patch by
   Agnewee)
 - 1493_: [Linux] `cpu_freq()`_: handle the case where
   ``/sys/devices/system/cpu/cpufreq/`` exists but is empty.
@@ -389,7 +389,7 @@ XXXX-XX-XX
 - 1419_: [Windows] `Process.environ()`_ raises ``NotImplementedError`` when querying
   a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
 - 1427_: [OSX] `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
-  on failed malloc().
+  on failed ``malloc()``.
 - 1429_: [Windows] ``SE DEBUG`` was not properly set for current process. It is
   now, and it should result in less `AccessDenied`_ exceptions for low-pid
   processes.
@@ -450,7 +450,7 @@ XXXX-XX-XX
 - 1376_: [Windows] ``OpenProcess`` now uses PROCESS_QUERY_LIMITED_INFORMATION
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
-- 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
+- 1376_: [Windows] check if variable is NULL before ``free()``ing it.  (patch by
   EccoTheFlintstone)
 
 5.4.8
@@ -563,7 +563,7 @@ XXXX-XX-XX
   enough permissions for ``/proc/pid/cred``.  (patch by Georg Sauthoff)
 - 1194_: [SunOS] Return nice value from psinfo as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
-- 1194_: [SunOS] Fix double free in `Process.cpu_num()`_.  (patch by Georg
+- 1194_: [SunOS] Fix double ``free()`` in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
 - 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
   and warnings.  (patch by Georg Sauthoff)
@@ -2008,7 +2008,7 @@ DeprecationWarning.
 
 - 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
-- 240_: [macOS] incorrect use of free() for `Process.connections()`_.
+- 240_: [macOS] incorrect use of ``free()`` for `Process.connections()`_.
 - 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
 - 248_: [Linux] `net_io_counters()`_ might return erroneous NIC names.
@@ -2249,7 +2249,7 @@ DeprecationWarning.
 - 36_: `Process.cpu_times()`_ and `Process.memory_info()`_ functions succeeded
   also for dead processes while a `NoSuchProcess`_ exception is supposed to be raised.
 - 48_: incorrect size for mib array defined in getcmdargs for BSD
-- 49_: possible memory leak due to missing free() on error condition on
+- 49_: possible memory leak due to missing ``free()`` on error condition on
 - 50_: fixed getcmdargs() memory fragmentation on BSD
 - 55_: test_pid_4 was failing on Windows Vista
 - 57_: some unit tests were failing on systems where no swap memory is
