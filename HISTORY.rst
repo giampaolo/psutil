@@ -176,7 +176,7 @@ XXXX-XX-XX
 - 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
 - 1677_: [Windows] `Process.exe()`_ will succeed for all process PIDs (instead of
   raising AccessDenied).
-- 1679_: [Windows] net_connections() and `Process.connections()`_ are 10% faster.
+- 1679_: [Windows] `net_connections()`_ and `Process.connections()`_ are 10% faster.
 - 1682_: [PyPy] added CI / test integration for PyPy via Travis.
 - 1686_: [Windows] added support for PyPy on Windows.
 - 1693_: [Windows] boot_time(), Process.create_time() and `users()`_'s login time
@@ -259,7 +259,7 @@ XXXX-XX-XX
   `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
   (patch by Arnon Yaari)
-- 1535_: 'type' and 'family' fields returned by net_connections() are not
+- 1535_: 'type' and 'family' fields returned by `net_connections()`_ are not
   always turned into enums.
 - 1536_: [NetBSD] `Process.cmdline()`_ erroneously raise ZombieProcess error if
   cmdline has non encodable chars.
@@ -470,14 +470,14 @@ XXXX-XX-XX
 - 1004_: [Linux] Process.io_counters() may raise ValueError.
 - 1277_: [OSX] available and used memory (psutil.virtual_memory()) metrics are
   not accurate.
-- 1294_: [Windows] psutil.Process().connections() may sometimes fail with
+- 1294_: [Windows] `Process.connections()`_ may sometimes fail with
   intermittent 0xC0000001.  (patch by Sylvain Duchesne)
 - 1307_: [Linux] `disk_partitions()`_ does not honour PROCFS_PATH.
 - 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
 - 1332_: [OSX] psutil debug messages are erroneously printed all the time.
   (patch by Ilya Yanok)
-- 1346_: [SunOS] net_connections() returns an empty list.  (patch by Oleksii
+- 1346_: [SunOS] `net_connections()`_ returns an empty list.  (patch by Oleksii
   Shevchuk)
 
 5.4.7
@@ -501,7 +501,7 @@ XXXX-XX-XX
 - 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
 - 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
-- 1294_: [Windows] psutil.Process().connections() may sometime fail with
+- 1294_: [Windows] `Process.connections()`_ may sometime fail with
   MemoryError.  (patch by sylvainduchesne)
 - 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
 - 1309_: [Linux] Process.status() is unable to recognize "idle" and "parked"
@@ -679,7 +679,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
-- 1125_: [BSD] net_connections() raises TypeError.
+- 1125_: [BSD] `net_connections()`_ raises TypeError.
 
 **Compatibility notes**
 
@@ -695,7 +695,7 @@ XXXX-XX-XX
 
 - 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
   (restart from 0). Introduced a new "nowrap" argument.
-- 928_: psutil.net_connections() and `Process.connections()`_ "laddr" and
+- 928_: `net_connections()`_ and `Process.connections()`_ "laddr" and
   "raddr" are now named tuples.
 - 1015_: `swap_memory()`_ now relies on /proc/meminfo instead of sysinfo() syscall
   so that it can be used in conjunction with PROCFS_PATH in order to retrieve
@@ -710,8 +710,8 @@ XXXX-XX-XX
 - 1058_: test suite now enables all warnings by default.
 - 1060_: source distribution is dynamically generated so that it only includes
   relevant files.
-- 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
-  (instead of -1).  (patch by Gleb Smirnoff)
+- 1079_: [FreeBSD] `net_connections()`_'s ``fd`` number is now being set for real
+  (instead of ``-1``).  (patch by Gleb Smirnoff)
 - 1091_: [SunOS] implemented `Process.environ()`_.  (patch by Oleksii Shevchuk)
 
 **Bug fixes**
@@ -720,7 +720,7 @@ XXXX-XX-XX
 - 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
   value of the first call is now cached so that boot_time() always returns the
   same value if fluctuation is <= 1 second.
-- 1013_: [FreeBSD] psutil.net_connections() may return incorrect PID.  (patch
+- 1013_: [FreeBSD] `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
 - 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
   NoSuchProcess.
@@ -731,7 +731,7 @@ XXXX-XX-XX
   skipping a file which gets deleted while open files are retrieved.
 - 1029_: [macOS, FreeBSD] `Process.connections()`_ with `family=unix` on Python
   3 doesn't properly handle unicode paths and may raise `UnicodeDecodeError`.
-- 1033_: [macOS, FreeBSD] memory leak for net_connections() and
+- 1033_: [macOS, FreeBSD] memory leak for `net_connections()`_ and
   `Process.connections()`_ when retrieving UNIX sockets (kind='unix').
 - 1040_: fixed many unicode related issues such as UnicodeDecodeError on
   Python 3 + UNIX and invalid encoded data on Windows.
@@ -748,7 +748,7 @@ XXXX-XX-XX
 - 1058_: fixed Python warnings.
 - 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
   or NICs are installed on the system.
-- 1063_: [NetBSD] net_connections() may list incorrect sockets.
+- 1063_: [NetBSD] `net_connections()`_ may list incorrect sockets.
 - 1064_: [NetBSD] `swap_memory()`_ may segfault in case of error.
 - 1065_: [OpenBSD] `Process.cmdline()`_ may raise SystemError.
 - 1067_: [NetBSD] `Process.cmdline()`_ leaks memory if process has terminated.
@@ -759,9 +759,9 @@ XXXX-XX-XX
 - 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
 - 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
-- 1077_: [SunOS] net_connections() does not work on SunOS 5.10. (patch by
+- 1077_: [SunOS] `net_connections()`_ does not work on SunOS 5.10. (patch by
   Oleksii Shevchuk)
-- 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
+- 1079_: [FreeBSD] `net_connections()`_ didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
 - 1085_: `cpu_count()`_ return value is now checked and forced to None if <= 1.
 - 1087_: Process.cpu_percent() guard against `cpu_count()`_ returning None and
@@ -942,7 +942,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 932_: [NetBSD] net_connections() and `Process.connections()`_ may fail without
+- 932_: [NetBSD] `net_connections()`_ and `Process.connections()`_ may fail without
   raising an exception.
 - 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
 
@@ -985,7 +985,7 @@ XXXX-XX-XX
 - 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
 - 825_: [Linux] `Process.cpu_affinity()`_: fix possible double close and use of
   unopened socket.
-- 880_: [Windows] Handle race condition inside psutil_net_connections.
+- 880_: [Windows] Handle race condition inside `net_connections()`_.
 - 885_: ValueError is raised if a negative integer is passed to cpu_percent()
   functions.
 - 892_: [Linux] `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
@@ -1134,7 +1134,7 @@ XXXX-XX-XX
 - 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
 - 761_: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
-- 766_: [Linux] net_connections() can't handle malformed /proc/net/unix file.
+- 766_: [Linux] `net_connections()`_ can't handle malformed /proc/net/unix file.
 - 767_: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
   broken on 2.4 kernels.
 - 770_: [NetBSD] disk_io_counters() metrics didn't update.
@@ -1163,7 +1163,7 @@ XXXX-XX-XX
 
 - 557_: [NetBSD] added NetBSD support.  (contributed by Ryo Onodera and
   Thomas Klausner)
-- 708_: [Linux] psutil.net_connections() and `Process.connections()`_ on Python 2
+- 708_: [Linux] `net_connections()`_ and `Process.connections()`_ on Python 2
   can be up to 3x faster in case of many connections.
   Also `Process.memory_maps()`_ is slightly faster.
 - 718_: `process_iter()`_ is now thread safe.
@@ -1255,7 +1255,7 @@ XXXX-XX-XX
   (patch by sk6249)
 - 672_: [Windows] compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
-- 675_: [Linux] net_connections(); UnicodeDecodeError may occur when listing
+- 675_: [Linux] `net_connections()`_: UnicodeDecodeError may occur when listing
   UNIX sockets.
 
 3.1.1
@@ -1324,10 +1324,10 @@ XXXX-XX-XX
   speed, MTU).
 - 376_: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
-  returned by psutil.Process' `Process.ionice()`_ and nice() methods are enums instead of
+  returned by `Process.ionice()`_ and `Process.nice()`_ are enums instead of
   plain integers.
 - 581_: add .gitignore. (patch by Gabi Davar)
-- 582_: connection constants returned by psutil.net_connections() and
+- 582_: connection constants returned by `net_connections()`_ and
   `Process.connections()`_ were turned from int to enums on Python > 3.4.
 - 587_: Move native extension into the package.
 - 589_: `Process.cpu_affinity()`_ accepts any kind of iterable (set, tuple, ...),
@@ -1343,12 +1343,12 @@ XXXX-XX-XX
 
 - 428_: [all UNIXes except Linux] correct handling of zombie processes;
   introduced new ZombieProcess exception class.
-- 512_: [BSD] fix segfault in net_connections().
+- 512_: [BSD] fix segfault in `net_connections()`_.
 - 555_: [Linux] `users()`_ correctly handles ":0" as an alias for
   "localhost"
 - 579_: [Windows] Fixed open_files() for PID>64K.
 - 579_: [Windows] fixed many compiler warnings.
-- 585_: [FreeBSD] net_connections() may raise KeyError.
+- 585_: [FreeBSD] `net_connections()`_ may raise KeyError.
 - 586_: [FreeBSD] `Process.cpu_affinity()`_ segfaults on set in case an invalid CPU
   number is provided.
 - 593_: [FreeBSD] `Process.memory_maps()`_ segfaults.
@@ -1390,7 +1390,7 @@ XXXX-XX-XX
 - 547_: [UNIX] `Process.username()`_ may raise KeyError if UID can't be resolved.
 - 551_: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
 - 556_: [Linux] lots of file handles were left open.
-- 561_: [Linux] net_connections() might skip some legitimate UNIX sockets.
+- 561_: [Linux] `net_connections()`_ might skip some legitimate UNIX sockets.
   (patch by spacewander)
 - 565_: [Windows] use proper encoding for `Process.username()`_ and `users()`_.
   (patch by Sylvain Mouquet)
@@ -1447,7 +1447,7 @@ XXXX-XX-XX
 - 446_: [Windows] fix encoding error when using net_io_counters() on Python 3.
   (patch by Szigeti Gabor Niif)
 - 460_: [Windows] net_io_counters() wraps after 4G.
-- 491_: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
+- 491_: [Linux] `net_connections()`_ exceptions. (patch by Alexander Grothe)
 
 2.1.0
 =====
@@ -1823,7 +1823,7 @@ DeprecationWarning.
 - 353_: [macOS] get_users() returns an empty list on macOS 10.8.
 - 356_: Process.parent now checks whether parent PID has been reused in which
   case returns None.
-- 365_: Process.set_nice() should check PID has not been reused by another
+- 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
 - 366_: [FreeBSD] `Process.memory_maps()`_, get_num_fds(), get_open_files() and
   getcwd() Process methods raise RuntimeError instead of AccessDenied.
@@ -2309,6 +2309,7 @@ DeprecationWarning.
 .. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
+.. _`net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.net_connections
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
 .. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
 .. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
@@ -2319,6 +2320,7 @@ DeprecationWarning.
 .. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
+.. _`Process.nice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.nice
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
