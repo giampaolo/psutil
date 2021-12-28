@@ -36,7 +36,7 @@ XXXX-XX-XX
   giving up and raising `AccessDenied`_, which was a fallback to avoid crashing.
 - 1904_, [Windows]: ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
   ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
-- 1913_, [Linux]: `wait_procs()`_ seemingly ignoring timeout, TimeoutExpired thrown
+- 1913_, [Linux]: `wait_procs()`_ seemingly ignoring timeout, `TimeoutExpired`_ thrown
 - 1919_, [Linux]: `sensors_battery()`_ can raise ``TypeError`` on PureOS.
 - 1921_, [Windows]: `swap_memory()`_ shows committed memory instead of swap
 - 1940_, [Linux]: psutil does not handle ``ENAMETOOLONG`` when accessing process
@@ -335,10 +335,10 @@ XXXX-XX-XX
   cause a crash due to fixed read violation.  (patch by Samer Masterson)
 - 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with Process methods
   involved into `Process.oneshot()`_ context.
-- 1491_, [SunOS]: `net_if_addrs()`_: ``free()`` ifap struct on error.  (patch by
-  Agnewee)
+- 1491_, [SunOS]: `net_if_addrs()`_: use ``free()`` against ``ifap`` struct
+  on error.  (patch by Agnewee)
 - 1493_, [Linux]: `cpu_freq()`_: handle the case where
-  ``/sys/devices/system/cpu/cpufreq/`` exists but is empty.
+  ``/sys/devices/system/cpu/cpufreq/`` exists but it's empty.
 
 5.6.1
 =====
@@ -443,15 +443,15 @@ XXXX-XX-XX
   are no longer exposed if not supported by the kernel.
 - 1368_, [Windows]: fix `Process.ionice()`_ mismatch.  (patch by
   EccoTheFlintstone)
-- 1370_, [Windows]: improper usage of CloseHandle() may lead to override the
+- 1370_, [Windows]: improper usage of ``CloseHandle()`` may lead to override the
   original error code when raising an exception.
 - 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
   Process instances to return incorrect results.
-- 1376_, [Windows]: ``OpenProcess`` now uses PROCESS_QUERY_LIMITED_INFORMATION
+- 1376_, [Windows]: ``OpenProcess`` now uses ``PROCESS_QUERY_LIMITED_INFORMATION``
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
-- 1376_, [Windows]: check if variable is NULL before ``free()``ing it.  (patch by
-  EccoTheFlintstone)
+- 1376_, [Windows]: check if variable is ``NULL`` before ``free()`` ing it.
+  (patch by EccoTheFlintstone)
 
 5.4.8
 =====
@@ -465,7 +465,7 @@ XXXX-XX-XX
 - 1310_, [Linux]: `sensors_temperatures()`_ now parses ``/sys/class/thermal``
   in case ``/sys/class/hwmon`` fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
-- 1320_, [Posix]: better compilation support when using g++ instead of GCC.
+- 1320_, [POSIX]: better compilation support when using g++ instead of GCC.
   (patch by Jaime Fullaondo)
 
 **Bug fixes**
@@ -535,7 +535,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1268_: setup.py's extra_require parameter requires latest setuptools version,
+- 1268_: setup.py's ``extra_require`` parameter requires latest setuptools version,
   breaking quite a lot of installations.
 
 5.4.4
@@ -573,7 +573,7 @@ XXXX-XX-XX
 - 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
 - 1222_, [Linux]: `Process.memory_full_info()`_ was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
-- 1224_, [Windows]: `Process.wait()`_ may erroneously raise TimeoutExpired.
+- 1224_, [Windows]: `Process.wait()`_ may erroneously raise `TimeoutExpired`_.
 - 1238_, [Linux]: `sensors_battery()`_ may return ``None`` in case battery is not
   listed as "BAT0" under ``/sys/class/power_supply``.
 - 1240_, [Windows]: `cpu_times()`_ float loses accuracy in a long running system.
@@ -598,7 +598,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1193_: `pids()`_ may return False on macOS.
+- 1193_: `pids()`_ may return ``False`` on macOS.
 
 5.4.2
 =====
@@ -899,8 +899,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 687_, [Linux]: `pid_exists()`_ no longer returns True if passed a process thread
-  ID.
+- 687_, [Linux]: `pid_exists()`_ no longer returns ``True`` if passed a process
+  thread ID.
 - 948_: cannot install psutil with ``PYTHONOPTIMIZE=2``.
 - 950_, [Windows]: `Process.cpu_percent()`_ was calculated incorrectly and showed
   higher number than real usage.
@@ -993,7 +993,7 @@ XXXX-XX-XX
   functions.
 - 892_, [Linux]: `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
   ``SystemError`` with no error set; now ``ValueError`` is raised.
-- 906_, [BSD]: `disk_partitions()`_ with `all=False` returned an empty list.
+- 906_, [BSD]: `disk_partitions()`_ with ``all=False`` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
 - 907_, [FreeBSD]: `Process.exe()`_ may fail with ``OSError(ENOENT)``.
 - 908_, [macOS], [BSD]: different process methods could errounesuly mask the real
@@ -1024,7 +1024,7 @@ XXXX-XX-XX
 - 863_, [Windows]: memory_map truncates addresses above 32 bits
 - 866_, [Windows]: `win_service_iter()`_ and services in general are not able to
   handle unicode service names / descriptions.
-- 869_, [Windows]: `Process.wait()`_ may raise TimeoutExpired with wrong timeout
+- 869_, [Windows]: `Process.wait()`_ may raise `TimeoutExpired`_ with wrong timeout
   unit (ms instead of sec).
 - 870_, [Windows]: Handle leak inside ``psutil_get_process_data``.
 
@@ -1504,7 +1504,7 @@ XXXX-XX-XX
   (set) on systems with more than 64 CPUs.
 - 448_, [Windows]: `Process.children()`_ and `Process.ppid()`_ memory leak (patch
   by Ulrich Klank).
-- 457_, [POSIX]: `pid_exists()`_ always returns True for PID 0.
+- 457_, [POSIX]: `pid_exists()`_ always returns ``True`` for PID 0.
 - 461_: namedtuples are not pickle-able.
 - 466_, [Linux]: `Process.exe()`_ improper null bytes handling.  (patch by
   Gautam Singh)
@@ -1989,7 +1989,7 @@ DeprecationWarning.
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
 - 262_, [Windows]: `disk_partitions()`_ was slow due to inspecting the
-  floppy disk drive also when "all" argument was False.
+  floppy disk drive also when parameter is ``"all=False``.
 - 273_: psutil.get_process_list() is deprecated.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
