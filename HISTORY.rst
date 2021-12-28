@@ -437,8 +437,8 @@ XXXX-XX-XX
 
 - 1111_: `Process.oneshot()`_ is now thread safe.
 - 1354_: [Linux] `disk_io_counters()`_ fails on Linux kernel 4.18+.
-- 1357_: [Linux] `Process.memory_maps()`_ and io_counters() method are no longer
-  exposed if not supported by the kernel.
+- 1357_: [Linux] `Process.memory_maps()`_ and `Process.io_counters()`_ methods
+  are no longer exposed if not supported by the kernel.
 - 1368_: [Windows] fix `Process.ionice()`_ mismatch.  (patch by
   EccoTheFlintstone)
 - 1370_: [Windows] improper usage of CloseHandle() may lead to override the
@@ -469,7 +469,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 715_: do not print exception on import time in case `cpu_times()`_ fails.
-- 1004_: [Linux] Process.io_counters() may raise ValueError.
+- 1004_: [Linux] `Process.io_counters()`_ may raise ValueError.
 - 1277_: [OSX] available and used memory (`virtual_memory()`_) metrics are
   not accurate.
 - 1294_: [Windows] `Process.connections()`_ may sometimes fail with
@@ -804,7 +804,7 @@ XXXX-XX-XX
 - 1000_: fixed some setup.py warnings.
 - 1002_: [SunOS] remove C macro which will not be available on new Solaris
   versions. (patch by Danek Duvall)
-- 1004_: [Linux] Process.io_counters() may raise ValueError.
+- 1004_: [Linux] `Process.io_counters()`_ may raise ValueError.
 - 1006_: [Linux] `cpu_freq()`_ may return None on some Linux versions does not
   support the function; now the function is not declared instead.
 - 1009_: [Linux] `sensors_temperatures()`_ may raise OSError.
@@ -832,10 +832,10 @@ XXXX-XX-XX
 **Enhancements**
 
 - 971_: [Linux] Add `sensors_fans()`_ function.  (patch by Nicolas Hennion)
-- 976_: [Windows] Process.io_counters() has 2 new fields: *other_count* and
-  *other_bytes*.
-- 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
-  *write_chars*.
+- 976_: [Windows] `Process.io_counters()`_ has 2 new fields: ``other_count`` and
+  ``other_bytes``.
+- 976_: [Linux] `Process.io_counters()`_ has 2 new fields: ``read_chars`` and
+  ``write_chars``.
 
 **Bug fixes**
 
@@ -1734,7 +1734,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 405_: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
+- 405_: `net_io_counters()`_ ``pernic=True`` no longer works as intended in 1.0.0.
 
 1.0.0
 =====
@@ -1921,9 +1921,9 @@ DeprecationWarning.
   - sout (no. of bytes the system has swapped out from disk (cumulative))
   All old memory-related functions are deprecated.
   Also two new example scripts were added:  free.py and meminfo.py.
-- 312_: psutil.network_io_counters() namedtuple includes 4 new fields:
-  errin, errout dropin and dropout, reflecting the number of packets
-  dropped and with errors.
+- 312_: ``net_io_counters()`` namedtuple includes 4 new fields:
+  ``errin``, ``errout``, ``dropin`` and ``dropout``, reflecting the number of
+   packets dropped and with errors.
 
 **Bug fixes**
 
@@ -1932,10 +1932,10 @@ DeprecationWarning.
 - 303_: [Windows] potential heap corruption in get_num_threads() and
   get_status() Process methods.
 - 305_: [FreeBSD] psutil can't compile on FreeBSD 9 due to removal of utmp.h.
-- 306_: at C level, errors are not checked when invoking Py* functions which
+- 306_: at C level, errors are not checked when invoking ``Py*`` functions which
   create or manipulate Python objects leading to potential memory related
   errors and/or segmentation faults.
-- 307_: [FreeBSD] values returned by psutil.network_io_counters() are wrong.
+- 307_: [FreeBSD] values returned by `net_io_counters()`_ are wrong.
 - 308_: [BSD / Windows] psutil.virtmem_usage() wasn't actually returning
   information about swap memory usage as it was supposed to do. It does
   now.
@@ -2009,7 +2009,7 @@ DeprecationWarning.
 - 240_: [macOS] incorrect use of free() for `Process.connections()`_.
 - 244_: [POSIX] `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
-- 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
+- 248_: [Linux] `net_io_counters()`_ might return erroneous NIC names.
 - 252_: [Windows] `Process.cwd()`_ erroneously raise NoSuchProcess for
   processes owned by another user.  It now raises AccessDenied instead.
 - 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
@@ -2019,7 +2019,7 @@ DeprecationWarning.
 - 272_: [Linux] Porcess.get_open_files() - potential race condition can lead to
   unexpected NoSuchProcess exception.  Also, we can get incorrect reports
   of not absolutized path names.
-- 275_: [Linux] Process.get_io_counters() erroneously raise NoSuchProcess on
+- 275_: [Linux] ``Process.io_counters()`` erroneously raise NoSuchProcess on
   old Linux versions. Where not available it now raises
   NotImplementedError.
 - 286_: `Process.is_running()`_ doesn't actually check whether PID has been
