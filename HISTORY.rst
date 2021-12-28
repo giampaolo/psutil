@@ -13,9 +13,9 @@ XXXX-XX-XX
 - 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
 - 1992_: error classes (`NoSuchProcess`_, `AccessDenied`_, etc.) now have a better
   formatted and separated ``__repr__`` and ``__str__`` implementations.
-- 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
-- 1999_, [Linux]: `disk_partitions()`_: convert "/dev/root" device (an alias used
-  on some Linux distros) to real root device path.
+- 1996_, [BSD]: add support for MidnightBSD.  (patch by Saeed Rasooli)
+- 1999_, [Linux]: `disk_partitions()`_: convert ``/dev/root`` device (an alias
+  used on some Linux distros) to real root device path.
 - 2005_: ``PSUTIL_DEBUG`` mode now prints file name and line number of the debug
   messages coming from C extension modules.
 
@@ -45,7 +45,7 @@ XXXX-XX-XX
   (patch by Xuehai Pan)
 - 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
   insufficient buffer len. (patch by MaWe2019)
-- 1965_, [Windows]: fix "Fatal Python error: deallocating ``None``" when calling
+- 1965_, [Windows]: fix "Fatal Python error: deallocating None" when calling
   `users()`_ multiple times.
 - 1980_, [Windows]: 32bit / WOW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in `AccessDenied`_. This is now fixed.  (patch
@@ -99,7 +99,7 @@ XXXX-XX-XX
 - 893_, [BSD]: add support for `Process.environ()`_ (patch by Armin Gruner)
 - 1830_, [UNIX]: `net_if_stats()`_ `isup` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
-- 1837_, [Linux]: improved battery detection and charge "secsleft" calculation
+- 1837_, [Linux]: improved battery detection and charge ``secsleft`` calculation
   (patch by aristocratos)
 
 **Bug fixes**
@@ -698,7 +698,7 @@ XXXX-XX-XX
 **Enhancements**
 
 - 802_: `disk_io_counters()`_ and `net_io_counters()`_ numbers no longer wrap
-  (restart from 0). Introduced a new "nowrap" argument.
+  (restart from 0). Introduced a new ``nowrap`` argument.
 - 928_: `net_connections()`_ and `Process.connections()`_ ``laddr`` and
   ``raddr`` are now named tuples.
 - 1015_: `swap_memory()`_ now relies on ``/proc/meminfo`` instead of ``sysinfo()``
@@ -973,15 +973,15 @@ XXXX-XX-XX
 
 - 874_, [Windows]: `net_if_addrs()`_ returns also the ``netmask``.
 - 887_, [Linux]: `virtual_memory()`_ ``available`` and ``used`` values are more
-  precise and match "free" cmdline utility.  ``available`` also takes into
+  precise and match ``free`` cmdline utility.  ``available`` also takes into
   account LCX containers preventing ``available`` to overflow ``total``.
 - 891_: `procinfo.py`_ script has been updated and provides a lot more info.
 
 **Bug fixes**
 
 - 514_, [macOS], **[critical]**: possibly fix `Process.memory_maps()`_ segfault.
-- 783_, [macOS]: `Process.status()`_ may erroneously return "running" for zombie
-  processes.
+- 783_, [macOS]: `Process.status()`_ may erroneously return ``"running"`` for
+  zombie processes.
 - 798_, [Windows]: `Process.open_files()`_ returns and empty list on Windows 10.
 - 825_, [Linux]: `Process.cpu_affinity()`_: fix possible double close and use of
   unopened socket.
@@ -1125,9 +1125,9 @@ XXXX-XX-XX
 - 704_, [Solaris]: psutil does not compile on Solaris sparc.
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for
   `Process.name()`_, `Process.cwd()`_, `Process.exe()`_, `Process.cmdline()`_
-  and `Process.open_files()`_ methods resulting in ``UnicodeDecodeError`` exceptions.
-  'surrogateescape' error handler is now used as a workaround for replacing the
-  corrupted data.
+  and `Process.open_files()`_ methods resulting in ``UnicodeDecodeError``
+  exceptions. 'surrogateescape' error handler is now used as a workaround for
+  replacing the corrupted data.
 - 737_, [Windows]: when the bitness of psutil and the target process was
   different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
   result or incorrectly report an `AccessDenied`_ error.
@@ -1349,8 +1349,8 @@ XXXX-XX-XX
 - 428_, [all :UNIXes except Linux] correct handling of zombie processes;
   introduced new `ZombieProcess`_ exception class.
 - 512_, [BSD], **[critical]**: fix segfault in `net_connections()`_.
-- 555_, [Linux]: `users()`_ correctly handles ":0" as an alias for
-  "localhost"
+- 555_, [Linux]: `users()`_ correctly handles ``":0"`` as an alias for
+  ``"localhost"``.
 - 579_, [Windows]: Fixed `Process.open_files()`_ for PID > 64K.
 - 579_, [Windows]: fixed many compiler warnings.
 - 585_, [FreeBSD]: `net_connections()`_ may raise ``KeyError``.
@@ -1372,7 +1372,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 496_, [Linux]: fix "``ValueError``: ambiguos inode with multiple PIDs references"
+- 496_, [Linux]: fix "ValueError: ambiguos inode with multiple PIDs references"
   (patch by Bruno Binet)
 
 2.2.0
@@ -1483,13 +1483,13 @@ XXXX-XX-XX
 - 453_: tests on Python < 2.7 require unittest2 module.
 - 459_: add a make file for running tests and other repetitive tasks (also
   on Windows).
-- 463_: make timeout parameter of ``cpu_percent*`` functions default to 0.0 'cause
-  it's a common trap to introduce slowdowns.
+- 463_: make timeout parameter of ``cpu_percent*`` functions default to ``0.0``
+  'cause it's a common trap to introduce slowdowns.
 - 468_: move documentation to readthedocs.com.
 - 477_: `Process.cpu_percent()`_ is about 30% faster.  (suggested by crusaderky)
 - 478_, [Linux]: almost all APIs are about 30% faster on Python 3.X.
 - 479_: long deprecated ``psutil.error`` module is gone; exception classes now
-  live in "psutil" namespace only.
+  live in psutil namespace only.
 
 **Bug fixes**
 
@@ -1544,7 +1544,7 @@ In most cases accessing the old names will work but it will cause a
 
 - All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
   get_ext_memory_info() renamed to memory_info_ex().
-  Assuming "p = psutil.Process()":
+  Assuming ``p = psutil.Process()``:
 
   +--------------------------+----------------------+
   | Old name                 | Replacement          |
@@ -1589,7 +1589,7 @@ In most cases accessing the old names will work but it will cause a
   +--------------------------+----------------------+
 
 - All psutil.Process ``set_*`` methods lost the ``set_`` prefix.
-  Assuming "p = psutil.Process()":
+  Assuming ``p = psutil.Process()``:
 
   +----------------------+---------------------------------+
   | Old name             | Replacement                     |
@@ -1603,9 +1603,9 @@ In most cases accessing the old names will work but it will cause a
   | p.set_rlimit()       | p.rlimit(resource, limits=None) |
   +----------------------+---------------------------------+
 
-- Except for 'pid' all psutil.Process class properties have been turned into
+- Except for ``pid``, all psutil.Process class properties have been turned into
   methods. This is the only case which there are no aliases.
-  Assuming "p = psutil.Process()":
+  Assuming ``p = psutil.Process()``:
 
   +---------------+-----------------+
   | Old name      | Replacement     |
@@ -1634,8 +1634,8 @@ In most cases accessing the old names will work but it will cause a
 - timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of 0.1.
 - long deprecated psutil.error module is gone; exception classes now live in
   "psutil" namespace only.
-- Process instances' "retcode" attribute returned by `wait_procs()`_ has
-  been renamed to "returncode" for consistency with subprocess.Popen.
+- Process instances' ``retcode`` attribute returned by `wait_procs()`_ has
+  been renamed to ``returncode`` for consistency with subprocess.Popen.
 
 1.2.1
 =====
@@ -1986,7 +1986,7 @@ In most cases accessing the old names will work but it will cause a
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
 - 262_, [Windows]: `disk_partitions()`_ was slow due to inspecting the
-  floppy disk drive also when parameter is ``"all=False``.
+  floppy disk drive also when parameter is ``all=False``.
 - 273_: psutil.get_process_list() is deprecated.
 - 274_: psutil no longer requires 2to3 at installation time in order to work
   with Python 3.
@@ -2049,7 +2049,7 @@ In most cases accessing the old names will work but it will cause a
 - 228_: some example scripts were not working with python 3.
 - 230_, [Windows :/ macOS] memory leak in `Process.connections()`_.
 - 232_, [Linux]: psutil.phymem_usage() can report erroneous values which are
-  different than "free" command.
+  different than ``free`` command.
 - 236_, [Windows]: memory/handle leak in `Process.memory_info()`_,
   `Process.suspend()`_ and `Process.resume()`_ methods.
 
@@ -2067,7 +2067,7 @@ In most cases accessing the old names will work but it will cause a
   immediately.
 - 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
 - 213_: add `iotop.py`_ script.
-- 217_: `Process.connections()`_ now has a "kind" argument to filter
+- 217_: `Process.connections()`_ now has a ``kind`` argument to filter
   for connections with different criteria.
 - 221_, [FreeBSD]: `Process.open_files()`_ has been rewritten in C and no longer
   relies on lsof.
@@ -2176,8 +2176,8 @@ In most cases accessing the old names will work but it will cause a
 - 88_: total system physical cached memory.
 - 88_: total system physical memory buffers used by the kernel.
 - 91_: add `Process.send_signal()`_ and `Process.terminate()`_ methods.
-- 95_: `NoSuchProcess`_ and `AccessDenied`_ exception classes now provide "pid",
-  "name" and "msg" attributes.
+- 95_: `NoSuchProcess`_ and `AccessDenied`_ exception classes now provide
+  ``pid``, ``name`` and ``msg`` attributes.
 - 97_: per-process children.
 - 98_: `Process.cpu_times()`_ and `Process.memory_info()`_ now return
   a namedtuple instead of a tuple.
@@ -2190,7 +2190,7 @@ In most cases accessing the old names will work but it will cause a
   longer required as a third-party dependancy. (patch by wj32)
 - 117_: added support for Windows 2000.
 - 123_: `cpu_percent()`_ and `Process.cpu_percent()`_ accept a
-  new 'interval' parameter.
+  new ``interval`` parameter.
 - 129_: per-process number of threads.
 
 **Bug fixes**
