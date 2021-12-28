@@ -21,7 +21,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1456_: [macOS] `cpu_freq()`_'s ``min`` and ``max`` are set to 0 if can't be
+- 1456_: [macOS] `cpu_freq()`_ ``min`` and ``max`` are set to 0 if can't be
   determined (instead of crashing).
 - 1512_: [macOS] sometimes `Process.connections()`_ will crash with
   ``EOPNOTSUPP`` for one connection; this is now ignored.
@@ -32,7 +32,7 @@ XXXX-XX-XX
 - 1901_: [macOS] different functions, especially `Process.open_files()`_ and
   `Process.connections()`_, could randomly raise `AccessDenied`_ because the
   internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
-  We now dynamically increase the buffer size until it's ``big`` enough instead of
+  We now dynamically increase the buffer size until it's big enough instead of
   giving up and raising `AccessDenied`_, which was a fallback to avoid crashing.
 - 1904_: [Windows] ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
   ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
@@ -659,7 +659,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1009_: [Linux] `sensors_temperatures()`_ may crash with ``IOError``.
-- 1012_: [Windows] `disk_io_counters()`_'s ``read_time`` and ``write_time``
+- 1012_: [Windows] `disk_io_counters()`_ ``read_time`` and ``write_time``
   were expressed in tens of micro seconds instead of milliseconds.
 - 1127_: [macOS] invalid reference counting in `Process.open_files()`_ may lead
   to segfault.  (patch by Jakub Bacic)
@@ -714,7 +714,7 @@ XXXX-XX-XX
 - 1058_: test suite now enables all warnings by default.
 - 1060_: source distribution is dynamically generated so that it only includes
   relevant files.
-- 1079_: [FreeBSD] `net_connections()`_'s ``fd`` number is now being set for real
+- 1079_: [FreeBSD] `net_connections()`_ ``fd`` number is now being set for real
   (instead of ``-1``).  (patch by Gleb Smirnoff)
 - 1091_: [SunOS] implemented `Process.environ()`_.  (patch by Oleksii Shevchuk)
 
@@ -744,7 +744,7 @@ XXXX-XX-XX
   zombie processes.
 - 1046_: [Windows] `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
 - 1047_: [Windows] `Process.username()`_: memory leak in case exception is thrown.
-- 1048_: [Windows] `users()`_'s ``host`` field report an invalid IP address.
+- 1048_: [Windows] `users()`_ ``host`` field report an invalid IP address.
 - 1050_: [Windows] `Process.memory_maps()`_ leaks memory.
 - 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
@@ -859,10 +859,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may erroneously return ``None`` on
+- 966_: [Linux] `sensors_battery()`_ ``power_plugged`` may erroneously return ``None`` on
   Python 3.
 - 968_: [Linux] `disk_io_counters()`_ raises ``TypeError`` on python 3.
-- 970_: [Linux] `sensors_battery()`_'s ``name`` and ``label`` fields on Python 3 are bytes
+- 970_: [Linux] `sensors_battery()`_ ``name`` and ``label`` fields on Python 3 are bytes
   instead of str.
 
 5.1.1
@@ -872,7 +872,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 966_: [Linux] `sensors_battery()`_'s ``percent`` is a float and is more precise.
+- 966_: [Linux] `sensors_battery()`_ ``percent`` is a float and is more precise.
 
 **Bug fixes**
 
@@ -881,7 +881,7 @@ XXXX-XX-XX
 - 965_: [Linux] `disk_io_counters()`_ may miscalculate sector size and report the
   wrong number of bytes read and written.
 - 966_: [Linux] `sensors_battery()`_ may fail with "no such file error".
-- 966_: [Linux] `sensors_battery()`_'s ``power_plugged`` may lie.
+- 966_: [Linux] `sensors_battery()`_ ``power_plugged`` may lie.
 
 5.1.0
 =====
@@ -906,7 +906,7 @@ XXXX-XX-XX
   higher number than real usage.
 - 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
-- 960_: `psutil.Popen`_'s ``wait()`` did not return the correct negative exit
+- 960_: `psutil.Popen`_ ``wait()`` did not return the correct negative exit
   status if process is ``kill()``ed by a signal.
 - 961_: [Windows] ``WindowsService.description()`` method may fail with
   ``ERROR_MUI_FILE_NOT_FOUND``.
@@ -974,8 +974,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 874_: [Windows] `net_if_addrs()`_ returns also the netmask.
-- 887_: [Linux] `virtual_memory()`_'s ``available`` and ``used`` values are more
+- 874_: [Windows] `net_if_addrs()`_ returns also the ``netmask``.
+- 887_: [Linux] `virtual_memory()`_ ``available`` and ``used`` values are more
   precise and match "free" cmdline utility.  ``available`` also takes into
   account LCX containers preventing ``available`` to overflow ``total``.
 - 891_: `procinfo.py`_ script has been updated and provides a lot more info.
@@ -1036,10 +1036,10 @@ XXXX-XX-XX
 **Enhancements**
 
 - 819_: [Linux] different speedup improvements:
-  `Process.ppid()`_ is 20% faster
-  `Process.status()`_ is 28% faster
-  `Process.name()`_ is 25% faster
-  Process.num_threads is 20% faster on Python 3
+  - `Process.ppid()`_ is 20% faster
+  - `Process.status()`_ is 28% faster
+  - `Process.name()`_ is 25% faster
+  - `Process.num_threads`_ is 20% faster on Python 3
 
 **Bug fixes**
 
@@ -1097,7 +1097,7 @@ XXXX-XX-XX
   (patch by wxwright)
 - 780_: [macOS] psutil does not compile with some GCC versions.
 - 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
-- 788_: [NetBSD] `virtual_memory()`_'s ``buffers`` and ``shared`` values were
+- 788_: [NetBSD] `virtual_memory()`_ ``buffers`` and ``shared`` values were
   set to 0.
 - 790_: [macOS] psutil won't compile on macOS 10.4.
 
@@ -1123,7 +1123,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 685_: [Linux] virtual_memory() provides wrong results on systems with a lot
+- 685_: [Linux] `virtual_memory()`_ provides wrong results on systems with a lot
   of physical memory.
 - 704_: [Solaris] psutil does not compile on Solaris sparc.
 - 734_: on Python 3 invalid UTF-8 data is not correctly handled for
@@ -1135,9 +1135,9 @@ XXXX-XX-XX
   different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
   result or incorrectly report an `AccessDenied`_ error.
 - 741_: [OpenBSD] psutil does not compile on mips64.
-- 751_: [Linux] fixed call to ``Py_DECREF`` on possible Null object.
+- 751_: [Linux] fixed call to ``Py_DECREF`` on possible ``NULL`` object.
 - 754_: [Linux] `Process.cmdline()`_ can be wrong in case of zombie process.
-- 759_: [Linux] `Process.memory_maps()`_ may return paths ending with " (deleted)"
+- 759_: [Linux] `Process.memory_maps()`_ may return paths ending with ``" (deleted)"``.
 - 761_: [Windows] `boot_time()`_ wraps to 0 after 49 days.
 - 764_: [NetBSD] fix compilation on NetBSD-6.x.
 - 766_: [Linux] `net_connections()`_ can't handle malformed ``/proc/net/unix``
@@ -1158,7 +1158,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 724_: [FreeBSD] `virtual_memory()`_.total is incorrect.
+- 724_: [FreeBSD] `virtual_memory()`_ ``total`` is incorrect.
 - 730_: [FreeBSD] `virtual_memory()`_ crashes.
 
 3.4.1
@@ -1177,12 +1177,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 714_: [OpenBSD] `virtual_memory()`_'s ``cached`` value was always set to 0.
+- 714_: [OpenBSD] `virtual_memory()`_ ``cached`` value was always set to 0.
 - 715_: don't crash at import time if `cpu_times()`_ fail for some reason.
 - 717_: [Linux] `Process.open_files()`_ fails if deleted files still visible.
 - 722_: [Linux] `swap_memory()`_ no longer crashes if ``sin`` / ``sout`` can't
   be determined due to missing ``/proc/vmstat``.
-- 724_: [FreeBSD] `virtual_memory()`_'s ``total`` is slightly incorrect.
+- 724_: [FreeBSD] `virtual_memory()`_ ``total`` is slightly incorrect.
 
 3.3.0
 =====
@@ -1233,8 +1233,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 644_: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
-  to use with `Process.send_signal()`_.
+- 644_: [Windows] added support for ``CTRL_C_EVENT`` and ``CTRL_BREAK_EVENT``
+  signals to use with `Process.send_signal()`_.
 - 648_: CI test integration for macOS. (patch by Jeff Tang)
 - 663_: [UNIX] `net_if_addrs()`_ now returns point-to-point (VPNs) addresses.
 - 655_: [Windows] different issues regarding unicode handling were fixed. On
@@ -1250,7 +1250,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 513_: [Linux] fixed integer overflow for RLIM_INFINITY.
+- 513_: [Linux] fixed integer overflow for ``RLIM_INFINITY``.
 - 641_: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
 - 652_: [Windows] `net_if_addrs()`_ ``UnicodeDecodeError`` in case of non-ASCII NIC
   names.
@@ -1480,7 +1480,7 @@ XXXX-XX-XX
 
 - 424_: [Windows] installer for Python 3.X 64 bit.
 - 427_: number of logical CPUs and physical cores (`cpu_count()`_).
-- 447_: `wait_procs()`_'s ``timeout`` parameter is now optional.
+- 447_: `wait_procs()`_ ``timeout`` parameter is now optional.
 - 452_: make Process instances hashable and usable with set()s.
 - 453_: tests on Python < 2.7 require unittest2 module.
 - 459_: add a make file for running tests and other repetitive tasks (also
@@ -1510,7 +1510,7 @@ XXXX-XX-XX
 - 470_: `wait_procs()`_ might not wait.  (patch by crusaderky)
 - 471_: [Windows] `Process.exe()`_ improper unicode handling. (patch by
   alex@mroja.net)
-- 473_: `psutil.Popen`_'s ``wait()`` method does not set returncode attribute.
+- 473_: `psutil.Popen`_ ``wait()`` method does not set returncode attribute.
 - 474_: [Windows] `Process.cpu_percent()`_ is no longer capped at 100%.
 - 476_: [Linux] encoding error for `Process.name()`_ and `Process.cmdline()`_.
 
@@ -1810,7 +1810,7 @@ DeprecationWarning.
   squeeze.
 - 321_: [UNIX] `Process.ppid()`_ property is no longer cached as the kernel may set
   the ppid to 1 in case of a zombie process.
-- 323_: [macOS] `disk_io_counters()`_'s ``read_time`` and ``write_time``
+- 323_: [macOS] `disk_io_counters()`_ ``read_time`` and ``write_time``
   parameters were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
 - 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
   change.
@@ -2387,6 +2387,7 @@ DeprecationWarning.
 .. _`Process.num_ctx_switches()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_ctx_switches
 .. _`Process.num_fds()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_fds
 .. _`Process.num_handles()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_handles
+.. _`Process.num_threads()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_threads
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`Process.open_files()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.open_files
 .. _`Process.parent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.parent
