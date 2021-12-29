@@ -1,5 +1,4 @@
-* *Bug tracker at https://github.com/giampaolo/psutil/issues*
-* *Timeline at: https://psutil.readthedocs.io/en/latest/#timeline*
+*Bug tracker at https://github.com/giampaolo/psutil/issues*
 
 5.9.0 (IN DEVELOPMENT)
 ======================
@@ -1303,8 +1302,8 @@ XXXX-XX-XX
 - 640_, [Linux]: ``*connections`` functions may swallow errors and return an
   incomplete list of connnections.
 - 642_: ``repr()`` of exceptions is incorrect.
-- 653_, [Windows]: Add ``inet_ntop()`` function for Windows XP to support IPv6.
-- 641_, [Windows]: Replace deprecated string functions with safe equivalents.
+- 653_, [Windows]: add ``inet_ntop()`` function for Windows XP to support IPv6.
+- 641_, [Windows]: replace deprecated string functions with safe equivalents.
 
 3.0.1
 =====
@@ -1331,7 +1330,7 @@ XXXX-XX-XX
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
   returned by `Process.ionice()`_ and `Process.nice()`_ are enums instead of
   plain integers.
-- 581_: add .gitignore. (patch by Gabi Davar)
+- 581_: add ``.gitignore``. (patch by Gabi Davar)
 - 582_: connection constants returned by `net_connections()`_ and
   `Process.connections()`_ were turned from int to enums on Python > 3.4.
 - 587_: Move native extension into the package.
@@ -1346,8 +1345,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 428_, [all :UNIXes except Linux] correct handling of zombie processes;
-  introduced new `ZombieProcess`_ exception class.
+- 428_, [POSIX] correct handling of zombie processes: introduced new
+  `ZombieProcess`_ exception class.
 - 512_, [BSD], **[critical]**: fix segfault in `net_connections()`_.
 - 555_, [Linux]: `users()`_ correctly handles ``":0"`` as an alias for
   ``"localhost"``.
