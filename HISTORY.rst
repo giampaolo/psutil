@@ -45,8 +45,8 @@ XXXX-XX-XX
   (patch by Xuehai Pan)
 - 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
   insufficient buffer len. (patch by MaWe2019)
-- 1965_, [Windows]: fix "Fatal Python error: deallocating None" when calling
-  `users()`_ multiple times.
+- 1965_, [Windows], **[critical]**: fix "Fatal Python error: deallocating None"
+  when calling `users()`_ multiple times.
 - 1980_, [Windows]: 32bit / WOW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in `AccessDenied`_. This is now fixed.  (patch
   by PetrPospisil)
@@ -75,17 +75,20 @@ XXXX-XX-XX
 
 - 1708_, [Linux]: get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
-- 1839_, [Windows], **[critical]**: always raise `AccessDenied`_ when failing
-  to query 64 processes from 32 bit ones (``NtWoW64`` APIs).
+- 1839_, [Windows], **[critical]**: always raise `AccessDenied`_ instead of
+  ``WindowsError`` when failing to query 64 processes from 32 bit ones by using
+  ``NtWoW64`` APIs.
 - 1866_, [Windows], **[critical]**: `Process.exe()`_, `Process.cmdline()`_,
-  `Process.environ()`_ may raise "invalid access to memory location" on Python 3.9.
+  `Process.environ()`_ may raise "[WinError 998] Invalid access to memory
+  location" on Python 3.9 / VS 2019.
 - 1874_, [SunOS]: wrong swap output given when encrypted column is present.
 - 1875_, [Windows], **[critical]**: `Process.username()`_ may raise
   ``ERROR_NONE_MAPPED`` if the SID has no corresponding account name. In this
   case `AccessDenied`_ is now raised.
 - 1886_, [macOS]: ``EIO`` error may be raised on `Process.cmdline()`_ and
   `Process.environ()`_. Now it gets translated into `AccessDenied`_.
-- 1887_, [Windows], **[critical]**: ``OpenProcess`` may fail with ``ERROR_SUCCESS``.
+- 1887_, [Windows], **[critical]**: ``OpenProcess`` may fail with
+  "[WinError 0] The operation completed successfully"."
   Turn it into `AccessDenied`_ or `NoSuchProcess`_ depending on whether the
   PID is alive.
 - 1891_, [macOS]: get rid of deprecated ``getpagesize()``.
@@ -153,7 +156,7 @@ XXXX-XX-XX
   (patch by Michał Górny)
 - 1760_, [Linux]: `Process.rlimit()`_ does not handle long long type properly.
 - 1766_, [macOS]: `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
-- 1781_, **[critical]**: fix signature of callback function for `getloadavg()`_.
+- 1781_, **[critical]**: `getloadavg()`_ can crash the Python interpreter.
   (patch by Ammar Askar)
 
 5.7.0
@@ -183,12 +186,13 @@ XXXX-XX-XX
 - 1538_, [NetBSD]: `Process.cwd()`_ may return ``ENOENT`` instead of `NoSuchProcess`_.
 - 1627_, [Linux]: `Process.memory_maps()`_ can raise ``KeyError``.
 - 1642_, [SunOS]: querying basic info for PID 0 results in ``FileNotFoundError``.
-- 1646_, [FreeBSD], **[critical]**: many `Process`_ methods may cause a segfault on
-  FreeBSD 12.0 due to a backward incompatible change in a C type introduced in 12.0.
+- 1646_, [FreeBSD], **[critical]**: many `Process`_ methods may cause a segfault
+  due to a backward incompatible change in a C type on FreeBSD 12.0.
 - 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
 - 1660_, [Windows]: `Process.open_files()`_ complete rewrite + check of errors.
-- 1662_, [Windows], **[critical]**: `Process.exe()`_ may raise ``WinError 0``.
+- 1662_, [Windows], **[critical]**: `Process.exe()`_ may raise "[WinError 0]
+  The operation completed successfully".
 - 1665_, [Linux]: `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
@@ -326,8 +330,8 @@ XXXX-XX-XX
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
 - 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
-  properly checked resuling in ``WindowsError`` being raised instead of
-  `AccessDenied`_.
+  properly checked resuling in ``WindowsError(ERROR_ACCESS_DENIED)`` being
+  raised instead of `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
   Windows APIs. Different process methods were affected by this.
 - 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
@@ -381,7 +385,8 @@ XXXX-XX-XX
 
 - 1353_: `process_iter()`_ is now thread safe (it rarely raised ``TypeError``).
 - 1394_, [Windows], **[critical]**: `Process.name()`_ and `Process.exe()`_ may
-  erroneously return "Registry" or fail with ``WinError 0``.
+  erroneously return "Registry" or fail with "[Error 0] The operation completed
+  successfully".
   ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_, [BSD]: lack of ``Py_DECREF`` could cause segmentation fault on process
@@ -446,7 +451,7 @@ XXXX-XX-XX
 - 1370_, [Windows]: improper usage of ``CloseHandle()`` may lead to override the
   original error code when raising an exception.
 - 1373_, **[critical]**: incorrect handling of cache in `Process.oneshot()`_
-  context causes 1394`Process`_ instances to return incorrect results.
+  context causes `Process`_ instances to return incorrect results.
 - 1376_, [Windows]: ``OpenProcess`` now uses ``PROCESS_QUERY_LIMITED_INFORMATION``
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
@@ -1157,7 +1162,8 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 724_, [FreeBSD]: `virtual_memory()`_ ``total`` is incorrect.
-- 730_, [FreeBSD], **[critical]**: `virtual_memory()`_ crashes.
+- 730_, [FreeBSD], **[critical]**: `virtual_memory()`_ crashes with
+  "OSError: [Errno 12] Cannot allocate memory".
 
 3.4.1
 =====
@@ -1289,7 +1295,7 @@ XXXX-XX-XX
 
 - 340_, [Windows], **[critical]**: `Process.open_files()`_ no longer hangs.
   Instead it uses a thred which times out and skips the file handle in case it's
-  taking too long to be retrieved.  (patch by Jeff Tang, PR-597)
+  taking too long to be retrieved.  (patch by Jeff Tang)
 - 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids
   owned by another user.
 - 636_, [Windows]: `Process.memory_info()`_ raise `AccessDenied`_.
@@ -1311,7 +1317,7 @@ XXXX-XX-XX
 
 - 632_, [Linux]: better error message if cannot parse process UNIX connections.
 - 634_, [Linux]: `Process.cmdline()`_ does not include empty string arguments.
-- 635_, [POSIX], **[critical]**: crash on module import if 'enum' package is
+- 635_, [POSIX], **[critical]**: crash on module import if ``enum`` package is
   installed on Python < 3.4.
 
 3.0.0
@@ -1706,8 +1712,7 @@ In most cases accessing the old names will work but it will cause a
 - 410_: host tar.gz and Windows binary files are on PyPI.
 - 412_, [Linux]: get/set process resource limits (`Process.rlimit()`_).
 - 415_, [Windows]: `Process.children()`_ is an order of magnitude faster.
-- 426_, [Windows], **[critical]**: `Process.name()`_ is an order of magnitude
-  faster.
+- 426_, [Windows]: `Process.name()`_ is an order of magnitude faster.
 - 431_, [POSIX]: `Process.name()`_ is slightly faster because it unnecessarily
   retrieved also `Process.cmdline()`_.
 
