@@ -2242,20 +2242,20 @@ In most cases accessing the old names will work but it will cause a
 
 **Enhancements**
 
-- 32_: Per-process CPU user/kernel times.
-- 33_: Per-process create time.
-- 34_: Per-process CPU utilization percentage.
-- 38_: Per-process memory usage (bytes).
-- 41_: Per-process memory utilization (percent).
-- 39_: System uptime.
-- 43_: Total system virtual memory.
-- 46_: Total system physical memory.
-- 44_: Total system used/free virtual and physical memory.
+- 32_: Per-process CPU user/kernel times (`Process.cpu_times()`_).
+- 33_: Per-process create time (`Process.create_time()`_).
+- 34_: Per-process CPU utilization percentage (`Process.cpu_percent()`_).
+- 38_: Per-process memory usage (bytes) (`Process.memory_info()`_).
+- 41_: Per-process memory percent (`Process.memory_percent()`_).
+- 39_: System uptime (`boot_time()`_).
+- 43_: Total system virtual memory (`Process.virtual_memory()`_).
+- 46_: Total system physical memory (`Process.virtual_memory()`_).
+- 44_: Total system used/free virtual and physical memory (`Process.virtual_memory()`_).
 
 **Bug fixes**
 
 - 36_, [Windows]: `NoSuchProcess`_ not raised when accessing timing methods.
-- 40_: test_get_cpu_times() failing on FreeBSD and macOS.
+- 40_, [FreeBSD], [macOS]: fix ``test_get_cpu_times`` failures.
 - 42_, [Windows]: `Process.memory_percent()`_ raises `AccessDenied`_.
 
 0.1.1
@@ -2266,9 +2266,9 @@ In most cases accessing the old names will work but it will cause a
 **Enhancements**
 
 - 4_, [FreeBSD]: support for all functions of psutil.
-- 9_, [macOS], [Windows]: Process.uid and Process.gid now retrieve process UID
-  and GID.
-- 11_: Support for parent/ppid - `Process.parent()`_ property returns a
+- 9_, [macOS], [Windows]: add ``Process.uid`` and ``Process.gid``, returning
+  process UID and GID.
+- 11_: per-process parent object: `Process.parent()`_ property returns a
   `Process`_ object representing the parent process, and `Process.ppid()`_
   returns the parent PID.
 - 12_, 15_:
@@ -2289,10 +2289,10 @@ In most cases accessing the old names will work but it will cause a
 - 17_: get_process_list() ignores `NoSuchProcess`_ and `AccessDenied`_
   exceptions during building of the list.
 - 22_, [Windows]: `Process.kill()`_ for PID 0 was failing with an unset exception.
-- 23_: Special case for `pid_exists()`_ with PID 0.
+- 23_, [Linux], [macOS]: create special case for `pid_exists()`_ with PID 0.
 - 24_, [Windows]: `Process.kill()`_ for PID 0 now raises `AccessDenied`_ exception
   instead of ``WindowsError``.
-- 30_: psutil.get_pid_list() was returning two ins.
+- 30_: psutil.get_pid_list() was returning two 0 PIDs.
 
 
 .. _`PROCFS_PATH`: https://psutil.readthedocs.io/en/latest/#psutil.PROCFS_PATH
