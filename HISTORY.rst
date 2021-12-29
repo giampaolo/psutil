@@ -36,22 +36,23 @@ XXXX-XX-XX
   giving up and raising `AccessDenied`_, which was a fallback to avoid crashing.
 - 1904_, [Windows]: ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
   ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
-- 1913_, [Linux]: `wait_procs()`_ seemingly ignoring timeout, `TimeoutExpired`_ thrown
+- 1913_, [Linux]: `wait_procs()`_ should catch ``subprocess.TimeoutExpired``
+  exception.
 - 1919_, [Linux]: `sensors_battery()`_ can raise ``TypeError`` on PureOS.
-- 1921_, [Windows]: `swap_memory()`_ shows committed memory instead of swap
+- 1921_, [Windows]: `swap_memory()`_ shows committed memory instead of swap.
 - 1940_, [Linux]: psutil does not handle ``ENAMETOOLONG`` when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
-- 1948_: ``memoize_when_activated`` decorator was not thread-safe.
+- 1948_, **[critical]**: ``memoize_when_activated`` decorator is not thread-safe.
   (patch by Xuehai Pan)
 - 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
   insufficient buffer len. (patch by MaWe2019)
 - 1965_, [Windows], **[critical]**: fix "Fatal Python error: deallocating None"
   when calling `users()`_ multiple times.
-- 1980_, [Windows]: 32bit / WOW64 processes fails to read `Process.name()`_ longer
+- 1980_, [Windows]: 32bit / WoW64 processes fails to read `Process.name()`_ longer
   than 128 characters resulting in `AccessDenied`_. This is now fixed.  (patch
   by PetrPospisil)
-- 1991_: `process_iter()`_ can raise ``TypeError`` if invoked from multiple threads
-  (not thread-safe).
+- 1991_, **[critical]**: `process_iter()`_ is not thread safe and can raise
+  ``TypeError`` if invoked from multiple threads.
 - 1956_, [macOS]: `Process.cpu_times()`_ reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
 - 2023_, [Linux]: `cpu_freq()`_ return order is wrong on systems with > 9 CPUs.
