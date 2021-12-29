@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         # os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-10.15]
         include:
           - {name: Linux, python: '3.9', os: ubuntu-latest}
     env:
@@ -128,7 +128,7 @@ jobs:
         python scripts/internal/print_hashes.py wheelhouse/
 
   freebsd:
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.6.0
@@ -139,7 +139,7 @@ jobs:
 
     - name: Run tests
       id: test
-      uses: vmactions/freebsd-vm@v0.1.4
+      uses: vmactions/freebsd-vm@v0.1.5
       with:
         usesh: true
         prepare: pkg install -y gcc python3

@@ -1413,11 +1413,13 @@ class TestProcess(PsutilTestCase):
         code = textwrap.dedent("""
             #include <unistd.h>
             #include <fcntl.h>
+
             char * const argv[] = {"cat", 0};
             char * const envp[] = {"A=1", "X", "C=3", 0};
+
             int main(void) {
-                /* Close stderr on exec so parent can wait for the execve to
-                 * finish. */
+                // Close stderr on exec so parent can wait for the
+                // execve to finish.
                 if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
                     return 0;
                 return execve("/bin/cat", argv, envp);
