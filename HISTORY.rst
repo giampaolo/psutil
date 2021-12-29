@@ -18,6 +18,7 @@ XXXX-XX-XX
   used on some Linux distros) to real root device path.
 - 2005_: ``PSUTIL_DEBUG`` mode now prints file name and line number of the debug
   messages coming from C extension modules.
+- 2042_: rewrite HISTORY.rst to use hyperlinks pointing to psutil API doc.
 
 **Bug fixes**
 
