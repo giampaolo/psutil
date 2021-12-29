@@ -132,14 +132,13 @@ XXXX-XX-XX
 **Enhancements**
 
 - 1729_: parallel tests on POSIX (``make test-parallel``). They're twice as fast!
-- 1741_: ``make build/install`` is now run in parallel and it's about 15% faster
-  on POSIX.
+- 1741_, [POSIX]: ``make build`` now runs in parallel on Python >= 3.6 and
+  it's about 15% faster.
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
 - 1757_: memory leak tests are now stable.
 - 1768_, [Windows]: added support for Windows Nano Server. (contributed by
   Julien Lebot)
-
 - 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
   negative signal which was used to terminate the process::
     >>> import psutil
@@ -240,7 +239,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1615_: remove pyproject.toml as it was causing installation issues.
+- 1615_: remove ``pyproject.toml`` as it was causing installation issues.
 
 5.6.4
 =====
@@ -249,8 +248,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1527_, [Linux]: added `Process.cpu_times()`_.iowait counter, which is the time
-  spent waiting for blocking I/O to complete.
+- 1527_, [Linux]: added `Process.cpu_times()`_ ``iowait`` counter, which is the
+  time spent waiting for blocking I/O to complete.
 - 1565_: add PEP 517/8 build backend and requirements specification for better
   pip integration.  (patch by Bernát Gábor)
 
@@ -310,7 +309,7 @@ XXXX-XX-XX
   info.
 - 1458_: provide coloured test output. Also show failures on
   ``KeyboardInterrupt``.
-- 1464_: various docfixes (always point to python3 doc, fix links, etc.).
+- 1464_: various docfixes (always point to Python 3 doc, fix links, etc.).
 - 1476_, [Windows]: it is now possible to set process high I/O priority
   (`Process.ionice()`_). Also, I/O priority values are now exposed as 4 new
   constants: ``IOPRIO_VERYLOW``, ``IOPRIO_LOW``, ``IOPRIO_NORMAL``,
@@ -322,11 +321,11 @@ XXXX-XX-XX
 - 1223_, [Windows]: `boot_time()`_ may return incorrect value on Windows XP.
 - 1456_, [Linux]: `cpu_freq()`_ returns ``None`` instead of 0.0 when ``min``
   and ``max`` fields can't be determined. (patch by Alex Manuskin)
-- 1462_, [Linux]: (tests) make tests invariant to LANG setting (patch by
+- 1462_, [Linux]: (tests) make tests invariant to ``LANG`` setting (patch by
   Benjamin Drung)
 - 1463_: `cpu_distribution.py`_ script was broken.
-- 1470_, [Linux]: `disk_partitions()`_: fix corner case when /etc/mtab doesn't
-  exist.  (patch by Cedric Lamoriniere)
+- 1470_, [Linux]: `disk_partitions()`_: fix corner case when ``/etc/mtab``
+  doesn't exist.  (patch by Cedric Lamoriniere)
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
@@ -380,7 +379,7 @@ XXXX-XX-XX
   function called which failed.
 - 1433_: new `Process.parents()`_ method.  (idea by Ghislain Le Meur)
 - 1437_: `pids()`_ are returned in sorted order.
-- 1442_: python3 is now the default interpreter used by Makefile.
+- 1442_: Python 3 is now the default interpreter used by Makefile.
 
 **Bug fixes**
 
@@ -390,19 +389,19 @@ XXXX-XX-XX
   ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_, [BSD]: lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
-- 1419_, [Windows]: `Process.environ()`_ raises ``NotImplementedError`` when querying
-  a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
-- 1427_, [OSX]: `Process.cmdline()`_ and `Process.environ()`_ may erroneously raise ``OSError``
-  on failed ``malloc()``.
+- 1419_, [Windows]: `Process.environ()`_ raises ``NotImplementedError`` when
+  querying a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
+- 1427_, [OSX]: `Process.cmdline()`_ and `Process.environ()`_ may erroneously
+  raise ``OSError`` on failed ``malloc()``.
 - 1429_, [Windows]: ``SE DEBUG`` was not properly set for current process. It is
-  now, and it should result in less `AccessDenied`_ exceptions for low-pid
+  now, and it should result in less `AccessDenied`_ exceptions for low PID
   processes.
 - 1432_, [Windows]: `Process.memory_info_ex()`_'s USS memory is miscalculated
   because we're not using the actual system ``PAGESIZE``.
 - 1439_, [NetBSD]: `Process.connections()`_ may return incomplete results if using
   `Process.oneshot()`_.
 - 1447_: original exception wasn't turned into `NoSuchProcess`_ / `AccessDenied`_
-  exceptions when using `Process.oneshot()`_ ctx manager.
+  exceptions when using `Process.oneshot()`_ context manager.
 
 **Incompatible API changes**
 
@@ -437,7 +436,7 @@ XXXX-XX-XX
 
 - 1350_, [FreeBSD]: added support for `sensors_temperatures()`_.  (patch by Alex
   Manuskin)
-- 1352_, [FreeBSD]: added support for CPU frequency.  (patch by Alex Manuskin)
+- 1352_, [FreeBSD]: added support for `cpu_freq()`_.  (patch by Alex Manuskin)
 
 **Bug fixes**
 
@@ -514,8 +513,8 @@ XXXX-XX-XX
 - 1305_, [Linux]: `disk_io_counters()`_ may report inflated r/w bytes values.
 - 1309_, [Linux]: `Process.status()`_ is unable to recognize ``"idle"`` and
   ``"parked"`` statuses (returns ``"?"``).
-- 1313_, [Linux]: `disk_io_counters()`_ can report inflated IO counters due to
-  erroneously counting base disk device and its partition(s) twice.
+- 1313_, [Linux]: `disk_io_counters()`_ can report inflated values due to
+  counting base disk device and its partition(s) twice.
 - 1323_, [Linux]: `sensors_temperatures()`_ may fail with ``ValueError``.
 
 5.4.6
@@ -563,18 +562,18 @@ XXXX-XX-XX
   systems using process groups (> 64 cores).
 - 771_, [Windows]: `cpu_stats()`_ and `cpu_freq()`_ may return incorrect results on
   systems using process groups (> 64 cores).
-- 1193_, [SunOS]: Return uid/gid from ``/proc/pid/psinfo`` if there aren't
+- 1193_, [SunOS]: return uid/gid from ``/proc/pid/psinfo`` if there aren't
   enough permissions for ``/proc/pid/cred``.  (patch by Georg Sauthoff)
-- 1194_, [SunOS]: Return nice value from ``psinfo`` as ``getpriority()`` doesn't
+- 1194_, [SunOS]: return nice value from ``psinfo`` as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
-- 1194_, [SunOS]: Fix double ``free()`` in `Process.cpu_num()`_.  (patch by Georg
+- 1194_, [SunOS]: fix double ``free()`` in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
-- 1194_, [SunOS]: Fix undefined behavior related to strict-aliasing rules
+- 1194_, [SunOS]: fix undefined behavior related to strict-aliasing rules
   and warnings.  (patch by Georg Sauthoff)
 - 1210_, [Linux]: `cpu_percent()`_ steal time may remain stuck at 100% due to Linux
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
-- 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
+- 1216_: fix compatibility with Python 2.6 on Windows (patch by Dan Vinakovsky)
 - 1222_, [Linux]: `Process.memory_full_info()`_ was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
 - 1224_, [Windows]: `Process.wait()`_ may erroneously raise `TimeoutExpired`_.
@@ -613,7 +612,7 @@ XXXX-XX-XX
 
 - 1173_: introduced ``PSUTIL_DEBUG`` environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
-- 1177_: added support for `sensors_battery()`_ on macOS.  (patch by Arnon Yaari)
+- 1177_, [macOS]: added support for `sensors_battery()`_.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on POSIX and 2.4x faster on Linux.
 - 1188_: deprecated method `Process.memory_info_ex()`_ now warns by using
   ``FutureWarning`` instead of ``DeprecationWarning``.
@@ -639,14 +638,14 @@ XXXX-XX-XX
 
 - 1164_, [AIX]: add support for `Process.num_ctx_switches()`_.  (patch by Arnon
   Yaari)
-- 1053_: abandon Python 3.3 support (psutil still works but it's no longer
+- 1053_: drop Python 3.3 support (psutil still works but it's no longer
   tested).
 
 **Bug fixes**
 
-- 1150_, [Windows]: when a process is terminate()d now the exit code is set to
+- 1150_, [Windows]: when a process is terminated now the exit code is set to
   ``SIGTERM`` instead of ``0``.  (patch by Akos Kiss)
-- 1151_: ``python -m psutil.tests`` fail
+- 1151_: ``python -m psutil.tests`` fail.
 - 1154_, [AIX], **[critical]**: psutil won't compile on AIX 6.1.0.
   (patch by Arnon Yaari)
 - 1167_, [Windows]: `net_io_counters()`_ packets count now include also non-unicast
@@ -668,13 +667,12 @@ XXXX-XX-XX
   were expressed in tens of micro seconds instead of milliseconds.
 - 1127_, [macOS], **[critical]**: invalid reference counting in
   `Process.open_files()`_ may lead to segfault.  (patch by Jakub Bacic)
-- 1129_, [Linux]: `sensors_fans()`_ may crash with ``IOError``.  (patch by Sebastian
-  Saip)
+- 1129_, [Linux]: `sensors_fans()`_ may crash with ``IOError``.  (patch by
+  Sebastian Saip)
 - 1131_, [SunOS]: fix compilation warnings.  (patch by Arnon Yaari)
 - 1133_, [Windows]: can't compile on newer versions of Visual Studio 2017 15.4.
   (patch by Max Bélanger)
-- 1138_, [Linux]: can't compile on CentOS 5.0 and RedHat 5.0.
-  (patch by Prodesire)
+- 1138_, [Linux]: can't compile on CentOS 5.0 and RedHat 5.0. (patch by Prodesire)
 
 5.3.1
 =====
@@ -692,8 +690,8 @@ XXXX-XX-XX
 
 **Compatibility notes**
 
-- 1120_: .exe files for Windows are no longer uploaded on PyPI as per PEP-527;
-  only wheels are provided.
+- 1120_: ``.exe`` files for Windows are no longer uploaded on PyPI as per
+  PEP-527. Only wheels are provided.
 
 5.3.0
 =====
@@ -726,9 +724,9 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 989_, [Windows]: `boot_time()`_ may return a negative value.
-- 1007_, [Windows]: `boot_time()`_ can have a 1 sec fluctuation between calls; the
-  value of the first call is now cached so that `boot_time()`_ always returns the
-  same value if fluctuation is <= 1 second.
+- 1007_, [Windows]: `boot_time()`_ can have a 1 sec fluctuation between calls.
+  The value of the first call is now cached so that `boot_time()`_ always
+  returns the same value if fluctuation is <= 1 second.
 - 1013_, [FreeBSD]: `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
 - 1014_, [Linux]: `Process`_ class can mask legitimate ``ENOENT`` exceptions as
@@ -751,12 +749,12 @@ XXXX-XX-XX
 - 1047_, [Windows]: `Process.username()`_: memory leak in case exception is thrown.
 - 1048_, [Windows]: `users()`_ ``host`` field report an invalid IP address.
 - 1050_, [Windows]: `Process.memory_maps()`_ leaks memory.
-- 1055_: `cpu_count()`_ is no longer cached; this is useful on systems such as
+- 1055_: `cpu_count()`_ is no longer cached. This is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
   `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
-- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise ``TypeError`` if no disks
-  or NICs are installed on the system.
+- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise ``TypeError`` if
+  no disks or NICs are installed on the system.
 - 1063_, [NetBSD]: `net_connections()`_ may list incorrect sockets.
 - 1064_, [NetBSD], **[critical]**: `swap_memory()`_ may segfault in case of error.
 - 1065_, [OpenBSD]: `Process.cmdline()`_ may raise ``SystemError``.
@@ -773,8 +771,8 @@ XXXX-XX-XX
 - 1079_, [FreeBSD]: `net_connections()`_ didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
 - 1085_: `cpu_count()`_ return value is now checked and forced to ``None`` if <= 1.
-- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning ``None`` and
-  assumes 1 instead.
+- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning ``None``
+  and assumes 1 instead.
 - 1093_, [SunOS]: `Process.memory_maps()`_ shows wrong 64 bit addresses.
 - 1094_, [Windows]: `pid_exists()`_ may lie. Also, all process APIs relying
   on ``OpenProcess`` Windows API now check whether the PID is actually running.
@@ -808,7 +806,7 @@ XXXX-XX-XX
   versions. (patch by Danek Duvall)
 - 1004_, [Linux]: `Process.io_counters()`_ may raise ``ValueError``.
 - 1006_, [Linux]: `cpu_freq()`_ may return ``None`` on some Linux versions does not
-  support the function; now the function is not declared instead.
+  support the function. Let's not make the function available instead.
 - 1009_, [Linux]: `sensors_temperatures()`_ may raise ``OSError``.
 - 1010_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` on Ubuntu 14.04.
 
@@ -823,8 +821,8 @@ XXXX-XX-XX
 - 993_, [Windows]: `Process.memory_maps()`_ on Python 3 may raise
   ``UnicodeDecodeError``.
 - 996_, [Linux]: `sensors_temperatures()`_ may not show all temperatures.
-- 997_, [FreeBSD]: `virtual_memory()`_ may fail due to missing sysctl parameter on
-  FreeBSD 12.
+- 997_, [FreeBSD]: `virtual_memory()`_ may fail due to missing ``sysctl``
+  parameter on FreeBSD 12.
 
 5.2.0
 =====
@@ -863,9 +861,9 @@ XXXX-XX-XX
 
 - 966_, [Linux]: `sensors_battery()`_ ``power_plugged`` may erroneously return
   ``None`` on Python 3.
-- 968_, [Linux]: `disk_io_counters()`_ raises ``TypeError`` on python 3.
-- 970_, [Linux]: `sensors_battery()`_ ``name`` and ``label`` fields on Python 3 are bytes
-  instead of str.
+- 968_, [Linux]: `disk_io_counters()`_ raises ``TypeError`` on Python 3.
+- 970_, [Linux]: `sensors_battery()`_ ``name`` and ``label`` fields on Python 3
+  are bytes instead of str.
 
 5.1.1
 =====
@@ -879,10 +877,10 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 964_, [Windows]: `Process.username()`_ and `users()`_ may return badly
-  decoding character on Python 3.
-- 965_, [Linux]: `disk_io_counters()`_ may miscalculate sector size and report the
-  wrong number of bytes read and written.
-- 966_, [Linux]: `sensors_battery()`_ may fail with "no such file error".
+  decoded character on Python 3.
+- 965_, [Linux]: `disk_io_counters()`_ may miscalculate sector size and report
+  the wrong number of bytes read and written.
+- 966_, [Linux]: `sensors_battery()`_ may fail with ``FileNotFoundError``.
 - 966_, [Linux]: `sensors_battery()`_ ``power_plugged`` may lie.
 
 5.1.0
@@ -1019,7 +1017,7 @@ XXXX-XX-XX
 - 854_: `Process.as_dict()`_ raises ``ValueError`` if passed an erroneous attrs name.
 - 857_, [SunOS]: `Process.cpu_times()`_, `Process.cpu_percent()`_,
   `Process.threads()`_ and `Process.memory_maps()`_ may raise ``RuntimeError`` if
-  attempting to query a 64bit process with a 32bit python. "Null" values are
+  attempting to query a 64bit process with a 32bit Python. "Null" values are
   returned as a fallback.
 - 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
   because it's deprecated.
@@ -1316,7 +1314,7 @@ XXXX-XX-XX
 - 632_, [Linux]: better error message if cannot parse process UNIX connections.
 - 634_, [Linux]: `Process.cmdline()`_ does not include empty string arguments.
 - 635_, [POSIX], **[critical]**: crash on module import if 'enum' package is
-  installed on python < 3.4.
+  installed on Python < 3.4.
 
 3.0.0
 =====
@@ -1422,7 +1420,7 @@ XXXX-XX-XX
 
 - 407_: project moved from Google Code to Github; code moved from Mercurial
   to Git.
-- 492_: use ``tox`` to run tests on multiple python versions.  (patch by msabramo)
+- 492_: use ``tox`` to run tests on multiple Python versions.  (patch by msabramo)
 - 505_, [Windows]: distribution as wheel packages.
 - 511_: add `ps.py`_ script.
 
@@ -1434,7 +1432,7 @@ XXXX-XX-XX
 - 503_, [Linux]: in rare conditions `Process.exe()`_, `Process.open_files()`_ and
   `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of `NoSuchProcess`_.
 - 504_, [Linux]: can't build RPM packages via setup.py
-- 506_, [Linux], **[critical]**: python 2.4 support was broken.
+- 506_, [Linux], **[critical]**: Python 2.4 support was broken.
 - 522_, [Linux]: `Process.cpu_affinity()`_ might return ``EINVAL``.  (patch by David
   Daeschler)
 - 529_, [Windows]: `Process.exe()`_ may raise unhandled ``WindowsError`` exception
@@ -1750,7 +1748,7 @@ In most cases accessing the old names will work but it will cause a
 - 367_: `Process.connections()`_ ``status`` strings are now constants.
 - 380_: test suite exits with non-zero on failure.  (patch by floppymaster)
 - 391_: introduce unittest2 facilities and provide workarounds if unittest2
-  is not installed (python < 2.7).
+  is not installed (Python < 2.7).
 
 **Bug fixes**
 
@@ -1860,7 +1858,7 @@ In most cases accessing the old names will work but it will cause a
 **Bug fixes**
 
 - 316_: `Process.exe()`_ was resolved in case it was a symlink.
-- 318_, **[critical]**: python 2.4 compatibility was broken.
+- 318_, **[critical]**: Python 2.4 compatibility was broken.
 
 **API changes**
 
@@ -2025,7 +2023,7 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 228_: some example scripts were not working with python 3.
+- 228_: some example scripts were not working with Python 3.
 - 230_, [Windows], [macOS]: fix memory leak in `Process.connections()`_.
 - 232_, [Linux]: ``psutil.phymem_usage()`` can report erroneous values which are
   different than ``free`` command.
@@ -2224,7 +2222,7 @@ In most cases accessing the old names will work but it will cause a
 - 59_: `Process.is_running()`_ is now 10 times faster.
 - 61_, [FreeBSD]: added supoprt for FreeBSD 64 bit.
 - 71_: per-process suspend and resume (`Process.suspend()`_ and `Process.resume()`_).
-- 75_: python 3 support.
+- 75_: Python 3 support.
 
 **Bug fixes**
 
