@@ -279,8 +279,11 @@ psutil_get_environ(pid_t pid) {
     arg_ptr = procargs + sizeof(nargs);
     arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
 
-    if (arg_ptr == NULL || arg_ptr == arg_end)
+    if (arg_ptr == NULL || arg_ptr == arg_end) {
+        psutil_debug(
+            "(arg_ptr == NULL || arg_ptr == arg_end); set environ to empty");
         goto empty;
+    }
 
     // skip ahead to the first argument
     for (; arg_ptr < arg_end; arg_ptr++) {
