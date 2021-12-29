@@ -55,7 +55,8 @@ XXXX-XX-XX
   ``TypeError`` if invoked from multiple threads.
 - 1956_, [macOS]: `Process.cpu_times()`_ reports incorrect timings on M1 machines.
   (patch by Olivier Dormond)
-- 2023_, [Linux]: `cpu_freq()`_ return order is wrong on systems with > 9 CPUs.
+- 2023_, [Linux]: `cpu_freq()`_ return order is wrong on systems with more than
+  9 CPUs.
 
 5.8.0
 =====
