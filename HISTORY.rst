@@ -380,8 +380,9 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1353_: `process_iter()`_ is now thread safe (it rarely raised ``TypeError``).
-- 1394_, [Windows]: `Process.name()`_ and `Process.exe()`_ may erroneously return
-  "Registry". ``QueryFullProcessImageNameW`` is now used instead of
+- 1394_, [Windows], **[critical]**: `Process.name()`_ and `Process.exe()`_ may
+  erroneously return "Registry" or fail with ``WinError 0``.
+  ``QueryFullProcessImageNameW`` is now used instead of
   ``GetProcessImageFileNameW`` in order to prevent that.
 - 1411_, [BSD]: lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
@@ -444,8 +445,8 @@ XXXX-XX-XX
   EccoTheFlintstone)
 - 1370_, [Windows]: improper usage of ``CloseHandle()`` may lead to override the
   original error code when raising an exception.
-- 1373_: incorrect handling of cache in `Process.oneshot()`_ context causes
-  `Process`_ instances to return incorrect results.
+- 1373_, **[critical]**: incorrect handling of cache in `Process.oneshot()`_
+  context causes 1394`Process`_ instances to return incorrect results.
 - 1376_, [Windows]: ``OpenProcess`` now uses ``PROCESS_QUERY_LIMITED_INFORMATION``
   access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
@@ -753,7 +754,7 @@ XXXX-XX-XX
   no disks or NICs are installed on the system.
 - 1063_, [NetBSD]: `net_connections()`_ may list incorrect sockets.
 - 1064_, [NetBSD], **[critical]**: `swap_memory()`_ may segfault in case of error.
-- 1065_, [OpenBSD]: `Process.cmdline()`_ may raise ``SystemError``.
+- 1065_, [OpenBSD], **[critical]**: `Process.cmdline()`_ may raise ``SystemError``.
 - 1067_, [NetBSD]: `Process.cmdline()`_ leaks memory if process has terminated.
 - 1069_, [FreeBSD]: `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
@@ -846,7 +847,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 971_, [Linux]: `sensors_temperatures()`_ didn't work on CentOS 7.
-- 973_: `cpu_percent()`_ may raise ``ZeroDivisionError``.
+- 973_, **[critical]**: `cpu_percent()`_ may raise ``ZeroDivisionError``.
 
 5.1.2
 =====
@@ -961,7 +962,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 927_: `psutil.Popen`_ ``__del__`` may cause maximum recursion depth error.
+- 927_, **[critical]**: `psutil.Popen`_ ``__del__`` may cause maximum recursion
+  depth error.
 
 4.4.0
 =====
@@ -978,7 +980,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 514_, [macOS], **[critical]**: possibly fix `Process.memory_maps()`_ segfault.
+- 514_, [macOS], **[critical]**: `Process.memory_maps()`_ can segfault.
 - 783_, [macOS]: `Process.status()`_ may erroneously return ``"running"`` for
   zombie processes.
 - 798_, [Windows]: `Process.open_files()`_ returns and empty list on Windows 10.
@@ -987,8 +989,8 @@ XXXX-XX-XX
 - 880_, [Windows]: fix race condition inside `net_connections()`_.
 - 885_: ``ValueError`` is raised if a negative integer is passed to `cpu_percent()`_
   functions.
-- 892_, [Linux]: `Process.cpu_affinity()`_ with ``[-1]`` as arg raises
-  ``SystemError`` with no error set; now ``ValueError`` is raised.
+- 892_, [Linux], **[critical]**: `Process.cpu_affinity()`_ with ``[-1]`` as arg
+  raises ``SystemError`` with no error set; now ``ValueError`` is raised.
 - 906_, [BSD]: `disk_partitions()`_ with ``all=False`` returned an empty list.
   Now the argument is ignored and all partitions are always returned.
 - 907_, [FreeBSD]: `Process.exe()`_ may fail with ``OSError(ENOENT)``.
@@ -1285,9 +1287,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 340_, [Windows]: `Process.open_files()`_ no longer hangs. Instead it uses a
-  thred which times out and skips the file handle in case it's taking too long
-  to be retrieved.  (patch by Jeff Tang, PR-597)
+- 340_, [Windows], **[critical]**: `Process.open_files()`_ no longer hangs.
+  Instead it uses a thred which times out and skips the file handle in case it's
+  taking too long to be retrieved.  (patch by Jeff Tang, PR-597)
 - 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids
   owned by another user.
 - 636_, [Windows]: `Process.memory_info()`_ raise `AccessDenied`_.
@@ -1340,8 +1342,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 428_, [POSIX] correct handling of zombie processes: introduced new
-  `ZombieProcess`_ exception class.
+- 428_, [POSIX], **[critical]**: correct handling of zombie processes on POSIX.
+  Introduced new `ZombieProcess`_ exception class.
 - 512_, [BSD], **[critical]**: fix segfault in `net_connections()`_.
 - 555_, [Linux]: `users()`_ correctly handles ``":0"`` as an alias for
   ``"localhost"``.
@@ -1640,8 +1642,8 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 348_, [Windows] fixed "ImportError: DLL load failed" occurring on module
-  import on Windows XP.
+- 348_, [Windows], **[critical]**: fixed "ImportError: DLL load failed" occurring
+  on module import on Windows XP.
 - 425_, [SunOS], **[critical]**: crash on import due to failure at determining
   ``BOOT_TIME``.
 - 443_, [Linux]: `Process.cpu_affinity()`_ can't set affinity on systems with
@@ -1704,7 +1706,8 @@ In most cases accessing the old names will work but it will cause a
 - 410_: host tar.gz and Windows binary files are on PyPI.
 - 412_, [Linux]: get/set process resource limits (`Process.rlimit()`_).
 - 415_, [Windows]: `Process.children()`_ is an order of magnitude faster.
-- 426_, [Windows]: `Process.name()`_ is an order of magnitude faster.
+- 426_, [Windows], **[critical]**: `Process.name()`_ is an order of magnitude
+  faster.
 - 431_, [POSIX]: `Process.name()`_ is slightly faster because it unnecessarily
   retrieved also `Process.cmdline()`_.
 
@@ -1770,7 +1773,8 @@ In most cases accessing the old names will work but it will cause a
 
 **Bug fixes**
 
-- 325_, [BSD]: `virtual_memory()`_ can raise ``SystemError``. (patch by Jan Beich)
+- 325_, [BSD], **[critical]**: `virtual_memory()`_ can raise ``SystemError``.
+  (patch by Jan Beich)
 - 370_, [BSD]: `Process.connections()`_ requires root.  (patch by John Baldwin)
 - 372_, [BSD]: different process methods raise `NoSuchProcess`_ instead of
   `AccessDenied`_.
@@ -1797,10 +1801,10 @@ In most cases accessing the old names will work but it will cause a
 - 234_, [Windows]: `disk_io_counters()`_ fails to list certain disks.
 - 264_, [Windows]: use of `disk_partitions()`_ may cause a message box to
   appear.
-- 313_, [Linux]: `virtual_memory()`_ and `swap_memory()`_ can crash on
-  certain exotic Linux flavors having an incomplete ``/proc`` interface.
-  If that's the case we now set the unretrievable stats to ``0`` and raise a
-  ``RuntimeWarning``.
+- 313_, [Linux], **[critical]**: `virtual_memory()`_ and `swap_memory()`_ can
+  crash on certain exotic Linux flavors having an incomplete ``/proc`` interface.
+  If that's the case we now set the unretrievable stats to ``0`` and raise
+  ``RuntimeWarning`` instead.
 - 315_, [macOS]: fix some compilation warnings.
 - 317_, [Windows]: cannot set process CPU affinity above 31 cores.
 - 319_, [Linux]: `Process.memory_maps()`_ raises ``KeyError`` 'Anonymous' on Debian
@@ -1812,9 +1816,10 @@ In most cases accessing the old names will work but it will cause a
 - 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
   change.
 - 333_, [macOS]: leak of Mach ports (patch by rsesek@google.com)
-- 337_, [Linux]: `Process`_ methods not working because of a poor ``/proc``
-  implementation will raise ``NotImplementedError`` rather than ``RuntimeError``
-  and `Process.as_dict()`_ will not blow up.  (patch by Curtin1060)
+- 337_, [Linux], **[critical]**: `Process`_ methods not working because of a
+  poor ``/proc`` implementation will raise ``NotImplementedError`` rather than
+  ``RuntimeError`` and `Process.as_dict()`_ will not blow up.
+  (patch by Curtin1060)
 - 338_, [Linux]: `disk_io_counters()`_ fails to find some disks.
 - 339_, [FreeBSD]: ``get_pid_list()`` can allocate all the memory on system.
 - 341_, [Linux], **[critical]**: psutil might crash on import due to error in
@@ -1829,7 +1834,7 @@ In most cases accessing the old names will work but it will cause a
   case returns ``None``.
 - 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
-- 366_, [FreeBSD]: `Process.memory_maps()`_, `Process.num_fds()`_,
+- 366_, [FreeBSD], **[critical]**: `Process.memory_maps()`_, `Process.num_fds()`_,
   `Process.open_files()`_ and `Process.cwd()`_ methods raise ``RuntimeError``
   instead of `AccessDenied`_.
 
@@ -1905,7 +1910,8 @@ In most cases accessing the old names will work but it will cause a
 - 299_: potential memory leak every time ``PyList_New(0)`` is used.
 - 303_, [Windows], **[critical]**: potential heap corruption in
   `Process.num_threads()`_ and `Process.status()`_ methods.
-- 305_, [FreeBSD]: psutil can't compile on FreeBSD 9 due to removal of utmp.h.
+- 305_, [FreeBSD], **[critical]**: can't compile on FreeBSD 9 due to removal of
+  ``utmp.h``.
 - 306_, **[critical]**: at C level, errors are not checked when invoking ``Py*``
   functions which create or manipulate Python objects leading to potential
   memory related errors and/or segmentation faults.
@@ -2130,8 +2136,8 @@ In most cases accessing the old names will work but it will cause a
 - 83_, [macOS]:  `Process.cmdline()`_ is empty on macOS 64-bit.
 - 130_, [Linux]: a race condition can cause ``IOError`` exception be raised on
   if process disappears between ``open()`` and the subsequent ``read()`` call.
-- 145_, [Windows]: ``WindowsError`` was raised instead of `AccessDenied`_ when
-  using `Process.resume()`_ or `Process.suspend()`_.
+- 145_, [Windows], **[critical]**: ``WindowsError`` was raised instead of
+  `AccessDenied`_ when using `Process.resume()`_ or `Process.suspend()`_.
 - 146_, [Linux]: `Process.exe()`_ property can raise ``TypeError`` if path
   contains NULL bytes.
 - 151_, [Linux]: `Process.exe()`_ and `Process.cwd()`_ for PID 0 return
@@ -2292,8 +2298,8 @@ In most cases accessing the old names will work but it will cause a
   exceptions during building of the list.
 - 22_, [Windows]: `Process.kill()`_ for PID 0 was failing with an unset exception.
 - 23_, [Linux], [macOS]: create special case for `pid_exists()`_ with PID 0.
-- 24_, [Windows]: `Process.kill()`_ for PID 0 now raises `AccessDenied`_ exception
-  instead of ``WindowsError``.
+- 24_, [Windows], **[critical]**: `Process.kill()`_ for PID 0 now raises
+  `AccessDenied`_ exception instead of ``WindowsError``.
 - 30_: psutil.get_pid_list() was returning two 0 PIDs.
 
 
