@@ -1878,47 +1878,21 @@ In most cases accessing the old names will work but it will cause a
   instead of being guessed from `Process.cmdline()`_.
 - 297_, [macOS]: the `Process`_ methods below were always raising `AccessDenied`_
   for any process except the current one. Now this is no longer true. Also
-  they are 2.5x faster.
-  - name
-  - get_memory_info()
-  - get_memory_percent()
-  - get_cpu_times()
-  - get_cpu_percent()
-  - get_num_threads()
+  they are 2.5x faster. `Process.name()`_, `Process.memory_info()`_,
+  `Process.memory_percent()`_, `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.num_threads()`_.
 - 300_: `pmap.py`_ script.
 - 301_: `process_iter()`_ now yields processes sorted by their PIDs.
 - 302_: process number of voluntary and involuntary context switches.
 - 303_, [Windows]: the`Process`_ methods below were always raising `AccessDenied`_
   for any process not owned by current user. Now this is no longer true:
-  - create_time
-  - get_cpu_times()
-  - get_cpu_percent()
-  - get_memory_info()
-  - get_memory_percent()
-  - get_num_handles()
-  - get_io_counters()
+  `Process.create_time()`_, `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.memory_info()`_, `Process.memory_percent()`_, `Process.num_handles()`_,
+  `Process.io_counters()`_.
 - 305_: add `netstat.py`_ script.
 - 311_: system memory functions has been refactorized and rewritten and now
   provide a more detailed and consistent representation of the system
-  memory. New `virtual_memory()`_ function provides the following
-  memory amounts:
-  - total
-  - available
-  - percent
-  - used
-  - active [POSIX]
-  - inactive [POSIX]
-  - buffers (BSD, Linux)
-  - cached (BSD, macOS)
-  - wired (macOS, BSD)
-  - shared [FreeBSD]
-  New `swap_memory()`_ provides:
-  - total
-  - used
-  - free
-  - percent
-  - sin (no. of bytes the system has swapped in from disk (cumulative))
-  - sout (no. of bytes the system has swapped out from disk (cumulative))
+  memory. Added new `virtual_memory()`_ and `swap_memory()`_ functions.
   All old memory-related functions are deprecated.
   Also two new example scripts were added:  `free.py`_ and `meminfo.py`_.
 - 312_: ``net_io_counters()`` namedtuple includes 4 new fields:
