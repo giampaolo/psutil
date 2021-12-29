@@ -366,6 +366,8 @@ class TestMisc(PsutilTestCase):
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
 
+    # XXX: https://github.com/pypa/setuptools/pull/2896
+    @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
     def test_setup_script(self):
         setup_py = os.path.join(ROOT_DIR, 'setup.py')
         if CI_TESTING and not os.path.exists(setup_py):

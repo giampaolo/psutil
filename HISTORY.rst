@@ -3,7 +3,7 @@
 5.9.0 (IN DEVELOPMENT)
 ======================
 
-XXXX-XX-XX
+2021-12-29
 
 **Enhancements**
 

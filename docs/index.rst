@@ -2610,6 +2610,10 @@ Supported Python versions are 2.6, 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2021-12-29:
+  `5.9.0 <https://pypi.org/project/psutil/5.9.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#590>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.8.0...release-5.9.0#files_bucket>`__
 - 2020-12-19:
   `5.8.0 <https://pypi.org/project/psutil/5.8.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#580>`__ -
