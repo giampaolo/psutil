@@ -75,17 +75,19 @@ XXXX-XX-XX
 
 - 1708_, [Linux]: get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
-- 1839_, [Windows]: always raise `AccessDenied`_ when failing to query 64 processes
-  from 32 bit ones (``NtWoW64`` APIs).
-- 1866_, [Windows]: `Process.exe()`_, `Process.cmdline()`_, `Process.environ()`_
-  may raise "invalid access to memory location" on Python 3.9.
+- 1839_, [Windows], **[critical]**: always raise `AccessDenied`_ when failing
+  to query 64 processes from 32 bit ones (``NtWoW64`` APIs).
+- 1866_, [Windows], **[critical]**: `Process.exe()`_, `Process.cmdline()`_,
+  `Process.environ()`_ may raise "invalid access to memory location" on Python 3.9.
 - 1874_, [SunOS]: wrong swap output given when encrypted column is present.
-- 1875_, [Windows]: `Process.username()`_ may raise ``ERROR_NONE_MAPPED`` if the SID
-  has no corresponding account name. In this case `AccessDenied`_ is now raised.
-- 1877_, [Windows]: ``OpenProcess`` may fail with ``ERROR_SUCCESS``. Turn it into
-  `AccessDenied`_ or `NoSuchProcess`_ depending on whether the PID is alive.
+- 1875_, [Windows], **[critical]**: `Process.username()`_ may raise
+  ``ERROR_NONE_MAPPED`` if the SID has no corresponding account name. In this
+  case `AccessDenied`_ is now raised.
 - 1886_, [macOS]: ``EIO`` error may be raised on `Process.cmdline()`_ and
   `Process.environ()`_. Now it gets translated into `AccessDenied`_.
+- 1887_, [Windows], **[critical]**: ``OpenProcess`` may fail with ``ERROR_SUCCESS``.
+  Turn it into `AccessDenied`_ or `NoSuchProcess`_ depending on whether the
+  PID is alive.
 - 1891_, [macOS]: get rid of deprecated ``getpagesize()``.
 
 5.7.3
@@ -136,21 +138,14 @@ XXXX-XX-XX
   it's about 15% faster.
 - 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
+- 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
+  negative signal which was used to terminate the process. It returns something
+  like ``<Negsignal.SIGTERM: -15>``.
+- 1747_: `Process`_ class provides more info about the process on ``str()``
+  and ``repr()`` (status and exit code).
 - 1757_: memory leak tests are now stable.
 - 1768_, [Windows]: added support for Windows Nano Server. (contributed by
   Julien Lebot)
-- 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
-  negative signal which was used to terminate the process::
-    >>> import psutil
-    >>> p = psutil.Process(9891)
-    >>> p.terminate()
-    >>> p.wait()
-    <Negsignal.SIGTERM: -15>
-- 1747_: `Process`_ class provides more info about the process on ``str()``
-  and ``repr()`` (status and exit code)::
-    >>> proc
-    psutil.Process(pid=12739, name='python3', status='terminated',
-                   exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
 
 **Bug fixes**
 
@@ -158,8 +153,8 @@ XXXX-XX-XX
   (patch by Michał Górny)
 - 1760_, [Linux]: `Process.rlimit()`_ does not handle long long type properly.
 - 1766_, [macOS]: `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
-- 1781_: fix signature of callback function for `getloadavg()`_.  (patch by
-  Ammar Askar)
+- 1781_, **[critical]**: fix signature of callback function for `getloadavg()`_.
+  (patch by Ammar Askar)
 
 5.7.0
 =====
@@ -193,7 +188,7 @@ XXXX-XX-XX
 - 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
 - 1660_, [Windows]: `Process.open_files()`_ complete rewrite + check of errors.
-- 1662_, [Windows]: `Process.exe()`_ may raise ``WinError 0``.
+- 1662_, [Windows], **[critical]**: `Process.exe()`_ may raise ``WinError 0``.
 - 1665_, [Linux]: `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
@@ -255,9 +250,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 875_, [Windows]: `Process.cmdline()`_, `Process.environ()`_ or `Process.cwd()`_
-  may occasionally fail with ``ERROR_PARTIAL_COPY`` which now gets translated to
-  `AccessDenied`_.
+- 875_, [Windows], **[critical]**: `Process.cmdline()`_, `Process.environ()`_ or
+  `Process.cwd()`_ may occasionally fail with ``ERROR_PARTIAL_COPY`` which now
+  gets translated to `AccessDenied`_.
 - 1126_, [Linux], **[critical]**: `Process.cpu_affinity()`_ segfaults on CentOS
   5 / manylinux. `Process.cpu_affinity()`_ support for CentOS 5 was removed.
 - 1528_, [AIX], **[critical]**: compilation error on AIX 7.2 due to 32 vs 64
@@ -291,8 +286,8 @@ XXXX-XX-XX
 - 1501_, [Windows]: `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
   "WinError 1168 element not found" exceptions for "Registry" and
   "Memory Compression" psuedo processes on Windows 10.
-- 1526_, [NetBSD]: `Process.cmdline()`_ could raise ``MemoryError``.  (patch by
-  Kamil Rytarowski)
+- 1526_, [NetBSD], **[critical]**: `Process.cmdline()`_ could raise
+  ``MemoryError``.  (patch by Kamil Rytarowski)
 
 5.6.2
 =====
@@ -330,8 +325,9 @@ XXXX-XX-XX
   ``SystemError``.  (patch by Daniel Beer)
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
-- 1475_, [Windows]: ``OSError.winerror`` attribute wasn't properly checked resuling
-  in ``WindowsError`` being raised instead of `AccessDenied`_.
+- 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
+  properly checked resuling in ``WindowsError`` being raised instead of
+  `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
   Windows APIs. Different process methods were affected by this.
 - 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
