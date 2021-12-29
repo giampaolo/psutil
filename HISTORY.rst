@@ -134,6 +134,12 @@ XXXX-XX-XX
 - 1729_: parallel tests on UNIX (``make test-parallel``). They're twice as fast!
 - 1741_: ``make build/install`` is now run in parallel and it's about 15% faster
   on UNIX.
+- 1747_: `Process.wait()`_ return value is cached so that the exit code can be
+  retrieved on then next call.
+- 1757_: memory leak tests are now stable.
+- 1768_, [Windows]: added support for Windows Nano Server. (contributed by
+  Julien Lebot)
+
 - 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
   negative signal which was used to terminate the process::
     >>> import psutil
@@ -141,16 +147,11 @@ XXXX-XX-XX
     >>> p.terminate()
     >>> p.wait()
     <Negsignal.SIGTERM: -15>
-- 1747_: `Process.wait()`_ return value is cached so that the exit code can be
-  retrieved on then next call.
 - 1747_: `Process`_ class provides more info about the process on ``str()``
   and ``repr()`` (status and exit code)::
     >>> proc
     psutil.Process(pid=12739, name='python3', status='terminated',
                    exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
-- 1757_: memory leak tests are now stable.
-- 1768_, [Windows]: added support for Windows Nano Server. (contributed by
-  Julien Lebot)
 
 **Bug fixes**
 
@@ -1893,11 +1894,11 @@ In most cases accessing the old names will work but it will cause a
 - 311_: system memory functions has been refactorized and rewritten and now
   provide a more detailed and consistent representation of the system
   memory. Added new `virtual_memory()`_ and `swap_memory()`_ functions.
-  All old memory-related functions are deprecated.
-  Also two new example scripts were added:  `free.py`_ and `meminfo.py`_.
+  All old memory-related functions are deprecated. Also two new example scripts
+  were added:  `free.py`_ and `meminfo.py`_.
 - 312_: ``net_io_counters()`` namedtuple includes 4 new fields:
   ``errin``, ``errout``, ``dropin`` and ``dropout``, reflecting the number of
-   packets dropped and with errors.
+  packets dropped and with errors.
 
 **Bug fixes**
 
