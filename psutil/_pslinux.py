@@ -1645,6 +1645,10 @@ def boot_time():
 
 
 class VirtualMachineDetector:
+    """This class is basically a translation of `systemd-detect-virt`
+    CLI tool from C to Python:
+    https://github.com/systemd/systemd/blob/main/src/basic/virt.c
+    """
 
     __slots__ = ["procfs_path"]
 
@@ -1669,11 +1673,15 @@ class VirtualMachineDetector:
                 return v
 
     def ask_if_openvz(self):
+        # /proc/vz exists in container and outside of the container,
+        # /proc/bc only outside of the container.
         if os.path.exists("%s/vz" % self.procfs_path):
             if not os.path.exists("%s/bc" % self.procfs_path):
                 return VIRTUALIZATION_OPENVZ
 
     def ask_if_wsl(self):
+        # "Official" way of detecting WSL:
+        # https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
         with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
             data = f.read().strip()
             if "Microsoft" in data or "WSL" in data:
@@ -1686,10 +1694,13 @@ class VirtualMachineDetector:
         if m:
             tracer_pid = int(m.group(1))
             pname = Process(tracer_pid).name()
-            if pname == "proot":
+            if pname.startswith("proot"):
                 return VIRTUALIZATION_PROOT
 
     def ask_run_host_container_manager(self):
+        # The container manager might have placed this in the /run/host/
+        # hierarchy for us, which is good because it doesn't require root
+        # privileges.
         with open_text("/run/host/container-manager") as f:
             data = f.read().strip()
             return self._container_from_string(data)
