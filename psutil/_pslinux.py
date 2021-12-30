@@ -1667,13 +1667,13 @@ class VirtualMachineDetector:
             if s.lower().startswith(k):
                 return v
 
-    def ask_proc_sys_kernel_osrelease(self):
+    def ask_if_wsl(self):
         with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
             data = f.read().strip()
             if "Microsoft" in data or "WSL" in data:
                 return VIRTUALIZATION_WSL
 
-    def ask_proc_status(self):
+    def ask_if_proot(self):
         with open_text('%s/self/status' % self.procfs_path) as f:
             data = f.read()
         m = re.search(r'TracerPid:\t(\d+)', data)
@@ -1792,8 +1792,8 @@ class VirtualMachineDetector:
         # order matters
         funcs = [
             # containers
-            self.ask_proc_sys_kernel_osrelease,  # wsl
-            self.ask_proc_status,  # proot
+            self.ask_if_wsl,  # wsl
+            self.ask_if_proot,  # proot
             self.ask_run_host_container_manager,
             self.ask_run_systemd_container,
             self.ask_pid_1_environ,

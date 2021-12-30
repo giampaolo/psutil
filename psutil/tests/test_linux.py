@@ -2261,13 +2261,13 @@ class TestVirtualization(PsutilTestCase):
     def setUp(self):
         self.vmd = VirtualMachineDetector()
 
-    def test_ask_proc_sys_kernel_osrelease(self):
+    def test_ask_if_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
-            self.assertEqual(self.vmd.ask_proc_sys_kernel_osrelease(), "wsl")
+            self.assertEqual(self.vmd.ask_if_wsl(), "wsl")
 
-    def test_ask_proc_status(self):
+    def test_ask_if_proot(self):
         with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
-            self.assertEqual(self.vmd.ask_proc_status(), "proot")
+            self.assertEqual(self.vmd.ask_if_proot(), "proot")
 
     def test_ask_run_host_container_manager(self):
         with mock_open_content("/run/host/container-manager", "podman"):
