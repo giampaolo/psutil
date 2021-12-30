@@ -1644,26 +1644,24 @@ def boot_time():
 # =====================================================================
 
 
-# The following is a translation of `systemd-detect-virt` CLI tool from
-# C to Python:
+# The following is a porting of `systemd-detect-virt` CLI tool from
+# C to Python (an almost literal translation):
 # https://github.com/systemd/systemd/blob/main/src/basic/virt.c
 # In here we try to respect the exact order in which the various
-# 'guess' routines are called.
-# There is a distinction between containers and VMs.
-# A "container" is typically "shared kernel virtualization", e.g. LXC.
-# A "vm" is "full hardware virtualization", e.g. VirtualBox.
-# If multiple virtualization solutions are used, only the innermost
-# is detected and identified. That means if both machine and
-# container virtualization are used in conjunction, only the latter
-# will be identified.
+# 'guess' functions are called.
 
 
-class ContainerDetector:
-
+class _VirtualizationBase:
     __slots__ = ["procfs_path"]
 
     def __init__(self):
         self.procfs_path = get_procfs_path()
+
+
+class ContainerDetector(_VirtualizationBase):
+    """A "container" is typically "shared kernel virtualization",
+    e.g. LXC.
+    """
 
     def _container_from_string(self, s):
         assert s, repr(s)
@@ -1750,12 +1748,8 @@ class ContainerDetector:
             return VIRTUALIZATION_DOCKER
 
 
-class VmDetector:
-
-    __slots__ = ["procfs_path"]
-
-    def __init__(self):
-        self.procfs_path = get_procfs_path()
+class VmDetector(_VirtualizationBase):
+    """A "vm" means "full hardware virtualization", e.g. VirtualBox."""
 
     def ask_sys_class_dmi(self):
         files = [
@@ -1843,6 +1837,13 @@ class VmDetector:
 
 
 def virtualization():
+    # There is a distinction between containers and VMs.
+    # A "container" is typically "shared kernel virtualization", e.g. LXC.
+    # A "vm" is "full hardware virtualization", e.g. VirtualBox.
+    # If multiple virtualization solutions are used, only the innermost
+    # is detected and identified. E.g. if both machine and container
+    # virtualization are used in conjunction, only the latter will be
+    # returned.
     container = ContainerDetector()
     vm = VmDetector()
     funcs = [
