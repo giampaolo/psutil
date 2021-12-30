@@ -1588,10 +1588,19 @@ def boot_time():
 
 
 # =====================================================================
-# --- processes
+# --- virtualization
 # =====================================================================
 
 
+VIRTUALIZATION_AMAZON = "amazon"
+VIRTUALIZATION_BHYVE = "bhyve"
+VIRTUALIZATION_BOCHS = "bochs"
+VIRTUALIZATION_KVM = "kvm"
+VIRTUALIZATION_ORACLE = "oracle"
+VIRTUALIZATION_PARALLELS = "parallels"
+VIRTUALIZATION_QEMU = "qemu"
+VIRTUALIZATION_VMWARE = "vmware"
+VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
 
 
@@ -1601,14 +1610,44 @@ class VirtualMachineDetector:
 
     @staticmethod
     def ask_proc_sysinfo():
-        path = "%s/sysinfo" % get_procfs_path()
-        needle = "VM00 Control Program"
-        with open_text(path) as f:
+        lookfor = "VM00 Control Program"
+        with open_text("%s/sysinfo" % get_procfs_path()) as f:
             for line in f:
-                if line.startswith(needle):
-                    if "z/VM" in line.partition(needle)[2]:
+                if line.startswith(lookfor):
+                    if "z/VM" in line.partition(lookfor)[2]:
                         return VIRTUALIZATION_ZVM
                     return
+
+    @staticmethod
+    def ask_dmi():
+        files = [
+            # Test this before sys_vendor to detect KVM over QEMU
+            "/sys/class/dmi/id/product_name",
+            "/sys/class/dmi/id/sys_vendor",
+            "/sys/class/dmi/id/board_vendor",
+            "/sys/class/dmi/id/bios_vendor",
+        ]
+        vendor_table = {
+            "KVM": VIRTUALIZATION_KVM,
+            "Amazon EC2": VIRTUALIZATION_AMAZON,
+            "QEMU": VIRTUALIZATION_QEMU,
+            # https://kb.vmware.com/s/article/1009458
+            "VMware": VIRTUALIZATION_VMWARE,
+            "VMW": VIRTUALIZATION_VMWARE,
+            "innotek GmbH": VIRTUALIZATION_ORACLE,
+            "Oracle Corporation": VIRTUALIZATION_ORACLE,
+            "Xen": VIRTUALIZATION_XEN,
+            "Bochs": VIRTUALIZATION_BOCHS,
+            "Parallels": VIRTUALIZATION_PARALLELS,
+            # https://wiki.freebsd.org/bhyve
+            "BHYVE": VIRTUALIZATION_BHYVE,
+        }
+        for file in files:
+            out = cat(file, fallback="", binary=False)
+            if out:
+                out = out.strip()
+                if out in vendor_table:
+                    return vendor_table[out]
 
     @staticmethod
     def guess(self):
@@ -1618,6 +1657,8 @@ class VirtualMachineDetector:
                 ret = self.ask_proc_sysinfo()
             except (IOError, OSError) as err:
                 debug(err)
+        if ret is None:
+            ret = self.ask_dmi()
         return ret
 
 

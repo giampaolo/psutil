@@ -2247,7 +2247,7 @@ class TestVirtualization(PsutilTestCase):
 
     def test_ask_proc_sysinfo(self):
         with mock_open_content(
-            '/proc/sysinfo',
+            "/proc/sysinfo",
             textwrap.dedent("""\
                 Manufacturer:         IBM
                 ...
@@ -2270,6 +2270,11 @@ class TestVirtualization(PsutilTestCase):
                 """)):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_proc_sysinfo(), "zvm")
+
+    def test_ask_dmi(self):
+        with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_dmi(), "vmware")
 
 
 # =====================================================================
