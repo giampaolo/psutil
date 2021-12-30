@@ -2381,7 +2381,7 @@ class TestVirtualizationVms(PsutilTestCase):
             self.assertEqual(self.detector.ask_proc_devtree_hypervisor(),
                              "vm-other")
 
-    def test_ask_proc_devtree(self):
+    def test_detect_powervm(self):
         def exists(path):
             if path in ("/proc/device-tree/ibm,partition-name",
                         "/proc/device-tree/hmc-managed?"):
@@ -2391,11 +2391,11 @@ class TestVirtualizationVms(PsutilTestCase):
 
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
-            self.assertEqual(self.detector.ask_proc_devtree(), "powervm")
+            self.assertEqual(self.detector.detect_powervm(), "powervm")
 
-        # check for qemu
+    def test_detect_qemu(self):
         with mock.patch("os.listdir", return_value=["fw-cfg"]):
-            self.assertEqual(self.detector.ask_proc_devtree(), "qemu")
+            self.assertEqual(self.detector.detect_qemu(), "qemu")
 
     def test_ask_proc_sysinfo(self):
         with mock_open_content(

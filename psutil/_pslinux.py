@@ -1816,13 +1816,14 @@ class VmDetector(_VirtualizationBase):
             else:
                 return VIRTUALIZATION_VM_OTHER
 
-    def ask_proc_devtree(self):
+    def detect_powervm(self):
         base = "%s/device-tree" % self.procfs_path
         if os.path.exists("%s/ibm,partition-name" % base):
             if os.path.exists("%s/hmc-managed?" % base):
                 if not os.path.exists("%s/chosen/qemu,graphic-width" % base):
                     return VIRTUALIZATION_POWERVM
 
+    def detect_qemu(self):
         if "fw-cfg" in os.listdir("%s/device-tree" % self.procfs_path):
             return VIRTUALIZATION_QEMU
 
@@ -1862,6 +1863,8 @@ def virtualization():
         vm.detect_xen,  # xen
         vm.ask_sys_hypervisor_type,   # xen / vm-other
         vm.ask_proc_devtree_hypervisor,
+        vm.detect_powervm,
+        vm.detect_qemu,
         vm.ask_proc_sysinfo,  # zvm
     ]
     ret = None
