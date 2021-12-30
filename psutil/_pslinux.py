@@ -1798,6 +1798,7 @@ class VirtualMachineDetector:
         # order matters
         funcs = [
             # containers
+            self.ask_if_openvz,
             self.ask_if_wsl,  # wsl
             self.ask_if_proot,  # proot
             self.ask_run_host_container_manager,

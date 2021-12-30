@@ -2273,40 +2273,50 @@ class TestVirtualization(PsutilTestCase):
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
             self.assertEqual(self.vmd.ask_if_openvz(), "openvz")
+            self.assertEqual(self.vmd.guess(), "openvz")
 
     def test_ask_if_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
             self.assertEqual(self.vmd.ask_if_wsl(), "wsl")
+            self.assertEqual(self.vmd.guess(), "wsl")
 
     def test_ask_if_proot(self):
         with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
             self.assertEqual(self.vmd.ask_if_proot(), "proot")
+            self.assertEqual(self.vmd.guess(), "proot")
 
     def test_ask_run_host_container_manager(self):
         with mock_open_content("/run/host/container-manager", "podman"):
             self.assertEqual(
                 self.vmd.ask_run_host_container_manager(), "podman")
+            self.assertEqual(self.vmd.guess(), "podman")
 
     def test_ask_run_systemd_container(self):
         with mock_open_content("/run/systemd/container", "rkt"):
             self.assertEqual(self.vmd.ask_run_systemd_container(), "rkt")
+            self.assertEqual(self.vmd.guess(), "rkt")
 
     def test_ask_pid_1_environ(self):
         with mock.patch("psutil._pslinux.Process.environ",
                         return_value={"container": "docker"}):
             self.assertEqual(self.vmd.ask_pid_1_environ(), "docker")
+            self.assertEqual(self.vmd.guess(), "docker")
 
     def test_look_for_known_files(self):
         with mock_os_path_exists("/run/.containerenv", True):
             self.assertEqual(self.vmd.look_for_known_files(), "podman")
+            self.assertEqual(self.vmd.guess(), "podman")
         with mock_os_path_exists("/.dockerenv", True):
             self.assertEqual(self.vmd.look_for_known_files(), "docker")
+            self.assertEqual(self.vmd.guess(), "docker")
         with mock.patch("os.path.exists", return_value=False):
             self.assertIsNone(self.vmd.look_for_known_files())
+            self.assertEqual(self.vmd.guess(), "")
 
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
             self.assertEqual(self.vmd.ask_sys_class_dmi(), "vmware")
+            self.assertEqual(self.vmd.guess(), "vmware")
 
     def test_ask_proc_cpuinfo(self):
         with mock_open_content(
@@ -2319,6 +2329,7 @@ class TestVirtualization(PsutilTestCase):
                 model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
                 """).encode()):
             self.assertEqual(self.vmd.ask_proc_cpuinfo(), "uml")
+            self.assertEqual(self.vmd.guess(), "uml")
 
     def test_ask_cpuid(self):
         self.assertIsInstance(cext.linux_cpuid(), str)
