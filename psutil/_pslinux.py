@@ -1751,7 +1751,7 @@ class ContainerDetector(_VirtualizationBase):
 class VmDetector(_VirtualizationBase):
     """A "vm" means "full hardware virtualization", e.g. VirtualBox."""
 
-    def ask_sys_class_dmi(self):
+    def ask_dmi(self):
         files = [
             "/sys/class/dmi/id/product_name",
             "/sys/class/dmi/id/sys_vendor",
@@ -1857,7 +1857,7 @@ def virtualization():
         container.ask_pid_1,
         container.look_for_known_files,  # podman / docker
         # vms
-        vm.ask_sys_class_dmi,
+        vm.ask_dmi,
         vm.detect_uml,  # uml
         vm.ask_cpuid,
         vm.detect_xen,  # xen

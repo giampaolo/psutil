@@ -2322,9 +2322,9 @@ class TestVirtualizationVms(PsutilTestCase):
     def setUp(self):
         self.detector = VmDetector()
 
-    def test_ask_sys_class_dmi(self):
+    def test_ask_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
-            self.assertEqual(self.detector.ask_sys_class_dmi(), "vmware")
+            self.assertEqual(self.detector.ask_dmi(), "vmware")
             self.assertEqual(psutil.virtualization(), "vmware")
 
     def test_detect_uml(self):
