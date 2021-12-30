@@ -1634,7 +1634,7 @@ class VirtualMachineDetector:
                     return VIRTUALIZATION_PROOT
 
     @staticmethod
-    def ask_dmi():
+    def ask_sys_class_dmi():
         files = [
             # Test this before sys_vendor to detect KVM over QEMU
             "/sys/class/dmi/id/product_name",
@@ -1658,11 +1658,9 @@ class VirtualMachineDetector:
             "BHYVE": VIRTUALIZATION_BHYVE,
         }
         for file in files:
-            out = cat(file, fallback="", binary=False)
-            if out:
-                out = out.strip()
-                if out in vendor_table:
-                    return vendor_table[out]
+            out = cat(file, fallback="", binary=False).strip()
+            if out and out in vendor_table:
+                return vendor_table[out]
 
     @staticmethod
     def ask_proc_cpuinfo():
@@ -1687,7 +1685,7 @@ class VirtualMachineDetector:
         # order matters
         funcs = [
             self.ask_proc_sys_kernel_osrelease,
-            self.ask_dmi,
+            self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,
             self.ask_proc_sysinfo
         ]

@@ -2255,10 +2255,10 @@ class TestVirtualization(PsutilTestCase):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_proc_status(), "proot")
 
-    def test_ask_dmi(self):
+    def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
             vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_dmi(), "vmware")
+            self.assertEqual(vm.ask_sys_class_dmi(), "vmware")
 
     def test_ask_proc_cpuinfo(self):
         with mock_open_content(
