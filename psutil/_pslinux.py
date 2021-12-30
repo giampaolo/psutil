@@ -1689,14 +1689,14 @@ class ContainerDetector:
 
         return VIRTUALIZATION_VM_OTHER
 
-    def ask_if_openvz(self):
+    def detect_openvz(self):
         # /proc/vz exists in container and outside of the container,
         # /proc/bc only outside of the container.
         if os.path.exists("%s/vz" % self.procfs_path):
             if not os.path.exists("%s/bc" % self.procfs_path):
                 return VIRTUALIZATION_OPENVZ
 
-    def ask_if_wsl(self):
+    def detect_wsl(self):
         # "Official" way of detecting WSL:
         # https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
         with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
@@ -1704,7 +1704,7 @@ class ContainerDetector:
             if "Microsoft" in data or "WSL" in data:
                 return VIRTUALIZATION_WSL
 
-    def ask_if_proot(self):
+    def detect_proot(self):
         with open_text('%s/self/status' % self.procfs_path) as f:
             data = f.read()
         m = re.search(r'TracerPid:\t(\d+)', data)
@@ -1750,7 +1750,7 @@ class ContainerDetector:
             return VIRTUALIZATION_DOCKER
 
 
-class VirtualMachineDetector:
+class VmDetector:
 
     __slots__ = ["procfs_path"]
 
@@ -1844,12 +1844,12 @@ class VirtualMachineDetector:
 
 def virtualization():
     container = ContainerDetector()
-    vm = VirtualMachineDetector()
+    vm = VmDetector()
     funcs = [
         # containers
-        container.ask_if_openvz,
-        container.ask_if_wsl,  # wsl
-        container.ask_if_proot,  # proot
+        container.detect_openvz,
+        container.detect_wsl,  # wsl
+        container.detect_proot,  # proot
         container.ask_run_host_container_manager,
         container.ask_run_systemd_container,
         container.ask_pid_1_environ,

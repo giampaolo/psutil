@@ -55,7 +55,7 @@ if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import ContainerDetector
-    from psutil._pslinux import VirtualMachineDetector
+    from psutil._pslinux import VmDetector
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
 
@@ -2263,7 +2263,7 @@ class TestVirtualizationContainers(PsutilTestCase):
     def setUp(self):
         self.detector = ContainerDetector()
 
-    def test_ask_if_openvz(self):
+    def test_detect_openvz(self):
         def exists(path):
             if path == "/proc/vz":
                 return True
@@ -2274,17 +2274,17 @@ class TestVirtualizationContainers(PsutilTestCase):
 
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
-            self.assertEqual(self.detector.ask_if_openvz(), "openvz")
+            self.assertEqual(self.detector.detect_openvz(), "openvz")
             self.assertEqual(psutil.virtualization(), "openvz")
 
-    def test_ask_if_wsl(self):
+    def test_detect_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
-            self.assertEqual(self.detector.ask_if_wsl(), "wsl")
+            self.assertEqual(self.detector.detect_wsl(), "wsl")
             self.assertEqual(psutil.virtualization(), "wsl")
 
-    def test_ask_if_proot(self):
+    def test_detect_proot(self):
         with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
-            self.assertEqual(self.detector.ask_if_proot(), "proot")
+            self.assertEqual(self.detector.detect_proot(), "proot")
             self.assertEqual(psutil.virtualization(), "proot")
 
     def test_ask_run_host_container_manager(self):
@@ -2320,7 +2320,7 @@ class TestVirtualizationContainers(PsutilTestCase):
 class TestVirtualizationVms(PsutilTestCase):
 
     def setUp(self):
-        self.detector = VirtualMachineDetector()
+        self.detector = VmDetector()
 
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
