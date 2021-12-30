@@ -1601,6 +1601,7 @@ VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_QEMU = "qemu"
 VIRTUALIZATION_UML = "uml"
 VIRTUALIZATION_VMWARE = "vmware"
+VIRTUALIZATION_WSL = "wsl"
 VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
 
@@ -1608,6 +1609,13 @@ VIRTUALIZATION_ZVM = "zvm"
 class VirtualMachineDetector:
 
     __slots__ = []
+
+    @staticmethod
+    def ask_proc_sys_kernel_osrelease():
+        with open_text('%s/sys/kernel/osrelease' % get_procfs_path()) as f:
+            data = f.read().strip()
+            if "Microsoft" in data or "WSL" in data:
+                return VIRTUALIZATION_WSL
 
     @staticmethod
     def ask_dmi():
@@ -1662,6 +1670,7 @@ class VirtualMachineDetector:
     def guess(self):
         # order matters
         funcs = [
+            self.ask_proc_sys_kernel_osrelease,
             self.ask_dmi,
             self.ask_proc_cpuinfo,
             self.ask_proc_sysinfo

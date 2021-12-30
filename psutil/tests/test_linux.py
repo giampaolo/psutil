@@ -2245,6 +2245,11 @@ class TestProcessAgainstStatus(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestVirtualization(PsutilTestCase):
 
+    def test_ask_proc_sys_kernel_osrelease(self):
+        with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_proc_sys_kernel_osrelease(), "wsl")
+
     def test_ask_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
             vm = VirtualMachineDetector()
