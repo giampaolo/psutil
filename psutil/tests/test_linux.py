@@ -2369,16 +2369,16 @@ class TestVirtualizationVms(PsutilTestCase):
             with mock_open_content("/sys/hypervisor/type", "something-else"):
                 self.assertEqual(self.detector.detect_xen(), "vm-other")
 
-    def test_ask_proc_devtree_hypervisor(self):
+    def test_ask_device_tree(self):
         path = "/proc/device-tree/hypervisor/compatible"
         with mock_open_content(path, "linux,kvm"):
-            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "kvm")
+            self.assertEqual(self.detector.ask_device_tree(), "kvm")
         with mock_open_content(path, "xen"):
-            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "xen")
+            self.assertEqual(self.detector.ask_device_tree(), "xen")
         with mock_open_content(path, "vmware"):
-            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "vmware")
+            self.assertEqual(self.detector.ask_device_tree(), "vmware")
         with mock_open_content(path, "?!?"):
-            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(),
+            self.assertEqual(self.detector.ask_device_tree(),
                              "vm-other")
 
     def test_detect_powervm(self):
@@ -2397,7 +2397,7 @@ class TestVirtualizationVms(PsutilTestCase):
         with mock.patch("os.listdir", return_value=["fw-cfg"]):
             self.assertEqual(self.detector.detect_qemu(), "qemu")
 
-    def test_ask_proc_sysinfo(self):
+    def test_detect_zvm(self):
         with mock_open_content(
             "/proc/sysinfo",
             textwrap.dedent("""\
@@ -2420,7 +2420,7 @@ class TestVirtualizationVms(PsutilTestCase):
                 VM00 CPUs Standby:    0
                 VM00 CPUs Reserved:   0
                 """)):
-            self.assertEqual(self.detector.ask_proc_sysinfo(), "zvm")
+            self.assertEqual(self.detector.detect_zvm(), "zvm")
 
 
 # =====================================================================

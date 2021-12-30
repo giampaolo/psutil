@@ -1802,7 +1802,7 @@ class VmDetector(_VirtualizationBase):
             else:
                 return VIRTUALIZATION_VM_OTHER
 
-    def ask_proc_devtree_hypervisor(self):
+    def ask_device_tree(self):
         path = "%s/device-tree/hypervisor/compatible" % self.procfs_path
         with open_text(path) as f:
             data = f.read().strip()
@@ -1826,7 +1826,7 @@ class VmDetector(_VirtualizationBase):
         if "fw-cfg" in os.listdir("%s/device-tree" % self.procfs_path):
             return VIRTUALIZATION_QEMU
 
-    def ask_proc_sysinfo(self):
+    def detect_zvm(self):
         with open_text("%s/sysinfo" % self.procfs_path) as f:
             for line in f:
                 if line.startswith("VM00 Control Program"):
@@ -1860,10 +1860,10 @@ def virtualization():
         vm.detect_uml,  # uml
         vm.ask_cpuid,
         vm.detect_xen,  # xen
-        vm.ask_proc_devtree_hypervisor,
+        vm.ask_device_tree,
         vm.detect_powervm,
         vm.detect_qemu,
-        vm.ask_proc_sysinfo,  # zvm
+        vm.detect_zvm,  # zvm
     ]
     ret = None
     for func in funcs:
