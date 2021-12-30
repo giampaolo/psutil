@@ -2340,6 +2340,12 @@ class TestVirtualization(PsutilTestCase):
         with mock_os_path_exists("/proc/xen", True):
             self.assertEqual(self.vmd.ask_proc_xen(), "xen")
 
+    def test_ask_sys_hypervisor_type(self):
+        with mock_open_content("/sys/hypervisor/type", "xen"):
+            self.assertEqual(self.vmd.ask_sys_hypervisor_type(), "xen")
+        with mock_open_content("/sys/hypervisor/type", "something-else"):
+            self.assertEqual(self.vmd.ask_sys_hypervisor_type(), "vm-other")
+
 
 # =====================================================================
 # --- test utils

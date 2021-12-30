@@ -1612,6 +1612,8 @@ VIRTUALIZATION_WSL = "wsl"
 VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
 
+VIRTUALIZATION_VM_OTHER = "vm-other"  # undefined, but there's a VM
+
 VIRT_NAMES_MAPPING = {
     "docker": VIRTUALIZATION_DOCKER,
     "lxc": VIRTUALIZATION_LXC,
@@ -1731,6 +1733,14 @@ class VirtualMachineDetector:
     def ask_proc_xen():
         if os.path.exists('%s/xen' % get_procfs_path()):
             return VIRTUALIZATION_XEN
+
+    @staticmethod
+    def ask_sys_hypervisor_type():
+        with open_text("/sys/hypervisor/type") as f:
+            if f.read().strip() == "xen":
+                return VIRTUALIZATION_XEN
+            else:
+                return VIRTUALIZATION_VM_OTHER
 
     def guess(self):
         # order matters
