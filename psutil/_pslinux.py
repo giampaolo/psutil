@@ -1798,7 +1798,7 @@ class VmDetector:
         if vendor and vendor in CPUID_VENDOR_VIRT_TABLE:
             return CPUID_VENDOR_VIRT_TABLE[vendor]
 
-    def ask_proc_xen(self):
+    def detect_xen(self):
         if os.path.exists('%s/xen' % self.procfs_path):
             return VIRTUALIZATION_XEN
 
@@ -1858,7 +1858,7 @@ def virtualization():
         vm.ask_sys_class_dmi,
         vm.detect_uml,  # uml
         vm.ask_cpuid,
-        vm.ask_proc_xen,  # xen
+        vm.detect_xen,  # xen
         vm.ask_sys_hypervisor_type,   # xen / vm-other
         vm.ask_proc_devtree_hypervisor,
         vm.ask_proc_sysinfo,  # zvm
