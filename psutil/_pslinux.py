@@ -1609,16 +1609,6 @@ class VirtualMachineDetector:
     __slots__ = []
 
     @staticmethod
-    def ask_proc_sysinfo():
-        lookfor = "VM00 Control Program"
-        with open_text("%s/sysinfo" % get_procfs_path()) as f:
-            for line in f:
-                if line.startswith(lookfor):
-                    if "z/VM" in line.partition(lookfor)[2]:
-                        return VIRTUALIZATION_ZVM
-                    return
-
-    @staticmethod
     def ask_dmi():
         files = [
             # Test this before sys_vendor to detect KVM over QEMU
@@ -1650,16 +1640,26 @@ class VirtualMachineDetector:
                     return vendor_table[out]
 
     @staticmethod
+    def ask_proc_sysinfo():
+        lookfor = "VM00 Control Program"
+        with open_text("%s/sysinfo" % get_procfs_path()) as f:
+            for line in f:
+                if line.startswith(lookfor):
+                    if "z/VM" in line.partition(lookfor)[2]:
+                        return VIRTUALIZATION_ZVM
+                    return
+
+    @staticmethod
     def guess(self):
         ret = None
+        if ret is None:
+            ret = self.ask_dmi()
         if ret is None:
             try:
                 ret = self.ask_proc_sysinfo()
             except (IOError, OSError) as err:
                 debug(err)
-        if ret is None:
-            ret = self.ask_dmi()
-        return ret
+        return ret or ""
 
 
 # =====================================================================
