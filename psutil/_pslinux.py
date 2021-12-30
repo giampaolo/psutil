@@ -1627,20 +1627,21 @@ VIRT_NAMES_MAPPING = {
 
 class VirtualMachineDetector:
 
-    __slots__ = []
+    __slots__ = ["procfs_path"]
+
+    def __init__(self):
+        self.procfs_path = get_procfs_path()
 
     # --- containers
 
-    @staticmethod
-    def ask_proc_sys_kernel_osrelease():
-        with open_text('%s/sys/kernel/osrelease' % get_procfs_path()) as f:
+    def ask_proc_sys_kernel_osrelease(self):
+        with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
             data = f.read().strip()
             if "Microsoft" in data or "WSL" in data:
                 return VIRTUALIZATION_WSL
 
-    @staticmethod
-    def ask_proc_status():
-        with open_text('%s/self/status' % get_procfs_path()) as f:
+    def ask_proc_status(self):
+        with open_text('%s/self/status' % self.procfs_path) as f:
             data = f.read()
         m = re.search(r'TracerPid:\t(\d+)', data)
         if m:
@@ -1649,26 +1650,22 @@ class VirtualMachineDetector:
             if pname == "proot":
                 return VIRTUALIZATION_PROOT
 
-    @staticmethod
-    def ask_run_host_container_manager():
+    def ask_run_host_container_manager(self):
         with open_text("/run/host/container-manager") as f:
             data = f.read().strip()
         return VIRT_NAMES_MAPPING.get(data, None)
 
-    @staticmethod
-    def ask_run_systemd_container():
+    def ask_run_systemd_container(self):
         with open_text("/run/systemd/container") as f:
             data = f.read().strip()
         return VIRT_NAMES_MAPPING.get(data, None)
 
-    @staticmethod
-    def ask_pid_1_environ():
+    def ask_pid_1_environ(self):
         env = Process(1).environ()
         if "container" in env:
             return VIRT_NAMES_MAPPING.get(env["container"], None)
 
-    @staticmethod
-    def look_for_known_files():
+    def look_for_known_files(self):
         if os.path.exists("/run/.containerenv"):
             return VIRTUALIZATION_PODMAN
         if os.path.exists("/.dockerenv"):
@@ -1676,8 +1673,7 @@ class VirtualMachineDetector:
 
     # --- vms
 
-    @staticmethod
-    def ask_sys_class_dmi():
+    def ask_sys_class_dmi(self):
         files = [
             # Test this before sys_vendor to detect KVM over QEMU
             "/sys/class/dmi/id/product_name",
@@ -1705,40 +1701,48 @@ class VirtualMachineDetector:
             if out and out in vendor_table:
                 return vendor_table[out]
 
-    @staticmethod
-    def ask_proc_cpuinfo():
-        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+    def ask_proc_cpuinfo(self):
+        with open_binary('%s/cpuinfo' % self.procfs_path) as f:
             for line in f:
                 if line.lower().startswith(b"vendor_id"):
                     if line.partition(b":")[2].strip() == b"User Mode Linux":
                         return VIRTUALIZATION_UML
 
-    @staticmethod
-    def ask_proc_sysinfo():
+    def ask_proc_sysinfo(self):
         lookfor = "VM00 Control Program"
-        with open_text("%s/sysinfo" % get_procfs_path()) as f:
+        with open_text("%s/sysinfo" % self.procfs_path) as f:
             for line in f:
                 if line.startswith(lookfor):
                     if "z/VM" in line.partition(lookfor)[2]:
                         return VIRTUALIZATION_ZVM
                     return
 
-    @staticmethod
-    def ask_cpuid():
+    def ask_cpuid(self):
         hypervisor = cext.linux_cpuid()
         if hypervisor:
             return VIRT_NAMES_MAPPING.get(hypervisor, None)
 
-    @staticmethod
-    def ask_proc_xen():
-        if os.path.exists('%s/xen' % get_procfs_path()):
+    def ask_proc_xen(self):
+        if os.path.exists('%s/xen' % self.procfs_path):
             return VIRTUALIZATION_XEN
 
-    @staticmethod
-    def ask_sys_hypervisor_type():
+    def ask_sys_hypervisor_type(self):
         with open_text("/sys/hypervisor/type") as f:
             if f.read().strip() == "xen":
                 return VIRTUALIZATION_XEN
+            else:
+                return VIRTUALIZATION_VM_OTHER
+
+    def ask_proc_devtree_hypervisor(self):
+        path = "%s/device-tree/hypervisor/compatible" % self.procfs_path
+        with open_text(path) as f:
+            data = f.read().strip()
+            if data == "linux,kvm":
+                return VIRTUALIZATION_KVM
+            elif data == "xen":
+                return VIRTUALIZATION_XEN
+            elif data == "vmware":
+                return VIRTUALIZATION_VMWARE
             else:
                 return VIRTUALIZATION_VM_OTHER
 

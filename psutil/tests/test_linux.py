@@ -2346,6 +2346,18 @@ class TestVirtualization(PsutilTestCase):
         with mock_open_content("/sys/hypervisor/type", "something-else"):
             self.assertEqual(self.vmd.ask_sys_hypervisor_type(), "vm-other")
 
+    def test_ask_proc_devtree_hypervisor(self):
+        path = "/proc/device-tree/hypervisor/compatible"
+        with mock_open_content(path, "linux,kvm"):
+            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "kvm")
+        with mock_open_content(path, "xen"):
+            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "xen")
+        with mock_open_content(path, "vmware"):
+            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "vmware")
+        with mock_open_content(path, "?!?"):
+            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(),
+                             "vm-other")
+
 
 # =====================================================================
 # --- test utils
