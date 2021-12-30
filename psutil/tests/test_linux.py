@@ -2358,6 +2358,18 @@ class TestVirtualization(PsutilTestCase):
             self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(),
                              "vm-other")
 
+    def test_ask_proc_devtree(self):
+        def exists(path):
+            if path in ("/proc/device-tree/ibm,partition-name",
+                        "/proc/device-tree/hmc-managed?"):
+                return True
+            else:
+                return orig_fun(path)
+
+        orig_fun = os.path.exists
+        with mock.patch("os.path.exists", create=True, side_effect=exists):
+            self.assertEqual(self.vmd.ask_proc_devtree(), "powervm")
+
 
 # =====================================================================
 # --- test utils

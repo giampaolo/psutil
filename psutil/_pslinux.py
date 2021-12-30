@@ -1602,6 +1602,7 @@ VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_PODMAN = "podman"
+VIRTUALIZATION_POWERVM = "powervm"
 VIRTUALIZATION_PROOT = "proot"
 VIRTUALIZATION_QEMU = "qemu"
 VIRTUALIZATION_RKT = "rkt"
@@ -1746,6 +1747,13 @@ class VirtualMachineDetector:
             else:
                 return VIRTUALIZATION_VM_OTHER
 
+    def ask_proc_devtree(self):
+        base = "%s/device-tree" % self.procfs_path
+        if os.path.exists("%s/ibm,partition-name" % base):
+            if os.path.exists("%s/hmc-managed?" % base):
+                if not os.path.exists("%s/chosen/qemu,graphic-width" % base):
+                    return VIRTUALIZATION_POWERVM
+
     def guess(self):
         # order matters
         funcs = [
@@ -1762,6 +1770,8 @@ class VirtualMachineDetector:
             self.ask_proc_sysinfo,  # zvm
             self.ask_cpuid,
             self.ask_proc_xen,  # xen
+            self.ask_sys_hypervisor_type,   # xen / vm-other
+            self.ask_proc_devtree_hypervisor,
         ]
         ret = None
         for func in funcs:
