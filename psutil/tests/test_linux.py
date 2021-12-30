@@ -2311,6 +2311,21 @@ class TestVirtualization(PsutilTestCase):
         self.assertIsInstance(cext.linux_cpuid(), str)
         self.vmd.ask_cpuid()
 
+        mapping = {
+            "XenVMMXenVMM": "xen",
+            "KVMKVMKVM": "kvm",
+            "TCGTCGTCGTCG": "qemu",
+            "VMwareVMware": "vmware",
+            "Microsoft Hv": "microsoft",
+            "bhyve bhyve ": "bhyve",
+            "QNXQVMBSQG": "qnx",
+            "ACRNACRNACRN": "acrn",
+        }
+        for k, v in mapping.items():
+            with mock.patch("psutil._pslinux.cext.linux_cpuid",
+                            return_value=k):
+                self.assertEqual(self.vmd.ask_cpuid(), v)
+
     def test_ask_proc_xen(self):
         with mock_os_path_exists("/proc/xen", True):
             self.assertEqual(self.vmd.ask_proc_xen(), "xen")

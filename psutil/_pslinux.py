@@ -1592,6 +1592,7 @@ def boot_time():
 # =====================================================================
 
 
+VIRTUALIZATION_ACRN = "acrn"
 VIRTUALIZATION_AMAZON = "amazon"
 VIRTUALIZATION_BHYVE = "bhyve"
 VIRTUALIZATION_BOCHS = "bochs"
@@ -1599,12 +1600,14 @@ VIRTUALIZATION_DOCKER = "docker"
 VIRTUALIZATION_KVM = "kvm"
 VIRTUALIZATION_LXC = "lxc"
 VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
+VIRTUALIZATION_MICROSOFT = "microsoft"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_PODMAN = "podman"
 VIRTUALIZATION_POWERVM = "powervm"
 VIRTUALIZATION_PROOT = "proot"
 VIRTUALIZATION_QEMU = "qemu"
+VIRTUALIZATION_QNX = "qnx"
 VIRTUALIZATION_RKT = "rkt"
 VIRTUALIZATION_SYSTEMD_NSPAWN = "systemd-nspawn"
 VIRTUALIZATION_UML = "uml"
@@ -1623,6 +1626,17 @@ VIRT_NAMES_MAPPING = {
     "rkt": VIRTUALIZATION_RKT,
     "systemd-nspawn": VIRTUALIZATION_SYSTEMD_NSPAWN,
     "wsl": VIRTUALIZATION_WSL,
+}
+
+CPUID_VENDOR_TABLE = {
+    "XenVMMXenVMM": VIRTUALIZATION_XEN,
+    "KVMKVMKVM": VIRTUALIZATION_KVM,
+    "TCGTCGTCGTCG": VIRTUALIZATION_QEMU,
+    "VMwareVMware": VIRTUALIZATION_VMWARE,
+    "Microsoft Hv": VIRTUALIZATION_MICROSOFT,
+    "bhyve bhyve ": VIRTUALIZATION_BHYVE,
+    "QNXQVMBSQG": VIRTUALIZATION_QNX,
+    "ACRNACRNACRN": VIRTUALIZATION_ACRN,
 }
 
 
@@ -1710,9 +1724,9 @@ class VirtualMachineDetector:
                         return VIRTUALIZATION_UML
 
     def ask_cpuid(self):
-        hypervisor = cext.linux_cpuid()
-        if hypervisor:
-            return VIRT_NAMES_MAPPING.get(hypervisor, None)
+        vendor = cext.linux_cpuid()
+        if vendor and vendor in CPUID_VENDOR_TABLE:
+            return CPUID_VENDOR_TABLE[vendor]
 
     def ask_proc_xen(self):
         if os.path.exists('%s/xen' % self.procfs_path):
