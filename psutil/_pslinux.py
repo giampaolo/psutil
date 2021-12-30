@@ -1648,6 +1648,8 @@ class VirtualMachineDetector:
     """This class is basically a translation of `systemd-detect-virt`
     CLI tool from C to Python:
     https://github.com/systemd/systemd/blob/main/src/basic/virt.c
+    In here we try to respect the exact order in which the various
+    'guess' routines are called.
     """
 
     __slots__ = ["procfs_path"]
@@ -1720,9 +1722,16 @@ class VirtualMachineDetector:
             return self._container_from_string(env["container"])
 
     def look_for_known_files(self):
+        # Check for existence of some well-known files. We only do this
+        # after checking for other specific container managers, otherwise
+        # we risk mistaking another container manager for Docker: the
+        # /.dockerenv file could inadvertently end up in a file system image.
         if os.path.exists("/run/.containerenv"):
+            # https://github.com/containers/podman/issues/6192
+            # https://github.com/containers/podman/issues/3586#issuecomment-661918679
             return VIRTUALIZATION_PODMAN
         if os.path.exists("/.dockerenv"):
+            # https://github.com/moby/moby/issues/18355
             return VIRTUALIZATION_DOCKER
 
     # --- vms
