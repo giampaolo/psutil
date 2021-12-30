@@ -2261,6 +2261,19 @@ class TestVirtualization(PsutilTestCase):
     def setUp(self):
         self.vmd = VirtualMachineDetector()
 
+    def test_ask_if_openvz(self):
+        def exists(path):
+            if path == "/proc/vz":
+                return True
+            elif path == "/proc/bc":
+                return False
+            else:
+                return orig_fun(path)
+
+        orig_fun = os.path.exists
+        with mock.patch("os.path.exists", create=True, side_effect=exists):
+            self.assertEqual(self.vmd.ask_if_openvz(), "openvz")
+
     def test_ask_if_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
             self.assertEqual(self.vmd.ask_if_wsl(), "wsl")

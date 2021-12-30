@@ -182,6 +182,7 @@ VIRTUALIZATION_KVM = "kvm"
 VIRTUALIZATION_LXC = "lxc"
 VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
 VIRTUALIZATION_MICROSOFT = "microsoft"
+VIRTUALIZATION_OPENVZ = "openvz"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_PODMAN = "podman"
@@ -1666,6 +1667,11 @@ class VirtualMachineDetector:
         for k, v in mapping.items():
             if s.lower().startswith(k):
                 return v
+
+    def ask_if_openvz(self):
+        if os.path.exists("%s/vz" % self.procfs_path):
+            if not os.path.exists("%s/bc" % self.procfs_path):
+                return VIRTUALIZATION_OPENVZ
 
     def ask_if_wsl(self):
         with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
