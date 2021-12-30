@@ -1830,7 +1830,15 @@ class VirtualMachineDetector:
                         return VIRTUALIZATION_KVM
 
     def guess(self):
-        # order matters
+        """There is a distinction between containers and VMs.
+        A "container" is typically "shared kernel virtualization", e.g. LXC.
+        A "vm" is "full hardware virtualization", e.g. VirtualBox.
+        If multiple virtualization solutions are used, only the innermost
+        is detected and identified. That means if both machine and
+        container virtualization are used in conjunction, only the latter
+        will be identified.
+        """
+        # order matters (FIFO)
         funcs = [
             # containers
             self.ask_if_openvz,
