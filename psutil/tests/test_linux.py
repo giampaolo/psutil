@@ -51,6 +51,7 @@ from psutil.tests import which
 
 
 if LINUX:
+    import psutil._psutil_linux as cext
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import VirtualMachineDetector
@@ -630,7 +631,6 @@ class TestSystemSwapMemory(PsutilTestCase):
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
-        import psutil._psutil_linux as cext
         _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
@@ -2258,45 +2258,42 @@ class TestProcessAgainstStatus(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestVirtualization(PsutilTestCase):
 
+    def setUp(self):
+        self.vmd = VirtualMachineDetector()
+
     def test_ask_proc_sys_kernel_osrelease(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_proc_sys_kernel_osrelease(), "wsl")
+            self.assertEqual(self.vmd.ask_proc_sys_kernel_osrelease(), "wsl")
 
     def test_ask_proc_status(self):
         with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_proc_status(), "proot")
+            self.assertEqual(self.vmd.ask_proc_status(), "proot")
 
     def test_ask_run_host_container_manager(self):
         with mock_open_content("/run/host/container-manager", "podman"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_run_host_container_manager(), "podman")
+            self.assertEqual(
+                self.vmd.ask_run_host_container_manager(), "podman")
 
     def test_ask_run_systemd_container(self):
         with mock_open_content("/run/systemd/container", "rkt"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_run_systemd_container(), "rkt")
+            self.assertEqual(self.vmd.ask_run_systemd_container(), "rkt")
 
     def test_ask_pid_1_environ(self):
         with mock.patch("psutil._pslinux.Process.environ",
                         return_value={"container": "docker"}):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_pid_1_environ(), "docker")
+            self.assertEqual(self.vmd.ask_pid_1_environ(), "docker")
 
     def test_look_for_known_files(self):
-        vm = VirtualMachineDetector()
         with mock_os_path_exists("/run/.containerenv", True):
-            self.assertEqual(vm.look_for_known_files(), "podman")
+            self.assertEqual(self.vmd.look_for_known_files(), "podman")
         with mock_os_path_exists("/.dockerenv", True):
-            self.assertEqual(vm.look_for_known_files(), "docker")
+            self.assertEqual(self.vmd.look_for_known_files(), "docker")
         with mock.patch("os.path.exists", return_value=False):
-            self.assertIsNone(vm.look_for_known_files())
+            self.assertIsNone(self.vmd.look_for_known_files())
 
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_sys_class_dmi(), "vmware")
+            self.assertEqual(self.vmd.ask_sys_class_dmi(), "vmware")
 
     def test_ask_proc_cpuinfo(self):
         with mock_open_content(
@@ -2308,8 +2305,7 @@ class TestVirtualization(PsutilTestCase):
                 model       : 94
                 model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
                 """).encode()):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_proc_cpuinfo(), "uml")
+            self.assertEqual(self.vmd.ask_proc_cpuinfo(), "uml")
 
     def test_ask_proc_sysinfo(self):
         with mock_open_content(
@@ -2334,14 +2330,11 @@ class TestVirtualization(PsutilTestCase):
                 VM00 CPUs Standby:    0
                 VM00 CPUs Reserved:   0
                 """)):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_proc_sysinfo(), "zvm")
+            self.assertEqual(self.vmd.ask_proc_sysinfo(), "zvm")
 
     def test_ask_cpuid(self):
-        import psutil._psutil_linux as cext
         self.assertIsInstance(cext.linux_cpuid(), str)
-        vm = VirtualMachineDetector()
-        vm.ask_cpuid()
+        self.vmd.ask_cpuid()
 
 
 # =====================================================================
