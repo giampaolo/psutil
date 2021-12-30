@@ -1796,7 +1796,6 @@ class VmDetector(_VirtualizationBase):
         if os.path.exists('%s/xen' % self.procfs_path):
             return VIRTUALIZATION_XEN
 
-    def ask_sys_hypervisor_type(self):
         with open_text("/sys/hypervisor/type") as f:
             if f.read().strip() == "xen":
                 return VIRTUALIZATION_XEN
@@ -1861,7 +1860,6 @@ def virtualization():
         vm.detect_uml,  # uml
         vm.ask_cpuid,
         vm.detect_xen,  # xen
-        vm.ask_sys_hypervisor_type,   # xen / vm-other
         vm.ask_proc_devtree_hypervisor,
         vm.detect_powervm,
         vm.detect_qemu,

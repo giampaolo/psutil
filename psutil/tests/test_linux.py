@@ -2363,11 +2363,11 @@ class TestVirtualizationVms(PsutilTestCase):
         with mock_os_path_exists("/proc/xen", True):
             self.assertEqual(self.detector.detect_xen(), "xen")
 
-    def test_ask_sys_hypervisor_type(self):
-        with mock_open_content("/sys/hypervisor/type", "xen"):
-            self.assertEqual(self.detector.ask_sys_hypervisor_type(), "xen")
-        with mock_open_content("/sys/hypervisor/type", "something-else"):
-            self.assertEqual(self.detector.ask_sys_hypervisor_type(), "vm-other")
+        with mock_os_path_exists("/proc/xen", False):
+            with mock_open_content("/sys/hypervisor/type", "xen"):
+                self.assertEqual(self.detector.detect_xen(), "xen")
+            with mock_open_content("/sys/hypervisor/type", "something-else"):
+                self.assertEqual(self.detector.detect_xen(), "vm-other")
 
     def test_ask_proc_devtree_hypervisor(self):
         path = "/proc/device-tree/hypervisor/compatible"
