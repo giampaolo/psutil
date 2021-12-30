@@ -2336,6 +2336,10 @@ class TestVirtualization(PsutilTestCase):
         self.assertIsInstance(cext.linux_cpuid(), str)
         self.vmd.ask_cpuid()
 
+    def test_ask_proc_xen(self):
+        with mock_os_path_exists("/proc/xen", True):
+            self.assertEqual(self.vmd.ask_proc_xen(), "xen")
+
 
 # =====================================================================
 # --- test utils

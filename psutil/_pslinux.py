@@ -1727,6 +1727,11 @@ class VirtualMachineDetector:
         if hypervisor:
             return VIRT_NAMES_MAPPING.get(hypervisor, None)
 
+    @staticmethod
+    def ask_proc_xen():
+        if os.path.exists('%s/xen' % get_procfs_path()):
+            return VIRTUALIZATION_XEN
+
     def guess(self):
         # order matters
         funcs = [
@@ -1742,6 +1747,7 @@ class VirtualMachineDetector:
             self.ask_proc_cpuinfo,  # uml
             self.ask_proc_sysinfo,  # zvm
             self.ask_cpuid,
+            self.ask_proc_xen,  # xen
         ]
         ret = None
         for func in funcs:
