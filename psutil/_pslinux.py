@@ -1659,8 +1659,7 @@ class VirtualMachineDetector:
 
     # --- containers
 
-    @staticmethod
-    def _container_from_string(s):
+    def _container_from_string(self, s):
         mapping = {
             "docker": VIRTUALIZATION_DOCKER,
             "lxc": VIRTUALIZATION_LXC,
@@ -1670,9 +1669,18 @@ class VirtualMachineDetector:
             "systemd-nspawn": VIRTUALIZATION_SYSTEMD_NSPAWN,
             "wsl": VIRTUALIZATION_WSL,
         }
+
+        if s == "oci":
+            # Some images hardcode container=oci, but OCI is not a specific
+            # container manager. # Try to detect one based on well-known
+            # files.
+            return self.look_for_known_files() or VIRTUALIZATION_VM_OTHER
+
         for k, v in mapping.items():
             if s.lower().startswith(k):
                 return v
+
+        return VIRTUALIZATION_VM_OTHER
 
     def ask_if_openvz(self):
         # /proc/vz exists in container and outside of the container,
