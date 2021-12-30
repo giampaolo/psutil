@@ -1618,16 +1618,6 @@ VIRTUALIZATION_ZVM = "zvm"
 
 VIRTUALIZATION_VM_OTHER = "vm-other"  # undefined, but there's a VM
 
-VIRT_NAMES_MAPPING = {
-    "docker": VIRTUALIZATION_DOCKER,
-    "lxc": VIRTUALIZATION_LXC,
-    "lxc-libvirt": VIRTUALIZATION_LXC_LIBVIRT,
-    "podman": VIRTUALIZATION_PODMAN,
-    "rkt": VIRTUALIZATION_RKT,
-    "systemd-nspawn": VIRTUALIZATION_SYSTEMD_NSPAWN,
-    "wsl": VIRTUALIZATION_WSL,
-}
-
 CPUID_VENDOR_TABLE = {
     "XenVMMXenVMM": VIRTUALIZATION_XEN,
     "KVMKVMKVM": VIRTUALIZATION_KVM,
@@ -1649,6 +1639,21 @@ class VirtualMachineDetector:
 
     # --- containers
 
+    @staticmethod
+    def _container_from_string(s):
+        mapping = {
+            "docker": VIRTUALIZATION_DOCKER,
+            "lxc": VIRTUALIZATION_LXC,
+            "lxc-libvirt": VIRTUALIZATION_LXC_LIBVIRT,
+            "podman": VIRTUALIZATION_PODMAN,
+            "rkt": VIRTUALIZATION_RKT,
+            "systemd-nspawn": VIRTUALIZATION_SYSTEMD_NSPAWN,
+            "wsl": VIRTUALIZATION_WSL,
+        }
+        for k, v in mapping.items():
+            if s.lower().startswith(k):
+                return v
+
     def ask_proc_sys_kernel_osrelease(self):
         with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
             data = f.read().strip()
@@ -1668,17 +1673,17 @@ class VirtualMachineDetector:
     def ask_run_host_container_manager(self):
         with open_text("/run/host/container-manager") as f:
             data = f.read().strip()
-        return VIRT_NAMES_MAPPING.get(data, None)
+            return self._container_from_string(data)
 
     def ask_run_systemd_container(self):
         with open_text("/run/systemd/container") as f:
             data = f.read().strip()
-        return VIRT_NAMES_MAPPING.get(data, None)
+            return self._container_from_string(data)
 
     def ask_pid_1_environ(self):
         env = Process(1).environ()
         if "container" in env:
-            return VIRT_NAMES_MAPPING.get(env["container"], None)
+            return self._container_from_string(env["container"])
 
     def look_for_known_files(self):
         if os.path.exists("/run/.containerenv"):
@@ -1690,7 +1695,6 @@ class VirtualMachineDetector:
 
     def ask_sys_class_dmi(self):
         files = [
-            # Test this before sys_vendor to detect KVM over QEMU
             "/sys/class/dmi/id/product_name",
             "/sys/class/dmi/id/sys_vendor",
             "/sys/class/dmi/id/board_vendor",
