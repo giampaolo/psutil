@@ -2323,8 +2323,7 @@ def users():
     return _psplatform.users()
 
 
-# Linux
-if hasattr(_psplatform, "virtualization"):
+if LINUX:
 
     def virtualization():
         return _psplatform.VirtualMachineDetector().guess()

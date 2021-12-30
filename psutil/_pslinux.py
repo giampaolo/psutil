@@ -1721,7 +1721,6 @@ class VirtualMachineDetector:
                         return VIRTUALIZATION_ZVM
                     return
 
-    @staticmethod
     def guess(self):
         # order matters
         funcs = [
