@@ -2327,7 +2327,7 @@ class TestVirtualizationVms(PsutilTestCase):
             self.assertEqual(self.detector.ask_sys_class_dmi(), "vmware")
             self.assertEqual(psutil.virtualization(), "vmware")
 
-    def test_ask_proc_cpuinfo(self):
+    def test_detect_uml(self):
         with mock_open_content(
             "/proc/cpuinfo",
             textwrap.dedent("""\
@@ -2337,7 +2337,7 @@ class TestVirtualizationVms(PsutilTestCase):
                 model       : 94
                 model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
                 """).encode()):
-            self.assertEqual(self.detector.ask_proc_cpuinfo(), "uml")
+            self.assertEqual(self.detector.detect_uml(), "uml")
             self.assertEqual(psutil.virtualization(), "uml")
 
     def test_ask_cpuid(self):

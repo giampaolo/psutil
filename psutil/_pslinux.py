@@ -1786,7 +1786,7 @@ class VmDetector:
                     debug("virtualization found in file %r" % file)
                     return v
 
-    def ask_proc_cpuinfo(self):
+    def detect_uml(self):
         with open_binary('%s/cpuinfo' % self.procfs_path) as f:
             for line in f:
                 if line.lower().startswith(b"vendor_id"):
@@ -1848,15 +1848,15 @@ def virtualization():
     funcs = [
         # containers
         container.detect_openvz,
-        container.detect_wsl,  # wsl
-        container.detect_proot,  # proot
+        container.detect_wsl,
+        container.detect_proot,
         container.ask_run_host,
         container.ask_run_systemd,
         container.ask_pid_1,
         container.look_for_known_files,  # podman / docker
         # vms
         vm.ask_sys_class_dmi,
-        vm.ask_proc_cpuinfo,  # uml
+        vm.detect_uml,  # uml
         vm.ask_cpuid,
         vm.ask_proc_xen,  # xen
         vm.ask_sys_hypervisor_type,   # xen / vm-other
