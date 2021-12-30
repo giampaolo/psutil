@@ -1706,11 +1706,15 @@ class VirtualMachineDetector:
             return self._container_from_string(data)
 
     def ask_run_systemd_container(self):
+        # ...Otherwise PID 1 might have dropped this information into a
+        # file in /run. This is better than accessing /proc/1/environ,
+        # since we don't need CAP_SYS_PTRACE for that.
         with open_text("/run/systemd/container") as f:
             data = f.read().strip()
             return self._container_from_string(data)
 
     def ask_pid_1_environ(self):
+        # Only works if running as root or if we have CAP_SYS_PTRACE.
         env = Process(1).environ()
         if "container" in env:
             return self._container_from_string(env["container"])
