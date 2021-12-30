@@ -1595,16 +1595,32 @@ def boot_time():
 VIRTUALIZATION_AMAZON = "amazon"
 VIRTUALIZATION_BHYVE = "bhyve"
 VIRTUALIZATION_BOCHS = "bochs"
+VIRTUALIZATION_DOCKER = "docker"
 VIRTUALIZATION_KVM = "kvm"
+VIRTUALIZATION_LXC = "lxc"
+VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
+VIRTUALIZATION_PODMAN = "podman"
 VIRTUALIZATION_PROOT = "proot"
 VIRTUALIZATION_QEMU = "qemu"
+VIRTUALIZATION_RKT = "rkt"
+VIRTUALIZATION_SYSTEMD_NSPAWN = "systemd-nspawn"
 VIRTUALIZATION_UML = "uml"
 VIRTUALIZATION_VMWARE = "vmware"
 VIRTUALIZATION_WSL = "wsl"
 VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
+
+VIRT_NAMES_MAPPING = {
+    "lxc": VIRTUALIZATION_LXC,
+    "lxc-libvirt": VIRTUALIZATION_LXC_LIBVIRT,
+    "systemd-nspawn": VIRTUALIZATION_SYSTEMD_NSPAWN,
+    "docker": VIRTUALIZATION_DOCKER,
+    "podman": VIRTUALIZATION_PODMAN,
+    "rkt": VIRTUALIZATION_RKT,
+    "wsl": VIRTUALIZATION_WSL,
+}
 
 
 class VirtualMachineDetector:
@@ -1632,6 +1648,12 @@ class VirtualMachineDetector:
             else:
                 if proc_name == "proot":
                     return VIRTUALIZATION_PROOT
+
+    @staticmethod
+    def ask_run_host_container_manager():
+        with open_text("/run/host/container-manager") as f:
+            data = f.read().strip()
+        return VIRT_NAMES_MAPPING.get(data, None)
 
     @staticmethod
     def ask_sys_class_dmi():
@@ -1685,6 +1707,8 @@ class VirtualMachineDetector:
         # order matters
         funcs = [
             self.ask_proc_sys_kernel_osrelease,
+            self.ask_proc_status,
+            self.ask_run_host_container_manager,
             self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,
             self.ask_proc_sysinfo
