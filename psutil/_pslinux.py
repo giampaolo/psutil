@@ -1660,6 +1660,7 @@ class VirtualMachineDetector:
     # --- containers
 
     def _container_from_string(self, s):
+        assert s, repr(s)
         mapping = {
             "docker": VIRTUALIZATION_DOCKER,
             "lxc": VIRTUALIZATION_LXC,
@@ -1751,7 +1752,7 @@ class VirtualMachineDetector:
             "/sys/class/dmi/id/board_vendor",
             "/sys/class/dmi/id/bios_vendor",
         ]
-        vendor_table = {
+        vendors_table = {
             "KVM": VIRTUALIZATION_KVM,
             "Amazon EC2": VIRTUALIZATION_AMAZON,
             "QEMU": VIRTUALIZATION_QEMU,
@@ -1768,8 +1769,10 @@ class VirtualMachineDetector:
         }
         for file in files:
             out = cat(file, fallback="", binary=False).strip()
-            if out and out in vendor_table:
-                return vendor_table[out]
+            for k, v in vendors_table.items():
+                if out.startswith(k):
+                    debug("virtualization found in file %r" % file)
+                    return v
 
     def ask_proc_cpuinfo(self):
         with open_binary('%s/cpuinfo' % self.procfs_path) as f:
