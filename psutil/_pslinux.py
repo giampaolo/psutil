@@ -1664,6 +1664,13 @@ class VirtualMachineDetector:
             return VIRT_NAMES_MAPPING.get(env["container"], None)
 
     @staticmethod
+    def look_for_known_files():
+        if os.path.exists("/run/.containerenv"):
+            return VIRTUALIZATION_PODMAN
+        if os.path.exists("/.dockerenv"):
+            return VIRTUALIZATION_DOCKER
+
+    @staticmethod
     def ask_sys_class_dmi():
         files = [
             # Test this before sys_vendor to detect KVM over QEMU
@@ -1719,6 +1726,7 @@ class VirtualMachineDetector:
             self.ask_run_host_container_manager,
             self.ask_run_systemd_container,
             self.ask_pid_1_environ,
+            self.look_for_known_files,
             self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,
             self.ask_proc_sysinfo

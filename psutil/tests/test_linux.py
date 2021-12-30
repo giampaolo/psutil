@@ -240,6 +240,19 @@ def mock_open_exception(for_path, exc):
         yield m
 
 
+@contextlib.contextmanager
+def mock_os_path_exists(for_path, retval):
+    def callback(path):
+        if path == for_path:
+            return retval
+        else:
+            return orig_fun(path)
+
+    orig_fun = os.path.exists
+    with mock.patch("os.path.exists", create=True, side_effect=callback) as m:
+        yield m
+
+
 # =====================================================================
 # --- system virtual memory
 # =====================================================================
@@ -2270,6 +2283,15 @@ class TestVirtualization(PsutilTestCase):
                         return_value={"container": "docker"}):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_pid_1_environ(), "docker")
+
+    def test_look_for_known_files(self):
+        vm = VirtualMachineDetector()
+        with mock_os_path_exists("/run/.containerenv", True):
+            self.assertEqual(vm.look_for_known_files(), "podman")
+        with mock_os_path_exists("/.dockerenv", True):
+            self.assertEqual(vm.look_for_known_files(), "docker")
+        with mock.patch("os.path.exists", return_value=False):
+            self.assertIsNone(vm.look_for_known_files())
 
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
