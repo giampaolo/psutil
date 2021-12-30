@@ -1592,6 +1592,40 @@ def boot_time():
 # =====================================================================
 
 
+VIRTUALIZATION_ZVM = "zvm"
+
+
+class VirtualMachineDetector:
+
+    __slots__ = []
+
+    @staticmethod
+    def ask_proc_sysinfo():
+        path = "%s/sysinfo" % get_procfs_path()
+        needle = "VM00 Control Program"
+        with open_text(path) as f:
+            for line in f:
+                if line.startswith(needle):
+                    if "z/VM" in line.partition(needle)[2]:
+                        return VIRTUALIZATION_ZVM
+                    return
+
+    @staticmethod
+    def guess(self):
+        ret = None
+        if ret is None:
+            try:
+                ret = self.ask_proc_sysinfo()
+            except (IOError, OSError) as err:
+                debug(err)
+        return ret
+
+
+# =====================================================================
+# --- processes
+# =====================================================================
+
+
 def pids():
     """Returns a list of PIDs currently running on the system."""
     return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]

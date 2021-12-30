@@ -2323,6 +2323,13 @@ def users():
     return _psplatform.users()
 
 
+# Linux
+if hasattr(_psplatform, "virtualization"):
+
+    def virtualization():
+        return _psplatform.VirtualMachineDetector().guess()
+
+
 # =====================================================================
 # --- Windows services
 # =====================================================================

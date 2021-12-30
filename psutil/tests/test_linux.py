@@ -53,6 +53,7 @@ from psutil.tests import which
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
+    from psutil._pslinux import VirtualMachineDetector
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
 
@@ -2235,6 +2236,40 @@ class TestProcessAgainstStatus(PsutilTestCase):
             assert not m.called
         else:
             assert m.called
+
+# =====================================================================
+# --- virtualization
+# =====================================================================
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestVirtualization(PsutilTestCase):
+
+    def test_ask_proc_sysinfo(self):
+        with mock_open_content(
+            '/proc/sysinfo',
+            textwrap.dedent("""\
+                Manufacturer:         IBM
+                ...
+                CPUs Total:           45
+                ...
+                LPAR Number:          31
+                ...
+                LPAR Name:            LP000031
+                ...
+                LPAR Extended Name:   Partition 31 Test System
+                LPAR UUID:            93724168-fda3-429b-8b28-a5d245dcb3ff
+                ...
+                VM00 Name:            VM310012
+                VM00 Control Program: z/VM    6.4.0
+                VM00 Adjustment:      83
+                VM00 CPUs Total:      2
+                VM00 CPUs Configured: 2
+                VM00 CPUs Standby:    0
+                VM00 CPUs Reserved:   0
+                """)):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_proc_sysinfo(), "zvm")
 
 
 # =====================================================================
