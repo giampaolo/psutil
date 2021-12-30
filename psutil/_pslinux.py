@@ -1658,6 +1658,12 @@ class VirtualMachineDetector:
         return VIRT_NAMES_MAPPING.get(data, None)
 
     @staticmethod
+    def ask_pid_1_environ():
+        env = Process(1).environ()
+        if "container" in env:
+            return VIRT_NAMES_MAPPING.get(env["container"], None)
+
+    @staticmethod
     def ask_sys_class_dmi():
         files = [
             # Test this before sys_vendor to detect KVM over QEMU
@@ -1712,6 +1718,7 @@ class VirtualMachineDetector:
             self.ask_proc_status,
             self.ask_run_host_container_manager,
             self.ask_run_systemd_container,
+            self.ask_pid_1_environ,
             self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,
             self.ask_proc_sysinfo
