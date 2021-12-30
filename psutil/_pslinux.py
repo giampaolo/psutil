@@ -1754,6 +1754,9 @@ class VirtualMachineDetector:
                 if not os.path.exists("%s/chosen/qemu,graphic-width" % base):
                     return VIRTUALIZATION_POWERVM
 
+        if "fw-cfg" in os.listdir("%s/device-tree" % self.procfs_path):
+            return VIRTUALIZATION_QEMU
+
     def guess(self):
         # order matters
         funcs = [

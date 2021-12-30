@@ -2370,6 +2370,10 @@ class TestVirtualization(PsutilTestCase):
         with mock.patch("os.path.exists", create=True, side_effect=exists):
             self.assertEqual(self.vmd.ask_proc_devtree(), "powervm")
 
+        # check for qemu
+        with mock.patch("os.listdir", return_value=["fw-cfg"]):
+            self.assertEqual(self.vmd.ask_proc_devtree(), "qemu")
+
 
 # =====================================================================
 # --- test utils
