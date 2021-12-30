@@ -2337,6 +2337,12 @@ class TestVirtualization(PsutilTestCase):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_proc_sysinfo(), "zvm")
 
+    def test_ask_cpuid(self):
+        import psutil._psutil_linux as cext
+        self.assertIsInstance(cext.linux_cpuid(), str)
+        vm = VirtualMachineDetector()
+        vm.ask_cpuid()
+
 
 # =====================================================================
 # --- test utils

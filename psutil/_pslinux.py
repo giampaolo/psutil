@@ -1721,6 +1721,12 @@ class VirtualMachineDetector:
                         return VIRTUALIZATION_ZVM
                     return
 
+    @staticmethod
+    def ask_cpuid():
+        hypervisor = cext.linux_cpuid()
+        if hypervisor:
+            return VIRT_NAMES_MAPPING.get(hypervisor, None)
+
     def guess(self):
         # order matters
         funcs = [
@@ -1734,13 +1740,15 @@ class VirtualMachineDetector:
             # vms
             self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,  # uml
-            self.ask_proc_sysinfo  # zvm
+            self.ask_proc_sysinfo,  # zvm
+            self.ask_cpuid,
         ]
         ret = None
         for func in funcs:
             try:
                 ret = func()
                 if ret:
+                    debug("virtualization() determined via %r" % func.__name__)
                     break
             except (IOError, OSError) as err:
                 debug(err)

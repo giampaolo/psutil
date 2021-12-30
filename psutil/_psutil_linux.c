@@ -25,6 +25,10 @@
 #include <linux/if.h>
 #include <sys/resource.h>
 
+#if defined(__i386__) || defined(__x86_64__)
+    #include <cpuid.h>
+#endif
+
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
     #include <linux/types.h>
@@ -468,6 +472,40 @@ error:
 }
 
 
+static PyObject *
+psutil_linux_cpuid(PyObject *self, PyObject *args) {
+#if defined(__i386__) || defined(__x86_64__)
+    // CPUID is a x86 specific interface.
+    uint32_t eax, ebx, ecx, edx;
+    int hypervisor;
+    union {
+        uint32_t sig32[3];
+        char text[13];
+    } sig = {};
+
+    // First detect whether there is a hypervisor.
+    // https://lwn.net/Articles/301888
+    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0) {
+        psutil_debug("__get_cpuid() failed");
+        return Py_BuildValue("s", "");
+    }
+
+    hypervisor = ecx & 0x80000000U;
+
+    if (hypervisor) {
+        // There is a hypervisor, see what it is.
+        __cpuid(0x40000000U, eax, ebx, ecx, edx);
+        sig.sig32[0] = ebx;
+        sig.sig32[1] = ecx;
+        sig.sig32[2] = edx;
+        return Py_BuildValue("s", sig.text);
+    }
+#endif
+
+    return Py_BuildValue("s", "");
+}
+
+
 /*
  * Module init.
  */
@@ -502,6 +540,9 @@ static PyMethodDef mod_methods[] = {
 
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
+    {"linux_cpuid", psutil_linux_cpuid, METH_VARARGS,
+     "A wrapper around __get_cpuid()."},
+
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,
      "Enable or disable PSUTIL_DEBUG messages"},
