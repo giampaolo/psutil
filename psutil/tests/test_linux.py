@@ -2260,6 +2260,11 @@ class TestVirtualization(PsutilTestCase):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_run_host_container_manager(), "podman")
 
+    def ask_run_systemd_container(self):
+        with mock_open_content("/run/systemd/container", "rkt"):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_run_systemd_container(), "rkt")
+
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
             vm = VirtualMachineDetector()
