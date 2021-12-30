@@ -1627,6 +1627,8 @@ class VirtualMachineDetector:
 
     __slots__ = []
 
+    # --- containers
+
     @staticmethod
     def ask_proc_sys_kernel_osrelease():
         with open_text('%s/sys/kernel/osrelease' % get_procfs_path()) as f:
@@ -1669,6 +1671,8 @@ class VirtualMachineDetector:
             return VIRTUALIZATION_PODMAN
         if os.path.exists("/.dockerenv"):
             return VIRTUALIZATION_DOCKER
+
+    # --- vms
 
     @staticmethod
     def ask_sys_class_dmi():
