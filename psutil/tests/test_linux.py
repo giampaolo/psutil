@@ -2250,6 +2250,11 @@ class TestVirtualization(PsutilTestCase):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_proc_sys_kernel_osrelease(), "wsl")
 
+    def test_ask_proc_status(self):
+        with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_proc_status(), "proot")
+
     def test_ask_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
             vm = VirtualMachineDetector()

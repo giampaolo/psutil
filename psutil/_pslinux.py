@@ -1598,6 +1598,7 @@ VIRTUALIZATION_BOCHS = "bochs"
 VIRTUALIZATION_KVM = "kvm"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
+VIRTUALIZATION_PROOT = "proot"
 VIRTUALIZATION_QEMU = "qemu"
 VIRTUALIZATION_UML = "uml"
 VIRTUALIZATION_VMWARE = "vmware"
@@ -1616,6 +1617,21 @@ class VirtualMachineDetector:
             data = f.read().strip()
             if "Microsoft" in data or "WSL" in data:
                 return VIRTUALIZATION_WSL
+
+    @staticmethod
+    def ask_proc_status():
+        with open_text('%s/self/status' % get_procfs_path()) as f:
+            data = f.read()
+        m = re.search(r'TracerPid:\t(\d+)', data)
+        if m:
+            tracer_pid = int(m.group(1))
+            try:
+                proc_name = Process(tracer_pid).name()
+            except (NoSuchProcess, AccessDenied):
+                pass
+            else:
+                if proc_name == "proot":
+                    return VIRTUALIZATION_PROOT
 
     @staticmethod
     def ask_dmi():
