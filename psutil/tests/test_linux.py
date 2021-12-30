@@ -2307,31 +2307,6 @@ class TestVirtualization(PsutilTestCase):
                 """).encode()):
             self.assertEqual(self.vmd.ask_proc_cpuinfo(), "uml")
 
-    def test_ask_proc_sysinfo(self):
-        with mock_open_content(
-            "/proc/sysinfo",
-            textwrap.dedent("""\
-                Manufacturer:         IBM
-                ...
-                CPUs Total:           45
-                ...
-                LPAR Number:          31
-                ...
-                LPAR Name:            LP000031
-                ...
-                LPAR Extended Name:   Partition 31 Test System
-                LPAR UUID:            93724168-fda3-429b-8b28-a5d245dcb3ff
-                ...
-                VM00 Name:            VM310012
-                VM00 Control Program: z/VM    6.4.0
-                VM00 Adjustment:      83
-                VM00 CPUs Total:      2
-                VM00 CPUs Configured: 2
-                VM00 CPUs Standby:    0
-                VM00 CPUs Reserved:   0
-                """)):
-            self.assertEqual(self.vmd.ask_proc_sysinfo(), "zvm")
-
     def test_ask_cpuid(self):
         self.assertIsInstance(cext.linux_cpuid(), str)
         self.vmd.ask_cpuid()
@@ -2373,6 +2348,31 @@ class TestVirtualization(PsutilTestCase):
         # check for qemu
         with mock.patch("os.listdir", return_value=["fw-cfg"]):
             self.assertEqual(self.vmd.ask_proc_devtree(), "qemu")
+
+    def test_ask_proc_sysinfo(self):
+        with mock_open_content(
+            "/proc/sysinfo",
+            textwrap.dedent("""\
+                Manufacturer:         IBM
+                ...
+                CPUs Total:           45
+                ...
+                LPAR Number:          31
+                ...
+                LPAR Name:            LP000031
+                ...
+                LPAR Extended Name:   Partition 31 Test System
+                LPAR UUID:            93724168-fda3-429b-8b28-a5d245dcb3ff
+                ...
+                VM00 Name:            VM310012
+                VM00 Control Program: z/VM    6.4.0
+                VM00 Adjustment:      83
+                VM00 CPUs Total:      2
+                VM00 CPUs Configured: 2
+                VM00 CPUs Standby:    0
+                VM00 CPUs Reserved:   0
+                """)):
+            self.assertEqual(self.vmd.ask_proc_sysinfo(), "zvm")
 
 
 # =====================================================================

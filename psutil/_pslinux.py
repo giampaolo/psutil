@@ -1709,15 +1709,6 @@ class VirtualMachineDetector:
                     if line.partition(b":")[2].strip() == b"User Mode Linux":
                         return VIRTUALIZATION_UML
 
-    def ask_proc_sysinfo(self):
-        lookfor = "VM00 Control Program"
-        with open_text("%s/sysinfo" % self.procfs_path) as f:
-            for line in f:
-                if line.startswith(lookfor):
-                    if "z/VM" in line.partition(lookfor)[2]:
-                        return VIRTUALIZATION_ZVM
-                    return
-
     def ask_cpuid(self):
         hypervisor = cext.linux_cpuid()
         if hypervisor:
@@ -1757,6 +1748,15 @@ class VirtualMachineDetector:
         if "fw-cfg" in os.listdir("%s/device-tree" % self.procfs_path):
             return VIRTUALIZATION_QEMU
 
+    def ask_proc_sysinfo(self):
+        with open_text("%s/sysinfo" % self.procfs_path) as f:
+            for line in f:
+                if line.startswith("VM00 Control Program"):
+                    if "z/VM" in line.partition("VM00 Control Program")[2]:
+                        return VIRTUALIZATION_ZVM
+                    else:
+                        return VIRTUALIZATION_KVM
+
     def guess(self):
         # order matters
         funcs = [
@@ -1770,11 +1770,11 @@ class VirtualMachineDetector:
             # vms
             self.ask_sys_class_dmi,
             self.ask_proc_cpuinfo,  # uml
-            self.ask_proc_sysinfo,  # zvm
             self.ask_cpuid,
             self.ask_proc_xen,  # xen
             self.ask_sys_hypervisor_type,   # xen / vm-other
             self.ask_proc_devtree_hypervisor,
+            self.ask_proc_sysinfo,  # zvm
         ]
         ret = None
         for func in funcs:
