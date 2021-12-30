@@ -1644,20 +1644,26 @@ def boot_time():
 # =====================================================================
 
 
-class VirtualMachineDetector:
-    """This class is basically a translation of `systemd-detect-virt`
-    CLI tool from C to Python:
-    https://github.com/systemd/systemd/blob/main/src/basic/virt.c
-    In here we try to respect the exact order in which the various
-    'guess' routines are called.
-    """
+# The following is a translation of `systemd-detect-virt` CLI tool from
+# C to Python:
+# https://github.com/systemd/systemd/blob/main/src/basic/virt.c
+# In here we try to respect the exact order in which the various
+# 'guess' routines are called.
+# There is a distinction between containers and VMs.
+# A "container" is typically "shared kernel virtualization", e.g. LXC.
+# A "vm" is "full hardware virtualization", e.g. VirtualBox.
+# If multiple virtualization solutions are used, only the innermost
+# is detected and identified. That means if both machine and
+# container virtualization are used in conjunction, only the latter
+# will be identified.
+
+
+class ContainerDetector:
 
     __slots__ = ["procfs_path"]
 
     def __init__(self):
         self.procfs_path = get_procfs_path()
-
-    # --- containers
 
     def _container_from_string(self, s):
         assert s, repr(s)
@@ -1743,7 +1749,13 @@ class VirtualMachineDetector:
             # https://github.com/moby/moby/issues/18355
             return VIRTUALIZATION_DOCKER
 
-    # --- vms
+
+class VirtualMachineDetector:
+
+    __slots__ = ["procfs_path"]
+
+    def __init__(self):
+        self.procfs_path = get_procfs_path()
 
     def ask_sys_class_dmi(self):
         files = [
@@ -1829,46 +1841,40 @@ class VirtualMachineDetector:
                     else:
                         return VIRTUALIZATION_KVM
 
-    def guess(self):
-        """There is a distinction between containers and VMs.
-        A "container" is typically "shared kernel virtualization", e.g. LXC.
-        A "vm" is "full hardware virtualization", e.g. VirtualBox.
-        If multiple virtualization solutions are used, only the innermost
-        is detected and identified. That means if both machine and
-        container virtualization are used in conjunction, only the latter
-        will be identified.
-        """
-        # order matters (FIFO)
-        funcs = [
-            # containers
-            self.ask_if_openvz,
-            self.ask_if_wsl,  # wsl
-            self.ask_if_proot,  # proot
-            self.ask_run_host_container_manager,
-            self.ask_run_systemd_container,
-            self.ask_pid_1_environ,
-            self.look_for_known_files,  # podman / docker
-            # vms
-            self.ask_sys_class_dmi,
-            self.ask_proc_cpuinfo,  # uml
-            self.ask_cpuid,
-            self.ask_proc_xen,  # xen
-            self.ask_sys_hypervisor_type,   # xen / vm-other
-            self.ask_proc_devtree_hypervisor,
-            self.ask_proc_sysinfo,  # zvm
-        ]
-        ret = None
-        for func in funcs:
-            try:
-                ret = func()
-                if ret:
-                    debug("virtualization() determined via %r" % func.__name__)
-                    break
-            except (IOError, OSError) as err:
-                debug(err)
-            except (AccessDenied, NoSuchProcess) as err:
-                debug(err)
-        return ret or ""
+
+def virtualization():
+    container = ContainerDetector()
+    vm = VirtualMachineDetector()
+    funcs = [
+        # containers
+        container.ask_if_openvz,
+        container.ask_if_wsl,  # wsl
+        container.ask_if_proot,  # proot
+        container.ask_run_host_container_manager,
+        container.ask_run_systemd_container,
+        container.ask_pid_1_environ,
+        container.look_for_known_files,  # podman / docker
+        # vms
+        vm.ask_sys_class_dmi,
+        vm.ask_proc_cpuinfo,  # uml
+        vm.ask_cpuid,
+        vm.ask_proc_xen,  # xen
+        vm.ask_sys_hypervisor_type,   # xen / vm-other
+        vm.ask_proc_devtree_hypervisor,
+        vm.ask_proc_sysinfo,  # zvm
+    ]
+    ret = None
+    for func in funcs:
+        try:
+            ret = func()
+            if ret:
+                debug("virtualization() determined via %r" % func.__name__)
+                break
+        except (IOError, OSError) as err:
+            debug(err)
+        except (AccessDenied, NoSuchProcess) as err:
+            debug(err)
+    return ret or ""
 
 
 # =====================================================================

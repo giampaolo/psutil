@@ -104,6 +104,7 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
+
     from ._pslinux import VIRTUALIZATION_ACRN  # NOQA
     from ._pslinux import VIRTUALIZATION_AMAZON  # NOQA
     from ._pslinux import VIRTUALIZATION_BHYVE  # NOQA
@@ -2350,7 +2351,7 @@ def users():
 if LINUX:
 
     def virtualization():
-        return _psplatform.VirtualMachineDetector().guess()
+        return _psplatform.virtualization()
 
 
 # =====================================================================

@@ -54,6 +54,7 @@ if LINUX:
     import psutil._psutil_linux as cext
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder
+    from psutil._pslinux import ContainerDetector
     from psutil._pslinux import VirtualMachineDetector
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
@@ -2250,16 +2251,17 @@ class TestProcessAgainstStatus(PsutilTestCase):
         else:
             assert m.called
 
+
 # =====================================================================
 # --- virtualization
 # =====================================================================
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestVirtualization(PsutilTestCase):
+class TestVirtualizationContainers(PsutilTestCase):
 
     def setUp(self):
-        self.vmd = VirtualMachineDetector()
+        self.detector = ContainerDetector()
 
     def test_ask_if_openvz(self):
         def exists(path):
@@ -2272,51 +2274,58 @@ class TestVirtualization(PsutilTestCase):
 
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
-            self.assertEqual(self.vmd.ask_if_openvz(), "openvz")
-            self.assertEqual(self.vmd.guess(), "openvz")
+            self.assertEqual(self.detector.ask_if_openvz(), "openvz")
+            self.assertEqual(psutil.virtualization(), "openvz")
 
     def test_ask_if_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
-            self.assertEqual(self.vmd.ask_if_wsl(), "wsl")
-            self.assertEqual(self.vmd.guess(), "wsl")
+            self.assertEqual(self.detector.ask_if_wsl(), "wsl")
+            self.assertEqual(psutil.virtualization(), "wsl")
 
     def test_ask_if_proot(self):
         with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
-            self.assertEqual(self.vmd.ask_if_proot(), "proot")
-            self.assertEqual(self.vmd.guess(), "proot")
+            self.assertEqual(self.detector.ask_if_proot(), "proot")
+            self.assertEqual(psutil.virtualization(), "proot")
 
     def test_ask_run_host_container_manager(self):
         with mock_open_content("/run/host/container-manager", "podman"):
             self.assertEqual(
-                self.vmd.ask_run_host_container_manager(), "podman")
-            self.assertEqual(self.vmd.guess(), "podman")
+                self.detector.ask_run_host_container_manager(), "podman")
+            self.assertEqual(psutil.virtualization(), "podman")
 
     def test_ask_run_systemd_container(self):
         with mock_open_content("/run/systemd/container", "rkt"):
-            self.assertEqual(self.vmd.ask_run_systemd_container(), "rkt")
-            self.assertEqual(self.vmd.guess(), "rkt")
+            self.assertEqual(self.detector.ask_run_systemd_container(), "rkt")
+            self.assertEqual(psutil.virtualization(), "rkt")
 
     def test_ask_pid_1_environ(self):
         with mock.patch("psutil._pslinux.Process.environ",
                         return_value={"container": "docker"}):
-            self.assertEqual(self.vmd.ask_pid_1_environ(), "docker")
-            self.assertEqual(self.vmd.guess(), "docker")
+            self.assertEqual(self.detector.ask_pid_1_environ(), "docker")
+            self.assertEqual(psutil.virtualization(), "docker")
 
     def test_look_for_known_files(self):
         with mock_os_path_exists("/run/.containerenv", True):
-            self.assertEqual(self.vmd.look_for_known_files(), "podman")
-            self.assertEqual(self.vmd.guess(), "podman")
+            self.assertEqual(self.detector.look_for_known_files(), "podman")
+            self.assertEqual(psutil.virtualization(), "podman")
         with mock_os_path_exists("/.dockerenv", True):
-            self.assertEqual(self.vmd.look_for_known_files(), "docker")
-            self.assertEqual(self.vmd.guess(), "docker")
+            self.assertEqual(self.detector.look_for_known_files(), "docker")
+            self.assertEqual(psutil.virtualization(), "docker")
         with mock.patch("os.path.exists", return_value=False):
-            self.assertIsNone(self.vmd.look_for_known_files())
-            self.assertEqual(self.vmd.guess(), "")
+            self.assertIsNone(self.detector.look_for_known_files())
+            self.assertEqual(psutil.virtualization(), "")
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestVirtualizationVms(PsutilTestCase):
+
+    def setUp(self):
+        self.detector = VirtualMachineDetector()
 
     def test_ask_sys_class_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
-            self.assertEqual(self.vmd.ask_sys_class_dmi(), "vmware")
-            self.assertEqual(self.vmd.guess(), "vmware")
+            self.assertEqual(self.detector.ask_sys_class_dmi(), "vmware")
+            self.assertEqual(psutil.virtualization(), "vmware")
 
     def test_ask_proc_cpuinfo(self):
         with mock_open_content(
@@ -2328,12 +2337,12 @@ class TestVirtualization(PsutilTestCase):
                 model       : 94
                 model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
                 """).encode()):
-            self.assertEqual(self.vmd.ask_proc_cpuinfo(), "uml")
-            self.assertEqual(self.vmd.guess(), "uml")
+            self.assertEqual(self.detector.ask_proc_cpuinfo(), "uml")
+            self.assertEqual(psutil.virtualization(), "uml")
 
     def test_ask_cpuid(self):
         self.assertIsInstance(cext.linux_cpuid(), str)
-        self.vmd.ask_cpuid()
+        self.detector.ask_cpuid()
 
         mapping = {
             "XenVMMXenVMM": "xen",
@@ -2348,28 +2357,28 @@ class TestVirtualization(PsutilTestCase):
         for k, v in mapping.items():
             with mock.patch("psutil._pslinux.cext.linux_cpuid",
                             return_value=k):
-                self.assertEqual(self.vmd.ask_cpuid(), v)
+                self.assertEqual(self.detector.ask_cpuid(), v)
 
     def test_ask_proc_xen(self):
         with mock_os_path_exists("/proc/xen", True):
-            self.assertEqual(self.vmd.ask_proc_xen(), "xen")
+            self.assertEqual(self.detector.ask_proc_xen(), "xen")
 
     def test_ask_sys_hypervisor_type(self):
         with mock_open_content("/sys/hypervisor/type", "xen"):
-            self.assertEqual(self.vmd.ask_sys_hypervisor_type(), "xen")
+            self.assertEqual(self.detector.ask_sys_hypervisor_type(), "xen")
         with mock_open_content("/sys/hypervisor/type", "something-else"):
-            self.assertEqual(self.vmd.ask_sys_hypervisor_type(), "vm-other")
+            self.assertEqual(self.detector.ask_sys_hypervisor_type(), "vm-other")
 
     def test_ask_proc_devtree_hypervisor(self):
         path = "/proc/device-tree/hypervisor/compatible"
         with mock_open_content(path, "linux,kvm"):
-            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "kvm")
+            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "kvm")
         with mock_open_content(path, "xen"):
-            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "xen")
+            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "xen")
         with mock_open_content(path, "vmware"):
-            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(), "vmware")
+            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(), "vmware")
         with mock_open_content(path, "?!?"):
-            self.assertEqual(self.vmd.ask_proc_devtree_hypervisor(),
+            self.assertEqual(self.detector.ask_proc_devtree_hypervisor(),
                              "vm-other")
 
     def test_ask_proc_devtree(self):
@@ -2382,11 +2391,11 @@ class TestVirtualization(PsutilTestCase):
 
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
-            self.assertEqual(self.vmd.ask_proc_devtree(), "powervm")
+            self.assertEqual(self.detector.ask_proc_devtree(), "powervm")
 
         # check for qemu
         with mock.patch("os.listdir", return_value=["fw-cfg"]):
-            self.assertEqual(self.vmd.ask_proc_devtree(), "qemu")
+            self.assertEqual(self.detector.ask_proc_devtree(), "qemu")
 
     def test_ask_proc_sysinfo(self):
         with mock_open_content(
@@ -2411,7 +2420,7 @@ class TestVirtualization(PsutilTestCase):
                 VM00 CPUs Standby:    0
                 VM00 CPUs Reserved:   0
                 """)):
-            self.assertEqual(self.vmd.ask_proc_sysinfo(), "zvm")
+            self.assertEqual(self.detector.ask_proc_sysinfo(), "zvm")
 
 
 # =====================================================================
