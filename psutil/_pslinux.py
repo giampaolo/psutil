@@ -1725,26 +1725,29 @@ class VirtualMachineDetector:
     def guess(self):
         # order matters
         funcs = [
-            self.ask_proc_sys_kernel_osrelease,
-            self.ask_proc_status,
+            # containers
+            self.ask_proc_sys_kernel_osrelease,  # wsl
+            self.ask_proc_status,  # proot
             self.ask_run_host_container_manager,
             self.ask_run_systemd_container,
             self.ask_pid_1_environ,
-            self.look_for_known_files,
+            self.look_for_known_files,  # podman / docker
+            # vms
             self.ask_sys_class_dmi,
-            self.ask_proc_cpuinfo,
-            self.ask_proc_sysinfo
+            self.ask_proc_cpuinfo,  # uml
+            self.ask_proc_sysinfo  # zvm
         ]
+        ret = None
         for func in funcs:
             try:
                 ret = func()
                 if ret:
-                    return ret
+                    break
             except (IOError, OSError) as err:
                 debug(err)
             except (AccessDenied, NoSuchProcess) as err:
                 debug(err)
-        return ""
+        return ret or ""
 
 
 # =====================================================================
