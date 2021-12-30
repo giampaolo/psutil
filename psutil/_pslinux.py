@@ -1599,6 +1599,7 @@ VIRTUALIZATION_KVM = "kvm"
 VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_QEMU = "qemu"
+VIRTUALIZATION_UML = "uml"
 VIRTUALIZATION_VMWARE = "vmware"
 VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
@@ -1640,6 +1641,14 @@ class VirtualMachineDetector:
                     return vendor_table[out]
 
     @staticmethod
+    def ask_proc_cpuinfo():
+        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+            for line in f:
+                if line.lower().startswith(b"vendor_id"):
+                    if line.partition(b":")[2].strip() == b"User Mode Linux":
+                        return VIRTUALIZATION_UML
+
+    @staticmethod
     def ask_proc_sysinfo():
         lookfor = "VM00 Control Program"
         with open_text("%s/sysinfo" % get_procfs_path()) as f:
@@ -1651,15 +1660,20 @@ class VirtualMachineDetector:
 
     @staticmethod
     def guess(self):
-        ret = None
-        if ret is None:
-            ret = self.ask_dmi()
-        if ret is None:
+        # order matters
+        funcs = [
+            self.ask_dmi,
+            self.ask_proc_cpuinfo,
+            self.ask_proc_sysinfo
+        ]
+        for func in funcs:
             try:
-                ret = self.ask_proc_sysinfo()
+                ret = func()
+                if ret:
+                    return ret
             except (IOError, OSError) as err:
                 debug(err)
-        return ret or ""
+        return ""
 
 
 # =====================================================================

@@ -2245,6 +2245,24 @@ class TestProcessAgainstStatus(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestVirtualization(PsutilTestCase):
 
+    def test_ask_dmi(self):
+        with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_dmi(), "vmware")
+
+    def test_ask_proc_cpuinfo(self):
+        with mock_open_content(
+            "/proc/cpuinfo",
+            textwrap.dedent("""\
+                processor   : 6
+                vendor_id   : User Mode Linux
+                cpu family  : 6
+                model       : 94
+                model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
+                """).encode()):
+            vm = VirtualMachineDetector()
+            self.assertEqual(vm.ask_proc_cpuinfo(), "uml")
+
     def test_ask_proc_sysinfo(self):
         with mock_open_content(
             "/proc/sysinfo",
@@ -2270,11 +2288,6 @@ class TestVirtualization(PsutilTestCase):
                 """)):
             vm = VirtualMachineDetector()
             self.assertEqual(vm.ask_proc_sysinfo(), "zvm")
-
-    def test_ask_dmi(self):
-        with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
-            vm = VirtualMachineDetector()
-            self.assertEqual(vm.ask_dmi(), "vmware")
 
 
 # =====================================================================
