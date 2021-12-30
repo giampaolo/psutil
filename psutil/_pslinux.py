@@ -1714,7 +1714,7 @@ class ContainerDetector:
             if pname.startswith("proot"):
                 return VIRTUALIZATION_PROOT
 
-    def ask_run_host_container_manager(self):
+    def ask_run_host(self):
         # The container manager might have placed this in the /run/host/
         # hierarchy for us, which is good because it doesn't require root
         # privileges.
@@ -1722,7 +1722,7 @@ class ContainerDetector:
             data = f.read().strip()
             return self._container_from_string(data)
 
-    def ask_run_systemd_container(self):
+    def ask_run_systemd(self):
         # ...Otherwise PID 1 might have dropped this information into a
         # file in /run. This is better than accessing /proc/1/environ,
         # since we don't need CAP_SYS_PTRACE for that.
@@ -1730,7 +1730,7 @@ class ContainerDetector:
             data = f.read().strip()
             return self._container_from_string(data)
 
-    def ask_pid_1_environ(self):
+    def ask_pid_1(self):
         # Only works if running as root or if we have CAP_SYS_PTRACE.
         env = Process(1).environ()
         if "container" in env:
@@ -1850,9 +1850,9 @@ def virtualization():
         container.detect_openvz,
         container.detect_wsl,  # wsl
         container.detect_proot,  # proot
-        container.ask_run_host_container_manager,
-        container.ask_run_systemd_container,
-        container.ask_pid_1_environ,
+        container.ask_run_host,
+        container.ask_run_systemd,
+        container.ask_pid_1,
         container.look_for_known_files,  # podman / docker
         # vms
         vm.ask_sys_class_dmi,

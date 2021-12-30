@@ -2287,21 +2287,21 @@ class TestVirtualizationContainers(PsutilTestCase):
             self.assertEqual(self.detector.detect_proot(), "proot")
             self.assertEqual(psutil.virtualization(), "proot")
 
-    def test_ask_run_host_container_manager(self):
+    def test_ask_run_host(self):
         with mock_open_content("/run/host/container-manager", "podman"):
             self.assertEqual(
-                self.detector.ask_run_host_container_manager(), "podman")
+                self.detector.ask_run_host(), "podman")
             self.assertEqual(psutil.virtualization(), "podman")
 
-    def test_ask_run_systemd_container(self):
+    def test_ask_run_systemd(self):
         with mock_open_content("/run/systemd/container", "rkt"):
-            self.assertEqual(self.detector.ask_run_systemd_container(), "rkt")
+            self.assertEqual(self.detector.ask_run_systemd(), "rkt")
             self.assertEqual(psutil.virtualization(), "rkt")
 
-    def test_ask_pid_1_environ(self):
+    def test_ask_pid_1(self):
         with mock.patch("psutil._pslinux.Process.environ",
                         return_value={"container": "docker"}):
-            self.assertEqual(self.detector.ask_pid_1_environ(), "docker")
+            self.assertEqual(self.detector.ask_pid_1(), "docker")
             self.assertEqual(psutil.virtualization(), "docker")
 
     def test_look_for_known_files(self):
