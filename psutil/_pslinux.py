@@ -1641,13 +1641,9 @@ class VirtualMachineDetector:
         m = re.search(r'TracerPid:\t(\d+)', data)
         if m:
             tracer_pid = int(m.group(1))
-            try:
-                proc_name = Process(tracer_pid).name()
-            except (NoSuchProcess, AccessDenied):
-                pass
-            else:
-                if proc_name == "proot":
-                    return VIRTUALIZATION_PROOT
+            pname = Process(tracer_pid).name()
+            if pname == "proot":
+                return VIRTUALIZATION_PROOT
 
     @staticmethod
     def ask_run_host_container_manager():
@@ -1726,6 +1722,8 @@ class VirtualMachineDetector:
                 if ret:
                     return ret
             except (IOError, OSError) as err:
+                debug(err)
+            except (AccessDenied, NoSuchProcess) as err:
                 debug(err)
         return ""
 
