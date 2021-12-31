@@ -108,6 +108,7 @@ if LINUX:
     from ._pslinux import VIRTUALIZATION_AMAZON  # NOQA
     from ._pslinux import VIRTUALIZATION_BHYVE  # NOQA
     from ._pslinux import VIRTUALIZATION_BOCHS  # NOQA
+    from ._pslinux import VIRTUALIZATION_CONTAINER_OTHER  # NOQA
     from ._pslinux import VIRTUALIZATION_DOCKER  # NOQA
     from ._pslinux import VIRTUALIZATION_KVM  # NOQA
     from ._pslinux import VIRTUALIZATION_LXC  # NOQA

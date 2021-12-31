@@ -78,6 +78,7 @@ __extra__all__ = [
     "VIRTUALIZATION_SYSTEMD_NSPAWN", "VIRTUALIZATION_UML",
     "VIRTUALIZATION_VMWARE", "VIRTUALIZATION_WSL", "VIRTUALIZATION_XEN",
     "VIRTUALIZATION_ZVM", "VIRTUALIZATION_VM_OTHER",
+    "VIRTUALIZATION_CONTAINER_OTHER",
 ]
 
 
@@ -198,7 +199,8 @@ VIRTUALIZATION_WSL = "wsl"
 VIRTUALIZATION_XEN = "xen"
 VIRTUALIZATION_ZVM = "zvm"
 
-VIRTUALIZATION_VM_OTHER = "vm-other"  # undefined, but there's a VM
+VIRTUALIZATION_CONTAINER_OTHER = "container-other"
+VIRTUALIZATION_VM_OTHER = "vm-other"
 
 CPUID_VENDOR_VIRT_TABLE = {
     "XenVMMXenVMM": VIRTUALIZATION_XEN,
@@ -1680,16 +1682,17 @@ class ContainerDetector(_VirtualizationBase):
             # container manager. # Try to detect one based on well-known
             # files.
             try:
-                return self.look_for_known_files() or VIRTUALIZATION_VM_OTHER
+                return self.look_for_known_files() or \
+                    VIRTUALIZATION_CONTAINER_OTHER
             except Exception as err:
                 debug(err)
-                return VIRTUALIZATION_VM_OTHER
+                return VIRTUALIZATION_CONTAINER_OTHER
 
         for k, v in mapping.items():
             if s.lower().startswith(k):
                 return v
 
-        return VIRTUALIZATION_VM_OTHER
+        return VIRTUALIZATION_CONTAINER_OTHER
 
     def detect_openvz(self):
         # /proc/vz exists in container and outside of the container,
@@ -1870,31 +1873,19 @@ def virtualization():
         vm.detect_zvm,  # zvm
     ]
     retval = None
-    found_vm_other = False
     for func in funcs:
+        funcname = "%s.%s" % (func.__self__.__class__.__name__, func.__name__)
+        debug("trying method %r" % funcname)
         try:
             retval = func()
             if retval:
-                debug("virtualization technology %r found via %r method" % (
-                      retval, func.__name__))
-                if retval == VIRTUALIZATION_VM_OTHER:
-                    # Keep attempting to find better info, and return
-                    # "vm-other" as last resort.
-                    found_vm_other = True
-                    continue
-                else:
-                    break
+                break
         except (IOError, OSError) as err:
-            debug("ignoring error '%s' for method %r" % ((err, func.__name__)))
+            debug("ignoring error '%s' for method %r" % ((err, funcname)))
         except (AccessDenied, NoSuchProcess) as err:
-            debug("ignoring error '%s' for method %r" % ((err, func.__name__)))
+            debug("ignoring error '%s' for method %r" % ((err, funcname)))
 
-    if not retval:
-        if found_vm_other:
-            return VIRTUALIZATION_VM_OTHER
-        return ""
-    else:
-        return retval
+    return retval or ""
 
 
 # =====================================================================
