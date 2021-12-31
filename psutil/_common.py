@@ -44,6 +44,8 @@ else:
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] == 3
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG', 0))
+if PSUTIL_DEBUG:
+    import inspect
 
 __all__ = [
     # OS constants
@@ -835,7 +837,6 @@ def print_color(
 def debug(msg):
     """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
     if PSUTIL_DEBUG:
-        import inspect
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
         if isinstance(msg, Exception):
