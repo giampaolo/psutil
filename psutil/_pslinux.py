@@ -1879,16 +1879,16 @@ def virtualization():
     ]
     retval = None
     for func in funcs:
-        funcname = "%s.%s" % (func.__self__.__class__.__name__, func.__name__)
-        debug("trying method %r" % funcname)
+        func_name = "%s.%s" % (func.__self__.__class__.__name__, func.__name__)
+        debug("trying method %r" % func_name)
         try:
             retval = func()
             if retval:
                 break
         except (IOError, OSError) as err:
-            debug("ignoring error '%s' for method %r" % ((err, funcname)))
+            debug("ignoring error '%s' for method %r" % ((err, func_name)))
         except (AccessDenied, NoSuchProcess) as err:
-            debug("ignoring error '%s' for method %r" % ((err, funcname)))
+            debug("ignoring error '%s' for method %r" % ((err, func_name)))
 
     return retval or ""
 
