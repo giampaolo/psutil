@@ -1647,7 +1647,7 @@ def boot_time():
 # The following is a porting of `systemd-detect-virt` CLI tool from
 # C to Python (an almost literal translation):
 # https://github.com/systemd/systemd/blob/main/src/basic/virt.c
-# In here we try to respect the exact order in which the various
+# In here we try to respect the original order in which the various
 # 'guess' functions are called.
 
 
@@ -1679,7 +1679,11 @@ class ContainerDetector(_VirtualizationBase):
             # Some images hardcode container=oci, but OCI is not a specific
             # container manager. # Try to detect one based on well-known
             # files.
-            return self.look_for_known_files() or VIRTUALIZATION_VM_OTHER
+            try:
+                return self.look_for_known_files() or VIRTUALIZATION_VM_OTHER
+            except Exception as err:
+                debug(err)
+                return VIRTUALIZATION_VM_OTHER
 
         for k, v in mapping.items():
             if s.lower().startswith(k):
