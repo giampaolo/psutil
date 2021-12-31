@@ -2423,6 +2423,8 @@ class TestVirtualizationVms(PsutilTestCase):
     def test_detect_qemu(self):
         with mock.patch("os.listdir", return_value=["fw-cfg"]):
             self.assertEqual(self.detector.detect_qemu(), "qemu")
+        with mock.patch("os.listdir", return_value=["QEMU"]):
+            self.assertEqual(self.detector.detect_qemu(), "qemu")
 
     def test_detect_zvm(self):
         with mock_open_content(

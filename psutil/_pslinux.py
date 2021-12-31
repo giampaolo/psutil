@@ -1832,6 +1832,10 @@ class VmDetector(_VirtualizationBase):
     def detect_qemu(self):
         if "fw-cfg" in os.listdir("%s/device-tree" % self.procfs_path):
             return VIRTUALIZATION_QEMU
+        # https://unix.stackexchange.com/a/89718
+        for name in os.listdir("/dev/disk/by-id/"):
+            if "QEMU" in name:
+                return VIRTUALIZATION_QEMU
 
     def detect_zvm(self):
         with open_text("%s/sysinfo" % self.procfs_path) as f:
