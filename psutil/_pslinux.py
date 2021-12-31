@@ -1853,6 +1853,7 @@ def virtualization():
     # returned.
     container = ContainerDetector()
     vm = VmDetector()
+    # order matters (FIFO), and it's the same as `systemd-detect-virt`.
     funcs = [
         # containers
         container.detect_openvz,

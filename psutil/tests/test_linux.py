@@ -27,6 +27,7 @@ from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import basestring
+from psutil._compat import redirect_stderr
 from psutil._compat import u
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
@@ -2262,6 +2263,19 @@ class TestVirtualizationContainers(PsutilTestCase):
 
     def setUp(self):
         self.detector = ContainerDetector()
+        self.patch_pydebug()
+
+    def patch_pydebug(self):
+        # Avoid spamming debug messages on screen, still executing the
+        # underlying debug() python code.
+        def debug(msg):
+            with redirect_stderr(io.StringIO()):
+                orig_debug(msg)
+
+        orig_debug = psutil._pslinux.debug
+        m = mock.patch("psutil._pslinux.debug", create=True, side_effect=debug)
+        ctx = m.__enter__()
+        self.addCleanup(ctx.__exit__)
 
     def test_detect_openvz(self):
         def exists(path):
@@ -2321,6 +2335,19 @@ class TestVirtualizationVms(PsutilTestCase):
 
     def setUp(self):
         self.detector = VmDetector()
+        self.patch_pydebug()
+
+    def patch_pydebug(self):
+        # Avoid spamming debug messages on screen, still executing the
+        # underlying debug() python code.
+        def debug(msg):
+            with redirect_stderr(io.StringIO()):
+                orig_debug(msg)
+
+        orig_debug = psutil._pslinux.debug
+        m = mock.patch("psutil._pslinux.debug", create=True, side_effect=debug)
+        ctx = m.__enter__()
+        self.addCleanup(ctx.__exit__)
 
     def test_ask_dmi(self):
         with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
