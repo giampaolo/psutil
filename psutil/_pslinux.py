@@ -1781,7 +1781,7 @@ class VmDetector(_VirtualizationBase):
             out = cat(file, fallback="", binary=False).strip()
             for k, v in vendors_table.items():
                 if out.startswith(k):
-                    debug("virtualization found in file %r" % file)
+                    debug("virtualization technology found in file %r" % file)
                     return v
 
     def detect_uml(self):
@@ -1875,6 +1875,8 @@ def virtualization():
         try:
             retval = func()
             if retval:
+                debug("virtualization technology %r found via %r method" % (
+                      retval, func.__name__))
                 if retval == VIRTUALIZATION_VM_OTHER:
                     # Keep attempting to find better info, and return
                     # "vm-other" as last resort.
@@ -1883,9 +1885,9 @@ def virtualization():
                 else:
                     break
         except (IOError, OSError) as err:
-            debug(err)
+            debug("ignoring error '%s' for method %r" % ((err, func.__name__)))
         except (AccessDenied, NoSuchProcess) as err:
-            debug(err)
+            debug("ignoring error '%s' for method %r" % ((err, func.__name__)))
 
     if not retval:
         if found_vm_other:
