@@ -71,7 +71,7 @@ __extra__all__ = [
     "VIRTUALIZATION_ACRN", "VIRTUALIZATION_AMAZON", "VIRTUALIZATION_BHYVE",
     "VIRTUALIZATION_BOCHS", "VIRTUALIZATION_DOCKER", "VIRTUALIZATION_KVM",
     "VIRTUALIZATION_LXC", "VIRTUALIZATION_LXC_LIBVIRT",
-    "VIRTUALIZATION_MICROSOFT", "VIRTUALIZATION_ORACLE",
+    "VIRTUALIZATION_MICROSOFT", "VIRTUALIZATION_VIRTUALBOX",
     "VIRTUALIZATION_PARALLELS", "VIRTUALIZATION_PODMAN",
     "VIRTUALIZATION_POWERVM", "VIRTUALIZATION_PROOT", "VIRTUALIZATION_QEMU",
     "VIRTUALIZATION_QNX", "VIRTUALIZATION_RKT",
@@ -183,7 +183,6 @@ VIRTUALIZATION_LXC = "lxc"
 VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
 VIRTUALIZATION_MICROSOFT = "microsoft"
 VIRTUALIZATION_OPENVZ = "openvz"
-VIRTUALIZATION_ORACLE = "oracle"
 VIRTUALIZATION_PARALLELS = "parallels"
 VIRTUALIZATION_PODMAN = "podman"
 VIRTUALIZATION_POWERVM = "powervm"
@@ -193,6 +192,7 @@ VIRTUALIZATION_QNX = "qnx"
 VIRTUALIZATION_RKT = "rkt"
 VIRTUALIZATION_SYSTEMD_NSPAWN = "systemd-nspawn"
 VIRTUALIZATION_UML = "uml"
+VIRTUALIZATION_VIRTUALBOX = "virtualbox"
 VIRTUALIZATION_VMWARE = "vmware"
 VIRTUALIZATION_WSL = "wsl"
 VIRTUALIZATION_XEN = "xen"
@@ -1644,11 +1644,13 @@ def boot_time():
 # =====================================================================
 
 
-# The following is a porting of `systemd-detect-virt` CLI tool from
-# C to Python (an almost literal translation):
+# The following is a port of `systemd-detect-virt` CLI tool in Python:
 # https://github.com/systemd/systemd/blob/main/src/basic/virt.c
-# In here we try to respect the original order in which the various
-# 'guess' functions are called.
+# I attempted to do a literal C -> Python translation whenever possible,
+# including respecting the original order in which the various 'guess'
+# functions are being called.
+# Differences with `systemd-detect-virt`:
+# * systemd-detect-virt returns 'oracle', we return 'virtualbox'
 
 
 class _VirtualizationBase:
@@ -1659,9 +1661,7 @@ class _VirtualizationBase:
 
 
 class ContainerDetector(_VirtualizationBase):
-    """A "container" is typically "shared kernel virtualization",
-    e.g. LXC.
-    """
+    """A "container" is typically "shared kernel virtualization", e.g. LXC."""
 
     def _container_from_string(self, s):
         assert s, repr(s)
@@ -1769,8 +1769,8 @@ class VmDetector(_VirtualizationBase):
             # https://kb.vmware.com/s/article/1009458
             "VMware": VIRTUALIZATION_VMWARE,
             "VMW": VIRTUALIZATION_VMWARE,
-            "innotek GmbH": VIRTUALIZATION_ORACLE,
-            "Oracle Corporation": VIRTUALIZATION_ORACLE,
+            "innotek GmbH": VIRTUALIZATION_VIRTUALBOX,
+            "Oracle Corporation": VIRTUALIZATION_VIRTUALBOX,
             "Xen": VIRTUALIZATION_XEN,
             "Bochs": VIRTUALIZATION_BOCHS,
             "Parallels": VIRTUALIZATION_PARALLELS,

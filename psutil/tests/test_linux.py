@@ -53,8 +53,8 @@ from psutil.tests import which
 if LINUX:
     import psutil._psutil_linux as cext
     from psutil._pslinux import CLOCK_TICKS
-    from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import ContainerDetector
+    from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import VmDetector
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
