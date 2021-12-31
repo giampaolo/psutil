@@ -2327,7 +2327,6 @@ class TestVirtualizationContainers(PsutilTestCase):
             self.assertEqual(psutil.virtualization(), "docker")
         with mock.patch("os.path.exists", return_value=False):
             self.assertIsNone(self.detector.look_for_known_files())
-            self.assertEqual(psutil.virtualization(), "")
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -2365,7 +2364,6 @@ class TestVirtualizationVms(PsutilTestCase):
                 model name  : Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
                 """).encode()):
             self.assertEqual(self.detector.detect_uml(), "uml")
-            self.assertEqual(psutil.virtualization(), "uml")
 
     def test_ask_cpuid(self):
         self.assertIsInstance(cext.linux_cpuid(), str)
