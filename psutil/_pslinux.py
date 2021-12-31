@@ -1869,18 +1869,30 @@ def virtualization():
         vm.detect_qemu,
         vm.detect_zvm,  # zvm
     ]
-    ret = None
+    retval = None
+    found_vm_other = False
     for func in funcs:
         try:
-            ret = func()
-            if ret:
-                debug("virtualization() determined via %r" % func.__name__)
-                break
+            retval = func()
+            if retval:
+                if retval == VIRTUALIZATION_VM_OTHER:
+                    # Keep attempting to find better info, and return
+                    # "vm-other" as last resort.
+                    found_vm_other = True
+                    continue
+                else:
+                    break
         except (IOError, OSError) as err:
             debug(err)
         except (AccessDenied, NoSuchProcess) as err:
             debug(err)
-    return ret or ""
+
+    if not retval:
+        if found_vm_other:
+            return VIRTUALIZATION_VM_OTHER
+        return ""
+    else:
+        return retval
 
 
 # =====================================================================
