@@ -727,7 +727,9 @@ def _cpu_get_cpuinfo_freq():
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
             if line.lower().startswith(b'cpu mhz'):
-                ret.append(float(line.split(b':', 1)[1]))
+                # cpuinfo reports frequency in MHz, for compatability with
+                # sysfs (kHz) multiply by 1000
+                ret.append(float(line.split(b':', 1)[1]) * 1000)
     return ret
 
 
