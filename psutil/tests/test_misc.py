@@ -54,7 +54,7 @@ from psutil.tests import unittest
 # ===================================================================
 
 
-class TestMisc(PsutilTestCase):
+class TestExceptionClasses(PsutilTestCase):
 
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_testproc().pid)
@@ -94,6 +94,12 @@ class TestMisc(PsutilTestCase):
 
     def test_process__str__(self):
         self.test_process__repr__(func=str)
+
+    def test_error__repr__(self):
+        self.assertEqual(repr(psutil.Error()), "psutil.Error()")
+
+    def test_error__str__(self):
+        self.assertEqual(str(psutil.Error()), "")
 
     def test_no_such_process__repr__(self):
         self.assertEqual(
@@ -160,6 +166,9 @@ class TestMisc(PsutilTestCase):
         self.assertEqual(
             str(psutil.TimeoutExpired(5, pid=321, name="name")),
             "timeout after 5 seconds (pid=321, name='name')")
+
+
+class TestMisc(PsutilTestCase):
 
     def test_process__eq__(self):
         p1 = psutil.Process()

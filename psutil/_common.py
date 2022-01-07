@@ -299,7 +299,7 @@ class Error(Exception):
                 ["%s=%r" % (k, v) for k, v in info.items()])
         else:
             details = None
-        return " ".join([x for x in (self.msg, details) if x])
+        return " ".join([x for x in (getattr(self, "msg", ""), details) if x])
 
     def __repr__(self):
         # invoked on `repr(Error)`
