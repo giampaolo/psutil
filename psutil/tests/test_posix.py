@@ -308,7 +308,7 @@ class TestSystemAPIs(PsutilTestCase):
         if len(pids_ps) - len(pids_psutil) > 1:
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
-            self.fail("difference: " + str(difference))
+            raise self.fail("difference: " + str(difference))
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
@@ -322,7 +322,7 @@ class TestSystemAPIs(PsutilTestCase):
                 if line.startswith(nic):
                     break
             else:
-                self.fail(
+                raise self.fail(
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 

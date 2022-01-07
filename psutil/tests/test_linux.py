@@ -1104,7 +1104,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 if part.fstype == 'zfs':
                     break
             else:
-                self.fail("couldn't find any ZFS partition")
+                raise self.fail("couldn't find any ZFS partition")
         else:
             # No ZFS partitions on this system. Let's fake one.
             fake_file = io.StringIO(u("nodev\tzfs\n"))

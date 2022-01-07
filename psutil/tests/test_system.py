@@ -184,8 +184,7 @@ class TestProcessAPIs(PsutilTestCase):
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in psutil.pids()
                 time.sleep(.1)
-                if pid in psutil.pids():
-                    self.fail(pid)
+                self.assertIn(pid, psutil.pids())
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
@@ -280,10 +279,10 @@ class TestMemoryAPIs(PsutilTestCase):
                 self.assertIsInstance(value, (int, long))
             if name != 'total':
                 if not value >= 0:
-                    self.fail("%r < 0 (%s)" % (name, value))
+                    raise self.fail("%r < 0 (%s)" % (name, value))
                 if value > mem.total:
-                    self.fail("%r > total (total=%s, %s=%s)"
-                              % (name, mem.total, name, value))
+                    raise self.fail("%r > total (total=%s, %s=%s)"
+                                    % (name, mem.total, name, value))
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
@@ -376,7 +375,7 @@ class TestCpuAPIs(PsutilTestCase):
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
                 return
-        self.fail("time remained the same")
+        raise self.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().

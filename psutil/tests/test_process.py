@@ -261,10 +261,10 @@ class TestProcess(PsutilTestCase):
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
         if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            self.fail("expected: %s, found: %s" % (utime, user_time))
+            raise self.fail("expected: %s, found: %s" % (utime, user_time))
 
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-            self.fail("expected: %s, found: %s" % (ktime, kernel_time))
+            raise self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
     def test_cpu_num(self):
@@ -285,8 +285,8 @@ class TestProcess(PsutilTestCase):
         # It will fail if the difference between the values is > 2s.
         difference = abs(create_time - now)
         if difference > 2:
-            self.fail("expected: %s, found: %s, difference: %s"
-                      % (now, create_time, difference))
+            raise self.fail("expected: %s, found: %s, difference: %s"
+                            % (now, create_time, difference))
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
@@ -983,7 +983,8 @@ class TestProcess(PsutilTestCase):
                         file.fd == fileobj.fileno():
                     break
             else:
-                self.fail("no file found; files=%s" % repr(p.open_files()))
+                raise self.fail("no file found; files=%s" % (
+                                repr(p.open_files())))
             self.assertEqual(normcase(file.path), normcase(fileobj.name))
             if WINDOWS:
                 self.assertEqual(file.fd, -1)
@@ -1020,7 +1021,8 @@ class TestProcess(PsutilTestCase):
             after = sum(p.num_ctx_switches())
             if after > before:
                 return
-        self.fail("num ctx switches still the same after 50.000 iterations")
+        raise self.fail(
+            "num ctx switches still the same after 50.000 iterations")
 
     def test_ppid(self):
         p = psutil.Process()
@@ -1495,7 +1497,7 @@ if POSIX and os.getuid() == 0:
             except psutil.AccessDenied:
                 pass
             else:
-                self.fail("exception not raised")
+                raise self.fail("exception not raised")
 
         @unittest.skipIf(1, "causes problem as root")
         def test_zombie_process(self):

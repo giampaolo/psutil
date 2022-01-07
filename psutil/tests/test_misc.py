@@ -205,7 +205,7 @@ class TestMisc(PsutilTestCase):
                             continue
                         if (fun.__doc__ is not None and
                                 'deprecated' not in fun.__doc__.lower()):
-                            self.fail('%r not in psutil.__all__' % name)
+                            raise self.fail('%r not in psutil.__all__' % name)
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
@@ -738,8 +738,8 @@ class TestScripts(PsutilTestCase):
             if name.endswith('.py'):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
-                    self.fail('no test defined for %r script'
-                              % os.path.join(SCRIPTS_DIR, name))
+                    raise self.fail('no test defined for %r script'
+                                    % os.path.join(SCRIPTS_DIR, name))
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_executable(self):
