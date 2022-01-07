@@ -23,6 +23,8 @@ import psutil.tests
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import bcat
+from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
 from psutil._common import memoize
@@ -450,6 +452,17 @@ class TestCommonModule(PsutilTestCase):
         msg = f.getvalue()
         self.assertIn("no such file", msg)
         self.assertIn("/foo", msg)
+
+    def test_cat_bcat(self):
+        testfn = self.get_testfn()
+        with open(testfn, "wt") as f:
+            f.write("foo")
+        self.assertEqual(cat(testfn), "foo")
+        self.assertEqual(bcat(testfn), b"foo")
+        self.assertRaises(FileNotFoundError, cat, testfn + '??')
+        self.assertRaises(FileNotFoundError, bcat, testfn + '??')
+        self.assertEqual(cat(testfn + '??', fallback="bar"), "bar")
+        self.assertEqual(bcat(testfn + '??', fallback="bar"), "bar")
 
 
 # ===================================================================

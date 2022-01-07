@@ -31,6 +31,8 @@ from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import bcat
+from ._common import cat
 from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
@@ -78,7 +80,6 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
-_DEFAULT = object()
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
@@ -281,35 +282,6 @@ def set_scputimes_ntuple(procfs_path):
         # Linux >= 3.2.0
         fields.append('guest_nice')
     scputimes = namedtuple('scputimes', fields)
-
-
-def cat(fname, fallback=_DEFAULT):
-    """Return file content. File is opened in text mode.
-    If specified, `fallback` is the value returned in case of error,
-    either if the file does not exist or cannot be read().
-    """
-    if fallback is _DEFAULT:
-        with open_text(fname) as f:
-            return f.read()
-    else:
-        try:
-            with open_text(fname) as f:
-                return f.read()
-        except (IOError, OSError):
-            return fallback
-
-
-def bcat(fname, fallback=_DEFAULT):
-    """Same as above but in binary mode."""
-    if fallback is _DEFAULT:
-        with open_binary(fname) as f:
-            return f.read()
-    else:
-        try:
-            with open_binary(fname) as f:
-                return f.read()
-        except (IOError, OSError):
-            return fallback
 
 
 try:
