@@ -5,14 +5,14 @@
 
 **Bug fixes**
 
-- 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
-  manually and passed through ``str``.
-- 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
-  ``min`` and ``max`` are in MHz.
 - 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
   ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
   calculate an approximation for ``available`` memory which matches "free"
   CLI utility.
+- 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
+  manually and passed through ``str``.
+- 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
+  ``min`` and ``max`` are in MHz.
 
 5.9.0
 =====
