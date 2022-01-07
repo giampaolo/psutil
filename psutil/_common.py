@@ -729,17 +729,17 @@ def open_text(fname, **kwargs):
     return open(fname, "rt", **kwargs)
 
 
-def cat(fname, fallback=_DEFAULT):
+def cat(fname, fallback=_DEFAULT, _open=open_text):
     """Read file content until EOF. File is opened in text mode.
     If specified, `fallback` is the value returned in case of error,
     either if the file does not exist or cannot be read().
     """
     if fallback is _DEFAULT:
-        with open_text(fname) as f:
+        with _open(fname) as f:
             return f.read()
     else:
         try:
-            with open_text(fname) as f:
+            with _open(fname) as f:
                 return f.read()
         except (IOError, OSError):
             return fallback
@@ -747,15 +747,7 @@ def cat(fname, fallback=_DEFAULT):
 
 def bcat(fname, fallback=_DEFAULT):
     """Same as above but opens file in binary mode."""
-    if fallback is _DEFAULT:
-        with open_binary(fname) as f:
-            return f.read()
-    else:
-        try:
-            with open_binary(fname) as f:
-                return f.read()
-        except (IOError, OSError):
-            return fallback
+    return cat(fname, fallback=fallback, _open=open_binary)
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
