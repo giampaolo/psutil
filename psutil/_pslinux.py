@@ -1695,6 +1695,7 @@ class ContainerDetector(_VirtualizationBase):
         return VIRTUALIZATION_CONTAINER_OTHER
 
     def detect_openvz(self):
+        # Check for OpenVZ / Virtuozzo.
         # /proc/vz exists in container and outside of the container,
         # /proc/bc only outside of the container.
         if os.path.exists("%s/vz" % self.procfs_path):
