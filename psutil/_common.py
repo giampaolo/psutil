@@ -730,9 +730,9 @@ def open_text(fname, **kwargs):
 
 
 def cat(fname, fallback=_DEFAULT, _open=open_text):
-    """Read file content until EOF. File is opened in text mode.
-    If specified, `fallback` is the value returned in case of error,
-    either if the file does not exist or cannot be read().
+    """Read file content until EOF and return it as a string. File is
+    open in text mode. If specified, `fallback` is the value returned in
+    case of error, either if the file does not exist or it can't be read().
     """
     if fallback is _DEFAULT:
         with _open(fname) as f:
