@@ -460,10 +460,10 @@ class TestCommonModule(PsutilTestCase):
             f.write("foo")
         self.assertEqual(cat(testfn), "foo")
         self.assertEqual(bcat(testfn), b"foo")
-        self.assertRaises(FileNotFoundError, cat, testfn + '??')
-        self.assertRaises(FileNotFoundError, bcat, testfn + '??')
-        self.assertEqual(cat(testfn + '??', fallback="bar"), "bar")
-        self.assertEqual(bcat(testfn + '??', fallback="bar"), "bar")
+        self.assertRaises(FileNotFoundError, cat, testfn + '-invalid')
+        self.assertRaises(FileNotFoundError, bcat, testfn + '-invalid')
+        self.assertEqual(cat(testfn + '-invalid', fallback="bar"), "bar")
+        self.assertEqual(bcat(testfn + '-invalid', fallback="bar"), "bar")
 
 
 # ===================================================================
