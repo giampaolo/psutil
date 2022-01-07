@@ -9,9 +9,10 @@
   manually and passed through ``str``.
 - 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
   ``min`` and ``max`` are in MHz.
-- 1915_, [Linux]: ``virtual_memory``_ may return ```0`` as ``available`` memory
-  on certain distros, in which case we calculate an appromixation which matches
-  ``free`` CLI utility.
+- 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
+  ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
+  calculate an approximation for ``available`` memory which matches "free"
+  CLI utility.
 
 5.9.0
 =====
