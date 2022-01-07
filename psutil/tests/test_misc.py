@@ -17,16 +17,21 @@ import os
 import pickle
 import socket
 import stat
-import sys
 
+import psutil
+import psutil.tests
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import debug
+from psutil._common import isfile_strict
 from psutil._common import memoize
 from psutil._common import memoize_when_activated
+from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
 from psutil._compat import PY3
+from psutil._compat import redirect_stderr
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
@@ -35,28 +40,23 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import import_module_by_path
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
-from psutil.tests import reload_module
 from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
+from psutil.tests import PsutilTestCase
+from psutil.tests import import_module_by_path
+from psutil.tests import mock
+from psutil.tests import reload_module
 from psutil.tests import sh
 from psutil.tests import unittest
-import psutil
-import psutil.tests
-
-
-PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 # ===================================================================
-# --- Misc / generic tests.
+# --- Test classes' repr(), str(), ...
 # ===================================================================
 
 
-class TestMisc(PsutilTestCase):
+class TestSpecialMethods(PsutilTestCase):
 
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_testproc().pid)
@@ -97,57 +97,77 @@ class TestMisc(PsutilTestCase):
     def test_process__str__(self):
         self.test_process__repr__(func=str)
 
-    def test_no_such_process__repr__(self, func=repr):
+    def test_error__repr__(self):
+        self.assertEqual(repr(psutil.Error()), "psutil.Error()")
+
+    def test_error__str__(self):
+        self.assertEqual(str(psutil.Error()), "")
+
+    def test_no_such_process__repr__(self):
         self.assertEqual(
             repr(psutil.NoSuchProcess(321)),
-            "psutil.NoSuchProcess process no longer exists (pid=321)")
+            "psutil.NoSuchProcess(pid=321, msg='process no longer exists')")
         self.assertEqual(
-            repr(psutil.NoSuchProcess(321, name='foo')),
-            "psutil.NoSuchProcess process no longer exists (pid=321, "
-            "name='foo')")
-        self.assertEqual(
-            repr(psutil.NoSuchProcess(321, msg='foo')),
-            "psutil.NoSuchProcess foo")
+            repr(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "psutil.NoSuchProcess(pid=321, name='name', msg='msg')")
 
-    def test_zombie_process__repr__(self, func=repr):
+    def test_no_such_process__str__(self):
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321)),
+            "process no longer exists (pid=321)")
+        self.assertEqual(
+            str(psutil.NoSuchProcess(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_zombie_process__repr__(self):
         self.assertEqual(
             repr(psutil.ZombieProcess(321)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321)")
+            'psutil.ZombieProcess(pid=321, msg="PID still '
+            'exists but it\'s a zombie")')
         self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo')),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, name='foo', ppid=1)),
-            "psutil.ZombieProcess process still exists but it's a zombie "
-            "(pid=321, name='foo', ppid=1)")
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, msg='foo')),
-            "psutil.ZombieProcess foo")
+            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "psutil.ZombieProcess(pid=321, ppid=320, name='name', msg='foo')")
 
-    def test_access_denied__repr__(self, func=repr):
+    def test_zombie_process__str__(self):
+        self.assertEqual(
+            str(psutil.ZombieProcess(321)),
+            "PID still exists but it's a zombie (pid=321)")
+        self.assertEqual(
+            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
+            "foo (pid=321, ppid=320, name='name')")
+
+    def test_access_denied__repr__(self):
         self.assertEqual(
             repr(psutil.AccessDenied(321)),
-            "psutil.AccessDenied (pid=321)")
+            "psutil.AccessDenied(pid=321)")
         self.assertEqual(
-            repr(psutil.AccessDenied(321, name='foo')),
-            "psutil.AccessDenied (pid=321, name='foo')")
-        self.assertEqual(
-            repr(psutil.AccessDenied(321, msg='foo')),
-            "psutil.AccessDenied foo")
+            repr(psutil.AccessDenied(321, name="name", msg="msg")),
+            "psutil.AccessDenied(pid=321, name='name', msg='msg')")
 
-    def test_timeout_expired__repr__(self, func=repr):
+    def test_access_denied__str__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321)),
-            "psutil.TimeoutExpired timeout after 321 seconds")
+            str(psutil.AccessDenied(321)),
+            "(pid=321)")
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111)),
-            "psutil.TimeoutExpired timeout after 321 seconds (pid=111)")
+            str(psutil.AccessDenied(321, name="name", msg="msg")),
+            "msg (pid=321, name='name')")
+
+    def test_timeout_expired__repr__(self):
         self.assertEqual(
-            repr(psutil.TimeoutExpired(321, pid=111, name='foo')),
-            "psutil.TimeoutExpired timeout after 321 seconds "
-            "(pid=111, name='foo')")
+            repr(psutil.TimeoutExpired(5)),
+            "psutil.TimeoutExpired(seconds=5, msg='timeout after 5 seconds')")
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
+            "msg='timeout after 5 seconds')")
+
+    def test_timeout_expired__str__(self):
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5)),
+            "timeout after 5 seconds")
+        self.assertEqual(
+            str(psutil.TimeoutExpired(5, pid=321, name="name")),
+            "timeout after 5 seconds (pid=321, name='name')")
 
     def test_process__eq__(self):
         p1 = psutil.Process()
@@ -160,6 +180,14 @@ class TestMisc(PsutilTestCase):
     def test_process__hash__(self):
         s = set([psutil.Process(), psutil.Process()])
         self.assertEqual(len(s), 1)
+
+
+# ===================================================================
+# --- Misc, generic, corner cases
+# ===================================================================
+
+
+class TestMisc(PsutilTestCase):
 
     def test__all__(self):
         dir_psutil = dir(psutil)
@@ -177,7 +205,7 @@ class TestMisc(PsutilTestCase):
                             continue
                         if (fun.__doc__ is not None and
                                 'deprecated' not in fun.__doc__.lower()):
-                            self.fail('%r not in psutil.__all__' % name)
+                            raise self.fail('%r not in psutil.__all__' % name)
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
@@ -195,6 +223,72 @@ class TestMisc(PsutilTestCase):
         p = psutil.Process()
         p.foo = '1'
         self.assertNotIn('foo', p.as_dict())
+
+    def test_serialization(self):
+        def check(ret):
+            if json is not None:
+                json.loads(json.dumps(ret))
+            a = pickle.dumps(ret)
+            b = pickle.loads(a)
+            self.assertEqual(ret, b)
+
+        check(psutil.Process().as_dict())
+        check(psutil.virtual_memory())
+        check(psutil.swap_memory())
+        check(psutil.cpu_times())
+        check(psutil.cpu_times_percent(interval=0))
+        check(psutil.net_io_counters())
+        if LINUX and not os.path.exists('/proc/diskstats'):
+            pass
+        else:
+            if not APPVEYOR:
+                check(psutil.disk_io_counters())
+        check(psutil.disk_partitions())
+        check(psutil.disk_usage(os.getcwd()))
+        check(psutil.users())
+
+    # XXX: https://github.com/pypa/setuptools/pull/2896
+    @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
+    def test_setup_script(self):
+        setup_py = os.path.join(ROOT_DIR, 'setup.py')
+        if CI_TESTING and not os.path.exists(setup_py):
+            return self.skipTest("can't find setup.py")
+        module = import_module_by_path(setup_py)
+        self.assertRaises(SystemExit, module.setup)
+        self.assertEqual(module.get_version(), psutil.__version__)
+
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.AccessDenied) as meth:
+            psutil.Process()
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.ZombieProcess(1)) as meth:
+            psutil.Process()
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=ValueError) as meth:
+            with self.assertRaises(ValueError):
+                psutil.Process()
+            assert meth.called
+
+    def test_sanity_version_check(self):
+        # see: https://github.com/giampaolo/psutil/issues/564
+        with mock.patch(
+                "psutil._psplatform.cext.version", return_value="0.0.0"):
+            with self.assertRaises(ImportError) as cm:
+                reload_module(psutil)
+            self.assertIn("version conflict", str(cm.exception).lower())
+
+
+# ===================================================================
+# --- psutil/_common.py utils
+# ===================================================================
+
+
+class TestCommonModule(PsutilTestCase):
 
     def test_memoize(self):
         @memoize
@@ -259,8 +353,6 @@ class TestMisc(PsutilTestCase):
         self.assertEqual(len(calls), 2)
 
     def test_parse_environ_block(self):
-        from psutil._common import parse_environ_block
-
         def k(s):
             return s.upper() if WINDOWS else s
 
@@ -315,7 +407,6 @@ class TestMisc(PsutilTestCase):
                     sock.close()
 
     def test_isfile_strict(self):
-        from psutil._common import isfile_strict
         this_file = os.path.abspath(__file__)
         assert isfile_strict(this_file)
         assert not isfile_strict(os.path.dirname(this_file))
@@ -331,61 +422,34 @@ class TestMisc(PsutilTestCase):
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
 
-    def test_serialization(self):
-        def check(ret):
-            if json is not None:
-                json.loads(json.dumps(ret))
-            a = pickle.dumps(ret)
-            b = pickle.loads(a)
-            self.assertEqual(ret, b)
-
-        check(psutil.Process().as_dict())
-        check(psutil.virtual_memory())
-        check(psutil.swap_memory())
-        check(psutil.cpu_times())
-        check(psutil.cpu_times_percent(interval=0))
-        check(psutil.net_io_counters())
-        if LINUX and not os.path.exists('/proc/diskstats'):
-            pass
+    def test_debug(self):
+        if PY3:
+            from io import StringIO
         else:
-            if not APPVEYOR:
-                check(psutil.disk_io_counters())
-        check(psutil.disk_partitions())
-        check(psutil.disk_usage(os.getcwd()))
-        check(psutil.users())
+            from StringIO import StringIO
 
-    def test_setup_script(self):
-        setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if CI_TESTING and not os.path.exists(setup_py):
-            return self.skipTest("can't find setup.py")
-        module = import_module_by_path(setup_py)
-        self.assertRaises(SystemExit, module.setup)
-        self.assertEqual(module.get_version(), psutil.__version__)
+        with redirect_stderr(StringIO()) as f:
+            debug("hello")
+        msg = f.getvalue()
+        assert msg.startswith("psutil-debug"), msg
+        self.assertIn("hello", msg)
+        self.assertIn(__file__.replace('.pyc', '.py'), msg)
 
-    def test_ad_on_process_creation(self):
-        # We are supposed to be able to instantiate Process also in case
-        # of zombie processes or access denied.
-        with mock.patch.object(psutil.Process, 'create_time',
-                               side_effect=psutil.AccessDenied) as meth:
-            psutil.Process()
-            assert meth.called
-        with mock.patch.object(psutil.Process, 'create_time',
-                               side_effect=psutil.ZombieProcess(1)) as meth:
-            psutil.Process()
-            assert meth.called
-        with mock.patch.object(psutil.Process, 'create_time',
-                               side_effect=ValueError) as meth:
-            with self.assertRaises(ValueError):
-                psutil.Process()
-            assert meth.called
+        # supposed to use repr(exc)
+        with redirect_stderr(StringIO()) as f:
+            debug(ValueError("this is an error"))
+        msg = f.getvalue()
+        self.assertIn("ignoring ValueError", msg)
+        self.assertIn("'this is an error'", msg)
 
-    def test_sanity_version_check(self):
-        # see: https://github.com/giampaolo/psutil/issues/564
-        with mock.patch(
-                "psutil._psplatform.cext.version", return_value="0.0.0"):
-            with self.assertRaises(ImportError) as cm:
-                reload_module(psutil)
-            self.assertIn("version conflict", str(cm.exception).lower())
+        # supposed to use str(exc), because of extra info about file name
+        with redirect_stderr(StringIO()) as f:
+            exc = OSError(2, "no such file")
+            exc.filename = "/foo"
+            debug(exc)
+        msg = f.getvalue()
+        self.assertIn("no such file", msg)
+        self.assertIn("/foo", msg)
 
 
 # ===================================================================
@@ -674,16 +738,17 @@ class TestScripts(PsutilTestCase):
             if name.endswith('.py'):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
-                    self.fail('no test defined for %r script'
-                              % os.path.join(SCRIPTS_DIR, name))
+                    raise self.fail('no test defined for %r script'
+                                    % os.path.join(SCRIPTS_DIR, name))
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_executable(self):
-        for name in os.listdir(SCRIPTS_DIR):
-            if name.endswith('.py'):
-                path = os.path.join(SCRIPTS_DIR, name)
-                if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
-                    self.fail('%r is not executable' % path)
+        for root, dirs, files in os.walk(SCRIPTS_DIR):
+            for file in files:
+                if file.endswith('.py'):
+                    path = os.path.join(root, file)
+                    if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
+                        raise self.fail('%r is not executable' % path)
 
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')

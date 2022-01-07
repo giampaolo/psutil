@@ -9,6 +9,7 @@ Test utilities.
 """
 
 from __future__ import print_function
+
 import atexit
 import contextlib
 import ctypes
@@ -46,14 +47,15 @@ from psutil import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 from psutil._common import supports_ipv6
+from psutil._compat import PY3
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
-from psutil._compat import PY3
 from psutil._compat import range
 from psutil._compat import super
 from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
+
 
 if PY3:
     import unittest
@@ -71,6 +73,9 @@ if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
+
+if POSIX:
+    from psutil._psposix import wait_pid
 
 
 __all__ = [
@@ -482,9 +487,6 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     Does nothing if the process does not exist.
     Return process exit status.
     """
-    if POSIX:
-        from psutil._psposix import wait_pid
-
     def wait(proc, timeout):
         if isinstance(proc, subprocess.Popen) and not PY3:
             proc.wait()
@@ -952,6 +954,15 @@ class TestMemoryLeak(PsutilTestCase):
     retries = 10 if CI_TESTING else 5
     verbose = True
     _thisproc = psutil.Process()
+    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG', 0))
+
+    @classmethod
+    def setUpClass(cls):
+        psutil._set_debug(False)  # avoid spamming to stderr
+
+    @classmethod
+    def tearDownClass(cls):
+        psutil._set_debug(cls._psutil_debug_orig)
 
     def _get_mem(self):
         # USS is the closest thing we have to "real" memory usage and it
@@ -1724,8 +1735,8 @@ else:
         in memory via ctypes.
         Return the new absolutized, normcased path.
         """
-        from ctypes import wintypes
         from ctypes import WinError
+        from ctypes import wintypes
         ext = ".dll"
         dst = get_testfn(suffix=suffix + ext)
         libs = [x.path for x in psutil.Process().memory_maps() if

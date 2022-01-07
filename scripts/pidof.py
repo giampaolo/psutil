@@ -12,8 +12,10 @@ $ pidof python
 """
 
 from __future__ import print_function
-import psutil
+
 import sys
+
+import psutil
 
 
 def pidof(pgname):

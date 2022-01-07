@@ -109,6 +109,72 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
 
 
 /*
+ * A wrapper around proc_pidinfo(PROC_PIDLISTFDS), which dynamically sets
+ * the buffer size.
+ */
+static struct proc_fdinfo*
+psutil_proc_list_fds(pid_t pid, int *num_fds) {
+    int ret;
+    int fds_size = 0;
+    int max_size = 24 * 1024 * 1024;  // 24M
+    struct proc_fdinfo *fds_pointer = NULL;
+
+    errno = 0;
+    ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (ret <= 0) {
+        psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 1/2");
+        goto error;
+    }
+
+    while (1) {
+        if (ret > fds_size) {
+            while (ret > fds_size) {
+                fds_size += PROC_PIDLISTFD_SIZE * 32;
+                if (fds_size > max_size) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "prevent malloc() to allocate > 24M");
+                    goto error;
+                }
+            }
+
+            if (fds_pointer != NULL) {
+                free(fds_pointer);
+            }
+            fds_pointer = malloc(fds_size);
+
+            if (fds_pointer == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+        }
+
+        errno = 0;
+        ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer, fds_size);
+        if (ret <= 0) {
+            psutil_raise_for_pid(pid, "proc_pidinfo(PROC_PIDLISTFDS) 2/2");
+            goto error;
+        }
+
+        if (ret + (int)PROC_PIDLISTFD_SIZE >= fds_size) {
+            psutil_debug("PROC_PIDLISTFDS: make room for 1 extra fd");
+            ret = fds_size + (int)PROC_PIDLISTFD_SIZE;
+            continue;
+        }
+
+        break;
+    }
+
+    *num_fds = (ret / (int)PROC_PIDLISTFD_SIZE);
+    return fds_pointer;
+
+error:
+    if (fds_pointer != NULL)
+        free(fds_pointer);
+    return NULL;
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
@@ -213,16 +279,23 @@ static PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
+    uint64_t total_user;
+    uint64_t total_system;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
 
+    total_user = pti.pti_total_user * PSUTIL_MACH_TIMEBASE_INFO.numer;
+    total_user /= PSUTIL_MACH_TIMEBASE_INFO.denom;
+    total_system = pti.pti_total_system * PSUTIL_MACH_TIMEBASE_INFO.numer;
+    total_system /= PSUTIL_MACH_TIMEBASE_INFO.denom;
+
     return Py_BuildValue(
         "(ddKKkkkk)",
-        (float)pti.pti_total_user / 1000000000.0,     // (float) cpu user time
-        (float)pti.pti_total_system / 1000000000.0,   // (float) cpu sys time
+        (float)total_user / 1000000000.0,     // (float) cpu user time
+        (float)total_system / 1000000000.0,   // (float) cpu sys time
         // Note about memory: determining other mem stats on macOS is a mess:
         // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
         // I just give up.
@@ -791,7 +864,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            AccessDenied("task_info");
+            AccessDenied("task_info(TASK_BASIC_INFO)");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
@@ -866,15 +939,12 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int iterations;
+    int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
@@ -885,23 +955,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
+    if (fds_pointer == NULL)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
-
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
@@ -968,15 +1026,12 @@ error:
 static PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int iterations;
+    int num_fds;
     int i;
     unsigned long nb;
-
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
-
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -997,25 +1052,11 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    if (pid == 0)
-        return py_retlist;
-    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
+    if (fds_pointer == NULL)
         goto error;
 
-    fds_pointer = malloc(pidinfo_result);
-    if (fds_pointer == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    pidinfo_result = psutil_proc_pidinfo(
-        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result <= 0)
-        goto error;
-
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
-    for (i = 0; i < iterations; i++) {
+    for (i = 0; i < num_fds; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
@@ -1176,30 +1217,18 @@ error:
 static PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
-    int pidinfo_result;
-    int num;
+    int num_fds;
     struct proc_fdinfo *fds_pointer;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
-    fds_pointer = malloc(pidinfo_result);
+    fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
-        return PyErr_NoMemory();
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
-    if (pidinfo_result <= 0) {
-        free(fds_pointer);
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
+        return NULL;
 
-    num = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     free(fds_pointer);
-    return Py_BuildValue("i", num);
+    return Py_BuildValue("i", num_fds);
 }
 
 
@@ -1677,8 +1706,8 @@ static PyMethodDef mod_methods[] = {
      "Return battery information."},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };

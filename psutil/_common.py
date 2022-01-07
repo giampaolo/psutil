@@ -7,8 +7,10 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division, print_function
+from __future__ import division
+from __future__ import print_function
 
+import collections
 import contextlib
 import errno
 import functools
@@ -18,11 +20,11 @@ import stat
 import sys
 import threading
 import warnings
-from collections import defaultdict
 from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
 
 try:
     from socket import AF_INET6
@@ -41,6 +43,9 @@ else:
 
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] == 3
+PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG', 0))
+if PSUTIL_DEBUG:
+    import inspect
 
 __all__ = [
     # OS constants
@@ -83,7 +88,7 @@ WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith("linux")
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
-FREEBSD = sys.platform.startswith("freebsd")
+FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
@@ -275,15 +280,32 @@ class Error(Exception):
     """
     __module__ = 'psutil'
 
-    def __init__(self, msg=""):
-        Exception.__init__(self, msg)
-        self.msg = msg
+    def _infodict(self, attrs):
+        try:
+            info = collections.OrderedDict()
+        except AttributeError:  # pragma: no cover
+            info = {}  # Python 2.6
+        for name in attrs:
+            value = getattr(self, name, None)
+            if value:
+                info[name] = value
+        return info
+
+    def __str__(self):
+        # invoked on `raise Error`
+        info = self._infodict(("pid", "ppid", "name"))
+        if info:
+            details = "(%s)" % ", ".join(
+                ["%s=%r" % (k, v) for k, v in info.items()])
+        else:
+            details = None
+        return " ".join([x for x in (getattr(self, "msg", ""), details) if x])
 
     def __repr__(self):
-        ret = "psutil.%s %s" % (self.__class__.__name__, self.msg)
-        return ret.strip()
-
-    __str__ = __repr__
+        # invoked on `repr(Error)`
+        info = self._infodict(("pid", "ppid", "name", "seconds", "msg"))
+        details = ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
+        return "psutil.%s(%s)" % (self.__class__.__name__, details)
 
 
 class NoSuchProcess(Error):
@@ -293,16 +315,10 @@ class NoSuchProcess(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
-            else:
-                details = "(pid=%s)" % self.pid
-            self.msg = "process no longer exists " + details
+        self.msg = msg or "process no longer exists"
 
 
 class ZombieProcess(NoSuchProcess):
@@ -315,19 +331,9 @@ class ZombieProcess(NoSuchProcess):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
-        NoSuchProcess.__init__(self, msg)
-        self.pid = pid
+        NoSuchProcess.__init__(self, pid, name, msg)
         self.ppid = ppid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            args = ["pid=%s" % pid]
-            if name:
-                args.append("name=%s" % repr(self.name))
-            if ppid:
-                args.append("ppid=%s" % self.ppid)
-            details = "(%s)" % ", ".join(args)
-            self.msg = "process still exists but it's a zombie " + details
+        self.msg = msg or "PID still exists but it's a zombie"
 
 
 class AccessDenied(Error):
@@ -335,17 +341,10 @@ class AccessDenied(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if (pid is not None) and (name is not None):
-                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
-                self.msg = "(pid=%s)" % self.pid
-            else:
-                self.msg = ""
+        self.msg = msg or ""
 
 
 class TimeoutExpired(Error):
@@ -355,14 +354,11 @@ class TimeoutExpired(Error):
     __module__ = 'psutil'
 
     def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self, "timeout after %s seconds" % seconds)
+        Error.__init__(self)
         self.seconds = seconds
         self.pid = pid
         self.name = name
-        if (pid is not None) and (name is not None):
-            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
-        elif (pid is not None):
-            self.msg += " (pid=%s)" % self.pid
+        self.msg = "timeout after %s seconds" % seconds
 
 
 # ===================================================================
@@ -451,7 +447,13 @@ def memoize_when_activated(fun):
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = self._cache[fun] = fun(self)
+            ret = fun(self)
+            try:
+                self._cache[fun] = ret
+            except AttributeError:
+                # multi-threading race condition, see:
+                # https://github.com/giampaolo/psutil/issues/1948
+                pass
         return ret
 
     def cache_activate(proc):
@@ -622,8 +624,8 @@ class _WrapNumbers:
         assert name not in self.reminders
         assert name not in self.reminder_keys
         self.cache[name] = input_dict
-        self.reminders[name] = defaultdict(int)
-        self.reminder_keys[name] = defaultdict(set)
+        self.reminders[name] = collections.defaultdict(int)
+        self.reminder_keys[name] = collections.defaultdict(set)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
@@ -832,15 +834,16 @@ def print_color(
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
 
-if bool(os.getenv('PSUTIL_DEBUG', 0)):
-    import inspect
-
-    def debug(msg):
-        """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+def debug(msg):
+    """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+    if PSUTIL_DEBUG:
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
+        if isinstance(msg, Exception):
+            if isinstance(msg, (OSError, IOError, EnvironmentError)):
+                # ...because str(exc) may contain info about the file name
+                msg = "ignoring %s" % msg
+            else:
+                msg = "ignoring %r" % msg
         print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
-else:
-    def debug(msg):
-        pass

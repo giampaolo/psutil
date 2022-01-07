@@ -11,9 +11,9 @@ an error/warning. Usage (from the root dir):
     $ python3 -m flake8 --exit-zero | python3 scripts/fix_flake8.py
 """
 
+import shutil
 import sys
 import tempfile
-import shutil
 from collections import defaultdict
 from collections import namedtuple
 from pprint import pprint as pp  # NOQA

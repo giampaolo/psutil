@@ -16,7 +16,6 @@ environment:
     WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.ci\\appveyor\\run_with_compiler.cmd"
     PYTHONWARNINGS: always
     PYTHONUNBUFFERED: 1
-    PSUTIL_TESTING: 1
     PSUTIL_DEBUG: 1
   matrix:
     # 32 bits
@@ -42,6 +41,11 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON_ARCH: "32"
 
+    - PYTHON: "C:\\Python310"
+      PYTHON_VERSION: "3.10.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON_ARCH: "32"
+
     # 64 bits
 
     - PYTHON: "C:\\Python27-x64"
@@ -62,6 +66,11 @@ environment:
 
     - PYTHON: "C:\\Python39-x64"
       PYTHON_VERSION: "3.9.x"
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python310-x64"
+      PYTHON_VERSION: "3.10.x"
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
       PYTHON_ARCH: "64"
 

@@ -31,8 +31,10 @@ pkts-sent                     0               0
 pkts-recv               1214470               0
 """
 
-import time
 import sys
+import time
+
+
 try:
     import curses
 except ImportError:

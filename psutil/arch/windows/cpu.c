@@ -215,7 +215,7 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                psutil_debug("GetLogicalProcessorInformationEx() returned ",
+                psutil_debug("GetLogicalProcessorInformationEx() returned %u",
                              GetLastError());
                 goto return_none;
             }

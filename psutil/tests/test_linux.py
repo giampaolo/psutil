@@ -7,6 +7,7 @@
 """Linux specific tests."""
 
 from __future__ import division
+
 import collections
 import contextlib
 import errno
@@ -23,29 +24,37 @@ import warnings
 
 import psutil
 from psutil import LINUX
-from psutil._compat import basestring
-from psutil._compat import FileNotFoundError
 from psutil._compat import PY3
+from psutil._compat import FileNotFoundError
+from psutil._compat import basestring
 from psutil._compat import u
-from psutil.tests import call_until
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
+from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
+from psutil.tests import PsutilTestCase
+from psutil.tests import ThreadTask
+from psutil.tests import call_until
+from psutil.tests import mock
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import ThreadTask
-from psutil.tests import TOLERANCE_DISK_USAGE
-from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 from psutil.tests import which
+
+
+if LINUX:
+    from psutil._pslinux import CLOCK_TICKS
+    from psutil._pslinux import RootFsDeviceFinder
+    from psutil._pslinux import calculate_avail_vmem
+    from psutil._pslinux import open_binary
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -57,6 +66,7 @@ SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
 EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
+
 
 # =====================================================================
 # --- utils
@@ -141,7 +151,7 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    out = sh('free -b', env={"LANG": "C.UTF-8"})
+    out = sh(["free", "-b"], env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
@@ -160,7 +170,7 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    out = sh('free -b', env={"LANG": "C.UTF-8"})
+    out = sh(["free", "-b"], env={"LANG": "C.UTF-8"})
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
@@ -174,7 +184,7 @@ def free_physmem():
 
 
 def vmstat(stat):
-    out = sh("vmstat -s", env={"LANG": "C.UTF-8"})
+    out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
     for line in out.split("\n"):
         line = line.strip()
         if stat in line:
@@ -183,7 +193,7 @@ def vmstat(stat):
 
 
 def get_free_version_info():
-    out = sh("free -V").strip()
+    out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
         raise unittest.SkipTest("can't determine free version")
     return tuple(map(int, out.split()[-1].split('.')))
@@ -271,7 +281,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
     def test_available(self):
         # "free" output format has changed at some point:
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
-        out = sh("free -b")
+        out = sh(["free", "-b"])
         lines = out.split('\n')
         if 'available' not in lines[0]:
             raise unittest.SkipTest("free does not support 'available' column")
@@ -374,9 +384,6 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 15%.
-        from psutil._pslinux import calculate_avail_vmem
-        from psutil._pslinux import open_binary
-
         mems = {}
         with open_binary('/proc/meminfo') as f:
             for line in f:
@@ -1113,7 +1120,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 if part.fstype == 'zfs':
                     break
             else:
-                self.fail("couldn't find any ZFS partition")
+                raise self.fail("couldn't find any ZFS partition")
         else:
             # No ZFS partitions on this system. Let's fake one.
             fake_file = io.StringIO(u("nodev\tzfs\n"))
@@ -1274,6 +1281,68 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         with mock.patch('psutil._pslinux.os.path.exists',
                         create=True, side_effect=exists):
             self.assertRaises(NotImplementedError, psutil.disk_io_counters)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestRootFsDeviceFinder(PsutilTestCase):
+
+    def setUp(self):
+        dev = os.stat("/").st_dev
+        self.major = os.major(dev)
+        self.minor = os.minor(dev)
+
+    def test_call_methods(self):
+        finder = RootFsDeviceFinder()
+        if os.path.exists("/proc/partitions"):
+            finder.ask_proc_partitions()
+        else:
+            self.assertRaises(FileNotFoundError, finder.ask_proc_partitions)
+        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
+                self.major, self.minor)):
+            finder.ask_sys_dev_block()
+        else:
+            self.assertRaises(FileNotFoundError, finder.ask_sys_dev_block)
+        finder.ask_sys_class_block()
+
+    @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
+    def test_comparisons(self):
+        finder = RootFsDeviceFinder()
+        self.assertIsNotNone(finder.find())
+
+        a = b = c = None
+        if os.path.exists("/proc/partitions"):
+            a = finder.ask_proc_partitions()
+        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
+                self.major, self.minor)):
+            b = finder.ask_sys_class_block()
+        c = finder.ask_sys_dev_block()
+
+        base = a or b or c
+        if base and a:
+            self.assertEqual(base, a)
+        if base and b:
+            self.assertEqual(base, b)
+        if base and c:
+            self.assertEqual(base, c)
+
+    @unittest.skipIf(not which("findmnt"), "findmnt utility not available")
+    @unittest.skipIf(GITHUB_ACTIONS, "unsupported on GITHUB_ACTIONS")
+    def test_against_findmnt(self):
+        psutil_value = RootFsDeviceFinder().find()
+        findmnt_value = sh("findmnt -o SOURCE -rn /")
+        self.assertEqual(psutil_value, findmnt_value)
+
+    def test_disk_partitions_mocked(self):
+        with mock.patch(
+                'psutil._pslinux.cext.disk_partitions',
+                return_value=[('/dev/root', '/', 'ext4', 'rw')]) as m:
+            part = psutil.disk_partitions()[0]
+            assert m.called
+            if not GITHUB_ACTIONS:
+                self.assertNotEqual(part.device, "/dev/root")
+                self.assertEqual(part.device, RootFsDeviceFinder().find())
+            else:
+                self.assertEqual(part.device, "/dev/root")
 
 
 # =====================================================================
@@ -1444,9 +1513,7 @@ class TestMisc(PsutilTestCase):
         # - Process(tid) is supposed to work
         # - pids() should not return the TID
         # See: https://github.com/giampaolo/psutil/issues/687
-        t = ThreadTask()
-        t.start()
-        try:
+        with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
             self.assertEqual(len(threads), 2)
@@ -1455,8 +1522,6 @@ class TestMisc(PsutilTestCase):
             pt = psutil.Process(tid)
             pt.as_dict()
             self.assertNotIn(tid, psutil.pids())
-        finally:
-            t.stop()
 
     def test_pid_exists_no_proc_status(self):
         # Internally pid_exists relies on /proc/{pid}/status.
@@ -1850,6 +1915,22 @@ class TestProcess(PsutilTestCase):
                 assert not files
                 assert m.called
 
+    def test_open_files_enametoolong(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink
+        # points to a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
+        p = psutil.Process()
+        files = p.open_files()
+        with open(self.get_testfn(), 'w'):
+            # give the kernel some time to see the new file
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            patch_point = 'psutil._pslinux.os.readlink'
+            with mock.patch(patch_point,
+                            side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+                files = p.open_files()
+                assert not files
+                assert m.called
+
     # --- mocked tests
 
     def test_terminal_mocked(self):
@@ -1998,8 +2079,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(exc.exception.name, p.name())
 
     def test_stat_file_parsing(self):
-        from psutil._pslinux import CLOCK_TICKS
-
         args = [
             "0",      # pid
             "(cat)",  # name
@@ -2084,6 +2163,16 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(gids.effective, 1005)
             self.assertEqual(gids.saved, 1006)
             self.assertEqual(p._proc._get_eligible_cpus(), list(range(0, 8)))
+
+    def test_connections_enametoolong(self):
+        # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
+        # a file with full path longer than PATH_MAX, see:
+        # https://github.com/giampaolo/psutil/issues/1940
+        with mock.patch('psutil._pslinux.os.readlink',
+                        side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+            p = psutil.Process()
+            assert not p.connections()
+            assert m.called
 
 
 @unittest.skipIf(not LINUX, "LINUX only")

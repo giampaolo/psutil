@@ -17,22 +17,22 @@ from . import _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
-from ._common import AccessDenied
 from ._common import AF_INET6
+from ._common import AccessDenied
+from ._common import NoSuchProcess
+from ._common import ZombieProcess
 from ._common import debug
 from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
-from ._common import NoSuchProcess
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
-from ._common import ZombieProcess
-from ._compat import b
+from ._compat import PY3
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
-from ._compat import PY3
+from ._compat import b
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
@@ -231,7 +231,7 @@ def disk_partitions(all=False):
                     continue
             except OSError as err:
                 # https://github.com/giampaolo/psutil/issues/1674
-                debug("skipping %r: %r" % (mountpoint, err))
+                debug("skipping %r: %s" % (mountpoint, err))
                 continue
         maxfile = maxpath = None  # set later
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,

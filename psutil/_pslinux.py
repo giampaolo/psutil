@@ -25,30 +25,31 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
+from ._common import NIC_DUPLEX_FULL
+from ._common import NIC_DUPLEX_HALF
+from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
+from ._common import NoSuchProcess
+from ._common import ZombieProcess
 from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
-from ._common import NoSuchProcess
 from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
-from ._common import ZombieProcess
-from ._compat import b
-from ._compat import basestring
+from ._compat import PY3
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
-from ._compat import PY3
+from ._compat import b
+from ._compat import basestring
+
 
 if sys.version_info >= (3, 4):
     import enum
@@ -746,16 +747,17 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
         real-time.
         """
         cpuinfo_freqs = _cpu_get_cpuinfo_freq()
-        paths = sorted(
-            glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or
-            glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq"))
+        paths = \
+            glob.glob("/sys/devices/system/cpu/cpufreq/policy[0-9]*") or \
+            glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
+        paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
         ret = []
         pjoin = os.path.join
         for i, path in enumerate(paths):
             if len(paths) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
-                curr = cpuinfo_freqs[i]
+                curr = cpuinfo_freqs[i] * 1000
             else:
                 curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
@@ -839,6 +841,10 @@ class Connections:
             except OSError as err:
                 if err.errno == errno.EINVAL:
                     # not a link
+                    continue
+                if err.errno == errno.ENAMETOOLONG:
+                    # file name too long
+                    debug(err)
                     continue
                 raise
             else:
@@ -1086,6 +1092,8 @@ def net_if_stats():
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
                 raise
+            else:
+                debug(err)
         else:
             ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
@@ -1194,6 +1202,80 @@ def disk_io_counters(perdisk=False):
     return retdict
 
 
+class RootFsDeviceFinder:
+    """disk_partitions() may return partitions with device == "/dev/root"
+    or "rootfs". This container class uses different strategies to try to
+    obtain the real device path. Resources:
+    https://bootlin.com/blog/find-root-device/
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
+    """
+    __slots__ = ['major', 'minor']
+
+    def __init__(self):
+        dev = os.stat("/").st_dev
+        self.major = os.major(dev)
+        self.minor = os.minor(dev)
+
+    def ask_proc_partitions(self):
+        with open_text("%s/partitions" % get_procfs_path()) as f:
+            for line in f.readlines()[2:]:
+                fields = line.split()
+                if len(fields) < 4:  # just for extra safety
+                    continue
+                major = int(fields[0]) if fields[0].isdigit() else None
+                minor = int(fields[1]) if fields[1].isdigit() else None
+                name = fields[3]
+                if major == self.major and minor == self.minor:
+                    if name:  # just for extra safety
+                        return "/dev/%s" % name
+
+    def ask_sys_dev_block(self):
+        path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        with open_text(path) as f:
+            for line in f:
+                if line.startswith("DEVNAME="):
+                    name = line.strip().rpartition("DEVNAME=")[2]
+                    if name:  # just for extra safety
+                        return "/dev/%s" % name
+
+    def ask_sys_class_block(self):
+        needle = "%s:%s" % (self.major, self.minor)
+        files = glob.iglob("/sys/class/block/*/dev")
+        for file in files:
+            try:
+                f = open_text(file)
+            except FileNotFoundError:  # race condition
+                continue
+            else:
+                with f:
+                    data = f.read().strip()
+                    if data == needle:
+                        name = os.path.basename(os.path.dirname(file))
+                        return "/dev/%s" % name
+
+    def find(self):
+        path = None
+        if path is None:
+            try:
+                path = self.ask_proc_partitions()
+            except (IOError, OSError) as err:
+                debug(err)
+        if path is None:
+            try:
+                path = self.ask_sys_dev_block()
+            except (IOError, OSError) as err:
+                debug(err)
+        if path is None:
+            try:
+                path = self.ask_sys_class_block()
+            except (IOError, OSError) as err:
+                debug(err)
+        # We use exists() because the "/dev/*" part of the path is hard
+        # coded, so we want to be sure.
+        if path is not None and os.path.exists(path):
+            return path
+
+
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
@@ -1221,6 +1303,8 @@ def disk_partitions(all=False):
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
+        if device in ("/dev/root", "rootfs"):
+            device = RootFsDeviceFinder().find() or device
         if not all:
             if device == '' or fstype not in fstypes:
                 continue
@@ -1316,7 +1400,7 @@ def sensors_temperatures():
                 path = os.path.join(base, 'type')
                 unit_name = cat(path, binary=False)
             except (IOError, OSError, ValueError) as err:
-                debug("ignoring %r for file %r" % (err, path))
+                debug(err)
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
@@ -1372,7 +1456,7 @@ def sensors_fans():
         try:
             current = int(cat(base + '_input'))
         except (IOError, OSError) as err:
-            warnings.warn("ignoring %r" % err, RuntimeWarning)
+            debug(err)
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
                         binary=False)
@@ -1398,7 +1482,10 @@ def sensors_battery():
         for path in paths:
             ret = cat(path, fallback=null)
             if ret != null:
-                return int(ret) if ret.isdigit() else ret
+                try:
+                    return int(ret)
+                except ValueError:
+                    return ret
         return None
 
     bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
@@ -2105,6 +2192,10 @@ class Process(object):
             except OSError as err:
                 if err.errno == errno.EINVAL:
                     # not a link
+                    continue
+                if err.errno == errno.ENAMETOOLONG:
+                    # file name too long
+                    debug(err)
                     continue
                 raise
             else:

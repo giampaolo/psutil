@@ -21,6 +21,7 @@ Parallel:
 """
 
 from __future__ import print_function
+
 import atexit
 import optparse
 import os
@@ -28,6 +29,8 @@ import sys
 import textwrap
 import time
 import unittest
+
+
 try:
     import ctypes
 except ImportError:
@@ -298,16 +301,15 @@ def get_runner(parallel=False):
 
 # Used by test_*,py modules.
 def run_from_name(name):
+    if CI_TESTING:
+        print_sysinfo()
     suite = TestLoader().from_name(name)
     runner = get_runner()
     runner.run(suite)
 
 
 def setup():
-    # Note: doc states that altering os.environment may cause memory
-    # leaks on some platforms.
-    # Sets PSUTIL_TESTING and PSUTIL_DEBUG in the C module.
-    psutil._psplatform.cext.set_testing()
+    psutil._set_debug(True)
 
 
 def main():

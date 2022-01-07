@@ -30,8 +30,10 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import time
 import sys
+import time
+
+
 try:
     import curses
 except ImportError:

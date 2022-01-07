@@ -18,6 +18,7 @@ import sys
 import time
 import traceback
 
+import psutil
 from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
@@ -33,25 +34,24 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
 from psutil.tests import APPVEYOR
-from psutil.tests import check_connection_ntuple
 from psutil.tests import CI_TESTING
-from psutil.tests import create_sockets
-from psutil.tests import enum
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import PYPY
+from psutil.tests import SKIP_SYSCONS
+from psutil.tests import VALID_PROC_STATUSES
+from psutil.tests import PsutilTestCase
+from psutil.tests import check_connection_ntuple
+from psutil.tests import create_sockets
+from psutil.tests import enum
 from psutil.tests import is_namedtuple
 from psutil.tests import kernel_version
 from psutil.tests import process_namespace
-from psutil.tests import PsutilTestCase
-from psutil.tests import PYPY
 from psutil.tests import serialrun
-from psutil.tests import SKIP_SYSCONS
 from psutil.tests import unittest
-from psutil.tests import VALID_PROC_STATUSES
-import psutil
 
 
 # ===================================================================
@@ -360,7 +360,6 @@ def proc_info(pid):
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)
-        assert exc.msg
 
     def do_wait():
         if pid != 0:

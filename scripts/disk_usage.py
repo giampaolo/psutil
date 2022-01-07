@@ -15,8 +15,9 @@ Device               Total     Used     Free  Use %      Type  Mount
 /dev/sda2           600.0M   312.4M   287.6M    52%   fuseblk  /media/Recovery
 """
 
-import sys
 import os
+import sys
+
 import psutil
 from psutil._common import bytes2human
 

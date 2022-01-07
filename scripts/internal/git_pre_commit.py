@@ -13,6 +13,7 @@ the files which were modified in the commit. Checks:
 - assert not pdb.set_trace in code
 - assert no bare except clause ("except:") in code
 - assert "flake8" checks pass
+- assert "isort" checks pass
 - assert C linter checks pass
 - abort if files were added/renamed/removed and MANIFEST.in was not updated
 
@@ -20,7 +21,9 @@ Install this with "make install-git-hooks".
 """
 
 from __future__ import print_function
+
 import os
+import shlex
 import subprocess
 import sys
 
@@ -115,14 +118,23 @@ def main():
                 print("%s:%s %s" % (path, lineno, line))
                 return exit("bare except clause")
 
-    # Python linter
+    # Python linters
     if py_files:
+        # flake8
         assert os.path.exists('.flake8')
-        # XXX: we should escape spaces and possibly other amenities here
         cmd = "%s -m flake8 --config=.flake8 %s" % (PYTHON, " ".join(py_files))
-        ret = subprocess.call(cmd, shell=True)
+        ret = subprocess.call(shlex.split(cmd))
         if ret != 0:
-            return exit("python code is not flake8 compliant")
+            return exit("python code didn't pass 'flake8' style check; "
+                        "try running 'make fix-flake8'")
+        # isort
+        assert os.path.exists('.isort.cfg')
+        cmd = "%s -m isort --settings=.isort.cfg --check-only %s" % (
+            PYTHON, " ".join(py_files))
+        ret = subprocess.call(shlex.split(cmd))
+        if ret != 0:
+            return exit("python code didn't pass 'isort' style check; "
+                        "try running 'make fix-imports'")
     # C linter
     if c_files:
         # XXX: we should escape spaces and possibly other amenities here
