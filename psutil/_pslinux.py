@@ -379,7 +379,6 @@ def calculate_avail_vmem(mems):
     It is still way more realistic than doing (free + cached) though.
     See:
     * https://gitlab.com/procps-ng/procps/issues/42
-    * https://gitlab.com/procps-ng/procps/-/issues/42
     * https://github.com/famzah/linux-memavailable-procfs/issues/2
     """
     # Note about "fallback" value. According to:
