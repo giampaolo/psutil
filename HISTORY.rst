@@ -1,5 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.1
+=====
+
+**Bug fixes**
+
+- 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
+  ``min`` and ``max`` are in MHz.
+
 5.9.0
 =====
 

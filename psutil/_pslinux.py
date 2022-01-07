@@ -749,7 +749,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
             if len(paths) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
-                curr = cpuinfo_freqs[i]
+                curr = cpuinfo_freqs[i] * 1000
             else:
                 curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
