@@ -1435,8 +1435,8 @@ def sensors_fans():
         except (IOError, OSError) as err:
             debug(err)
             continue
-        unit_name = cat(os.path.join(os.path.dirname(base), 'name'))
-        label = cat(base + '_label', fallback='')
+        unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
+        label = cat(base + '_label', fallback='').strip()
         ret[unit_name].append(_common.sfan(label, current))
 
     return dict(ret)
@@ -1461,7 +1461,7 @@ def sensors_battery():
                 try:
                     return int(ret)
                 except ValueError:
-                    return ret
+                    return ret.strip()
         return None
 
     bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
