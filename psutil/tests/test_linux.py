@@ -2250,15 +2250,6 @@ class TestUtils(PsutilTestCase):
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
             assert m.called
 
-    def test_cat(self):
-        testfn = self.get_testfn()
-        with open(testfn, "wt") as f:
-            f.write("foo ")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=True), b"foo")
-        self.assertEqual(
-            psutil._psplatform.cat(testfn + '??', fallback="bar"), "bar")
-
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name

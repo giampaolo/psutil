@@ -184,7 +184,7 @@ class TestProcessAPIs(PsutilTestCase):
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in psutil.pids()
                 time.sleep(.1)
-                self.assertIn(pid, psutil.pids())
+                self.assertNotIn(pid, psutil.pids())
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)

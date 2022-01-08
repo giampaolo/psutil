@@ -46,6 +46,7 @@ PY3 = sys.version_info[0] == 3
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG', 0))
 if PSUTIL_DEBUG:
     import inspect
+_DEFAULT = object()
 
 __all__ = [
     # OS constants
@@ -72,6 +73,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
+    'open_text', 'open_binary', 'cat', 'bcat',
     'bytes2human', 'conn_to_ntuple', 'debug',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
@@ -725,6 +727,28 @@ def open_text(fname, **kwargs):
         kwargs.setdefault('encoding', ENCODING)
         kwargs.setdefault('errors', ENCODING_ERRS)
     return open(fname, "rt", **kwargs)
+
+
+def cat(fname, fallback=_DEFAULT, _open=open_text):
+    """Read entire file content and return it as a string. File is
+    opened in text mode. If specified, `fallback` is the value
+    returned in case of error, either if the file does not exist or
+    it can't be read().
+    """
+    if fallback is _DEFAULT:
+        with _open(fname) as f:
+            return f.read()
+    else:
+        try:
+            with _open(fname) as f:
+                return f.read()
+        except (IOError, OSError):
+            return fallback
+
+
+def bcat(fname, fallback=_DEFAULT):
+    """Same as above but opens file in binary mode."""
+    return cat(fname, fallback=fallback, _open=open_binary)
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
