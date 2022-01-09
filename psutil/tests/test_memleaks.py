@@ -32,6 +32,7 @@ from psutil._compat import ProcessLookupError
 from psutil._compat import super
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_DISK_SWAPS
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_IONICE
 from psutil.tests import HAS_MEMORY_MAPS
@@ -401,6 +402,10 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     @fewtimes_if_linux()
     def test_disk_io_counters(self):
         self.execute(lambda: psutil.disk_io_counters(nowrap=False))
+
+    @unittest.skipIf(not HAS_DISK_SWAPS, "not supported")
+    def test_disk_swaps(self):
+        self.execute(psutil.disk_swaps)
 
     # --- proc
 

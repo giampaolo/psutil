@@ -531,6 +531,23 @@ Disks
   .. versionchanged::
     4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
 
+.. function:: disk_swaps()
+
+  Enumerate swap partitions and swap files as a list of namedtuples including:
+
+  - **path**: the path of the swap partition/file on disk
+  - **total**: total swap partition/file size
+  - **used**: used swap partition/file size
+  - **fstype** (Linux): either "partition" or "swapfile"
+  - **priority** (Linux): makes sense when multiple swap files are in use.
+    The lower the priority, the more likely the swap file is o be used.
+  - **peak** (Windows): the highest peak usage over time.
+
+  Availability: Linux, Windows, FreeBSD
+
+  .. versionadded:: 5.7.1
+
+
 Network
 -------
 

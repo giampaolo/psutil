@@ -1635,6 +1635,8 @@ PsutilMethods[] = {
      "Return a list of currently connected users."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
+    {"disk_swaps", psutil_disk_swaps, METH_VARARGS,
+     "Return information about the disk page files as a list."},
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide connections"},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,

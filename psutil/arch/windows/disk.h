@@ -10,3 +10,5 @@ PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_disk_usage(PyObject *self, PyObject *args);
 PyObject *psutil_QueryDosDevice(PyObject *self, PyObject *args);
+PyObject *psutil_disk_swaps(PyObject *self, PyObject *args);
+

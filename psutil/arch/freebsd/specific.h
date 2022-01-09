@@ -28,3 +28,4 @@ PyObject* psutil_sensors_battery(PyObject* self, PyObject* args);
 PyObject* psutil_sensors_cpu_temperature(PyObject* self, PyObject* args);
 PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
 PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
+PyObject* psutil_disk_swaps(PyObject* self, PyObject* args);

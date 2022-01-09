@@ -37,6 +37,7 @@ from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
+from psutil.tests import HAS_DISK_SWAPS
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
@@ -680,6 +681,35 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertIsNone(psutil.disk_io_counters(perdisk=False))
             self.assertEqual(psutil.disk_io_counters(perdisk=True), {})
             assert m.called
+
+    @unittest.skipIf(not HAS_DISK_SWAPS, "not supported")
+    def test_disk_swaps(self):
+        ls = psutil.disk_swaps()
+        self.assertIsInstance(ls, list)
+        if not ls:
+            raise self.skipTest("no swap locations")
+
+        for swap in ls:
+            assert os.path.exists(swap.path), swap.path
+            self.assertGreaterEqual(swap.total, 0)
+            self.assertGreaterEqual(swap.used, 0)
+            if LINUX:
+                fields = ('path', 'total', 'used', 'fstype', 'priority')
+                self.assertEqual(swap._fields, fields)
+                self.assertIn(swap.fstype, ("partition", "swapfile"))
+                self.assertIsInstance(swap.priority, int)
+            elif WINDOWS:
+                fields = ('path', 'total', 'used', 'peak')
+                self.assertEqual(swap._fields, fields)
+                self.assertGreaterEqual(swap.peak, 0)
+
+        if LINUX:
+            self.assertEqual(
+                psutil.swap_memory().total,
+                sum([x.total for x in psutil.disk_swaps()]))
+            self.assertEqual(
+                psutil.swap_memory().used,
+                sum([x.used for x in psutil.disk_swaps()]))
 
 
 class TestNetAPIs(PsutilTestCase):

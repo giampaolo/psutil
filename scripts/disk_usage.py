@@ -20,6 +20,7 @@ import sys
 
 import psutil
 from psutil._common import bytes2human
+from psutil._common import usage_percent
 
 
 def main():
@@ -42,6 +43,16 @@ def main():
             int(usage.percent),
             part.fstype,
             part.mountpoint))
+    if hasattr(psutil, "disk_swaps"):
+        for swap in psutil.disk_swaps():
+            print(templ % (
+                swap.path,
+                bytes2human(swap.total),
+                bytes2human(swap.used),
+                bytes2human(swap.total - swap.used),
+                int(usage_percent(swap.used, swap.total)),
+                "swap",
+                ""))
 
 
 if __name__ == '__main__':

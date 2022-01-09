@@ -147,6 +147,10 @@ class TestAvailSystemAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
                          LINUX or WINDOWS or FREEBSD or MACOS)
 
+    def test_disk_swaps(self):
+        hasit = LINUX or WINDOWS or FREEBSD
+        self.assertEqual(hasattr(psutil, "disk_swaps"), hasit)
+
 
 class TestAvailProcessAPIs(PsutilTestCase):
 

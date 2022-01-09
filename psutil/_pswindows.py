@@ -166,6 +166,9 @@ scputimes = namedtuple('scputimes',
                        ['user', 'system', 'idle', 'interrupt', 'dpc'])
 # psutil.virtual_memory()
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+# psutil.disk_swaps()
+sdiskswap = namedtuple(
+    'sdiskswap', _common.sdiskswap._fields + ('peak', ))
 # psutil.Process.memory_info()
 pmem = namedtuple(
     'pmem', ['rss', 'vms',
@@ -197,6 +200,9 @@ def convert_dos_path(s):
     into:
         "C:\Windows\systemew\file.txt"
     """
+    # "\??\" refers to \GLOBAL??\. Just remove it.
+    if s.startswith("\\??\\"):
+        return s[4:]
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive):]
@@ -281,6 +287,17 @@ def disk_partitions(all):
     """Return disk partitions."""
     rawlist = cext.disk_partitions(all)
     return [_common.sdiskpart(*x) for x in rawlist]
+
+
+def disk_swaps():
+    """Return disk page files information."""
+    ret = []
+    rawlist = cext.disk_swaps()
+    for dospath, total, used, peak in rawlist:
+        path = convert_dos_path(dospath)
+        nt = sdiskswap(path, total, used, peak)
+        ret.append(nt)
+    return ret
 
 
 # =====================================================================

@@ -188,6 +188,7 @@ __all__ = [
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    # "disk_swaps"
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
@@ -2081,6 +2082,25 @@ def disk_io_counters(perdisk=False, nowrap=True):
 disk_io_counters.cache_clear = functools.partial(
     _wrap_numbers.cache_clear, 'psutil.disk_io_counters')
 disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
+
+
+# Linux
+if hasattr(_psplatform, "disk_swaps"):
+
+    def disk_swaps():
+        """Enumerate swap partitions and swap files as a list of namedtuples:
+
+        - path: the path of the swap partition/file on disk
+        - total: total swap partition/file size
+        - used: used swap partition/file size
+        - fstype (Linux): either "partition" or "swapfile"
+        - priority (Linux): makes sense when multiple swap files are in
+          use. The lower the priority, the more likely the swap file is
+          to be used.
+        """
+        return _psplatform.disk_swaps()
+
+    __all__.append("disk_swaps")
 
 
 # =====================================================================

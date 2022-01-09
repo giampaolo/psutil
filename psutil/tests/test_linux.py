@@ -1268,6 +1268,20 @@ class TestSystemDiskIoCounters(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
+class TestDiskSwaps(unittest.TestCase):
+
+    @unittest.skipIf(not which("swapon"), "swapon utility not available")
+    def test_against_swapon(self):
+        swaps = psutil.disk_swaps()
+        lines = sh("swapon --bytes").split('\n')
+        lines.pop(0)  # header
+        for i, line in enumerate(lines):
+            path, fstype, total, used, prio = line.split()
+            self.assertEqual((path, int(total), int(used), fstype, int(prio)),
+                             tuple(swaps[i]))
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
 class TestRootFsDeviceFinder(PsutilTestCase):
 
     def setUp(self):

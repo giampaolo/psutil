@@ -187,6 +187,8 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
 # psutil.disk_partitions()
 sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts',
                                      'maxfile', 'maxpath'])
+# psutil.disk_swaps()
+sdiskswap = namedtuple('sdiskswap', ['path', 'total', 'used'])
 # psutil.net_io_counters()
 snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'packets_sent', 'packets_recv',

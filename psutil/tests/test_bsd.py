@@ -27,6 +27,7 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 from psutil.tests import which
 
@@ -242,17 +243,17 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
 @unittest.skipIf(not FREEBSD, "FREEBSD only")
 class FreeBSDSystemTestCase(PsutilTestCase):
 
-    @staticmethod
-    def parse_swapinfo():
+    @unittest.skipIf(not which('swapinfo'), "swapinfo util not available")
+    def parse_swapinfo(self):
         # the last line is always the total
-        output = sh("swapinfo -k").splitlines()[-1]
-        parts = re.split(r'\s+', output)
-
-        if not parts:
-            raise ValueError("Can't parse swapinfo: %s" % output)
-
-        # the size is in 1k units, so multiply by 1024
-        total, used, free = (int(p) * 1024 for p in parts[1:4])
+        total = used = free = 0
+        lines = sh("swapinfo -k").splitlines()
+        lines.pop(0)  # header
+        for line in lines:
+            path, total_, used_, free_ = line.split()[:4]
+            total += int(total_) * 1024
+            used += int(used_) * 1024
+            free += int(free_) * 1024
         return total, used, free
 
     def test_cpu_frequency_against_sysctl(self):
@@ -474,6 +475,26 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             self.assertEqual(
                 psutil.sensors_temperatures()["coretemp"][cpu].high,
                 sysctl_result)
+
+    # --- disks
+
+    @unittest.skipIf(not which('swapinfo'), "swapinfo util not available")
+    def test_disk_swaps(self):
+        total, used, free = self.parse_swapinfo()
+        self.assertAlmostEqual(
+            sum([x.total for x in psutil.disk_swaps()]),
+            total, delta=TOLERANCE_SYS_MEM)
+        self.assertAlmostEqual(
+            sum([x.used for x in psutil.disk_swaps()]),
+            used, delta=TOLERANCE_SYS_MEM)
+
+        lines = sh("swapinfo -k").splitlines()
+        lines.pop(0)  # header
+        paths = []
+        for i, line in enumerate(lines):
+            paths.append(line.split()[0])
+        self.assertEqual(sorted(paths),
+                         sorted([x.path for x in psutil.disk_swaps()]))
 
 
 # =====================================================================
