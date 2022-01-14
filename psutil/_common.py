@@ -716,7 +716,7 @@ wrap_numbers.cache_info = _wn.cache_info
 #   >>> with open(file) as f:
 #   ...    for line in f:
 #   ...        ...
-# Per-line default buffer size for binary files is 1K. For text files
+# Default per-line buffer size for binary files is 1K. For text files
 # is 8K. We use a bigger buffer (32K) in order to have more consistent
 # results when reading /proc pseudo files on Linux, see:
 # https://github.com/giampaolo/psutil/issues/2050
