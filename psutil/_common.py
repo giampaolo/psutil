@@ -736,7 +736,7 @@ def open_text(fname):
     On Python 2 this is just an alias for open(name, 'rt').
     """
     if not PY3:
-        return open_binary(fname)
+        return open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE)
 
     # See:
     # https://github.com/giampaolo/psutil/issues/675
