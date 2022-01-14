@@ -726,27 +726,23 @@ wrap_numbers.cache_info = _wn.cache_info
 FILE_READ_BUFFER_SIZE = 32 * 1024
 
 
-def open_binary(fname, **kwargs):
-    kwargs.setdefault('buffering', FILE_READ_BUFFER_SIZE)
-    return open(fname, "rb", **kwargs)
+def open_binary(fname):
+    return open(fname, "rb", buffering=FILE_READ_BUFFER_SIZE)
 
 
-def open_text(fname, **kwargs):
+def open_text(fname):
     """On Python 3 opens a file in text mode by using fs encoding and
     a proper en/decoding errors handler.
     On Python 2 this is just an alias for open(name, 'rt').
     """
     if not PY3:
-        return open_binary(fname, **kwargs)
+        return open_binary(fname)
 
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
-    kwargs.setdefault('encoding', ENCODING)
-    kwargs.setdefault('errors', ENCODING_ERRS)
-    kwargs.setdefault('buffering', FILE_READ_BUFFER_SIZE)
-
-    fobj = open(fname, "rt", **kwargs)
+    fobj = open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE,
+                encoding=ENCODING, errors=ENCODING_ERRS)
     try:
         # Dictates per-line read(2) buffer size. Defaults is 8k. See:
         # https://github.com/giampaolo/psutil/issues/2050#issuecomment-1013387546
