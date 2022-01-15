@@ -85,10 +85,6 @@ HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = cext_posix.getpagesize()
 BOOT_TIME = None  # set later
-# Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
-# On Python 2, using a buffer with open() for such files may result in a
-# speedup, see: https://github.com/giampaolo/psutil/issues/708
-BIGFILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 
 # "man iostat" states that sectors are equivalent with blocks and have
@@ -904,7 +900,7 @@ class Connections:
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
-        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
+        with open_text(file) as f:
             f.readline()  # skip the first line
             for lineno, line in enumerate(f, 1):
                 try:
@@ -941,7 +937,7 @@ class Connections:
     @staticmethod
     def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
+        with open_text(file) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
@@ -1720,8 +1716,7 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
-        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                         buffering=BIGFILE_BUFFERING) as f:
+        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid)) as f:
             return f.read().strip()
 
     def oneshot_enter(self):
