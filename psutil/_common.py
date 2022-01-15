@@ -289,7 +289,7 @@ class Error(Exception):
             info = {}  # Python 2.6
         for name in attrs:
             value = getattr(self, name, None)
-            if value:
+            if value is not None:
                 info[name] = value
         return info
 
