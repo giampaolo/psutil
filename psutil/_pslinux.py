@@ -201,15 +201,15 @@ VIRTUALIZATION_ZVM = "zvm"
 VIRTUALIZATION_CONTAINER_OTHER = "container-other"
 VIRTUALIZATION_VM_OTHER = "vm-other"
 
-CPUID_VENDOR_VIRT_TABLE = {
-    "XenVMMXenVMM": VIRTUALIZATION_XEN,
+CPUID_VENDOR_TABLE = {
+    "ACRNACRNACRN": VIRTUALIZATION_ACRN,
+    "bhyve bhyve ": VIRTUALIZATION_BHYVE,
     "KVMKVMKVM": VIRTUALIZATION_KVM,
+    "Microsoft Hv": VIRTUALIZATION_MICROSOFT,
+    "QNXQVMBSQG": VIRTUALIZATION_QNX,
     "TCGTCGTCGTCG": VIRTUALIZATION_QEMU,
     "VMwareVMware": VIRTUALIZATION_VMWARE,
-    "Microsoft Hv": VIRTUALIZATION_MICROSOFT,
-    "bhyve bhyve ": VIRTUALIZATION_BHYVE,
-    "QNXQVMBSQG": VIRTUALIZATION_QNX,
-    "ACRNACRNACRN": VIRTUALIZATION_ACRN,
+    "XenVMMXenVMM": VIRTUALIZATION_XEN,
 }
 
 
@@ -1780,8 +1780,8 @@ class VmDetector(_VirtualizationBase):
 
     def ask_cpuid(self):
         vendor = cext.linux_cpuid()
-        if vendor and vendor in CPUID_VENDOR_VIRT_TABLE:
-            return CPUID_VENDOR_VIRT_TABLE[vendor]
+        if vendor and vendor in CPUID_VENDOR_TABLE:
+            return CPUID_VENDOR_TABLE[vendor]
 
     def detect_xen(self):
         if os.path.exists('%s/xen' % self.procfs_path):
