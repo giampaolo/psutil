@@ -74,6 +74,21 @@ VIRTUALIZATION_ZVM = "zvm"
 VIRTUALIZATION_CONTAINER_OTHER = "container-other"
 VIRTUALIZATION_VM_OTHER = "vm-other"
 
+# https://evasions.checkpoint.com/techniques/cpu.html
+CPUID_VENDOR_TABLE = {
+    "ACRNACRNACRN": VIRTUALIZATION_ACRN,
+    "bhyve bhyve ": VIRTUALIZATION_BHYVE,
+    "KVMKVMKVM": VIRTUALIZATION_KVM,
+    "Microsoft Hv": VIRTUALIZATION_MICROSOFT,
+    "prl hyperv": VIRTUALIZATION_PARALLELS,  # on Windows only
+    "QNXQVMBSQG": VIRTUALIZATION_QNX,
+    "TCGTCGTCGTCG": VIRTUALIZATION_QEMU,
+    "VBoxVBoxVBox": VIRTUALIZATION_VIRTUALBOX,  # on Windows only
+    "VMwareVMware": VIRTUALIZATION_VMWARE,
+    "XenVMMXenVMM": VIRTUALIZATION_XEN,
+}
+
+
 # =====================================================================
 # --- Linux
 # =====================================================================
@@ -81,17 +96,6 @@ VIRTUALIZATION_VM_OTHER = "vm-other"
 if LINUX:
     from . import _psutil_linux as cext
     from ._pslinux import Process
-
-    CPUID_VENDOR_TABLE = {
-        "ACRNACRNACRN": VIRTUALIZATION_ACRN,
-        "bhyve bhyve ": VIRTUALIZATION_BHYVE,
-        "KVMKVMKVM": VIRTUALIZATION_KVM,
-        "Microsoft Hv": VIRTUALIZATION_MICROSOFT,
-        "QNXQVMBSQG": VIRTUALIZATION_QNX,
-        "TCGTCGTCGTCG": VIRTUALIZATION_QEMU,
-        "VMwareVMware": VIRTUALIZATION_VMWARE,
-        "XenVMMXenVMM": VIRTUALIZATION_XEN,
-    }
 
     class _VirtualizationBase:
         __slots__ = ["procfs_path"]
@@ -355,4 +359,6 @@ elif WINDOWS:
     from . import _psutil_windows as cext
 
     def virtualization():
-        return cext.__cpuid()
+        vendor = cext.__cpuid()
+        if vendor is not None and vendor in CPUID_VENDOR_TABLE:
+            return CPUID_VENDOR_TABLE[vendor]
