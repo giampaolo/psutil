@@ -2,6 +2,7 @@ import os
 import re
 
 from ._common import LINUX
+from ._common import WINDOWS
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import cat
@@ -41,6 +42,10 @@ VIRTUALIZATION_ZVM = "zvm"
 
 VIRTUALIZATION_CONTAINER_OTHER = "container-other"
 VIRTUALIZATION_VM_OTHER = "vm-other"
+
+# =====================================================================
+# --- Linux
+# =====================================================================
 
 if LINUX:
     from . import _psutil_linux as cext
@@ -322,3 +327,13 @@ if LINUX:
                 debug("ignoring error '%s' for method %r" % ((err, func_name)))
 
         return retval or ""
+
+# =====================================================================
+# --- Windows
+# =====================================================================
+
+elif WINDOWS:
+    from . import _psutil_windows as cext
+
+    def virtualization():
+        return cext.__cpuid()

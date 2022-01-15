@@ -220,19 +220,32 @@ __all__ = [
 
 
 __all__.extend(_psplatform.__extra__all__)
+_globals = globals()
 
 # Linux, FreeBSD
 if hasattr(_psplatform.Process, "rlimit"):
     # Populate global namespace with RLIM* constants.
     from . import _psutil_posix
 
-    _globals = globals()
     _name = None
     for _name in dir(_psutil_posix):
         if _name.startswith('RLIM') and _name.isupper():
             _globals[_name] = getattr(_psutil_posix, _name)
             __all__.append(_name)
-    del _globals, _name
+    del _name
+
+if LINUX or WINDOWS:
+    from . import _virt
+
+    _name = None
+    for _name in dir(_virt):
+        if _name.startswith('VIRTUALIZATION_') and _name.isupper():
+            _globals[_name] = getattr(_virt, _name)
+            __all__.append(_name)
+    del _name
+
+del _globals
+
 
 AF_LINK = _psplatform.AF_LINK
 
