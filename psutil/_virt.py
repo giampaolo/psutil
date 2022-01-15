@@ -155,9 +155,10 @@ if LINUX:
             m = re.search(r'TracerPid:\t(\d+)', data)
             if m:
                 tracer_pid = int(m.group(1))
-                pname = Process(tracer_pid).name()
-                if pname.startswith("proot"):
-                    return VIRTUALIZATION_PROOT
+                if tracer_pid != 0:
+                    pname = Process(tracer_pid).name()
+                    if pname.startswith("proot"):
+                        return VIRTUALIZATION_PROOT
 
         def ask_run_host(self):
             # The container manager might have placed this in the /run/host/
