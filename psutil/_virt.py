@@ -341,9 +341,9 @@ if LINUX:
                 if retval:
                     break
             except (IOError, OSError) as err:
-                debug("ignoring error '%s' for method %r" % ((err, func_name)))
+                debug(err)
             except (AccessDenied, NoSuchProcess) as err:
-                debug("ignoring error '%s' for method %r" % ((err, func_name)))
+                debug(err)
 
         return retval or ""
 
