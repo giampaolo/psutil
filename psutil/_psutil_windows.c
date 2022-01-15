@@ -1654,6 +1654,8 @@ PsutilMethods[] = {
      "Return battery metrics usage."},
     {"getpagesize", psutil_getpagesize, METH_VARARGS,
      "Return system memory page size."},
+    {"__cpuid", psutil_cpuid, METH_VARARGS,
+     "A wrapper around __cpuid()."},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,

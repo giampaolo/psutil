@@ -541,7 +541,7 @@ static PyMethodDef mod_methods[] = {
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
     {"linux_cpuid", psutil_linux_cpuid, METH_VARARGS,
-     "A wrapper around __get_cpuid()."},
+     "A wrapper around __cpuid()."},
 
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,

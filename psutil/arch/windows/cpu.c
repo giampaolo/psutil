@@ -412,3 +412,34 @@ error:
         LocalFree(pBuffer);
     return NULL;
 }
+
+
+/*
+ * A wrapper around __cpuid syscall. Returns a string in case a
+ * hypervisor / virtualizer is present, else None.
+ */
+PyObject *
+psutil_cpuid(PyObject *self, PyObject *args) {
+    int cpuInfo[4] = {-1};
+    char cpuString[0x20];
+    unsigned nIds;
+    const auto queryVendorIdMagic = 0x40000000;
+
+    // Check bit 31 of register ECX (the "hypervisor present bit").
+    // If this bit is set, a hypervisor is present.
+    // In a non-virtualized environment, the bit will be clear.
+    __cpuid(cpuInfo, 1);
+    if (!(cpuInfo[2] & (1 << 31))) {
+        // not virtualized
+        Py_RETURN_NONE;
+    }
+
+    // Virtualized.
+    __cpuid(cpuInfo, queryVendorIdMagic);
+    nIds = cpuInfo[0];
+    memset(cpuString, 0, sizeof(cpuString));
+    *((int*)cpuString) = cpuInfo[1];
+    *((int*)(cpuString + 4)) = cpuInfo[3];
+    *((int*)(cpuString + 8)) = cpuInfo[2];
+    return Py_BuildValue("s", cpuString);
+}

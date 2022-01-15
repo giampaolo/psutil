@@ -2349,7 +2349,8 @@ def users():
     return _psplatform.users()
 
 
-if LINUX:
+# Linux, Windows
+if hasattr(_psplatform, "virtualization"):
 
     def virtualization():
         return _psplatform.virtualization()
