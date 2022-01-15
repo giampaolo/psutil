@@ -1735,6 +1735,7 @@ class ContainerDetector(_VirtualizationBase):
         if os.path.exists("/.dockerenv"):
             # https://github.com/moby/moby/issues/18355
             return VIRTUALIZATION_DOCKER
+        # Note: virt-what also checks for `/.dockerinit`.
 
 
 class VmDetector(_VirtualizationBase):
