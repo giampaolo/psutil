@@ -144,14 +144,12 @@ if LINUX:
         def detect_wsl(self):
             # "Official" way of detecting WSL:
             # https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
-            with open_text('%s/sys/kernel/osrelease' % self.procfs_path) as f:
-                data = f.read().strip()
-                if "Microsoft" in data or "WSL" in data:
-                    return VIRTUALIZATION_WSL
+            data = cat('%s/sys/kernel/osrelease' % self.procfs_path).strip()
+            if "Microsoft" in data or "WSL" in data:
+                return VIRTUALIZATION_WSL
 
         def detect_proot(self):
-            with open_text('%s/self/status' % self.procfs_path) as f:
-                data = f.read()
+            data = cat('%s/self/status' % self.procfs_path).strip()
             m = re.search(r'TracerPid:\t(\d+)', data)
             if m:
                 tracer_pid = int(m.group(1))
@@ -164,17 +162,15 @@ if LINUX:
             # The container manager might have placed this in the /run/host/
             # hierarchy for us, which is good because it doesn't require root
             # privileges.
-            with open_text("/run/host/container-manager") as f:
-                data = f.read().strip()
-                return self._container_from_string(data)
+            data = cat("/run/host/container-manager").strip()
+            return self._container_from_string(data)
 
         def ask_run_systemd(self):
             # ...Otherwise PID 1 might have dropped this information into a
             # file in /run. This is better than accessing /proc/1/environ,
             # since we don't need CAP_SYS_PTRACE for that.
-            with open_text("/run/systemd/container") as f:
-                data = f.read().strip()
-                return self._container_from_string(data)
+            data = cat("/run/systemd/container").strip()
+            return self._container_from_string(data)
 
         def ask_pid_1(self):
             # Only works if running as root or if we have CAP_SYS_PTRACE.
@@ -223,7 +219,7 @@ if LINUX:
                 "BHYVE": VIRTUALIZATION_BHYVE,
             }
             for file in files:
-                out = cat(file, fallback="")
+                out = cat(file, fallback="").strip()
                 for k, v in vendors_table.items():
                     if out.startswith(k):
                         debug("virtualization found in file %r" % file)
@@ -245,25 +241,23 @@ if LINUX:
         def detect_xen(self):
             if os.path.exists('%s/xen' % self.procfs_path):
                 return VIRTUALIZATION_XEN
-
-            with open_text("/sys/hypervisor/type") as f:
-                if f.read().strip() == "xen":
-                    return VIRTUALIZATION_XEN
-                else:
-                    return VIRTUALIZATION_VM_OTHER
+            data = cat("/sys/hypervisor/type").strip()
+            if data == "xen":
+                return VIRTUALIZATION_XEN
+            else:
+                return VIRTUALIZATION_VM_OTHER
 
         def ask_device_tree(self):
             path = "%s/device-tree/hypervisor/compatible" % self.procfs_path
-            with open_text(path) as f:
-                data = f.read().strip()
-                if data == "linux,kvm":
-                    return VIRTUALIZATION_KVM
-                elif data == "xen":
-                    return VIRTUALIZATION_XEN
-                elif data == "vmware":
-                    return VIRTUALIZATION_VMWARE
-                else:
-                    return VIRTUALIZATION_VM_OTHER
+            data = cat(path)
+            if data == "linux,kvm":
+                return VIRTUALIZATION_KVM
+            elif data == "xen":
+                return VIRTUALIZATION_XEN
+            elif data == "vmware":
+                return VIRTUALIZATION_VMWARE
+            else:
+                return VIRTUALIZATION_VM_OTHER
 
         def detect_powervm(self):
             base = "%s/device-tree" % self.procfs_path
