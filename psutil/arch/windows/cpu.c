@@ -7,6 +7,9 @@
 #include <Python.h>
 #include <windows.h>
 #include <PowrProf.h>
+#if defined(_M_IX86) || defined(_M_X64)
+    #include <intrin.h>  // __cpuid
+#endif
 
 #include "../../_psutil_common.h"
 
@@ -420,6 +423,7 @@ error:
  */
 PyObject *
 psutil_cpuid(PyObject *self, PyObject *args) {
+#if defined(_M_IX86) || defined(_M_X64)
     int cpuInfo[4] = {-1};
     char cpuString[0x20];
     unsigned nIds;
@@ -442,4 +446,6 @@ psutil_cpuid(PyObject *self, PyObject *args) {
     *((int*)(cpuString + 4)) = cpuInfo[3];
     *((int*)(cpuString + 8)) = cpuInfo[2];
     return Py_BuildValue("s", cpuString);
+#endif  // _M_IX86 || _M_X64
+    Py_RETURN_NONE;
 }
