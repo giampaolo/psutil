@@ -176,6 +176,7 @@ VIRTUALIZATION_AMAZON = "amazon"
 VIRTUALIZATION_BHYVE = "bhyve"
 VIRTUALIZATION_BOCHS = "bochs"
 VIRTUALIZATION_DOCKER = "docker"
+VIRTUALIZATION_IBM_SYSTEMZ = "ibm-systemz"  # detected by virt-what
 VIRTUALIZATION_KVM = "kvm"
 VIRTUALIZATION_LXC = "lxc"
 VIRTUALIZATION_LXC_LIBVIRT = "lxc-libvirt"
@@ -1838,6 +1839,8 @@ class VmDetectorOthers(_VirtualizationBase):
                     value = line.partition(b":")[2].strip()
                     if b"PowerVM Lx86" in value:
                         return VIRTUALIZATION_POWERVM
+                    elif b"IBM/S390" in value:
+                        return VIRTUALIZATION_IBM_SYSTEMZ
 
 
 def virtualization():

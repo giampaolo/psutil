@@ -2459,6 +2459,9 @@ class TestVirtualizationVms(PsutilTestCase):
         with mock_open_content("/proc/cpuinfo", b"vendor_id   : PowerVM Lx86"):
             self.assertEqual(self.detector_others.ask_proc_cpuinfo(),
                              "powervm")
+        with mock_open_content("/proc/cpuinfo", b"vendor_id   : IBM/S390"):
+            self.assertEqual(self.detector_others.ask_proc_cpuinfo(),
+                             "ibm-systemz")
 
 
 # =====================================================================
