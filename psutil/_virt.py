@@ -360,5 +360,8 @@ elif WINDOWS:
 
     def virtualization():
         vendor = cext.__cpuid()
-        if vendor is not None and vendor in CPUID_VENDOR_TABLE:
-            return CPUID_VENDOR_TABLE[vendor]
+        if vendor is not None:
+            if vendor in CPUID_VENDOR_TABLE:
+                return CPUID_VENDOR_TABLE[vendor]
+            else:
+                return VIRTUALIZATION_VM_OTHER
