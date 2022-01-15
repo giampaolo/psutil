@@ -104,32 +104,32 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
-    from ._pslinux import VIRTUALIZATION_ACRN  # NOQA
-    from ._pslinux import VIRTUALIZATION_AMAZON  # NOQA
-    from ._pslinux import VIRTUALIZATION_BHYVE  # NOQA
-    from ._pslinux import VIRTUALIZATION_BOCHS  # NOQA
-    from ._pslinux import VIRTUALIZATION_CONTAINER_OTHER  # NOQA
-    from ._pslinux import VIRTUALIZATION_DOCKER  # NOQA
-    from ._pslinux import VIRTUALIZATION_IBM_SYSTEMZ  # NOQA
-    from ._pslinux import VIRTUALIZATION_KVM  # NOQA
-    from ._pslinux import VIRTUALIZATION_LXC  # NOQA
-    from ._pslinux import VIRTUALIZATION_LXC_LIBVIRT  # NOQA
-    from ._pslinux import VIRTUALIZATION_MICROSOFT  # NOQA
-    from ._pslinux import VIRTUALIZATION_PARALLELS  # NOQA
-    from ._pslinux import VIRTUALIZATION_PODMAN  # NOQA
-    from ._pslinux import VIRTUALIZATION_POWERVM  # NOQA
-    from ._pslinux import VIRTUALIZATION_PROOT  # NOQA
-    from ._pslinux import VIRTUALIZATION_QEMU  # NOQA
-    from ._pslinux import VIRTUALIZATION_QNX  # NOQA
-    from ._pslinux import VIRTUALIZATION_RKT  # NOQA
-    from ._pslinux import VIRTUALIZATION_SYSTEMD_NSPAWN  # NOQA
-    from ._pslinux import VIRTUALIZATION_UML  # NOQA
-    from ._pslinux import VIRTUALIZATION_VIRTUALBOX  # NOQA
-    from ._pslinux import VIRTUALIZATION_VM_OTHER  # NOQA
-    from ._pslinux import VIRTUALIZATION_VMWARE  # NOQA
-    from ._pslinux import VIRTUALIZATION_WSL  # NOQA
-    from ._pslinux import VIRTUALIZATION_XEN  # NOQA
-    from ._pslinux import VIRTUALIZATION_ZVM  # NOQA
+    from ._virt import VIRTUALIZATION_ACRN  # NOQA
+    from ._virt import VIRTUALIZATION_AMAZON  # NOQA
+    from ._virt import VIRTUALIZATION_BHYVE  # NOQA
+    from ._virt import VIRTUALIZATION_BOCHS  # NOQA
+    from ._virt import VIRTUALIZATION_CONTAINER_OTHER  # NOQA
+    from ._virt import VIRTUALIZATION_DOCKER  # NOQA
+    from ._virt import VIRTUALIZATION_IBM_SYSTEMZ  # NOQA
+    from ._virt import VIRTUALIZATION_KVM  # NOQA
+    from ._virt import VIRTUALIZATION_LXC  # NOQA
+    from ._virt import VIRTUALIZATION_LXC_LIBVIRT  # NOQA
+    from ._virt import VIRTUALIZATION_MICROSOFT  # NOQA
+    from ._virt import VIRTUALIZATION_PARALLELS  # NOQA
+    from ._virt import VIRTUALIZATION_PODMAN  # NOQA
+    from ._virt import VIRTUALIZATION_POWERVM  # NOQA
+    from ._virt import VIRTUALIZATION_PROOT  # NOQA
+    from ._virt import VIRTUALIZATION_QEMU  # NOQA
+    from ._virt import VIRTUALIZATION_QNX  # NOQA
+    from ._virt import VIRTUALIZATION_RKT  # NOQA
+    from ._virt import VIRTUALIZATION_SYSTEMD_NSPAWN  # NOQA
+    from ._virt import VIRTUALIZATION_UML  # NOQA
+    from ._virt import VIRTUALIZATION_VIRTUALBOX  # NOQA
+    from ._virt import VIRTUALIZATION_VM_OTHER  # NOQA
+    from ._virt import VIRTUALIZATION_VMWARE  # NOQA
+    from ._virt import VIRTUALIZATION_WSL  # NOQA
+    from ._virt import VIRTUALIZATION_XEN  # NOQA
+    from ._virt import VIRTUALIZATION_ZVM  # NOQA
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
@@ -2350,10 +2350,11 @@ def users():
 
 
 # Linux, Windows
-if hasattr(_psplatform, "virtualization"):
+if LINUX:
 
     def virtualization():
-        return _psplatform.virtualization()
+        from psutil._virt import virtualization
+        return virtualization()
 
 
 # =====================================================================

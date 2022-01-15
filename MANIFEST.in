@@ -42,6 +42,7 @@ include psutil/_psutil_posix.h
 include psutil/_psutil_sunos.c
 include psutil/_psutil_windows.c
 include psutil/_pswindows.py
+include psutil/_virt.py
 include psutil/arch/aix/common.c
 include psutil/arch/aix/common.h
 include psutil/arch/aix/ifaddrs.c

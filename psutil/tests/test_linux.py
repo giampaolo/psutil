@@ -54,12 +54,12 @@ from psutil.tests import which
 if LINUX:
     import psutil._psutil_linux as cext
     from psutil._pslinux import CLOCK_TICKS
-    from psutil._pslinux import ContainerDetector
     from psutil._pslinux import RootFsDeviceFinder
-    from psutil._pslinux import VmDetector
-    from psutil._pslinux import VmDetectorOthers
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
+    from psutil._virt import ContainerDetector
+    from psutil._virt import VmDetector
+    from psutil._virt import VmDetectorOthers
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -2300,7 +2300,7 @@ class TestVirtualizationContainers(PsutilTestCase):
             self.assertEqual(psutil.virtualization(), "wsl")
 
     def test_detect_proot(self):
-        with mock.patch("psutil._pslinux.Process.name", return_value="proot"):
+        with mock.patch("psutil._virt.Process.name", return_value="proot"):
             self.assertEqual(self.detector.detect_proot(), "proot")
             self.assertEqual(psutil.virtualization(), "proot")
 
@@ -2316,7 +2316,7 @@ class TestVirtualizationContainers(PsutilTestCase):
             self.assertEqual(psutil.virtualization(), "rkt")
 
     def test_ask_pid_1(self):
-        with mock.patch("psutil._pslinux.Process.environ",
+        with mock.patch("psutil._virt.Process.environ",
                         return_value={"container": "docker"}):
             self.assertEqual(self.detector.ask_pid_1(), "docker")
             self.assertEqual(psutil.virtualization(), "docker")
