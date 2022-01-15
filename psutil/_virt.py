@@ -105,6 +105,7 @@ if LINUX:
         """
 
         def _container_from_string(self, s):
+            s = s.strip()
             assert s, repr(s)
             mapping = {
                 "docker": VIRTUALIZATION_DOCKER,
@@ -144,12 +145,12 @@ if LINUX:
         def detect_wsl(self):
             # "Official" way of detecting WSL:
             # https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
-            data = cat('%s/sys/kernel/osrelease' % self.procfs_path).strip()
+            data = cat('%s/sys/kernel/osrelease' % self.procfs_path)
             if "Microsoft" in data or "WSL" in data:
                 return VIRTUALIZATION_WSL
 
         def detect_proot(self):
-            data = cat('%s/self/status' % self.procfs_path).strip()
+            data = cat('%s/self/status' % self.procfs_path)
             m = re.search(r'TracerPid:\t(\d+)', data)
             if m:
                 tracer_pid = int(m.group(1))
@@ -162,14 +163,14 @@ if LINUX:
             # The container manager might have placed this in the /run/host/
             # hierarchy for us, which is good because it doesn't require root
             # privileges.
-            data = cat("/run/host/container-manager").strip()
+            data = cat("/run/host/container-manager")
             return self._container_from_string(data)
 
         def ask_run_systemd(self):
             # ...Otherwise PID 1 might have dropped this information into a
             # file in /run. This is better than accessing /proc/1/environ,
             # since we don't need CAP_SYS_PTRACE for that.
-            data = cat("/run/systemd/container").strip()
+            data = cat("/run/systemd/container")
             return self._container_from_string(data)
 
         def ask_pid_1(self):
