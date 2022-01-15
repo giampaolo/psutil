@@ -1762,7 +1762,7 @@ class VmDetector(_VirtualizationBase):
             "BHYVE": VIRTUALIZATION_BHYVE,
         }
         for file in files:
-            out = cat(file, fallback="", binary=False).strip()
+            out = cat(file, fallback="")
             for k, v in vendors_table.items():
                 if out.startswith(k):
                     debug("virtualization technology found in file %r" % file)
@@ -1828,6 +1828,18 @@ class VmDetector(_VirtualizationBase):
                         return VIRTUALIZATION_KVM
 
 
+class VmDetectorOthers(_VirtualizationBase):
+    """Mostly stuff took from `virt-what` bash script."""
+
+    def ask_proc_cpuinfo(self):
+        with open_binary('%s/cpuinfo' % self.procfs_path) as f:
+            for line in f:
+                if line.lower().startswith(b"vendor_id"):
+                    value = line.partition(b":")[2].strip()
+                    if b"PowerVM Lx86" in value:
+                        return VIRTUALIZATION_POWERVM
+
+
 def virtualization():
     # There is a distinction between containers and VMs.
     # A "container" is typically "shared kernel virtualization", e.g. LXC.
@@ -1838,6 +1850,7 @@ def virtualization():
     # returned.
     container = ContainerDetector()
     vm = VmDetector()
+    vmothers = VmDetectorOthers()
     # order matters (FIFO), and it's the same as `systemd-detect-virt`.
     funcs = [
         # containers
@@ -1857,6 +1870,8 @@ def virtualization():
         vm.detect_powervm,
         vm.detect_qemu,
         vm.detect_zvm,  # zvm
+        # vms others
+        vmothers.ask_proc_cpuinfo,
     ]
     retval = None
     for func in funcs:

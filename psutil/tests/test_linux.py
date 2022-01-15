@@ -57,6 +57,7 @@ if LINUX:
     from psutil._pslinux import ContainerDetector
     from psutil._pslinux import RootFsDeviceFinder
     from psutil._pslinux import VmDetector
+    from psutil._pslinux import VmDetectorOthers
     from psutil._pslinux import calculate_avail_vmem
     from psutil._pslinux import open_binary
 
@@ -2336,6 +2337,7 @@ class TestVirtualizationVms(PsutilTestCase):
 
     def setUp(self):
         self.detector = VmDetector()
+        self.detector_others = VmDetectorOthers()
         self.patch_pydebug()
 
     def patch_pydebug(self):
@@ -2450,6 +2452,13 @@ class TestVirtualizationVms(PsutilTestCase):
                 VM00 CPUs Reserved:   0
                 """)):
             self.assertEqual(self.detector.detect_zvm(), "zvm")
+
+    # --- others
+
+    def test_ask_proc_cpuinfo(self):
+        with mock_open_content("/proc/cpuinfo", b"vendor_id   : PowerVM Lx86"):
+            self.assertEqual(self.detector_others.ask_proc_cpuinfo(),
+                             "powervm")
 
 
 # =====================================================================
