@@ -1,3 +1,32 @@
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""
+Routines & strategies to guess whether we're running inside a virtual
+machine.
+
+LINUX
+=====
+
+This implementation is a port of `systemd-detect-virt` C CLI tool
+and tries to mimick it as much as possible:
+https://github.com/systemd/systemd/blob/main/src/basic/virt.c
+I attempted to do a literal C -> Python translation whenever possible,
+including respecting the original order in which the various 'guess'
+functions are being called.
+Differences with `systemd-detect-virt`:
+* systemd-detect-virt returns 'oracle', we return 'virtualbox'
+
+In addition, it uses a couple of strategies of `virt-what` bash script:
+* detects "ibm-systemz"
+
+WINDOWS
+=======
+
+We simply interpret the string returned by __cpuid() syscall, if any.
+"""
+
 import os
 import re
 
@@ -61,14 +90,6 @@ if LINUX:
         "VMwareVMware": VIRTUALIZATION_VMWARE,
         "XenVMMXenVMM": VIRTUALIZATION_XEN,
     }
-
-    # The following is a port of `systemd-detect-virt` CLI tool in Python:
-    # https://github.com/systemd/systemd/blob/main/src/basic/virt.c
-    # I attempted to do a literal C -> Python translation whenever possible,
-    # including respecting the original order in which the various 'guess'
-    # functions are being called.
-    # Differences with `systemd-detect-virt`:
-    # * systemd-detect-virt returns 'oracle', we return 'virtualbox'
 
     class _VirtualizationBase:
         __slots__ = ["procfs_path"]

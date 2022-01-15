@@ -2362,12 +2362,17 @@ def users():
     return _psplatform.users()
 
 
-# Linux, Windows
-if LINUX:
+if LINUX or WINDOWS:
 
     def virtualization():
+        """Tries to guess if we're running in a virtual environment.
+        If so, it returns the virtualization technology being used
+        as a string, else it returns an empty string.
+        """
         from psutil._virt import virtualization
         return virtualization()
+
+    __all__.append("virtualization")
 
 
 # =====================================================================
