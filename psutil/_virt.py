@@ -25,6 +25,8 @@ WINDOWS
 =======
 
 We simply interpret the string returned by __cpuid() syscall, if any.
+Useful references:
+* https://artemonsecurity.com/vmde.pdf
 """
 
 import os

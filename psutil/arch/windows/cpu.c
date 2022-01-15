@@ -420,6 +420,7 @@ error:
 /*
  * A wrapper around __cpuid syscall. Returns a string in case a
  * hypervisor / virtualizer is present, else None.
+ * Reference: https://artemonsecurity.com/vmde.pdf
  */
 PyObject *
 psutil_cpuid(PyObject *self, PyObject *args) {
