@@ -46,7 +46,7 @@ LABELS_MAP = {
     "macos": [
         "macos", "mac ", "osx", "os x", "mojave", "sierra", "capitan",
         "yosemite", "catalina", "mojave", "big sur", "xcode", "darwin",
-        "dylib",
+        "dylib", "m1",
     ],
     "aix": ["aix"],
     "cygwin": ["cygwin"],
@@ -180,14 +180,6 @@ def is_event_new_pr():
         return False
 
 
-def is_event_new_comment():
-    data = _get_event_data()
-    try:
-        return data['action'] == 'created' and 'comment' in data
-    except KeyError:
-        return False
-
-
 def get_issue():
     data = _get_event_data()
     try:
@@ -317,10 +309,6 @@ def on_new_pr(issue):
     #     issue.create_comment(REPLY_UPDATE_CHANGELOG)
 
 
-def on_new_comment(issue):
-    pass
-
-
 def main():
     issue = get_issue()
     stype = "PR" if is_pr(issue) else "issue"
@@ -336,11 +324,8 @@ def main():
         add_labels_from_text(issue, issue.title)
         add_labels_from_new_body(issue, issue.body)
         on_new_pr(issue)
-    elif is_event_new_comment():
-        log("created new comment for %s" % issue)
-        on_new_comment(issue)
     else:
-        raise ValueError("unhandled event")
+        log("unhandled event")
 
 
 if __name__ == '__main__':

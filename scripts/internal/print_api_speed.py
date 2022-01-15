@@ -25,10 +25,12 @@ ionice                    0.000013
 ...
 """
 
-from __future__ import print_function, division
-from timeit import default_timer as timer
+from __future__ import division
+from __future__ import print_function
+
 import inspect
 import os
+from timeit import default_timer as timer
 
 import psutil
 from psutil._common import print_color

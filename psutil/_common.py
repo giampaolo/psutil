@@ -7,8 +7,10 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division, print_function
+from __future__ import division
+from __future__ import print_function
 
+import collections
 import contextlib
 import errno
 import functools
@@ -18,11 +20,11 @@ import stat
 import sys
 import threading
 import warnings
-from collections import defaultdict
 from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
 
 try:
     from socket import AF_INET6
@@ -41,6 +43,10 @@ else:
 
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] == 3
+PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG', 0))
+if PSUTIL_DEBUG:
+    import inspect
+_DEFAULT = object()
 
 __all__ = [
     # OS constants
@@ -67,6 +73,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
+    'open_text', 'open_binary', 'cat', 'bcat',
     'bytes2human', 'conn_to_ntuple', 'debug',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
@@ -83,7 +90,7 @@ WINDOWS = os.name == "nt"
 LINUX = sys.platform.startswith("linux")
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
-FREEBSD = sys.platform.startswith("freebsd")
+FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
@@ -275,15 +282,32 @@ class Error(Exception):
     """
     __module__ = 'psutil'
 
-    def __init__(self, msg=""):
-        Exception.__init__(self, msg)
-        self.msg = msg
+    def _infodict(self, attrs):
+        try:
+            info = collections.OrderedDict()
+        except AttributeError:  # pragma: no cover
+            info = {}  # Python 2.6
+        for name in attrs:
+            value = getattr(self, name, None)
+            if value:
+                info[name] = value
+        return info
+
+    def __str__(self):
+        # invoked on `raise Error`
+        info = self._infodict(("pid", "ppid", "name"))
+        if info:
+            details = "(%s)" % ", ".join(
+                ["%s=%r" % (k, v) for k, v in info.items()])
+        else:
+            details = None
+        return " ".join([x for x in (getattr(self, "msg", ""), details) if x])
 
     def __repr__(self):
-        ret = "psutil.%s %s" % (self.__class__.__name__, self.msg)
-        return ret.strip()
-
-    __str__ = __repr__
+        # invoked on `repr(Error)`
+        info = self._infodict(("pid", "ppid", "name", "seconds", "msg"))
+        details = ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
+        return "psutil.%s(%s)" % (self.__class__.__name__, details)
 
 
 class NoSuchProcess(Error):
@@ -293,16 +317,10 @@ class NoSuchProcess(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
-            else:
-                details = "(pid=%s)" % self.pid
-            self.msg = "process no longer exists " + details
+        self.msg = msg or "process no longer exists"
 
 
 class ZombieProcess(NoSuchProcess):
@@ -315,19 +333,9 @@ class ZombieProcess(NoSuchProcess):
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
-        NoSuchProcess.__init__(self, msg)
-        self.pid = pid
+        NoSuchProcess.__init__(self, pid, name, msg)
         self.ppid = ppid
-        self.name = name
-        self.msg = msg
-        if msg is None:
-            args = ["pid=%s" % pid]
-            if name:
-                args.append("name=%s" % repr(self.name))
-            if ppid:
-                args.append("ppid=%s" % self.ppid)
-            details = "(%s)" % ", ".join(args)
-            self.msg = "process still exists but it's a zombie " + details
+        self.msg = msg or "PID still exists but it's a zombie"
 
 
 class AccessDenied(Error):
@@ -335,17 +343,10 @@ class AccessDenied(Error):
     __module__ = 'psutil'
 
     def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self, msg)
+        Error.__init__(self)
         self.pid = pid
         self.name = name
-        self.msg = msg
-        if msg is None:
-            if (pid is not None) and (name is not None):
-                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
-                self.msg = "(pid=%s)" % self.pid
-            else:
-                self.msg = ""
+        self.msg = msg or ""
 
 
 class TimeoutExpired(Error):
@@ -355,14 +356,11 @@ class TimeoutExpired(Error):
     __module__ = 'psutil'
 
     def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self, "timeout after %s seconds" % seconds)
+        Error.__init__(self)
         self.seconds = seconds
         self.pid = pid
         self.name = name
-        if (pid is not None) and (name is not None):
-            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
-        elif (pid is not None):
-            self.msg += " (pid=%s)" % self.pid
+        self.msg = "timeout after %s seconds" % seconds
 
 
 # ===================================================================
@@ -451,7 +449,13 @@ def memoize_when_activated(fun):
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = self._cache[fun] = fun(self)
+            ret = fun(self)
+            try:
+                self._cache[fun] = ret
+            except AttributeError:
+                # multi-threading race condition, see:
+                # https://github.com/giampaolo/psutil/issues/1948
+                pass
         return ret
 
     def cache_activate(proc):
@@ -622,8 +626,8 @@ class _WrapNumbers:
         assert name not in self.reminders
         assert name not in self.reminder_keys
         self.cache[name] = input_dict
-        self.reminders[name] = defaultdict(int)
-        self.reminder_keys[name] = defaultdict(set)
+        self.reminders[name] = collections.defaultdict(int)
+        self.reminder_keys[name] = collections.defaultdict(set)
 
     def _remove_dead_reminders(self, input_dict, name):
         """In case the number of keys changed between calls (e.g. a
@@ -707,22 +711,71 @@ wrap_numbers.cache_clear = _wn.cache_clear
 wrap_numbers.cache_info = _wn.cache_info
 
 
-def open_binary(fname, **kwargs):
-    return open(fname, "rb", **kwargs)
+# The read buffer size for open() builtin. This (also) dictates how
+# much data we read(2) when iterating over file lines as in:
+#   >>> with open(file) as f:
+#   ...    for line in f:
+#   ...        ...
+# Default per-line buffer size for binary files is 1K. For text files
+# is 8K. We use a bigger buffer (32K) in order to have more consistent
+# results when reading /proc pseudo files on Linux, see:
+# https://github.com/giampaolo/psutil/issues/2050
+# On Python 2 this also speeds up the reading of big files:
+# (namely /proc/{pid}/smaps and /proc/net/*):
+# https://github.com/giampaolo/psutil/issues/708
+FILE_READ_BUFFER_SIZE = 32 * 1024
 
 
-def open_text(fname, **kwargs):
+def open_binary(fname):
+    return open(fname, "rb", buffering=FILE_READ_BUFFER_SIZE)
+
+
+def open_text(fname):
     """On Python 3 opens a file in text mode by using fs encoding and
     a proper en/decoding errors handler.
     On Python 2 this is just an alias for open(name, 'rt').
     """
-    if PY3:
-        # See:
-        # https://github.com/giampaolo/psutil/issues/675
-        # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRS)
-    return open(fname, "rt", **kwargs)
+    if not PY3:
+        return open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE)
+
+    # See:
+    # https://github.com/giampaolo/psutil/issues/675
+    # https://github.com/giampaolo/psutil/pull/733
+    fobj = open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE,
+                encoding=ENCODING, errors=ENCODING_ERRS)
+    try:
+        # Dictates per-line read(2) buffer size. Defaults is 8k. See:
+        # https://github.com/giampaolo/psutil/issues/2050#issuecomment-1013387546
+        fobj._CHUNK_SIZE = FILE_READ_BUFFER_SIZE
+    except AttributeError:
+        pass
+    except Exception:
+        fobj.close()
+        raise
+
+    return fobj
+
+
+def cat(fname, fallback=_DEFAULT, _open=open_text):
+    """Read entire file content and return it as a string. File is
+    opened in text mode. If specified, `fallback` is the value
+    returned in case of error, either if the file does not exist or
+    it can't be read().
+    """
+    if fallback is _DEFAULT:
+        with _open(fname) as f:
+            return f.read()
+    else:
+        try:
+            with _open(fname) as f:
+                return f.read()
+        except (IOError, OSError):
+            return fallback
+
+
+def bcat(fname, fallback=_DEFAULT):
+    """Same as above but opens file in binary mode."""
+    return cat(fname, fallback=fallback, _open=open_binary)
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
@@ -832,15 +885,16 @@ def print_color(
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
 
-if bool(os.getenv('PSUTIL_DEBUG', 0)):
-    import inspect
-
-    def debug(msg):
-        """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+def debug(msg):
+    """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+    if PSUTIL_DEBUG:
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
+        if isinstance(msg, Exception):
+            if isinstance(msg, (OSError, IOError, EnvironmentError)):
+                # ...because str(exc) may contain info about the file name
+                msg = "ignoring %s" % msg
+            else:
+                msg = "ignoring %r" % msg
         print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
-else:
-    def debug(msg):
-        pass

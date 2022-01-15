@@ -20,12 +20,12 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil.tests import spawn_testproc
 from psutil.tests import HAS_BATTERY
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
-from psutil.tests import TOLERANCE_SYS_MEM
+from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 from psutil.tests import unittest
 from psutil.tests import which
@@ -117,9 +117,9 @@ class BSDTestCase(PsutilTestCase):
             self.assertEqual(usage.total, total)
             # 10 MB tollerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % (usage.free, free))
+                raise self.fail("psutil=%s, df=%s" % (usage.free, free))
             if abs(usage.used - used) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % (usage.used, used))
+                raise self.fail("psutil=%s, df=%s" % (usage.used, used))
 
     @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_cpu_count_logical(self):

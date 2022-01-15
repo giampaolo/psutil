@@ -433,6 +433,7 @@ psutil_winservice_start(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    CloseServiceHandle(hService);
     Py_RETURN_NONE;
 
 error:

@@ -63,38 +63,42 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
     </div>
-    <br />
 
+    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Supporters
 ----------
 
-None yet.
-
 .. raw:: html
 
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+      <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+      <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+      <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+    </div>
+    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Install
 =======
 
-Linux Ubuntu / Debian::
+On Linux, Windows, macOS::
 
-  sudo apt-get install gcc python3-dev
-  sudo pip3 install psutil
-
-Linux Redhat::
-
-  sudo yum install gcc python3-devel
-  sudo pip3 install psutil
-
-Windows::
-
-  pip3 install psutil
+  pip install psutil
 
 For other platforms see more detailed
 `install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
@@ -149,6 +153,12 @@ CPU
     scputimes(user=17411.7, nice=77.99, system=3797.02, idle=51266.57, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
+
+    .. warning::
+      CPU times are always supposed to increase over time, or at least remain
+      the same, and that's because time cannot go backwards.
+      Surprisingly sometimes this might not be the case (at least on Windows
+      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -256,7 +266,7 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-    Return CPU frequency as a nameduple including *current*, *min* and *max*
+    Return CPU frequency as a named tuple including *current*, *min* and *max*
     frequencies expressed in Mhz.
     On Linux *current* frequency reports the real-time value, on all other
     platforms it represents the nominal "fixed" value.
@@ -412,7 +422,7 @@ Disks
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
   See `disk_usage.py`_ script providing an example usage.
-  Returns a list of namedtuples with the following fields:
+  Returns a list of named tuples with the following fields:
 
   * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
     drive letter (e.g. ``"C:\\"``).
@@ -549,7 +559,7 @@ Network
   numbers will always be increasing or remain the same, but never decrease.
   ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
-  On machines with no network iterfaces this function will return ``None`` or
+  On machines with no network interfaces this function will return ``None`` or
   ``{}`` if *pernic* is ``True``.
 
     >>> import psutil
@@ -978,31 +988,37 @@ Exceptions
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
   Raised by :class:`Process` class methods when no process with the given
-  *pid* is found in the current process list or when a process no longer
+  *pid* is found in the current process list, or when a process no longer
   exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name()` was previously called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
-  process on UNIX (Windows doesn't have zombie processes). Depending on the
-  method called the OS may be able to succeed in retrieving the process
-  information or not.
-  Note: this is a subclass of :class:`NoSuchProcess` so if you're not
-  interested in retrieving zombies (e.g. when using :func:`process_iter()`)
-  you can ignore this exception and just catch :class:`NoSuchProcess`.
+  process on UNIX (Windows doesn't have zombie processes).
+  *name* and *ppid* attributes are available if :meth:`Process.name()` or
+  :meth:`Process.ppid()` methods were called before the process turned into a
+  zombie.
+
+  .. note::
+
+    this is a subclass of :class:`NoSuchProcess` so if you're not interested
+    in retrieving zombies (e.g. when using :func:`process_iter()`) you can
+    ignore this exception and just catch :class:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
   Raised by :class:`Process` class methods when permission to perform an
-  action is denied. "name" is the name of the process (may be ``None``).
+  action is denied due to insufficient privileges.
+  *name* attribute is available if :meth:`Process.name()` was previously called.
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
-  Raised by :meth:`Process.wait` if timeout expires and process is still
-  alive.
+  Raised by :meth:`Process.wait` method if timeout expires and the process is
+  still alive.
+  *name* attribute is available if :meth:`Process.name()` was previously called.
 
 Process class
 -------------
@@ -1440,9 +1456,16 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by process as a list of named tuples including thread
-    id and thread CPU times (user/system). On OpenBSD this method requires
-    root privileges.
+    Return threads opened by process as a list of named tuples. On OpenBSD this
+    method requires root privileges.
+
+    - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
+      to the current process, this matches the
+      `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`__
+      attribute of the `threading.Thread`_ class, and can be used to reference
+      individual Python threads running within your own Python app.
+    - **user_time**: time spent in user mode.
+    - **system_time**: time spent in kernel mode.
 
   .. method:: cpu_times()
 
@@ -2413,7 +2436,7 @@ Kill process tree
                      timeout=None, on_terminate=None):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callabck function which is
+      "on_terminate", if specified, is a callback function which is
       called as soon as a child terminates.
       """
       assert pid != os.getpid(), "won't kill myself"
@@ -2533,6 +2556,30 @@ Running tests
 
     $ python3 -m psutil.tests
 
+Debug mode
+==========
+
+If you want to debug unusual situations or want to report a bug, it may be
+useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable.
+In this mode, psutil may (or may not) print additional information to stderr.
+Usually these are error conditions which are not severe, and hence are ignored
+(instead of crashing).
+Unit tests automatically run with debug mode enabled.
+On UNIX:
+
+::
+
+  $ PSUTIL_DEBUG=1 python3 script.py
+  psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
+
+On Windows:
+
+::
+
+  set PSUTIL_DEBUG=1 python.exe script.py
+  psutil-debug [psutil/arch/windows/process_info.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
+
+
 Security
 ========
 
@@ -2547,6 +2594,7 @@ If you want to develop psutil take a look at the `development guide`_.
 Platforms support history
 =========================
 
+* psutil 5.9.0 (2021-12): **MidnightBSD**
 * psutil 5.8.0 (2020-12): **PyPy 2** on Windows
 * psutil 5.7.1 (2020-07): **Windows Nano**
 * psutil 5.7.0 (2020-02): drop Windows XP & Server 2003 support
@@ -2563,6 +2611,10 @@ Supported Python versions are 2.6, 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2021-12-29:
+  `5.9.0 <https://pypi.org/project/psutil/5.9.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#590>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.8.0...release-5.9.0#files_bucket>`__
 - 2020-12-19:
   `5.8.0 <https://pypi.org/project/psutil/5.8.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#580>`__ -
@@ -2954,6 +3006,7 @@ Timeline
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme

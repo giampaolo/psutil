@@ -14,8 +14,6 @@
 // ====================================================================
 
 int PSUTIL_DEBUG = 0;
-int PSUTIL_TESTING = 0;
-// PSUTIL_CONN_NONE
 
 
 // ====================================================================
@@ -83,8 +81,9 @@ PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     char fullmsg[1024];
 
 #ifdef PSUTIL_WINDOWS
+    DWORD dwLastError = GetLastError();
     sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(GetLastError(), fullmsg);
+    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
 #else
     PyObject *exc;
     sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
@@ -130,50 +129,25 @@ AccessDenied(const char *syscall) {
 }
 
 
-// ====================================================================
-// --- Global utils
-// ====================================================================
-
-/*
- * Enable testing mode. This has the same effect as setting PSUTIL_TESTING
- * env var. This dual method exists because updating os.environ on
- * Windows has no effect. Called on unit tests setup.
- */
+// Enable or disable PSUTIL_DEBUG messages.
 PyObject *
-psutil_set_testing(PyObject *self, PyObject *args) {
-    PSUTIL_TESTING = 1;
-    PSUTIL_DEBUG = 1;
-    Py_INCREF(Py_None);
-    return Py_None;
-}
+psutil_set_debug(PyObject *self, PyObject *args) {
+    PyObject *value;
+    int x;
 
-
-/*
- * Print a debug message on stderr. No-op if PSUTIL_DEBUG env var is not set.
- */
-void
-psutil_debug(const char* format, ...) {
-    va_list argptr;
-    if (PSUTIL_DEBUG) {
-        va_start(argptr, format);
-        fprintf(stderr, "psutil-debug> ");
-        vfprintf(stderr, format, argptr);
-        fprintf(stderr, "\n");
-        va_end(argptr);
+    if (!PyArg_ParseTuple(args, "O", &value))
+        return NULL;
+    x = PyObject_IsTrue(value);
+    if (x < 0) {
+        return NULL;
     }
-}
-
-
-/*
- * Called on module import on all platforms.
- */
-int
-psutil_setup(void) {
-    if (getenv("PSUTIL_DEBUG") != NULL)
+    else if (x == 0) {
+        PSUTIL_DEBUG = 0;
+    }
+    else {
         PSUTIL_DEBUG = 1;
-    if (getenv("PSUTIL_TESTING") != NULL)
-        PSUTIL_TESTING = 1;
-    return 0;
+    }
+    Py_RETURN_NONE;
 }
 
 
@@ -213,6 +187,15 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 }
 #endif
 
+// ====================================================================
+// --- macOS
+// ====================================================================
+
+#ifdef PSUTIL_OSX
+#include <mach/mach_time.h>
+
+struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
+#endif
 
 // ====================================================================
 // --- Windows
@@ -396,18 +379,6 @@ psutil_set_winver() {
 }
 
 
-int
-psutil_load_globals() {
-    if (psutil_loadlibs() != 0)
-        return 1;
-    if (psutil_set_winver() != 0)
-        return 1;
-    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
-    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
-    return 0;
-}
-
-
 /*
  * Convert the hi and lo parts of a FILETIME structure or a LARGE_INTEGER
  * to a UNIX time.
@@ -443,3 +414,24 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
                          (ULONGLONG)li.LowPart);
 }
 #endif  // PSUTIL_WINDOWS
+
+
+// Called on module import on all platforms.
+int
+psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
+
+#ifdef PSUTIL_WINDOWS
+    if (psutil_loadlibs() != 0)
+        return 1;
+    if (psutil_set_winver() != 0)
+        return 1;
+    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
+    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
+#endif
+#ifdef PSUTIL_OSX
+    mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
+#endif
+    return 0;
+}

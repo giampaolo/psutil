@@ -21,7 +21,6 @@ import time
 import types
 
 import psutil
-
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
@@ -33,15 +32,12 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
+from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
-from psutil._compat import PY3
 from psutil._compat import super
 from psutil.tests import APPVEYOR
-from psutil.tests import call_until
 from psutil.tests import CI_TESTING
-from psutil.tests import copyload_shared_lib
-from psutil.tests import create_exe
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_CPU_AFFINITY
@@ -52,17 +48,20 @@ from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
-from psutil.tests import mock
-from psutil.tests import process_namespace
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PsutilTestCase
+from psutil.tests import ThreadTask
+from psutil.tests import call_until
+from psutil.tests import copyload_shared_lib
+from psutil.tests import create_exe
+from psutil.tests import mock
+from psutil.tests import process_namespace
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import ThreadTask
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
@@ -262,10 +261,10 @@ class TestProcess(PsutilTestCase):
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
         if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            self.fail("expected: %s, found: %s" % (utime, user_time))
+            raise self.fail("expected: %s, found: %s" % (utime, user_time))
 
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-            self.fail("expected: %s, found: %s" % (ktime, kernel_time))
+            raise self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
     def test_cpu_num(self):
@@ -286,8 +285,8 @@ class TestProcess(PsutilTestCase):
         # It will fail if the difference between the values is > 2s.
         difference = abs(create_time - now)
         if difference > 2:
-            self.fail("expected: %s, found: %s, difference: %s"
-                      % (now, create_time, difference))
+            raise self.fail("expected: %s, found: %s, difference: %s"
+                            % (now, create_time, difference))
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
@@ -984,7 +983,8 @@ class TestProcess(PsutilTestCase):
                         file.fd == fileobj.fileno():
                     break
             else:
-                self.fail("no file found; files=%s" % repr(p.open_files()))
+                raise self.fail("no file found; files=%s" % (
+                                repr(p.open_files())))
             self.assertEqual(normcase(file.path), normcase(fileobj.name))
             if WINDOWS:
                 self.assertEqual(file.fd, -1)
@@ -1021,7 +1021,8 @@ class TestProcess(PsutilTestCase):
             after = sum(p.num_ctx_switches())
             if after > before:
                 return
-        self.fail("num ctx switches still the same after 50.000 iterations")
+        raise self.fail(
+            "num ctx switches still the same after 50.000 iterations")
 
     def test_ppid(self):
         p = psutil.Process()
@@ -1332,6 +1333,20 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
             assert m.called
 
+    def test_reused_pid(self):
+        # Emulate a case where PID has been reused by another process.
+        subp = self.spawn_testproc()
+        p = psutil.Process(subp.pid)
+        p._ident = (p.pid, p.create_time() + 100)
+        assert not p.is_running()
+        assert p != psutil.Process(subp.pid)
+        msg = "process no longer exists and its PID has been reused"
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.suspend)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.resume)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.terminate)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.kill)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.children)
+
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         if 0 not in psutil.pids():
@@ -1375,7 +1390,6 @@ class TestProcess(PsutilTestCase):
     def test_environ(self):
         def clean_dict(d):
             # Most of these are problematic on Travis.
-            d.pop("PSUTIL_TESTING", None)
             d.pop("PLAT", None)
             d.pop("HOME", None)
             if MACOS:
@@ -1401,11 +1415,13 @@ class TestProcess(PsutilTestCase):
         code = textwrap.dedent("""
             #include <unistd.h>
             #include <fcntl.h>
+
             char * const argv[] = {"cat", 0};
             char * const envp[] = {"A=1", "X", "C=3", 0};
+
             int main(void) {
-                /* Close stderr on exec so parent can wait for the execve to
-                 * finish. */
+                // Close stderr on exec so parent can wait for the
+                // execve to finish.
                 if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
                     return 0;
                 return execve("/bin/cat", argv, envp);
@@ -1481,7 +1497,7 @@ if POSIX and os.getuid() == 0:
             except psutil.AccessDenied:
                 pass
             else:
-                self.fail("exception not raised")
+                raise self.fail("exception not raised")
 
         @unittest.skipIf(1, "causes problem as root")
         def test_zombie_process(self):

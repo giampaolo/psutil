@@ -1147,8 +1147,8 @@ static PyMethodDef mod_methods[] = {
     {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
 #endif
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS,
+     "Enable or disable PSUTIL_DEBUG messages"},
 
     {NULL, NULL, 0, NULL}
 };

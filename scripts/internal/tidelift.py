@@ -10,8 +10,11 @@ Put your Tidelift API token in a file first:
 """
 
 from __future__ import print_function
+
 import os
+
 import requests
+
 import psutil
 from psutil.tests import import_module_by_path
 

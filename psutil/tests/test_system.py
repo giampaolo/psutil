@@ -32,10 +32,9 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil.tests import ASCII_FS
-from psutil.tests import check_net_address
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
-from psutil.tests import enum
+from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
@@ -46,13 +45,15 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYPY
-from psutil.tests import retry_on_failure
-from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import UNICODE_SUFFIX
+from psutil.tests import PsutilTestCase
+from psutil.tests import check_net_address
+from psutil.tests import enum
+from psutil.tests import mock
+from psutil.tests import retry_on_failure
 from psutil.tests import unittest
+
 
 # ===================================================================
 # --- System-related API tests
@@ -185,8 +186,7 @@ class TestProcessAPIs(PsutilTestCase):
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in psutil.pids()
                 time.sleep(.1)
-                if pid in psutil.pids():
-                    self.fail(pid)
+                self.assertNotIn(pid, psutil.pids())
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
@@ -281,10 +281,10 @@ class TestMemoryAPIs(PsutilTestCase):
                 self.assertIsInstance(value, (int, long))
             if name != 'total':
                 if not value >= 0:
-                    self.fail("%r < 0 (%s)" % (name, value))
+                    raise self.fail("%r < 0 (%s)" % (name, value))
                 if value > mem.total:
-                    self.fail("%r > total (total=%s, %s=%s)"
-                              % (name, mem.total, name, value))
+                    raise self.fail("%r > total (total=%s, %s=%s)"
+                                    % (name, mem.total, name, value))
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
@@ -377,7 +377,7 @@ class TestCpuAPIs(PsutilTestCase):
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
                 return
-        self.fail("time remained the same")
+        raise self.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().

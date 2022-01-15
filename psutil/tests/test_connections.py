@@ -8,7 +8,6 @@
 
 import os
 import socket
-import sys
 import textwrap
 from contextlib import closing
 from socket import AF_INET
@@ -28,17 +27,17 @@ from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import AF_UNIX
+from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import SKIP_SYSCONS
+from psutil.tests import PsutilTestCase
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
-from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import PsutilTestCase
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
-from psutil.tests import SKIP_SYSCONS
 from psutil.tests import tcp_socketpair
 from psutil.tests import unittest
 from psutil.tests import unix_socketpair
@@ -47,7 +46,6 @@ from psutil.tests import wait_for_file
 
 thisproc = psutil.Process()
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
-PYTHON_39 = sys.version_info[:2] == (3, 9)
 
 
 @serialrun

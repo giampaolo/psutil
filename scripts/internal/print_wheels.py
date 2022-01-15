@@ -10,8 +10,8 @@ import collections
 import glob
 import os
 
-from psutil._common import print_color
 from psutil._common import bytes2human
+from psutil._common import print_color
 
 
 class Wheel:
@@ -74,7 +74,7 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-54s %7s %7s %7s"
+    templ = "%-100s %7s %7s %7s"
     for platf, wheels in groups.items():
         ppn = "%s (total = %s)" % (platf, len(wheels))
         s = templ % (ppn, "size", "arch", "pyver")

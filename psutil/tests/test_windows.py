@@ -27,15 +27,15 @@ from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import IS_64BIT
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PY3
 from psutil.tests import PYPY
+from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import PsutilTestCase
+from psutil.tests import mock
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import unittest
 
 
@@ -47,22 +47,11 @@ if WINDOWS and not PYPY:
         import win32process
         import wmi  # requires "pip install wmi" / "make setup-dev-env"
 
+if WINDOWS:
+    from psutil._pswindows import convert_oserror
+
 
 cext = psutil._psplatform.cext
-
-
-def wrap_exceptions(fun):
-    def wrapper(self, *args, **kwargs):
-        try:
-            return fun(self, *args, **kwargs)
-        except OSError as err:
-            from psutil._pswindows import ACCESS_DENIED_SET
-            if err.errno in ACCESS_DENIED_SET:
-                raise psutil.AccessDenied(None, None)
-            if err.errno == errno.ESRCH:
-                raise psutil.NoSuchProcess(None, None)
-            raise
-    return wrapper
 
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
@@ -135,7 +124,7 @@ class TestSystemAPIs(WindowsTestCase):
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
             if nic not in out:
-                self.fail(
+                raise self.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
 
     def test_total_phymem(self):
@@ -189,11 +178,11 @@ class TestSystemAPIs(WindowsTestCase):
                     self.assertEqual(usage.free, wmi_free)
                     # 10 MB tollerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
-                        self.fail("psutil=%s, wmi=%s" % (
+                        raise self.fail("psutil=%s, wmi=%s" % (
                             usage.free, wmi_free))
                     break
             else:
-                self.fail("can't find partition %s" % repr(ps_part))
+                raise self.fail("can't find partition %s" % repr(ps_part))
 
     @retry_on_failure()
     def test_disk_usage(self):
@@ -560,7 +549,7 @@ class TestProcessWMI(WindowsTestCase):
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
         if (vms != wmi_usage) and (vms != wmi_usage * 1024):
-            self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
+            raise self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -643,7 +632,6 @@ class TestDualProcessImplementation(PsutilTestCase):
             assert fun.called
 
     def test_cmdline(self):
-        from psutil._pswindows import convert_oserror
         for pid in psutil.pids():
             try:
                 a = cext.proc_cmdline(pid, use_peb=True)
@@ -735,7 +723,7 @@ class RemoteProcessTestCase(PsutilTestCase):
         p = psutil.Process(self.proc32.pid)
         e = p.environ()
         self.assertIn("THINK_OF_A_NUMBER", e)
-        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+        self.assertEqual(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
     def test_environ_64(self):
         p = psutil.Process(self.proc64.pid)

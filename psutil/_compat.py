@@ -8,11 +8,13 @@ Python 3 way of doing things).
 """
 
 import collections
+import contextlib
 import errno
 import functools
 import os
 import sys
 import types
+
 
 __all__ = [
     # constants
@@ -25,6 +27,8 @@ __all__ = [
     "lru_cache",
     # shutil module
     "which", "get_terminal_size",
+    # contextlib module
+    "redirect_stderr",
     # python 3 exceptions
     "FileNotFoundError", "PermissionError", "ProcessLookupError",
     "InterruptedError", "ChildProcessError", "FileExistsError"]
@@ -410,8 +414,8 @@ except ImportError:
     def get_terminal_size(fallback=(80, 24)):
         try:
             import fcntl
-            import termios
             import struct
+            import termios
         except ImportError:
             return fallback
         else:
@@ -422,3 +426,25 @@ except ImportError:
                 return (res[1], res[0])
             except Exception:
                 return fallback
+
+
+# python 3.3
+try:
+    from subprocess import TimeoutExpired as SubprocessTimeoutExpired
+except ImportError:
+    class SubprocessTimeoutExpired:
+        pass
+
+
+# python 3.5
+try:
+    from contextlib import redirect_stderr
+except ImportError:
+    @contextlib.contextmanager
+    def redirect_stderr(new_target):
+        original = getattr(sys, "stderr")
+        try:
+            setattr(sys, "stderr", new_target)
+            yield new_target
+        finally:
+            setattr(sys, "stderr", original)

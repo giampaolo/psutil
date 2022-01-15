@@ -15,10 +15,12 @@ DEPS = \
 	coverage \
 	flake8 \
 	flake8-print \
+	isort \
 	pyperf \
 	pypinfo \
 	requests \
 	setuptools \
+	sphinx_rtd_theme \
 	twine \
 	virtualenv \
 	wheel
@@ -38,9 +40,9 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_TESTING=1 PSUTIL_DEBUG=1
+TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
-all: test
+all: help
 
 # ===================================================================
 # Install
@@ -186,18 +188,29 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-lint-py:  ## Run Python (flake8) linter.
+check-flake8:  ## Run flake8 linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
 
-lint-c:  ## Run  C linter.
+check-imports:  ## Run isort linter.
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg --check-only
+
+check-c-code:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-lint:  ## Run Python (flake8) and C linters.
-	${MAKE} lint-py
-	${MAKE} lint-c
+lint:  ## Run all linters
+	${MAKE} check-flake8
+	${MAKE} check-imports
+	${MAKE} check-c-code
 
-fix-lint:  ## Attempt to automatically fix some Python lint issues.
+# ===================================================================
+# Fixers
+# ===================================================================
+
+fix-flake8:  ## Attempt to automatically fix some Python flake8 issues.
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
+
+fix-imports:  ## Fix imports with isort.
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg
 
 # ===================================================================
 # GIT
@@ -213,9 +226,11 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
+	${MAKE} print-wheels
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
+	${MAKE} print-wheels
 
 print-wheels:  ## Print downloaded wheels
 	$(PYTHON) scripts/internal/print_wheels.py

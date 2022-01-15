@@ -23,7 +23,7 @@
     :alt: Code quality
 
 .. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
-    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3ACI
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
     :alt: Linux, macOS, Windows tests
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
@@ -35,7 +35,7 @@
     :alt: Test coverage (coverall.io)
 
 .. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
-    :target: http://psutil.readthedocs.io/en/latest/?badge=latest
+    :target: https://psutil.readthedocs.io/en/latest/
     :alt: Documentation Status
 
 .. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
@@ -43,7 +43,6 @@
     :alt: Latest version
 
 .. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
-    :target: https://pypi.org/project/psutil
     :alt: Supported Python versions
 
 .. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
@@ -122,7 +121,11 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png" />
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
@@ -130,16 +133,27 @@ Sponsors
 Supporters
 ==========
 
-None yet.
-
 .. raw:: html
 
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+      <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+      <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+      <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+
+    </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
 
 Contributing
 ============
 
-See `CONTRIBUTING.md <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__ guidelines.
+See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
 
 Example usages
 ==============
@@ -296,9 +310,9 @@ Process management
     >>> p
     psutil.Process(pid=7055, name='python3', status='running', started='09:04:44')
     >>> p.name()
-    'python'
+    'python3'
     >>> p.exe()
-    '/usr/bin/python'
+    '/usr/bin/python3'
     >>> p.cwd()
     '/home/giampaolo'
     >>> p.cmdline()
@@ -439,23 +453,6 @@ Further process APIs
     ...
     >>> # waits for multiple processes to terminate
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
-    >>>
-
-Popen wrapper:
-
-.. code-block:: python
-
-    >>> import psutil
-    >>> from subprocess import PIPE
-    >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
-    >>> p.name()
-    'python'
-    >>> p.username()
-    'giampaolo'
-    >>> p.communicate()
-    ('hello\n', None)
-    >>> p.wait(timeout=2)
-    0
     >>>
 
 Windows services

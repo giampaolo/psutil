@@ -279,8 +279,11 @@ psutil_get_environ(pid_t pid) {
     arg_ptr = procargs + sizeof(nargs);
     arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
 
-    if (arg_ptr == NULL || arg_ptr == arg_end)
+    if (arg_ptr == NULL || arg_ptr == arg_end) {
+        psutil_debug(
+            "(arg_ptr == NULL || arg_ptr == arg_end); set environ to empty");
         goto empty;
+    }
 
     // skip ahead to the first argument
     for (; arg_ptr < arg_end; arg_ptr++) {
@@ -361,7 +364,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess("sysctl (len == 0)");
+        NoSuchProcess("sysctl(kinfo_proc), len == 0");
         return -1;
     }
     return 0;
@@ -370,14 +373,22 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 /*
  * A wrapper around proc_pidinfo().
- * Returns 0 on failure (and Python exception gets already set).
+ * https://opensource.apple.com/source/xnu/xnu-2050.7.9/bsd/kern/proc_info.c
+ * Returns 0 on failure.
  */
 int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
-    int ret = proc_pidinfo(pid, flavor, arg, pti, size);
-    if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
+    int ret;
+
+    ret = proc_pidinfo(pid, flavor, arg, pti, size);
+    if (ret <= 0) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
+        return 0;
+    }
+    if ((unsigned long)ret < sizeof(pti)) {
+        psutil_raise_for_pid(
+            pid, "proc_pidinfo() return size < sizeof(struct_pointer)");
         return 0;
     }
     return ret;

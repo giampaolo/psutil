@@ -11,21 +11,28 @@ import time
 
 import psutil
 from psutil import MACOS
+from psutil import POSIX
 from psutil.tests import HAS_BATTERY
+from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import TOLERANCE_DISK_USAGE
-from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import unittest
 
 
-def sysctl(param):
-    """Expects a sysctl sub-command and return its stripped result."""
-    out = sh("sysctl " + param)
-    result = out.partition(' ')[2]
+if POSIX:
+    from psutil._psutil_posix import getpagesize
+
+
+def sysctl(cmdline):
+    """Expects a sysctl command with an argument and parse the result
+    returning only the value of interest.
+    """
+    out = sh(cmdline)
+    result = out.split()[1]
     try:
         return int(result)
     except ValueError:
@@ -34,8 +41,6 @@ def sysctl(param):
 
 def vm_stat(field):
     """Wrapper around 'vm_stat' cmdline utility."""
-    from psutil._psutil_posix import getpagesize
-
     out = sh('vm_stat')
     for line in out.split('\n'):
         if field in line:
