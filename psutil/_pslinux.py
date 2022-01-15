@@ -31,6 +31,8 @@ from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import bcat
+from ._common import cat
 from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
@@ -91,16 +93,11 @@ POWER_SUPPLY_PATH = "/sys/class/power_supply"
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
-_DEFAULT = object()
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = cext_posix.getpagesize()
 BOOT_TIME = None  # set later
-# Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
-# On Python 2, using a buffer with open() for such files may result in a
-# speedup, see: https://github.com/giampaolo/psutil/issues/708
-BIGFILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 
 # "man iostat" states that sectors are equivalent with blocks and have
@@ -335,22 +332,6 @@ def set_scputimes_ntuple(procfs_path):
         # Linux >= 3.2.0
         fields.append('guest_nice')
     scputimes = namedtuple('scputimes', fields)
-
-
-def cat(fname, fallback=_DEFAULT, binary=True):
-    """Return file content.
-    fallback: the value returned in case the file does not exist or
-              cannot be read
-    binary: whether to open the file in binary or text mode.
-    """
-    try:
-        with open_binary(fname) if binary else open_text(fname) as f:
-            return f.read().strip()
-    except (IOError, OSError):
-        if fallback is not _DEFAULT:
-            return fallback
-        else:
-            raise
 
 
 try:
@@ -803,19 +784,19 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
             if len(paths) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
-                curr = cpuinfo_freqs[i]
+                curr = cpuinfo_freqs[i] * 1000
             else:
-                curr = cat(pjoin(path, "scaling_cur_freq"), fallback=None)
+                curr = bcat(pjoin(path, "scaling_cur_freq"), fallback=None)
             if curr is None:
                 # Likely an old RedHat, see:
                 # https://github.com/giampaolo/psutil/issues/1071
-                curr = cat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
+                curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
                     raise NotImplementedError(
                         "can't find current frequency file")
             curr = int(curr) / 1000
-            max_ = int(cat(pjoin(path, "scaling_max_freq"))) / 1000
-            min_ = int(cat(pjoin(path, "scaling_min_freq"))) / 1000
+            max_ = int(bcat(pjoin(path, "scaling_max_freq"))) / 1000
+            min_ = int(bcat(pjoin(path, "scaling_min_freq"))) / 1000
             ret.append(_common.scpufreq(curr, min_, max_))
         return ret
 
@@ -973,7 +954,7 @@ class Connections:
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
-        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
+        with open_text(file) as f:
             f.readline()  # skip the first line
             for lineno, line in enumerate(f, 1):
                 try:
@@ -1010,7 +991,7 @@ class Connections:
     @staticmethod
     def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        with open_text(file, buffering=BIGFILE_BUFFERING) as f:
+        with open_text(file) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
@@ -1403,9 +1384,9 @@ def sensors_temperatures():
     for base in basenames:
         try:
             path = base + '_input'
-            current = float(cat(path)) / 1000.0
+            current = float(bcat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
-            unit_name = cat(path, binary=False)
+            unit_name = cat(path).strip()
         except (IOError, OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
@@ -1417,9 +1398,9 @@ def sensors_temperatures():
             # https://github.com/giampaolo/psutil/issues/1323
             continue
 
-        high = cat(base + '_max', fallback=None)
-        critical = cat(base + '_crit', fallback=None)
-        label = cat(base + '_label', fallback='', binary=False)
+        high = bcat(base + '_max', fallback=None)
+        critical = bcat(base + '_crit', fallback=None)
+        label = cat(base + '_label', fallback='').strip()
 
         if high is not None:
             try:
@@ -1442,9 +1423,9 @@ def sensors_temperatures():
         for base in basenames:
             try:
                 path = os.path.join(base, 'temp')
-                current = float(cat(path)) / 1000.0
+                current = float(bcat(path)) / 1000.0
                 path = os.path.join(base, 'type')
-                unit_name = cat(path, binary=False)
+                unit_name = cat(path).strip()
             except (IOError, OSError, ValueError) as err:
                 debug(err)
                 continue
@@ -1456,13 +1437,13 @@ def sensors_temperatures():
             high = None
             for trip_point in trip_points:
                 path = os.path.join(base, trip_point + "_type")
-                trip_type = cat(path, fallback='', binary=False)
+                trip_type = cat(path, fallback='').strip()
                 if trip_type == 'critical':
-                    critical = cat(os.path.join(base, trip_point + "_temp"),
-                                   fallback=None)
+                    critical = bcat(os.path.join(base, trip_point + "_temp"),
+                                    fallback=None)
                 elif trip_type == 'high':
-                    high = cat(os.path.join(base, trip_point + "_temp"),
-                               fallback=None)
+                    high = bcat(os.path.join(base, trip_point + "_temp"),
+                                fallback=None)
 
                 if high is not None:
                     try:
@@ -1500,13 +1481,12 @@ def sensors_fans():
     basenames = sorted(set([x.split('_')[0] for x in basenames]))
     for base in basenames:
         try:
-            current = int(cat(base + '_input'))
+            current = int(bcat(base + '_input'))
         except (IOError, OSError) as err:
             debug(err)
             continue
-        unit_name = cat(os.path.join(os.path.dirname(base), 'name'),
-                        binary=False)
-        label = cat(base + '_label', fallback='', binary=False)
+        unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
+        label = cat(base + '_label', fallback='').strip()
         ret[unit_name].append(_common.sfan(label, current))
 
     return dict(ret)
@@ -1521,17 +1501,17 @@ def sensors_battery():
     """
     null = object()
 
-    def multi_cat(*paths):
+    def multi_bcat(*paths):
         """Attempt to read the content of multiple files which may
         not exist. If none of them exist return None.
         """
         for path in paths:
-            ret = cat(path, fallback=null)
+            ret = bcat(path, fallback=null)
             if ret != null:
                 try:
                     return int(ret)
                 except ValueError:
-                    return ret
+                    return ret.strip()
         return None
 
     bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
@@ -1544,16 +1524,16 @@ def sensors_battery():
     root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
 
     # Base metrics.
-    energy_now = multi_cat(
+    energy_now = multi_bcat(
         root + "/energy_now",
         root + "/charge_now")
-    power_now = multi_cat(
+    power_now = multi_bcat(
         root + "/power_now",
         root + "/current_now")
-    energy_full = multi_cat(
+    energy_full = multi_bcat(
         root + "/energy_full",
         root + "/charge_full")
-    time_to_empty = multi_cat(root + "/time_to_empty_now")
+    time_to_empty = multi_bcat(root + "/time_to_empty_now")
 
     # Percent. If we have energy_full the percentage will be more
     # accurate compared to reading /capacity file (float vs. int).
@@ -1571,13 +1551,13 @@ def sensors_battery():
     # Note: AC0 is not always available and sometimes (e.g. CentOS7)
     # it's called "AC".
     power_plugged = None
-    online = multi_cat(
+    online = multi_bcat(
         os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
         os.path.join(POWER_SUPPLY_PATH, "AC/online"))
     if online is not None:
         power_plugged = online == 1
     else:
-        status = cat(root + "/status", fallback="", binary=False).lower()
+        status = cat(root + "/status", fallback="").strip().lower()
         if status == "discharging":
             power_plugged = False
         elif status in ("charging", "full"):
@@ -2007,8 +1987,7 @@ class Process(object):
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
+        data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
         # Process name is between parentheses. It can contain spaces and
         # other parentheses. This is taken into account by looking for
         # the first occurrence of "(" and the last occurence of ")".
@@ -2044,8 +2023,7 @@ class Process(object):
     @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
-        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                         buffering=BIGFILE_BUFFERING) as f:
+        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid)) as f:
             return f.read().strip()
 
     def oneshot_enter(self):

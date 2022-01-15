@@ -1120,7 +1120,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 if part.fstype == 'zfs':
                     break
             else:
-                self.fail("couldn't find any ZFS partition")
+                raise self.fail("couldn't find any ZFS partition")
         else:
             # No ZFS partitions on this system. Let's fake one.
             fake_file = io.StringIO(u("nodev\tzfs\n"))
@@ -1927,9 +1927,10 @@ class TestProcess(PsutilTestCase):
             patch_point = 'psutil._pslinux.os.readlink'
             with mock.patch(patch_point,
                             side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
-                files = p.open_files()
-                assert not files
-                assert m.called
+                with mock.patch("psutil._common.debug"):
+                    files = p.open_files()
+                    assert not files
+                    assert m.called
 
     # --- mocked tests
 
@@ -2171,8 +2172,9 @@ class TestProcess(PsutilTestCase):
         with mock.patch('psutil._pslinux.os.readlink',
                         side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
             p = psutil.Process()
-            assert not p.connections()
-            assert m.called
+            with mock.patch("psutil._common.debug"):
+                assert not p.connections()
+                assert m.called
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -2462,15 +2464,6 @@ class TestUtils(PsutilTestCase):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
             assert m.called
-
-    def test_cat(self):
-        testfn = self.get_testfn()
-        with open(testfn, "wt") as f:
-            f.write("foo ")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=True), b"foo")
-        self.assertEqual(
-            psutil._psplatform.cat(testfn + '??', fallback="bar"), "bar")
 
 
 if __name__ == '__main__':
