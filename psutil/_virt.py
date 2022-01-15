@@ -250,7 +250,7 @@ if LINUX:
 
         def ask_device_tree(self):
             path = "%s/device-tree/hypervisor/compatible" % self.procfs_path
-            data = cat(path)
+            data = cat(path).strip()
             if data == "linux,kvm":
                 return VIRTUALIZATION_KVM
             elif data == "xen":
