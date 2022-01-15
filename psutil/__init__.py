@@ -2365,12 +2365,13 @@ def users():
 if LINUX or WINDOWS:
 
     def virtualization():
-        """Tries to guess if we're running in a virtual environment.
+        """Try different techniques to guess if we're running in a
+        virtual environment (either a container or a virtual machine).
         If so, it returns the virtualization technology being used
         as a string, else it returns an empty string.
         """
-        from psutil._virt import virtualization
-        return virtualization()
+        from psutil._virt import detect
+        return detect()
 
     __all__.append("virtualization")
 

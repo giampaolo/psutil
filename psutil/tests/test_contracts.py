@@ -40,6 +40,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import HAS_VIRTUALIZATION
 from psutil.tests import PYPY
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import VALID_PROC_STATUSES
@@ -146,6 +147,9 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_battery(self):
         self.assertEqual(hasattr(psutil, "sensors_battery"),
                          LINUX or WINDOWS or FREEBSD or MACOS)
+
+    def test_virtualization(self):
+        self.assertEqual(hasattr(psutil, "virtualization"), LINUX or WINDOWS)
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
@@ -326,6 +330,11 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(user.terminal, (str, type(None)))
             self.assertIsInstance(user.host, (str, type(None)))
             self.assertIsInstance(user.pid, (int, type(None)))
+
+    @unittest.skipIf(not HAS_VIRTUALIZATION, "not supported")
+    def test_virtualization(self):
+        ret = psutil.virtualization()
+        self.assertIsInstance(ret, str)
 
 
 class TestProcessWaitType(PsutilTestCase):

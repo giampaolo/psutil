@@ -302,7 +302,7 @@ if LINUX:
                         elif b"IBM/S390" in value:
                             return VIRTUALIZATION_IBM_SYSTEMZ
 
-    def virtualization():
+    def get_functions():
         # There is a distinction between containers and VMs.
         # A "container" is typically "shared kernel virtualization", e.g. LXC.
         # A "vm" is "full hardware virtualization", e.g. VirtualBox.
@@ -335,21 +335,7 @@ if LINUX:
             # vms others
             vmothers.ask_proc_cpuinfo,
         ]
-        retval = None
-        for func in funcs:
-            func_name = "%s.%s" % (
-                func.__self__.__class__.__name__, func.__name__)
-            debug("trying method %r" % func_name)
-            try:
-                retval = func()
-                if retval:
-                    break
-            except (IOError, OSError) as err:
-                debug(err)
-            except (AccessDenied, NoSuchProcess) as err:
-                debug(err)
-
-        return retval or ""
+        return funcs
 
 # =====================================================================
 # --- Windows
@@ -358,10 +344,36 @@ if LINUX:
 elif WINDOWS:
     from . import _psutil_windows as cext
 
-    def virtualization():
+    def ask_cpuid():
         vendor = cext.__cpuid()
         if vendor is not None:
             if vendor in CPUID_VENDOR_TABLE:
                 return CPUID_VENDOR_TABLE[vendor]
             else:
                 return VIRTUALIZATION_VM_OTHER
+
+    def get_functions():
+        return [
+            ask_cpuid,
+        ]
+
+# ---
+
+
+def detect():
+    funcs = get_functions()
+    retval = None
+    for func in funcs:
+        func_name = "%s.%s" % (
+            func.__self__.__class__.__name__, func.__name__)
+        debug("trying method %r" % func_name)
+        try:
+            retval = func()
+            if retval:
+                break
+        except (IOError, OSError) as err:
+            debug(err)
+        except (AccessDenied, NoSuchProcess) as err:
+            debug(err)
+
+    return retval or ""

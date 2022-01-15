@@ -87,7 +87,7 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
+    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO", "HAS_VIRTUALIZATION",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -192,6 +192,7 @@ except Exception:
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
+HAS_VIRTUALIZATION = hasattr(psutil, "virtualization")
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 # --- misc

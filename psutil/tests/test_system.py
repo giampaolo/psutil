@@ -42,6 +42,7 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import HAS_VIRTUALIZATION
 from psutil.tests import IS_64BIT
 from psutil.tests import PYPY
 from psutil.tests import UNICODE_SUFFIX
@@ -216,6 +217,11 @@ class TestMiscAPIs(PsutilTestCase):
                 self.assertIsNone(user.pid)
             else:
                 psutil.Process(user.pid)
+
+    @unittest.skipIf(not HAS_VIRTUALIZATION, "not suported")
+    def test_virtualization(self):
+        ret = psutil.virtualization()
+        self.assertIsInstance(ret, str)
 
     def test_test(self):
         # test for psutil.test() function
