@@ -41,6 +41,8 @@ from ._common import debug
 from ._common import get_procfs_path
 from ._common import open_binary
 from ._common import open_text
+from ._compat import FileNotFoundError
+from ._compat import PermissionError
 
 
 # virtualization strings

@@ -48,8 +48,8 @@ if WINDOWS and not PYPY:
         import wmi  # requires "pip install wmi" / "make setup-dev-env"
 
 if WINDOWS:
-    from psutil._pswindows import convert_oserror
     from psutil import _virt as virtmod
+    from psutil._pswindows import convert_oserror
 
 
 cext = psutil._psplatform.cext

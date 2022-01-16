@@ -2330,7 +2330,7 @@ class TestVirtualizationVms(PsutilTestCase):
         self.patch_pydebug()
 
     def test_ask_dmi(self):
-        with mock_open_content("/sys/class/dmi/id/sys_vendor", "VMware"):
+        with mock_open_content("/sys/class/dmi/id/product_name", "VMware"):
             self.assertEqual(self.detector.ask_dmi(), "vmware")
             self.assertEqual(psutil.virtualization(), "vmware")
 
