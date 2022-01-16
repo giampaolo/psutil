@@ -989,37 +989,37 @@ static PyMethodDef
 PsutilMethods[] =
 {
     // --- process-related functions
-    {"proc_args", psutil_proc_args, METH_VARARGS, ""},
-    {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS, ""},
-    {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS, ""},
-    {"proc_cred", psutil_proc_cred, METH_VARARGS, ""},
-    {"proc_environ", psutil_proc_environ, METH_VARARGS, ""},
-    {"proc_name", psutil_proc_name, METH_VARARGS, ""},
+    {"proc_args", psutil_proc_args, METH_VARARGS},
+    {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS},
+    {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS},
+    {"proc_cred", psutil_proc_cred, METH_VARARGS},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS},
+    {"proc_name", psutil_proc_name, METH_VARARGS},
 #ifdef CURR_VERSION_THREAD
-    {"proc_threads", psutil_proc_threads, METH_VARARGS, ""},
+    {"proc_threads", psutil_proc_threads, METH_VARARGS},
 #endif
 #ifdef CURR_VERSION_PROCESS
-    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS, ""},
+    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
 #endif
-    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS, ""},
+    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
 
     // --- system-related functions
-    {"boot_time", psutil_boot_time, METH_VARARGS, ""},
-    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS, ""},
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS, ""},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS, ""},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS, ""},
-    {"users", psutil_users, METH_VARARGS, ""},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS, ""},
+    {"boot_time", psutil_boot_time, METH_VARARGS},
+    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
+    {"swap_mem", psutil_swap_mem, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
-    {"net_io_counters", psutil_net_io_counters, METH_VARARGS, ""},
+    {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
 #endif
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS, ""},
-    {"net_connections", psutil_net_connections, METH_VARARGS, ""},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS, ""},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
+    {"net_connections", psutil_net_connections, METH_VARARGS},
+    {"net_if_stats", psutil_net_if_stats, METH_VARARGS},
 
     // --- others
-    {"set_debug", psutil_set_debug, METH_VARARGS, ""},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };

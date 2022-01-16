@@ -476,22 +476,22 @@ static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
-    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS, ""},
-    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS, ""},
+    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
+    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
 #endif
 #ifdef PSUTIL_HAVE_CPU_AFFINITY
-    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS, ""},
-    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS, ""},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
 #endif
     // --- system related functions
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS, ""},
-    {"users", psutil_users, METH_VARARGS, ""},
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS, ""},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
 
     // --- linux specific
-    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS, ""},
+    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others
-    {"set_debug", psutil_set_debug, METH_VARARGS, ""},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };

@@ -664,14 +664,14 @@ extern "C" {
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef mod_methods[] = {
-    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS, ""},
-    {"getpriority", psutil_posix_getpriority, METH_VARARGS, ""},
-    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS, ""},
-    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS, ""},
-    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS, ""},
-    {"setpriority", psutil_posix_setpriority, METH_VARARGS, ""},
+    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
+    {"getpriority", psutil_posix_getpriority, METH_VARARGS},
+    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
+    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
+    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS},
+    {"setpriority", psutil_posix_setpriority, METH_VARARGS},
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS, ""},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
 #endif
     {NULL, NULL, 0, NULL}
 };
