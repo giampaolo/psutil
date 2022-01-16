@@ -92,6 +92,24 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
 
 PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int freq;
+    size_t size;
+    int mib[2] = {CTL_HW, HW_CPUSPEED};
+
+    // On VirtualBox I get "sysctl hw.cpuspeed=2593" (never changing),
+    // which appears to be expressed in Mhz.
+    size = sizeof(freq);
+    if (sysctl(mib, 2, &freq, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    return Py_BuildValue("i", freq);
+}
+
+
+PyObject *
 psutil_cpu_vendor(PyObject *self, PyObject *args) {
     int mib[2];
     char vendor[128];

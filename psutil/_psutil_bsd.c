@@ -1133,6 +1133,10 @@ static PyMethodDef mod_methods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
+     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return CPU frequency"},
+#endif
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},
@@ -1142,14 +1146,11 @@ static PyMethodDef mod_methods[] = {
      "Return battery information."},
     {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS,
      "Return temperature information for a given CPU core number."},
-    {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
-     "Return frequency of a given CPU"},
 #endif
 #if defined(PSUTIL_OPENBSD)
     {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS,
      "Return the CPU vendor string."},
 #endif
-
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,
      "Enable or disable PSUTIL_DEBUG messages"},
