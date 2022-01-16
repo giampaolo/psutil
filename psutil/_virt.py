@@ -354,51 +354,61 @@ elif WINDOWS:
         except FileNotFoundError:
             return False
 
-    def ask_cpuid():
-        vendor = cext.cpuid()
-        if vendor is not None:
-            if vendor in CPUID_VENDOR_TABLE:
-                return CPUID_VENDOR_TABLE[vendor]
-            else:
-                return VIRTUALIZATION_VM_OTHER
+    class GenericDetector:
 
-    def detect_vbox_from_registry():
-        keys = [
-            r"SOFTWARE\\Oracle\\VirtualBox Guest Additions",
-            r"HARDWARE\\ACPI\\DSDT\\VBOX__",
-            r"HARDWARE\\ACPI\\FADT\\VBOX__",
-            r"HARDWARE\\ACPI\\RSDT\\VBOX__",
-            r"SYSTEM\\ControlSet001\\Services\\VBoxGuest",
-            r"SYSTEM\\ControlSet001\\Services\\VBoxMouse",
-            r"SYSTEM\\ControlSet001\\Services\\VBoxService",
-            r"SYSTEM\\ControlSet001\\Services\\VBoxSF",
-            r"SYSTEM\\ControlSet001\\Services\\VBoxVideo",
-        ]
-        for k in keys:
-            if _winreg_key_exists(k):
-                return VIRTUALIZATION_VIRTUALBOX
+        @staticmethod
+        def ask_cpuid():
+            vendor = cext.cpuid()
+            if vendor is not None:
+                if vendor in CPUID_VENDOR_TABLE:
+                    return CPUID_VENDOR_TABLE[vendor]
+                else:
+                    return VIRTUALIZATION_VM_OTHER
 
-    def detect_vbox_from_devices():
-        devs = [
-            "\\\\.\\VBoxMiniRdrDN",
-            "\\\\.\\pipe\\VBoxMiniRdDN",
-            "\\\\.\\VBoxTrayIPC",
-            "\\\\.\\pipe\\VBoxTrayIPC",
-        ]
-        for dev in devs:
-            try:
-                with open(dev):
+    class VboxDetector:
+        # https://github.com/a0rtega/pafish/blob/master/pafish/vbox.c
+
+        @staticmethod
+        def from_registry():
+            keys = [
+                r"SOFTWARE\\Oracle\\VirtualBox Guest Additions",
+                r"HARDWARE\\ACPI\\DSDT\\VBOX__",
+                r"HARDWARE\\ACPI\\FADT\\VBOX__",
+                r"HARDWARE\\ACPI\\RSDT\\VBOX__",
+                r"SYSTEM\\ControlSet001\\Services\\VBoxGuest",
+                r"SYSTEM\\ControlSet001\\Services\\VBoxMouse",
+                r"SYSTEM\\ControlSet001\\Services\\VBoxService",
+                r"SYSTEM\\ControlSet001\\Services\\VBoxSF",
+                r"SYSTEM\\ControlSet001\\Services\\VBoxVideo",
+            ]
+            for k in keys:
+                if _winreg_key_exists(k):
                     return VIRTUALIZATION_VIRTUALBOX
-            except PermissionError:
-                return VIRTUALIZATION_VIRTUALBOX
-            except Exception:
-                pass
+
+        @staticmethod
+        def from_devices():
+            devs = [
+                "\\\\.\\VBoxMiniRdrDN",
+                "\\\\.\\pipe\\VBoxMiniRdDN",
+                "\\\\.\\VBoxTrayIPC",
+                "\\\\.\\pipe\\VBoxTrayIPC",
+            ]
+            for dev in devs:
+                try:
+                    with open(dev):
+                        return VIRTUALIZATION_VIRTUALBOX
+                except PermissionError:
+                    return VIRTUALIZATION_VIRTUALBOX
+                except Exception:
+                    pass
 
     def get_functions():
+        generic = GenericDetector()
+        vbox = VboxDetector()
         return [
-            ask_cpuid,
-            detect_vbox_from_registry,
-            detect_vbox_from_devices,
+            generic.ask_cpuid,
+            vbox.from_registry,
+            vbox.from_devices,
         ]
 
 # ---
