@@ -1899,7 +1899,6 @@ if hasattr(_psplatform, "cpu_freq"):
     __all__.append("cpu_freq")
 
 
-# Availability: Linux, macOS, Windows
 if hasattr(_psplatform, "cpu_info"):
 
     def cpu_info():
@@ -1907,8 +1906,8 @@ if hasattr(_psplatform, "cpu_info"):
         Usually used in conjunction with cpu_count().
         Dictionary keys availability:
 
-          * "model": Linux, macOS, Windows, FreeBSD, NetBSD
-          * "vendor": Linux, macOS, Windows
+          * "model": Linux, macOS, Windows, FreeBSD, NetBSD, OpenBSD
+          * "vendor": Linux, macOS, Windows, OpenBSD
           * "arch": Linux, macOS, Windows
           * "byteorder": all
           * "l1d_cache": Linux, macOS

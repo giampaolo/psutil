@@ -280,12 +280,11 @@ else:
         return ret
 
 
-if FREEBSD or NETBSD:
-
-    def cpu_info():
-        return dict(
-            model=cext.cpu_model(),
-        )
+def cpu_info():
+    d = dict(model=cext.cpu_model())
+    if OPENBSD:
+        d["vendor"] = cext.cpu_vendor()
+    return d
 
 
 def cpu_stats():

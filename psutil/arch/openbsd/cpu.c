@@ -107,3 +107,31 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", freq);
 }
+
+
+PyObject *
+psutil_cpu_vendor(PyObject *self, PyObject *args) {
+    char vendor[128];
+    size_t size = sizeof(vendor);
+    int mib[2] = {CTL_HW, HW_VENDOR};
+
+    if (sysctl(mib, 2, vendor, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return Py_BuildValue("s", vendor);
+}
+
+
+PyObject *
+psutil_cpu_model(PyObject *self, PyObject *args) {
+    char product[128];
+    size_t size = sizeof(product);
+    int mib[2] = {CTL_HW, HW_PRODUCT};
+
+    if (sysctl(mib, 2, product, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return Py_BuildValue("s", product);
+}

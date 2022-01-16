@@ -1153,6 +1153,11 @@ static PyMethodDef mod_methods[] = {
 #if defined(PSUTIL_NETBSD)
     {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
 #endif
+#if defined(PSUTIL_OPENBSD)
+    {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS, ""},
+    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
+#endif
+
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,
      "Enable or disable PSUTIL_DEBUG messages"},
