@@ -664,21 +664,14 @@ extern "C" {
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef mod_methods[] = {
-    {"getpriority", psutil_posix_getpriority, METH_VARARGS,
-     "Return process priority"},
-    {"setpriority", psutil_posix_setpriority, METH_VARARGS,
-     "Set process priority"},
-    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
-     "Retrieve NICs information"},
-    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS,
-     "Retrieve NIC MTU"},
-    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS,
-     "Return True if the NIC is running."},
-    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS,
-     "Return memory page size."},
+    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS, ""},
+    {"getpriority", psutil_posix_getpriority, METH_VARARGS, ""},
+    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS, ""},
+    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS, ""},
+    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS, ""},
+    {"setpriority", psutil_posix_setpriority, METH_VARARGS, ""},
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
-     "Return NIC stats."},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS, ""},
 #endif
     {NULL, NULL, 0, NULL}
 };
