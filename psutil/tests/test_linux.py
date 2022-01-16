@@ -2300,9 +2300,11 @@ class TestVirtualizationContainers(PsutilTestCase):
             self.assertEqual(psutil.virtualization(), "wsl")
 
     def test_detect_proot(self):
-        with mock.patch("psutil._virt.Process.name", return_value="proot"):
-            self.assertEqual(self.detector.detect_proot(), "proot")
-            self.assertEqual(psutil.virtualization(), "proot")
+        with mock.patch("psutil._virt.cat",
+                        return_value="TracerPid:\t%s" % os.getpid()):
+            with mock.patch("psutil._virt.Process.name", return_value="proot"):
+                self.assertEqual(self.detector.detect_proot(), "proot")
+                self.assertEqual(psutil.virtualization(), "proot")
 
     def test_ask_run_host(self):
         with mock_open_content("/run/host/container-manager", "podman"):
