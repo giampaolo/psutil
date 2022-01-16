@@ -64,6 +64,7 @@
 
 #ifdef PSUTIL_FREEBSD
     #include "arch/freebsd/cpu.h"
+    #include "arch/freebsd/mem.h"
     #include "arch/freebsd/specific.h"
     #include "arch/freebsd/sys_socks.h"
     #include "arch/freebsd/proc_socks.h"
