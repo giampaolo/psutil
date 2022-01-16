@@ -345,9 +345,9 @@ elif WINDOWS:
     from . import _psutil_windows as cext
     import winreg
 
-    def _winreg_key_exists(name, base=winreg.HKEY_LOCAL_MACHINE):
+    def _winreg_key_exists(key, root=winreg.HKEY_LOCAL_MACHINE):
         try:
-            with winreg.OpenKey(winreg.ConnectRegistry(None, base), name):
+            with winreg.OpenKey(winreg.ConnectRegistry(None, root), key):
                 return True
         except FileNotFoundError:
             return False
