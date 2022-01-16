@@ -3,8 +3,6 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Platform-specific module methods for OpenBSD.
  */
 
 #include <Python.h>
@@ -21,7 +19,6 @@
 #include <sys/proc.h>
 #include <signal.h>
 #include <kvm.h>
-// connection stuff
 #include <netdb.h>  // for NI_MAXHOST
 #include <sys/socket.h>
 #define _KERNEL  // for DTYPE_*

@@ -80,7 +80,7 @@
     #include "arch/openbsd/cpu.h"
     #include "arch/openbsd/disk.h"
     #include "arch/openbsd/mem.h"
-    #include "arch/openbsd/specific.h"
+    #include "arch/openbsd/proc.h"
 
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
