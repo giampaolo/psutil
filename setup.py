@@ -221,6 +221,7 @@ elif OPENBSD:
         sources=sources + [
             'psutil/_psutil_bsd.c',
             'psutil/arch/openbsd/cpu.c',
+            'psutil/arch/openbsd/disk.c',
             'psutil/arch/openbsd/specific.c',
         ],
         define_macros=macros,

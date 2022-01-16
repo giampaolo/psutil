@@ -22,5 +22,4 @@ PyObject *psutil_swap_mem(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_connections(PyObject *self, PyObject *args);
-PyObject *psutil_disk_io_counters(PyObject* self, PyObject* args);
 
