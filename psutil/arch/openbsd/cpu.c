@@ -111,12 +111,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_cpu_vendor(PyObject *self, PyObject *args) {
-    int mib[2];
     char vendor[128];
     size_t size = sizeof(vendor);
+    int mib[2] = {CTL_HW, HW_VENDOR};
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_VENDOR;
     if (sysctl(mib, 2, vendor, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
