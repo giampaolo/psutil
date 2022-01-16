@@ -207,7 +207,10 @@ elif FREEBSD:
         sources=sources + [
             'psutil/_psutil_bsd.c',
             'psutil/arch/freebsd/cpu.c',
-            'psutil/arch/freebsd/specific.c',
+            'psutil/arch/freebsd/mem.c',
+            'psutil/arch/freebsd/disk.c',
+            'psutil/arch/freebsd/sensors.c',
+            'psutil/arch/freebsd/proc.c',
             'psutil/arch/freebsd/sys_socks.c',
             'psutil/arch/freebsd/proc_socks.c',
         ],
