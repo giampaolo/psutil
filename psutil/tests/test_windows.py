@@ -835,15 +835,18 @@ class TestVirtualization(PsutilTestCase):
     def test_cpuid(self):
         cext.cpuid()
 
-    def test_ask_cpuid(self):
+    def test_generic_ask_cpuid(self):
         with mock.patch("psutil._virt.cext.cpuid",
                         return_value="VBoxVBoxVBox") as m:
             self.assertEqual(virtmod.GenericDetector().ask_cpuid(),
                              "virtualbox")
             assert m.called
 
-    def test_vbox_from_registry(self):
-        virtmod.VboxDetector().from_registry()
+    def test_vbox_from_registry_1(self):
+        virtmod.VboxDetector().from_registry_1()
+
+    def test_vbox_from_registry_2(self):
+        virtmod.VboxDetector().from_registry_2()
 
     def test_vbox_from_devices(self):
         virtmod.VboxDetector().from_devices()
