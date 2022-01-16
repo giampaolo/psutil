@@ -269,11 +269,11 @@ CPU
     Return CPU frequency as a named tuple including *current*, *min* and *max*
     frequencies expressed in Mhz.
     On Linux *current* frequency reports the real-time value, on all other
-    platforms it represents the nominal "fixed" value.
+    platforms this usually represents the nominal "fixed" value (never changing).
     If *percpu* is ``True`` and the system supports per-cpu frequency
     retrieval (Linux only) a list of frequencies is returned for each CPU,
     if not, a list with a single element is returned.
-    If *min* and *max* cannot be determined they are set to ``0``.
+    If *min* and *max* cannot be determined they are set to ``0.0``.
 
     Example (Linux):
 
@@ -288,11 +288,13 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, macOS, Windows, FreeBSD
+    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD
 
     .. versionadded:: 5.1.0
 
     .. versionchanged:: 5.5.1 added FreeBSD support.
+
+    .. versionchanged:: 5.9.1 added OpenBSD support.
 
 .. function:: getloadavg()
 
