@@ -75,6 +75,7 @@ VIRTUALIZATION_CONTAINER_OTHER = "container-other"
 VIRTUALIZATION_VM_OTHER = "vm-other"
 
 # https://evasions.checkpoint.com/techniques/cpu.html
+# https://github.com/a0rtega/pafish/blob/master/pafish/cpu.c
 CPUID_VENDOR_TABLE = {
     "ACRNACRNACRN": VIRTUALIZATION_ACRN,
     "bhyve bhyve ": VIRTUALIZATION_BHYVE,
