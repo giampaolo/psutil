@@ -916,6 +916,13 @@ class PsutilTestCase(TestCase):
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
 
+    def patch_pydebug(self):
+        m1 = mock.patch("psutil._common.debug").__enter__()
+        self.addCleanup(m1.__exit__)
+        if hasattr(psutil._psplatform, "debug"):
+            m2 = mock.patch(psutil._psplatform.__name__ + ".debug").__enter__()
+            self.addCleanup(m2.__exit__)
+
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
