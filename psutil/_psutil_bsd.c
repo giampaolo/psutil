@@ -1145,6 +1145,10 @@ static PyMethodDef mod_methods[] = {
     {"cpu_frequency", psutil_cpu_freq, METH_VARARGS,
      "Return frequency of a given CPU"},
 #endif
+#if defined(PSUTIL_OPENBSD)
+    {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS,
+     "Return the CPU vendor string."},
+#endif
 
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS,

@@ -33,6 +33,7 @@ import os
 import re
 
 from ._common import LINUX
+from ._common import OPENBSD
 from ._common import WINDOWS
 from ._common import AccessDenied
 from ._common import NoSuchProcess
@@ -78,7 +79,7 @@ VIRTUALIZATION_VM_OTHER = "vm-other"
 
 # https://evasions.checkpoint.com/techniques/cpu.html
 # https://github.com/a0rtega/pafish/blob/master/pafish/cpu.c
-CPUID_VENDOR_TABLE = {
+CPUID_VENDORS_TABLE = {
     "ACRNACRNACRN": VIRTUALIZATION_ACRN,
     "bhyve bhyve ": VIRTUALIZATION_BHYVE,
     "KVMKVMKVM": VIRTUALIZATION_KVM,
@@ -91,6 +92,21 @@ CPUID_VENDOR_TABLE = {
     "XenVMMXenVMM": VIRTUALIZATION_XEN,
 }
 
+DMI_VENDORS_TABLE = {
+    "KVM": VIRTUALIZATION_KVM,
+    "Amazon EC2": VIRTUALIZATION_AMAZON,
+    "QEMU": VIRTUALIZATION_QEMU,
+    # https://kb.vmware.com/s/article/1009458
+    "VMware": VIRTUALIZATION_VMWARE,
+    "VMW": VIRTUALIZATION_VMWARE,
+    "innotek GmbH": VIRTUALIZATION_VIRTUALBOX,
+    "Oracle Corporation": VIRTUALIZATION_VIRTUALBOX,
+    "Xen": VIRTUALIZATION_XEN,
+    "Bochs": VIRTUALIZATION_BOCHS,
+    "Parallels": VIRTUALIZATION_PARALLELS,
+    # https://wiki.freebsd.org/bhyve
+    "BHYVE": VIRTUALIZATION_BHYVE,
+}
 
 # =====================================================================
 # --- Linux
@@ -211,24 +227,9 @@ if LINUX:
                 "/sys/class/dmi/id/board_vendor",
                 "/sys/class/dmi/id/bios_vendor",
             ]
-            vendors_table = {
-                "KVM": VIRTUALIZATION_KVM,
-                "Amazon EC2": VIRTUALIZATION_AMAZON,
-                "QEMU": VIRTUALIZATION_QEMU,
-                # https://kb.vmware.com/s/article/1009458
-                "VMware": VIRTUALIZATION_VMWARE,
-                "VMW": VIRTUALIZATION_VMWARE,
-                "innotek GmbH": VIRTUALIZATION_VIRTUALBOX,
-                "Oracle Corporation": VIRTUALIZATION_VIRTUALBOX,
-                "Xen": VIRTUALIZATION_XEN,
-                "Bochs": VIRTUALIZATION_BOCHS,
-                "Parallels": VIRTUALIZATION_PARALLELS,
-                # https://wiki.freebsd.org/bhyve
-                "BHYVE": VIRTUALIZATION_BHYVE,
-            }
             for file in files:
                 out = cat(file, fallback="").strip()
-                for k, v in vendors_table.items():
+                for k, v in DMI_VENDORS_TABLE.items():
                     if out.startswith(k):
                         debug("virtualization found in file %r" % file)
                         return v
@@ -243,8 +244,8 @@ if LINUX:
 
         def ask_cpuid(self):
             vendor = cext.linux_cpuid()
-            if vendor and vendor in CPUID_VENDOR_TABLE:
-                return CPUID_VENDOR_TABLE[vendor]
+            if vendor and vendor in CPUID_VENDORS_TABLE:
+                return CPUID_VENDORS_TABLE[vendor]
 
         def detect_xen(self):
             if os.path.exists('%s/xen' % self.procfs_path):
@@ -369,8 +370,8 @@ elif WINDOWS:
         def ask_cpuid():
             vendor = cext.cpuid()
             if vendor is not None:
-                if vendor in CPUID_VENDOR_TABLE:
-                    return CPUID_VENDOR_TABLE[vendor]
+                if vendor in CPUID_VENDORS_TABLE:
+                    return CPUID_VENDORS_TABLE[vendor]
                 else:
                     return VIRTUALIZATION_VM_OTHER
 
@@ -433,6 +434,26 @@ elif WINDOWS:
             vbox.from_devices,
         ]
 
+# =====================================================================
+# --- OpenBSD
+# =====================================================================
+
+elif OPENBSD:
+    from . import _psutil_bsd as cext
+
+    def ask_cpu_vendor():
+        # Vendor is determined via "sysctl hw.vendor". On VirtualBox
+        # this returns "innotek GmbH", which is the same DMI value
+        # returned on Linux.
+        vendor = cext.cpu_vendor()
+        if vendor and vendor in DMI_VENDORS_TABLE:
+            return DMI_VENDORS_TABLE[vendor]
+
+    def get_functions():
+        return [
+            ask_cpu_vendor,
+        ]
+
 # ---
 
 
@@ -440,8 +461,12 @@ def detect():
     funcs = get_functions()
     retval = None
     for func in funcs:
-        func_name = "%s.%s" % (
-            func.__self__.__class__.__name__, func.__name__)
+        if hasattr(func, "__self__"):  # it's a class method
+            func_name = "%s.%s" % (
+                func.__self__.__class__.__name__, func.__name__)
+        else:  # it's a function
+            func_name = func.__name__
+
         debug("trying method %r" % func_name)
         try:
             retval = func()

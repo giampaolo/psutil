@@ -149,7 +149,8 @@ class TestAvailSystemAPIs(PsutilTestCase):
                          LINUX or WINDOWS or FREEBSD or MACOS)
 
     def test_virtualization(self):
-        self.assertEqual(hasattr(psutil, "virtualization"), LINUX or WINDOWS)
+        self.assertEqual(hasattr(psutil, "virtualization"),
+                         LINUX or WINDOWS or OPENBSD)
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
