@@ -346,10 +346,8 @@ elif WINDOWS:
     import winreg
 
     def _winreg_key_exists(name, base=winreg.HKEY_LOCAL_MACHINE):
-        debug("checking %r" % name)
-        reg = winreg.ConnectRegistry(None, base)
         try:
-            with winreg.OpenKey(reg, name, 0, winreg.KEY_READ):
+            with winreg.OpenKey(winreg.ConnectRegistry(None, base), name):
                 return True
         except FileNotFoundError:
             return False
