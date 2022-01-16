@@ -1,4 +1,4 @@
-|  |downloads| |stars| |forks| |contributors| |coverage| |quality|
+|  |downloads| |stars| |forks| |contributors| |coverage|
 |  |version| |py-versions| |packages| |license|
 |  |github-actions| |appveyor| |doc| |twitter| |tidelift|
 
@@ -17,10 +17,6 @@
 .. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
-
-.. |quality| image:: https://img.shields.io/codacy/grade/ce63e7f7f69d44b5b59682196e6fbfca.svg
-    :target: https://www.codacy.com/app/g-rodola/psutil?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=giampaolo/psutil&amp;utm_campaign=Badge_Grade
-    :alt: Code quality
 
 .. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
