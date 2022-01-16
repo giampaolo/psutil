@@ -134,7 +134,7 @@ class TestAvailSystemAPIs(PsutilTestCase):
 
     def test_cpu_freq(self):
         self.assertEqual(hasattr(psutil, "cpu_freq"),
-                         LINUX or MACOS or WINDOWS or FREEBSD)
+                         LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD)
 
     def test_sensors_temperatures(self):
         self.assertEqual(
