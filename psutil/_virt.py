@@ -342,17 +342,23 @@ if LINUX:
 # =====================================================================
 
 elif WINDOWS:
-    from . import _psutil_windows as cext
     import winreg
 
-    def _winreg_key_exists(name, base=winreg.HKEY_LOCAL_MACHINE):
-        debug("checking %r" % name)
-        reg = winreg.ConnectRegistry(None, base)
+    from . import _psutil_windows as cext
+
+    def _winreg_key_exists(key, root=winreg.HKEY_LOCAL_MACHINE):
         try:
-            with winreg.OpenKey(reg, name, 0, winreg.KEY_READ):
+            with winreg.OpenKeyEx(root, key):
                 return True
         except FileNotFoundError:
             return False
+
+    def _winreg_key_get(key, subkey, root=winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKeyEx(root, key) as handle:
+                return winreg.QueryValueEx(handle, subkey)[0]
+        except FileNotFoundError:
+            return ""
 
     class GenericDetector:
 
@@ -369,20 +375,32 @@ elif WINDOWS:
         # https://github.com/a0rtega/pafish/blob/master/pafish/vbox.c
 
         @staticmethod
-        def from_registry():
+        def from_registry_1():
             keys = [
-                r"SOFTWARE\\Oracle\\VirtualBox Guest Additions",
-                r"HARDWARE\\ACPI\\DSDT\\VBOX__",
-                r"HARDWARE\\ACPI\\FADT\\VBOX__",
-                r"HARDWARE\\ACPI\\RSDT\\VBOX__",
-                r"SYSTEM\\ControlSet001\\Services\\VBoxGuest",
-                r"SYSTEM\\ControlSet001\\Services\\VBoxMouse",
-                r"SYSTEM\\ControlSet001\\Services\\VBoxService",
-                r"SYSTEM\\ControlSet001\\Services\\VBoxSF",
-                r"SYSTEM\\ControlSet001\\Services\\VBoxVideo",
+                "SOFTWARE\\Oracle\\VirtualBox Guest Additions",
+                "HARDWARE\\ACPI\\DSDT\\VBOX__",
+                "HARDWARE\\ACPI\\FADT\\VBOX__",
+                "HARDWARE\\ACPI\\RSDT\\VBOX__",
+                "SYSTEM\\ControlSet001\\Services\\VBoxGuest",
+                "SYSTEM\\ControlSet001\\Services\\VBoxMouse",
+                "SYSTEM\\ControlSet001\\Services\\VBoxService",
+                "SYSTEM\\ControlSet001\\Services\\VBoxSF",
+                "SYSTEM\\ControlSet001\\Services\\VBoxVideo",
             ]
             for k in keys:
                 if _winreg_key_exists(k):
+                    return VIRTUALIZATION_VIRTUALBOX
+
+        @staticmethod
+        def from_registry_2():
+            triples = [
+                ("HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port 0\\Scsi Bus 0\\Target Id 0\\Logical Unit Id 0", "Identifier", "VBOX"),  # NOQA
+                ("HARDWARE\\Description\\System", "SystemBiosVersion", "VBOX"),
+                ("HARDWARE\\Description\\System", "VideoBiosVersion", "VIRTUALBOX"),  # NOQA
+                ("HARDWARE\\DESCRIPTION\\System", "SystemBiosDate", "06/23/99"),  # NOQA
+            ]
+            for key, subkey, value in triples:
+                if _winreg_key_get(key, subkey).startswith(value):
                     return VIRTUALIZATION_VIRTUALBOX
 
         @staticmethod
@@ -407,7 +425,8 @@ elif WINDOWS:
         vbox = VboxDetector()
         return [
             generic.ask_cpuid,
-            vbox.from_registry,
+            vbox.from_registry_1,
+            vbox.from_registry_2,
             vbox.from_devices,
         ]
 
