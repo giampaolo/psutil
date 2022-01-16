@@ -77,6 +77,7 @@
         #include <utmpx.h>
     #endif
 #elif PSUTIL_OPENBSD
+    #include "arch/openbsd/cpu.h"
     #include "arch/openbsd/specific.h"
 
     #include <utmp.h>

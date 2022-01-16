@@ -220,6 +220,7 @@ elif OPENBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
+            'psutil/arch/openbsd/cpu.c',
             'psutil/arch/openbsd/specific.c',
         ],
         define_macros=macros,
