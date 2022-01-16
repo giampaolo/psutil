@@ -5,14 +5,11 @@
  */
 
 /*
-System-wide CPU related functions.
 Original code was refactored and moved from psutil/arch/freebsd/specific.c
-in 2020 (and was moved in there previously already) from cset.
-a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012
 For reference, here's the git history with original(ish) implementations:
-- CPU stats: fb0154ef164d0e5942ac85102ab660b8d2938fbb
-- CPU freq: 459556dd1e2979cdee22177339ced0761caf4c83
-- CPU cores: e0d6d7865df84dc9a1d123ae452fd311f79b1dde
+- sensors_battery(): 022cf0a05d34f4274269d4f8002ee95b9f3e32d2
+- sensors_cpu_temperature(): bb5d032be76980a9e110f03f1203bd35fa85a793
+  (patch by Alex Manuskin)
 */
 
 
