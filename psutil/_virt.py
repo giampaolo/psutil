@@ -442,6 +442,7 @@ elif OPENBSD:
     from . import _psutil_bsd as cext
 
     def _find_dmi_or_cpuid_match(inputstr):
+        # Try to match input against known CPUID / DMI strings.
         inputstr = inputstr.strip()
         for k, v in CPUID_VENDORS_TABLE.items():
             if inputstr.startswith(k):
@@ -461,7 +462,12 @@ elif OPENBSD:
             return _find_dmi_or_cpuid_match(vendor)
 
     def ask_cpu_chipset():
+        # Chipset is determined via "sysctl hw.product". On VirtualBox
+        # this returns "VirtualBox". If it's not that we try to match
+        # it against known CPUID / DMI strings.
         chipset = cext.cpu_chipset()
+        if chipset.startswith("VirtualBox"):
+            return VIRTUALIZATION_VIRTUALBOX
         if chipset:
             return _find_dmi_or_cpuid_match(chipset)
 
