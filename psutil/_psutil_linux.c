@@ -476,35 +476,22 @@ static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
-    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
-     "Get process I/O priority"},
-    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
-     "Set process I/O priority"},
+    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
+    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
 #endif
 #ifdef PSUTIL_HAVE_CPU_AFFINITY
-    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
-     "Return process CPU affinity as a Python long (the bitmask)."},
-    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
-     "Set process CPU affinity; expects a bitmask."},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
 #endif
-
     // --- system related functions
-
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-     "Return disk mounted partitions as a list of tuples including "
-     "device, mount point and filesystem type"},
-    {"users", psutil_users, METH_VARARGS,
-     "Return currently connected users as a list of tuples"},
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
-     "Return duplex and speed info about a NIC"},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
 
     // --- linux specific
-
-    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
-     "A wrapper around sysinfo(), return system memory usage statistics"},
+    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others
-    {"set_debug", psutil_set_debug, METH_VARARGS,
-     "Enable or disable PSUTIL_DEBUG messages"},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };
