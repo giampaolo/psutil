@@ -441,17 +441,34 @@ elif WINDOWS:
 elif OPENBSD:
     from . import _psutil_bsd as cext
 
+    def _find_dmi_or_cpuid_match(inputstr):
+        inputstr = inputstr.strip()
+        for k, v in CPUID_VENDORS_TABLE.items():
+            if inputstr.startswith(k):
+                debug("found CPUID match")
+                return v
+        for k, v in DMI_VENDORS_TABLE.items():
+            if inputstr.startswith(k):
+                debug("found DMI match")
+                return v
+
     def ask_cpu_vendor():
         # Vendor is determined via "sysctl hw.vendor". On VirtualBox
         # this returns "innotek GmbH", which is the same DMI value
         # returned on Linux.
         vendor = cext.cpu_vendor()
-        if vendor and vendor in DMI_VENDORS_TABLE:
-            return DMI_VENDORS_TABLE[vendor]
+        if vendor:
+            return _find_dmi_or_cpuid_match(vendor)
+
+    def ask_cpu_chipset():
+        chipset = cext.cpu_chipset()
+        if chipset:
+            return _find_dmi_or_cpuid_match(chipset)
 
     def get_functions():
         return [
             ask_cpu_vendor,
+            ask_cpu_chipset,
         ]
 
 # ---
