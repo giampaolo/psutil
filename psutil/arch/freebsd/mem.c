@@ -8,10 +8,18 @@
 #include <Python.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
+#include <vm/vm_param.h>
 #include <devstat.h>
+#include <paths.h>
+#include <fcntl.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
+
+
+#ifndef _PATH_DEVNULL
+    #define _PATH_DEVNULL "/dev/null"
+#endif
 
 
 PyObject *

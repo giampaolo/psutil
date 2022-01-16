@@ -51,6 +51,8 @@ include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
 include psutil/arch/freebsd/cpu.c
 include psutil/arch/freebsd/cpu.h
+include psutil/arch/freebsd/disk.c
+include psutil/arch/freebsd/disk.h
 include psutil/arch/freebsd/mem.c
 include psutil/arch/freebsd/mem.h
 include psutil/arch/freebsd/proc_socks.c

@@ -11,7 +11,6 @@ typedef struct kinfo_proc kinfo_proc;
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 int psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc);
 
-PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
 PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);
