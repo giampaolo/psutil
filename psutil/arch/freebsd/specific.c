@@ -2,9 +2,6 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Helper functions specific to FreeBSD.
- * Used by _psutil_bsd module methods.
  */
 
 #include <Python.h>
