@@ -291,6 +291,8 @@ class Error(Exception):
             value = getattr(self, name, None)
             if value:
                 info[name] = value
+            elif name == "pid" and value == 0:
+                info[name] = value
         return info
 
     def __str__(self):

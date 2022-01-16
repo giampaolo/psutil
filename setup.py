@@ -220,7 +220,10 @@ elif OPENBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/openbsd/specific.c',
+            'psutil/arch/openbsd/cpu.c',
+            'psutil/arch/openbsd/disk.c',
+            'psutil/arch/openbsd/mem.c',
+            'psutil/arch/openbsd/proc.c',
         ],
         define_macros=macros,
         libraries=["kvm"])

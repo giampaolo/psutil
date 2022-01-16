@@ -1911,7 +1911,7 @@ class TestProcess(PsutilTestCase):
             patch_point = 'psutil._pslinux.os.readlink'
             with mock.patch(patch_point,
                             side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
-                with mock.patch("psutil._common.debug"):
+                with mock.patch("psutil._pslinux.debug"):
                     files = p.open_files()
                     assert not files
                     assert m.called
@@ -2156,7 +2156,7 @@ class TestProcess(PsutilTestCase):
         with mock.patch('psutil._pslinux.os.readlink',
                         side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
             p = psutil.Process()
-            with mock.patch("psutil._common.debug"):
+            with mock.patch("psutil._pslinux.debug"):
                 assert not p.connections()
                 assert m.called
 

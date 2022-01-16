@@ -77,7 +77,10 @@
         #include <utmpx.h>
     #endif
 #elif PSUTIL_OPENBSD
-    #include "arch/openbsd/specific.h"
+    #include "arch/openbsd/cpu.h"
+    #include "arch/openbsd/disk.h"
+    #include "arch/openbsd/mem.h"
+    #include "arch/openbsd/proc.h"
 
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
@@ -1128,6 +1131,10 @@ static PyMethodDef mod_methods[] = {
      "Return currently connected users as a list of tuples"},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return CPU statistics"},
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
+     {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
+     "Return CPU frequency"},
+#endif
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},
