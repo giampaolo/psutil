@@ -510,10 +510,10 @@ static PyMethodDef mod_methods[] = {
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
 #endif
     // --- system related functions
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
     {"cpu_caches", psutil_cpu_caches, METH_VARARGS},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
 
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
