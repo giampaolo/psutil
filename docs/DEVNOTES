@@ -124,6 +124,7 @@ INCONSISTENCIES
 RESOURCES
 =========
 
+- conky: https://github.com/brndnmtthws/conky/
 - sigar: https://github.com/hyperic/sigar (Java)
 - zabbix: https://zabbix.org/wiki/Get_Zabbix
 - libstatgrab: http://www.i-scream.org/libstatgrab/
