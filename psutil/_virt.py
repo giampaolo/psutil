@@ -343,18 +343,45 @@ if LINUX:
 
 elif WINDOWS:
     from . import _psutil_windows as cext
+    import winreg
+
+    def _winreg_key_exists(name, base=winreg.HKEY_LOCAL_MACHINE):
+        debug("checking %r" % name)
+        reg = winreg.ConnectRegistry(None, base)
+        try:
+            with winreg.OpenKey(reg, name, 0, winreg.KEY_READ):
+                return True
+        except FileNotFoundError:
+            return False
 
     def ask_cpuid():
-        vendor = cext.__cpuid()
+        vendor = cext.cpuid()
         if vendor is not None:
             if vendor in CPUID_VENDOR_TABLE:
                 return CPUID_VENDOR_TABLE[vendor]
             else:
                 return VIRTUALIZATION_VM_OTHER
 
+    def detect_vbox_from_registry():
+        keys = [
+            r"SOFTWARE\\Oracle\\VirtualBox Guest Additions",
+            r"HARDWARE\\ACPI\\DSDT\\VBOX__",
+            r"HARDWARE\\ACPI\\FADT\\VBOX__",
+            r"HARDWARE\\ACPI\\RSDT\\VBOX__",
+            r"SYSTEM\\ControlSet001\\Services\\VBoxGuest",
+            r"SYSTEM\\ControlSet001\\Services\\VBoxMouse",
+            r"SYSTEM\\ControlSet001\\Services\\VBoxService",
+            r"SYSTEM\\ControlSet001\\Services\\VBoxSF",
+            r"SYSTEM\\ControlSet001\\Services\\VBoxVideo",
+        ]
+        for k in keys:
+            if _winreg_key_exists(k):
+                return VIRTUALIZATION_VIRTUALBOX
+
     def get_functions():
         return [
             ask_cpuid,
+            detect_vbox_from_registry,
         ]
 
 # ---

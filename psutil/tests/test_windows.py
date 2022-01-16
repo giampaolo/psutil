@@ -49,6 +49,7 @@ if WINDOWS and not PYPY:
 
 if WINDOWS:
     from psutil._pswindows import convert_oserror
+    from psutil import _virt as virtmod
 
 
 cext = psutil._psplatform.cext
@@ -821,6 +822,28 @@ class TestServices(PsutilTestCase):
         self.assertIn(service.display_name(), str(service))
         self.assertIn(service.name(), repr(service))
         self.assertIn(service.display_name(), repr(service))
+
+
+# ===================================================================
+# Virtualization
+# ===================================================================
+
+
+@unittest.skipIf(not WINDOWS, "WINDOWS only")
+class TestVirtualization(PsutilTestCase):
+
+    def test_cpuid(self):
+        cext.cpuid()
+
+    def test_ask_cpuid(self):
+        with mock.patch("psutil._virt.cext.cpuid",
+                        return_value="VBoxVBoxVBox") as m:
+            self.assertEqual(virtmod.ask_cpuid(), "virtualbox")
+            assert m.called
+
+    def test_detect_vbox_from_registry(self):
+        virtmod.detect_vbox_from_registry()
+
 
 
 if __name__ == '__main__':
