@@ -1092,8 +1092,12 @@ static PyMethodDef mod_methods[] = {
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
+    {"cpu_model", psutil_cpu_model, METH_VARARGS},
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
+#if defined(PSUTIL_OPENBSD) || defined(PSUTIL_FREEBSD)
+    {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS},
+#endif
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
@@ -1111,13 +1115,6 @@ static PyMethodDef mod_methods[] = {
 #if defined(PSUTIL_FREEBSD)
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS},
-#endif
-#if defined(PSUTIL_NETBSD)
-    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
-#endif
-#if defined(PSUTIL_OPENBSD)
-    {"cpu_vendor", psutil_cpu_vendor, METH_VARARGS, ""},
-    {"cpu_model", psutil_cpu_model, METH_VARARGS, ""},
 #endif
     // --- others
     {"set_debug", psutil_set_debug, METH_VARARGS},

@@ -1907,7 +1907,7 @@ if hasattr(_psplatform, "cpu_info"):
         Dictionary keys availability:
 
           * "model": Linux, macOS, Windows, FreeBSD, NetBSD, OpenBSD
-          * "vendor": Linux, macOS, Windows, OpenBSD
+          * "vendor": Linux, macOS, Windows, FreeBSD, OpenBSD
           * "arch": Linux, macOS, Windows
           * "byteorder": all
           * "l1d_cache": Linux, macOS

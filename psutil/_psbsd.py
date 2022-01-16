@@ -282,7 +282,7 @@ else:
 
 def cpu_info():
     d = dict(model=cext.cpu_model())
-    if OPENBSD:
+    if OPENBSD or FREEBSD:
         d["vendor"] = cext.cpu_vendor()
     return d
 

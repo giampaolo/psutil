@@ -136,8 +136,10 @@ psutil_cpu_model(PyObject *self, PyObject *args) {
     size_t size = 0;
     PyObject *py_str;
 
-    if (sysctlbyname("hw.model", NULL, &size, NULL, 0))
+    if (sysctlbyname("hw.model", NULL, &size, NULL, 0)) {
+        psutil_debug("sysctlbyname('hw.model') 1/2 failed");
         goto error;
+    }
 
     buf = malloc(size);
     if (!buf) {
@@ -145,8 +147,10 @@ psutil_cpu_model(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (sysctlbyname("hw.model", buf, &size, NULL, 0))
+    if (sysctlbyname("hw.model", buf, &size, NULL, 0)) {
+        psutil_debug("sysctlbyname('hw.model') 2/2 failed");
         goto error;
+    }
 
     py_str = Py_BuildValue("s", buf);
     free(buf);
@@ -157,3 +161,17 @@ error:
         free(buf);
     Py_RETURN_NONE;
 }
+
+
+PyObject *
+psutil_cpu_vendor(PyObject *self, PyObject *args) {
+    char vendor[128];
+    size_t size = sizeof(vendor);
+
+    if (sysctlbyname("hw.hv_vendor", &vendor, &size, NULL, 0)) {
+        psutil_debug("sysctlbyname('hw.hv_vendor') failed");
+        Py_RETURN_NONE;
+    }
+    return Py_BuildValue("s", vendor);
+}
+

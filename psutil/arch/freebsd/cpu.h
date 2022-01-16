@@ -10,3 +10,4 @@ PyObject* psutil_cpu_freq(PyObject* self, PyObject* args);
 PyObject* psutil_cpu_stats(PyObject* self, PyObject* args);
 PyObject* psutil_cpu_topology(PyObject* self, PyObject* args);
 PyObject* psutil_cpu_model(PyObject* self, PyObject* args);
+PyObject* psutil_cpu_vendor(PyObject* self, PyObject* args);
