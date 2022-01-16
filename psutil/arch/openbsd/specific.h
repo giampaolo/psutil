@@ -13,12 +13,9 @@ int psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc);
 struct kinfo_file * kinfo_getfile(pid_t pid, int* cnt);
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 char **_psutil_get_argv(pid_t pid);
-PyObject * psutil_get_cmdline(pid_t pid);
 
-//
+PyObject *psutil_get_cmdline(pid_t pid);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
-PyObject *psutil_virtual_mem(PyObject *self, PyObject *args);
-PyObject *psutil_swap_mem(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_connections(PyObject *self, PyObject *args);

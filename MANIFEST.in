@@ -65,6 +65,8 @@ include psutil/arch/openbsd/cpu.c
 include psutil/arch/openbsd/cpu.h
 include psutil/arch/openbsd/disk.c
 include psutil/arch/openbsd/disk.h
+include psutil/arch/openbsd/mem.c
+include psutil/arch/openbsd/mem.h
 include psutil/arch/openbsd/specific.c
 include psutil/arch/openbsd/specific.h
 include psutil/arch/osx/cpu.c

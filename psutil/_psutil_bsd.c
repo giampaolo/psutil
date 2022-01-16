@@ -79,6 +79,7 @@
 #elif PSUTIL_OPENBSD
     #include "arch/openbsd/cpu.h"
     #include "arch/openbsd/disk.h"
+    #include "arch/openbsd/mem.h"
     #include "arch/openbsd/specific.h"
 
     #include <utmp.h>
