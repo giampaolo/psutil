@@ -2279,44 +2279,36 @@ class TestVirtualizationContainers(PsutilTestCase):
         orig_fun = os.path.exists
         with mock.patch("os.path.exists", create=True, side_effect=exists):
             self.assertEqual(self.detector.detect_openvz(), "openvz")
-            self.assertEqual(psutil.virtualization(), "openvz")
 
     def test_detect_wsl(self):
         with mock_open_content("/proc/sys/kernel/osrelease", "Microsoft"):
             self.assertEqual(self.detector.detect_wsl(), "wsl")
-            self.assertEqual(psutil.virtualization(), "wsl")
 
     def test_detect_proot(self):
         with mock.patch("psutil._virt.cat",
                         return_value="TracerPid:\t%s" % os.getpid()):
             with mock.patch("psutil._virt.Process.name", return_value="proot"):
                 self.assertEqual(self.detector.detect_proot(), "proot")
-                self.assertEqual(psutil.virtualization(), "proot")
 
     def test_ask_run_host(self):
         with mock_open_content("/run/host/container-manager", "podman"):
             self.assertEqual(
                 self.detector.ask_run_host(), "podman")
-            self.assertEqual(psutil.virtualization(), "podman")
 
     def test_ask_run_systemd(self):
         with mock_open_content("/run/systemd/container", "rkt"):
             self.assertEqual(self.detector.ask_run_systemd(), "rkt")
-            self.assertEqual(psutil.virtualization(), "rkt")
 
     def test_ask_pid_1(self):
         with mock.patch("psutil._virt.Process.environ",
                         return_value={"container": "docker"}):
             self.assertEqual(self.detector.ask_pid_1(), "docker")
-            self.assertEqual(psutil.virtualization(), "docker")
 
     def test_look_for_known_files(self):
         with mock_os_path_exists("/run/.containerenv", True):
             self.assertEqual(self.detector.look_for_known_files(), "podman")
-            self.assertEqual(psutil.virtualization(), "podman")
         with mock_os_path_exists("/.dockerenv", True):
             self.assertEqual(self.detector.look_for_known_files(), "docker")
-            self.assertEqual(psutil.virtualization(), "docker")
         with mock.patch("os.path.exists", return_value=False):
             self.assertIsNone(self.detector.look_for_known_files())
 
@@ -2330,9 +2322,8 @@ class TestVirtualizationVms(PsutilTestCase):
         self.patch_pydebug()
 
     def test_ask_dmi(self):
-        with mock_open_content("/sys/class/dmi/id/product_name", "VMware"):
+        with mock.patch("psutil._virt.cat", return_value="VMware"):
             self.assertEqual(self.detector.ask_dmi(), "vmware")
-            self.assertEqual(psutil.virtualization(), "vmware")
 
     def test_detect_uml(self):
         with mock_open_content(
