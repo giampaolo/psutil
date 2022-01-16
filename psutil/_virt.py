@@ -378,10 +378,27 @@ elif WINDOWS:
             if _winreg_key_exists(k):
                 return VIRTUALIZATION_VIRTUALBOX
 
+    def detect_vbox_from_devices():
+        devs = [
+            "\\\\.\\VBoxMiniRdrDN",
+            "\\\\.\\pipe\\VBoxMiniRdDN",
+            "\\\\.\\VBoxTrayIPC",
+            "\\\\.\\pipe\\VBoxTrayIPC",
+        ]
+        for dev in devs:
+            try:
+                with open(dev):
+                    return VIRTUALIZATION_VIRTUALBOX
+            except PermissionError:
+                return VIRTUALIZATION_VIRTUALBOX
+            except Exception:
+                pass
+
     def get_functions():
         return [
             ask_cpuid,
             detect_vbox_from_registry,
+            detect_vbox_from_devices,
         ]
 
 # ---
@@ -397,6 +414,8 @@ def detect():
         try:
             retval = func()
             if retval:
+                debug("virtualization technology %r found via %r method" % (
+                      retval, func_name))
                 break
         except (IOError, OSError) as err:
             debug(err)
