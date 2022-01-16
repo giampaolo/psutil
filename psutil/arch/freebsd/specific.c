@@ -435,69 +435,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    static int maxcpus;
-    int mib[2];
-    int ncpu;
-    size_t len;
-    size_t size;
-    int i;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    // retrieve maxcpus value
-    size = sizeof(maxcpus);
-    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
-        Py_DECREF(py_retlist);
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('kern.smp.maxcpus')");
-    }
-    long cpu_time[maxcpus][CPUSTATES];
-
-    // retrieve the number of cpus
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
-        goto error;
-    }
-
-    // per-cpu info
-    size = sizeof(cpu_time);
-    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('kern.smp.maxcpus')");
-        goto error;
-    }
-
-    for (i = 0; i < ncpu; i++) {
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cputime);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
-
-
-PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
     // 'procstat' cmdline utility has been used as an example.
