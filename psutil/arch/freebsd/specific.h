@@ -23,5 +23,3 @@ PyObject* psutil_proc_num_fds(PyObject* self, PyObject* args);
 PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
 PyObject* psutil_proc_setrlimit(PyObject* self, PyObject* args);
 PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
-PyObject* psutil_sensors_battery(PyObject* self, PyObject* args);
-PyObject* psutil_sensors_cpu_temperature(PyObject* self, PyObject* args);

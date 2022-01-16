@@ -29,9 +29,6 @@
 
 
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-#define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
-        (bt.frac >> 32) ) >> 32 ) / 1000000)
-#define DECIKELVIN_2_CELCIUS(t) (t - 2731) / 10
 
 
 // ============================================================================
@@ -708,69 +705,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 error:
     if (py_cpu_seq != NULL)
         Py_DECREF(py_cpu_seq);
-    return NULL;
-}
-
-
-/*
- * Return battery information.
- */
-PyObject *
-psutil_sensors_battery(PyObject *self, PyObject *args) {
-    int percent;
-    int minsleft;
-    int power_plugged;
-    size_t size = sizeof(percent);
-
-    if (sysctlbyname("hw.acpi.battery.life", &percent, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("hw.acpi.battery.time", &minsleft, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("hw.acpi.acline", &power_plugged, &size, NULL, 0))
-        goto error;
-    return Py_BuildValue("iii", percent, minsleft, power_plugged);
-
-error:
-    // see: https://github.com/giampaolo/psutil/issues/1074
-    if (errno == ENOENT)
-        PyErr_SetString(PyExc_NotImplementedError, "no battery");
-    else
-        PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
-}
-
-
-/*
- * Return temperature information for a given CPU core number.
- */
-PyObject *
-psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
-    int current;
-    int tjmax;
-    int core;
-    char sensor[26];
-    size_t size = sizeof(current);
-
-    if (! PyArg_ParseTuple(args, "i", &core))
-        return NULL;
-    sprintf(sensor, "dev.cpu.%d.temperature", core);
-    if (sysctlbyname(sensor, &current, &size, NULL, 0))
-        goto error;
-    current = DECIKELVIN_2_CELCIUS(current);
-
-    // Return -273 in case of faliure.
-    sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
-    if (sysctlbyname(sensor, &tjmax, &size, NULL, 0))
-        tjmax = 0;
-    tjmax = DECIKELVIN_2_CELCIUS(tjmax);
-
-    return Py_BuildValue("ii", current, tjmax);
-
-error:
-    if (errno == ENOENT)
-        PyErr_SetString(PyExc_NotImplementedError, "no temperature sensors");
-    else
-        PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
 
