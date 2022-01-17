@@ -24,6 +24,10 @@ For reference, here's the git history with original(ish) implementations:
 #include "../../_psutil_posix.h"
 
 
+#define cpuid(in,a,b,c,d) \
+    asm("cpuid": "=a" (a), "=b" (b), "=c" (c), "=d" (d) : "a" (in));
+
+
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     static int maxcpus;
@@ -227,15 +231,28 @@ error:
 }
 
 
+// Reference: `cpuid` command, see: https://www.freshports.org/misc/cpuid
 PyObject *
 psutil_cpu_vendor(PyObject *self, PyObject *args) {
-    char vendor[128];
-    size_t size = sizeof(vendor);
+    int i;
+    unsigned long li, maxi, maxei, ebx, ecx, edx, unused;
+    char buf[24] = { 0 };
+    FILE *fp;
 
-    if (sysctlbyname("hw.hv_vendor", &vendor, &size, NULL, 0)) {
-        psutil_debug("sysctlbyname('hw.hv_vendor') failed");
-        Py_RETURN_NONE;
+    fp = fmemopen(buf, sizeof(buf), "w");
+    if (!fp) {
+        PyErr_SetFromOSErrnoWithSyscall("fmemopen");
+        return NULL;
     }
-    return Py_BuildValue("s", vendor);
-}
 
+    cpuid(0, unused, ebx, ecx, edx);
+    for (i=0; i<4; i++)
+        fputc(ebx >> (8 * i), fp);
+    for (i=0; i<4; i++)
+        fputc(edx >> (8 * i), fp);
+    for (i=0; i<4; i++)
+        fputc(ecx >> (8 * i), fp);
+    fclose(fp);
+
+    return Py_BuildValue("s", buf);
+}
