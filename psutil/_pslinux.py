@@ -1741,16 +1741,16 @@ class Process(object):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
         except (FileNotFoundError, ProcessLookupError):
-            # no such file error; might be raised also if the
-            # path actually exists for system processes with
-            # low pids (about 0-20)
-            if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
-                return ""
+            if not pid_exists(self.pid):
+                raise NoSuchProcess(self.pid, self._name)
             else:
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
+                # its /proc/pid directory exists, but the /exe file does not.
+                # it's either a zombie
+                if self.status() == "zombie":
                     raise ZombieProcess(self.pid, self._name, self._ppid)
+                else:
+                    # or a kernel thread, for whom we return an empty string.
+                    return ""
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
 
