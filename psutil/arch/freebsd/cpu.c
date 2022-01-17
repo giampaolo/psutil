@@ -235,7 +235,7 @@ error:
 PyObject *
 psutil_cpu_vendor(PyObject *self, PyObject *args) {
     int i;
-    unsigned long li, maxi, maxei, ebx, ecx, edx, unused;
+    unsigned long ebx, ecx, edx, unused;
     char buf[24] = { 0 };
     FILE *fp;
 
