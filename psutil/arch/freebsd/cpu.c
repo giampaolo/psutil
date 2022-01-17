@@ -38,7 +38,7 @@ char *INTEL_FEATURE_FLAGS[] = {
     "pse",
     "tsc",
     "msr",
-    "par",
+    "pae",
     "mce",
     "cx8",
     "apic",

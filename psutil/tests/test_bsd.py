@@ -487,6 +487,12 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         else:
             raise self.skipTest("line not found")
 
+    @unittest.skipIf(not which('cpuid'), "cpuid cmd not available")
+    def test_cpu_info_flags(self):
+        out = sh("cpuid")
+        for flag in psutil.cpu_info()["flags"]:
+            self.assertIn(flag.upper(), out)
+
 
 # =====================================================================
 # --- OpenBSD
