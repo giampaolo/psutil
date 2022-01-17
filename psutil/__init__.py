@@ -1915,7 +1915,7 @@ if hasattr(_psplatform, "cpu_info"):
           * "l1_cache": Windows
           * "l2_cache": Linux, macOS, Windows
           * "l3_cache": Linux, macOS, Windows
-          * "flags": Linux, macOS, Windows
+          * "flags": Linux, macOS, Windows, FreeBSD
         """
         ret = _psplatform.cpu_info()
         if 'arch' not in ret and POSIX:

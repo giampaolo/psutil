@@ -475,6 +475,18 @@ class FreeBSDSystemTestCase(PsutilTestCase):
                 psutil.sensors_temperatures()["coretemp"][cpu].high,
                 sysctl_result)
 
+    # --- CPU info
+
+    @unittest.skipIf(not which('cpuid'), "cpuid cmd not available")
+    def test_cpu_info_vendor(self):
+        out = sh("cpuid")
+        for line in out.splitlines():
+            if "vendor" in line.lower():
+                self.assertIn(psutil.cpu_info()["vendor"], line)
+                break
+        else:
+            raise self.skipTest("line not found")
+
 
 # =====================================================================
 # --- OpenBSD

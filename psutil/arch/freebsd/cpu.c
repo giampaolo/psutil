@@ -24,6 +24,7 @@ For reference, here's the git history with original(ish) implementations:
 #include "../../_psutil_posix.h"
 
 
+// Reference: `cpuid` command, see https://www.freshports.org/misc/cpuid
 #define cpuid(in,a,b,c,d) \
     asm("cpuid": "=a" (a), "=b" (b), "=c" (c), "=d" (d) : "a" (in));
 #define EBX_INTEL 0x756e6547
@@ -269,7 +270,7 @@ error:
 }
 
 
-// Reference: `cpuid` command, see: https://www.freshports.org/misc/cpuid
+// Reference: `cpuid` command, see https://www.freshports.org/misc/cpuid
 PyObject *
 psutil_cpu_vendor(PyObject *self, PyObject *args) {
     int i;
@@ -296,7 +297,7 @@ psutil_cpu_vendor(PyObject *self, PyObject *args) {
 }
 
 
-// Reference: `cpuid` command, see: https://www.freshports.org/misc/cpuid
+// Reference: `cpuid` command, see https://www.freshports.org/misc/cpuid
 PyObject *
 psutil_cpu_flags(PyObject *self, PyObject *args) {
     int i, feature_flags;
@@ -329,7 +330,7 @@ psutil_cpu_flags(PyObject *self, PyObject *args) {
         ;;
     }
     else if (ebx == EBX_CYRIX) {
-       ;;
+        ;;
     }
     else {
         ;;  // unknown vendor
