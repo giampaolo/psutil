@@ -64,7 +64,10 @@
 
 #ifdef PSUTIL_FREEBSD
     #include "arch/freebsd/cpu.h"
-    #include "arch/freebsd/specific.h"
+    #include "arch/freebsd/mem.h"
+    #include "arch/freebsd/disk.h"
+    #include "arch/freebsd/sensors.h"
+    #include "arch/freebsd/proc.h"
     #include "arch/freebsd/sys_socks.h"
     #include "arch/freebsd/proc_socks.h"
 
@@ -103,12 +106,6 @@
 
 // convert a timeval struct to a double
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-
-#ifdef PSUTIL_FREEBSD
-    // convert a bintime struct to milliseconds
-    #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * \
-                           (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
-#endif
 
 #if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
     #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
