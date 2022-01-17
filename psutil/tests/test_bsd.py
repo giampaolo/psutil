@@ -477,6 +477,9 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- CPU info
 
+    def test_cpu_info_model(self):
+        self.assertEqual(psutil.cpu_info()["model"], sysctl("hw.model"))
+
     @unittest.skipIf(not which('cpuid'), "cpuid cmd not available")
     def test_cpu_info_vendor(self):
         out = sh("cpuid")
