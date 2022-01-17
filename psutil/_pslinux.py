@@ -1577,6 +1577,31 @@ def pids():
     return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
 
 
+def pid_for_tid(pid_or_tid):
+    """If the ID refers to a thread, returns the parent/master PID of the
+    process which spawned the thread, else None.
+    """
+    path = "%s/%s/status" % (get_procfs_path(), pid_or_tid)
+    try:
+        f = open_binary(path)
+    except FileNotFoundError:
+        pass
+    else:
+        with f:
+            tgid = pid = None
+            for line in f:
+                if line.startswith(b"Tgid:"):
+                    tgid = int(line.split()[1])
+                elif line.startswith(b"Pid:"):
+                    pid = int(line.split()[1])
+                if pid is not None and tgid is not None:
+                    # If tgid and pid are different then we're dealing with
+                    # a process TID. Despite counter-intuitive, `return tgid`
+                    # here means "return the ID of the process which spawned
+                    # this thread."
+                    return tgid if pid != tgid else None
+
+
 def pid_exists(pid):
     """Check for the existence of a unix PID. Linux TIDs are not
     supported (always return False).
@@ -1655,13 +1680,19 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache", "_is_thread"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._procfs_path = get_procfs_path()
+        master_pid = pid_for_tid(pid)
+        if master_pid:
+            self._is_thread = True
+            self._procfs_path = "%s/%s/task" % (get_procfs_path(), master_pid)
+        else:
+            self._is_thread = False
+            self._procfs_path = get_procfs_path()
 
     def _assert_alive(self):
         """Raise NSP if the process disappeared on us."""
@@ -2015,6 +2046,8 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
+        if self._is_thread:
+            return []
         thread_ids = os.listdir("%s/%s/task" % (self._procfs_path, self.pid))
         thread_ids.sort()
         retlist = []
