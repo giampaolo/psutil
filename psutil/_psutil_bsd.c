@@ -1090,6 +1090,9 @@ static PyMethodDef mod_methods[] = {
     {"boot_time", psutil_boot_time, METH_VARARGS},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
     {"cpu_model", psutil_cpu_model, METH_VARARGS},
+#if defined(PSUTIL_FREEBSD)
+    {"cpu_flags", psutil_cpu_flags, METH_VARARGS},
+#endif
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_FREEBSD)

@@ -26,6 +26,44 @@ For reference, here's the git history with original(ish) implementations:
 
 #define cpuid(in,a,b,c,d) \
     asm("cpuid": "=a" (a), "=b" (b), "=c" (c), "=d" (d) : "a" (in));
+#define EBX_INTEL 0x756e6547
+#define EBX_AMD 0x68747541
+#define EBX_CYRIX 0x69727943
+
+char *INTEL_FEATURE_FLAGS[] = {
+    "fpu",
+    "vme",
+    "de",
+    "pse",
+    "tsc",
+    "msr",
+    "par",
+    "mce",
+    "cx8",
+    "apic",
+    "10",
+    "sep",
+    "mtrr",
+    "pge",
+    "mca",
+    "cmov",
+    "fgpat",
+    "pse",
+    "pn",
+    "clfsh",
+    "20",
+    "ds",
+    "acpi",
+    "mmx",
+    "fxsr",
+    "sse",
+    "sse2",
+    "ss",
+    "ht",
+    "tm",
+    "30",
+    "31",
+};
 
 
 PyObject *
@@ -256,3 +294,52 @@ psutil_cpu_vendor(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("s", buf);
 }
+
+
+// Reference: `cpuid` command, see: https://www.freshports.org/misc/cpuid
+PyObject *
+psutil_cpu_flags(PyObject *self, PyObject *args) {
+    int i, feature_flags;
+    unsigned long ebx, ecx, edx, eax, unused, maxi;
+    PyObject *py_str = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    cpuid(0, maxi, unused, unused, unused);
+    maxi &= 0xffff;
+
+    cpuid(0, unused, ebx, ecx, edx);
+    if (ebx == EBX_INTEL) {
+        cpuid(1, eax, ebx, unused, edx);
+        feature_flags = edx;
+        for (i=0; i<32; i++) {
+            if (feature_flags & (1 << i)) {
+                py_str = Py_BuildValue("s", INTEL_FEATURE_FLAGS[i]);
+                if (py_str == NULL)
+                    goto error;
+                if (PyList_Append(py_retlist, py_str))
+                    goto error;
+                Py_CLEAR(py_str);
+            }
+        }
+    }
+    else if (ebx == EBX_AMD) {
+        ;;
+    }
+    else if (ebx == EBX_CYRIX) {
+       ;;
+    }
+    else {
+        ;;  // unknown vendor
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_str);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+

@@ -284,6 +284,8 @@ def cpu_info():
     d = dict(model=cext.cpu_model())
     if OPENBSD or FREEBSD:
         d["vendor"] = cext.cpu_vendor()
+    if FREEBSD:
+        d["flags"] = cext.cpu_flags()
     return d
 
 
