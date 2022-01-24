@@ -10,6 +10,10 @@
 #include <winternl.h>
 #include <iphlpapi.h>
 
+#ifndef PSUTIL_MAYBE_EXTERN
+#define PSUTIL_MAYBE_EXTERN extern
+#endif
+
 typedef LONG NTSTATUS;
 
 // https://github.com/ajkhoury/TestDll/blob/master/nt_ddk.h
@@ -550,14 +554,14 @@ typedef struct {
 // Type defs for modules loaded at runtime.
 // ================================================================
 
-BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
+PSUTIL_MAYBE_EXTERN BOOL (WINAPI *_GetLogicalProcessorInformationEx) (
     LOGICAL_PROCESSOR_RELATIONSHIP relationship,
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer,
     PDWORD ReturnLength);
 
 #define GetLogicalProcessorInformationEx _GetLogicalProcessorInformationEx
 
-BOOLEAN (WINAPI * _WinStationQueryInformationW) (
+PSUTIL_MAYBE_EXTERN BOOLEAN (WINAPI * _WinStationQueryInformationW) (
     HANDLE ServerHandle,
     ULONG SessionId,
     WINSTATIONINFOCLASS WinStationInformationClass,
@@ -567,7 +571,7 @@ BOOLEAN (WINAPI * _WinStationQueryInformationW) (
 
 #define WinStationQueryInformationW _WinStationQueryInformationW
 
-NTSTATUS (NTAPI *_NtQueryInformationProcess) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (NTAPI *_NtQueryInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
@@ -576,7 +580,7 @@ NTSTATUS (NTAPI *_NtQueryInformationProcess) (
 
 #define NtQueryInformationProcess _NtQueryInformationProcess
 
-NTSTATUS (NTAPI *_NtQuerySystemInformation) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (NTAPI *_NtQuerySystemInformation) (
     ULONG SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
@@ -584,7 +588,7 @@ NTSTATUS (NTAPI *_NtQuerySystemInformation) (
 
 #define NtQuerySystemInformation _NtQuerySystemInformation
 
-NTSTATUS (NTAPI *_NtSetInformationProcess) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (NTAPI *_NtSetInformationProcess) (
     HANDLE ProcessHandle,
     DWORD ProcessInformationClass,
     PVOID ProcessInformation,
@@ -592,19 +596,19 @@ NTSTATUS (NTAPI *_NtSetInformationProcess) (
 
 #define NtSetInformationProcess _NtSetInformationProcess
 
-PSTR (NTAPI * _RtlIpv4AddressToStringA) (
+PSUTIL_MAYBE_EXTERN PSTR (NTAPI * _RtlIpv4AddressToStringA) (
     struct in_addr *Addr,
     PSTR S);
 
 #define RtlIpv4AddressToStringA _RtlIpv4AddressToStringA
 
-PSTR (NTAPI * _RtlIpv6AddressToStringA) (
+PSUTIL_MAYBE_EXTERN PSTR (NTAPI * _RtlIpv6AddressToStringA) (
     struct in6_addr *Addr,
     PSTR P);
 
 #define RtlIpv6AddressToStringA _RtlIpv6AddressToStringA
 
-DWORD (WINAPI * _GetExtendedTcpTable) (
+PSUTIL_MAYBE_EXTERN DWORD (WINAPI * _GetExtendedTcpTable) (
     PVOID pTcpTable,
     PDWORD pdwSize,
     BOOL bOrder,
@@ -614,7 +618,7 @@ DWORD (WINAPI * _GetExtendedTcpTable) (
 
 #define GetExtendedTcpTable _GetExtendedTcpTable
 
-DWORD (WINAPI * _GetExtendedUdpTable) (
+PSUTIL_MAYBE_EXTERN DWORD (WINAPI * _GetExtendedUdpTable) (
     PVOID pUdpTable,
     PDWORD pdwSize,
     BOOL bOrder,
@@ -624,12 +628,12 @@ DWORD (WINAPI * _GetExtendedUdpTable) (
 
 #define GetExtendedUdpTable _GetExtendedUdpTable
 
-DWORD (CALLBACK *_GetActiveProcessorCount) (
+PSUTIL_MAYBE_EXTERN DWORD (CALLBACK *_GetActiveProcessorCount) (
     WORD GroupNumber);
 
 #define GetActiveProcessorCount _GetActiveProcessorCount
 
-BOOL(CALLBACK *_WTSQuerySessionInformationW) (
+PSUTIL_MAYBE_EXTERN BOOL(CALLBACK *_WTSQuerySessionInformationW) (
     HANDLE hServer,
     DWORD SessionId,
     WTS_INFO_CLASS WTSInfoClass,
@@ -639,7 +643,7 @@ BOOL(CALLBACK *_WTSQuerySessionInformationW) (
 
 #define WTSQuerySessionInformationW _WTSQuerySessionInformationW
 
-BOOL(CALLBACK *_WTSEnumerateSessionsW)(
+PSUTIL_MAYBE_EXTERN BOOL(CALLBACK *_WTSEnumerateSessionsW)(
     HANDLE hServer,
     DWORD Reserved,
     DWORD Version,
@@ -649,18 +653,18 @@ BOOL(CALLBACK *_WTSEnumerateSessionsW)(
 
 #define WTSEnumerateSessionsW _WTSEnumerateSessionsW
 
-VOID(CALLBACK *_WTSFreeMemory)(
+PSUTIL_MAYBE_EXTERN VOID(CALLBACK *_WTSFreeMemory)(
     IN PVOID pMemory
     );
 
 #define WTSFreeMemory _WTSFreeMemory
 
-ULONGLONG (CALLBACK *_GetTickCount64) (
+PSUTIL_MAYBE_EXTERN ULONGLONG (CALLBACK *_GetTickCount64) (
     void);
 
 #define GetTickCount64 _GetTickCount64
 
-NTSTATUS (NTAPI *_NtQueryObject) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (NTAPI *_NtQueryObject) (
     HANDLE Handle,
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
     PVOID ObjectInformation,
@@ -669,25 +673,25 @@ NTSTATUS (NTAPI *_NtQueryObject) (
 
 #define NtQueryObject _NtQueryObject
 
-NTSTATUS (WINAPI *_RtlGetVersion) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (WINAPI *_RtlGetVersion) (
     PRTL_OSVERSIONINFOW lpVersionInformation
 );
 
 #define RtlGetVersion _RtlGetVersion
 
-NTSTATUS (WINAPI *_NtResumeProcess) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (WINAPI *_NtResumeProcess) (
     HANDLE hProcess
 );
 
 #define NtResumeProcess _NtResumeProcess
 
-NTSTATUS (WINAPI *_NtSuspendProcess) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (WINAPI *_NtSuspendProcess) (
     HANDLE hProcess
 );
 
 #define NtSuspendProcess _NtSuspendProcess
 
-NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
+PSUTIL_MAYBE_EXTERN NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
     HANDLE ProcessHandle,
     PVOID BaseAddress,
     int MemoryInformationClass,
@@ -698,7 +702,7 @@ NTSTATUS (NTAPI *_NtQueryVirtualMemory) (
 
 #define NtQueryVirtualMemory _NtQueryVirtualMemory
 
-ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
+PSUTIL_MAYBE_EXTERN ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
     NTSTATUS status
 );
 

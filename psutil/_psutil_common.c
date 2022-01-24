@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#define PSUTIL_MAYBE_EXTERN 
 #include "_psutil_common.h"
 
 // ====================================================================
