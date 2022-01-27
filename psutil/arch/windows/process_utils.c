@@ -160,7 +160,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 }
 
 
-// Check for PID existance. Return 1 if pid exists, 0 if not, -1 on error.
+// Check for PID existence. Return 1 if pid exists, 0 if not, -1 on error.
 int
 psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;

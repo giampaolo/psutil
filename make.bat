@@ -2,7 +2,7 @@
 
 rem ==========================================================================
 rem Shortcuts for various tasks, emulating UNIX "make" on Windows.
-rem It is primarly intended as a shortcut for compiling / installing
+rem It is primarily intended as a shortcut for compiling / installing
 rem psutil ("make.bat build", "make.bat install") and running tests
 rem ("make.bat test").
 rem

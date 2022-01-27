@@ -319,7 +319,7 @@ psutil_loadlibs() {
     // minimum requirement: Win 7
     GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");
-    // minumum requirement: Win 7
+    // minimum requirement: Win 7
     GetLogicalProcessorInformationEx = psutil_GetProcAddressFromLib(
         "kernel32", "GetLogicalProcessorInformationEx");
     // minimum requirements: Windows Server Core

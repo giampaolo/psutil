@@ -64,7 +64,7 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
         goto error;
     current = DECIKELVIN_2_CELCIUS(current);
 
-    // Return -273 in case of faliure.
+    // Return -273 in case of failure.
     sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
     if (sysctlbyname(sensor, &tjmax, &size, NULL, 0))
         tjmax = 0;

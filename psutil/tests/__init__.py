@@ -311,7 +311,7 @@ def spawn_testproc(cmd=None, **kwds):
     return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
     By default stdin and stdout are redirected to /dev/null.
-    It also attemps to make sure the process is in a reasonably
+    It also attempts to make sure the process is in a reasonably
     initialized state.
     The process is registered for cleanup on reap_children().
     """
@@ -566,7 +566,7 @@ def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
     and any children currently running, ensuring that no processes stick
     around to hog resources.
-    If resursive is True it also tries to terminate and wait()
+    If recursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
     # Get the children here before terminating them, as in case of

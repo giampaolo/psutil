@@ -313,7 +313,7 @@ XXXX-XX-XX
 - 1276_, [AIX]: can't get whole `Process.cmdline()`_.  (patch by Arnon Yaari)
 - 1501_, [Windows]: `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
   "WinError 1168 element not found" exceptions for "Registry" and
-  "Memory Compression" psuedo processes on Windows 10.
+  "Memory Compression" pseudo processes on Windows 10.
 - 1526_, [NetBSD], **[critical]**: `Process.cmdline()`_ could raise
   ``MemoryError``.  (patch by Kamil Rytarowski)
 
@@ -352,9 +352,9 @@ XXXX-XX-XX
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
-- 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
+- 1474_: fix formatting of ``psutil.tests()`` which mimics ``ps aux`` output.
 - 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
-  properly checked resuling in ``WindowsError(ERROR_ACCESS_DENIED)`` being
+  properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
   raised instead of `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
   Windows APIs. Different process methods were affected by this.
@@ -1318,7 +1318,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 340_, [Windows], **[critical]**: `Process.open_files()`_ no longer hangs.
-  Instead it uses a thred which times out and skips the file handle in case it's
+  Instead it uses a thread which times out and skips the file handle in case it's
   taking too long to be retrieved.  (patch by Jeff Tang)
 - 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids
   owned by another user.
@@ -1327,7 +1327,7 @@ XXXX-XX-XX
   affect ``os.getpid()`` 's process group and not PID 0.
 - 639_, [Linux]: `Process.cmdline()`_ can be truncated.
 - 640_, [Linux]: ``*connections`` functions may swallow errors and return an
-  incomplete list of connnections.
+  incomplete list of connections.
 - 642_: ``repr()`` of exceptions is incorrect.
 - 653_, [Windows]: add ``inet_ntop()`` function for Windows XP to support IPv6.
 - 641_, [Windows]: replace deprecated string functions with safe equivalents.
@@ -1398,7 +1398,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 572_, [Linux]: fix "ValueError: ambiguos inode with multiple PIDs references"
+- 572_, [Linux]: fix "ValueError: ambiguous inode with multiple PIDs references"
   for `Process.connections()`_. (patch by Bruno Binet)
 
 2.2.0
@@ -1842,7 +1842,7 @@ In most cases accessing the old names will work but it will cause a
   the PPID to 1 in case of a zombie process.
 - 323_, [macOS]: `disk_io_counters()`_ ``read_time`` and ``write_time``
   parameters were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
-- 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
+- 331_: `Process.cmdline()`_ is no longer cached after first access as it may
   change.
 - 333_, [macOS]: leak of Mach ports (patch by rsesek@google.com)
 - 337_, [Linux], **[critical]**: `Process`_ methods not working because of a
@@ -2199,7 +2199,7 @@ In most cases accessing the old names will work but it will cause a
 - 113_: exception messages now include `Process.name()`_ and `Process.pid`_.
 - 114_, [Windows]: `Process.username()`_ has been rewritten in pure C and no
   longer uses WMI resulting in a big speedup. Also, pywin32 is no longer
-  required as a third-party dependancy. (patch by wj32)
+  required as a third-party dependency. (patch by wj32)
 - 117_, [Windows]: added support for Windows 2000.
 - 123_: `cpu_percent()`_ and `Process.cpu_percent()`_ accept a
   new ``interval`` parameter.

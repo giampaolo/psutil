@@ -698,8 +698,8 @@ class TestSystemCPUCountLogical(PsutilTestCase):
             self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
             assert m.called
 
-            # Let's have open() return emtpy data and make sure None is
-            # returned ('cause we mimick os.cpu_count()).
+            # Let's have open() return empty data and make sure None is
+            # returned ('cause we mimic os.cpu_count()).
             with mock.patch('psutil._common.open', create=True) as m:
                 self.assertIsNone(psutil._pslinux.cpu_count_logical())
                 self.assertEqual(m.call_count, 2)

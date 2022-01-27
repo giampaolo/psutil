@@ -81,7 +81,7 @@ def handle_f401(fname, lineno):
 
 def remove_lines(fname, entries):
     """Check if we should remove lines, then do it.
-    Return the numner of lines removed.
+    Return the number of lines removed.
     """
     to_remove = []
     for entry in entries:
@@ -116,7 +116,7 @@ def remove_lines(fname, entries):
 
 def add_lines(fname, entries):
     """Check if we should remove lines, then do it.
-    Return the numner of lines removed.
+    Return the number of lines removed.
     """
     EXPECTED_BLANK_LINES = (
         'E302',  # 'expected 2 blank limes, found 1'
