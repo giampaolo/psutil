@@ -799,19 +799,29 @@ class TestProcess(PsutilTestCase):
         init = p.nice()
         try:
             if WINDOWS:
-                for prio in [psutil.NORMAL_PRIORITY_CLASS,
-                             psutil.IDLE_PRIORITY_CLASS,
+                # A CI runner may limit our maximum priority, which will break
+                # this test. Instead, we test in order of increasing priority,
+                # and match either the expected value or the highest so far.
+                highest_prio = None
+                for prio in [psutil.IDLE_PRIORITY_CLASS,
                              psutil.BELOW_NORMAL_PRIORITY_CLASS,
-                             psutil.REALTIME_PRIORITY_CLASS,
+                             psutil.NORMAL_PRIORITY_CLASS,
+                             psutil.ABOVE_NORMAL_PRIORITY_CLASS,
                              psutil.HIGH_PRIORITY_CLASS,
-                             psutil.ABOVE_NORMAL_PRIORITY_CLASS]:
+                             psutil.REALTIME_PRIORITY_CLASS]:
                     with self.subTest(prio=prio):
                         try:
                             p.nice(prio)
                         except psutil.AccessDenied:
                             pass
                         else:
-                            self.assertEqual(p.nice(), prio)
+                            new_prio = p.nice()
+                            if CI_TESTING:
+                                if new_prio == prio or highest_prio is None:
+                                    highest_prio = prio
+                                self.assertEqual(new_prio, highest_prio)
+                            else:
+                                self.assertEqual(new_prio, prio)
             else:
                 try:
                     if hasattr(os, "getpriority"):
@@ -846,7 +856,13 @@ class TestProcess(PsutilTestCase):
         username = p.username()
         if WINDOWS:
             domain, username = username.split('\\')
-            self.assertEqual(username, getpass.getuser())
+            getpass_user = getpass.getuser()
+            if getpass_user.endswith('$'):
+                # When running as a service account (most likely to be
+                # NetworkService), these user name calculations don't produce
+                # the same result, causing the test to fail.
+                raise unittest.SkipTest('running as service account')
+            self.assertEqual(username, getpass_user)
             if 'USERDOMAIN' in os.environ:
                 self.assertEqual(domain, os.environ['USERDOMAIN'])
         else:
