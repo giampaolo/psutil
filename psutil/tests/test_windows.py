@@ -86,13 +86,14 @@ class TestCpuAPIs(WindowsTestCase):
 
     def test_cpu_count_logical_vs_wmi(self):
         w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+        procs = sum(proc.NumberOfLogicalProcessors
+                    for proc in w.Win32_Processor())
+        self.assertEqual(psutil.cpu_count(), procs)
 
     def test_cpu_count_cores_vs_wmi(self):
         w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+        cores = sum(proc.NumberOfCores for proc in w.Win32_Processor())
+        self.assertEqual(psutil.cpu_count(logical=False), cores)
 
     def test_cpu_count_vs_cpu_times(self):
         self.assertEqual(psutil.cpu_count(),
@@ -213,7 +214,7 @@ class TestSystemAPIs(WindowsTestCase):
             wmi_btime_str, "%Y%m%d%H%M%S")
         psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        self.assertLessEqual(diff, 3)
+        self.assertLessEqual(diff, 5)
 
     def test_boot_time_fluctuation(self):
         # https://github.com/giampaolo/psutil/issues/1007
@@ -351,12 +352,23 @@ class TestProcess(WindowsTestCase):
                           p.send_signal, signal.CTRL_BREAK_EVENT)
 
     def test_username(self):
-        self.assertEqual(psutil.Process().username(),
-                         win32api.GetUserNameEx(win32con.NameSamCompatible))
+        name = win32api.GetUserNameEx(win32con.NameSamCompatible)
+        if name.endswith('$'):
+            # When running as a service account (most likely to be
+            # NetworkService), these user name calculations don't produce the
+            # same result, causing the test to fail.
+            raise unittest.SkipTest('running as service account')
+        self.assertEqual(psutil.Process().username(), name)
 
     def test_cmdline(self):
-        sys_value = re.sub(' +', ' ', win32api.GetCommandLine()).strip()
+        sys_value = re.sub('[ ]+', ' ', win32api.GetCommandLine()).strip()
         psutil_value = ' '.join(psutil.Process().cmdline())
+        if sys_value[0] == '"' != psutil_value[0]:
+            # The PyWin32 command line may retain quotes around argv[0] if they
+            # were used unnecessarily, while psutil will omit them. So remove
+            # the first 2 quotes from sys_value if not in psutil_value.
+            # A path to an executable will not contain quotes, so this is safe.
+            sys_value = sys_value.replace('"', '', 2)
         self.assertEqual(sys_value, psutil_value)
 
     # XXX - occasional failures
