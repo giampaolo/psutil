@@ -119,7 +119,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     size_t len = sizeof(curr);
     size_t size = sizeof(min);
 
-    // also availble as "hw.cpufrequency" but it's deprecated
+    // also available as "hw.cpufrequency" but it's deprecated
     mib[0] = CTL_HW;
     mib[1] = HW_CPU_FREQ;
 

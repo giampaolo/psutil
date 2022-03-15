@@ -510,7 +510,7 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
-    @unittest.skipIf(not HAS_CPU_FREQ, "not suported")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:

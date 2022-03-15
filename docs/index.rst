@@ -1101,7 +1101,7 @@ Process class
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal emtpy rows indicate what process methods can
+    In the table below horizontal empty rows indicate what process methods can
     be efficiently grouped together internally.
     The last column (speedup) shows an approximation of the speedup you can get
     if you call all the methods together (best case scenario).
@@ -1194,8 +1194,8 @@ Process class
 
     .. versionadded:: 4.0.0
     .. versionchanged:: 5.3.0 added SunOS support
-    .. versionchanged:: 5.6.3 added AIX suport
-    .. versionchanged:: 5.7.3 added BSD suport
+    .. versionchanged:: 5.6.3 added AIX support
+    .. versionchanged:: 5.7.3 added BSD support
 
   .. method:: create_time()
 

@@ -115,7 +115,7 @@ Unit tests are automatically run on every ``git push`` on **Linux**, **macOS**,
 .. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
 
-OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
+OpenBSD, NetBSD, AIX and Solaris does not have continuous test integration.
 
 Documentation
 -------------

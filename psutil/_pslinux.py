@@ -1675,7 +1675,7 @@ class Process(object):
         """Parse /proc/{pid}/stat file and return a dict with various
         process info.
         Using "man proc" as a reference: where "man proc" refers to
-        position N always substract 3 (e.g ppid position 4 in
+        position N always subtract 3 (e.g ppid position 4 in
         'man proc' == position 1 in here).
         The return value is cached in case oneshot() ctx manager is
         in use.
