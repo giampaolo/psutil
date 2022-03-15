@@ -249,7 +249,7 @@ def swap_memory():
     free_system = mem[3]
 
     # Despite the name PageFile refers to total system memory here
-    # thus physical memory values need to be substracted to get swap values
+    # thus physical memory values need to be subtracted to get swap values
     total = total_system - total_phys
     free = min(total, free_system - free_phys)
     used = total - free
