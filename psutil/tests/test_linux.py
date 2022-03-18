@@ -112,21 +112,26 @@ def get_ipv4_broadcast(ifname):
                         struct.pack('256s', ifname))[20:24])
 
 
-def get_ipv6_address(ifname):
+def get_ipv6_addresses(ifname):
     with open("/proc/net/if_inet6", 'rt') as f:
+        all_fields = []
         for line in f.readlines():
             fields = line.split()
             if fields[-1] == ifname:
-                break
-        else:
+                all_fields.append(fields)
+                
+        if len(all_fields) ==0:
             raise ValueError("could not find interface %r" % ifname)
-    unformatted = fields[0]
-    groups = []
-    for i in range(0, len(unformatted), 4):
-        groups.append(unformatted[i:i + 4])
-    formatted = ":".join(groups)
-    packed = socket.inet_pton(socket.AF_INET6, formatted)
-    return socket.inet_ntop(socket.AF_INET6, packed)
+
+    for i in range(0, len(all_fields)):
+        unformatted = all_fields[i][0]
+        groups = []
+        for j in range(0, len(unformatted), 4):
+            groups.append(unformatted[j:j + 4])
+        formatted = ":".join(groups)
+        packed = socket.inet_pton(socket.AF_INET6, formatted)
+        all_fields[i] = socket.inet_ntop(socket.AF_INET6, packed)
+    return all_fields
 
 
 def get_mac_address(ifname):
@@ -950,8 +955,8 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     # That is the "zone id" portion, which usually is the name
                     # of the network interface.
                     address = addr.address.split('%')[0]
-                    self.assertEqual(address, get_ipv6_address(name))
-
+                    self.assertIn(address, get_ipv6_addresses(name))
+                    
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @unittest.skipIf(not which('ip'), "'ip' utility not available")
     # def test_net_if_names(self):
