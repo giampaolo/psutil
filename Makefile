@@ -10,6 +10,7 @@ TSCRIPT = psutil/tests/runner.py
 # Internal.
 DEPS = \
 	argparse \
+	autopep8 \
 	check-manifest \
 	concurrencytest \
 	coverage \
@@ -206,8 +207,8 @@ lint:  ## Run all linters
 # Fixers
 # ===================================================================
 
-fix-flake8:  ## Attempt to automatically fix some Python flake8 issues.
-	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8 --exit-zero | $(PYTHON) scripts/internal/fix_flake8.py
+fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
+	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m autopep8 --in-place --jobs 0 --global-config=.flake8
 
 fix-imports:  ## Fix imports with isort.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg

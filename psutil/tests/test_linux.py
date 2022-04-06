@@ -119,8 +119,8 @@ def get_ipv6_addresses(ifname):
             fields = line.split()
             if fields[-1] == ifname:
                 all_fields.append(fields)
-                
-        if len(all_fields) ==0:
+
+        if len(all_fields) == 0:
             raise ValueError("could not find interface %r" % ifname)
 
     for i in range(0, len(all_fields)):
@@ -956,7 +956,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     # of the network interface.
                     address = addr.address.split('%')[0]
                     self.assertIn(address, get_ipv6_addresses(name))
-                    
+
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @unittest.skipIf(not which('ip'), "'ip' utility not available")
     # def test_net_if_names(self):
