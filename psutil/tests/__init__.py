@@ -509,7 +509,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             proc.send_signal(signal.SIGCONT)
         proc.send_signal(sig)
 
-    def term_subproc(proc, timeout):
+    def term_subprocess_proc(proc, timeout):
         try:
             sendsig(proc, sig)
         except OSError as err:
@@ -519,7 +519,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
                 raise
         return wait(proc, timeout)
 
-    def term_psproc(proc, timeout):
+    def term_psutil_proc(proc, timeout):
         try:
             sendsig(proc, sig)
         except psutil.NoSuchProcess:
@@ -534,7 +534,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             if POSIX:
                 return wait_pid(pid, timeout)
         else:
-            return term_psproc(proc, timeout)
+            return term_psutil_proc(proc, timeout)
 
     def flush_popen(proc):
         if proc.stdout:
@@ -550,9 +550,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         if isinstance(p, int):
             return term_pid(p, wait_timeout)
         elif isinstance(p, (psutil.Process, psutil.Popen)):
-            return term_psproc(p, wait_timeout)
+            return term_psutil_proc(p, wait_timeout)
         elif isinstance(p, subprocess.Popen):
-            return term_subproc(p, wait_timeout)
+            return term_subprocess_proc(p, wait_timeout)
         else:
             raise TypeError("wrong type %r" % p)
     finally:
