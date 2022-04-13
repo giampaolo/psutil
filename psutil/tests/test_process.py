@@ -345,8 +345,6 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not LINUX, "linux only")
     def test_ionice_linux(self):
         p = psutil.Process()
-        if not CI_TESTING:
-            self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
         self.assertEqual(psutil.IOPRIO_CLASS_NONE, 0)
         self.assertEqual(psutil.IOPRIO_CLASS_RT, 1)  # high
         self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)  # normal
