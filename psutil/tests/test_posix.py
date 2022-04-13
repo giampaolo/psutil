@@ -392,7 +392,7 @@ class TestSystemAPIs(PsutilTestCase):
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                total, used, free, percent = df(part.device)
+                total, used, free, percent = df(part.mountpoint)
             except RuntimeError as err:
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
