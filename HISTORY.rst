@@ -17,7 +17,7 @@ XXXX-XX-XX
 
 - 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
   manually and passed through ``str``.
-- 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
+- 2049_, [Linux]: `cpu_freq()`_ erroneously returns ``curr`` value in GHz while
   ``min`` and ``max`` are in MHz.
 - 2050_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` if running in a
   LCX container.
