@@ -46,10 +46,12 @@ jobs:
       with:
         access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
       with:
         python-version: 3.9
+        cache: pip
+        cache-dependency-path: .github/workflows/build.yml
 
     - name: Install cibuildwheel
       run: pip install cibuildwheel
@@ -63,7 +65,7 @@ jobs:
       run: cibuildwheel .
 
     - name: Create wheels
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: wheels
         path: wheelhouse
@@ -102,10 +104,12 @@ jobs:
       with:
         access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
       with:
         python-version: 3.9
+        cache: pip
+        cache-dependency-path: .github/workflows/build.yml
 
     - name: Install cibuildwheel
       run: pip install cibuildwheel==1.12.0
@@ -114,7 +118,7 @@ jobs:
       run: cibuildwheel .
 
     - name: Create wheels
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: wheels
         path: wheelhouse
@@ -135,7 +139,7 @@ jobs:
       with:
         access_token: ${{ github.token }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Run tests
       id: test
@@ -157,8 +161,11 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        cache: pip
+        cache-dependency-path: .github/workflows/build.yml
     - name: 'Run linters'
       run: |
         # py2
