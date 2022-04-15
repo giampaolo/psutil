@@ -858,6 +858,11 @@ class TestCase(unittest.TestCase):
         def runTest(self):
             pass
 
+        @contextlib.contextmanager
+        def subTest(self, *args, **kw):
+            # fake it for python 2.7
+            yield
+
 
 # monkey patch default unittest.TestCase
 unittest.TestCase = TestCase
