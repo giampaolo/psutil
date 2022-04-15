@@ -17,6 +17,7 @@ import os
 import pickle
 import socket
 import stat
+import unittest
 
 import psutil
 import psutil.tests
@@ -51,7 +52,6 @@ from psutil.tests import import_module_by_path
 from psutil.tests import mock
 from psutil.tests import reload_module
 from psutil.tests import sh
-from psutil.tests import unittest
 
 
 # ===================================================================

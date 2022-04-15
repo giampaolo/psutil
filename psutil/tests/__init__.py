@@ -31,6 +31,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import unittest
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -56,11 +57,6 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
-
-if PY3:
-    import unittest
-else:
-    import unittest2 as unittest  # requires "pip install unittest2"
 
 try:
     from unittest import mock  # py3
@@ -861,6 +857,11 @@ class TestCase(unittest.TestCase):
     if not PY3:
         def runTest(self):
             pass
+
+        @contextlib.contextmanager
+        def subTest(self, *args, **kw):
+            # fake it for python 2.7
+            yield
 
 
 # monkey patch default unittest.TestCase

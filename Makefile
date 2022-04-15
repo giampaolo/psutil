@@ -9,7 +9,6 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 DEPS = \
-	argparse \
 	autoflake \
 	autopep8 \
 	check-manifest \
@@ -29,8 +28,7 @@ DEPS = \
 PY2_DEPS = \
 	futures \
 	ipaddress \
-	mock \
-	unittest2
+	mock
 DEPS += `$(PYTHON) -c \
 	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.

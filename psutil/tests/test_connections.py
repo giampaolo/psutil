@@ -9,6 +9,7 @@
 import os
 import socket
 import textwrap
+import unittest
 from contextlib import closing
 from socket import AF_INET
 from socket import AF_INET6
@@ -39,7 +40,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import tcp_socketpair
-from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 

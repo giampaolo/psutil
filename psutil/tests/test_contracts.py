@@ -17,6 +17,7 @@ import stat
 import sys
 import time
 import traceback
+import unittest
 
 import psutil
 from psutil import AIX
@@ -51,7 +52,6 @@ from psutil.tests import is_namedtuple
 from psutil.tests import kernel_version
 from psutil.tests import process_namespace
 from psutil.tests import serialrun
-from psutil.tests import unittest
 
 
 # ===================================================================

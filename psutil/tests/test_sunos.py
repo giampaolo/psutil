@@ -7,12 +7,12 @@
 """Sun OS specific tests."""
 
 import os
+import unittest
 
 import psutil
 from psutil import SUNOS
 from psutil.tests import PsutilTestCase
 from psutil.tests import sh
-from psutil.tests import unittest
 
 
 @unittest.skipIf(not SUNOS, "SUNOS only")

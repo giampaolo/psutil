@@ -20,6 +20,7 @@ import socket
 import struct
 import textwrap
 import time
+import unittest
 import warnings
 
 import psutil
@@ -46,7 +47,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import unittest
 from psutil.tests import which
 
 

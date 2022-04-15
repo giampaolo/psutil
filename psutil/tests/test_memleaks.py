@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import functools
 import os
+import unittest
 
 import psutil
 import psutil._common
@@ -50,7 +51,6 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
-from psutil.tests import unittest
 
 
 cext = psutil._psplatform.cext

@@ -16,6 +16,7 @@ import os
 import socket
 import stat
 import subprocess
+import unittest
 
 import psutil
 import psutil.tests
@@ -48,7 +49,6 @@ from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
-from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid

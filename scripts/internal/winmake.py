@@ -51,8 +51,6 @@ DEPS = [
     "requests"
 ]
 if sys.version_info[:2] <= (2, 7):
-    DEPS.append('unittest2')
-if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
