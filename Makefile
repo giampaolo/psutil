@@ -9,7 +9,6 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 DEPS = \
-	argparse \
 	autoflake \
 	autopep8 \
 	check-manifest \
