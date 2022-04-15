@@ -7,7 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1053_: dropped support for Python 2.6.  (patch by Matthieu Darbois)
+- 1053_: dropped support for Python 2.6.  (patches by Matthieu Darbois and Hugo van Kemenade)
 - 2050_, [Linux]: increase ``read(2)`` buffer size from 1k to 32k when reading
   ``/proc`` pseudo files line by line. This should help having more consistent
   results.

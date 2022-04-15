@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions from 2.6 to 3.4+.
+Works with Python versions 2.7 and 3.4+.
 """
 
 from __future__ import division
@@ -380,10 +380,7 @@ class Process(object):
         self._ident = (self.pid, self._create_time)
 
     def __str__(self):
-        try:
-            info = collections.OrderedDict()
-        except AttributeError:  # pragma: no cover
-            info = {}  # Python 2.6
+        info = collections.OrderedDict()
         info["pid"] = self.pid
         if self._name:
             info['name'] = self._name
