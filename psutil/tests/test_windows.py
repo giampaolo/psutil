@@ -338,8 +338,6 @@ class TestProcess(WindowsTestCase):
         win32api.CloseHandle(handle)
         self.assertEqual(p.num_handles(), before)
 
-    @unittest.skipIf(not sys.version_info >= (2, 7),
-                     "CTRL_* signals not supported")
     def test_ctrl_signals(self):
         p = psutil.Process(self.spawn_testproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
