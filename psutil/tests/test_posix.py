@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import time
+import unittest
 
 import psutil
 from psutil import AIX
@@ -32,7 +33,6 @@ from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 from psutil.tests import which
 
 

@@ -17,6 +17,7 @@ import signal
 import subprocess
 import sys
 import time
+import unittest
 import warnings
 
 import psutil
@@ -36,7 +37,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 
 
 if WINDOWS and not PYPY:

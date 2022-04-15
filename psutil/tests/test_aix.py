@@ -9,12 +9,12 @@
 """AIX specific tests."""
 
 import re
+import unittest
 
 import psutil
 from psutil import AIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import sh
-from psutil.tests import unittest
 
 
 @unittest.skipIf(not AIX, "AIX only")

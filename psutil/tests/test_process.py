@@ -19,6 +19,7 @@ import sys
 import textwrap
 import time
 import types
+import unittest
 
 import psutil
 from psutil import AIX
@@ -62,7 +63,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
 

@@ -16,6 +16,7 @@ import signal
 import socket
 import sys
 import time
+import unittest
 
 import psutil
 from psutil import AIX
@@ -50,7 +51,6 @@ from psutil.tests import check_net_address
 from psutil.tests import enum
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
-from psutil.tests import unittest
 
 
 # ===================================================================

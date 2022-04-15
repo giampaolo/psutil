@@ -76,6 +76,7 @@ etc.) and make sure that:
 import os
 import shutil
 import traceback
+import unittest
 import warnings
 from contextlib import closing
 
@@ -108,7 +109,6 @@ from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 
 
 if APPVEYOR:
