@@ -77,7 +77,6 @@ extras_require = {"test": [
     "enum34; python_version <= '3.4'",
     "ipaddress; python_version < '3.0'",
     "mock; python_version < '3.0'",
-    "unittest2; python_version < '3.0'",
 ]}
 if not PYPY:
     extras_require['test'].extend([

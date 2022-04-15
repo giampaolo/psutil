@@ -31,6 +31,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import unittest
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -56,11 +57,6 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
-
-if PY3:
-    import unittest
-else:
-    import unittest2 as unittest  # requires "pip install unittest2"
 
 try:
     from unittest import mock  # py3
