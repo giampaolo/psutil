@@ -197,7 +197,7 @@ check-imports:  ## Run isort linter.
 check-c-code:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-lint:  ## Run all linters
+check-all:  ## Run all linters
 	${MAKE} check-flake8
 	${MAKE} check-imports
 	${MAKE} check-c-code
@@ -212,6 +212,10 @@ fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
 
 fix-imports:  ## Fix imports with isort.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg
+
+fix-all:
+	${MAKE} fix-flake8
+	${MAKE} fix-imports
 
 # ===================================================================
 # GIT
