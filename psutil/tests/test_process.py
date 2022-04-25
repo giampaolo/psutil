@@ -296,7 +296,10 @@ class TestProcess(PsutilTestCase):
         terminal = psutil.Process().terminal()
         if terminal is not None:
             tty = os.path.realpath(sh('tty'))
-            self.assertEqual(terminal, tty)
+            if tty == '/dev/ptmx' and terminal.startswith('/dev/pts/'):
+                pass
+            else:
+                self.assertEqual(terminal, tty)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
