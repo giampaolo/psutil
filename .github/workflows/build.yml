@@ -3,7 +3,7 @@
 #
 # * Linux
 # * macOS
-# * Windows (disabled)
+# * Windows
 # * FreeBSD
 #
 # To skip certain builds see:
@@ -20,15 +20,19 @@
 on: [push, pull_request]
 name: build
 jobs:
-  # Linux + macOS + Windows Python 3.6+
-  py3:
-    name: ${{ matrix.os }}-py36-plus
+  # Linux + macOS + Windows CPython 3.6+
+  cp36:
+    name: cp36+, ${{ matrix.os }}, ${{ matrix.archs }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-11, windows-2019]
+        include:
+          - {os: macos-11, archs: "x86_64 universal2"}
+          - {os: ubuntu-20.04, archs: "x86_64 i686"}
+          - {os: ubuntu-20.04, archs: "aarch64"}
+          - {os: windows-2019, archs: "AMD64 x86"}
 
     steps:
     - name: Cancel previous runs
@@ -43,10 +47,16 @@ jobs:
         cache: pip
         cache-dependency-path: .github/workflows/build.yml
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+      if: matrix.archs == 'aarch64'
+
     - name: Run tests
       uses: pypa/cibuildwheel@v2.10.1
       with:
         config-file: "./cibuildwheel.toml"
+      env:
+        CIBW_ARCHS: ${{ matrix.archs }}
 
     - name: Create wheels
       uses: actions/upload-artifact@v3
@@ -65,9 +75,9 @@ jobs:
   # Windows cp37+ tests
   # psutil tests do not like running from a virtualenv with python>=3.7 so
   # not using cibuildwheel for those. run them "manually" with this job.
-  windows-py3-test:
-    name: windows-py3-test-${{ matrix.python }}-${{ matrix.architecture }}
-    needs: py3
+  windows-cp3-test:
+    name: windows tests ${{ matrix.python }} ${{ matrix.architecture }}
+    needs: cp36
     runs-on: windows-2019
     timeout-minutes: 20
     strategy:
@@ -105,9 +115,9 @@ jobs:
         python ../psutil/tests/test_memleaks.py
       shell: bash
 
-  # Linux + macOS + Python 2.7 & 3.5
-  linux-macos-py2:
-    name: ${{ matrix.os }}-py27-py35
+  # Linux + macOS + CPython 2.7 & 3.5
+  linux-macos-cp27-cp35:
+    name: cp27/cp35, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:

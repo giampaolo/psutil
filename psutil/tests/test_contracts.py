@@ -43,6 +43,7 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYPY
+from psutil.tests import QEMU_USER
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
@@ -278,6 +279,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
 
+    @unittest.skipIf(QEMU_USER, 'QEMU user not supported')
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, info in psutil.net_if_stats().items():
@@ -425,6 +427,9 @@ class TestFetchAllProcesses(PsutilTestCase):
         failures = []
         for info in self.iter_proc_info():
             for name, value in info.items():
+                if QEMU_USER and name == 'status':
+                    # @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+                    continue
                 meth = getattr(self, name)
                 try:
                     meth(value, info)
