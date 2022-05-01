@@ -578,7 +578,7 @@ psutil_get_cmdline(DWORD pid, int use_peb) {
             wcslen(szArglist[i]));
         if (py_unicode == NULL)
             goto out;
-        PyList_SET_ITEM(py_retlist, i, py_unicode);
+        PyList_SetItem(py_retlist, i, py_unicode);
         py_unicode = NULL;
     }
     ret = py_retlist;
