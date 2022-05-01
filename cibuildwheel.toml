@@ -11,3 +11,18 @@ archs = ["x86_64", "universal2"]
 
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "10.9"
+
+[tool.cibuildwheel.windows]
+# psutil tests do not like running from a virtualenv with python>=3.7
+# restrict build & tests to cp36
+# cp36-abi3 wheels will need to be tested outside cibuildwheel for python>=3.7
+build = "cp36-*"
+test-command = [
+    "python {project}/psutil/tests/runner.py",
+    "python {project}/psutil/tests/test_memleaks.py"
+]
+
+[tool.cibuildwheel.windows.environment]
+PYTHONWARNINGS = "always"
+PYTHONUNBUFFERED = "1"
+PSUTIL_DEBUG = "1"

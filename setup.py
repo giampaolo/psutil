@@ -100,6 +100,14 @@ def get_version():
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
+PY36_PLUS = sys.version_info[:2] >= (3, 6)
+CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
+if CP36_PLUS and (MACOS or LINUX or WINDOWS):
+    py_limited_api = {"py_limited_api": True}
+    macros.append(('Py_LIMITED_API', '0x03060000'))
+else:
+    py_limited_api = {}
+
 
 def get_description():
     script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
@@ -182,7 +190,8 @@ if WINDOWS:
             "ws2_32", "PowrProf", "pdh",
         ],
         # extra_compile_args=["/W 4"],
-        # extra_link_args=["/DEBUG"]
+        # extra_link_args=["/DEBUG"],
+        **py_limited_api
     )
 
 elif MACOS:
@@ -197,7 +206,8 @@ elif MACOS:
         define_macros=macros,
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
-        ])
+        ],
+        **py_limited_api)
 
 elif FREEBSD:
     macros.append(("PSUTIL_FREEBSD", 1))
@@ -214,7 +224,8 @@ elif FREEBSD:
             'psutil/arch/freebsd/proc_socks.c',
         ],
         define_macros=macros,
-        libraries=["devstat"])
+        libraries=["devstat"],
+        **py_limited_api)
 
 elif OPENBSD:
     macros.append(("PSUTIL_OPENBSD", 1))
@@ -228,7 +239,8 @@ elif OPENBSD:
             'psutil/arch/openbsd/proc.c',
         ],
         define_macros=macros,
-        libraries=["kvm"])
+        libraries=["kvm"],
+        **py_limited_api)
 
 elif NETBSD:
     macros.append(("PSUTIL_NETBSD", 1))
@@ -240,7 +252,8 @@ elif NETBSD:
             'psutil/arch/netbsd/socks.c',
         ],
         define_macros=macros,
-        libraries=["kvm"])
+        libraries=["kvm"],
+        **py_limited_api)
 
 elif LINUX:
     def get_ethtool_macro():
@@ -276,7 +289,8 @@ elif LINUX:
     ext = Extension(
         'psutil._psutil_linux',
         sources=sources + ['psutil/_psutil_linux.c'],
-        define_macros=macros)
+        define_macros=macros,
+        **py_limited_api)
 
 elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
@@ -288,7 +302,8 @@ elif SUNOS:
             'psutil/arch/solaris/environ.c'
         ],
         define_macros=macros,
-        libraries=['kstat', 'nsl', 'socket'])
+        libraries=['kstat', 'nsl', 'socket'],
+        **py_limited_api)
 
 elif AIX:
     macros.append(("PSUTIL_AIX", 1))
@@ -300,7 +315,8 @@ elif AIX:
             'psutil/arch/aix/common.c',
             'psutil/arch/aix/ifaddrs.c'],
         libraries=['perfstat'],
-        define_macros=macros)
+        define_macros=macros,
+        **py_limited_api)
 
 else:
     sys.exit('platform %s is not supported' % sys.platform)
@@ -310,7 +326,8 @@ if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',
         define_macros=macros,
-        sources=sources)
+        sources=sources,
+        **py_limited_api)
     if SUNOS:
         def get_sunos_update():
             # See https://serverfault.com/q/524883
@@ -341,11 +358,27 @@ if POSIX:
 else:
     extensions = [ext]
 
+cmdclass = {}
+if py_limited_api:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+    class bdist_wheel_abi3(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            self.root_is_pure = False
+
+        def get_tag(self):
+            python, abi, plat = _bdist_wheel.get_tag(self)
+            return python, "abi3", plat
+
+    cmdclass["bdist_wheel"] = bdist_wheel_abi3
+
 
 def main():
     kwargs = dict(
         name='psutil',
         version=VERSION,
+        cmdclass=cmdclass,
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_description(),
         long_description_content_type='text/x-rst',
