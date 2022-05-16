@@ -77,7 +77,8 @@ __extra__all__ = [
 
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
-HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
+HAS_PROC_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
+HAS_PROC_SMAPS_ROLLUP = os.path.exists('/proc/%s/smaps_rollup' % os.getpid())
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
@@ -1875,9 +1876,33 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
         return pmem(rss, vms, shared, text, lib, data, dirty)
 
+    if HAS_PROC_SMAPS_ROLLUP:
+
+        @wrap_exceptions
+        def memory_full_info(self):
+            uss = pss = swap = 0
+            try:
+                with open_binary("{}/{}/smaps_rollup".format(
+                        self._procfs_path, self.pid)) as f:
+                    for line in f:
+                        if line.startswith(b"Private_:"):
+                            uss += int(line.split()[1]) * 1024
+                        elif line.startswith(b"Pss:"):
+                            pss = int(line.split()[1]) * 1024
+                        elif line.startswith(b"Swap:"):
+                            swap = int(line.split()[1]) * 1024
+            except ProcessLookupError:  # happens on readline()
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+
+            basic_mem = self.memory_info()
+            return pfullmem(*basic_mem + (uss, pss, swap))
+
     # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
     # CONFIG_MMU kernel configuration option is not enabled.
-    if HAS_SMAPS:
+    elif HAS_PROC_SMAPS:
 
         @wrap_exceptions
         def memory_full_info(
@@ -1910,7 +1935,7 @@ class Process(object):
     else:
         memory_full_info = memory_info
 
-    if HAS_SMAPS:
+    if HAS_PROC_SMAPS:
 
         @wrap_exceptions
         def memory_maps(self):
