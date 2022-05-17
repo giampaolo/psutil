@@ -1876,16 +1876,18 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
         return pmem(rss, vms, shared, text, lib, data, dirty)
 
-    if HAS_PROC_SMAPS_ROLLUP:
+    if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
         @wrap_exceptions
-        def memory_full_info(self):
+        def _parse_smaps_rollup(self):
+            # /proc/pid/smaps_rollup was added to Linux in 2017.
             uss = pss = swap = 0
             try:
                 with open_binary("{}/{}/smaps_rollup".format(
                         self._procfs_path, self.pid)) as f:
                     for line in f:
-                        if line.startswith(b"Private_:"):
+                        if line.startswith(b"Private_"):
+                            # Private_Clean, Private_Dirty, Private_Hugetlb
                             uss += int(line.split()[1]) * 1024
                         elif line.startswith(b"Pss:"):
                             pss = int(line.split()[1]) * 1024
@@ -1896,22 +1898,18 @@ class Process(object):
                     raise NoSuchProcess(self.pid, self._name)
                 else:
                     raise ZombieProcess(self.pid, self._name, self._ppid)
-
-            basic_mem = self.memory_info()
-            return pfullmem(*basic_mem + (uss, pss, swap))
-
-    # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
-    # CONFIG_MMU kernel configuration option is not enabled.
-    elif HAS_PROC_SMAPS:
+            return (uss, pss, swap)
 
         @wrap_exceptions
-        def memory_full_info(
+        def _parse_smaps(
                 self,
                 # Gets Private_Clean, Private_Dirty, Private_Hugetlb.
                 _private_re=re.compile(br"\nPrivate.*:\s+(\d+)"),
                 _pss_re=re.compile(br"\nPss\:\s+(\d+)"),
                 _swap_re=re.compile(br"\nSwap\:\s+(\d+)")):
-            basic_mem = self.memory_info()
+            # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
+            # CONFIG_MMU kernel configuration option is not enabled.
+
             # Note: using 3 regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
@@ -1930,6 +1928,14 @@ class Process(object):
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
+            return (uss, pss, swap)
+
+        def memory_full_info(self):
+            if HAS_PROC_SMAPS_ROLLUP:  # faster
+                uss, pss, swap = self._parse_smaps_rollup()
+            else:
+                uss, pss, swap = self._parse_smaps()
+            basic_mem = self.memory_info()
             return pfullmem(*basic_mem + (uss, pss, swap))
 
     else:
