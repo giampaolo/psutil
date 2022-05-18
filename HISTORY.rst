@@ -12,9 +12,9 @@ XXXX-XX-XX
   ``/proc`` pseudo files line by line. This should help having more consistent
   results.
 - 2057_, [OpenBSD]: add support for `cpu_freq()`_.
-- 2107_ [Linux]: Process.memory_full_info() (reporting memory USS/PSS/Swap)
-  now reads ``/proc/pid/smaps_rollup`` instead of ``/proc/pids/smaps``
-  resulting in a 5x speedup.
+- 2107_ [Linux]: Process.memory_full_info() (reporting proecss USS/PSS/Swap
+  memory) now reads ``/proc/pid/smaps_rollup`` instead of ``/proc/pids/smaps``
+  which makes it 5 times faster.
 
 **Bug fixes**
 
