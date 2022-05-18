@@ -1775,28 +1775,19 @@ class TestSensorsFans(PsutilTestCase):
 class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
-    def test_memory_full_info(self):
-        testfn = self.get_testfn()
-        src = textwrap.dedent("""
-            import time
-            with open("%s", "w") as f:
-                time.sleep(10)
-            """ % testfn)
-        sproc = self.pyrun(src)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
-        p = psutil.Process(sproc.pid)
-        time.sleep(.1)
-        mem = p.memory_full_info()
-        maps = p.memory_maps(grouped=False)
+    def test_parse_smaps_vs_memory_maps(self):
+        sproc = self.spawn_testproc()
+        uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
+        maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         self.assertAlmostEqual(
-            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]),
+            uss, sum([x.private_dirty + x.private_clean for x in maps]),
             delta=4096)
         self.assertAlmostEqual(
-            mem.pss, sum([x.pss for x in maps]), delta=4096)
+            pss, sum([x.pss for x in maps]), delta=4096)
         self.assertAlmostEqual(
-            mem.swap, sum([x.swap for x in maps]), delta=4096)
+            swap, sum([x.swap for x in maps]), delta=4096)
 
-    def test_memory_full_info_mocked(self):
+    def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
         with mock_open_content(
             "/proc/%s/smaps" % os.getpid(),
@@ -1823,12 +1814,12 @@ class TestProcess(PsutilTestCase):
                 Locked:                19 kB
                 VmFlags: rd ex
                 """).encode()) as m:
-            p = psutil.Process()
-            mem = p.memory_full_info()
+            p = psutil._pslinux.Process(os.getpid())
+            uss, pss, swap = p._parse_smaps()
             assert m.called
-            self.assertEqual(mem.uss, (6 + 7 + 14) * 1024)
-            self.assertEqual(mem.pss, 3 * 1024)
-            self.assertEqual(mem.swap, 15 * 1024)
+            self.assertEqual(uss, (6 + 7 + 14) * 1024)
+            self.assertEqual(pss, 3 * 1024)
+            self.assertEqual(swap, 15 * 1024)
 
     # On PYPY file descriptors are not closed fast enough.
     @unittest.skipIf(PYPY, "unreliable on PYPY")

@@ -77,7 +77,8 @@ __extra__all__ = [
 
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
-HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
+HAS_PROC_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
+HAS_PROC_SMAPS_ROLLUP = os.path.exists('/proc/%s/smaps_rollup' % os.getpid())
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
@@ -1875,18 +1876,42 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
         return pmem(rss, vms, shared, text, lib, data, dirty)
 
-    # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
-    # CONFIG_MMU kernel configuration option is not enabled.
-    if HAS_SMAPS:
+    if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
         @wrap_exceptions
-        def memory_full_info(
+        def _parse_smaps_rollup(self):
+            # /proc/pid/smaps_rollup was added to Linux in 2017. Faster
+            # than /proc/pid/smaps. It reports higher PSS than */smaps
+            # (from 1k up to 200k higher; tested against all processes).
+            uss = pss = swap = 0
+            try:
+                with open_binary("{}/{}/smaps_rollup".format(
+                        self._procfs_path, self.pid)) as f:
+                    for line in f:
+                        if line.startswith(b"Private_"):
+                            # Private_Clean, Private_Dirty, Private_Hugetlb
+                            uss += int(line.split()[1]) * 1024
+                        elif line.startswith(b"Pss:"):
+                            pss = int(line.split()[1]) * 1024
+                        elif line.startswith(b"Swap:"):
+                            swap = int(line.split()[1]) * 1024
+            except ProcessLookupError:  # happens on readline()
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+            return (uss, pss, swap)
+
+        @wrap_exceptions
+        def _parse_smaps(
                 self,
                 # Gets Private_Clean, Private_Dirty, Private_Hugetlb.
                 _private_re=re.compile(br"\nPrivate.*:\s+(\d+)"),
                 _pss_re=re.compile(br"\nPss\:\s+(\d+)"),
                 _swap_re=re.compile(br"\nSwap\:\s+(\d+)")):
-            basic_mem = self.memory_info()
+            # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
+            # CONFIG_MMU kernel configuration option is not enabled.
+
             # Note: using 3 regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
@@ -1905,12 +1930,20 @@ class Process(object):
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
+            return (uss, pss, swap)
+
+        def memory_full_info(self):
+            if HAS_PROC_SMAPS_ROLLUP:  # faster
+                uss, pss, swap = self._parse_smaps_rollup()
+            else:
+                uss, pss, swap = self._parse_smaps()
+            basic_mem = self.memory_info()
             return pfullmem(*basic_mem + (uss, pss, swap))
 
     else:
         memory_full_info = memory_info
 
-    if HAS_SMAPS:
+    if HAS_PROC_SMAPS:
 
         @wrap_exceptions
         def memory_maps(self):
