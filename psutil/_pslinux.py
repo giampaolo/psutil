@@ -1880,7 +1880,9 @@ class Process(object):
 
         @wrap_exceptions
         def _parse_smaps_rollup(self):
-            # /proc/pid/smaps_rollup was added to Linux in 2017.
+            # /proc/pid/smaps_rollup was added to Linux in 2017. Faster
+            # than /proc/pid/smaps. It reports higher PSS than */smaps
+            # (from 1k up to 200k higher; tested against all processes).
             uss = pss = swap = 0
             try:
                 with open_binary("{}/{}/smaps_rollup".format(

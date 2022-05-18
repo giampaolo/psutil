@@ -1775,18 +1775,17 @@ class TestSensorsFans(PsutilTestCase):
 class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
-    def test_memory_full_info(self):
+    def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_testproc()
-        p = psutil.Process(sproc.pid)
-        mem = p.memory_full_info()
-        maps = p.memory_maps(grouped=False)
+        uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
+        maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         self.assertAlmostEqual(
-            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]),
+            uss, sum([x.private_dirty + x.private_clean for x in maps]),
             delta=4096)
         self.assertAlmostEqual(
-            mem.pss, sum([x.pss for x in maps]), delta=4096)
+            pss, sum([x.pss for x in maps]), delta=4096)
         self.assertAlmostEqual(
-            mem.swap, sum([x.swap for x in maps]), delta=4096)
+            swap, sum([x.swap for x in maps]), delta=4096)
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
