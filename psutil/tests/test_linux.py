@@ -1788,7 +1788,7 @@ class TestProcess(PsutilTestCase):
         self.assertAlmostEqual(
             mem.swap, sum([x.swap for x in maps]), delta=4096)
 
-    def test_memory_full_info_mocked(self):
+    def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
         with mock_open_content(
             "/proc/%s/smaps" % os.getpid(),
@@ -1815,12 +1815,12 @@ class TestProcess(PsutilTestCase):
                 Locked:                19 kB
                 VmFlags: rd ex
                 """).encode()) as m:
-            p = psutil.Process()
-            mem = p.memory_full_info()
+            p = psutil._pslinux.Process(os.getpid())
+            uss, pss, swap = p._parse_smaps()
             assert m.called
-            self.assertEqual(mem.uss, (6 + 7 + 14) * 1024)
-            self.assertEqual(mem.pss, 3 * 1024)
-            self.assertEqual(mem.swap, 15 * 1024)
+            self.assertEqual(uss, (6 + 7 + 14) * 1024)
+            self.assertEqual(pss, 3 * 1024)
+            self.assertEqual(swap, 15 * 1024)
 
     # On PYPY file descriptors are not closed fast enough.
     @unittest.skipIf(PYPY, "unreliable on PYPY")
