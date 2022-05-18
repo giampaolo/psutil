@@ -1776,16 +1776,8 @@ class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     def test_memory_full_info(self):
-        testfn = self.get_testfn()
-        src = textwrap.dedent("""
-            import time
-            with open("%s", "w") as f:
-                time.sleep(10)
-            """ % testfn)
-        sproc = self.pyrun(src)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
+        sproc = self.spawn_testproc()
         p = psutil.Process(sproc.pid)
-        time.sleep(.1)
         mem = p.memory_full_info()
         maps = p.memory_maps(grouped=False)
         self.assertAlmostEqual(
