@@ -71,7 +71,10 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
     if (s != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhAddEnglishCounterW failed");
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "PdhAddEnglishCounterW failed. Performance counters may be disabled."
+        );
         return NULL;
     }
 
