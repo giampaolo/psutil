@@ -1,18 +1,19 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.1 (IN DEVELOPMENT)
-======================
+5.9.1
+=====
 
-XXXX-XX-XX
+2022-05-20
 
 **Enhancements**
 
-- 1053_: dropped support for Python 2.6.  (patches by Matthieu Darbois and Hugo van Kemenade)
+- 1053_: drop Python 2.6 support.  (patches by Matthieu Darbois and Hugo van
+  Kemenade)
 - 2050_, [Linux]: increase ``read(2)`` buffer size from 1k to 32k when reading
   ``/proc`` pseudo files line by line. This should help having more consistent
   results.
 - 2057_, [OpenBSD]: add support for `cpu_freq()`_.
-- 2107_ [Linux]: `Process.memory_full_info()`_ (reporting process USS/PSS/Swap
+- 2107_, [Linux]: `Process.memory_full_info()`_ (reporting process USS/PSS/Swap
   memory) now reads ``/proc/pid/smaps_rollup`` instead of ``/proc/pids/smaps``,
   which makes it 5 times faster.
 

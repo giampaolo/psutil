@@ -2597,7 +2597,7 @@ If you want to develop psutil take a look at the `development guide`_.
 Platforms support history
 =========================
 
-* psutil 5.9.1 (2022-XX): drop Python 2.6 support
+* psutil 5.9.1 (2022-05): drop Python 2.6 support
 * psutil 5.9.0 (2021-12): **MidnightBSD**
 * psutil 5.8.0 (2020-12): **PyPy 2** on Windows
 * psutil 5.7.1 (2020-07): **Windows Nano**
@@ -2615,6 +2615,10 @@ Supported Python versions are 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2022-05-20:
+  `5.9.1 <https://pypi.org/project/psutil/5.9.1/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#591>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.0...release-5.9.1#files_bucket>`__
 - 2021-12-29:
   `5.9.0 <https://pypi.org/project/psutil/5.9.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#590>`__ -
