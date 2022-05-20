@@ -147,7 +147,6 @@ include scripts/internal/print_hashes.py
 include scripts/internal/print_timeline.py
 include scripts/internal/print_wheels.py
 include scripts/internal/purge_installation.py
-include scripts/internal/tidelift.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

@@ -270,9 +270,6 @@ check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 
-tidelift-relnotes:  ## upload release notes from HISTORY
-	$(PYTHON) scripts/internal/tidelift.py
-
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} check-sdist
 	${MAKE} install
@@ -296,7 +293,6 @@ release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
 	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
-	${MAKE} tidelift-relnotes
 
 check-manifest:  ## Inspect MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v $(ARGS)
