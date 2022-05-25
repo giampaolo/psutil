@@ -36,7 +36,7 @@ Sponsors
 
 `Add your logo <https://github.com/sponsors/giampaolo>`__.
 
-Example usages"""
+Example usages"""  # noqa
 
 
 def main():

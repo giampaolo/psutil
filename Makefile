@@ -16,6 +16,7 @@ DEPS = \
 	coverage \
 	flake8 \
 	flake8-print \
+	flake8-bugbear \
 	isort \
 	pyperf \
 	pypinfo \
@@ -188,19 +189,19 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-check-flake8:  ## Run flake8 linter.
+flake8:  ## Run flake8 linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
 
-check-imports:  ## Run isort linter.
+isort:  ## Run isort linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg --check-only
 
-check-c-code:  ## Run C linter.
+c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-check-all:  ## Run all linters
-	${MAKE} check-flake8
-	${MAKE} check-imports
-	${MAKE} check-c-code
+lint-all:  ## Run all linters
+	${MAKE} flake8
+	${MAKE} isort
+	${MAKE} c-linter
 
 # ===================================================================
 # Fixers

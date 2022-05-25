@@ -228,7 +228,7 @@ _SENTINEL = object()
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
     msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil" % getattr(_psplatform.cext, "__file__")
+          "version of psutil" % _psplatform.cext.__file__
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
             '.'.join([x for x in str(_psplatform.cext.version)]), __version__)

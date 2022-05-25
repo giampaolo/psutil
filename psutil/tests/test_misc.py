@@ -402,7 +402,7 @@ class TestCommonModule(PsutilTestCase):
                 supports_ipv6.cache_clear()
                 assert s.called
         else:
-            with self.assertRaises(Exception):
+            with self.assertRaises(socket.error):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 try:
                     sock.bind(("::1", 0))

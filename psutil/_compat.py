@@ -232,8 +232,8 @@ except ImportError:
             return self.hashvalue
 
     def _make_key(args, kwds, typed,
-                  kwd_mark=(object(), ),
-                  fasttypes=set((int, str, frozenset, type(None))),
+                  kwd_mark=(_SENTINEL, ),
+                  fasttypes=set((int, str, frozenset, type(None))),  # noqa
                   sorted=sorted, tuple=tuple, type=type, len=len):
         key = args
         if kwds:
@@ -442,9 +442,9 @@ try:
 except ImportError:
     @contextlib.contextmanager
     def redirect_stderr(new_target):
-        original = getattr(sys, "stderr")
+        original = sys.stderr
         try:
-            setattr(sys, "stderr", new_target)
+            sys.stderr = new_target
             yield new_target
         finally:
-            setattr(sys, "stderr", original)
+            sys.stderr = original

@@ -83,7 +83,7 @@ def get_changes():
     block = []
 
     # eliminate the part preceding the first block
-    for i, line in enumerate(lines):
+    for line in lines:
         line = lines.pop(0)
         if line.startswith('===='):
             break

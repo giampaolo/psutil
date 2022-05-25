@@ -1,15 +1,17 @@
 # Configuration file for flake 8. This is used by "make lint" and by the
 # GIT commit hook script.
-# T001 = print() statement
 
 [flake8]
 ignore =
-    # line break after binary operator
-    W504
+    W504  # line break after binary operator
+    # --- flake8-bugbear
+    B007  # Loop control variable 'keyword' not used within the loop body. If this is intended, start the name with an underscore.
+    B014  # Redundant exception types in `except (IOError, OSError) as err:`.  Write `except OSError as err:`, which catches exactly the same exceptions.
+    B008  # Do not perform function calls in argument defaults.
 per-file-ignores =
+   # T001 = print() statement
    setup.py:T001
    scripts/*:T001
-   scripts/internal/convert_readme.py:E501,T001
    psutil/tests/runner.py:T001
    psutil/tests/test_memleaks.py:T001
    .github/workflows/*:T001
