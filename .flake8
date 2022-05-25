@@ -3,15 +3,20 @@
 
 [flake8]
 ignore =
-    W504  # line break after binary operator
-    # --- flake8-bugbear
-    B007  # Loop control variable 'keyword' not used within the loop body. If this is intended, start the name with an underscore.
-    B014  # Redundant exception types in `except (IOError, OSError) as err:`.  Write `except OSError as err:`, which catches exactly the same exceptions.
-    B008  # Do not perform function calls in argument defaults.
+   W504  # line break after binary operator
+
+   # --- flake8-bugbear plugin
+   B007  # Loop control variable 'keyword' not used within the loop body. If this is intended, start the name with an underscore.
+   B014  # Redundant exception types in `except (IOError, OSError) as err:`.  Write `except OSError as err:`, which catches exactly the same exceptions.
+   B008  # Do not perform function calls in argument defaults.
+
+   # --- flake8-blind-except plugin
+   B902  # blind except Exception: statement
+
 per-file-ignores =
-   # T001 = print() statement
-   setup.py:T001
-   scripts/*:T001
-   psutil/tests/runner.py:T001
-   psutil/tests/test_memleaks.py:T001
-   .github/workflows/*:T001
+   # T001, T201 = print() statement (flake8-print plugin)
+   setup.py:T001,T201
+   scripts/*:T001,T201
+   psutil/tests/runner.py:T001,T201
+   psutil/tests/test_memleaks.py:T001,T201
+   .github/workflows/*:T001,T201

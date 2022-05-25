@@ -113,10 +113,10 @@ def main():
             if "pdb.set_trace" in line:
                 print("%s:%s %s" % (path, lineno, line))
                 return exit("you forgot a pdb in your python code")
-            # bare except clause
-            if "except:" in line and not line.endswith("# NOQA"):
-                print("%s:%s %s" % (path, lineno, line))
-                return exit("bare except clause")
+            # # bare except clause (now provided by flake8-blind-except plugin)
+            # if "except:" in line and not line.endswith("# NOQA"):
+            #     print("%s:%s %s" % (path, lineno, line))
+            #     return exit("bare except clause")
 
     # Python linters
     if py_files:
