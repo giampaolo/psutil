@@ -41,14 +41,18 @@ PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
     "flake8",
+    "flake8-blind-except",
+    "flake8-bugbear",
+    "flake8-debugger",
+    "flake8-print",
     "nose",
     "pdbpp",
     "pip",
     "pyperf",
     "pyreadline",
+    "requests"
     "setuptools",
     "wheel",
-    "requests"
 ]
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')

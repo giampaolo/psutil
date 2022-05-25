@@ -15,9 +15,10 @@ DEPS = \
 	concurrencytest \
 	coverage \
 	flake8 \
-	flake8-bugbear \
-	flake8-print \
 	flake8-blind-except \
+	flake8-bugbear \
+	flake8-debugger \
+	flake8-print \
 	isort \
 	pyperf \
 	pypinfo \
