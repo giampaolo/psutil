@@ -296,7 +296,7 @@ class TestCommonModule(PsutilTestCase):
     def test_memoize(self):
         @memoize
         def foo(*args, **kwargs):
-            "foo docstring"
+            """foo docstring"""
             calls.append(None)
             return (args, kwargs)
 

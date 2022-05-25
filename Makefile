@@ -19,6 +19,7 @@ DEPS = \
 	flake8-bugbear \
 	flake8-debugger \
 	flake8-print \
+	flake8-quotes \
 	isort \
 	pyperf \
 	pypinfo \

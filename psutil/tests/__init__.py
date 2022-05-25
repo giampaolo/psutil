@@ -739,7 +739,7 @@ def call_until(fun, expr):
 
 
 def safe_rmpath(path):
-    "Convenience function for removing temporary test files or dirs"
+    """Convenience function for removing temporary test files or dirs."""
     def retry_fun(fun):
         # On Windows it could happen that the file or directory has
         # open handles or references preventing the delete operation
@@ -772,7 +772,7 @@ def safe_rmpath(path):
 
 
 def safe_mkdir(dir):
-    "Convenience function for creating a directory"
+    """Convenience function for creating a directory."""
     try:
         os.mkdir(dir)
     except FileExistsError:
@@ -781,7 +781,7 @@ def safe_mkdir(dir):
 
 @contextlib.contextmanager
 def chdir(dirname):
-    "Context manager which temporarily changes the current directory."
+    """Context manager which temporarily changes the current directory."""
     curdir = os.getcwd()
     try:
         os.chdir(dirname)
