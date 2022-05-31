@@ -2000,14 +2000,19 @@ def disk_usage(path):
     return _psplatform.disk_usage(path)
 
 
-def disk_partitions(all=False):
+def disk_partitions(all=False, get_maxfile_maxpath=True):
     """Return mounted partitions as a list of
-    (device, mountpoint, fstype, opts) namedtuple.
+    (device, mountpoint, fstype, opts, maxfile, maxpath) namedtuple.
     'opts' field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
     If *all* parameter is False return physical devices only and ignore
     all others.
+
+    If *get_maxfile_maxpath* is True, fetch `PC_NAME_MAX` and `PC_PATH_MAX`
+    into `maxfile` and `maxpath` respectively. Note that this uses `pathconf`
+    which uses `statfs` syscall, which might be slow or hang forever in case
+    of unresponsive NFS mount.
     """
     def pathconf(path, name):
         try:
@@ -2016,7 +2021,7 @@ def disk_partitions(all=False):
             pass
 
     ret = _psplatform.disk_partitions(all)
-    if POSIX:
+    if get_maxfile_maxpath and POSIX:
         new = []
         for item in ret:
             nt = item._replace(
