@@ -124,4 +124,5 @@ only_commits:
     - psutil/arch/windows/*
     - psutil/tests/*
     - scripts/*
+    - scripts/internal/*
     - setup.py
