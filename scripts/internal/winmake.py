@@ -50,7 +50,7 @@ DEPS = [
     "pip",
     "pyperf",
     "pyreadline",
-    "requests"
+    "requests",
     "setuptools",
     "wheel",
 ]
