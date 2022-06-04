@@ -42,7 +42,6 @@ DEPS = [
     "coverage",
     "flake8",
     "flake8-blind-except",
-    "flake8-bugbear",
     "flake8-debugger",
     "flake8-print",
     "nose",
@@ -54,6 +53,9 @@ DEPS = [
     "setuptools",
     "wheel",
 ]
+
+if sys.version_info[:2] >= (3, 5):
+    DEPS.append('flake8-bugbear')
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
