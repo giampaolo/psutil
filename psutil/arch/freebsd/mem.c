@@ -6,6 +6,7 @@
 
 
 #include <Python.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <vm/vm_param.h>

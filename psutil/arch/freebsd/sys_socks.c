@@ -10,6 +10,7 @@
  */
 
 #include <Python.h>
+#include <sys/param.h>
 #include <sys/user.h>
 #include <sys/file.h>
 #include <sys/socketvar.h>    // for struct xsocket
