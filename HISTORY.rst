@@ -1,5 +1,10 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+**Bug fixes**
+
+- 2113, [FreeBSD]: __FreeBSD_version used in mem.c without including
+  <sys/param.h>
+
 5.9.1
 =====
 
