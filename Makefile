@@ -44,10 +44,11 @@ BUILD_OPTS = `$(PYTHON) -c \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
-	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
+	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
-all: help
+# if make is invoked with no arg, default to `make help`
+.DEFAULT_GOAL := help
 
 # ===================================================================
 # Install
@@ -75,9 +76,7 @@ clean:  ## Remove all build files.
 		docs/_build/ \
 		htmlcov/
 
-_:
-
-build: _  ## Compile (in parallel) without installing.
+build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
