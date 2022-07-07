@@ -83,8 +83,6 @@ build:  ## Compile (in parallel) without installing.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
 
 install:  ## Install this package as current user in "edit" mode.
-	# make sure setuptools is installed (needed for 'develop' / edit mode)
-	$(PYTHON) -c "import setuptools"
 	${MAKE} build
 	PYTHONWARNINGS=all $(PYTHON) setup.py develop $(INSTALL_OPTS)
 	$(PYTHON) -c "import psutil"  # make sure it actually worked
