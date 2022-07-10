@@ -21,6 +21,7 @@ import os
 import random
 import re
 import select
+import shlex
 import shutil
 import signal
 import socket
@@ -450,14 +451,14 @@ def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    shell = True if isinstance(cmd, (str, unicode)) else False
     # Prevents subprocess to open error dialogs in case of error.
-    flags = 0x8000000 if WINDOWS and shell else 0
-    kwds.setdefault("shell", shell)
+    flags = 0x8000000 if WINDOWS else 0
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
     kwds.setdefault("creationflags", flags)
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
     if PY3:
