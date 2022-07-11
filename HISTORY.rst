@@ -30,6 +30,8 @@
   ``min`` and ``max`` are in MHz.
 - 2050_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` if running in a
   LCX container.
+- 2095_, [Linux]: `net_if_stats()` returns incorrect interface speed for 100GbE 
+  network cards
 
 5.9.0
 =====
