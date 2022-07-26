@@ -1003,7 +1003,7 @@ class TestMemoryLeak(PsutilTestCase):
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
-        called fun repeadetly, and return the memory difference.
+        called fun repeatedly, and return the memory difference.
         """
         gc.collect(generation=1)
         mem1 = self._get_mem()

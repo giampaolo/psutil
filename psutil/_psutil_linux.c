@@ -417,6 +417,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     int sock = 0;
     int ret;
     int duplex;
+    __u32 uint_speed;
     int speed;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
@@ -438,7 +439,15 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     if (ret != -1) {
         duplex = ethcmd.duplex;
-        speed = ethcmd.speed;
+        // speed is returned from ethtool as a __u32 ranging from 0 to INT_MAX
+        // or SPEED_UNKNOWN (-1)
+        uint_speed = ethtool_cmd_speed(&ethcmd);
+        if (uint_speed == (__u32)SPEED_UNKNOWN || uint_speed > INT_MAX) {
+            speed = 0;
+        }
+        else {
+            speed = (int)uint_speed;
+        }
     }
     else {
         if ((errno == EOPNOTSUPP) || (errno == EINVAL)) {
