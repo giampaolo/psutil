@@ -976,6 +976,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIfStats(PsutilTestCase):
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -996,6 +997,7 @@ class TestSystemNetIfStats(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     @retry_on_failure()
     def test_against_ifconfig(self):
         def ifconfig(nic):
