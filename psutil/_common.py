@@ -83,17 +83,22 @@ __all__ = [
 # ===================================================================
 
 
-POSIX = os.name == "posix"
-WINDOWS = os.name == "nt"
-LINUX = sys.platform.startswith("linux")
-MACOS = sys.platform.startswith("darwin")
+# Allow to redefine os.name and sys.platform if build OS and target 
+# OS are different (e.g. build OS is MacOS, target OS is Linux)
+target_os_name = os.getenv('TARGET_OS_NAME', os.name)
+target_sys_platform = os.getenv('TARGET_SYS_PLATFORM', sys.platform)
+
+POSIX = target_os_name == "posix"
+WINDOWS = target_os_name == "nt"
+LINUX = target_sys_platform.startswith("linux")
+MACOS = target_sys_platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
-FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
-OPENBSD = sys.platform.startswith("openbsd")
-NETBSD = sys.platform.startswith("netbsd")
+FREEBSD = target_sys_platform.startswith(("freebsd", "midnightbsd"))
+OPENBSD = target_sys_platform.startswith("openbsd")
+NETBSD = target_sys_platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
-SUNOS = sys.platform.startswith(("sunos", "solaris"))
-AIX = sys.platform.startswith("aix")
+SUNOS = target_sys_platform.startswith(("sunos", "solaris"))
+AIX = target_sys_platform.startswith("aix")
 
 
 # ===================================================================
