@@ -220,7 +220,6 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "*-musllinux*",
     "cp36-*",
     "cp37-*",
     "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
