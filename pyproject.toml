@@ -205,7 +205,6 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "*-musllinux*",
     "cp313-win*",  # pywin32 is not available on cp313 yet
     "pp*",
 ]
@@ -222,6 +221,10 @@ archs = ["arm64", "x86_64"]
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y net-tools"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = "apk --no-cache add coreutils procps"
 
 [build-system]
 build-backend = "setuptools.build_meta"
