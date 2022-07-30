@@ -326,11 +326,11 @@ if FREEBSD:
             if available_freq:
                 try:
                     min_freq = int(available_freq.split(" ")[-1].split("/")[0])
-                except(IndexError, ValueError):
+                except (IndexError, ValueError):
                     min_freq = None
                 try:
                     max_freq = int(available_freq.split(" ")[0].split("/")[0])
-                except(IndexError, ValueError):
+                except (IndexError, ValueError):
                     max_freq = None
             ret.append(_common.scpufreq(current, min_freq, max_freq))
         return ret
