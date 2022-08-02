@@ -4,6 +4,7 @@
 
 - 2113, [FreeBSD]: __FreeBSD_version used in mem.c without including
   <sys/param.h>
+- 2128, [NetBSD]: fix bugs in swap code
 
 5.9.1
 =====
