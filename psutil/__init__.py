@@ -325,7 +325,7 @@ class Process(object):
      - use is_running() before querying the process
      - if you're continuously iterating over a set of Process
        instances use process_iter() which pre-emptively checks
-     process identity for every yielded instance
+       process identity for every yielded instance
     """
 
     def __init__(self, pid=None):
