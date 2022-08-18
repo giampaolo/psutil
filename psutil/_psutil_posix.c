@@ -9,6 +9,7 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -429,6 +430,24 @@ error:
     return PyErr_SetFromErrno(PyExc_OSError);
 }
 
+static bool
+check_and_append_iff_flag(PyObject *py_retlist, short int flags, short int flag_to_check, const char * flag_name)
+{
+    PyObject *py_str = NULL;
+
+    if (flags & flag_to_check) {
+        py_str = PyUnicode_DecodeFSDefault(flag_name);
+        if (! py_str)
+            return false;
+        if (PyList_Append(py_retlist, py_str)) {
+            Py_DECREF(py_str);
+            return false;
+        }
+        Py_CLEAR(py_str);
+    }
+
+    return true;
+}
 
 /*
  * Get all of the NIC flags and return them.
@@ -440,89 +459,151 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
     int ret;
     struct ifreq ifr;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_flag = NULL;
     short int flags;
 
     if (py_retlist == NULL)
         return NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
-        return NULL;
+        goto error;
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1)
-        return NULL;
+    if (sock == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
+    if (ret == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
+    }
 
     close(sock);
     sock = -1;
 
     flags = ifr.ifr_flags & 0xFFFF;
 
-    if (flags & IFF_UP) {
-        py_flag = PyUnicode_DecodeFSDefault("up");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_BROADCAST) {
-        py_flag = PyUnicode_DecodeFSDefault("broadcast");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_DEBUG) {
-        py_flag = PyUnicode_DecodeFSDefault("debug");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_LOOPBACK) {
-        py_flag = PyUnicode_DecodeFSDefault("loopback");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_POINTOPOINT) {
-        py_flag = PyUnicode_DecodeFSDefault("pointopoint");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_NOTRAILERS) {
-        py_flag = PyUnicode_DecodeFSDefault("notrailers");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_RUNNING) {
-        py_flag = PyUnicode_DecodeFSDefault("running");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_NOARP) {
-        py_flag = PyUnicode_DecodeFSDefault("noarp");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_PROMISC) {
-        py_flag = PyUnicode_DecodeFSDefault("promisc");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_ALLMULTI) {
-        py_flag = PyUnicode_DecodeFSDefault("allmulti");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
-    if (flags & IFF_MULTICAST) {
-        py_flag = PyUnicode_DecodeFSDefault("multicast");
-        if (PyList_Append(py_retlist, py_flag))
-            goto error;
-    }
+    // Linux/glibc IFF flags: https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/gnu/net/if.h;h=251418f82331c0426e58707fe4473d454893b132;hb=HEAD
+    // macOS IFF flags: https://opensource.apple.com/source/xnu/xnu-792/bsd/net/if.h.auto.html
+    // AIX IFF flags: https://www.ibm.com/support/pages/how-hexadecimal-flags-displayed-ifconfig-are-calculated
+    // FreeBSD IFF flags: https://www.freebsd.org/cgi/man.cgi?query=if_allmulti&apropos=0&sektion=0&manpath=FreeBSD+10-current&format=html
+
+#ifdef IFF_UP
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_UP, "up"))
+        goto error;
+#endif
+#ifdef IFF_BROADCAST
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_BROADCAST, "broadcast"))
+        goto error;
+#endif
+#ifdef IFF_DEBUG
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_DEBUG, "debug"))
+        goto error;
+#endif
+#ifdef IFF_LOOPBACK
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LOOPBACK, "loopback"))
+        goto error;
+#endif
+#ifdef IFF_POINTOPOINT
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_POINTOPOINT, "pointopoint"))
+        goto error;
+#endif
+#ifdef IFF_NOTRAILERS
+    // Available in (at least) Linux, macOS, AIX
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_NOTRAILERS, "notrailers"))
+        goto error;
+#endif
+#ifdef IFF_RUNNING
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_RUNNING, "running"))
+        goto error;
+#endif
+#ifdef IFF_NOARP
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_NOARP, "noarp"))
+        goto error;
+#endif
+#ifdef IFF_PROMISC
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_PROMISC, "promisc"))
+        goto error;
+#endif
+#ifdef IFF_ALLMULTI
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_ALLMULTI, "allmulti"))
+        goto error;
+#endif
+#ifdef IFF_MASTER
+    // Available in (at least) Linux
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_MASTER, "master"))
+        goto error;
+#endif
+#ifdef IFF_SLAVE
+    // Available in (at least) Linux
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_SLAVE, "slave"))
+        goto error;
+#endif
+#ifdef IFF_MULTICAST
+    // Available in (at least) Linux, macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_MULTICAST, "multicast"))
+        goto error;
+#endif
+#ifdef IFF_PORTSEL
+    // Available in (at least) Linux
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_PORTSEL, "portsel"))
+        goto error;
+#endif
+#ifdef IFF_AUTOMEDIA
+    // Available in (at least) Linux
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_AUTOMEDIA, "automedia"))
+        goto error;
+#endif
+#ifdef IFF_DYNAMIC
+    // Available in (at least) Linux
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_DYNAMIC, "dynamic"))
+        goto error;
+#endif
+#ifdef IFF_OACTIVE
+    // Available in (at least) macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_OACTIVE, "oactive"))
+        goto error;
+#endif
+#ifdef IFF_SIMPLEX
+    // Available in (at least) macOS, AIX, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_SIMPLEX, "simplex"))
+        goto error;
+#endif
+#ifdef IFF_LINK0
+    // Available in (at least) macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK0, "link0"))
+        goto error;
+#endif
+#ifdef IFF_LINK1
+    // Available in (at least) macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK1, "link1"))
+        goto error;
+#endif
+#ifdef IFF_LINK2
+    // Available in (at least) macOS, BSD
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK2, "link2"))
+        goto error;
+#endif
+#ifdef IFF_D2
+    // Available in (at least) AIX
+    if (!check_and_append_iff_flag(py_retlist, flags, IFF_D2, "d2"))
+        goto error;
+#endif
 
     return py_retlist;
 
 error:
-    Py_XDECREF(py_flag);
     Py_DECREF(py_retlist);
     if (sock != -1)
         close(sock);

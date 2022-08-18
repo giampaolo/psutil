@@ -735,7 +735,12 @@ Network
   - **speed**: the NIC speed expressed in mega bits (MB), if it can't be
     determined (e.g. 'localhost') it will be set to ``0``.
   - **mtu**: NIC's maximum transmission unit expressed in bytes.
-  - **flags**: a string of comma-separate flags on the interface (may be ``None``).
+  - **flags**: a string of comma-separated flags on the interface (may be the empty string).
+    Possible flags are: ``up``, ``broadcast``, ``debug``, ``loopback``,
+    ``pointopoint``, ``notrailers``, ``running``, ``noarp``, ``promisc``,
+    ``allmulti``, ``master``, ``slave``, ``multicast``, ``portsel``,
+    ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
+    and ``d2`` (some flags are only available on certain platforms).
 
   Example:
 
@@ -750,7 +755,7 @@ Network
 
   .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
 
-  .. versionchanged:: 5.9.1 *flags* field was added.
+  .. versionchanged:: 5.9.1 *flags* field was added on POSIX.
 
 Sensors
 -------

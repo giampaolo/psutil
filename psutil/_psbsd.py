@@ -390,13 +390,8 @@ def net_if_stats():
         else:
             if hasattr(_common, 'NicDuplex'):
                 duplex = _common.NicDuplex(duplex)
-            flag_list = []
-            for flagname, bit in _psposix.POSIX_NET_FLAGS:
-                if flags & (1 << bit):
-                    flag_list.append(flagname)
-
-            output_flags = ','.join(flag_list)
-            isup = 'running' in output_flags
+            output_flags = ','.join(flags)
+            isup = 'running' in flags
             ret[name] = _common.snicstats(isup, duplex, speed, mtu, output_flags)
     return ret
 
