@@ -83,6 +83,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     struct kinfo_proc *buf = NULL;
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     size_t length = 0;
+    size_t max_length = 12 * 1024 * 1024;  // 12MB
 
     assert(procList != NULL);
     assert(*procList == NULL);
@@ -95,20 +96,36 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
         return 1;
     }
 
-    // Allocate an appropriately sized buffer based on the results
-    // from the previous call.
-    buf = malloc(length);
-    if (buf == NULL) {
-        PyErr_NoMemory();
-        return 1;
-    }
+    while (1) {
+        // Allocate an appropriately sized buffer based on the results
+        // from the previous call.
+        buf = malloc(length);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            return 1;
+        }
 
-    // Call sysctl again with the new buffer.
-    err = sysctl(name, 3, buf, &length, NULL, 0);
-    if (err == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl");
-        free(buf);
-        return 1;
+        // Call sysctl again with the new buffer.
+        err = sysctl(name, 3, buf, &length, NULL, 0);
+        if (err == -1) {
+            free(buf);
+            if (errno == ENOMEM) {
+                // Sometimes the first sysctl() suggested size is not enough,
+                // so we dynamically increase it until it's big enough :
+                // https://github.com/giampaolo/psutil/issues/2093
+                psutil_debug("errno=ENOMEM, length=%zu; retrying", length);
+                length *= 2;
+                if (length < max_length) {
+                    continue;
+                }
+            }
+
+            PyErr_SetFromOSErrnoWithSyscall("sysctl()");
+            return 1;
+        }
+        else {
+            break;
+        }
     }
 
     *procList = buf;

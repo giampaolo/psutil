@@ -76,6 +76,7 @@ clean:  ## Remove all build files.
 		docs/_build/ \
 		htmlcov/
 
+.PHONY: build
 build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
