@@ -9,7 +9,7 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 DEPS = \
-	git+https://github.com/PyCQA/autoflake.git@refs/pull/107/head \
+	git+https://github.com/PyCQA/autoflake.git \
 	autopep8 \
 	check-manifest \
 	concurrencytest \
@@ -270,8 +270,8 @@ check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	${MAKE} clean
 	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
-	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
-	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
+	build/venv/local/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
+	build/venv/local/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} check-sdist
@@ -293,7 +293,6 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	$(PYTHON) -c "import subprocess, sys; out = subprocess.check_output('git diff --quiet && git diff --cached --quiet', shell=True).strip(); sys.exit('there are uncommitted changes:\n%s' % out) if out else 0 ;"
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 

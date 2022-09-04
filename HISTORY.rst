@@ -1,18 +1,18 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.2 (IN DEVELOPMENT)
-======================
+5.9.2
+=====
 
-XXXX-XX-XX
+2022-09-04
 
 **Bug fixes**
 
-- 2093_, [FreeBSD]: `pids()`_ may fail with ENOMEM. Dynamically increase
-  the ``malloc()`` buffer size until it's big enough.
-- 2095_, [Linux]: `net_if_stats()`_ returns incorrect interface speed for 100GbE
-  network cards.
-- 2113_, [FreeBSD]: `virtual_memory()`_ may raise ENOMEM due to missing
-  ``#include <sys/param.h>`` directive.  (patch by Peter Jeremy)
+- 2093_, [FreeBSD], **[critical]**: `pids()`_ may fail with ENOMEM. Dynamically
+  increase the ``malloc()`` buffer size until it's big enough.
+- 2095_, [Linux]: `net_if_stats()`_ returns incorrect interface speed for
+  100GbE network cards.
+- 2113_, [FreeBSD], **[critical]**: `virtual_memory()`_ may raise ENOMEM due to
+  missing ``#include <sys/param.h>`` directive.  (patch by Peter Jeremy)
 - 2128_, [NetBSD]: `swap_memory()`_ was miscalculated.  (patch by Thomas Klausner)
 
 5.9.1
