@@ -814,6 +814,7 @@ class TestNetAPIs(PsutilTestCase):
             self.assertIn(duplex, all_duplexes)
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
+            self.assertIsInstance(flags, str)
 
     @unittest.skipIf(not (LINUX or BSD or MACOS),
                      "LINUX or BSD or MACOS specific")

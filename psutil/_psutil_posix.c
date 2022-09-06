@@ -430,23 +430,21 @@ error:
     return PyErr_SetFromErrno(PyExc_OSError);
 }
 
-static bool
-check_and_append_iff_flag(PyObject *py_retlist, short int flags, short int flag_to_check, const char * flag_name)
+static int
+append_flag(PyObject *py_retlist, const char * flag_name)
 {
     PyObject *py_str = NULL;
 
-    if (flags & flag_to_check) {
-        py_str = PyUnicode_DecodeFSDefault(flag_name);
-        if (! py_str)
-            return false;
-        if (PyList_Append(py_retlist, py_str)) {
-            Py_DECREF(py_str);
-            return false;
-        }
-        Py_CLEAR(py_str);
+    py_str = PyUnicode_DecodeFSDefault(flag_name);
+    if (! py_str)
+        return 0;
+    if (PyList_Append(py_retlist, py_str)) {
+        Py_DECREF(py_str);
+        return 0;
     }
+    Py_CLEAR(py_str);
 
-    return true;
+    return 1;
 }
 
 /*
@@ -469,14 +467,14 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
         goto error;
     }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
     }
 
@@ -492,113 +490,135 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
 #ifdef IFF_UP
     // Available in (at least) Linux, macOS, AIX, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_UP, "up"))
-        goto error;
+    if (flags & IFF_UP)
+        if (!append_flag(py_retlist, "up"))
+            goto error;
 #endif
 #ifdef IFF_BROADCAST
     // Available in (at least) Linux, macOS, AIX, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_BROADCAST, "broadcast"))
-        goto error;
+    if (flags & IFF_BROADCAST)
+        if (!append_flag(py_retlist, "broadcast"))
+            goto error;
 #endif
 #ifdef IFF_DEBUG
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_DEBUG, "debug"))
-        goto error;
+    if (flags & IFF_DEBUG)
+        if (!append_flag(py_retlist, "debug"))
+            goto error;
 #endif
 #ifdef IFF_LOOPBACK
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LOOPBACK, "loopback"))
-        goto error;
+    if (flags & IFF_LOOPBACK)
+        if (!append_flag(py_retlist, "loopback"))
+            goto error;
 #endif
 #ifdef IFF_POINTOPOINT
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_POINTOPOINT, "pointopoint"))
-        goto error;
+    if (flags & IFF_POINTOPOINT)
+        if (!append_flag(py_retlist, "pointopoint"))
+            goto error;
 #endif
 #ifdef IFF_NOTRAILERS
     // Available in (at least) Linux, macOS, AIX
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_NOTRAILERS, "notrailers"))
-        goto error;
+    if (flags & IFF_NOTRAILERS)
+        if (!append_flag(py_retlist, "notrailers"))
+            goto error;
 #endif
 #ifdef IFF_RUNNING
     // Available in (at least) Linux, macOS, AIX, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_RUNNING, "running"))
-        goto error;
+    if (flags & IFF_RUNNING)
+        if (!append_flag(py_retlist, "running"))
+            goto error;
 #endif
 #ifdef IFF_NOARP
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_NOARP, "noarp"))
-        goto error;
+    if (flags & IFF_NOARP)
+        if (!append_flag(py_retlist, "noarp"))
+            goto error;
 #endif
 #ifdef IFF_PROMISC
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_PROMISC, "promisc"))
-        goto error;
+    if (flags & IFF_PROMISC)
+        if (!append_flag(py_retlist, "promisc"))
+            goto error;
 #endif
 #ifdef IFF_ALLMULTI
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_ALLMULTI, "allmulti"))
-        goto error;
+    if (flags & IFF_ALLMULTI)
+        if (!append_flag(py_retlist, "allmulti"))
+            goto error;
 #endif
 #ifdef IFF_MASTER
     // Available in (at least) Linux
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_MASTER, "master"))
-        goto error;
+    if (flags & IFF_MASTER)
+        if (!append_flag(py_retlist, "master"))
+            goto error;
 #endif
 #ifdef IFF_SLAVE
     // Available in (at least) Linux
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_SLAVE, "slave"))
-        goto error;
+    if (flags & IFF_SLAVE)
+        if (!append_flag(py_retlist, "slave"))
+            goto error;
 #endif
 #ifdef IFF_MULTICAST
     // Available in (at least) Linux, macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_MULTICAST, "multicast"))
-        goto error;
+    if (flags & IFF_MULTICAST)
+        if (!append_flag(py_retlist, "multicast"))
+            goto error;
 #endif
 #ifdef IFF_PORTSEL
     // Available in (at least) Linux
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_PORTSEL, "portsel"))
-        goto error;
+    if (flags & IFF_PORTSEL)
+        if (!append_flag(py_retlist, "portsel"))
+            goto error;
 #endif
 #ifdef IFF_AUTOMEDIA
     // Available in (at least) Linux
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_AUTOMEDIA, "automedia"))
-        goto error;
+    if (flags & IFF_AUTOMEDIA)
+        if (!append_flag(py_retlist, "automedia"))
+            goto error;
 #endif
 #ifdef IFF_DYNAMIC
     // Available in (at least) Linux
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_DYNAMIC, "dynamic"))
-        goto error;
+    if (flags & IFF_DYNAMIC)
+        if (!append_flag(py_retlist, "dynamic"))
+            goto error;
 #endif
 #ifdef IFF_OACTIVE
     // Available in (at least) macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_OACTIVE, "oactive"))
-        goto error;
+    if (flags & IFF_OACTIVE)
+        if (!append_flag(py_retlist, "oactive"))
+            goto error;
 #endif
 #ifdef IFF_SIMPLEX
     // Available in (at least) macOS, AIX, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_SIMPLEX, "simplex"))
-        goto error;
+    if (flags & IFF_SIMPLEX)
+        if (!append_flag(py_retlist, "simplex"))
+            goto error;
 #endif
 #ifdef IFF_LINK0
     // Available in (at least) macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK0, "link0"))
-        goto error;
+    if (flags & IFF_LINK0)
+        if (!append_flag(py_retlist, "link0"))
+            goto error;
 #endif
 #ifdef IFF_LINK1
     // Available in (at least) macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK1, "link1"))
-        goto error;
+    if (flags & IFF_LINK1)
+        if (!append_flag(py_retlist, "link1"))
+            goto error;
 #endif
 #ifdef IFF_LINK2
     // Available in (at least) macOS, BSD
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_LINK2, "link2"))
-        goto error;
+    if (flags & IFF_LINK2)
+        if (!append_flag(py_retlist, "link2"))
+            goto error;
 #endif
 #ifdef IFF_D2
     // Available in (at least) AIX
-    if (!check_and_append_iff_flag(py_retlist, flags, IFF_D2, "d2"))
-        goto error;
+    if (flags & IFF_D2)
+        if (!append_flag(py_retlist, "d2"))
+            goto error;
 #endif
 
     return py_retlist;
