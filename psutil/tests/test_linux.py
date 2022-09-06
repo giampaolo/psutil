@@ -993,6 +993,27 @@ class TestSystemNetIfStats(PsutilTestCase):
             with open("/sys/class/net/%s/mtu" % name, "rt") as f:
                 self.assertEqual(stats.mtu, int(f.read().strip()))
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
+    def test_flags(self):
+        # first line looks like this:
+        # "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500"
+        matches_found = 0
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                match = re.search(r"flags=(\d+)?<(.*?)>", out)
+                if match and len(match.groups()) >= 2:
+                    matches_found += 1
+                    ifconfig_flags = set(match.group(2).lower().split(","))
+                    psutil_flags = set(stats.flags.split(","))
+                    self.assertEqual(ifconfig_flags, psutil_flags)
+
+        if not matches_found:
+            raise self.fail("no matches were found")
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
