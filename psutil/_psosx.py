@@ -274,7 +274,8 @@ def net_if_stats():
                 duplex = _common.NicDuplex(duplex)
             output_flags = ','.join(flags)
             isup = 'running' in flags
-            ret[name] = _common.snicstats(isup, duplex, speed, mtu, output_flags)
+            ret[name] = _common.snicstats(isup, duplex, speed, mtu,
+                                          output_flags)
     return ret
 
 

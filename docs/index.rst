@@ -742,6 +742,8 @@ Network
     ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
     and ``d2`` (some flags are only available on certain platforms).
 
+    Availability: UNIX
+
   Example:
 
     >>> import psutil
@@ -755,7 +757,7 @@ Network
 
   .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
 
-  .. versionchanged:: 5.9.2 *flags* field was added on POSIX.
+  .. versionchanged:: 5.9.3 *flags* field was added on POSIX.
 
 Sensors
 -------

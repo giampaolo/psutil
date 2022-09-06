@@ -9,7 +9,6 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <signal.h>
