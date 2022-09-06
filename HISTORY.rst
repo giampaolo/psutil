@@ -1,8 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.3 (IN DEVELOPMENT)
+======================
+
+**Bug fixes**
+
+- 2135_, [macOS]: Fix out-of-bounds read around sysctl_procargs
+
 5.9.2
 =====
-
 2022-09-04
 
 **Bug fixes**
