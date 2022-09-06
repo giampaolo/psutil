@@ -24,6 +24,7 @@
 
 - 1053_: drop Python 2.6 support.  (patches by Matthieu Darbois and Hugo van
   Kemenade)
+- 2037_: Add additional flags to net_if_stats.
 - 2050_, [Linux]: increase ``read(2)`` buffer size from 1k to 32k when reading
   ``/proc`` pseudo files line by line. This should help having more consistent
   results.

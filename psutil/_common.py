@@ -199,7 +199,8 @@ sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
 snicaddr = namedtuple('snicaddr',
                       ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
-snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
+snicstats = namedtuple('snicstats',
+                       ['isup', 'duplex', 'speed', 'mtu', 'flags'])
 # psutil.cpu_stats()
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])

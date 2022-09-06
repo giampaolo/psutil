@@ -1060,7 +1060,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_is_running(name)
+            flags = cext_posix.net_if_flags(name)
             duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -1069,7 +1069,10 @@ def net_if_stats():
             else:
                 debug(err)
         else:
-            ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
+            output_flags = ','.join(flags)
+            isup = 'running' in flags
+            ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu,
+                                          output_flags)
     return ret
 
 

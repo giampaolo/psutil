@@ -429,6 +429,206 @@ error:
     return PyErr_SetFromErrno(PyExc_OSError);
 }
 
+static int
+append_flag(PyObject *py_retlist, const char * flag_name)
+{
+    PyObject *py_str = NULL;
+
+    py_str = PyUnicode_DecodeFSDefault(flag_name);
+    if (! py_str)
+        return 0;
+    if (PyList_Append(py_retlist, py_str)) {
+        Py_DECREF(py_str);
+        return 0;
+    }
+    Py_CLEAR(py_str);
+
+    return 1;
+}
+
+/*
+ * Get all of the NIC flags and return them.
+ */
+static PyObject *
+psutil_net_if_flags(PyObject *self, PyObject *args) {
+    char *nic_name;
+    int sock = -1;
+    int ret;
+    struct ifreq ifr;
+    PyObject *py_retlist = PyList_New(0);
+    short int flags;
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        goto error;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
+        goto error;
+    }
+
+    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    if (ret == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
+        goto error;
+    }
+
+    close(sock);
+    sock = -1;
+
+    flags = ifr.ifr_flags & 0xFFFF;
+
+    // Linux/glibc IFF flags: https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/gnu/net/if.h;h=251418f82331c0426e58707fe4473d454893b132;hb=HEAD
+    // macOS IFF flags: https://opensource.apple.com/source/xnu/xnu-792/bsd/net/if.h.auto.html
+    // AIX IFF flags: https://www.ibm.com/support/pages/how-hexadecimal-flags-displayed-ifconfig-are-calculated
+    // FreeBSD IFF flags: https://www.freebsd.org/cgi/man.cgi?query=if_allmulti&apropos=0&sektion=0&manpath=FreeBSD+10-current&format=html
+
+#ifdef IFF_UP
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (flags & IFF_UP)
+        if (!append_flag(py_retlist, "up"))
+            goto error;
+#endif
+#ifdef IFF_BROADCAST
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (flags & IFF_BROADCAST)
+        if (!append_flag(py_retlist, "broadcast"))
+            goto error;
+#endif
+#ifdef IFF_DEBUG
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_DEBUG)
+        if (!append_flag(py_retlist, "debug"))
+            goto error;
+#endif
+#ifdef IFF_LOOPBACK
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_LOOPBACK)
+        if (!append_flag(py_retlist, "loopback"))
+            goto error;
+#endif
+#ifdef IFF_POINTOPOINT
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_POINTOPOINT)
+        if (!append_flag(py_retlist, "pointopoint"))
+            goto error;
+#endif
+#ifdef IFF_NOTRAILERS
+    // Available in (at least) Linux, macOS, AIX
+    if (flags & IFF_NOTRAILERS)
+        if (!append_flag(py_retlist, "notrailers"))
+            goto error;
+#endif
+#ifdef IFF_RUNNING
+    // Available in (at least) Linux, macOS, AIX, BSD
+    if (flags & IFF_RUNNING)
+        if (!append_flag(py_retlist, "running"))
+            goto error;
+#endif
+#ifdef IFF_NOARP
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_NOARP)
+        if (!append_flag(py_retlist, "noarp"))
+            goto error;
+#endif
+#ifdef IFF_PROMISC
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_PROMISC)
+        if (!append_flag(py_retlist, "promisc"))
+            goto error;
+#endif
+#ifdef IFF_ALLMULTI
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_ALLMULTI)
+        if (!append_flag(py_retlist, "allmulti"))
+            goto error;
+#endif
+#ifdef IFF_MASTER
+    // Available in (at least) Linux
+    if (flags & IFF_MASTER)
+        if (!append_flag(py_retlist, "master"))
+            goto error;
+#endif
+#ifdef IFF_SLAVE
+    // Available in (at least) Linux
+    if (flags & IFF_SLAVE)
+        if (!append_flag(py_retlist, "slave"))
+            goto error;
+#endif
+#ifdef IFF_MULTICAST
+    // Available in (at least) Linux, macOS, BSD
+    if (flags & IFF_MULTICAST)
+        if (!append_flag(py_retlist, "multicast"))
+            goto error;
+#endif
+#ifdef IFF_PORTSEL
+    // Available in (at least) Linux
+    if (flags & IFF_PORTSEL)
+        if (!append_flag(py_retlist, "portsel"))
+            goto error;
+#endif
+#ifdef IFF_AUTOMEDIA
+    // Available in (at least) Linux
+    if (flags & IFF_AUTOMEDIA)
+        if (!append_flag(py_retlist, "automedia"))
+            goto error;
+#endif
+#ifdef IFF_DYNAMIC
+    // Available in (at least) Linux
+    if (flags & IFF_DYNAMIC)
+        if (!append_flag(py_retlist, "dynamic"))
+            goto error;
+#endif
+#ifdef IFF_OACTIVE
+    // Available in (at least) macOS, BSD
+    if (flags & IFF_OACTIVE)
+        if (!append_flag(py_retlist, "oactive"))
+            goto error;
+#endif
+#ifdef IFF_SIMPLEX
+    // Available in (at least) macOS, AIX, BSD
+    if (flags & IFF_SIMPLEX)
+        if (!append_flag(py_retlist, "simplex"))
+            goto error;
+#endif
+#ifdef IFF_LINK0
+    // Available in (at least) macOS, BSD
+    if (flags & IFF_LINK0)
+        if (!append_flag(py_retlist, "link0"))
+            goto error;
+#endif
+#ifdef IFF_LINK1
+    // Available in (at least) macOS, BSD
+    if (flags & IFF_LINK1)
+        if (!append_flag(py_retlist, "link1"))
+            goto error;
+#endif
+#ifdef IFF_LINK2
+    // Available in (at least) macOS, BSD
+    if (flags & IFF_LINK2)
+        if (!append_flag(py_retlist, "link2"))
+            goto error;
+#endif
+#ifdef IFF_D2
+    // Available in (at least) AIX
+    if (flags & IFF_D2)
+        if (!append_flag(py_retlist, "d2"))
+            goto error;
+#endif
+
+    return py_retlist;
+
+error:
+    Py_DECREF(py_retlist);
+    if (sock != -1)
+        close(sock);
+    return NULL;
+}
+
 
 /*
  * Inspect NIC flags, returns a bool indicating whether the NIC is
@@ -667,6 +867,7 @@ static PyMethodDef mod_methods[] = {
     {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
     {"getpriority", psutil_posix_getpriority, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
+    {"net_if_flags", psutil_net_if_flags, METH_VARARGS},
     {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
     {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS},
     {"setpriority", psutil_posix_setpriority, METH_VARARGS},

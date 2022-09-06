@@ -735,19 +735,29 @@ Network
   - **speed**: the NIC speed expressed in mega bits (MB), if it can't be
     determined (e.g. 'localhost') it will be set to ``0``.
   - **mtu**: NIC's maximum transmission unit expressed in bytes.
+  - **flags**: a string of comma-separated flags on the interface (may be an empty string).
+    Possible flags are: ``up``, ``broadcast``, ``debug``, ``loopback``,
+    ``pointopoint``, ``notrailers``, ``running``, ``noarp``, ``promisc``,
+    ``allmulti``, ``master``, ``slave``, ``multicast``, ``portsel``,
+    ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
+    and ``d2`` (some flags are only available on certain platforms).
+
+    Availability: UNIX
 
   Example:
 
     >>> import psutil
     >>> psutil.net_if_stats()
-    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
-     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
+    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
+     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
 
   Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
 
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
+
+  .. versionchanged:: 5.9.3 *flags* field was added on POSIX.
 
 Sensors
 -------

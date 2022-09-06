@@ -808,12 +808,13 @@ class TestNetAPIs(PsutilTestCase):
                         psutil.NIC_DUPLEX_UNKNOWN)
         for name, stats in nics.items():
             self.assertIsInstance(name, str)
-            isup, duplex, speed, mtu = stats
+            isup, duplex, speed, mtu, flags = stats
             self.assertIsInstance(isup, bool)
             self.assertIn(duplex, all_duplexes)
             self.assertIn(duplex, all_duplexes)
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
+            self.assertIsInstance(flags, str)
 
     @unittest.skipIf(not (LINUX or BSD or MACOS),
                      "LINUX or BSD or MACOS specific")
