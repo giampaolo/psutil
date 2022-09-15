@@ -1,5 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.3 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 2140_, [macOS]: build and test Python 2.7 wheels.
+
 5.9.2
 =====
 
