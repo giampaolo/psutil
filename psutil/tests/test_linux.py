@@ -1010,6 +1010,15 @@ class TestSystemNetIfStats(PsutilTestCase):
                     ifconfig_flags = set(match.group(2).lower().split(","))
                     psutil_flags = set(stats.flags.split(","))
                     self.assertEqual(ifconfig_flags, psutil_flags)
+                else:
+                    # ifconfig has a different output on CentOS 6
+                    # let's try that
+                    match = re.search(r"(.*)  MTU:(\d+)  Metric:(\d+)", out)
+                    if match and len(match.groups()) >= 3:
+                        matches_found += 1
+                        ifconfig_flags = set(match.group(1).lower().split())
+                        psutil_flags = set(stats.flags.split(","))
+                        self.assertEqual(ifconfig_flags, psutil_flags)
 
         if not matches_found:
             raise self.fail("no matches were found")

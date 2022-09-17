@@ -434,7 +434,11 @@ append_flag(PyObject *py_retlist, const char * flag_name)
 {
     PyObject *py_str = NULL;
 
-    py_str = PyUnicode_DecodeFSDefault(flag_name);
+#if PY_MAJOR_VERSION >= 3
+    py_str = PyUnicode_FromString(flag_name);
+#else
+    py_str = PyString_FromString(flag_name);
+#endif
     if (! py_str)
         return 0;
     if (PyList_Append(py_retlist, py_str)) {
