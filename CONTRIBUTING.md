@@ -25,7 +25,7 @@ Pull Requests
 
 * The PR system is for fixing bugs or make enhancements related to the
   **program code**.
-* If you whish to implement a new feature or add support for a new platform it's
+* If you wish to implement a new feature or add support for a new platform it's
   better to **discuss it first**, either on the issue tracker, the forum or via
   private email.
 * In order to get acquainted with the code base and tooling, take a look at the

@@ -100,7 +100,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // gets cpu time informations
+    // gets cpu time information
     status = NtQuerySystemInformation(
         SystemProcessorPerformanceInformation,
         sppi,
@@ -172,7 +172,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     if (ncpus != 0)
         return Py_BuildValue("I", ncpus);
     else
-        Py_RETURN_NONE;  // mimick os.cpu_count()
+        Py_RETURN_NONE;  // mimic os.cpu_count()
 }
 
 
@@ -248,7 +248,7 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     }
     else {
         psutil_debug("GetLogicalProcessorInformationEx() count was 0");
-        Py_RETURN_NONE;  // mimick os.cpu_count()
+        Py_RETURN_NONE;  // mimic os.cpu_count()
     }
 
 return_none:

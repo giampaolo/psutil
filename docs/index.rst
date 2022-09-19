@@ -1604,7 +1604,7 @@ Process class
 
     Return a named tuple with variable fields depending on the platform
     representing memory information about the process.
-    The "portable" fields available on all plaforms are `rss` and `vms`.
+    The "portable" fields available on all platforms are `rss` and `vms`.
     All numbers are expressed in bytes.
 
     +---------+---------+-------+---------+-----+------------------------------+
@@ -2550,7 +2550,7 @@ FAQs
 ====
 
 * Q: Why do I get :class:`AccessDenied` for certain processes?
-* A: This may happen when you query processess owned by another user,
+* A: This may happen when you query processes owned by another user,
   especially on macOS (see `issue #883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.

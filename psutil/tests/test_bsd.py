@@ -115,7 +115,7 @@ class BSDTestCase(PsutilTestCase):
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)
             self.assertEqual(usage.total, total)
-            # 10 MB tollerance
+            # 10 MB tolerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
                 raise self.fail("psutil=%s, df=%s" % (usage.free, free))
             if abs(usage.used - used) > 10 * 1024 * 1024:
