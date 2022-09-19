@@ -955,6 +955,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
+    // see: https://github.com/giampaolo/psutil/issues/2116
+    if (pid == 0)
+        return py_retlist;
+
     fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
         goto error;
@@ -1046,6 +1050,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                            &py_type_filter)) {
         goto error;
     }
+
+    // see: https://github.com/giampaolo/psutil/issues/2116
+    if (pid == 0)
+        return py_retlist;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
