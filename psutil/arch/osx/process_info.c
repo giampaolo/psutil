@@ -241,7 +241,14 @@ error:
 }
 
 
-// return process environment as a python string
+// Return process environment as a python string.
+// On Big Sur this function returns an empty string unless:
+// * kernel is DEVELOPMENT || DEBUG
+// * target process is same as current_proc()
+// * target process is not cs_restricted
+// * SIP is off
+// * caller has an entitlement
+// See: https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321
 PyObject *
 psutil_get_environ(pid_t pid) {
     int nargs;

@@ -34,6 +34,7 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
+from psutil._compat import unicode
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -448,7 +449,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertIsInstance(part, str)
 
     def exe(self, ret, info):
-        self.assertIsInstance(ret, (str, type(None)))
+        self.assertIsInstance(ret, (str, unicode, type(None)))
         if not ret:
             self.assertEqual(ret, '')
         else:
@@ -476,7 +477,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.assertGreaterEqual(ret, 0)
 
     def name(self, ret, info):
-        self.assertIsInstance(ret, str)
+        self.assertIsInstance(ret, (str, unicode))
         if APPVEYOR and not ret and info['status'] == 'stopped':
             return
         # on AIX, "<exiting>" processes don't have names
