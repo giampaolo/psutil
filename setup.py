@@ -360,7 +360,7 @@ def main():
         author_email='g.rodola@gmail.com',
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
-        license='BSD',
+        license='BSD-3-Clause',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
         classifiers=[
