@@ -1,12 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.3
-=====
+5.9.3 (IN DEVELOPMENT)
+======================
 
 XXXX-XX-XX
 
 **Bug fixes**
 
+- 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
+  out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
 - 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
   instead of str.  (patch by Matthieu Darbois)
 

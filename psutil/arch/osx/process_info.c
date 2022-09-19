@@ -116,14 +116,14 @@ psutil_sysctl_argmax() {
 
 // Read process argument space.
 static int
-psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
+psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     int mib[3];
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
-    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
+    if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("psutil_pid_exists -> 0");
             return 1;
@@ -188,7 +188,7 @@ psutil_get_cmdline(pid_t pid) {
         goto error;
     }
 
-    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
     arg_end = &procargs[argmax];
@@ -268,7 +268,7 @@ psutil_get_environ(pid_t pid) {
         goto error;
     }
 
-    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
     arg_end = &procargs[argmax];
