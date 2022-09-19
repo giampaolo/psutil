@@ -1492,7 +1492,7 @@ if POSIX and os.getuid() == 0:
 
                 def test_(self):
                     try:
-                        meth()
+                        meth()  # noqa
                     except psutil.AccessDenied:
                         pass
                 setattr(self, attr, types.MethodType(test_, self))
