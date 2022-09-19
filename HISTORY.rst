@@ -7,7 +7,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 2116_, [macOS]: `psutil.net_connections`_ fails with RuntimeError.
+- 2116_, [macOS], [critical]: `psutil.net_connections`_ fails with RuntimeError.
 - 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
   out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
 - 2138_, [Linux], **[critical]**: can't compile psutil on Android due to
