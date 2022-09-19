@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.3
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
+  instead of str.  (patch by Matthieu Darbois)
+
 5.9.2
 =====
 
