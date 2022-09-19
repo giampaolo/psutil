@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
   out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
+- 2138_, [Linux], **[critical]**: can't compile psutil on Android due to
+  undefined ``ethtool_cmd_speed`` symbol.
 - 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
   instead of str.  (patch by Matthieu Darbois)
 

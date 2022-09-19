@@ -73,6 +73,12 @@ ioprio_set(int which, int who, int ioprio) {
     return syscall(__NR_ioprio_set, which, who, ioprio);
 }
 
+// defined in linux/ethtool.h but not always available (e.g. Android)
+static inline uint32_t
+psutil_ethtool_cmd_speed(const struct ethtool_cmd *ecmd) {
+    return (ecmd->speed_hi << 16) | ecmd->speed;
+}
+
 #define IOPRIO_CLASS_SHIFT 13
 #define IOPRIO_PRIO_MASK ((1UL << IOPRIO_CLASS_SHIFT) - 1)
 
@@ -441,7 +447,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
         duplex = ethcmd.duplex;
         // speed is returned from ethtool as a __u32 ranging from 0 to INT_MAX
         // or SPEED_UNKNOWN (-1)
-        uint_speed = ethtool_cmd_speed(&ethcmd);
+        uint_speed = psutil_ethtool_cmd_speed(&ethcmd);
         if (uint_speed == (__u32)SPEED_UNKNOWN || uint_speed > INT_MAX) {
             speed = 0;
         }
