@@ -167,7 +167,7 @@ class TestSystemAPIs(WindowsTestCase):
                     self.assertEqual(usage.total, int(wmi_part.Size))
                     wmi_free = int(wmi_part.FreeSpace)
                     self.assertEqual(usage.free, wmi_free)
-                    # 10 MB tollerance
+                    # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
                         raise self.fail("psutil=%s, wmi=%s" % (
                             usage.free, wmi_free))

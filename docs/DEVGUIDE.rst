@@ -32,7 +32,7 @@ Once you have a compiler installed:
     make uninstall
     make help
 
-- if you're working on a new feature and you whish to compile & test it "on the
+- if you're working on a new feature and you wish to compile & test it "on the
   fly" from a test script, this is a quick & dirty way to do it:
 
 .. code-block:: bash

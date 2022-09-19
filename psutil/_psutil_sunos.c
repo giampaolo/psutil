@@ -124,7 +124,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 }
 
 /*
- * Join array of C strings to C string with delemiter dm.
+ * Join array of C strings to C string with delimiter dm.
  * Omit empty records.
  */
 static int
@@ -1255,7 +1255,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 lport = tp.tcpConnLocalPort;
                 rport = tp.tcpConnRemPort;
 
-                // contruct python tuple/list
+                // construct python tuple/list
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;
@@ -1300,7 +1300,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 lport = tp6.tcp6ConnLocalPort;
                 rport = tp6.tcp6ConnRemPort;
 
-                // contruct python tuple/list
+                // construct python tuple/list
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;

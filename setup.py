@@ -327,7 +327,7 @@ if POSIX:
             # Detect Solaris 5.10, update >= 4, see:
             # https://github.com/giampaolo/psutil/pull/1638
             if get_sunos_update() >= 4:
-                # MIB compliancy starts with SunOS 5.10 Update 4:
+                # MIB compliance starts with SunOS 5.10 Update 4:
                 posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))

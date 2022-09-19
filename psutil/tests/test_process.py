@@ -700,7 +700,7 @@ class TestProcess(PsutilTestCase):
                     self.assertEqual(exe.replace(ver, ''),
                                      PYTHON_EXE.replace(ver, ''))
                 except AssertionError:
-                    # Tipically MACOS. Really not sure what to do here.
+                    # Typically MACOS. Really not sure what to do here.
                     pass
 
         out = sh([exe, "-c", "import os; print('hey')"])
@@ -1534,7 +1534,7 @@ class TestPopen(PsutilTestCase):
 
     def test_misc(self):
         # XXX this test causes a ResourceWarning on Python 3 because
-        # psutil.__subproc instance doesn't get propertly freed.
+        # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,

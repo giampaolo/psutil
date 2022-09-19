@@ -243,7 +243,7 @@ def is_storage_device(name):
     "nvme0n1p1"). If name is a virtual device (e.g. "loop1", "ram")
     return True.
     """
-    # Readapted from iostat source code, see:
+    # Re-adapted from iostat source code, see:
     # https://github.com/sysstat/sysstat/blob/
     #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
     # Some devices may have a slash in their name (e.g. cciss/c0d0...).
@@ -916,7 +916,7 @@ class Connections:
                     # # out if there are multiple references to the
                     # # same inode. We won't do this for UNIX sockets.
                     # if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
-                    #     raise ValueError("ambiguos inode with multiple "
+                    #     raise ValueError("ambiguous inode with multiple "
                     #                      "PIDs references")
                     pid, fd = inodes[inode][0]
                 else:
@@ -1687,7 +1687,7 @@ class Process(object):
         data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
         # Process name is between parentheses. It can contain spaces and
         # other parentheses. This is taken into account by looking for
-        # the first occurrence of "(" and the last occurence of ")".
+        # the first occurrence of "(" and the last occurrence of ")".
         rpar = data.rfind(b')')
         name = data[data.find(b'(') + 1:rpar]
         fields = data[rpar + 2:].split()
