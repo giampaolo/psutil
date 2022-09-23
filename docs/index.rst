@@ -3036,4 +3036,3 @@ Timeline
 .. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
