@@ -14,6 +14,8 @@ XXXX-XX-XX
   undefined ``ethtool_cmd_speed`` symbol.
 - 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
   instead of str.  (patch by Matthieu Darbois)
+- 2150_, [Linux] `Process.threads()`_ may raise ``NoSuchProcess``. Fix race
+  condition.  (patch by Daniel Li)
 
 5.9.2
 =====
