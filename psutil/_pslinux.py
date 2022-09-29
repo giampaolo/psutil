@@ -2061,9 +2061,9 @@ class Process(object):
             try:
                 with open_binary(fname) as f:
                     st = f.read().strip()
-            except FileNotFoundError:
-                # no such file or directory; it means thread
-                # disappeared on us
+            except (FileNotFoundError, ProcessLookupError):
+                # no such file or directory or no such process;
+                # it means thread disappeared on us
                 hit_enoent = True
                 continue
             # ignore the first two values ("pid (exe)")
@@ -2217,7 +2217,7 @@ class Process(object):
                         with open_binary(file) as f:
                             pos = int(f.readline().split()[1])
                             flags = int(f.readline().split()[1], 8)
-                    except FileNotFoundError:
+                    except (FileNotFoundError, ProcessLookupError):
                         # fd gone in the meantime; process may
                         # still be alive
                         hit_enoent = True
