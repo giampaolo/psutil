@@ -2217,7 +2217,7 @@ class Process(object):
                         with open_binary(file) as f:
                             pos = int(f.readline().split()[1])
                             flags = int(f.readline().split()[1], 8)
-                    except FileNotFoundError:
+                    except (FileNotFoundError, ProcessLookupError):
                         # fd gone in the meantime; process may
                         # still be alive
                         hit_enoent = True
