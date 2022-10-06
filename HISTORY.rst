@@ -17,6 +17,8 @@ XXXX-XX-XX
 - 2147_, [macOS] Fix disk usage report on macOS 12+.  (patch by Matthieu Darbois)
 - 2150_, [Linux] `Process.threads()`_ may raise ``NoSuchProcess``. Fix race
   condition.  (patch by Daniel Li)
+- 2153_, [macOS] Fix race condition in test_posix.TestProcess.test_cmdline.
+  (patch by Matthieu Darbois)
 
 5.9.2
 =====
