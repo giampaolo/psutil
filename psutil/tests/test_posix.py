@@ -271,6 +271,12 @@ class TestProcess(PsutilTestCase):
             adjusted_ps_pathname = ps_pathname[:len(ps_pathname)]
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
+    # On macOS the official python installer exposes a python wrapper that
+    # executes a python executable hidden inside an application bundle inside
+    # the Python framework.
+    # There's a race condition between the ps call & the psutil call below
+    # depending on the completion of the execve call so let's retry on failure
+    @retry_on_failure()
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
