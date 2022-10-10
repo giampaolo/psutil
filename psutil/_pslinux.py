@@ -1298,7 +1298,7 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
-def sensors_temperatures():
+def sensors_temperatures(force_thermalzone=False):
     """Return hardware (CPU and others) temperatures as a dict
     including hardware name, label, current, max and critical
     temperatures.
@@ -1366,7 +1366,7 @@ def sensors_temperatures():
         ret[unit_name].append((label, current, high, critical))
 
     # Indication that no sensors were detected in /sys/class/hwmon/
-    if not basenames:
+    if force_thermalzone or not basenames:
         basenames = glob.glob('/sys/class/thermal/thermal_zone*')
         basenames = sorted(set(basenames))
 
