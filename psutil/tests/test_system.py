@@ -44,6 +44,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
+from psutil.tests import MACOS_12PLUS
 from psutil.tests import PYPY
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
@@ -561,8 +562,10 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertEqual(usage.total, shutil_usage.total)
             self.assertAlmostEqual(usage.free, shutil_usage.free,
                                    delta=tolerance)
-            self.assertAlmostEqual(usage.used, shutil_usage.used,
-                                   delta=tolerance)
+            if not MACOS_12PLUS:
+                # see https://github.com/giampaolo/psutil/issues/2147
+                self.assertAlmostEqual(usage.used, shutil_usage.used,
+                                       delta=tolerance)
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms

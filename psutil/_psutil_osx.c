@@ -836,6 +836,52 @@ error:
 }
 
 
+static PyObject *
+psutil_disk_usage_used(PyObject *self, PyObject *args) {
+    PyObject *py_default_value;
+    PyObject *py_mount_point_bytes = NULL;
+    char* mount_point;
+
+#if PY_MAJOR_VERSION >= 3
+    if (!PyArg_ParseTuple(args, "O&O", PyUnicode_FSConverter, &py_mount_point_bytes, &py_default_value)) {
+        return NULL;
+    }
+    mount_point = PyBytes_AsString(py_mount_point_bytes);
+    if (NULL == mount_point) {
+        Py_XDECREF(py_mount_point_bytes);
+        return NULL;
+    }
+#else
+    if (!PyArg_ParseTuple(args, "sO", &mount_point, &py_default_value)) {
+        return NULL;
+    }
+#endif
+
+#ifdef ATTR_VOL_SPACEUSED
+    /* Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info. */
+    int ret;
+    struct {
+        uint32_t size;
+        uint64_t spaceused;
+    } __attribute__((aligned(4), packed)) attrbuf = {0};
+    struct attrlist attrs = {0};
+
+    attrs.bitmapcount = ATTR_BIT_MAP_COUNT;
+    attrs.volattr = ATTR_VOL_INFO | ATTR_VOL_SPACEUSED;
+    Py_BEGIN_ALLOW_THREADS
+    ret = getattrlist(mount_point, &attrs, &attrbuf, sizeof(attrbuf), 0);
+    Py_END_ALLOW_THREADS
+    if (ret == 0) {
+        Py_XDECREF(py_mount_point_bytes);
+        return PyLong_FromUnsignedLongLong(attrbuf.spaceused);
+    }
+    psutil_debug("getattrlist(ATTR_VOL_SPACEUSED) failed, fall-back to default value");
+#endif
+    Py_XDECREF(py_mount_point_bytes);
+    Py_INCREF(py_default_value);
+    return py_default_value;
+}
+
 /*
  * Return process threads
  */
@@ -1681,6 +1727,7 @@ static PyMethodDef mod_methods[] = {
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"disk_usage_used", psutil_disk_usage_used, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
