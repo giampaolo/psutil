@@ -89,11 +89,8 @@ jobs:
         cache: pip
         cache-dependency-path: .github/workflows/build.yml
 
-    - name: Install cibuildwheel
-      run: pip install cibuildwheel==1.12.0
-
     - name: Run tests
-      run: cibuildwheel .
+      uses: pypa/cibuildwheel@v1.12.0
 
     - name: Create wheels
       uses: actions/upload-artifact@v3
