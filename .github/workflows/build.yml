@@ -45,8 +45,6 @@ jobs:
 
     - name: Run tests
       uses: pypa/cibuildwheel@v2.11.1
-      with:
-        config-file: "./cibuildwheel.toml"
 
     - name: Create wheels
       uses: actions/upload-artifact@v3

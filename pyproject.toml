@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=43"]
+build-backend = "setuptools.build_meta"
+
 [tool.cibuildwheel]
 build = ["cp36-*", "cp37-*", "cp38-*", "cp39-*", "cp310-*"]
 skip = ["*-musllinux*"]
