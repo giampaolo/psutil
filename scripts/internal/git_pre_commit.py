@@ -128,8 +128,7 @@ def main():
             return exit("python code didn't pass 'flake8' style check; "
                         "try running 'make fix-flake8'")
         # isort
-        assert os.path.exists('.isort.cfg')
-        cmd = "%s -m isort --settings=.isort.cfg --check-only %s" % (
+        cmd = "%s -m isort --check-only %s" % (
             PYTHON, " ".join(py_files))
         ret = subprocess.call(shlex.split(cmd))
         if ret != 0:

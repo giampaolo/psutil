@@ -1,7 +1,5 @@
-include .coveragerc
 include .flake8
 include .gitignore
-include .isort.cfg
 include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
@@ -123,6 +121,7 @@ include psutil/tests/test_system.py
 include psutil/tests/test_testutils.py
 include psutil/tests/test_unicode.py
 include psutil/tests/test_windows.py
+include pyproject.toml
 include scripts/battery.py
 include scripts/cpu_distribution.py
 include scripts/disk_usage.py

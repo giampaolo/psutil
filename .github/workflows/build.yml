@@ -151,6 +151,6 @@ jobs:
         # py3
         python3 -m pip install flake8 isort
         python3 -m flake8 .
-        python3 -m isort --settings=.isort.cfg .
+        python3 -m isort .
         # clinter
         find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py

@@ -9,7 +9,7 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 DEPS = \
-	git+https://github.com/PyCQA/autoflake.git \
+	autoflake \
 	autopep8 \
 	check-manifest \
 	concurrencytest \
@@ -195,7 +195,7 @@ flake8:  ## Run flake8 linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
 
 isort:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg --check-only
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only
 
 c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -214,7 +214,7 @@ fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
 	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs 0 --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
 
 fix-imports:  ## Fix imports with isort.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --settings=.isort.cfg
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8
