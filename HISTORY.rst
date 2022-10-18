@@ -1,9 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.3 (IN DEVELOPMENT)
-======================
+5.9.3
+=====
 
-XXXX-XX-XX
+2022-10-18
+
+**Enhancements**
+
+- 2040_, [macOS]: provide wheels for arm64 architecture.  (patch by Matthieu
+  Darbois)
 
 **Bug fixes**
 
