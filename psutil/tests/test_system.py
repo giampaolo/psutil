@@ -10,6 +10,7 @@ import contextlib
 import datetime
 import errno
 import os
+import platform
 import pprint
 import shutil
 import signal
@@ -511,6 +512,8 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(MACOS and platform.machine() == 'arm64', "skipped due to #1892")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         def check_ls(ls):

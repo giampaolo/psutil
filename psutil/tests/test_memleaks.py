@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import functools
 import os
+import platform
 import unittest
 
 import psutil
@@ -364,6 +365,8 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         self.execute(psutil.cpu_stats)
 
     @fewtimes_if_linux()
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(MACOS and platform.machine() == 'arm64', "skipped due to #1892")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
