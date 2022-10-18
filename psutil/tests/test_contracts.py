@@ -12,6 +12,7 @@ Some of these are duplicates of tests test_system.py and test_process.py
 import errno
 import multiprocessing
 import os
+import platform
 import signal
 import stat
 import sys
@@ -235,6 +236,8 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_count(self):
         self.assertIsInstance(psutil.cpu_count(), int)
 
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(MACOS and platform.machine() == 'arm64', "skipped due to #1892")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
