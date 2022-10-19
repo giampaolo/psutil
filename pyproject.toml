@@ -38,7 +38,7 @@ exclude_lines = [
 ]
 
 [build-system]
-requires = ["setuptools>=43"]
+requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]

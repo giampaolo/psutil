@@ -34,6 +34,8 @@ with warnings.catch_warnings():
     try:
         from wheel.bdist_wheel import bdist_wheel
     except ImportError:
+        if "CIBUILDWHEEL" in os.environ:
+            raise
         bdist_wheel = None
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -57,6 +59,9 @@ from _compat import which  # NOQA
 
 
 PYPY = '__pypy__' in sys.builtin_module_names
+PY36_PLUS = sys.version_info[:2] >= (3, 6)
+CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
+
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
@@ -104,8 +109,6 @@ def get_version():
 VERSION = get_version()
 macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
-PY36_PLUS = sys.version_info[:2] >= (3, 6)
-CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
 if bdist_wheel and CP36_PLUS and (MACOS or LINUX or WINDOWS):
     py_limited_api = {"py_limited_api": True}
     macros.append(('Py_LIMITED_API', '0x03060000'))
@@ -365,10 +368,6 @@ else:
 cmdclass = {}
 if py_limited_api:
     class bdist_wheel_abi3(bdist_wheel):
-        def finalize_options(self):
-            bdist_wheel.finalize_options(self)
-            self.root_is_pure = False
-
         def get_tag(self):
             python, abi, plat = bdist_wheel.get_tag(self)
             return python, "abi3", plat
