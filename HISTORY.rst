@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.4 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- XXXX_, [Linux]: when process is a zombie, certain methods like
+  `Process.open_files()`_, `Process.environ()`_ and `Process.io_counters
+  ()`_ erroneously raise ``AccessDenied`` instead of ``ZombieProcess``.
+
 5.9.3
 =====
 

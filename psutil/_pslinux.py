@@ -1635,6 +1635,20 @@ def ppid_map():
     return ret
 
 
+def is_zombie(pid):
+    try:
+        data = bcat("%s/%s/stat" % (get_procfs_path(), pid))
+    except EnvironmentError:
+        return False
+    else:
+        # Process name is between parentheses. It can contain spaces and
+        # other parentheses. This is taken into account by looking for
+        # the first occurrence of "(" and the last occurrence of ")".
+        rpar = data.rfind(b')')
+        fields = data[rpar + 2:].split()
+        return fields[0] == "Z"
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and IOError exceptions
     into NoSuchProcess and AccessDenied.
@@ -1644,9 +1658,19 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except PermissionError:
-            raise AccessDenied(self.pid, self._name)
+            # Linux is peculiar in that accessing certain pseudo files
+            # like /proc/pid/fd/*, /proc/pid/environ and /proc/pid/io
+            # results in EPERM if process is a zombie. In such cases it
+            # appears more correct to raise ZP instead of AD.
+            if is_zombie(self.pid):
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+            else:
+                raise AccessDenied(self.pid, self._name)
         except ProcessLookupError:
-            raise NoSuchProcess(self.pid, self._name)
+            if is_zombie(self.pid):
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+            else:
+                raise NoSuchProcess(self.pid, self._name)
         except FileNotFoundError:
             if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)

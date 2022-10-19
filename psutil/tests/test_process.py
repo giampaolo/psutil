@@ -1324,6 +1324,12 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.all):
             succeed_or_zombie_p_exc(fun)
 
+        if LINUX:
+            # TODO: broken
+            # self.assertRaises(psutil.ZombieProcess, zproc.exe)
+            self.assertRaises(psutil.ZombieProcess, zproc.cwd)
+            self.assertRaises(psutil.ZombieProcess, zproc.memory_full_info)
+
         assert psutil.pid_exists(zproc.pid)
         self.assertIn(zproc.pid, psutil.pids())
         self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
