@@ -58,6 +58,11 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 #endif
 
 
+#ifndef SPEED_UNKNOWN
+    #define SPEED_UNKNOWN -1
+#endif
+
+
 #if PSUTIL_HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
