@@ -610,20 +610,25 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
+    PERFORMANCE_INFORMATION perfInfo;
 
-    if (! GlobalMemoryStatusEx(&memInfo)) {
+    if (! GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    return Py_BuildValue("(LLLLLL)",
-                         memInfo.ullTotalPhys,      // total
-                         memInfo.ullAvailPhys,      // avail
-                         memInfo.ullTotalPageFile,  // total page file
-                         memInfo.ullAvailPageFile,  // avail page file
-                         memInfo.ullTotalVirtual,   // total virtual
-                         memInfo.ullAvailVirtual);  // avail virtual
+    // values are size_t, widen (if needed) to long long
+    pageSize = perfInfo.PageSize;
+    totalPhys = perfInfo.PhysicalTotal * pageSize;
+    availPhys = perfInfo.PhysicalAvailable * pageSize;
+    totalSys = perfInfo.CommitLimit * pageSize;
+    availSys = totalSys - perfInfo.CommitTotal * pageSize;
+    return Py_BuildValue(
+        "(LLLL)",
+        totalPhys,
+        availPhys,
+        totalSys,
+        availSys);
 }
 
 

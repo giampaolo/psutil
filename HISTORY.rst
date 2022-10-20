@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.4 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2077_, [Windows]: Use system-level values for `virtual_memory()`. (patch by
+  Daniel Widdis)
+
 5.9.3
 =====
 
