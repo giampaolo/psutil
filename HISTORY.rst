@@ -5,10 +5,20 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2102_: use Limited API when building wheels with CPython 3.6+ on Linux,
+  macOS and Windows. This allows to use pre-built wheels in all future versions
+  of cPython 3.  (patch by Matthieu Darbois)
+
 **Bug fixes**
 
-- 2077_, [Windows]: Use system-level values for `virtual_memory()`. (patch by
+- 2077_, [Windows]: Use system-level values for `virtual_memory()`_. (patch by
   Daniel Widdis)
+- 2156_, [Linux]: compilation may fail on very old gcc compilers due to missing
+  ``SPEED_UNKNOWN`` definition.  (patch by Amir Rossert)
+- 2010_, [macOS]: on MacOS, arm64 ``IFM_1000_TX`` and ``IFM_1000_T`` are the
+  same value, causing a build failure.  (patch by Lawrence D'Anna)
 
 5.9.3
 =====

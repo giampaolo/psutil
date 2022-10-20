@@ -781,7 +781,7 @@ I: 1956
 
 N: Matthieu Darbois
 W: https://github.com/mayeut
-I: 2039, 2142, 2147, 2153, 2040
+I: 2039, 2142, 2147, 2153, 2040, 2102
 
 N: Hugo van Kemenade
 W: https://github.com/hugovk
@@ -805,3 +805,11 @@ I: 2150
 N: Daniel Widdis
 W: https://github.com/dbwiddis
 I: 2077
+
+N: Amir Rossert
+W: https://github.com/arossert
+I: 2156
+
+N: Lawrence D'Anna
+W: https://github.com/smoofra
+I: 2010

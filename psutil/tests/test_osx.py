@@ -192,13 +192,13 @@ class TestSystemAPIs(PsutilTestCase):
     def test_swapmem_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
-        self.assertEqual(psutil_val, vmstat_val)
+        self.assertEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_swapmem_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout
-        self.assertEqual(psutil_val, vmstat_val)
+        self.assertEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     # Not very reliable.
     # def test_swapmem_total(self):
