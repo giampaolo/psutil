@@ -708,13 +708,14 @@ int psutil_get_nic_speed(int ifm_active) {
                 case(IFM_1000_LX):  // 1000baseLX - single-mode fiber
                 case(IFM_1000_CX):  // 1000baseCX - 150ohm STP
 #if defined(IFM_1000_TX) && !defined(PSUTIL_OPENBSD)
+                #define HAS_CASE_IFM_1000_TX 1
                 // FreeBSD 4 and others (but NOT OpenBSD) -> #define IFM_1000_T in net/if_media.h
                 case(IFM_1000_TX):
 #endif
 #ifdef IFM_1000_FX
                 case(IFM_1000_FX):
 #endif
-#ifdef IFM_1000_T
+#if defined(IFM_1000_T) && (!HAS_CASE_IFM_1000_TX || IFM_1000_T != IFM_1000_TX)
                 case(IFM_1000_T):
 #endif
                     return 1000;
