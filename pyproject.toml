@@ -38,12 +38,11 @@ exclude_lines = [
 ]
 
 [build-system]
-requires = ["setuptools>=43"]
+requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = ["cp36-*", "cp37-*", "cp38-*", "cp39-*", "cp310-*"]
-skip = ["*-musllinux*"]
+skip = ["pp*", "*-musllinux*"]
 test-extras = "test"
 test-command = [
     "PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py",
@@ -52,3 +51,18 @@ test-command = [
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
+
+[tool.cibuildwheel.windows]
+# psutil tests do not like running from a virtualenv with python>=3.7
+# restrict build & tests to cp36
+# cp36-abi3 wheels will need to be tested outside cibuildwheel for python>=3.7
+build = "cp36-*"
+test-command = [
+    "python {project}/psutil/tests/runner.py",
+    "python {project}/psutil/tests/test_memleaks.py"
+]
+
+[tool.cibuildwheel.windows.environment]
+PYTHONWARNINGS = "always"
+PYTHONUNBUFFERED = "1"
+PSUTIL_DEBUG = "1"

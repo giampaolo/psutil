@@ -296,52 +296,46 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     cpu_set_t cpu_set;
     size_t len;
     pid_t pid;
-    int i, seq_len;
+    Py_ssize_t i, seq_len;
     PyObject *py_cpu_set;
-    PyObject *py_cpu_seq = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
-        PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
-                     Py_TYPE(py_cpu_set)->tp_name);
-        goto error;
+        return PyErr_Format(PyExc_TypeError, "sequence argument expected, got %R", Py_TYPE(py_cpu_set));
     }
 
-    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
-    if (!py_cpu_seq)
-        goto error;
-    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+    seq_len = PySequence_Size(py_cpu_set);
+    if (seq_len < 0) {
+        return NULL;
+    }
     CPU_ZERO(&cpu_set);
     for (i = 0; i < seq_len; i++) {
-        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+        PyObject *item = PySequence_GetItem(py_cpu_set, i);
+        if (!item) {
+            return NULL;
+        }
 #if PY_MAJOR_VERSION >= 3
         long value = PyLong_AsLong(item);
 #else
         long value = PyInt_AsLong(item);
 #endif
+        Py_XDECREF(item);
         if ((value == -1) || PyErr_Occurred()) {
             if (!PyErr_Occurred())
                 PyErr_SetString(PyExc_ValueError, "invalid CPU value");
-            goto error;
+            return NULL;
         }
         CPU_SET(value, &cpu_set);
     }
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    Py_DECREF(py_cpu_seq);
     Py_RETURN_NONE;
-
-error:
-    if (py_cpu_seq != NULL)
-        Py_DECREF(py_cpu_seq);
-    return NULL;
 }
 #endif  /* PSUTIL_HAVE_CPU_AFFINITY */
 
