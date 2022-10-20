@@ -612,21 +612,23 @@ static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
     PERFORMANCE_INFORMATION perfInfo;
+
     if (! GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    // values are size_t, widen to long long
+    // values are size_t, widen (if needed) to long long
     pageSize = perfInfo.PageSize;
     totalPhys = perfInfo.PhysicalTotal * pageSize;
     availPhys = perfInfo.PhysicalAvailable * pageSize;
     totalSys = perfInfo.CommitLimit * pageSize;
     availSys = totalSys - perfInfo.CommitTotal * pageSize;
-    return Py_BuildValue("(LLLL)",
-                         totalPhys,
-                         availPhys,
-                         totalSys,
-                         availSys);
+    return Py_BuildValue(
+        "(LLLL)",
+        totalPhys,
+        availPhys,
+        totalSys,
+        availSys);
 }
 
 

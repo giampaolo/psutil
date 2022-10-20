@@ -248,7 +248,8 @@ def swap_memory():
     total_system = mem[2]
     free_system = mem[3]
 
-    # physical memory values need to be substracted to get swap values
+    # system memory (commit total/limit) is the sum of physical and swap
+    # thus physical memory values need to be substracted to get swap values
     total = total_system - total_phys
     free = min(total, free_system - free_phys)
     used = total - free
