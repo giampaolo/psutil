@@ -75,6 +75,7 @@ from __future__ import print_function
 import argparse
 import inspect
 import os
+import sys
 from timeit import default_timer as timer
 
 import psutil
@@ -105,14 +106,16 @@ def print_timings():
 
 
 def timecall(title, fun, *args, **kw):
-    print("%-50s" % title, end="", flush=True)
+    print("%-50s" % title, end="")
+    sys.stdout.flush()
     t = timer()
     for n in range(TIMES):
         fun(*args, **kw)
         elapsed = timer() - t
         if elapsed > 2:
             break
-    print("\r", end="", flush=True)
+    print("\r", end="")
+    sys.stdout.flush()
     timings.append((title, n + 1, elapsed))
 
 
