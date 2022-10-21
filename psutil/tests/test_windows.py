@@ -23,6 +23,7 @@ import warnings
 import psutil
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
+from psutil._compat import which
 from psutil._compat import super
 from psutil._compat import which
 from psutil.tests import APPVEYOR
@@ -161,6 +162,7 @@ class TestSystemAPIs(WindowsTestCase):
         self.assertAlmostEqual(
             int(w.AvailableBytes), psutil.virtual_memory().free,
             delta=TOLERANCE_SYS_MEM)
+
     def test_total_swapmem(self):
         if (psutil.swap_memory().total > 0):
             w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
