@@ -256,7 +256,7 @@ def swap_memory():
     # pages are accessed, so free_phys is an overestimate of the portion
     # free_system contributed to by physical memory, and in some edge cases
     # can exceed free system memory.
-    free = max(0, free_system - free_phys)
+    free = max(0, min(total, free_system - free_phys))
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
