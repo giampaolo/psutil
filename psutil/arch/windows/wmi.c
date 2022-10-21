@@ -123,7 +123,7 @@ psutil_get_loadavg(PyObject *self, PyObject *args) {
 }
 
 /*
- * Percent swap implementation using "\PagingFile(_Total)\% Usage" counter
+ * Percent swap implementation using "\Paging File(_Total)\% Usage" counter
  */
 
 /*
