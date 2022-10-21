@@ -23,6 +23,7 @@ import warnings
 import psutil
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
+from psutil._compat import which
 from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
@@ -31,6 +32,7 @@ from psutil.tests import IS_64BIT
 from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
@@ -60,6 +62,37 @@ cext = psutil._psplatform.cext
 @unittest.skipIf(GITHUB_ACTIONS and not PY3, "pywin32 broken on GITHUB + PY2")
 class WindowsTestCase(PsutilTestCase):
     pass
+
+
+def powershell(cmd):
+    """Currently not used, but avalable just in case. Usage:
+
+    >>> powershell(
+        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
+    """
+    if not which("powershell.exe"):
+        raise unittest.SkipTest("powershell.exe not available")
+    cmdline = \
+        'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive ' + \
+        '-NoProfile -WindowStyle Hidden -Command "%s"' % cmd
+    return sh(cmdline)
+
+
+def wmic(path, what, converter=int):
+    """Currently not used, but avalable just in case. Usage:
+
+    >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
+    2134124534
+    """
+    out = sh("wmic path %s get %s" % (path, what)).strip()
+    data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
+    if converter is not None:
+        if "," in what:
+            return tuple([converter(x) for x in data.split()])
+        else:
+            return converter(data)
+    else:
+        return data
 
 
 # ===================================================================
@@ -122,6 +155,12 @@ class TestSystemAPIs(WindowsTestCase):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         self.assertEqual(int(w.TotalPhysicalMemory),
                          psutil.virtual_memory().total)
+
+    def test_free_phymem(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        self.assertAlmostEqual(
+            int(w.AvailableBytes), psutil.virtual_memory().free,
+            delta=TOLERANCE_SYS_MEM)
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
     # def test__UPTIME(self):

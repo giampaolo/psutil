@@ -383,7 +383,7 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def check_flake8():
+def flake8():
     """Run flake8 against all py files"""
     py_files = subprocess.check_output("git ls-files")
     if PY3:
@@ -565,7 +565,7 @@ def main():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
-    sp.add_parser('check_flake8', help="run flake8 against all py files")
+    sp.add_parser('flake8', help="run flake8 against all py files")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('setup-dev-env', help="install deps")
