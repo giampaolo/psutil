@@ -251,7 +251,12 @@ def swap_memory():
     # system memory (commit total/limit) is the sum of physical and swap
     # thus physical memory values need to be substracted to get swap values
     total = total_system - total_phys
-    free = min(total, free_system - free_phys)
+    # commit total is incremented immediately (decrementing free_system)
+    # while the corresponding free physical value is not decremented until
+    # pages are accessed, so free_phys is an overestimate of the portion
+    # free_system contributed to by physical memory, and in some edge cases
+    # can exceed free system memory.
+    free = max(0, free_system - free_phys)
     used = total - free
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
