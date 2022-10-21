@@ -241,18 +241,13 @@ def virtual_memory():
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
-    mem = cext.virtual_mem()
-
-    total_phys = mem[0]
-    free_phys = mem[1]
-    total_system = mem[2]
-    free_system = mem[3]
-
-    # system memory (commit total/limit) is the sum of physical and swap
-    # thus physical memory values need to be substracted to get swap values
-    total = total_system - total_phys
-    free = min(total, free_system - free_phys)
-    used = total - free
+    total = used = 0
+    pagefiles = cext.disk_swaps()
+    for pf in pagefiles:
+        path, total_size, total_in_use, peak_usage = pf
+        total += total_size
+        used += total_in_use
+    free = total - used
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
 
