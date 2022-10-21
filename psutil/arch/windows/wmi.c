@@ -3,7 +3,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Functions related to the Windows Management Instrumentation API.
+ * Functions related to the Performance Data Helper (PDH) API.
+ * File name from Windows Management Instrumentation API, not implemented.
  */
 
 #include <Python.h>
@@ -12,6 +13,9 @@
 
 #include "../../_psutil_common.h"
 
+/*
+ * Load average implementation using "\System\Processor Queue Length" counter
+ */
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation
@@ -52,7 +56,6 @@ VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     load_avg_15m = load_avg_15m * LOADAVG_FACTOR_15F + currentLoad * \
         (1.0 - LOADAVG_FACTOR_15F);
 }
-
 
 PyObject *
 psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
@@ -117,4 +120,62 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 PyObject *
 psutil_get_loadavg(PyObject *self, PyObject *args) {
     return Py_BuildValue("(ddd)", load_avg_1m, load_avg_5m, load_avg_15m);
+}
+
+/*
+ * Percent swap implementation using "\PagingFile(_Total)\% Usage" counter
+ */
+
+/*
+ * Return a Python float representing the percent usage of all paging files on
+ * the system.
+ */
+PyObject *
+psutil_get_percentswap(PyObject *self, PyObject *args) {
+    WCHAR *szCounterPath = L"\\PagingFile(_Total)\\% Usage";
+    PDH_STATUS s;
+    HQUERY hQuery;
+    HCOUNTER hCounter;
+    PDH_FMT_COUNTERVALUE counterValue;
+    double percentUsage;
+
+    if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        return NULL;
+    }
+
+    s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
+    if (s != ERROR_SUCCESS) {
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "PdhAddEnglishCounterW failed. Performance counters may be disabled."
+        );
+        return NULL;
+    }
+
+    s = PdhCollectQueryData(hQuery);
+    if (s != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhCollectQueryData failed");
+        return NULL;
+    }
+
+    s = PdhGetFormattedCounterValue(
+        (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
+    if (s != ERROR_SUCCESS) {
+        return NULL;
+    }
+
+    percentUsage = counterValue.doubleValue;
+
+    if ((PdhRemoveCounter(hCounter)) != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhRemoveCounter failed");
+        return NULL;
+    }
+
+    if ((PdhCloseQuery(hQuery)) != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhCloseQuery failed");
+        return NULL;
+    }
+
+    return Py_BuildValue("d", percentUsage);
 }

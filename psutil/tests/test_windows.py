@@ -177,10 +177,16 @@ class TestSystemAPIs(WindowsTestCase):
             # calculate swap usage to integer percent
             percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
             # exact percent may change but should be reasonable
-            # assert within +/- 10% and between 0 and 100
+            # assert within +/- 5% and between 0 and 100
+            # check the pdh class
+            self.assertGreaterEqual(psutil.percentswap(), 0)
+            self.assertAlmostEqual(psutil.percentswap(), percentSwap,
+                                   delta=5)
+            self.assertLessEqual(psutil.percentswap(), 100)
+            # check the end result
             self.assertGreaterEqual(psutil.swap_memory().percent, 0)
             self.assertAlmostEqual(psutil.swap_memory().percent, percentSwap,
-                                   delta=10)
+                                   delta=5)
             self.assertLessEqual(psutil.swap_memory().percent, 100)
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")

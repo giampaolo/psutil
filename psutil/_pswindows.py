@@ -244,20 +244,18 @@ def swap_memory():
     mem = cext.virtual_mem()
 
     total_phys = mem[0]
-    free_phys = mem[1]
     total_system = mem[2]
-    free_system = mem[3]
 
     # system memory (commit total/limit) is the sum of physical and swap
     # thus physical memory values need to be substracted to get swap values
     total = total_system - total_phys
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until
-    # pages are accessed, so free_phys is an overestimate of the portion
-    # free_system contributed to by physical memory, and in some edge cases
-    # can exceed free system memory.
-    free = max(0, min(total, free_system - free_phys))
-    used = total - free
+    # pages are accessed, so we ignore free system memory and calculate
+    # page file usage based on performance counter
+    percentswap = cext.percentswap()
+    used = int(percentswap * total)
+    free = total - used
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)
 
