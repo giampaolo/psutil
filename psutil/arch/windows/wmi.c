@@ -132,7 +132,7 @@ psutil_get_loadavg(PyObject *self, PyObject *args) {
  */
 PyObject *
 psutil_get_percentswap(PyObject *self, PyObject *args) {
-    WCHAR *szCounterPath = L"\\PagingFile(_Total)\\% Usage";
+    WCHAR *szCounterPath = L"\\Paging File(_Total)\\% Usage";
     PDH_STATUS s;
     HQUERY hQuery;
     HCOUNTER hCounter;
