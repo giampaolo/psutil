@@ -173,7 +173,8 @@ class TestSystemAPIs(WindowsTestCase):
 
     def test_percent_swapmem(self):
         if (psutil.swap_memory().total > 0):
-            w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile()[0]
+            w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(
+                Name="_Total")[0]
             # calculate swap usage to integer percent
             percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
             # exact percent may change but should be reasonable
