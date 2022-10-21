@@ -164,13 +164,10 @@ class TestSystemAPIs(WindowsTestCase):
             delta=TOLERANCE_SYS_MEM)
 
     def test_total_swapmem(self):
-        if (psutil.swap_memory().total > 0):
-            w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-            self.assertEqual(int(w.CommitLimit)
-                                - psutil.virtual_memory().total,
-                            psutil.swap_memory().total)
-        else:
-            self.assertEqual(0, psutil.swap_memory().total)
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        self.assertEqual(int(w.CommitLimit) - psutil.virtual_memory().total,
+                         psutil.swap_memory().total)
+        if (psutil.swap_memory().total == 0):
             self.assertEqual(0, psutil.swap_memory().free)
             self.assertEqual(0, psutil.swap_memory().used)
 
@@ -185,7 +182,7 @@ class TestSystemAPIs(WindowsTestCase):
             self.assertGreaterEqual(psutil.swap_memory().percent,
                                     percentSwap - 10)
             self.assertLessEqual(psutil.swap_memory().percent,
-                                    percentSwap + 10)
+                                 percentSwap + 10)
             self.assertLessEqual(psutil.swap_memory().percent, 100)
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
