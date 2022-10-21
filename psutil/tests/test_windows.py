@@ -179,10 +179,8 @@ class TestSystemAPIs(WindowsTestCase):
             # exact percent may change but should be reasonable
             # assert within +/- 10% and between 0 and 100
             self.assertGreaterEqual(psutil.swap_memory().percent, 0)
-            self.assertGreaterEqual(psutil.swap_memory().percent,
-                                    percentSwap - 10)
-            self.assertLessEqual(psutil.swap_memory().percent,
-                                 percentSwap + 10)
+            self.assertAlmostEqual(psutil.swap_memory().percent, percentSwap,
+                                   delta=10)
             self.assertLessEqual(psutil.swap_memory().percent, 100)
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
