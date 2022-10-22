@@ -98,7 +98,7 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are **2.7**, **3.4+** and
+Supported Python versions are **2.7**, **3.5+** and
 `PyPy <http://pypy.org/>`__.
 
 Funding

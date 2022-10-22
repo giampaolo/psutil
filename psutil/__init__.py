@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions 2.7 and 3.4+.
+Works with Python versions 2.7 and 3.5+.
 """
 
 from __future__ import division
@@ -2189,7 +2189,7 @@ def net_if_addrs():
     Note: you can have more than one address of the same family
     associated with each interface.
     """
-    has_enums = sys.version_info >= (3, 4)
+    has_enums = sys.version_info[0] >= 3
     if has_enums:
         import socket
     rawlist = _psplatform.net_if_addrs()

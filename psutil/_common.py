@@ -35,7 +35,7 @@ try:
 except ImportError:
     AF_UNIX = None
 
-if sys.version_info >= (3, 4):
+if sys.version_info[0] >= 3:
     import enum
 else:
     enum = None

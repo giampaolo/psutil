@@ -67,7 +67,7 @@ except ImportError:
         warnings.simplefilter("ignore")
         import mock  # NOQA - requires "pip install mock"
 
-if sys.version_info >= (3, 4):
+if sys.version_info[0] >= 3:
     import enum
 else:
     enum = None
@@ -1714,9 +1714,6 @@ def import_module_by_path(path):
     if sys.version_info[0] == 2:
         import imp
         return imp.load_source(name, path)
-    elif sys.version_info[:2] <= (3, 4):
-        from importlib.machinery import SourceFileLoader
-        return SourceFileLoader(name, path).load_module()
     else:
         import importlib.util
         spec = importlib.util.spec_from_file_location(name, path)

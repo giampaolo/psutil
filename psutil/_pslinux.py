@@ -53,7 +53,7 @@ from ._compat import b
 from ._compat import basestring
 
 
-if sys.version_info >= (3, 4):
+if sys.version_info[0] >= 3:
     import enum
 else:
     enum = None
