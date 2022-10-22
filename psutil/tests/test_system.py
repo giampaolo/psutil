@@ -294,8 +294,9 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.total >= 0, mem
         assert mem.used >= 0, mem
         if mem.total > 0:
-            # likely a system with no swap partition
-            assert mem.free > 0, mem
+            # likely a system with no swap partition.
+            # a system can run with no free swap space.
+            assert mem.free >= 0, mem
         else:
             assert mem.free == 0, mem
         assert 0 <= mem.percent <= 100, mem
