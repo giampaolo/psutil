@@ -10,6 +10,7 @@ XXXX-XX-XX
 - 2102_: use Limited API when building wheels with CPython 3.6+ on Linux,
   macOS and Windows. This allows to use pre-built wheels in all future versions
   of cPython 3.  (patch by Matthieu Darbois)
+- 2162_: build & test wheels for Linux CPython 3.5.  (patch by Matthieu Darbois)
 
 **Bug fixes**
 

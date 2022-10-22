@@ -103,9 +103,9 @@ jobs:
         python ../psutil/tests/test_memleaks.py
       shell: bash
 
-  # Linux + macOS + Python 2
-  linux-macos-py2:
-    name: ${{ matrix.os }}-py2
+  # Linux (2.7 / 3.5) + macOS 2.7
+  linux-macos-py-old:
+    name: ${{ matrix.os }}-py-old
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -117,7 +117,7 @@ jobs:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
       CIBW_TEST_EXTRAS: test
-      CIBW_BUILD: 'cp27-*'
+      CIBW_BUILD: 'cp27-* cp35-manylinux*'
 
     steps:
     - name: Cancel previous runs
