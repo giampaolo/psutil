@@ -251,10 +251,13 @@ def swap_memory():
     total = total_system - total_phys
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until
-    # pages are accessed, so we ignore free system memory and calculate
-    # page file usage based on performance counter
-    percentswap = cext.getpercentswap()
-    used = int(0.01 * percentswap * total)
+    # pages are accessed, so we can't use free system memory for swap.
+    # instead, we calculate page file usage based on performance counter
+    if (total > 0):
+        percentswap = cext.getpercentswap()
+        used = int(0.01 * percentswap * total)
+    else:
+        used = 0
     free = total - used
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, 0, 0)

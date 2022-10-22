@@ -155,27 +155,21 @@ psutil_get_percentswap(PyObject *self, PyObject *args) {
 
     s = PdhCollectQueryData(hQuery);
     if (s != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhCollectQueryData failed");
-        return NULL;
+        // If swap disabled this will fail
+        percentUsage = 0;
+    } else {
+        s = PdhGetFormattedCounterValue(
+            (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
+        if (s != ERROR_SUCCESS) {
+            percentUsage = 0;
+        } else {
+            percentUsage = counterValue.doubleValue;
+        }
     }
 
-    s = PdhGetFormattedCounterValue(
-        (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
-    if (s != ERROR_SUCCESS) {
-        return NULL;
-    }
+    PdhRemoveCounter(hCounter);
 
-    percentUsage = counterValue.doubleValue;
-
-    if ((PdhRemoveCounter(hCounter)) != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhRemoveCounter failed");
-        return NULL;
-    }
-
-    if ((PdhCloseQuery(hQuery)) != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhCloseQuery failed");
-        return NULL;
-    }
+    PdhCloseQuery(hQuery);
 
     return Py_BuildValue("d", percentUsage);
 }
