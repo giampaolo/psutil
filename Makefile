@@ -270,8 +270,8 @@ check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
 	${MAKE} clean
 	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
-	build/venv/local/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
-	build/venv/local/bin/python -c "import os; os.chdir('build/venv'); import psutil"
+	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
+	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} check-sdist

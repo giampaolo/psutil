@@ -1,9 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.4 (IN DEVELOPMENT)
-======================
+5.9.4
+=====
 
-XXXX-XX-XX
+2022-11-07
 
 **Enhancements**
 
