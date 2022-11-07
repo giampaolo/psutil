@@ -28,7 +28,7 @@ from psutil._common import print_color
 USER = "giampaolo"
 PROJECT = "psutil"
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.7', '3.8', '3.9', '3.10']
+PY_VERSIONS = ['2.7']
 TIMEOUT = 30
 
 

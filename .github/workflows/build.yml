@@ -79,18 +79,22 @@ jobs:
       uses: styfle/cancel-workflow-action@0.9.1
       with:
         access_token: ${{ github.token }}
+
     - uses: actions/checkout@v3
+
     - uses: actions/setup-python@v4
       with:
         python-version: "${{ matrix.python }}"
         architecture: "${{ matrix.architecture }}"
         cache: pip
         cache-dependency-path: .github/workflows/build.yml
+
     - name: Download wheels
       uses: actions/download-artifact@v3
       with:
         name: wheels
         path: wheelhouse
+
     - name: Run tests
       run: |
         mkdir .tests

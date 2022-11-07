@@ -256,13 +256,6 @@ sdist:  ## Create tar.gz source distribution.
 	$(PYTHON) setup.py sdist
 	$(PYTHON) -m twine check dist/*.tar.gz
 
-upload-src:  ## Upload source tarball on https://pypi.org/project/psutil/
-	${MAKE} sdist
-	$(PYTHON) -m twine upload dist/*.tar.gz
-
-upload-wheels:  ## Upload wheels in dist/* directory on PyPI.
-	$(PYTHON) -m twine upload dist/*.whl
-
 # --- others
 
 check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
@@ -293,6 +286,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
+	$(PYTHON) -m twine check dist/*
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
