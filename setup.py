@@ -119,12 +119,11 @@ else:
 def get_description():
     script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
     readme = os.path.join(HERE, 'README.rst')
-    p = subprocess.Popen([sys.executable, script, readme],
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        raise RuntimeError(stderr)
-    data = stdout.decode('utf8')
+    temp = os.path.join(HERE, 'README.rst.tmp')
+    subprocess.check_call([sys.executable, script, readme, temp])
+    with open(temp) as f:
+        data = f.read()
+    os.unlink(temp)
     if WINDOWS:
         data = data.replace('\r\n', '\n')
     return data

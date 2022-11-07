@@ -44,7 +44,11 @@ def main():
         data = f.read()
     data = re.sub(r".. raw:: html\n+\s+<div align[\s\S]*?/div>", summary, data)
     data = re.sub(r"Sponsors\n========[\s\S]*?Example usages", funding, data)
-    print(data)
+    if len(sys.argv) > 2:
+        with open(sys.argv[2], "wb") as f:
+            f.write(data.encode("utf8"))
+    else:
+        print(data)
 
 
 if __name__ == '__main__':
