@@ -59,21 +59,18 @@
 
 -----
 
-.. raw:: html
+Quick links
+===========
 
-    <div align="center">
-        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.png" /></a>
-        <br />
-        <br />
-        <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/giampaolo/psutil/blob/master/INSTALL.rst"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
-    </div>
+- `Home page <https://github.com/giampaolo/psutil>`_
+- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+- `Documentation <http://psutil.readthedocs.io>`_
+- `Download <https://pypi.org/project/psutil/#files>`_
+- `Forum <http://groups.google.com/group/psutil/topics>`_
+- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
+- `Blog <https://gmpy.dev/tags/psutil>`_
+- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+
 
 Summary
 =======
@@ -113,45 +110,11 @@ and have your logo displayed in here and psutil `doc <https://psutil.readthedocs
 Sponsors
 ========
 
-.. raw:: html
+.. image:: https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png
+  :width: 200
+  :alt: Alternative text
 
-    <div>
-        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
-        </a>
-        &nbsp;&nbsp
-        <a href="https://sansec.io/">
-            <img src="https://sansec.io/assets/images/logo.svg" />
-        </a>
-    </div>
-    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
-
-Supporters
-==========
-
-.. raw:: html
-
-    <div>
-      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
-      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
-      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
-      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
-      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
-      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
-      <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
-      <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
-      <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
-      <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-      <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
-
-    </div>
-    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
-
-
-Contributing
-============
-
-See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
+`Add your logo <https://github.com/sponsors/giampaolo>`__.
 
 Example usages
 ==============
