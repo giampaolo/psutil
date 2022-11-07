@@ -1,15 +1,79 @@
-Quick links
-===========
+|  |downloads| |stars| |forks| |contributors| |coverage|
+|  |version| |py-versions| |packages| |license|
+|  |github-actions| |appveyor| |doc| |twitter| |tidelift|
 
-- `Home page <https://github.com/giampaolo/psutil>`_
-- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Documentation <http://psutil.readthedocs.io>`_
-- `Download <https://pypi.org/project/psutil/#files>`_
-- `Forum <http://groups.google.com/group/psutil/topics>`_
-- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
-- `Blog <https://gmpy.dev/tags/psutil>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+.. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
+    :target: https://pepy.tech/project/psutil
+    :alt: Downloads
 
+.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/stargazers
+    :alt: Github stars
+
+.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/network/members
+    :alt: Github forks
+
+.. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/graphs/contributors
+    :alt: Contributors
+
+.. |github-actions| image:: https://img.shields.io/github/workflow/status/giampaolo/psutil/CI?label=Linux%2C%20macOS%2C%20FreeBSD
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
+    :alt: Linux, macOS, Windows tests
+
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
+    :target: https://ci.appveyor.com/project/giampaolo/psutil
+    :alt: Windows tests (Appveyor)
+
+.. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
+    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
+    :alt: Test coverage (coverall.io)
+
+.. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
+    :target: https://psutil.readthedocs.io/en/latest/
+    :alt: Documentation Status
+
+.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
+    :target: https://pypi.org/project/psutil
+    :alt: Latest version
+
+.. |py-versions| image:: https://img.shields.io/pypi/pyversions/psutil.svg
+    :alt: Supported Python versions
+
+.. |packages| image:: https://repology.org/badge/tiny-repos/python:psutil.svg
+    :target: https://repology.org/metapackage/python:psutil/versions
+    :alt: Binary packages
+
+.. |license| image:: https://img.shields.io/pypi/l/psutil.svg
+    :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
+    :alt: License
+
+.. |twitter| image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=flat&logo=twitter&logoColor=4FADFF
+    :target: https://twitter.com/grodola
+    :alt: Twitter Follow
+
+.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
+    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+    :alt: Tidelift
+
+-----
+
+.. raw:: html
+
+    <div align="center">
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.png" /></a>
+        <br />
+        <br />
+        <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/INSTALL.rst"><b>Install</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
+    </div>
 
 Summary
 =======
@@ -49,11 +113,45 @@ and have your logo displayed in here and psutil `doc <https://psutil.readthedocs
 Sponsors
 ========
 
-.. image:: https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png
-  :width: 200
-  :alt: Alternative text
+.. raw:: html
 
-`Add your logo <https://github.com/sponsors/giampaolo>`__.
+    <div>
+        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg" />
+        </a>
+    </div>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+Supporters
+==========
+
+.. raw:: html
+
+    <div>
+      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+      <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+      <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+      <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+      <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
+      <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
+
+    </div>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
+
+Contributing
+============
+
+See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
 
 Example usages
 ==============
