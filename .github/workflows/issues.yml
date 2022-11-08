@@ -1,4 +1,5 @@
 # Fired by Github Actions every time an issue, PR or comment is created.
+
 name: issues
 on:
   issues:
@@ -14,17 +15,17 @@ jobs:
     # install python
     - uses: actions/checkout@v3
     - name: Install Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.8
-        cache: pip
-        cache-dependency-path: .github/workflows/issues.yml
+        python-version: '3.x'
+
     # install deps
     - name: Install deps
-      run: python -m pip install --upgrade pip PyGithub
+      run: python3 -m pip install PyGithub
+
     # run
     - name: Run
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        PYTHONUNBUFFERED=1 python .github/workflows/issues.py
+        PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/issues.py
