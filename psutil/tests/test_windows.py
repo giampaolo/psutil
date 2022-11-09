@@ -23,8 +23,8 @@ import warnings
 import psutil
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
-from psutil._compat import which
 from psutil._compat import super
+from psutil._compat import which
 from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY

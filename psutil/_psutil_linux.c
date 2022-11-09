@@ -78,10 +78,16 @@ ioprio_set(int which, int who, int ioprio) {
     return syscall(__NR_ioprio_set, which, who, ioprio);
 }
 
-// defined in linux/ethtool.h but not always available (e.g. Android)
+// * defined in linux/ethtool.h but not always available (e.g. Android)
+// * #ifdef check needed for old kernels, see:
+//   https://github.com/giampaolo/psutil/issues/2164
 static inline uint32_t
 psutil_ethtool_cmd_speed(const struct ethtool_cmd *ecmd) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
+    return ecmd->speed;
+#else
     return (ecmd->speed_hi << 16) | ecmd->speed;
+#endif
 }
 
 #define IOPRIO_CLASS_SHIFT 13
