@@ -192,3 +192,14 @@ jobs:
         python3 -m isort .
         # clinter
         find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
+
+  check_dist:
+    name: Check dist
+    needs: [linux-macos-py2, py3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: wheelhouse
+      - run: pipx run twine check --strict wheelhouse/*
