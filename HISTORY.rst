@@ -1,5 +1,10 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.5 (IN DEVELOPMENT)
+======================
+
+- 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
+
 5.9.4
 =====
 
