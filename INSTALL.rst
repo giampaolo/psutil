@@ -25,6 +25,11 @@ RedHat / CentOS::
     sudo yum install gcc python3-devel
     pip install --no-binary :all: psutil
 
+Alpine::
+
+    sudo apk add gcc python3-dev
+    pip install --no-binary :all: psutil
+
 Windows (build)
 ---------------
 
