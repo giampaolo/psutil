@@ -5,11 +5,12 @@
 # found in the LICENSE file.
 
 """
-Convert README.rst format to make it compatible with PyPI (no raw html).
+Remove raw HTML from README.rst to make it compatible with PyPI on
+dist upload.
 """
 
+import argparse
 import re
-import sys
 
 
 summary = """\
@@ -40,7 +41,10 @@ Example usages"""  # noqa
 
 
 def main():
-    with open(sys.argv[1]) as f:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('file', type=str)
+    args = parser.parse_args()
+    with open(args.file) as f:
         data = f.read()
     data = re.sub(r".. raw:: html\n+\s+<div align[\s\S]*?/div>", summary, data)
     data = re.sub(r"Sponsors\n========[\s\S]*?Example usages", funding, data)
