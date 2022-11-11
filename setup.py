@@ -118,18 +118,16 @@ else:
     py_limited_api = {}
 
 
-def get_description():
+def get_long_description():
     script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
     readme = os.path.join(HERE, 'README.rst')
     p = subprocess.Popen([sys.executable, script, readme],
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
-    data = stdout.decode('utf8')
-    if WINDOWS:
-        data = data.replace('\r\n', '\n')
-    return data
+    return stdout
 
 
 @contextlib.contextmanager
@@ -388,7 +386,7 @@ def main():
         version=VERSION,
         cmdclass=cmdclass,
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
-        long_description=get_description(),
+        long_description=get_long_description(),
         long_description_content_type='text/x-rst',
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',

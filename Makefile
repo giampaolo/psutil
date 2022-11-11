@@ -254,7 +254,7 @@ git-tag-release:  ## Git-tag a new release.
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON) setup.py sdist
-	$(PYTHON) -m twine check dist/*.tar.gz
+	$(PYTHON) -m twine check --strict dist/*.tar.gz
 
 # --- others
 
@@ -276,7 +276,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} download-wheels-appveyor
 	${MAKE} print-hashes
 	${MAKE} print-wheels
-	$(PYTHON) -m twine check dist/*
+	$(PYTHON) -m twine check --strict dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -286,7 +286,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 
 release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	$(PYTHON) -m twine check dist/*
+	$(PYTHON) -m twine check --strict dist/*
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
 	${MAKE} git-tag-release
 
