@@ -234,14 +234,14 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
-	${MAKE} print-wheels
+	${MAKE} print-dist
 
 download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
-	${MAKE} print-wheels
+	${MAKE} print-dist
 
-print-wheels:  ## Print downloaded wheels
-	$(PYTHON) scripts/internal/print_wheels.py
+print-dist:  ## Print downloaded wheels / tar.gs
+	$(PYTHON) scripts/internal/print_dist.py
 
 # ===================================================================
 # Distribution
@@ -275,7 +275,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
 	${MAKE} print-hashes
-	${MAKE} print-wheels
+	${MAKE} print-dist
 	$(PYTHON) -m twine check --strict dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \

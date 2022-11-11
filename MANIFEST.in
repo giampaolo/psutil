@@ -141,10 +141,10 @@ include scripts/internal/git_pre_commit.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py
+include scripts/internal/print_dist.py
 include scripts/internal/print_downloads.py
 include scripts/internal/print_hashes.py
 include scripts/internal/print_timeline.py
-include scripts/internal/print_wheels.py
 include scripts/internal/purge_installation.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
