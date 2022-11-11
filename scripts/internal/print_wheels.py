@@ -6,6 +6,7 @@
 
 """Nicely print wheels print in dist/ directory."""
 
+import argparse
 import collections
 import glob
 import os
@@ -67,8 +68,15 @@ class Wheel:
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('dir', nargs="?", default="dist",
+                        help='directory containing tar.gz or wheel files')
+    args = parser.parse_args()
+
+    if not os.path.isdir(args.dir):
+        raise NotADirectoryError(args.dir)
     groups = collections.defaultdict(list)
-    for path in glob.glob('dist/*.whl'):
+    for path in glob.glob('%s/*.whl' % args.dir):
         wheel = Wheel(path)
         groups[wheel.platform()].append(wheel)
 
