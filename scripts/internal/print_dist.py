@@ -89,12 +89,8 @@ def main():
                         help='directory containing tar.gz or wheel files')
     args = parser.parse_args()
 
-    if not os.path.isdir(args.dir):
-        raise NotADirectoryError(args.dir)
     groups = collections.defaultdict(list)
-
-    ls = sorted(os.listdir(args.dir),
-                key=lambda x: x.endswith("tar.gz"))
+    ls = sorted(os.listdir(args.dir), key=lambda x: x.endswith("tar.gz"))
     for name in ls:
         path = os.path.join(args.dir, name)
         if path.endswith(".whl"):
