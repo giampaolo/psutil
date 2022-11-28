@@ -19,6 +19,9 @@
 
 on: [push, pull_request]
 name: build
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  cancel-in-progress: true
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
@@ -30,12 +33,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-12, windows-2019]
         # python: ["3.6", "3.11"]
-
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
 
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -73,11 +70,6 @@ jobs:
         architecture: ["x86", "x64"]
 
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
     - uses: actions/checkout@v3
 
     - uses: actions/setup-python@v4
@@ -120,11 +112,6 @@ jobs:
       CIBW_BUILD: 'cp27-*'
 
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
@@ -150,11 +137,6 @@ jobs:
   py3-freebsd:
     runs-on: macos-12
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
     - uses: actions/checkout@v3
 
     - name: Run tests
