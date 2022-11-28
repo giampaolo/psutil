@@ -42,10 +42,11 @@ jobs:
       with:
         python-version: 3.11
 
-    - name: Install ARM Docker support
+    - name: Set up QEMU
       if: runner.os == 'linux'
-      run: |
-        sudo apt-get install qemu qemu-system-arm binfmt-support qemu-user-static
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: 'arm64'
 
     - name: Create wheels + run tests
       uses: pypa/cibuildwheel@v2.11.2
