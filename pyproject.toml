@@ -51,6 +51,7 @@ test-command = [
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
+build = "cp36-*"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
