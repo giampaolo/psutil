@@ -49,6 +49,9 @@ test-command = [
     "PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py"
 ]
 
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
 
