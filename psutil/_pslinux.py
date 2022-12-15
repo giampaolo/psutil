@@ -1468,22 +1468,45 @@ def sensors_battery():
             'battery' in x.lower()]
     if not bats:
         return None
+
+    def batsum(arr):
+        while None in arr:
+            arr.remove(None)
+        if len(arr):
+            return(sum(arr))
+        else:
+            return(None)
+
+    energy_now_array = []
+    power_now_array = []
+    energy_full_array = []
+    time_to_empty_array = []
+
+    
+
     # Get the first available battery. Usually this is "BAT0", except
     # some rare exceptions:
     # https://github.com/giampaolo/psutil/issues/1238
-    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
+    for bat in sorted(bats):
+        root = os.path.join(POWER_SUPPLY_PATH, bat)
 
-    # Base metrics.
-    energy_now = multi_bcat(
-        root + "/energy_now",
-        root + "/charge_now")
-    power_now = multi_bcat(
-        root + "/power_now",
-        root + "/current_now")
-    energy_full = multi_bcat(
-        root + "/energy_full",
-        root + "/charge_full")
-    time_to_empty = multi_bcat(root + "/time_to_empty_now")
+        # Base metrics.
+        energy_now_array.append(multi_bcat(
+            root + "/energy_now",
+            root + "/charge_now"))
+        power_now_array.append(multi_bcat(
+            root + "/power_now",
+            root + "/current_now"))
+        energy_full_array.append(multi_bcat(
+            root + "/energy_full",
+            root + "/charge_full"))
+        time_to_empty_array.append(multi_bcat(root + "/time_to_empty_now"))
+
+    
+    energy_now = batsum(energy_now_array)
+    power_now = batsum(power_now_array)
+    energy_full = batsum(energy_full_array)
+    time_to_empty = batsum(time_to_empty_array)
 
     # Percent. If we have energy_full the percentage will be more
     # accurate compared to reading /capacity file (float vs. int).
