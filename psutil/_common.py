@@ -391,6 +391,15 @@ def memoize(fun):
     1
     >>> foo.cache_clear()
     >>>
+
+    It supports:
+     - functions
+     - classes (acts as a @singleton)
+     - staticmethods
+     - classmethods
+
+    It does NOT support:
+     - methods
     """
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):

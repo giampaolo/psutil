@@ -291,9 +291,108 @@ class TestMisc(PsutilTestCase):
 # ===================================================================
 
 
-class TestCommonModule(PsutilTestCase):
+class TestMemoizeDecorator(PsutilTestCase):
 
-    def test_memoize(self):
+    def setUp(self):
+        self.calls = []
+
+    tearDown = setUp
+
+    def run_against(self, obj, expected_retval=None):
+        # no args
+        for x in range(2):
+            ret = obj()
+            self.assertEqual(self.calls, [((), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args
+        for x in range(2):
+            ret = obj(1)
+            self.assertEqual(self.calls, [((), {}), ((1, ), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args + kwargs
+        for x in range(2):
+            ret = obj(1, bar=2)
+            self.assertEqual(
+                self.calls, [((), {}), ((1, ), {}), ((1, ), {'bar': 2})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # clear cache
+        self.assertEqual(len(self.calls), 3)
+        obj.cache_clear()
+        ret = obj()
+        if expected_retval is not None:
+            self.assertEqual(ret, expected_retval)
+        self.assertEqual(len(self.calls), 4)
+        # docstring
+        self.assertEqual(obj.__doc__, "my docstring")
+
+    def test_function(self):
+        @memoize
+        def foo(*args, **kwargs):
+            """my docstring"""
+            baseclass.calls.append((args, kwargs))
+            return 22
+
+        baseclass = self
+        self.run_against(foo, expected_retval=22)
+
+    def test_class(self):
+        @memoize
+        class Foo:
+            """my docstring"""
+
+            def __init__(self, *args, **kwargs):
+                baseclass.calls.append((args, kwargs))
+
+            def bar(self):
+                return 22
+
+        baseclass = self
+        self.run_against(Foo, expected_retval=None)
+        self.assertEqual(Foo().bar(), 22)
+
+    def test_class_singleton(self):
+        # @memoize can be used against classes to create singletons
+        @memoize
+        class Bar:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        self.assertIs(Bar(), Bar())
+        self.assertEqual(id(Bar()), id(Bar()))
+        self.assertEqual(id(Bar(1)), id(Bar(1)))
+        self.assertEqual(id(Bar(1, foo=3)), id(Bar(1, foo=3)))
+        self.assertNotEqual(id(Bar(1)), id(Bar(2)))
+
+    def test_staticmethod(self):
+        class Foo:
+            @staticmethod
+            @memoize
+            def bar(*args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_classmethod(self):
+        class Foo:
+            @classmethod
+            @memoize
+            def bar(cls, *args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_original(self):
+        # This was the original test before I made it dynamic to test it
+        # against different types. Keeping it anyway.
         @memoize
         def foo(*args, **kwargs):
             """foo docstring"""
@@ -327,6 +426,9 @@ class TestCommonModule(PsutilTestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+
+class TestCommonModule(PsutilTestCase):
 
     def test_memoize_when_activated(self):
         class Foo:

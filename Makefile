@@ -121,7 +121,7 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 # Tests
 # ===================================================================
 
-test:  ## Run all tests.
+test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
@@ -168,10 +168,6 @@ test-platform:  ## Run specific platform tests only.
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
-
-test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
-	${MAKE} build
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
