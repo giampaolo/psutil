@@ -127,7 +127,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         return PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
     if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        psutil_debug("sysct('hw.cpufrequency_min') failed (set to 0)");
+        psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
 
     if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
         psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
