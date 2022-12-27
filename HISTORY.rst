@@ -4,6 +4,7 @@
 ======================
 
 - 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
+- 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
 
 5.9.4
 =====
