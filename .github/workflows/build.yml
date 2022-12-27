@@ -182,11 +182,6 @@ jobs:
     - uses: actions/setup-python@v4
     - name: 'Run linters'
       run: |
-        # py2
-        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-        python2 get-pip.py
-        python2 -m pip install flake8
-        python2 -m flake8 .
         # py3
         python3 -m pip install flake8 isort
         python3 -m flake8 .
