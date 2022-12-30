@@ -27,6 +27,7 @@ from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
+from psutil.tests import COVERAGE
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PsutilTestCase
@@ -368,6 +369,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     @retry_on_failure()
     @unittest.skipIf(CI_TESTING, "skipped on CI")
+    @unittest.skipIf(COVERAGE, "skipped during test coverage")
     def test_leak_mem(self):
         ls = []
 

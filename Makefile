@@ -177,7 +177,7 @@ test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(TEST_PREFIX) $(PYTHON) -m coverage run $(TSCRIPT)
+	$(TEST_PREFIX) $(PYTHON) -m coverage run -m unittest -v
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html

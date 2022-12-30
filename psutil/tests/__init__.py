@@ -87,7 +87,7 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO", "MACOS_11PLUS",
-    "MACOS_12PLUS",
+    "MACOS_12PLUS", "COVERAGE",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -128,6 +128,7 @@ PYPY = '__pypy__' in sys.builtin_module_names
 APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = APPVEYOR or GITHUB_ACTIONS
+COVERAGE = 'COVERAGE_RUN' in os.environ
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 

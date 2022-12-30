@@ -3,9 +3,6 @@ force_single_line = true  # one import per line
 lines_after_imports = 2  # blank spaces after import section
 
 [tool.coverage.report]
-include = [
-    "*psutil*"
-]
 omit = [
     "psutil/_compat.py",
     "psutil/tests/*",
