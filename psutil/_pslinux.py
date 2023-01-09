@@ -1257,16 +1257,17 @@ def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
-    with open_text("%s/filesystems" % procfs_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line.startswith("nodev"):
-                fstypes.add(line.strip())
-            else:
-                # ignore all lines starting with "nodev" except "nodev zfs"
-                fstype = line.split("\t")[1]
-                if fstype == "zfs":
-                    fstypes.add("zfs")
+    if not all:
+        with open_text("%s/filesystems" % procfs_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line.startswith("nodev"):
+                    fstypes.add(line.strip())
+                else:
+                    # ignore all lines starting with "nodev" except "nodev zfs"
+                    fstype = line.split("\t")[1]
+                    if fstype == "zfs":
+                        fstypes.add("zfs")
 
     # See: https://github.com/giampaolo/psutil/issues/1307
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
