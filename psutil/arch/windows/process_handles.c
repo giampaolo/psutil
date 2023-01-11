@@ -193,6 +193,7 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
     PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
     HANDLE                              hFile = NULL;
+    HANDLE                              hSafeFile = NULL;
     ULONG                               i = 0;
     BOOLEAN                             errorOccurred = FALSE;
     PyObject*                           py_path = NULL;
@@ -222,14 +223,17 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             continue;
         }
 
-        if (GetFileType(hFile) != FILE_TYPE_DISK) {
-            SetLastError(0);
-            CloseHandle(hFile);
-            hFile = NULL;
-            continue;
-        }
+        hSafeFile = ReOpenFile(
+            hFile,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            0);
+        CloseHandle(hFile);
 
-        fileName = psutil_threaded_get_filename(hFile);
+        if (hSafeFile == INVALID_HANDLE_VALUE)
+            continue;
+
+        fileName = psutil_threaded_get_filename(hSafeFile);
         if (fileName == NULL)
             goto error;
 
@@ -248,8 +252,8 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             FREE(fileName);
             fileName = NULL;
         }
-        CloseHandle(hFile);
-        hFile = NULL;
+        CloseHandle(hSafeFile);
+        hSafeFile = NULL;
     }
 
     goto exit;
@@ -260,8 +264,8 @@ error:
     goto exit;
 
 exit:
-    if (hFile != NULL)
-        CloseHandle(hFile);
+    if (hSafeFile != NULL)
+        CloseHandle(hSafeFile);
     if (fileName != NULL)
         FREE(fileName);
     if (py_path != NULL)
