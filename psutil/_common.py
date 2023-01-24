@@ -25,6 +25,8 @@ from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
+from ._compat import raise_from
+
 
 try:
     from socket import AF_INET6
@@ -407,7 +409,10 @@ def memoize(fun):
         try:
             return cache[key]
         except KeyError:
-            ret = cache[key] = fun(*args, **kwargs)
+            try:
+                ret = cache[key] = fun(*args, **kwargs)
+            except Exception as err:
+                raise raise_from(err, None)
             return ret
 
     def cache_clear():

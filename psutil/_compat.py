@@ -49,6 +49,13 @@ if PY3:
 
     def b(s):
         return s.encode("latin-1")
+
+    __builtins__["exec"]("""def raise_from(value, from_value):
+    try:
+        raise value from from_value
+    finally:
+        value = None
+    """)
 else:
     long = long
     range = xrange
@@ -60,6 +67,9 @@ else:
 
     def b(s):
         return s
+
+    def raise_from(value, from_value):
+        raise value
 
 
 # --- builtins
