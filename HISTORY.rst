@@ -3,8 +3,18 @@
 5.9.5 (IN DEVELOPMENT)
 ======================
 
+**Enhancements**
+
+- 2196_: in case of exception, hide the `KeyError` bit from the traceback
+  message.
+
+**Bug fixes**
+
 - 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
 - 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
+- 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
+  /proc/filesystems and raise `AccessDenied`_ unless user specified `all=False`
+  argument.
 
 5.9.4
 =====
