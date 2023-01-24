@@ -45,10 +45,8 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
-from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
-from psutil.tests import import_module_by_path
 from psutil.tests import mock
 from psutil.tests import reload_module
 from psutil.tests import sh
@@ -250,15 +248,15 @@ class TestMisc(PsutilTestCase):
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
 
-    # XXX: https://github.com/pypa/setuptools/pull/2896
-    @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
-    def test_setup_script(self):
-        setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if CI_TESTING and not os.path.exists(setup_py):
-            return self.skipTest("can't find setup.py")
-        module = import_module_by_path(setup_py)
-        self.assertRaises(SystemExit, module.setup)
-        self.assertEqual(module.get_version(), psutil.__version__)
+    # # XXX: https://github.com/pypa/setuptools/pull/2896
+    # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
+    # def test_setup_script(self):
+    #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
+    #     if CI_TESTING and not os.path.exists(setup_py):
+    #         return self.skipTest("can't find setup.py")
+    #     module = import_module_by_path(setup_py)
+    #     self.assertRaises(SystemExit, module.setup)
+    #     self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case

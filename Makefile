@@ -8,7 +8,7 @@ ARGS =
 TSCRIPT = psutil/tests/runner.py
 
 # Internal.
-DEPS = \
+PY3_DEPS = \
 	autoflake \
 	autopep8 \
 	check-manifest \
@@ -34,8 +34,8 @@ PY2_DEPS = \
 	futures \
 	ipaddress \
 	mock
-DEPS += `$(PYTHON) -c \
-	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
+PY_DEPS = `$(PYTHON) -c \
+	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
 	"import sys, os; \
@@ -55,7 +55,8 @@ TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 # ===================================================================
 
 clean:  ## Remove all build files.
-	@rm -rfv `find . -type d -name __pycache__ \
+	@rm -rfv `find . \
+		-type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
 		-o -type f -name \*.pyc \
@@ -71,10 +72,12 @@ clean:  ## Remove all build files.
 		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
+		.pytest_cache \
 		build/ \
 		dist/ \
 		docs/_build/ \
-		htmlcov/
+		htmlcov/ \
+		wheelhouse
 
 .PHONY: build
 build:  ## Compile (in parallel) without installing.
@@ -115,7 +118,7 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(PY_DEPS)
 
 # ===================================================================
 # Tests
