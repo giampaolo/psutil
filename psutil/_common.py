@@ -469,11 +469,17 @@ def memoize_when_activated(fun):
             ret = self._cache[fun]
         except AttributeError:
             # case 2: we never entered oneshot() ctx
-            return fun(self)
+            try:
+                return fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = fun(self)
+            try:
+                ret = fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
             try:
                 self._cache[fun] = ret
             except AttributeError:
