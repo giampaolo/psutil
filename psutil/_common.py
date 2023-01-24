@@ -25,8 +25,6 @@ from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
-from ._compat import raise_from
-
 
 try:
     from socket import AF_INET6
@@ -366,6 +364,20 @@ class TimeoutExpired(Error):
 # ===================================================================
 # --- utils
 # ===================================================================
+
+
+# This should be in _compat.py rather than here, but does not work well
+# with setup.py importing this module via a sys.path trick.
+if PY3:
+    __builtins__["exec"]("""def raise_from(value, from_value):
+    try:
+        raise value from from_value
+    finally:
+        value = None
+    """)
+else:
+    def raise_from(value, from_value):
+        raise value
 
 
 def usage_percent(used, total, round_=None):
