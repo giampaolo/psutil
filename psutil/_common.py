@@ -366,6 +366,20 @@ class TimeoutExpired(Error):
 # ===================================================================
 
 
+# This should be in _compat.py rather than here, but does not work well
+# with setup.py importing this module via a sys.path trick.
+if PY3:
+    __builtins__["exec"]("""def raise_from(value, from_value):
+    try:
+        raise value from from_value
+    finally:
+        value = None
+    """)
+else:
+    def raise_from(value, from_value):
+        raise value
+
+
 def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
@@ -407,7 +421,10 @@ def memoize(fun):
         try:
             return cache[key]
         except KeyError:
-            ret = cache[key] = fun(*args, **kwargs)
+            try:
+                ret = cache[key] = fun(*args, **kwargs)
+            except Exception as err:
+                raise raise_from(err, None)
             return ret
 
     def cache_clear():
@@ -452,11 +469,17 @@ def memoize_when_activated(fun):
             ret = self._cache[fun]
         except AttributeError:
             # case 2: we never entered oneshot() ctx
-            return fun(self)
+            try:
+                return fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = fun(self)
+            try:
+                ret = fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
             try:
                 self._cache[fun] = ret
             except AttributeError:
