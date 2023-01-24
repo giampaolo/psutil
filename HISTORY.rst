@@ -5,8 +5,8 @@
 
 **Enhancements**
 
-- 2196_: in case of exception, hide the `KeyError` bit from the traceback
-  message.
+- 2196_: in case of exception, display a cleaner error traceback by hiding the
+  `KeyError` bit deriving from a missed cache hit.
 
 **Bug fixes**
 
