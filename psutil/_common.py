@@ -369,7 +369,15 @@ class TimeoutExpired(Error):
 # This should be in _compat.py rather than here, but does not work well
 # with setup.py importing this module via a sys.path trick.
 if PY3:
-    __builtins__["exec"]("""def raise_from(value, from_value):
+    import platform
+    impl = platform.python_implementation()
+    if impl == "CPython":
+        f_exec = __builtins__["exec"]  # cpython dict
+    elif impl == "PyPy":
+        f_exec = getattr(__builtins__, "exec")  # pypy module
+    else:
+        raise RuntimeError(f"Unknown platform {impl}")
+    f_exec("""def raise_from(value, from_value):
     try:
         raise value from from_value
     finally:
