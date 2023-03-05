@@ -41,7 +41,6 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -241,12 +240,7 @@ def _get_py_exe():
             return exe
 
     if GITHUB_ACTIONS:
-        if PYPY:
-            return which("pypy3") if PY3 else which("pypy")
-        elif FREEBSD:
-            return os.path.realpath(sys.executable)
-        else:
-            return which('python')
+        return sys.executable
     elif MACOS:
         exe = \
             attempt(sys.executable) or \
@@ -361,17 +355,26 @@ def spawn_testproc(cmd=None, **kwds):
     if cmd is None:
         testfn = get_testfn()
         try:
+            exe = getattr(sys, "_base_executable", PYTHON_EXE)
             safe_rmpath(testfn)
             pyline = "from time import sleep;" \
                      "open(r'%s', 'w').close();" \
                      "sleep(60);" % testfn
-            cmd = [PYTHON_EXE, "-c", pyline]
+            cmd = [exe, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
             wait_for_file(testfn, delete=True, empty=True)
         finally:
             safe_rmpath(testfn)
     else:
+        if cmd[0] == PYTHON_EXE:
+            base_exe = getattr(sys, "_base_executable", None)
+            if base_exe and WINDOWS and sys.version_info >= (3, 7):
+                env = kwds.get("env", os.environ).copy()
+                env["__PYVENV_LAUNCHER__"] = sys.executable
+                kwds["env"] = env
+                exe = base_exe
+                cmd = [exe] + cmd[1:]
         sproc = subprocess.Popen(cmd, **kwds)
         _subprocesses_started.add(sproc)
         wait_for_pid(sproc.pid)
@@ -389,6 +392,7 @@ def spawn_children_pair():
     tfile = None
     testfn = get_testfn(dir=os.getcwd())
     try:
+        exe = getattr(sys, "_base_executable", PYTHON_EXE)
         s = textwrap.dedent("""\
             import subprocess, os, sys, time
             s = "import os, time;"
@@ -398,7 +402,7 @@ def spawn_children_pair():
             s += "time.sleep(60);"
             p = subprocess.Popen([r'%s', '-c', s])
             p.wait()
-            """ % (os.path.basename(testfn), PYTHON_EXE))
+            """ % (os.path.basename(testfn), exe))
         # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
