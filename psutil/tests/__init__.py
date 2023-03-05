@@ -41,7 +41,6 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -80,8 +79,8 @@ if POSIX:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
+    'PYPY', 'PYTHON_BASE_EXE', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -241,13 +240,8 @@ def _get_py_exe():
             return exe
 
     if GITHUB_ACTIONS:
-        if PYPY:
-            return which("pypy3") if PY3 else which("pypy")
-        elif FREEBSD:
-            return os.path.realpath(sys.executable)
-        else:
-            return which('python')
-    elif MACOS:
+        return sys.executable
+    if MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -262,7 +256,25 @@ def _get_py_exe():
         return exe
 
 
+# PYTHON_EXE always has psutil installed
 PYTHON_EXE = _get_py_exe()
+
+
+def _get_py_base_exe():
+    # On windows, starting with python 3.7,
+    # virtual environments use a venvlauncher startup process
+    # This does not play well when counting spawned processes or
+    # when relying on the pid of the spawned process to do some checks
+    # e.g. connection check per pid
+    # let's use the base python in this case.
+    base = getattr(sys, "_base_executable", None)
+    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+        return base
+    return PYTHON_EXE
+
+
+# PYTHON_BASE_EXE might not have psutil (or anything) installed
+PYTHON_BASE_EXE = _get_py_base_exe()
 DEVNULL = open(os.devnull, 'r+')
 atexit.register(DEVNULL.close)
 
@@ -365,7 +377,7 @@ def spawn_testproc(cmd=None, **kwds):
             pyline = "from time import sleep;" \
                      "open(r'%s', 'w').close();" \
                      "sleep(60);" % testfn
-            cmd = [PYTHON_EXE, "-c", pyline]
+            cmd = [PYTHON_BASE_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
             wait_for_file(testfn, delete=True, empty=True)
@@ -398,7 +410,7 @@ def spawn_children_pair():
             s += "time.sleep(60);"
             p = subprocess.Popen([r'%s', '-c', s])
             p.wait()
-            """ % (os.path.basename(testfn), PYTHON_EXE))
+            """ % (os.path.basename(testfn), PYTHON_BASE_EXE))
         # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
@@ -471,10 +483,17 @@ def pyrun(src, **kwds):
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
     srcfile = get_testfn()
+    if PYTHON_BASE_EXE != PYTHON_EXE:
+        # We're in a Windows python 3.7+ virtual environment
+        # we need to set __PYVENV_LAUNCHER__ to sys.executable
+        # for the base python executable to know about the environment
+        env = kwds.get("env", os.environ).copy()
+        env["__PYVENV_LAUNCHER__"] = sys.executable
+        kwds["env"] = env
     try:
         with open(srcfile, 'wt') as f:
             f.write(src)
-        subp = spawn_testproc([PYTHON_EXE, f.name], **kwds)
+        subp = spawn_testproc([PYTHON_BASE_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
         return (subp, srcfile)
     except Exception:
@@ -851,7 +870,7 @@ def create_exe(outpath, c_code=None):
             safe_rmpath(f.name)
     else:
         # copy python executable
-        shutil.copyfile(PYTHON_EXE, outpath)
+        shutil.copyfile(PYTHON_BASE_EXE, outpath)
         if POSIX:
             st = os.stat(outpath)
             os.chmod(outpath, st.st_mode | stat.S_IEXEC)
@@ -1175,7 +1194,7 @@ def print_sysinfo():
     info['user'] = getpass.getuser()
     info['home'] = os.path.expanduser("~")
     info['cwd'] = os.getcwd()
-    info['pyexe'] = PYTHON_EXE
+    info['pyexe'] = PYTHON_BASE_EXE
     info['hostname'] = platform.node()
     info['PID'] = os.getpid()
 

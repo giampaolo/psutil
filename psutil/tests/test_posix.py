@@ -25,7 +25,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_BASE_EXE
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
@@ -137,7 +137,7 @@ class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc([PYTHON_EXE, "-E", "-O"],
+        cls.pid = spawn_testproc([PYTHON_BASE_EXE, "-E", "-O"],
                                  stdin=subprocess.PIPE).pid
 
     @classmethod
@@ -198,7 +198,7 @@ class TestProcess(PsutilTestCase):
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name().lower()
-        # ...because of how we calculate PYTHON_EXE; on MACOS this may
+        # ...because of how we calculate PYTHON_BASE_EXE; on MACOS this may
         # be "pythonX.Y".
         name_ps = re.sub(r"\d.\d", "", name_ps)
         name_psutil = re.sub(r"\d.\d", "", name_psutil)

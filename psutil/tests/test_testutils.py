@@ -29,7 +29,7 @@ from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
 from psutil.tests import HAS_CONNECTIONS_UNIX
-from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_BASE_EXE
 from psutil.tests import PsutilTestCase
 from psutil.tests import TestMemoryLeak
 from psutil.tests import bind_socket
@@ -259,7 +259,7 @@ class TestProcessUtils(PsutilTestCase):
         self.assertProcessGone(p)
         terminate(p)
         # by psutil.Popen
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [PYTHON_BASE_EXE, "-c", "import time; time.sleep(60);"]
         p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         terminate(p)
         self.assertProcessGone(p)

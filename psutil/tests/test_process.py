@@ -51,7 +51,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
 from psutil.tests import MACOS_11PLUS
 from psutil.tests import PYPY
-from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_BASE_EXE
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
@@ -134,25 +134,25 @@ class TestProcess(PsutilTestCase):
     def test_wait_exited(self):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
         # normal return, same as exit(0)
-        cmd = [PYTHON_EXE, "-c", "pass"]
+        cmd = [PYTHON_BASE_EXE, "-c", "pass"]
         p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 0)
         self.assertProcessGone(p)
         # exit(1), implicit in case of error
-        cmd = [PYTHON_EXE, "-c", "1 / 0"]
+        cmd = [PYTHON_BASE_EXE, "-c", "1 / 0"]
         p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
         code = p.wait()
         self.assertEqual(code, 1)
         self.assertProcessGone(p)
         # via sys.exit()
-        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
+        cmd = [PYTHON_BASE_EXE, "-c", "import sys; sys.exit(5);"]
         p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 5)
         self.assertProcessGone(p)
         # via os._exit()
-        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
+        cmd = [PYTHON_BASE_EXE, "-c", "import os; os._exit(5);"]
         p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 5)
@@ -305,7 +305,7 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         # test reads
         io1 = p.io_counters()
-        with open(PYTHON_EXE, 'rb') as f:
+        with open(PYTHON_BASE_EXE, 'rb') as f:
             f.read()
         io2 = p.io_counters()
         if not BSD and not AIX:
@@ -683,12 +683,12 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc()
         exe = p.exe()
         try:
-            self.assertEqual(exe, PYTHON_EXE)
+            self.assertEqual(exe, PYTHON_BASE_EXE)
         except AssertionError:
-            if WINDOWS and len(exe) == len(PYTHON_EXE):
+            if WINDOWS and len(exe) == len(PYTHON_BASE_EXE):
                 # on Windows we don't care about case sensitivity
                 normcase = os.path.normcase
-                self.assertEqual(normcase(exe), normcase(PYTHON_EXE))
+                self.assertEqual(normcase(exe), normcase(PYTHON_BASE_EXE))
             else:
                 # certain platforms such as BSD are more accurate returning:
                 # "/usr/local/bin/python2.7"
@@ -699,7 +699,7 @@ class TestProcess(PsutilTestCase):
                 ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
                 try:
                     self.assertEqual(exe.replace(ver, ''),
-                                     PYTHON_EXE.replace(ver, ''))
+                                     PYTHON_BASE_EXE.replace(ver, ''))
                 except AssertionError:
                     # Typically MACOS. Really not sure what to do here.
                     pass
@@ -708,7 +708,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(out, 'hey')
 
     def test_cmdline(self):
-        cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
+        cmdline = [PYTHON_BASE_EXE, "-c", "import time; time.sleep(60)"]
         p = self.spawn_psproc(cmdline)
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
@@ -716,11 +716,11 @@ class TestProcess(PsutilTestCase):
         # like this is a kernel bug.
         # XXX - AIX truncates long arguments in /proc/pid/cmdline
         if NETBSD or OPENBSD or AIX:
-            self.assertEqual(p.cmdline()[0], PYTHON_EXE)
+            self.assertEqual(p.cmdline()[0], PYTHON_BASE_EXE)
         else:
             if MACOS and CI_TESTING:
                 pyexe = p.cmdline()[0]
-                if pyexe != PYTHON_EXE:
+                if pyexe != PYTHON_BASE_EXE:
                     self.assertEqual(' '.join(p.cmdline()[1:]),
                                      ' '.join(cmdline[1:]))
                     return
@@ -735,7 +735,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
-        p = self.spawn_psproc(PYTHON_EXE)
+        p = self.spawn_psproc(PYTHON_BASE_EXE)
         name = p.name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
@@ -874,7 +874,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.cwd(), os.getcwd())
 
     def test_cwd_2(self):
-        cmd = [PYTHON_EXE, "-c",
+        cmd = [PYTHON_BASE_EXE, "-c",
                "import os, time; os.chdir('..'); time.sleep(60)"]
         p = self.spawn_psproc(cmd)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
@@ -973,7 +973,7 @@ class TestProcess(PsutilTestCase):
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % testfn
-        p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
+        p = self.spawn_psproc([PYTHON_BASE_EXE, "-c", cmdline])
 
         for x in range(100):
             filenames = [os.path.normcase(x.path) for x in p.open_files()]
@@ -1291,7 +1291,7 @@ class TestProcess(PsutilTestCase):
         # NtQuerySystemInformation succeeds even if process is gone.
         if WINDOWS and not GITHUB_ACTIONS:
             normcase = os.path.normcase
-            self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
+            self.assertEqual(normcase(p.exe()), normcase(PYTHON_BASE_EXE))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
@@ -1541,7 +1541,7 @@ class TestPopen(PsutilTestCase):
         # XXX this test causes a ResourceWarning on Python 3 because
         # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [PYTHON_BASE_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE) as proc:
             proc.name()
@@ -1556,7 +1556,7 @@ class TestPopen(PsutilTestCase):
             self.assertEqual(proc.wait(5), signal.SIGTERM)
 
     def test_ctx_manager(self):
-        with psutil.Popen([PYTHON_EXE, "-V"],
+        with psutil.Popen([PYTHON_BASE_EXE, "-V"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,
                           stdin=subprocess.PIPE) as proc:
@@ -1570,7 +1570,7 @@ class TestPopen(PsutilTestCase):
         # subprocess.Popen()'s terminate(), kill() and send_signal() do
         # not raise exception after the process is gone. psutil.Popen
         # diverges from that.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [PYTHON_BASE_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE) as proc:
             proc.terminate()
