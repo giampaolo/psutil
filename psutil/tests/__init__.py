@@ -41,7 +41,6 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -80,8 +79,8 @@ if POSIX:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
@@ -240,14 +239,23 @@ def _get_py_exe():
         else:
             return exe
 
+    env = os.environ.copy()
+
+    # On windows, starting with python 3.7,
+    # virtual environments use a venvlauncher startup process
+    # This does not play well when counting spawned processes or
+    # when relying on the pid of the spawned process to do some checks
+    # e.g. connection check per pid
+    # let's use the base python in this case.
+    base = getattr(sys, "_base_executable", None)
+    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+        # we need to set __PYVENV_LAUNCHER__ to sys.executable
+        # for the base python executable to know about the environment
+        env["__PYVENV_LAUNCHER__"] = sys.executable
+        return base, env
     if GITHUB_ACTIONS:
-        if PYPY:
-            return which("pypy3") if PY3 else which("pypy")
-        elif FREEBSD:
-            return os.path.realpath(sys.executable)
-        else:
-            return which('python')
-    elif MACOS:
+        return sys.executable, env
+    if MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
@@ -255,14 +263,14 @@ def _get_py_exe():
             attempt(psutil.Process().exe())
         if not exe:
             raise ValueError("can't find python exe real abspath")
-        return exe
+        return exe, env
     else:
         exe = os.path.realpath(sys.executable)
         assert os.path.exists(exe), exe
-        return exe
+        return exe, env
 
 
-PYTHON_EXE = _get_py_exe()
+PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
 atexit.register(DEVNULL.close)
 
@@ -351,7 +359,7 @@ def spawn_testproc(cmd=None, **kwds):
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     kwds.setdefault("cwd", os.getcwd())
-    kwds.setdefault("env", os.environ)
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs. This will also
         # cause stderr to be suppressed, which is suboptimal in order
@@ -470,6 +478,7 @@ def pyrun(src, **kwds):
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     srcfile = get_testfn()
     try:
         with open(srcfile, 'wt') as f:

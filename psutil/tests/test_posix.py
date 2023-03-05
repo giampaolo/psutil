@@ -26,6 +26,7 @@ from psutil import SUNOS
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
@@ -138,7 +139,8 @@ class TestProcess(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_testproc([PYTHON_EXE, "-E", "-O"],
-                                 stdin=subprocess.PIPE).pid
+                                 stdin=subprocess.PIPE,
+                                 env=PYTHON_EXE_ENV).pid
 
     @classmethod
     def tearDownClass(cls):
