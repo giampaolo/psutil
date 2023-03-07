@@ -466,12 +466,14 @@ def main():
                                 "develop")):
             py3 = "3" if PY3 else ""
             if LINUX:
+                pyimpl = "pypy" if PYPY else "python"
                 if which('dpkg'):
-                    missdeps("sudo apt-get install gcc python%s-dev" % py3)
+                    missdeps("sudo apt-get install gcc %s%s-dev" %
+                             (pyimpl, py3))
                 elif which('rpm'):
-                    missdeps("sudo yum install gcc python%s-devel" % py3)
+                    missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
                 elif which('apk'):
-                    missdeps("sudo apk add gcc python%s-dev" % py3)
+                    missdeps("sudo apk add gcc %s%s-dev" % (pyimpl, py3))
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
                              "is not installed"), color="red", file=sys.stderr)
