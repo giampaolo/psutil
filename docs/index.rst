@@ -505,7 +505,7 @@ Disks
   numbers will always be increasing or remain the same, but never decrease.
   ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
   cache.
-  On Windows it may be ncessary to issue ``diskperf -y`` command from cmd.exe
+  On Windows it may be necessary to issue ``diskperf -y`` command from cmd.exe
   first in order to enable IO counters.
   On diskless machines this function will return ``None`` or ``{}`` if
   *perdisk* is ``True``.
