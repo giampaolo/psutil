@@ -45,7 +45,7 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
+TEST_PREFIX = PSUTIL_SCRIPTS_DIR=`pwd`/scripts PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
