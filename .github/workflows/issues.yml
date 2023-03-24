@@ -8,6 +8,9 @@ on:
     typed: [opened]
   issue_comment:
     types: [created]
+
+permissions: read-all
+
 jobs:
   build:
     runs-on: ubuntu-latest

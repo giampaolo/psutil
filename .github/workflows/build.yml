@@ -19,6 +19,7 @@
 
 on: [push, pull_request]
 name: build
+permissions: read-all
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
@@ -30,6 +31,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-12, windows-2019]
         # python: ["3.6", "3.11"]
+
+    permissions:
+      actions: write  # necessary for styfle/cancel-workflow-action
 
     steps:
     - name: Cancel previous runs
@@ -72,6 +76,9 @@ jobs:
         python: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         architecture: ["x86", "x64"]
 
+    permissions:
+      actions: write  # necessary for styfle/cancel-workflow-action
+
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.9.1
@@ -112,6 +119,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-12]
+
+    permissions:
+      actions: write  # necessary for styfle/cancel-workflow-action
+
     env:
       CIBW_TEST_COMMAND:
         PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
@@ -149,6 +160,10 @@ jobs:
   # FreeBSD (tests only)
   py3-freebsd:
     runs-on: macos-12
+
+    permissions:
+      actions: write  # necessary for styfle/cancel-workflow-action
+      
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@0.9.1
