@@ -478,7 +478,6 @@ def pyrun(src, **kwds):
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
-    kwds.setdefault("env", PYTHON_EXE_ENV)
     srcfile = get_testfn()
     try:
         with open(srcfile, 'wt') as f:

@@ -136,25 +136,25 @@ class TestProcess(PsutilTestCase):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
         # normal return, same as exit(0)
         cmd = [PYTHON_EXE, "-c", "pass"]
-        p = self.spawn_psproc(cmd, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 0)
         self.assertProcessGone(p)
         # exit(1), implicit in case of error
         cmd = [PYTHON_EXE, "-c", "1 / 0"]
-        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
         code = p.wait()
         self.assertEqual(code, 1)
         self.assertProcessGone(p)
         # via sys.exit()
         cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
-        p = self.spawn_psproc(cmd, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 5)
         self.assertProcessGone(p)
         # via os._exit()
         cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
-        p = self.spawn_psproc(cmd, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmd)
         code = p.wait()
         self.assertEqual(code, 5)
         self.assertProcessGone(p)
@@ -710,7 +710,7 @@ class TestProcess(PsutilTestCase):
 
     def test_cmdline(self):
         cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
-        p = self.spawn_psproc(cmdline, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmdline)
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
         # Also /proc/pid/cmdline behaves the same so it looks
@@ -736,7 +736,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
-        p = self.spawn_psproc(PYTHON_EXE, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(PYTHON_EXE)
         name = p.name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
@@ -877,7 +877,7 @@ class TestProcess(PsutilTestCase):
     def test_cwd_2(self):
         cmd = [PYTHON_EXE, "-c",
                "import os, time; os.chdir('..'); time.sleep(60)"]
-        p = self.spawn_psproc(cmd, env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc(cmd)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
@@ -974,7 +974,7 @@ class TestProcess(PsutilTestCase):
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % testfn
-        p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline], env=PYTHON_EXE_ENV)
+        p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
         for x in range(100):
             filenames = [os.path.normcase(x.path) for x in p.open_files()]
