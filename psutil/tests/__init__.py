@@ -253,9 +253,9 @@ def _get_py_exe():
         # for the base python executable to know about the environment
         env["__PYVENV_LAUNCHER__"] = sys.executable
         return base, env
-    if GITHUB_ACTIONS:
+    elif GITHUB_ACTIONS:
         return sys.executable, env
-    if MACOS:
+    elif MACOS:
         exe = \
             attempt(sys.executable) or \
             attempt(os.path.realpath(sys.executable)) or \
