@@ -52,6 +52,7 @@ from psutil.tests import HAS_THREADS
 from psutil.tests import MACOS_11PLUS
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
@@ -1543,7 +1544,7 @@ class TestPopen(PsutilTestCase):
         # Not sure what to do though.
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+                          stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.name()
             proc.cpu_times()
             proc.stdin
@@ -1559,7 +1560,7 @@ class TestPopen(PsutilTestCase):
         with psutil.Popen([PYTHON_EXE, "-V"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,
-                          stdin=subprocess.PIPE) as proc:
+                          stdin=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.communicate()
         assert proc.stdout.closed
         assert proc.stderr.closed
@@ -1572,7 +1573,7 @@ class TestPopen(PsutilTestCase):
         # diverges from that.
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+                          stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.terminate()
             proc.wait()
             self.assertRaises(psutil.NoSuchProcess, proc.terminate)

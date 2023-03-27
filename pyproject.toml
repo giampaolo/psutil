@@ -48,9 +48,3 @@ test-command = [
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-
-[tool.cibuildwheel.windows]
-# psutil tests do not like running from a virtualenv with python>=3.7
-# restrict build & tests to cp36
-# cp36-abi3 wheels will need to be tested outside cibuildwheel for python>=3.7
-build = "cp36-*"
