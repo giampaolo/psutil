@@ -15,6 +15,8 @@
 - 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
   /proc/filesystems and raise `AccessDenied`_ unless user specified `all=False`
   argument.
+- 2216_, [Windows]: fix tests when running in a virtual environment (patch by
+  Matthieu Darbois)
 
 5.9.4
 =====
