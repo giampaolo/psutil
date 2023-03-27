@@ -510,7 +510,7 @@ def virtual_memory():
         msg = "%s memory stats couldn't be determined and %s set to 0" % (
             ", ".join(missing_fields),
             "was" if len(missing_fields) == 1 else "were")
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared, slab)
@@ -544,7 +544,7 @@ def swap_memory():
         # see https://github.com/giampaolo/psutil/issues/722
         msg = "'sin' and 'sout' swap memory stats couldn't " \
               "be determined and were set to 0 (%s)" % str(err)
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
     else:
         with f:
@@ -564,7 +564,7 @@ def swap_memory():
                 # https://github.com/giampaolo/psutil/issues/313
                 msg = "'sin' and 'sout' swap memory stats couldn't " \
                       "be determined and were set to 0"
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
 

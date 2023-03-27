@@ -248,7 +248,7 @@ def _get_py_exe():
     # Let's use the base python in this case.
     base = getattr(sys, "_base_executable", None)
     if WINDOWS and sys.version_info >= (3, 7) and base is not None:
-        # We need to set __PYVENV_LAUNCHER__ to sys.executable for the 
+        # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
         return base, env
@@ -1737,7 +1737,7 @@ def import_module_by_path(path):
 
 def warn(msg):
     """Raise a warning msg."""
-    warnings.warn(msg, UserWarning)
+    warnings.warn(msg, UserWarning, stacklevel=2)
 
 
 def is_namedtuple(x):

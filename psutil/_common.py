@@ -372,7 +372,7 @@ if PY3:
     if isinstance(__builtins__, dict):  # cpython
         exec_ = __builtins__["exec"]
     else:  # pypy
-        exec_ = getattr(__builtins__, "exec")
+        exec_ = getattr(__builtins__, "exec")  # noqa
 
     exec_("""def raise_from(value, from_value):
     try:
