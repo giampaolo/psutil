@@ -241,16 +241,15 @@ def _get_py_exe():
 
     env = os.environ.copy()
 
-    # On windows, starting with python 3.7,
-    # virtual environments use a venvlauncher startup process
-    # This does not play well when counting spawned processes or
-    # when relying on the pid of the spawned process to do some checks
-    # e.g. connection check per pid
-    # let's use the base python in this case.
+    # On Windows, starting with python 3.7, virtual environments use a
+    # venv launcher startup process. This does not play well when
+    # counting spawned processes, or when relying on the PID of the
+    # spawned process to do some checks, e.g. connections check per PID.
+    # Let's use the base python in this case.
     base = getattr(sys, "_base_executable", None)
     if WINDOWS and sys.version_info >= (3, 7) and base is not None:
-        # we need to set __PYVENV_LAUNCHER__ to sys.executable
-        # for the base python executable to know about the environment
+        # We need to set __PYVENV_LAUNCHER__ to sys.executable for the 
+        # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
         return base, env
     elif GITHUB_ACTIONS:
